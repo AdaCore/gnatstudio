@@ -29,6 +29,7 @@ with Ada_Analyzer;          use Ada_Analyzer;
 with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
 with Language;              use Language;
+with VFS;                   use VFS;
 
 with Codefix.Merge_Utils;   use Codefix.Merge_Utils;
 
@@ -170,16 +171,9 @@ package body Codefix.Text_Manager is
 
    function "=" (Left, Right : File_Cursor) return Boolean is
    begin
-
-      if Left.File_Name /= null xor Right.File_Name /= null then
-         return False;
-      else
-         return Left.Line = Right.Line
-           and then Left.Col = Right.Col
-           and then ((Left.File_Name = null and then Right.File_Name = null)
-                     or else (Left.File_Name.all = Right.File_Name.all));
-      end if;
-
+      return Left.Line = Right.Line
+        and then Left.Col = Right.Col
+        and then Left.File = Right.File;
    end "=";
 
    ---------
@@ -188,8 +182,8 @@ package body Codefix.Text_Manager is
 
    function "<" (Left, Right : File_Cursor) return Boolean is
    begin
-      return Left.File_Name.all < Right.File_Name.all
-        or else (Left.File_Name.all = Right.File_Name.all
+      return Left.File < Right.File
+        or else (Left.File = Right.File
                  and then Text_Cursor (Left) < Text_Cursor (Right));
    end "<";
 
@@ -200,9 +194,9 @@ package body Codefix.Text_Manager is
    procedure Assign
      (This : in out File_Cursor'Class; Source : File_Cursor'Class) is
    begin
-      This.Col := Source.Col;
+      This.Col  := Source.Col;
       This.Line := Source.Line;
-      Assign (This.File_Name, Source.File_Name);
+      This.File := Source.File;
    end Assign;
 
    ----------------------------------------------------------------------------
@@ -214,8 +208,9 @@ package body Codefix.Text_Manager is
    ----------
 
    procedure Free (This : in out Mark_Abstr) is
+      pragma Unreferenced (This);
    begin
-      Free (This.File_Name);
+      null;
    end Free;
 
    ---------------
@@ -295,17 +290,16 @@ package body Codefix.Text_Manager is
 
       declare
          Res : Mark_Abstr'Class := Get_New_Mark
-          (Get_File (Current_Text, Real_Cursor.File_Name.all).all,
-            Text_Cursor (Real_Cursor));
+          (Get_File (Current_Text, Get_File (Real_Cursor)).all,
+           Real_Cursor);
       begin
-         Assign (Res.File_Name, Cursor.File_Name);
-
          if Cursor.Line = 0 then
             Res.Is_First_Line := True;
          else
             Res.Is_First_Line := False;
          end if;
 
+         Res.File_Name := Get_File (Cursor);
          return Res;
       end;
    end Get_New_Mark;
@@ -318,11 +312,9 @@ package body Codefix.Text_Manager is
      (Current_Text : Text_Navigator_Abstr'Class;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
-      Cursor : File_Cursor;
+      Cursor : File_Cursor'Class := Get_Current_Cursor
+        (Get_File (Current_Text, Mark.File_Name).all, Mark);
    begin
-      Cursor := File_Cursor (Get_Current_Cursor
-        (Get_File (Current_Text, Mark.File_Name.all).all, Mark));
-
       if Mark.Is_First_Line then
          Cursor.Line := 0;
       end if;
@@ -342,7 +334,7 @@ package body Codefix.Text_Manager is
      return Construct_Information is
    begin
       return Get_Unit
-        (Get_File (Current_Text, Cursor.File_Name.all).all,
+        (Get_File (Current_Text, Get_File (Cursor)).all,
          Text_Cursor (Cursor),
          Position,
          Category_1,
@@ -355,7 +347,7 @@ package body Codefix.Text_Manager is
 
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Spec         : Construct_Information) return Construct_Information is
    begin
       return Search_Body (Get_File (Current_Text, File_Name).all, Spec);
@@ -371,7 +363,7 @@ package body Codefix.Text_Manager is
       Len    : Natural) return String is
    begin
       return Get
-        (Get_File (This, Cursor.File_Name.all).all, Text_Cursor (Cursor), Len);
+        (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor), Len);
    end Get;
 
    --------------
@@ -383,7 +375,7 @@ package body Codefix.Text_Manager is
       Cursor : File_Cursor'Class) return String is
    begin
       return Get_Line
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          Text_Cursor (Cursor));
    end Get_Line;
 
@@ -393,7 +385,7 @@ package body Codefix.Text_Manager is
 
    function Read_File
      (This : Text_Navigator_Abstr;
-      File_Name : String) return GNAT.OS_Lib.String_Access is
+      File_Name : VFS.Virtual_File) return GNAT.OS_Lib.String_Access is
    begin
       return Read_File (Get_File (This, File_Name).all);
    end Read_File;
@@ -404,7 +396,7 @@ package body Codefix.Text_Manager is
 
    function Get_File
      (This : Text_Navigator_Abstr'Class;
-      Name : String) return Ptr_Text
+      Name : VFS.Virtual_File) return Ptr_Text
    is
       Iterator    : Text_List.List_Node := First (This.Files.all);
       New_Text    : Ptr_Text;
@@ -423,7 +415,7 @@ package body Codefix.Text_Manager is
 
       Append (This.Files.all, New_Text);
 
-      New_Text.File_Name := new String'(Name);
+      New_Text.File_Name := Name;
       Initialize (New_Text.all, Name);
 
       return New_Text;
@@ -440,7 +432,7 @@ package body Codefix.Text_Manager is
       New_Value : String) is
    begin
       Replace
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          Text_Cursor (Cursor),
          Len,
          New_Value);
@@ -456,7 +448,7 @@ package body Codefix.Text_Manager is
       New_Line    : String) is
    begin
       Add_Line
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          Text_Cursor (Cursor),
          New_Line);
    end Add_Line;
@@ -470,8 +462,7 @@ package body Codefix.Text_Manager is
       Cursor : File_Cursor'Class) is
    begin
       Delete_Line
-        (Get_File (This, Cursor.File_Name.all).all,
-         Text_Cursor (Cursor));
+        (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
    end Delete_Line;
 
    ----------------
@@ -493,7 +484,7 @@ package body Codefix.Text_Manager is
       if Unit_Info.Is_Declaration then
          Body_Info := Search_Body
            (Current_Text,
-            Cursor.File_Name.all,
+            Get_File (Cursor),
             Unit_Info);
 
          for J in Body_Info.Sloc_Start.Line .. Body_Info.Sloc_End.Line loop
@@ -517,7 +508,7 @@ package body Codefix.Text_Manager is
       Cursor : File_Cursor'Class) return Natural is
    begin
       return Line_Length
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          File_Cursor (Cursor));
    end Line_Length;
 
@@ -547,7 +538,7 @@ package body Codefix.Text_Manager is
      return File_Cursor'Class is
    begin
       return Search_String
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          File_Cursor (Cursor),
          Searched,
          Escape_Manager,
@@ -556,7 +547,7 @@ package body Codefix.Text_Manager is
 
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String;
+      File_Name : VFS.Virtual_File;
       Category  : Language_Category;
       Name      : String := "") return Construct_Information is
    begin
@@ -569,7 +560,7 @@ package body Codefix.Text_Manager is
 
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String) return Natural is
+      File_Name : VFS.Virtual_File) return Natural is
    begin
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
@@ -585,7 +576,7 @@ package body Codefix.Text_Manager is
      return String is
    begin
       return Get_Extended_Unit_Name
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          Cursor,
          Category);
    end Get_Extended_Unit_Name;
@@ -607,10 +598,10 @@ package body Codefix.Text_Manager is
 
       Result :=
         (Text_Cursor (Get_Right_Paren
-                        (Get_File (Current_Text, Cursor.File_Name.all).all,
+                        (Get_File (Current_Text, Get_File (Cursor)).all,
                          Cursor,
                          Get_Line (Current_Text, Line_Cursor)))
-         with File_Name => Clone (Cursor.File_Name));
+         with File => Get_File (Cursor));
 
       return Result;
    end Get_Right_Paren;
@@ -632,13 +623,13 @@ package body Codefix.Text_Manager is
       if Unit_Info.Is_Declaration then
          Body_Info := Search_Body
            (Current_Text,
-            Cursor.File_Name.all,
+            Get_File (Cursor),
             Unit_Info);
 
-         Assign (Body_Begin.File_Name, Cursor.File_Name);
-         Assign (Body_End.File_Name, Cursor.File_Name);
-         Assign (Spec_Begin.File_Name, Cursor.File_Name);
-         Assign (Spec_End.File_Name, Cursor.File_Name);
+         Set_File (Body_Begin, Get_File (Cursor));
+         Set_File (Body_End,   Get_File (Cursor));
+         Set_File (Spec_Begin, Get_File (Cursor));
+         Set_File (Spec_End,   Get_File (Cursor));
 
          Body_Begin.Col := Body_Info.Sloc_Start.Column;
          Body_Begin.Line := Body_Info.Sloc_Start.Line;
@@ -656,8 +647,8 @@ package body Codefix.Text_Manager is
          Body_End.Col := Unit_Info.Sloc_End.Column;
          Body_End.Line := Unit_Info.Sloc_End.Line;
 
-         Assign (Body_Begin.File_Name, Cursor.File_Name);
-         Assign (Body_End.File_Name, Cursor.File_Name);
+         Set_File (Body_Begin, Get_File (Cursor));
+         Set_File (Body_End,   Get_File (Cursor));
 
          Assign (Spec_Begin, Null_File_Cursor);
          Assign (Spec_End, Null_File_Cursor);
@@ -675,7 +666,7 @@ package body Codefix.Text_Manager is
       Word   : out GNAT.OS_Lib.String_Access) is
    begin
       Next_Word
-        (Get_File (This, Cursor.File_Name.all).all,
+        (Get_File (This, Get_File (Cursor)).all,
          Cursor,
          Word);
    end Next_Word;
@@ -686,7 +677,7 @@ package body Codefix.Text_Manager is
 
    function Get_Structure
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String) return Construct_List_Access is
+      File_Name : VFS.Virtual_File) return Construct_List_Access is
    begin
       return Get_Structure (Get_File (This, File_Name).all);
    end Get_Structure;
@@ -718,8 +709,8 @@ package body Codefix.Text_Manager is
    begin
       Result := (Text_Cursor
                    (Previous_Char
-                      (Get_File (This, Cursor.File_Name.all).all, Cursor))
-                 with Clone (Cursor.File_Name));
+                      (Get_File (This, Get_File (Cursor)).all, Cursor))
+                 with Get_File (Cursor));
       return Result;
    end Previous_Char;
 
@@ -728,7 +719,7 @@ package body Codefix.Text_Manager is
    ----------
 
    procedure Undo
-     (This : Text_Navigator_Abstr'Class; File_Name : String) is
+     (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File) is
    begin
       Undo (Get_File (This, File_Name).all);
    end Undo;
@@ -745,7 +736,6 @@ package body Codefix.Text_Manager is
    begin
       Free (This.Structure.all);
       Free (This.Structure);
-      Free (This.File_Name);
       Free (This.Structure_Up_To_Date);
    end Free;
 
@@ -1041,9 +1031,9 @@ package body Codefix.Text_Manager is
    -- Get_File_Name --
    -------------------
 
-   function Get_File_Name (This : Text_Interface) return String is
+   function Get_File_Name (This : Text_Interface) return VFS.Virtual_File is
    begin
-      return This.File_Name.all;
+      return This.File_Name;
    end Get_File_Name;
 
    -----------------
@@ -1474,8 +1464,9 @@ package body Codefix.Text_Manager is
    ----------
 
    procedure Free (This : in out File_Cursor) is
+      pragma Unreferenced (This);
    begin
-      Free (This.File_Name);
+      null;
    end Free;
 
    -----------
@@ -1485,7 +1476,7 @@ package body Codefix.Text_Manager is
    function Clone (This : File_Cursor) return File_Cursor is
       New_Cursor : File_Cursor := This;
    begin
-      New_Cursor.File_Name := Clone (This.File_Name);
+      New_Cursor.File := This.File;
       return New_Cursor;
    end Clone;
 
@@ -1858,7 +1849,7 @@ package body Codefix.Text_Manager is
    begin
       Destination :=
         (Context         => Original_Unit,
-         Cursor          => Clone (Cursor),
+         Cursor          => Clone (File_Cursor (Cursor)),
          Original_Length => Len,
          Content         => To_Mergable_String (Get (This, Cursor, Len)),
          Next            => null,
@@ -1902,7 +1893,7 @@ package body Codefix.Text_Manager is
       Free_Data (Destination);
       Destination :=
         (Context         => Original_Unit,
-         Cursor          => Clone (Cursor),
+         Cursor          => Clone (File_Cursor (Cursor)),
          Original_Length => Str'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
@@ -2049,8 +2040,7 @@ package body Codefix.Text_Manager is
                Line_Cursor.Line := Line_Cursor.Line - 1;
             end if;
 
-            exit when Prev.Cursor.File_Name.all =
-              Current_Line.Cursor.File_Name.all
+            exit when Get_File (Prev.Cursor) = Get_File (Current_Line.Cursor)
               and then (Prev.Cursor.Line + 1 = Current_Line.Cursor.Line
                         or else Prev.Cursor.Line = Current_Line.Cursor.Line);
             exit when Line_Cursor.Line = 0;
@@ -2091,7 +2081,7 @@ package body Codefix.Text_Manager is
       Line_Cursor.Col := 1;
       New_Line := new Extract_Line;
       Current_Line := This;
-      End_Of_File := Line_Max (Current_Text, Line_Cursor.File_Name.all);
+      End_Of_File := Line_Max (Current_Text, Get_File (Line_Cursor));
 
       if This.Next = null then
          for J in 1 .. Size loop
@@ -2108,8 +2098,8 @@ package body Codefix.Text_Manager is
 
       else
          for J in 1 .. Size loop
-            exit when Current_Line.Cursor.File_Name.all =
-              Current_Line.Next.Cursor.File_Name.all
+            exit when Get_File (Current_Line.Cursor) =
+              Get_File (Current_Line.Next.Cursor)
               and then (Current_Line.Cursor.Line + 1 =
                           Current_Line.Next.Cursor.Line
                         or else Current_Line.Next.Cursor.Line =
@@ -2206,7 +2196,7 @@ package body Codefix.Text_Manager is
    begin
       if This = null then
          return null;
-      elsif This.Cursor.File_Name.all = Cursor.File_Name.all
+      elsif Get_File (This.Cursor) = Get_File (Cursor)
         and then This.Cursor.Line = Cursor.Line
       then
          return This;
@@ -2325,7 +2315,7 @@ package body Codefix.Text_Manager is
         (Destination,
          new Extract_Line'
            (Context         => Original_Unit,
-            Cursor          => Clone (Cursor),
+            Cursor          => Clone (File_Cursor (Cursor)),
             Original_Length => Str'Length,
             Content         => To_Mergable_String (Str),
             Next            => null,
@@ -2498,13 +2488,13 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
-      Last_File_Name  : GNAT.OS_Lib.String_Access :=
-        Current_Extract.Cursor.File_Name;
+      Last_File_Name  : VFS.Virtual_File :=
+        Get_File (Current_Extract.Cursor);
       Offset_Line     : Integer := 0;
    begin
       while Current_Extract /= null loop
-         if Current_Extract.Cursor.File_Name.all /= Last_File_Name.all then
-            Last_File_Name := Current_Extract.Cursor.File_Name;
+         if Get_File (Current_Extract.Cursor) /= Last_File_Name then
+            Last_File_Name := Get_File (Current_Extract.Cursor);
             Offset_Line := 0;
          end if;
 
@@ -2668,7 +2658,7 @@ package body Codefix.Text_Manager is
    begin
       while Current_Extract /= null loop
          if Current_Extract.Cursor.Line = Position.Line
-           and Current_Extract.Cursor.File_Name.all = Position.File_Name.all
+           and Get_File (Current_Extract.Cursor) = Get_File (Position)
          then
             return Current_Extract;
          end if;
@@ -2679,7 +2669,7 @@ package body Codefix.Text_Manager is
       Raise_Exception
         (Codefix_Panic'Identity,
          "line" & Natural'Image (Position.Line) & " of " &
-           Position.File_Name.all & " not found in an extract");
+           Full_Name (Get_File (Position)).all & " not found in an extract");
    end Get_Line;
 
    ----------------
@@ -3256,7 +3246,7 @@ package body Codefix.Text_Manager is
    function Get_Files_Names
      (This : Extract; Size_Max : Natural := 0) return String
    is
-      Previous     : GNAT.OS_Lib.String_Access;
+      Previous     : VFS.Virtual_File;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
       Result       : GNAT.OS_Lib.String_Access;
 
@@ -3265,14 +3255,15 @@ package body Codefix.Text_Manager is
          return "";
       end if;
 
-      Previous := Current_Line.Cursor.File_Name;
-      Assign (Result, Previous);
+      Previous := Get_File (Current_Line.Cursor);
+      Assign (Result, Full_Name (Previous).all);
 
       while Current_Line /= null loop
-         if Previous.all /= Current_Line.Cursor.File_Name.all then
+         if Previous /= Get_File (Current_Line.Cursor) then
             Assign
-              (Result, Result.all & " / " & Current_Line.Cursor.File_Name.all);
-            Previous := Current_Line.Cursor.File_Name;
+              (Result, Result.all & " / " &
+               Full_Name (Get_File (Current_Line.Cursor)).all);
+            Previous := Get_File (Current_Line.Cursor);
          end if;
          Current_Line := Current_Line.Next;
       end loop;
@@ -3296,7 +3287,7 @@ package body Codefix.Text_Manager is
    ------------------
 
    function Get_Nb_Files (This : Extract) return Natural is
-      Previous     : GNAT.OS_Lib.String_Access;
+      Previous     : VFS.Virtual_File;
       Current_Line : Ptr_Extract_Line := Get_First_Line (This);
       Total        : Natural := 1;
 
@@ -3305,12 +3296,12 @@ package body Codefix.Text_Manager is
          return 0;
       end if;
 
-      Previous := Current_Line.Cursor.File_Name;
+      Previous := Get_File (Current_Line.Cursor);
 
       while Current_Line /= null loop
-         if Previous.all /= Current_Line.Cursor.File_Name.all then
+         if Previous /= Get_File (Current_Line.Cursor) then
             Total := Total + 1;
-            Previous := Current_Line.Cursor.File_Name;
+            Previous := Get_File (Current_Line.Cursor);
          end if;
          Current_Line := Current_Line.Next;
       end loop;
@@ -3361,7 +3352,7 @@ package body Codefix.Text_Manager is
    begin
       while Line /= null loop
          for J in 1 .. Get_Number_Actions (Line.all) loop
-            Undo (Current_Text, Line.Cursor.File_Name.all);
+            Undo (Current_Text, Get_File (Line.Cursor));
          end loop;
 
          Line := Line.Next;
@@ -3410,7 +3401,7 @@ package body Codefix.Text_Manager is
    exception
       when E : Codefix_Panic =>
          if Error_Cb /= null then
-            Error_Cb (Exception_Information (E));
+            Error_Cb (Current_Text.Kernel, Exception_Information (E));
          end if;
    end Secured_Execute;
 
@@ -3424,11 +3415,19 @@ package body Codefix.Text_Manager is
       Free (File_Cursor (This));
    end Free;
 
+   -----------
+   -- Clone --
+   -----------
+
    function Clone (This : Word_Cursor) return Word_Cursor is
    begin
       return (Clone (File_Cursor (This)) with
               Clone (This.String_Match), This.Mode);
    end Clone;
+
+   --------------------
+   -- Make_Word_Mark --
+   --------------------
 
    procedure Make_Word_Mark
      (Word         : Word_Cursor;
@@ -3440,17 +3439,26 @@ package body Codefix.Text_Manager is
       Mark.Mark_Id := new Mark_Abstr'Class'(Get_New_Mark (Current_Text, Word));
    end Make_Word_Mark;
 
+   ----------------------
+   -- Make_Word_Cursor --
+   ----------------------
+
    procedure Make_Word_Cursor
      (Word         : Word_Mark;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : out Word_Cursor) is
+      Cursor       : out Word_Cursor)
+   is
+      Curs : constant File_Cursor'Class :=
+        Get_Current_Cursor (Current_Text, Word.Mark_Id.all);
    begin
-      Cursor := (File_Cursor
-                   (Get_Current_Cursor (Current_Text, Word.Mark_Id.all))
-                 with null, Text_Ascii);
-      Cursor.Mode := Word.Mode;
-      Assign (Cursor.String_Match, Word.String_Match);
+      Set_File     (Cursor, Get_File (Curs));
+      Set_Location (Cursor, Get_Line (Curs), Get_Column (Curs));
+      Set_Word     (Cursor, Word.String_Match.all, Word.Mode);
    end Make_Word_Cursor;
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (This : in out Word_Mark) is
    begin
@@ -3494,14 +3502,13 @@ package body Codefix.Text_Manager is
          when Text_Ascii =>
             Delete
               (Get_First_Line (New_Extract).Content,
-               Word.Col,
+               Get_Column (Word),
                Word.String_Match'Length);
          when Regular_Expression =>
             Delete
               (Get_First_Line (New_Extract).Content,
-               Word.Col,
-               Get_Word_Length
-                 (New_Extract, Word, Word.String_Match.all));
+               Get_Column (Word),
+               Get_Word_Length (New_Extract, Word, Word.String_Match.all));
       end case;
 
       Get_First_Line (New_Extract).Context := Unit_Modified;
@@ -3792,5 +3799,101 @@ package body Codefix.Text_Manager is
          Success,
          Chronologic_Changes);
    end Merge_Extracts;
+
+   ----------------
+   -- Set_Kernel --
+   ----------------
+
+   procedure Set_Kernel
+     (Text : in out Text_Navigator_Abstr;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Text.Kernel := Glide_Kernel.Kernel_Handle (Kernel);
+   end Set_Kernel;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Text : Text_Navigator_Abstr) return Glide_Kernel.Kernel_Handle is
+   begin
+      return Text.Kernel;
+   end Get_Kernel;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (This : Text_Cursor) return Integer is
+   begin
+      return This.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (This : Text_Cursor) return Integer is
+   begin
+      return This.Col;
+   end Get_Column;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (This : File_Cursor) return VFS.Virtual_File is
+   begin
+      return This.File;
+   end Get_File;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Line : in out Ptr_Extract_Line) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Extract_Line, Ptr_Extract_Line);
+   begin
+      Unchecked_Free (Line);
+   end Free;
+
+   ------------------
+   -- Set_Location --
+   ------------------
+
+   procedure Set_Location
+     (This : in out Text_Cursor; Line, Column : Integer) is
+   begin
+      This.Line := Line;
+      This.Col := Column;
+   end Set_Location;
+
+   --------------
+   -- Set_File --
+   --------------
+
+   procedure Set_File (This : in out File_Cursor; File : VFS.Virtual_File) is
+   begin
+      This.File := File;
+   end Set_File;
+
+   --------------
+   -- Set_Word --
+   --------------
+
+   procedure Set_Word
+     (Word : in out Word_Cursor;
+      String_Match : String;
+      Mode         : String_Mode := Text_Ascii) is
+   begin
+      if String_Match = "" then
+         Free (Word.String_Match);
+      else
+         Assign (Word.String_Match, new String'(String_Match));
+      end if;
+      Word.Mode := Mode;
+   end Set_Word;
 
 end Codefix.Text_Manager;

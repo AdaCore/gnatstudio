@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with Language;     use Language;
 with Basic_Types;  use Basic_Types;
 with VFS;
+with Glide_Kernel;
 
 with Generic_List;
 
@@ -51,12 +52,7 @@ package Codefix.Text_Manager is
    --  type Text_Cursor
    ----------------------------------------------------------------------------
 
-   type Text_Cursor is tagged record
-      Line, Col : Natural := 0;
-      --  If Line = 0, indicates a special case to handle the first line
-      --  differently. ??? Not quite clear why it is needed to handle it
-      --  specially.
-   end record;
+   type Text_Cursor is tagged private;
 
    function "<" (Left, Right : Text_Cursor) return Boolean;
    --  Return True when Left is before Right.
@@ -70,11 +66,23 @@ package Codefix.Text_Manager is
    function ">=" (Left, Right : Text_Cursor'Class) return Boolean;
    --  Return True when Left is after or in the same position than Right.
 
-   type File_Cursor is new Text_Cursor with record
-      File_Name : GNAT.OS_Lib.String_Access;
-   end record;
+   procedure Set_Location
+     (This : in out Text_Cursor; Line, Column : Integer);
+   --  Set the location information
 
+   function Get_Line (This : Text_Cursor) return Integer;
+   function Get_Column (This : Text_Cursor) return Integer;
+   --  Return the location
+
+
+   type File_Cursor is new Text_Cursor with private;
    Null_File_Cursor : constant File_Cursor;
+
+   procedure Set_File (This : in out File_Cursor; File : VFS.Virtual_File);
+   --  Set the file information
+
+   function Get_File (This : File_Cursor) return VFS.Virtual_File;
+   --  Return the file associated with the cursor
 
    function "=" (Left, Right : File_Cursor) return Boolean;
    --  Return true when Left is in the same position than rigth.
@@ -84,6 +92,7 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
+   --  Does nothing, just needed for generic instantiation
 
    function Clone (This : File_Cursor) return File_Cursor;
    --  Duplicate all informations of a File_Cursor, specially informations
@@ -132,7 +141,7 @@ package Codefix.Text_Manager is
 
    function Get_New_Mark
      (Current_Text : Text_Interface;
-      Cursor       : Text_Cursor'Class) return Mark_Abstr'Class is abstract;
+      Cursor       : File_Cursor'Class) return Mark_Abstr'Class is abstract;
    --  Create a new mark at the position specified by the cursor.
 
    function Get_Current_Cursor
@@ -145,7 +154,7 @@ package Codefix.Text_Manager is
 
    procedure Initialize
      (This      : in out Text_Interface;
-      File_Name : String) is abstract;
+      File_Name : VFS.Virtual_File) is abstract;
    --  Initialize the structure of the Text_Interface.
 
    procedure Free (This : in out Text_Interface);
@@ -194,7 +203,7 @@ package Codefix.Text_Manager is
      (This : Text_Interface) return GNAT.OS_Lib.String_Access is abstract;
    --  Get the entire file in a String_Access.
 
-   function Get_File_Name (This : Text_Interface) return String;
+   function Get_File_Name (This : Text_Interface) return VFS.Virtual_File;
    --  Return the name of the file.
 
    procedure Commit (This : Text_Interface) is abstract;
@@ -270,6 +279,13 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Ptr_Text_Navigator);
 
+   procedure Set_Kernel
+     (Text : in out Text_Navigator_Abstr;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   function Get_Kernel
+     (Text : Text_Navigator_Abstr) return Glide_Kernel.Kernel_Handle;
+   --  Set or retrieve the kernel
+
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : VFS.Virtual_File)
       return VFS.Virtual_File is abstract;
@@ -314,7 +330,7 @@ package Codefix.Text_Manager is
 
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Spec         : Construct_Information) return Construct_Information;
    --  Returns the body of a subprogramm, only if this body is in the same
    --  file.
@@ -334,7 +350,7 @@ package Codefix.Text_Manager is
 
    function Read_File
      (This      : Text_Navigator_Abstr;
-      File_Name : String) return GNAT.OS_Lib.String_Access;
+      File_Name : VFS.Virtual_File) return GNAT.OS_Lib.String_Access;
    --  Get the entire file File_Name.
 
    procedure Replace
@@ -376,7 +392,7 @@ package Codefix.Text_Manager is
 
    function Search_Unit
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String;
+      File_Name : VFS.Virtual_File;
       Category  : Language_Category;
       Name      : String := "") return Construct_Information;
    --  Return the first Contruct_Information that matche Category and name.
@@ -386,7 +402,7 @@ package Codefix.Text_Manager is
 
    function Line_Max
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String) return Natural;
+      File_Name : VFS.Virtual_File) return Natural;
    --  Return the number of the last line in the text loaded.
 
    function Get_Extended_Unit_Name
@@ -420,7 +436,7 @@ package Codefix.Text_Manager is
 
    function Get_Structure
      (This      : Text_Navigator_Abstr'Class;
-      File_Name : String) return Construct_List_Access;
+      File_Name : VFS.Virtual_File) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface.
 
    procedure Update_All
@@ -434,7 +450,7 @@ package Codefix.Text_Manager is
    --  position specified by the cursor
 
    procedure Undo
-     (This : Text_Navigator_Abstr'Class; File_Name : String);
+     (This : Text_Navigator_Abstr'Class; File_Name : VFS.Virtual_File);
    --  Undo the last action from the File_Name.
 
    ----------------------------------------------------------------------------
@@ -879,11 +895,8 @@ package Codefix.Text_Manager is
    --  type Text_Command
    ----------------------------------------------------------------------------
 
-   type Word_Cursor is new File_Cursor with record
-      String_Match : GNAT.OS_Lib.String_Access;
-      Mode         : String_Mode := Text_Ascii;
-   end record;
-   --  Word_cursor is an object that descibes a specific word in the text. In
+   type Word_Cursor is new File_Cursor with private;
+   --  Word_cursor is an object that describes a specific word in the text. In
    --  case where it is used to match a word in the text, the mode can be
    --  'Regular_Expression'. Otherwise, this field is ignored.
 
@@ -892,6 +905,13 @@ package Codefix.Text_Manager is
       String_Match : GNAT.OS_Lib.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
+
+   procedure Set_Word
+     (Word : in out Word_Cursor;
+      String_Match : String;
+      Mode         : String_Mode := Text_Ascii);
+   --  Change the attributes of Word.
+   --  No String_Match is registered if an empty string is passed
 
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark.
@@ -932,7 +952,9 @@ package Codefix.Text_Manager is
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
-   type Execute_Corrupted is access procedure (Error_Message : String);
+   type Execute_Corrupted is access procedure
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Error_Message : String);
 
    procedure Secured_Execute
      (This         : Text_Command'Class;
@@ -1116,17 +1138,18 @@ private
 
    type Text_Navigator_Abstr is abstract tagged record
       Files : Ptr_List_Text := new Text_List.List;
+      Kernel               : Glide_Kernel.Kernel_Handle;
    end record;
 
    function Get_File
      (This    : Text_Navigator_Abstr'Class;
-      Name    : String) return Ptr_Text;
+      Name    : VFS.Virtual_File) return Ptr_Text;
    --  Returns the existent file interface, or create a new one if it doesn't
    --  exists.
 
    type Mark_Abstr is abstract tagged record
       Is_First_Line : Boolean := False;
-      File_Name     : GNAT.OS_Lib.String_Access;
+      File_Name     : VFS.Virtual_File;
    end record;
 
    ----------------------------------------------------------------------------
@@ -1141,7 +1164,7 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
-      File_Name            : GNAT.OS_Lib.String_Access;
+      File_Name            : VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
    end record;
 
@@ -1184,8 +1207,8 @@ private
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Extract_Line, Ptr_Extract_Line);
+   procedure Free (Line : in out Ptr_Extract_Line);
+   --  Free the memory associated with the line
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -1248,7 +1271,23 @@ private
    --  Others
    ----------------------------------------------------------------------------
 
-   Null_File_Cursor : constant File_Cursor := (0, 0, null);
+   type Text_Cursor is tagged record
+      Line, Col : Natural := 0;
+      --  If Line = 0, indicates a special case to handle the first line
+      --  differently. ??? Not quite clear why it is needed to handle it
+      --  specially.
+   end record;
+
+   type File_Cursor is new Text_Cursor with record
+      File : VFS.Virtual_File;
+   end record;
+
+   Null_File_Cursor : constant File_Cursor := (0, 0, VFS.No_File);
+
+   type Word_Cursor is new File_Cursor with record
+      String_Match : GNAT.OS_Lib.String_Access;
+      Mode         : String_Mode := Text_Ascii;
+   end record;
 
    function Normalize (Str : Basic_Types.String_Access) return String;
    --  Change the string in order to make comparaisons between lists of
