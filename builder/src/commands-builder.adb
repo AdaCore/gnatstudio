@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Status_Bar;            use GVD.Status_Bar;
-
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
@@ -202,8 +200,6 @@ package body Commands.Builder is
          Interrupt (Fd);
          Console.Insert (Kernel, "<^C>");
          Top.Interrupted := False;
-         Print_Message
-           (Top.Statusbar, GVD.Status_Bar.Help, -"Interrupting build...");
          Timeout := 10;
       end if;
 
