@@ -563,6 +563,21 @@ package body Src_Info.Queries is
       Current_Dep  := Lib_Info.LI.Dependencies_Info;
       Dependencies := null;
 
+      --  The body and separates always depends on the spec
+      if Part /= Unit_Spec
+        and then Lib_Info.LI.Spec_Info /= null
+      then
+         FI := Lib_Info.LI.Spec_Info;
+         Dependencies := new Dependency_Node'
+           (Value =>
+              (File =>
+                 (File_Name => new String' (FI.Source_Filename.all),
+                  LI_Name   => new String' (Lib_Info.LI.LI_Filename.all)),
+               Dep  => (Depends_From_Spec => False,
+                        Depends_From_Body => True)),
+            Next  => Dependencies);
+      end if;
+
       while Current_Dep /= null loop
          B := Get_Depends_From_Body (Current_Dep.Value.Dep_Info);
          S := Get_Depends_From_Spec (Current_Dep.Value.Dep_Info);
