@@ -55,6 +55,9 @@ with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 
 with Ada.Exceptions;   use Ada.Exceptions;
+with System;           use System;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Traces;           use Traces;
 
@@ -203,9 +206,9 @@ package body Browsers.Call_Graph is
       Kernel   : Kernel_Handle;
       Callback : Examine_Callback;
       Execute  : Execute_Callback;
+      Browser_Destroyed : Boolean;
    end record;
-   package Examine_Ancestors_Idle is new Gtk.Main.Idle
-     (Examine_Ancestors_Idle_Data);
+   type Examine_Ancestors_Data_Access is access Examine_Ancestors_Idle_Data;
 
    procedure Call_Graph_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -243,8 +246,16 @@ package body Browsers.Call_Graph is
    --  If Callback.Browser is null, then Background_Mode is ignored, and the
    --  query is processed synchronously
 
-   function Examine_Ancestors_Call_Graph_Idle
-     (Data : Examine_Ancestors_Idle_Data) return Boolean;
+   procedure Ancestors_Browser_Destroyed_While_Computed
+     (Data                 : System.Address;
+      Where_The_Object_Was : System.Address);
+   pragma Convention (C, Ancestors_Browser_Destroyed_While_Computed);
+   --  Called when a browser is destroyed while its contents is being computed
+
+   procedure Examine_Ancestors_Call_Graph_Idle
+     (Data    : in out Examine_Ancestors_Data_Access;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
    --  Main idle loop for Examine_Ancestors_Call_Graph
 
    procedure Edit_Entity_Call_Graph_From_Contextual
@@ -331,7 +342,7 @@ package body Browsers.Call_Graph is
       Is_Renaming : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
-   procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data);
+   procedure Destroy_Idle (Data : in out Examine_Ancestors_Data_Access);
    --  Called when the idle loop is destroyed.
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data);
@@ -342,6 +353,8 @@ package body Browsers.Call_Graph is
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Entity_Idle_Data, Destroy_Idle);
+   package Ancestor_Commands is new Commands.Generic_Asynchronous
+     (Examine_Ancestors_Data_Access, Destroy_Idle);
 
    procedure On_Call_Graph
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -741,7 +754,7 @@ package body Browsers.Call_Graph is
    -- Destroy_Idle --
    ------------------
 
-   procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data) is
+   procedure Destroy_Idle (Data : in out Examine_Ancestors_Data_Access) is
       procedure Clean;
       --  Clean up before exiting Destroy_Idle
 
@@ -756,6 +769,9 @@ package body Browsers.Call_Graph is
          end if;
       end Clean;
 
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Examine_Ancestors_Idle_Data, Examine_Ancestors_Data_Access);
+
    begin
       if Data.Callback.Browser /= null then
          --  Refresh the item, since we might have added links to it
@@ -764,8 +780,13 @@ package body Browsers.Call_Graph is
          Layout (Data.Callback.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Data.Callback.Browser));
          Show_Item (Get_Canvas (Data.Callback.Browser), Data.Callback.Item);
+
+         Weak_Unref (Data.Callback.Browser,
+                     Ancestors_Browser_Destroyed_While_Computed'Access);
       end if;
       Clean;
+
+      Unchecked_Free (Data);
 
    exception
       when E : others =>
@@ -778,46 +799,65 @@ package body Browsers.Call_Graph is
    -- Examine_Ancestors_Call_Graph_Idle --
    ---------------------------------------
 
-   function Examine_Ancestors_Call_Graph_Idle
-     (Data : Examine_Ancestors_Idle_Data) return Boolean
+   procedure Examine_Ancestors_Call_Graph_Idle
+     (Data    : in out Examine_Ancestors_Data_Access;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
    is
-      procedure Add_Item (Refs : Entity_Reference);
-      --  Add a new item for the entity declared in Node to the browser
-
-      --------------
-      -- Add_Item --
-      --------------
-
-      procedure Add_Item (Refs : Entity_Reference) is
-         Parent : constant Entity_Information := Get_Caller (Refs);
-      begin
-         if Parent /= null
-           and then Show_In_Call_Graph (Get_Kind (Refs))
-           and then Is_Subprogram (Parent)
-         then
-            Data.Execute (Data.Callback, Parent, Refs, False);
-         end if;
-      end Add_Item;
-
+      Parent : Entity_Information;
+      Ref    : Entity_Reference;
    begin
-      if At_End (Data.Iter.all) then
-         return False;
-
+      if Data.Browser_Destroyed then
+         Result := Success;
+      elsif At_End (Data.Iter.all) then
+         Result := Success;
       else
-         if Get (Data.Iter.all) /= No_Entity_Reference then
-            Add_Item (Get (Data.Iter.all));
+         Ref := Get (Data.Iter.all);
+
+         if Ref /= No_Entity_Reference then
+            Parent := Get_Caller (Ref);
+            if Parent /= null
+              and then Show_In_Call_Graph (Get_Kind (Ref))
+              and then Is_Subprogram (Parent)
+            then
+               Data.Execute (Data.Callback, Parent, Ref, False);
+            end if;
          end if;
 
          Next (Data.Iter.all);
-         return True;
+
+         if Command /= null then
+            Set_Progress (Command,
+                          (Running,
+                           Get_Current_Progress (Data.Iter.all),
+                           Get_Total_Progress (Data.Iter.all)));
+         end if;
+
+         Result := Execute_Again;
       end if;
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
-         return False;
+         Result := Failure;
    end Examine_Ancestors_Call_Graph_Idle;
+
+   ------------------------------------------------
+   -- Ancestors_Browser_Destroyed_While_Computed --
+   ------------------------------------------------
+
+   procedure Ancestors_Browser_Destroyed_While_Computed
+     (Data                 : System.Address;
+      Where_The_Object_Was : System.Address)
+   is
+      pragma Unreferenced (Where_The_Object_Was);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Examine_Ancestors_Data_Access);
+   begin
+      Convert (Data).Browser_Destroyed := True;
+      Convert (Data).Callback.Browser := null;
+   end Ancestors_Browser_Destroyed_While_Computed;
 
    -------------------------------------------
    -- Examine_Ancestors_Call_Graph_Iterator --
@@ -830,8 +870,10 @@ package body Browsers.Call_Graph is
       Execute         : Execute_Callback;
       Background_Mode : Boolean)
    is
-      Data          : Examine_Ancestors_Idle_Data;
+      C             : Ancestor_Commands.Generic_Asynchronous_Command_Access;
       Rename        : Entity_Information;
+      Data          : Examine_Ancestors_Data_Access;
+      Result        : Command_Return_Type;
    begin
       --  If we have a renaming, add the entry for the renamed entity
       Rename := Renaming_Of (Entity);
@@ -840,22 +882,32 @@ package body Browsers.Call_Graph is
       end if;
 
       Ref (Entity);
-      Data := (Iter     => new Entity_Reference_Iterator,
-               Entity   => Entity,
-               Kernel   => Kernel_Handle (Kernel),
-               Callback => Callback,
-               Execute  => Execute);
+      Data := new Examine_Ancestors_Idle_Data'
+        (Iter              => new Entity_Reference_Iterator,
+         Entity            => Entity,
+         Kernel            => Kernel_Handle (Kernel),
+         Callback          => Callback,
+         Browser_Destroyed => False,
+         Execute           => Execute);
       Find_All_References (Iter => Data.Iter.all, Entity => Entity);
 
+      if Callback.Browser /= null then
+         Weak_Ref
+           (Callback.Browser,
+            Ancestors_Browser_Destroyed_While_Computed'Access,
+            Data.all'Address);
+      end if;
+
       if Background_Mode and then Callback.Browser /= null then
-         Callback.Browser.Idle_Id := Examine_Ancestors_Idle.Add
-           (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
-            D        => Data,
-            Priority => Priority_Low_Idle,
-            Destroy  => Destroy_Idle'Access);
+         Ancestor_Commands.Create
+           (C, -"Called by", Data, Examine_Ancestors_Call_Graph_Idle'Access);
+         Launch_Background_Command
+           (Kernel, Command_Access (C), True, True, "call graph");
       else
-         while Examine_Ancestors_Call_Graph_Idle (Data) loop
-            null;
+         loop
+            Examine_Ancestors_Call_Graph_Idle
+              (Data, Command_Access (C), Result);
+            exit when Result /= Execute_Again;
          end loop;
          Destroy_Idle (Data);
       end if;
