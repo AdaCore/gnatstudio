@@ -2,7 +2,6 @@
 with Gtk.Clist;
 with Gtk.GEntry;
 with Gtk.Menu;
-with Gtk.Style;
 
 with Wizards;
 with Directory_Tree;
@@ -28,7 +27,6 @@ private
       Src_Dir_List      : Gtk.Clist.Gtk_Clist;
       Obj_Dir_Selection : Directory_Tree.Dir_Tree;
       Switches          : Switches_Editors.Switches_Edit;
-      Title_Style       : Gtk.Style.Gtk_Style;
       Naming            : Naming_Editors.Naming_Editor;
 
       Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
