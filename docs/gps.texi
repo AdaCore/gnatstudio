@@ -201,8 +201,8 @@ following choices:
 
 @table @b
 @item Start with default project
-If you choose this option by clicking on the @code{Start} button, GPS
-will create a default internal project with the following properties:
+If you select this option and click on the @code{OK} button, GPS will create a
+default internal project with the following properties:
 
   The project supports Ada files only, using the default GNAT
   naming scheme: @code{.ads} for spec files, @code{.adb} for body files.
@@ -216,21 +216,22 @@ will create a default internal project with the following properties:
   be put, corresponding also to the current directory.
 
 @item Create new project with wizard
-By clicking on the @code{Create} button, you will start a wizard allowing
-you to specify most of the properties for a new project. Once the project
-is created, GPS will save it and load it automatically.
+Selecting this option and clicking on the @code{OK} button will start a
+wizard allowing you to specify most of the properties for a new project. Once
+the project is created, GPS will save it and load it automatically.
 @c See ??? for more details on the project wizard.
 
 @item Open existing project
 You can select an existing project by clicking on the @code{Browse} button,
 or by using a previousely loaded project listed in the combo box. When a
-project is selected, clicking on the @code{Open} button will load this
+project is selected, clicking on the @code{OK} button will load this
 project and open the main window.
 
 @item Always show this dialog when GPS starts
 If unset, the welcome dialog won't be shown in future sessions.
 In this case, GPS will behave as follows: it will first look for a
--P switch on the command line, and load the coresponding project if present.
+@code{-P} switch on the command line, and load the coresponding project if
+present.
 Then, it will look for a project file in the current directory and will
 load the first project file found.
 
