@@ -71,4 +71,25 @@ package body Odd.Canvas is
       return Canvas.Item_Num;
    end Get_Next_Item_Num;
 
+   -----------------
+   -- Set_Process --
+   -----------------
+
+   procedure Set_Process
+     (Canvas  : access Odd_Canvas_Record;
+      Process : access Gtk.Window.Gtk_Window_Record'Class) is
+   begin
+      Canvas.Process := Gtk.Window.Gtk_Window (Process);
+   end Set_Process;
+
+   -----------------
+   -- Get_Process --
+   -----------------
+
+   function Get_Process (Canvas : access Odd_Canvas_Record)
+      return Gtk.Window.Gtk_Window is
+   begin
+      return Canvas.Process;
+   end Get_Process;
+
 end Odd.Canvas;

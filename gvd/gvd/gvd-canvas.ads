@@ -20,6 +20,7 @@
 
 with Gtkada.Canvas;
 with Odd.Preferences;
+with Gtk.Window;
 
 package Odd.Canvas is
 
@@ -49,11 +50,23 @@ package Odd.Canvas is
    --  the canvas.
    --  Two successive calls to that function will not return the same value.
 
+   procedure Set_Process
+     (Canvas  : access Odd_Canvas_Record;
+      Process : access Gtk.Window.Gtk_Window_Record'Class);
+   --  Set the process associated with the canvas.
+
+   function Get_Process (Canvas : access Odd_Canvas_Record)
+     return Gtk.Window.Gtk_Window;
+   --  Return the process tab that contains the canvas.
+
 private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
    record
       Detect_Aliases : Boolean := Odd.Preferences.Default_Detect_Aliases;
       Item_Num       : Integer := 0;
+
+      Process        : Gtk.Window.Gtk_Window;
+      --  The process tab that contains the canvas
    end record;
 end Odd.Canvas;
