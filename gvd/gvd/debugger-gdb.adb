@@ -1371,7 +1371,8 @@ package body Debugger.Gdb is
      return Breakpoint_Array
    is
       Num_Breakpoints : Natural := 0;
-      S : String := Send (Debugger, "info breakpoints", Is_Internal => True);
+      S : constant String :=
+        Send (Debugger, "info breakpoints", Is_Internal => True);
       Index : Natural := S'First;
       Tmp   : Natural;
    begin
