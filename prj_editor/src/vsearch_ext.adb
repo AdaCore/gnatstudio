@@ -287,7 +287,6 @@ package body Vsearch_Ext is
       end if;
 
       Show_All (Vsearch.Table);
-      Queue_Resize (Get_Toplevel (Vsearch.Table));
    end On_Options_Toggled;
 
    ------------------------------
