@@ -52,6 +52,9 @@ with Gdk.Color;                 use Gdk.Color;
 with Commands;                  use Commands;
 
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
 
 
 package body Vdiff2_Module is
@@ -66,6 +69,13 @@ package body Vdiff2_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
+
+   procedure VDiff_Contextual
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Generate the contextual menu entries for contextual menus in other
+   --  modules than the visual diff.
 
    procedure On_Compare_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -92,6 +102,10 @@ package body Vdiff2_Module is
    procedure On_Preferences_Changed
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
    --  Called when the preferences have changed
+
+   procedure On_Ref_Change
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
 
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
@@ -168,8 +182,9 @@ package body Vdiff2_Module is
             if File3 = "" then
                return;
             end if;
-
+            Trace (Me, "begin Diff3");
             Result := Diff3 (Kernel, File1, File2, File3);
+            Trace (Me, "end Diff3 ");
 
             if Result = Diff_Chunk_List.Null_List then
                Button := Message_Dialog
@@ -184,7 +199,11 @@ package body Vdiff2_Module is
                      File3 => new String'(File3),
                      Current_Node => First (Result),
                      Ref_File => 2);
+
+            Trace (Me, "begin Show_Differences3");
             Show_Differences3 (Kernel, Item);
+            Trace (Me, "end Show_Differences3");
+
             Append (Id.List_Diff.all, Item);
             Dummy := Execute (Id.Command_First);
             --  Free (Result);
@@ -454,6 +473,7 @@ package body Vdiff2_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Merge_Two_Files;
+
    -----------------
    -- Mime_Action --
    -----------------
@@ -639,11 +659,12 @@ package body Vdiff2_Module is
                 Unhighlight_Difference'Access);
 
       Register_Module
-        (Module       => Vdiff_Module_ID,
-         Kernel       => Kernel,
-         Module_Name  => Vdiff_Module_Name,
-         Priority     => Default_Priority,
-         Mime_Handler => Mime_Action'Access);
+        (Module                  => Vdiff_Module_ID,
+         Kernel                  => Kernel,
+         Module_Name             => Vdiff_Module_Name,
+         Priority                => Default_Priority,
+         Mime_Handler            => Mime_Action'Access,
+         Contextual_Menu_Handler => VDiff_Contextual'Access);
 
       Diff3_Cmd := Param_Spec_String
       (Gnew_String
@@ -838,5 +859,67 @@ package body Vdiff2_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences_Changed;
+
+   ---------------------
+   --  On_Ref_Change  --
+   ---------------------
+
+   procedure On_Ref_Change
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+      pragma Unreferenced (Context, Widget);
+   begin
+      null;
+   end On_Ref_Change;
+
+   ----------------------
+   -- VDiff_Contextual --
+   ----------------------
+
+   procedure VDiff_Contextual
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+
+      File    : File_Selection_Context_Access;
+      Submenu : Gtk_Menu;
+      Mitem   : Gtk_Menu_Item;
+      Dummy   : Diff_Head_List.List_Node;
+      Selected_File : GNAT.OS_Lib.String_Access;
+
+   begin
+
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) and then
+           Has_Directory_Information (File_Selection_Context_Access (Context))
+         then
+            Selected_File := new String'
+              (Directory_Information
+                 (File_Selection_Context_Access (Context)) &
+               File_Information
+                 (File_Selection_Context_Access (Context)));
+            Dummy := Is_In_Diff_List
+              (Selected_File,
+               VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+
+            if Dummy /= Diff_Head_List.Null_Node then
+               Gtk_New (Mitem, Label => -"Visual Diff");
+               Gtk_New (Submenu);
+               Set_Submenu (Mitem, Gtk_Widget (Submenu));
+               Append (Menu, Mitem);
+               Gtk_New (Mitem, -"Is New Diff Ref");
+               Append (Submenu, Mitem);
+               Context_Callback.Connect
+                 (Mitem, "activate",
+                  Context_Callback.To_Marshaller (On_Ref_Change'Access),
+                  Selection_Context_Access (Context));
+            end if;
+         end if;
+      end if;
+   end VDiff_Contextual;
 
 end Vdiff2_Module;
