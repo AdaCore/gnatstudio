@@ -57,7 +57,7 @@ with Histories;                 use Histories;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 with Basic_Types;
-with Dialogs;                   use Dialogs;
+with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with String_List_Utils;
 with GUI_Utils;                 use GUI_Utils;
