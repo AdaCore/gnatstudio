@@ -65,6 +65,8 @@ private
       Data  : Process_Data;
       Files : File_Array_Access := null;
       Main_Error_Category : GNAT.OS_Lib.String_Access;
+      Style_Category      : GNAT.OS_Lib.String_Access;
+      Warning_Category    : GNAT.OS_Lib.String_Access;
    end record;
 
 end Commands.Builder;
