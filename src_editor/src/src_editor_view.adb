@@ -757,9 +757,14 @@ package body Src_Editor_View is
       Unref (Layout);
 
       --  Re-set the color of the current line.
-      Set_Foreground
-        (Source.Current_Line_GC,
-         Get_Pref (Source.Kernel, Current_Line_Color));
+      --  This procedure might be called before the Map_Cb has been called,
+      --  and therefore the Current_Line_GC might not be initialized at this
+      --  point.
+      if Source.Current_Line_GC /= null then
+         Set_Foreground
+           (Source.Current_Line_GC,
+            Get_Pref (Source.Kernel, Current_Line_Color));
+      end if;
 
    exception
       when E : others =>
