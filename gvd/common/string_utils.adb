@@ -812,6 +812,29 @@ package body String_Utils is
       return C = '_' or else Is_Alphanumeric (C);
    end Is_Word_Char;
 
+   ----------------------
+   -- Is_Entity_Letter --
+   ----------------------
+
+   function Is_Entity_Letter (Char : Character) return Boolean is
+   begin
+      return Char = '_' or else Is_Alphanumeric (Char);
+   end Is_Entity_Letter;
+
+   ------------------------
+   -- Is_Operator_Letter --
+   ------------------------
+
+   function Is_Operator_Letter (Char : Character) return Boolean is
+   begin
+      case Char is
+         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
+            return True;
+         when others =>
+            return False;
+      end case;
+   end Is_Operator_Letter;
+
    ------------------------
    -- Relative_Path_Name --
    ------------------------

@@ -154,6 +154,16 @@ package String_Utils is
    function Is_Word_Char (C : Character) return Boolean;
    --  Return whether C is a word character (alphanumeric or underscore).
 
+   function Is_Entity_Letter (Char : Character) return Boolean;
+   --  Return True if the given letter is a valid letter for an entity name
+   --  (ie if the letter is either alphanumeric or an '_').
+
+   function Is_Operator_Letter (Char : Character) return Boolean;
+   --  Return True if the given letter is a valid operator.
+
+   function Case_Insensitive_Equal (S1, S2 : String) return Boolean;
+   --  Return True if S1 = S2 without taking into account case sensitivity.
+
    ----------------------------
    -- File name manipulation --
    ----------------------------
@@ -211,9 +221,6 @@ package String_Utils is
    --  Returns a file name from an ada subprogram/package name (ie converts '.'
    --  and '-' to the appropriate characters).
    --  ??? Note: this should be modified to use the naming schemes, if needed.
-
-   function Case_Insensitive_Equal (S1, S2 : String) return Boolean;
-   --  Return True if S1 = S2 without taking into account case sensitivity.
 
    ---------------------------
    -- C String manipulation --
