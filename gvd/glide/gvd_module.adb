@@ -1103,8 +1103,6 @@ package body GVD_Module is
         (Find_Menu_Item (Kernel, Debug & (-"Debug")), Available);
       Set_Sensitive
         (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Session")), Available);
 
       Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
       Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
@@ -1963,8 +1961,7 @@ package body GVD_Module is
       Top          : constant Glide_Window := Glide_Window (Window);
       Debug        : constant String := '/' & (-"Debug") & '/';
       Debug_Sub    : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub     : constant String := Debug & (-"D_ata") & '/';
-      Session_Sub  : constant String := Debug & (-"_Session") & '/';
+      Data_Sub     : constant String := Debug & (-"Data") & '/';
       Mitem        : Gtk_Menu_Item;
       Menu         : Gtk_Menu;
       --  ??? Should get the right process
@@ -2012,17 +2009,6 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
 
-      --  ??? Not supported yet in the context of GPS
-      Register_Menu (Kernel, Session_Sub, -"_Open...", Stock_Open,
-                     null, Sensitive => False);
-      Register_Menu (Kernel, Session_Sub, -"_Save As...", Stock_Save_As,
-                     null, Sensitive => False);
-      Mitem := Register_Menu
-        (Kernel, Session_Sub, -"_Command History", Stock_Index,
-         On_Command_History'Access);
-
-      Set_Sensitive (Mitem, False);
-
       Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
                      On_Call_Stack'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
@@ -2042,6 +2028,11 @@ package body GVD_Module is
                      On_Edit_Breakpoints'Access);
       Register_Menu (Kernel, Data_Sub, -"Examine _Memory", "",
                      On_Examine_Memory'Access);
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Data_Sub, Mitem);
+      Register_Menu
+        (Kernel, Data_Sub, -"_Command History", Stock_Index,
+         On_Command_History'Access, Sensitive => False);      Gtk_New (Mitem);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
