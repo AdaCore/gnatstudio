@@ -18,16 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package is a simple widget that groups the project tree (to show the
---  directories and subprojects) and the display of the scenario variables,
---  that the user can modify.
+--  This package groups a tre (that shows projects, directories, files, and
+--  entities in the files), and the display of the scenario variables that the
+--  user can modify.
 --  This widget also knows how to save its state to an Ada stream, and re-read
 --  a previously saved configuration.
 
 with Glide_Kernel;
-with Project_Trees;
 with Scenario_Views;
 with Vsearch_Ext;
+with Gtk.Ctree;
+with Gdk.Pixmap;
+with Gdk.Bitmap;
 
 with Gtk.Box;
 
@@ -40,23 +42,45 @@ package Project_Explorers is
      (Explorer : out Project_Explorer;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new explorer.
+   --  On each update, and since the list of withed projects can not changed,
+   --  the open/close status of all the project nodes is kept.
 
    procedure Initialize
      (Explorer : access Project_Explorer_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   function Get_Tree
-     (Explorer : access Project_Explorer_Record)
-      return Project_Trees.Project_Tree;
-   --  Return the directory/subproject tree displayed in the explorer.
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  You should connect to the "context_changed" signal in the kernel to get
+   --  report on selection changes.
+   --  </signals>
 
 private
-   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
-      Scenario : Scenario_Views.Scenario_View;
-      Tree     : Project_Trees.Project_Tree;
-      Search   : Vsearch_Ext.Vsearch_Extended;
-   end record;
+   type Node_Types is
+     (Project_Node,
+      Modified_Project_Node,
+      Directory_Node,
+      Obj_Directory_Node,
+      File_Node,
+      Category_Node,
+      Entity_Node);
+   --  The kind of nodes one might find in the tree
 
-   pragma Inline (Get_Tree);
+   type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
+   type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
+
+   type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
+      Scenario      : Scenario_Views.Scenario_View;
+      Tree          : Gtk.Ctree.Gtk_Ctree;
+      Search        : Vsearch_Ext.Vsearch_Extended;
+      Kernel        : Glide_Kernel.Kernel_Handle;
+      Open_Pixmaps  : Pixmap_Array;
+      Close_Pixmaps : Pixmap_Array;
+      Open_Masks    : Mask_Array;
+      Close_Masks   : Mask_Array;
+   end record;
 end Project_Explorers;
