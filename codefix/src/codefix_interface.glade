@@ -176,6 +176,7 @@
 	  <widget>
 	    <class>GtkButton</class>
 	    <name>Skip_Correction</name>
+	    <tooltip>Don't fix this error</tooltip>
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
 	    <signal>
@@ -191,6 +192,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Accept_Correction</name>
+	  <tooltip>Fix this error</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -205,6 +207,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Skip_All_Corrections</name>
+	  <tooltip>Don't fix any error of the same category than the current one</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -219,6 +222,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Accept_All_Corrections</name>
+	  <tooltip>Fix each error of the same category than the current one</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -233,6 +237,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Undo</name>
+	  <tooltip>Cancel previous changes</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -247,6 +252,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Refresh</name>
+	  <tooltip>Recalculate the fix with last user's changes</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -277,6 +283,7 @@
 	<widget>
 	  <class>GtkButton</class>
 	  <name>Cancel_Changes</name>
+	  <tooltip>Cancel all changes</tooltip>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
 	  <signal>
@@ -286,20 +293,6 @@
 	    <last_modification_time>Mon, 06 May 2002 15:44:55 GMT</last_modification_time>
 	  </signal>
 	  <stock_button>GNOME_STOCK_BUTTON_CANCEL</stock_button>
-	</widget>
-
-	<widget>
-	  <class>GtkButton</class>
-	  <name>Apply_Changes</name>
-	  <can_default>True</can_default>
-	  <can_focus>True</can_focus>
-	  <signal>
-	    <name>clicked</name>
-	    <handler>on_Apply_Changes_clicked</handler>
-	    <object>Codefix_Window</object>
-	    <last_modification_time>Mon, 06 May 2002 15:46:06 GMT</last_modification_time>
-	  </signal>
-	  <stock_button>GNOME_STOCK_BUTTON_CLOSE</stock_button>
 	</widget>
       </widget>
     </widget>
