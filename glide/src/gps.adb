@@ -94,6 +94,7 @@ with Help_Module;
 with Codefix_Module;
 with Python_Module;
 with KeyManager_Module;
+--  with Docgen_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -859,6 +860,7 @@ procedure GPS is
       Codefix_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
+      --  Docgen_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
@@ -887,8 +889,6 @@ procedure GPS is
            (GPS.Kernel, Tools & (-"Profile")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, Tools & (-"Generate API doc")), False);
       end;
 
       --  Print a welcome message in the console, but before parsing the error
