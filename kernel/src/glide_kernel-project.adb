@@ -271,6 +271,10 @@ package body Glide_Kernel.Project is
       if Is_Regular_File (Project) then
          Change_Dir (Dir_Name (Project));
 
+         --  When loading a new project, we need to reset the cache containing
+         --  LI information, otherwise this cache might contain dangling
+         --  references to projects that have been freed.
+         Reset_LI_File_List (Kernel);
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,
