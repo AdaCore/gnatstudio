@@ -22,9 +22,6 @@ distrib:
 	$(CP) ../../gvd/common/htables.ad? common
 	$(CP) ../../gvd/common/string_hash.ad? common
 	$(CP) ../../gvd/common/traces.ad? common
-	$(CP) ../../gtkada/src/glib-graphs.ad? gtkada
-	$(CP) ../../gtkada/src/gtkada.ads gtkada
-	$(CP) ../../gtkada/src/gtkada-intl.ad? gtkada
 	$(CP) ../../gvd/common/basic_types.ad? gvd
 	$(CP) ../../gvd/common/os_utils.ad? gvd
 	$(CP) ../../gvd/common/vfs.ad? gvd
