@@ -1192,7 +1192,9 @@ package body Project_Viewers is
       procedure Report_Error (S : String) is
       begin
          Console.Insert
-           (Kernel, S & ASCII.LF, Mode => Console.Error, Add_LF => False);
+           (Kernel, S & ASCII.LF,
+            Mode => Console.Error,
+            Add_LF => False);
       end Report_Error;
 
       --------------------------------

@@ -144,7 +144,6 @@ package body VCS.ClearCase is
       Close (File);
       Insert (Kernel,
               -"ClearCase: Got comparison for file " & Current_File,
-              Highlight_Sloc => False,
               Mode => Verbose);
 
       Display_Differences
@@ -186,9 +185,7 @@ package body VCS.ClearCase is
       while Node /= Null_Node loop
          Insert (Kernel,
                  "   " & Data (Node),
-                 False,
-                 True,
-                 Mode);
+                 Mode => Mode);
 
          Node := Next (Node);
       end loop;
@@ -349,15 +346,13 @@ package body VCS.ClearCase is
                Insert
                  (Kernel,
                   -"ClearCase error:",
-                  Highlight_Sloc => False,
                   Mode           => Error);
 
                while List_Temp /= Null_Node loop
                   Insert
                     (Kernel,
                      "    " & Data (List_Temp),
-                     Highlight_Sloc => False,
-                     Mode           => Error);
+                     Mode => Error);
 
                   List_Temp := Next (List_Temp);
                end loop;
@@ -471,8 +466,7 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"Clearcase: Checking out element: "
-                      & File & " ...",
-                    False, True, Info);
+                      & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
@@ -566,8 +560,7 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"Clearcase: Checking-in element: "
-                      & File & " ...",
-                    False, True, Info);
+                      & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
@@ -646,8 +639,7 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"Clearcase: updating "
-                      & File & " ...",
-                    False, True, Info);
+                      & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
@@ -810,8 +802,7 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"Clearcase: Adding element: "
-                      & File & " ...",
-                    False, True, Info);
+                      & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
@@ -972,8 +963,7 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"Clearcase: Removing element: "
-                      & File & " ...",
-                    False, True, Info);
+                      & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
@@ -1146,8 +1136,7 @@ package body VCS.ClearCase is
    begin
       Insert (Kernel,
               -"Clearcase: getting differences for "
-                & File & " ...",
-              False, True, Info);
+                & File & " ...", Mode => Info);
 
       --  Create the end of the message.
 

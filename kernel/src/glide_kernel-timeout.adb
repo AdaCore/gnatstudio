@@ -145,16 +145,15 @@ package body Glide_Kernel.Timeout is
             return;
          end if;
 
-         Console.Insert (Kernel, Command, False, Add_LF => False);
+         Console.Insert (Kernel, Command, Add_LF => False);
 
          for J in Arguments'Range loop
-            Console.Insert
-              (Kernel, ' ' & Arguments (J).all, False, Add_LF => False);
+            Console.Insert (Kernel, ' ' & Arguments (J).all, Add_LF => False);
          end loop;
 
          --  Add end of line after last argument
 
-         Console.Insert (Kernel, "", False);
+         Console.Insert (Kernel, "");
 
          Fd := new TTY_Process_Descriptor;
          Non_Blocking_Spawn (Fd.all, Exec.all, Arguments, Err_To_Out => True);
@@ -164,7 +163,7 @@ package body Glide_Kernel.Timeout is
       exception
          when Invalid_Process =>
             Success := False;
-            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", Mode => Error);
       end Spawn;
 
    begin

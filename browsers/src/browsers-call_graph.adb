@@ -1006,10 +1006,8 @@ package body Browsers.Call_Graph is
       Name     : String;
       Category : String) is
    begin
-      Console.Insert
-        (Kernel,
-         File & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name,
-         Location_Id => Category);
+      Console.Insert_Result
+        (Kernel, Category, File, Name, Line, Column, Name'Length);
    end Print_Ref;
 
    -------------------------

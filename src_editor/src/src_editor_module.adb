@@ -1165,7 +1165,7 @@ package body Src_Editor_Module is
       else
          Console.Insert
            (Kernel, (-"Cannot open file ") & "'" & File & "'",
-            Highlight_Sloc => False,
+            Add_LF         => True,
             Mode           => Error);
       end if;
 
@@ -1780,7 +1780,8 @@ package body Src_Editor_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot pretty print", Mode => Error);
+           (Kernel, -"No file selected, cannot pretty print",
+            Mode => Error);
          return;
       end if;
 
@@ -1800,7 +1801,8 @@ package body Src_Editor_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot pretty print", Mode => Error);
+              (Kernel, -"No file name, cannot pretty print",
+               Mode => Error);
             return;
          end if;
 

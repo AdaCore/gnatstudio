@@ -320,8 +320,7 @@ package body Src_Editor_Box is
       if Get_Filename (Editor) = "" then
          Console.Insert
            (Kernel, -"Cross-references not possible on unamed files",
-            Mode           => Error,
-            Highlight_Sloc => False);
+            Mode           => Error);
          return;
       end if;
 
@@ -342,8 +341,7 @@ package body Src_Editor_Box is
             & Get_Filename (Editor) & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
-            Mode           => Error,
-            Highlight_Sloc => False);
+            Mode           => Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
@@ -376,16 +374,14 @@ package body Src_Editor_Box is
             Console.Insert
               (Kernel, -"Cross-reference failed for "
                  & Entity_Name_Information (Context),
-               Mode           => Error,
-               Highlight_Sloc => False);
+               Mode           => Error);
             Pop_State (Kernel_Handle (Kernel));
             return;
 
          when Internal_Error =>
             Console.Insert
               (Kernel, -"Cross-reference internal error detected",
-               Mode           => Error,
-               Highlight_Sloc => False);
+               Mode           => Error);
             Pop_State (Kernel_Handle (Kernel));
             return;
 
@@ -393,13 +389,11 @@ package body Src_Editor_Box is
             if To_Body then
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated body",
-                  Highlight_Sloc => False);
+                  -"This entity does not have an associated body");
             else
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated declaration",
-                  Highlight_Sloc => False);
+                  -"This entity does not have an associated declaration");
             end if;
 
             Pop_State (Kernel_Handle (Kernel));

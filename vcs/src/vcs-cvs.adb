@@ -148,12 +148,11 @@ package body VCS.CVS is
    begin
       if L_Temp /= Null_Node then
          Insert
-           (Kernel, -"CVS output:", Highlight_Sloc => False, Mode => Info);
+           (Kernel, -"CVS output:", Mode => Info);
 
          while H_Temp /= Null_Node loop
             Insert (Kernel,
                     Data (H_Temp),
-                    Highlight_Sloc => False,
                     Mode => Verbose);
             H_Temp := Next (H_Temp);
          end loop;
@@ -161,7 +160,6 @@ package body VCS.CVS is
          while L_Temp /= Null_Node loop
             Insert (Kernel,
                     Data (L_Temp),
-                    Highlight_Sloc => False,
                     Mode => Info,
                     Add_LF => False);
             L_Temp := Next (L_Temp);
@@ -429,7 +427,6 @@ package body VCS.CVS is
       if not File_Status_List.Is_Empty (Result) then
          Insert (Kernel,
                  -"CVS: Status obtained for files in " & New_Dir,
-                 Highlight_Sloc => False,
                  Mode => Verbose);
       end if;
 
@@ -469,7 +466,6 @@ package body VCS.CVS is
       Insert (Rep.Kernel,
               -"CVS: Querying status for files in "
               & Dir_Name (Data (Files)),
-              Highlight_Sloc => False,
               Mode => Verbose);
 
       if Data (Files) = Dir_Name (Data (Files)) then
@@ -918,7 +914,6 @@ package body VCS.CVS is
       Close (File);
       Insert (Kernel,
               -"CVS: Got comparison for file " & Current_File,
-              Highlight_Sloc => False,
               Mode => Verbose);
 
       Display_Differences
@@ -967,7 +962,6 @@ package body VCS.CVS is
 
       Insert (Rep.Kernel,
               -"CVS: Getting comparison for file " & File & "...",
-              Highlight_Sloc => False,
               Mode => Verbose);
 
       Create (C,
@@ -1014,7 +1008,6 @@ package body VCS.CVS is
            (Kernel,
             -"CVS: No annotations available for file "
             & Current_File,
-            Highlight_Sloc => False,
             Mode => Verbose);
          return False;
       end if;

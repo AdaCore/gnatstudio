@@ -739,8 +739,7 @@ package body VCS_View_Pkg is
       M_Type   : Message_Type;
       Message  : String) is
    begin
-      Console.Insert
-        (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
+      Console.Insert (Kernel, Message, Mode => M_Type);
    end Push_Message;
 
    ----------------------
