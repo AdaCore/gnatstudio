@@ -44,7 +44,6 @@
 --  hierarchy (imported projects, modified projects,...) can not change when
 --  the view changes.
 
-with Basic_Types;
 with Prj;
 with Prj_API;
 with Prj.Tree;
@@ -109,14 +108,6 @@ package Glide_Kernel.Project is
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
-
-   function Get_Source_Files
-     (Handle : access Kernel_Handle_Record'Class)
-      return Basic_Types.String_Array_Access;
-   --  Return the list of source files belonging to the project described in
-   --  Handle. Only the direct sources of the project are currently returned,
-   --  i.e. not those found in subprojects.
-   --  It is the caller's responsability to free the list.
 
    function Scenario_Variables_Cmd_Line
      (Handle : access Kernel_Handle_Record'Class)
