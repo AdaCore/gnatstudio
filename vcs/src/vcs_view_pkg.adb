@@ -62,26 +62,21 @@ with VCS_View_Pixmaps; use VCS_View_Pixmaps;
 
 with Glide_Intl; use Glide_Intl;
 
-with Unchecked_Deallocation;
-
 package body VCS_View_Pkg is
 
    ------------------
    --  Local types --
    ------------------
 
-   type Explorer_And_Path_Record is new Gtk_Widget_Record with record
+   type Explorer_And_Log is record
       Explorer   : VCS_View_Access;
       Log_Editor : Log_Editor_Window_Access;
-      Paths      : VCS.String_List.List;
    end record;
-   type Explorer_And_Path is access all Explorer_And_Path_Record;
    --  This type is a convenience type used to pass parameters to some
    --  callbacks.
 
-   procedure Free is new Unchecked_Deallocation
-     (Explorer_And_Path_Record, Explorer_And_Path);
-   --  Free memory associated with an Explorer_And_Path object.
+   package Explorer_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Explorer_And_Log);
 
    type Iter_Action is access
      procedure (Explorer : access VCS_View_Record'Class;
@@ -97,6 +92,10 @@ package body VCS_View_Pkg is
 
    package Selection_Callback is
       new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
+
+   package Explorer_Selection_Foreach is
+      new Selection_Foreach (VCS_View_Access);
+   use Explorer_Selection_Foreach;
 
    use VCS.String_List;
 
@@ -114,14 +113,14 @@ package body VCS_View_Pkg is
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
 
-   Selected_Column           : constant := 0;
-   Name_Column               : constant := 1;
-   Local_Rev_Column          : constant := 2;
-   Rep_Rev_Column            : constant := 3;
-   Status_Description_Column : constant := 4;
-   Status_Pixbuf_Column      : constant := 5;
-   Log_Column                : constant := 6;
-   Log_Editor_Column         : constant := 7;
+   Name_Column               : constant := 0;
+   Local_Rev_Column          : constant := 1;
+   Rep_Rev_Column            : constant := 2;
+   Status_Description_Column : constant := 3;
+   Status_Pixbuf_Column      : constant := 4;
+   Log_Column                : constant := 5;
+   Log_Editor_Column         : constant := 6;
+   Log_Editable_Column       : constant := 7;
 
    -------------------
    -- Columns_Types --
@@ -130,14 +129,14 @@ package body VCS_View_Pkg is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Selected_Column           => GType_Boolean,
-         Name_Column               => GType_String,
+        (Name_Column               => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
          Log_Column                => GType_String,
-         Log_Editor_Column         => GType_Object);
+         Log_Editor_Column         => GType_Object,
+         Log_Editable_Column       => GType_Boolean);
       --  The Log_Editor_Column should contain a procedure which returns the
       --  log string given a filename.
       --  ??? This is a bit dirty, we are passing a GObject to the underlying C
@@ -197,7 +196,8 @@ package body VCS_View_Pkg is
       Explorer : Gtk_Widget);
    --  Handle the error message output by VCS operations.
 
-   procedure Display_String_List
+   procedure
+     Display_String_List
      (Explorer : access VCS_View_Record'Class;
       List     : VCS.String_List.List;
       M_Type   : Message_Type);
@@ -225,9 +225,6 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record'Class;
       Action   : Iter_Action);
    --  Run the Action for each of the selected file.
-
-   procedure Select_All_Toggled (Explorer : VCS_View_Access);
-   --  Selects all items that are checked.
 
    function Get_Iter_From_Name
      (Explorer : access VCS_View_Record'Class;
@@ -303,22 +300,12 @@ package body VCS_View_Pkg is
 
    procedure Log_Editor_Text_Changed
      (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
+      Parameter   : Explorer_And_Log);
    --  ???
 
    procedure Log_Editor_Ok_Clicked
      (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
-   --  ???
-
-   procedure Toggled_Callback
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
-   --  ???
-
-   procedure Selection_Column_Clicked
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
+      Parameter   : Explorer_And_Log);
    --  ???
 
    procedure Edited_Callback
@@ -388,7 +375,6 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set (Explorer.Model, Iter, Selected_Column, Selected);
       Set (Explorer.Model, Iter, Name_Column,
            Base_Name (Head (Status_Record.File_Name)));
 
@@ -432,7 +418,9 @@ package body VCS_View_Pkg is
 
       Set (Explorer.Model, Iter, Status_Description_Column,
            File_Status'Image (Status_Record.Status));
+      Set (Explorer.Model, Iter, Log_Column, "");
       Set (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
+      Set (Explorer.Model, Iter, Log_Editable_Column, True);
    end Fill_Info;
 
    ------------------------
@@ -464,19 +452,27 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record'Class;
       Action   : Iter_Action)
    is
-      Iter : Gtk_Tree_Iter := Get_Iter_Root (Explorer.Model);
-      Toggled : Boolean;
+      procedure On_Selected_Item
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : VCS_View_Access);
+      --  Launch the Action for one item.
+
+      procedure On_Selected_Item
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : VCS_View_Access)
+      is
+      begin
+         Action (Explorer, Iter);
+      end On_Selected_Item;
 
    begin
-      while Iter /= Null_Iter loop
-         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
-
-         if Toggled then
-            Action (Explorer, Iter);
-         end if;
-
-         Next (Explorer.Model, Iter);
-      end loop;
+      Selected_Foreach (Get_Selection (Explorer.Tree),
+                        On_Selected_Item'Unrestricted_Access,
+                        VCS_View_Access (Explorer));
    end Foreach_Selected_File;
 
    ------------------------
@@ -486,30 +482,30 @@ package body VCS_View_Pkg is
    function Get_Selected_Files
      (Explorer : access VCS_View_Record'Class) return VCS.String_List.List
    is
-      Iter    : Gtk_Tree_Iter;
-      Toggled : Boolean;
       Result  : List;
 
+      procedure Add_Selected_Item
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : VCS_View_Access);
+      --  Add an item to Result.
+
+      procedure Add_Selected_Item
+        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Data  : VCS_View_Access)
+      is
+      begin
+         Append (Result, Explorer.Current_Directory.all
+                 & Get_String (Explorer.Model, Iter, Name_Column));
+      end Add_Selected_Item;
+
    begin
-      if Explorer.Current_Directory = null then
-         return Result;
-      end if;
-
-      Iter := Get_Iter_Root (Explorer.Model);
-
-      while Iter /= Null_Iter loop
-         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
-
-         if Toggled then
-            Append
-              (Result,
-               Explorer.Current_Directory.all
-               & Get_String (Explorer.Model, Iter, Name_Column));
-         end if;
-
-         Next (Explorer.Model, Iter);
-      end loop;
-
+      Selected_Foreach (Get_Selection (Explorer.Tree),
+                        Add_Selected_Item'Unrestricted_Access,
+                        VCS_View_Access (Explorer));
       return Result;
    end Get_Selected_Files;
 
@@ -588,18 +584,21 @@ package body VCS_View_Pkg is
 
    procedure Log_Editor_Text_Changed
      (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues)
+      Parameter   : Explorer_And_Log)
    is
-      Parameter : Explorer_And_Path := Explorer_And_Path (Object);
-      Temp_Path : List := Parameter.Paths;
+      Temp_Path : List := Parameter.Log_Editor.Files;
       Iter      : Gtk_Tree_Iter;
-
    begin
       while not Is_Empty (Temp_Path) loop
-         Iter := Get_Iter_From_String
-           (Parameter.Explorer.Model, Head (Temp_Path));
-         Set (Parameter.Explorer.Model, Iter, Log_Column,
-              Get_Text (Parameter.Log_Editor));
+         Iter := Get_Iter_From_Name
+           (Parameter.Explorer,
+            Head (Temp_Path));
+
+         if Iter /= Null_Iter then
+            Set (Parameter.Explorer.Model, Iter, Log_Column,
+                 Get_Text (Parameter.Log_Editor));
+         end if;
+
          Temp_Path := Next (Temp_Path);
       end loop;
    end Log_Editor_Text_Changed;
@@ -610,29 +609,32 @@ package body VCS_View_Pkg is
 
    procedure Log_Editor_Ok_Clicked
      (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues)
+      Parameter   : Explorer_And_Log)
    is
-      Parameter : Explorer_And_Path := Explorer_And_Path (Object);
-      Value     : GValue;
-      Iter      : Gtk_Tree_Iter;
+      Value      : GValue;
+      Iter       : Gtk_Tree_Iter;
+      Temp_Paths : List := Parameter.Log_Editor.Files;
 
    begin
       Init (Value, GType_String);
 
-      while not Is_Empty (Parameter.Paths) loop
-         Iter := Get_Iter_From_String
-           (Parameter.Explorer.Model, Head (Parameter.Paths));
-         Set
-           (Parameter.Explorer.Model,
-            Iter,
-            Log_Editor_Column,
-            System.Null_Address);
+      while not Is_Empty (Temp_Paths) loop
+         Iter := Get_Iter_From_Name
+           (Parameter.Explorer,
+            Head (Temp_Paths));
 
-         Tail (Parameter.Paths);
+         if Iter /= Null_Iter then
+            Set
+              (Parameter.Explorer.Model,
+               Iter,
+               Log_Editor_Column,
+               System.Null_Address);
+         end if;
+
+         Temp_Paths := Next (Temp_Paths);
       end loop;
 
-      --  Free object.
-      Destroy (Parameter.Log_Editor);
+      Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
 
    --------------------------------
@@ -657,7 +659,7 @@ package body VCS_View_Pkg is
          Iter     : Gtk_Tree_Iter)
       is
          Stored_Object    : GObject;
-         Parameter_Object : Explorer_And_Path;
+         Parameter_Object : Explorer_And_Log;
          Log_Editor       : Log_Editor_Window_Access;
 
       begin
@@ -668,12 +670,10 @@ package body VCS_View_Pkg is
 
          if Stored_Object = null then
             Gtk_New (Log_Editor);
-            Parameter_Object := new Explorer_And_Path_Record;
+            --  Parameter_Object := new Explorer_And_Log_Record;
 
             Parameter_Object.Explorer := VCS_View_Access (Explorer);
             Parameter_Object.Log_Editor := Log_Editor;
-            Append (Parameter_Object.Paths,
-                    To_String (Get_Path (Explorer.Model, Iter)));
 
             Set_Title (Log_Editor,
                        -"Log editor for "
@@ -690,23 +690,24 @@ package body VCS_View_Pkg is
             Set_Text (Log_Editor,
                       Get_String (Explorer.Model, Iter, Log_Column));
 
-            Widget_Callback.Object_Connect
+            Explorer_Callback.Connect
               (Log_Editor.Ok_Button,
                "clicked",
-               Log_Editor_Ok_Clicked'Access,
+               Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
                Parameter_Object);
 
-            Widget_Callback.Object_Connect
+            Explorer_Callback.Connect
               (Log_Editor.Log_Text,
                "insert_text",
-               Log_Editor_Text_Changed'Access,
+               Explorer_Callback.To_Marshaller
+                (Log_Editor_Text_Changed'Access),
                Parameter_Object,
                After => True);
 
-            Widget_Callback.Object_Connect
+            Explorer_Callback.Connect
               (Log_Editor.Log_Text,
                "destroy",
-               Log_Editor_Ok_Clicked'Access,
+               Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
                Parameter_Object);
 
             if Explorer.Kernel = null then
@@ -746,11 +747,11 @@ package body VCS_View_Pkg is
       Explorer          : constant VCS_View_Access := VCS_View_Access (Object);
       Stub              : Log_Editor_Window_Record;
       Log_Editor        : Log_Editor_Window_Access;
-      Parameter_Object  : Explorer_And_Path;
+      Parameter_Object  : Explorer_And_Log;
       No_Files_Selected : Boolean := True;
 
       procedure Clear_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
+        (View     : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter);
       --  Removes any log_editor attached to the given row.
 
@@ -761,7 +762,7 @@ package body VCS_View_Pkg is
       --  log_editor.
 
       procedure Clear_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
+        (View     : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter)
       is
          Stored_Object : GObject;
@@ -774,9 +775,8 @@ package body VCS_View_Pkg is
          if Stored_Object /= null then
             Log_Editor := Log_Editor_Window_Access
               (Get_User_Data (Stored_Object.all'Address, Stub));
-            Destroy (Log_Editor);
-            Set
-              (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
+
+            Log_Editor_Ok_Clicked (Object, (Explorer, Log_Editor));
          end if;
       end Clear_Launch_Log_Editor;
 
@@ -784,10 +784,6 @@ package body VCS_View_Pkg is
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter) is
       begin
-         Append
-           (Parameter_Object.Paths,
-            To_String (Get_Path (Explorer.Model, Iter)));
-
          Add_File_Name
            (Log_Editor, Get_String (Explorer.Model, Iter, Name_Column));
 
@@ -817,7 +813,6 @@ package body VCS_View_Pkg is
       Set_Title (Log_Editor, -"Multiple log editor");
       Set_Text (Log_Editor, "");
 
-      Parameter_Object := new Explorer_And_Path_Record;
       Parameter_Object.Explorer := Explorer;
       Parameter_Object.Log_Editor := Log_Editor;
 
@@ -825,16 +820,16 @@ package body VCS_View_Pkg is
       Foreach_Selected_File
         (Explorer, Fill_Launch_Log_Editor'Unrestricted_Access);
 
-      Widget_Callback.Object_Connect
+      Explorer_Callback.Connect
         (Log_Editor.Ok_Button,
          "clicked",
-         Log_Editor_Ok_Clicked'Access,
+         Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
          Parameter_Object);
 
-      Widget_Callback.Object_Connect
+      Explorer_Callback.Connect
         (Log_Editor.Log_Text,
          "insert_text",
-         Log_Editor_Text_Changed'Access,
+         Explorer_Callback.To_Marshaller (Log_Editor_Text_Changed'Access),
          Parameter_Object,
          After => True);
 
@@ -1281,30 +1276,6 @@ package body VCS_View_Pkg is
       Refresh_Files (Explorer, False);
    end Show_Files;
 
-   ------------------------
-   -- Select_All_Toggled --
-   ------------------------
-
-   procedure Select_All_Toggled (Explorer : VCS_View_Access) is
-      Iter      : Gtk_Tree_Iter := Get_Iter_Root (Explorer.Model);
-      Toggled   : Boolean;
-      Selection : Gtk_Tree_Selection := Get_Selection (Explorer.Tree);
-
-   begin
-      Explorer.Model_Sync := True;
-      Unselect_All (Selection);
-
-      while Iter /= Null_Iter loop
-         Toggled := Boolean_Get (Explorer.Model, Iter, Selected_Column);
-
-         if Toggled then
-            Select_Iter (Selection, Iter);
-         end if;
-
-         Next (Explorer.Model, Iter);
-      end loop;
-   end Select_All_Toggled;
-
    ---------------------
    -- Edited_Callback --
    ---------------------
@@ -1324,7 +1295,11 @@ package body VCS_View_Pkg is
 
    begin
       Iter := Get_Iter_From_String (Explorer.Model, Path_String);
-      --  Success := Boolean_Get (Explorer.Model, Iter, Selected_Column);
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
       Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
 
       Stored_Object := GObject_Get (Explorer.Model, Iter, Log_Editor_Column);
@@ -1335,47 +1310,6 @@ package body VCS_View_Pkg is
          Set_Text (Log_Editor, Text_String);
       end if;
    end Edited_Callback;
-
-   ----------------------
-   -- Toggled_Callback --
-   ----------------------
-
-   procedure Toggled_Callback
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues)
-   is
-      Explorer    : constant VCS_View_Access := VCS_View_Access (Object);
-      Iter        : Gtk_Tree_Iter;
-      Path_String : String := Get_String (Nth (Params, 1));
-      Success     : Boolean;
-
-   begin
-      Iter := Get_Iter_From_String (Explorer.Model, Path_String);
-      Success := Boolean_Get (Explorer.Model, Iter, Selected_Column);
-      Set (Explorer.Model, Iter, Selected_Column, not Success);
-      Explorer.All_Selected := False;
-   end Toggled_Callback;
-
-   ------------------------------
-   -- Selection_Column_Clicked --
-   ------------------------------
-
-   procedure Selection_Column_Clicked
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues)
-   is
-      Explorer   : constant VCS_View_Access := VCS_View_Access (Object);
-      Iter       : Gtk_Tree_Iter := Get_Iter_Root (Explorer.Model);
-
-   begin
-      while Iter /= Null_Iter loop
-         Set (Explorer.Model, Iter, Selected_Column,
-              not Explorer.All_Selected);
-         Next (Explorer.Model, Iter);
-      end loop;
-
-      Explorer.All_Selected := not Explorer.All_Selected;
-   end Selection_Column_Clicked;
 
    ----------------------
    -- Set_Column_Types --
@@ -1396,26 +1330,6 @@ package body VCS_View_Pkg is
       Gtk_New (Pixbuf_Rend);
 
       Set_Rules_Hint (Explorer.Tree, True);
-
-      Gtk_New (Col);
-      Set_Title (Col, "");
-      Pack_Start (Col, Toggle_Rend, True);
-      Add_Attribute (Col, Toggle_Rend, "active", Selected_Column);
-      Set_Clickable (Col, True);
-
-      Widget_Callback.Object_Connect
-        (Col,
-         "clicked",
-         Selection_Column_Clicked'Access,
-         Gtk_Widget (Explorer));
-
-      Dummy := Append_Column (Explorer.Tree, Col);
-
-      Widget_Callback.Object_Connect
-        (Toggle_Rend,
-         "toggled",
-         Toggled_Callback'Access,
-         Gtk_Widget (Explorer));
 
       Gtk_New (Col);
       Set_Title (Col, -"Local file name");
@@ -1441,7 +1355,8 @@ package body VCS_View_Pkg is
       Set_Title (Col, -"Log");
       Pack_Start (Col, Editable_Rend, True);
       Add_Attribute (Col, Editable_Rend, "text", Log_Column);
-      Add_Attribute (Col, Editable_Rend, "editable", Selected_Column);
+      Add_Attribute (Col, Editable_Rend, "editable", Log_Editable_Column);
+
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Widget_Callback.Object_Connect
