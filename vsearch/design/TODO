@@ -54,8 +54,6 @@
 
 8 * [Yeti] Caching Language_Context
 
-9 * [Yeti] Use Boyer-Moore algorithm instead of Index
-
 8 * [Yeti] When Whole_Word without Regexp, search for literal text and then
     verify it's a whole one
 
