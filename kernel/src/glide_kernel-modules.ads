@@ -91,6 +91,7 @@
 --      - Adding new user-modifiable preferences (see glide_preferences.ads)
 --      - Adding new supported languages (see language_handlers-glide.ads)
 --        and the corresponding cross-referencing subprograms (same file)
+--      - Each module can register new commands for the shell interpreter
 --
 --   All these changes can be done locally in the module, and do not need any
 --   modification to the rest of GPS itself (apart from registering the module
