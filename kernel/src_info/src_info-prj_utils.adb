@@ -23,6 +23,7 @@ with Namet;                   use Namet;
 with Types;                   use Types;
 with Projects;                use Projects;
 with VFS;                     use VFS;
+with Glib.Convert;            use Glib.Convert;
 
 package body Src_Info.Prj_Utils is
 
@@ -35,7 +36,7 @@ package body Src_Info.Prj_Utils is
       Project : Project_Type;
       File_Must_Exist : Boolean := True) return VFS.Virtual_File
    is
-      N : constant String := Get_String (Unit_Name);
+      N : constant String := Locale_To_UTF8 (Get_String (Unit_Name));
       --  Need to do a copy, since Name_Buffer is modified afterward
    begin
       return Get_Source_Filename (N, Project, File_Must_Exist);
