@@ -22,6 +22,7 @@ with Glib;
 with Gdk.Bitmap;
 with Gdk.Color;
 with Gdk.Pixmap;
+with Gdk.Rectangle;
 with Gtk.Main;
 with Gtk.Menu;
 with Gtk.Widget;
@@ -159,7 +160,8 @@ private
      (Widget : access Gtk.Text.Gtk_Text_Record'Class;
       Data   : in out Editor_Tooltip_Data;
       Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width, Height : out Glib.Gint);
+      Width, Height : out Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle);
 
    package Editor_Tooltips is new Odd.Tooltips
      (Editor_Tooltip_Data, Gtk.Text.Gtk_Text_Record, Draw_Tooltip);

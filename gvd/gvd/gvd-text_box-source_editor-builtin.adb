@@ -27,6 +27,7 @@ with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 with Gdk.Font;              use Gdk.Font;
 with Gdk.Window;            use Gdk.Window;
+with Gdk.Rectangle;         use Gdk.Rectangle;
 with Gtk.Adjustment;        use Gtk.Adjustment;
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
 with Gtk.Enums;             use Gtk.Enums;
@@ -1182,10 +1183,11 @@ package body Odd.Source_Editors is
    ------------------
 
    procedure Draw_Tooltip
-     (Widget : access Gtk_Text_Record'Class;
-      Data : in out Editor_Tooltip_Data;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width, Height : out Glib.Gint)
+     (Widget        : access Gtk_Text_Record'Class;
+      Data          : in out Editor_Tooltip_Data;
+      Pixmap        : out Gdk.Pixmap.Gdk_Pixmap;
+      Width, Height : out Glib.Gint;
+      Area          : out Gdk_Rectangle)
    is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
@@ -1224,20 +1226,22 @@ package body Odd.Source_Editors is
       Get_Pointer (Get_Text_Area (Get_Child (Data.Box)), X, Y, Mask2, Win);
 
       declare
-         Variable_Name : constant String := Get_Entity (Data.Box, X, Y);
+         Variable_Name : Odd.Types.String_Access;
       begin
 
-         if Variable_Name = "" then
+         Get_Entity_Area (Data.Box, X, Y, Area, Variable_Name);
+
+         if Variable_Name = null then
             return;
          end if;
 
          if Tooltips_In_Source = Full then
-            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+            Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
             if Entity = null then
                return;
             else
                Parse_Value
-                 (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+                 (Debugger.Debugger, Variable_Name.all, Entity, Value_Found);
             end if;
 
             if Value_Found then
@@ -1254,10 +1258,10 @@ package body Odd.Source_Editors is
 
          else
             if Can_Tooltip_On_Entity
-              (Get_Language (Debugger.Debugger), Variable_Name)
+              (Get_Language (Debugger.Debugger), Variable_Name.all)
             then
                Value :=
-                 new String'(Value_Of (Debugger.Debugger, Variable_Name));
+                 new String'(Value_Of (Debugger.Debugger, Variable_Name.all));
                if Value.all = "" then
                   Free (Value);
                   return;
@@ -1284,6 +1288,8 @@ package body Odd.Source_Editors is
                  (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
             end if;
          end if;
+
+         Free (Variable_Name);
       end;
 
       if Width /= 0 and then Height /= 0 then
