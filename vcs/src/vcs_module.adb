@@ -412,24 +412,24 @@ package body VCS_Module is
 
       Gtk_New (Menu_Item, -"Revert");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (Revert'Access),
+         Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Add to repository");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (Add'Access),
+         Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Remove from repository");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
---       Kernel_Callback.Connect
---         (Menu_Item, "activate",
---          Kernel_Callback.To_Marshaller (Update_Files_In_Current_Dir'Access),
---          Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Menu_Item, "activate",
+         Kernel_Callback.To_Marshaller (Remove'Access),
+         Kernel_Handle (Kernel));
    end Initialize_Module;
 
    ---------------------
