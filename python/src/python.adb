@@ -162,6 +162,17 @@ package body Python is
         (Arg, Format & ASCII.NUL, Value1, Value2, Value3, Value4, Value5) = 1;
    end PyArg_ParseTuple;
 
+   ----------------------
+   -- PyFunction_Check --
+   ----------------------
+
+   function PyFunction_Check (Func : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pyfunction_check");
+   begin
+      return Internal (Func) = 1;
+   end PyFunction_Check;
+
    --------------------
    -- PyString_Check --
    --------------------
