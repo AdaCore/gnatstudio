@@ -330,7 +330,7 @@ package body Commands.Editor is
          Gint (Command.Start_Column));
 
       if Command.End_Line_After = -1 then
-         Forward_Chars (Iter, Command.Text_After.all'Length, Result);
+         Forward_Chars (Iter, Command.Text_After'Length, Result);
          Command.End_Line_After := Integer (Get_Line (Iter));
          Command.End_Column_After := Integer (Get_Line_Offset (Iter));
       end if;
