@@ -236,4 +236,34 @@ package body VCS is
       return Result;
    end Get_Identified_Actions;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out File_Status) is
+   begin
+      Free (X.Label);
+      Free (X.Stock_Id);
+   end Free;
+
+   ---------------------------
+   -- Get_Registered_Status --
+   ---------------------------
+
+   function Get_Registered_Status
+     (Rep : access VCS_Record) return Status_Array
+   is
+      pragma Unreferenced (Rep);
+   begin
+      return
+        (1 => Unknown,
+         2 => Up_To_Date,
+         3 => Modified,
+         4 => Added,
+         5 => Removed,
+         6 => Needs_Merge,
+         7 => Needs_Update,
+         8 => Not_Registered);
+   end Get_Registered_Status;
+
 end VCS;
