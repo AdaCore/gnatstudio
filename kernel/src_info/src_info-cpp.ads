@@ -72,13 +72,13 @@ package Src_Info.CPP is
 
    type Iterator_State_Type is
      (Start,         -- starting state
+      Analyse_Files, -- searching files to be updated
       Process_Files, -- processing one file from list of source files
       Process_Xrefs, -- processing xrefs for all files
       Done);         -- updating done
 
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
       State           : Iterator_State_Type := Start;
-      Process_All     : Boolean := False;
       Root_Project    : Prj.Project_Id;
       Project         : Prj.Project_Id;
       SN_Dir          : SN.String_Access;

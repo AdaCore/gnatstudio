@@ -344,19 +344,32 @@ package body Src_Info.CPP is
       case Iterator.State is
 
          when Start
+            | Analyse_Files
             | Process_Files =>
             loop
+               if Iterator.State /= Start then
+                  Next_Source_File (Iterator);
+               else
+                  Iterator.State := Analyse_Files;
+               end if;
                declare
                   Next_File : String := Current_Source_File (Iterator);
                begin
                   if Next_File = "" then
-                     --  all files processed, start generating of xrefs
-                     Iterator.State := Process_Xrefs;
-                     Browse.Generate_Xrefs
-                       (Iterator.SN_Dir.all,
-                        Iterator.Tmp_Filename,
-                        Iterator.PD);
-                     return;
+                     if Iterator.State = Process_Files then
+                        --  all files processed, start generating of xrefs
+                        Iterator.State := Process_Xrefs;
+                        Browse.Generate_Xrefs
+                          (Iterator.SN_Dir.all,
+                           Iterator.Tmp_Filename,
+                           Iterator.PD);
+                        return;
+                     else
+                        --  nothing to update
+                        Iterator.State := Done;
+                        Finished := True;
+                        return;
+                     end if;
                   else
                      --  Start processing next file
                      --  File needs to be processing if:
@@ -375,8 +388,6 @@ package body Src_Info.CPP is
                            Iterator.PD);
                         Set_Valid (Next_File, True, Iterator.Xrefs);
                         return;
-                     else
-                        Next_Source_File (Iterator);
                      end if;
                   end if;
                end;
