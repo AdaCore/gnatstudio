@@ -87,6 +87,13 @@ package body GVD.Files is
       Error_Msg := null;
       Contents  := null;
 
+      --  No need to do anything when File_Name is null.
+
+      if Cache.File_Name.all = "" then
+         Error_Msg := new String'(-"No file to edit");
+         return;
+      end if;
+
       --  Do we already know the file contents ?
 
       if Cache.File_Contents /= null then
@@ -160,7 +167,6 @@ package body GVD.Files is
             delay 0.1;
          end loop;
       end if;
-
 
       if F /= Invalid_FD then
          Length := Positive (File_Length (F));
