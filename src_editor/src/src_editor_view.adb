@@ -116,7 +116,7 @@ package body Src_Editor_View is
       Event  : Gdk_Event) return Boolean;
    --  Callback for the "key_press_event" signal.
 
-   procedure Map_Cb (View : access Gtk_Widget_Record'Class);
+   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
    --  It performs various operations that can not be done before the widget
    --  is mapped, such as creating GCs associated to the left border window
@@ -231,11 +231,11 @@ package body Src_Editor_View is
    --------------------------
 
    procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Insert_Iter : Gtk_Text_Iter;
    begin
-      Get_Cursor_Position
-        (Source_Buffer (Get_Buffer (View)),
-         View.Saved_Cursor_Line,
-         View.Saved_Cursor_Column);
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
    end Save_Cursor_Position;
 
    -----------------------------
@@ -243,12 +243,15 @@ package body Src_Editor_View is
    -----------------------------
 
    procedure Restore_Cursor_Position
-     (View : access Source_View_Record'Class) is
+     (View : access Source_View_Record'Class)
+   is
+      Insert_Iter : Gtk_Text_Iter;
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      Set_Cursor_Position
-        (Source_Buffer (Get_Buffer (View)),
-         View.Saved_Cursor_Line,
-         View.Saved_Cursor_Column);
+      Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
+
+      --  ??? Do we want to save/restore the selection bound as well ?
+      Place_Cursor (Buffer, Insert_Iter);
    end Restore_Cursor_Position;
 
    ------------
@@ -260,6 +263,9 @@ package body Src_Editor_View is
       Unref (View.Side_Column_GC);
       Unref (View.Side_Background_GC);
       Unref (View.Default_GC);
+      Unref (View.Current_Line_GC);
+
+      Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
       if View.Connect_Expose_Id /= 0 then
          Idle_Remove (View.Connect_Expose_Id);
@@ -327,9 +333,8 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      Save_Cursor_Position (User);
-
       if User.Has_Focus then
+         Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User);
       end if;
 
@@ -448,16 +453,43 @@ package body Src_Editor_View is
 
          Redraw_Columns (View);
 
-      --  Redraw the line showing the 80th column
       elsif Window_Type = Text_Window_Text then
          declare
             Column  : constant := 80;
             Rect    : Gdk_Rectangle;
 
          begin
+            --  Get the window coordinates.
             Get_Visible_Rect (View, Rect);
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+
+
+            --  ??? Maybe the following could be cached.
+            declare
+               Line_Y : Gint;
+               Line_Height : Gint;
+               Cursor_Iter : Gtk_Text_Iter;
+               Dummy : Gint := 0;
+               Buffer_Line_Y : Gint;
+            begin
+               Get_Iter_At_Mark
+                 (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
+
+               Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
+               Buffer_To_Window_Coords
+                 (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
+
+               Draw_Rectangle
+                 (Window,
+                  View.Current_Line_GC,
+                  True,
+                  0, Buffer_Line_Y,
+                  Rect.Width, Line_Height);
+            end;
+
+
+            --  Redraw the line showing the 80th column
             X := Column * View.Char_Width - Rect.X;
             Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
          end;
@@ -521,30 +553,42 @@ package body Src_Editor_View is
    -- Map_Cb --
    ------------
 
-   procedure Map_Cb (View : access Gtk_Widget_Record'Class) is
+   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class) is
       Color   : Gdk_Color;
       Success : Boolean;
+      View    : constant Source_View := Source_View (Widget);
    begin
+      --  ??? Here we are creating GCs and allocating colors for every instance
+      --  of a text view, maybe this could be shared somewhere.
+
       --  Now that the Source_View is mapped, we can create the Graphic
       --  Context used for writting line numbers.
       Gdk_New
-        (Source_View (View).Side_Column_GC,
-         Get_Window (Source_View (View), Text_Window_Left));
+        (View.Side_Column_GC,
+         Get_Window (View, Text_Window_Left));
       Gdk_New
-        (Source_View (View).Side_Background_GC,
-         Get_Window (Source_View (View), Text_Window_Left));
+        (View.Side_Background_GC,
+         Get_Window (View, Text_Window_Left));
+
       Gdk_New
-        (Source_View (View).Default_GC,
-         Get_Window (Source_View (View), Text_Window_Text));
+        (View.Current_Line_GC,
+         Get_Window (View, Text_Window_Text));
+      Set_Foreground
+        (View.Current_Line_GC,
+         Get_Pref (View.Kernel, Current_Line_Color));
+
+      Gdk_New
+        (View.Default_GC,
+         Get_Window (View, Text_Window_Text));
       Color := Parse ("#eeeeee");
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
       if Success then
          Set_Foreground
-           (Source_View (View).Side_Background_GC, Color);
+           (View.Side_Background_GC, Color);
       else
          Set_Foreground
-           (Source_View (View).Side_Background_GC,
+           (View.Side_Background_GC,
             White (Get_Default_Colormap));
       end if;
 
@@ -552,7 +596,7 @@ package body Src_Editor_View is
       Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
       if Success then
-         Set_Foreground (Source_View (View).Default_GC, Color);
+         Set_Foreground (View.Default_GC, Color);
       end if;
 
    exception
@@ -592,9 +636,9 @@ package body Src_Editor_View is
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
-      Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
+      View.Kernel := Kernel_Handle (Kernel);
 
-      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
 
       Preferences_Changed (View, Kernel_Handle (Kernel));
 
@@ -657,6 +701,9 @@ package body Src_Editor_View is
       View.Connect_Expose_Id := Source_View_Idle.Add
         (Connect_Expose'Access,
          Source_View (View));
+
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
    end Initialize;
 
    --------------------
@@ -706,6 +753,11 @@ package body Src_Editor_View is
       Set_Text (Layout, "m");
       Get_Pixel_Size (Layout, Source.Char_Width, Height);
       Unref (Layout);
+
+      --  Re-set the color of the current line.
+      Set_Foreground
+        (Source.Current_Line_GC,
+         Get_Pref (Source.Kernel, Current_Line_Color));
 
    exception
       when E : others =>
