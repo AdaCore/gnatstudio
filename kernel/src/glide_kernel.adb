@@ -473,8 +473,9 @@ package body Glide_Kernel is
       if Is_Incomplete (LI_File) then
          declare
             LI_Name : constant String :=
-              Find_Object_File (Handle, Get_LI_Filename (LI_File));
-
+              Find_Object_File
+                (Handle, Get_LI_Filename (LI_File),
+                 Use_Predefined_Object_Path => True);
          begin
             --  ??? Should we have another version of Parse_ALI_File that takes
             --  ??? directly a LI_File_Ptr that needs to be completed.
