@@ -31,7 +31,7 @@ GPS.parse_xml ("""
   </Submenu>""")
 
 
-GPS.Editor.register_highlighting ("dynamic occurrences", "lightblue")
+GPS.Editor.register_highlighting ("dynamic occurrences", "lightblue", True)
 
 def mark_selected ():
    selection=GPS.Editor.get_chars (GPS.current_context().file().name())

@@ -4,7 +4,7 @@
 
 import GPS
 
-GPS.Editor.register_highlighting ("bookmarks", "light blue")
+GPS.Editor.register_highlighting ("bookmarks", "orange", True)
 
 def add_bookmark ():
    context=GPS.current_context()
