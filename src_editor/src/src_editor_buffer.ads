@@ -177,6 +177,12 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Return the current cursor position
 
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Editable_Line_Type;
+      Column : out Positive);
+   --  Return the current editable cursor position.
+
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
@@ -721,6 +727,16 @@ package Src_Editor_Buffer is
    --  (Ie if the text has not been modified since the last computation).
 
 private
+
+   procedure Highlight_Slice
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Re-compute the highlighting for at least the given region.
+   --  If the text creates non-closed comments or string regions, then
+   --  the re-highlighted area is automatically extended to the right.
+   --  When the re-highlighted area is extended to the right, the extension
+   --  is computed in a semi-intelligent fashion.
 
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
    --  This procedure should be called every time that an internal
