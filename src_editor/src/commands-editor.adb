@@ -520,7 +520,9 @@ package body Commands.Editor is
      (Command : access Hide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
-      Hide_Lines (Command.Buffer, Command.Mark, Command.Number);
+      if Blocks_Valid (Command.Buffer) then
+         Hide_Lines (Command.Buffer, Command.Mark, Command.Number);
+      end if;
 
       return Success;
    end Execute;
@@ -533,9 +535,9 @@ package body Commands.Editor is
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
-      Unhide_Lines
-        (Command.Buffer, Command.Mark,
-         Command.First_Line, Command.Last_Line);
+      if Blocks_Valid (Command.Buffer) then
+         Unhide_Lines (Command.Buffer, Command.Mark);
+      end if;
 
       return Success;
    end Execute;
