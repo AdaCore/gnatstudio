@@ -143,6 +143,7 @@ package body Python.GUI is
 
    procedure Create_Output_Class
      (Interpreter    : access Python_Interpreter_Record'Class;
+      Module_Name    : String;
       Main_Module    : PyObject);
    --  Create the GPS.Console class
 
@@ -505,6 +506,7 @@ package body Python.GUI is
 
    procedure Create_Output_Class
      (Interpreter    : access Python_Interpreter_Record'Class;
+      Module_Name    : String;
       Main_Module    : PyObject)
    is
       Meths   : constant PyObject := PyDict_New;
@@ -518,7 +520,7 @@ package body Python.GUI is
             & " consoles. The current console can be overriden by"
             & " calls to set_console()")));
       PyDict_SetItemString
-        (Meths, "__module__", PyString_FromString ("__builtin__"));
+        (Meths, "__module__", PyString_FromString (Module_Name));
       PyDict_SetItemString
         (Meths, Class_Data_Key,
          PyCObject_FromVoidPtr (Interpreter.all'Address));
@@ -535,12 +537,7 @@ package body Python.GUI is
       Add_Method (Output, Create_Method_Def ("readline", Read_Line'Access));
       Add_Method (Output, Create_Method_Def ("isatty",   Is_A_TTY'Access));
       Add_Method (Output, Create_Method_Def
-        ("__init__", Output_Constructor'Access,
-         -("Build a new instance of the class. The parameter indicates"
-           & ASCII.LF
-           & "whether the output to this stream should be captured by GPS,"
-           & ASCII.LF
-           & "and returned when commands are executed through a GPS action")));
+        ("__init__", Output_Constructor'Access));
    end Create_Output_Class;
 
    -------------------
@@ -552,7 +549,7 @@ package body Python.GUI is
       Module_Name : String;
       Module      : PyObject) is
    begin
-      Create_Output_Class (Interpreter, Module);
+      Create_Output_Class (Interpreter, Module_Name, Module);
 
       --  Note: we also set __stdout__,..., so that the user can restore them
       --  after temporarily modifying sys.stdout in their own programs
