@@ -28,8 +28,12 @@ with String_Utils;          use String_Utils;
 with Glib.Object;           use Glib.Object;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Traces;                use Traces;
+with Ada.Exceptions;        use Ada.Exceptions;
 
 package body Refactoring_Module is
+
+   Me : constant Debug_Handle := Create ("Refactoring");
 
    procedure Refactoring_Contextual
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -47,30 +51,44 @@ package body Refactoring_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      Entity  : Entity_Information;
-      Submenu : Gtk_Menu;
-      Item    : Gtk_Menu_Item;
+      Selection : Entity_Selection_Context_Access;
+      Entity    : Entity_Information;
+      Submenu   : Gtk_Menu;
+      Item      : Gtk_Menu_Item;
+
    begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
-
-         if Entity = No_Entity_Information then
-            return;
-         end if;
-
-         Gtk_New (Item, -"Refactoring");
-         Append (Menu, Item);
-
-         Gtk_New (Submenu);
-         Set_Submenu (Item, Submenu);
-
-         Gtk_New (Item, -"Rename " & Krunch (Get_Name (Entity)));
-         Append (Submenu, Item);
-         Context_Callback.Connect
-           (Item, "activate",
-            Context_Callback.To_Marshaller (On_Rename_Entity'Access),
-            Selection_Context_Access (Context));
+      if Context.all not in Entity_Selection_Context'Class then
+         return;
       end if;
+
+      Selection := Entity_Selection_Context_Access (Context);
+
+      if not Has_Entity_Name_Information (Selection) then
+         return;
+      end if;
+
+      Entity := Get_Entity (Selection);
+
+      if Entity = No_Entity_Information then
+         return;
+      end if;
+
+      Gtk_New (Item, -"Refactoring");
+      Append (Menu, Item);
+
+      Gtk_New (Submenu);
+      Set_Submenu (Item, Submenu);
+
+      Gtk_New (Item, -"Rename " & Krunch (Get_Name (Entity)));
+      Append (Submenu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller (On_Rename_Entity'Access),
+         Selection_Context_Access (Context));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Refactoring_Contextual;
 
    ---------------------
