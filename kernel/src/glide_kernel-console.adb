@@ -244,6 +244,8 @@ package body Glide_Kernel.Console is
       Real_Last  : Natural;
       Line       : Natural := 1;
       Column     : Natural := 1;
+      C          : String_Access;
+
    begin
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
@@ -290,31 +292,25 @@ package body Glide_Kernel.Console is
                end if;
             end if;
 
-            declare
-               C : String_Access;
-            begin
-               if Matched (Warning_Index) /= No_Match then
-                  C := new String'(Warning_Category);
-               elsif  Matched (Style_Index) /= No_Match then
-                  C := new String'(Style_Category);
-               else
-                  C := new String'(Category);
-               end if;
+            if Matched (Warning_Index) /= No_Match then
+               C := Warning_Category'Unrestricted_Access;
+            elsif  Matched (Style_Index) /= No_Match then
+               C := Style_Category'Unrestricted_Access;
+            else
+               C := Category'Unrestricted_Access;
+            end if;
 
-               Insert_Result
-                 (Kernel,
-                  Category,
-                  Create
-                    (Text (Matched
-                             (File_Index).First .. Matched (File_Index).Last),
-                     Kernel),
-                  Text (Last + 1 .. Real_Last),
-                  Positive (Line), Positive (Column), 0,
-                  Highlight,
-                  C.all);
-
-               Free (C);
-            end;
+            Insert_Result
+              (Kernel,
+               Category,
+               Create
+                 (Text (Matched
+                          (File_Index).First .. Matched (File_Index).Last),
+                  Kernel),
+               Text (Last + 1 .. Real_Last),
+               Positive (Line), Positive (Column), 0,
+               Highlight,
+               C.all);
          end if;
 
          Start := Real_Last + 1;
