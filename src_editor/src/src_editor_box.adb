@@ -262,9 +262,11 @@ package body Src_Editor_Box is
             Column             => Column_Information (Context),
             Location           => Location,
             Status             => Status);
+
       else
-         Src_Info.Queries.Find_Declaration
-           (Lib_Info           => Source_Info,
+         Find_Declaration_Or_Overloaded
+           (Kernel             => Kernel,
+            Lib_Info           => Source_Info,
             File_Name          => Base_Name (Get_Filename (Editor)),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Line_Information (Context),
@@ -274,9 +276,10 @@ package body Src_Editor_Box is
       end if;
 
       case Status is
-         when Entity_Not_Found =>
+         when Entity_Not_Found | Overloaded_Entity_Found =>
             Console.Insert
-              (Kernel, -"Cross-reference failed.", Highlight_Sloc => False);
+              (Kernel, -"Cross-reference failed for "
+               & Entity_Name_Information (Context), Highlight_Sloc => False);
             Pop_State (Kernel_Handle (Kernel));
             return;
          when Internal_Error =>
@@ -286,11 +289,17 @@ package body Src_Editor_Box is
             Pop_State (Kernel_Handle (Kernel));
             return;
          when No_Body_Entity_Found =>
-            Console.Insert
-              (Kernel,
-               (-"This entity does not have an associated ")
-                 & (-"declaration or body."),
-               Highlight_Sloc => False);
+            if To_Body then
+               Console.Insert
+                 (Kernel,
+                  -"This entity does not have an associated body.",
+                  Highlight_Sloc => False);
+            else
+               Console.Insert
+                 (Kernel,
+                  -"This entity does not have an associated declaration.",
+                  Highlight_Sloc => False);
+            end if;
             Pop_State (Kernel_Handle (Kernel));
             return;
          when Success =>
@@ -403,7 +412,9 @@ package body Src_Editor_Box is
       --  Exit if we could not locate the associated Source_Info.
 
       if Source_Info /= No_LI_File then
-         Src_Info.Queries.Find_Declaration
+         --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
+         --  ask the user interactively for the tooltips.
+         Find_Declaration
            (Lib_Info           => Source_Info,
             File_Name          => Base_Name (Filename),
             Entity_Name        => Entity_Name_Information (Context),
