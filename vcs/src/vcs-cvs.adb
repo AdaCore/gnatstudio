@@ -1262,10 +1262,16 @@ package body VCS.CVS is
             Rev_Index : Natural := S'First;
             Command   : Custom_Command_Access;
          begin
-            A (J).Text := new String'(S (S'First .. S'First + Index));
+            Skip_To_Char (S, Rev_Index, ' ');
 
+            A (J).Text := new String'
+              ("<span underline=""single"" foreground=""blue"">"
+               & S (S'First .. Rev_Index - 1)
+               & "</span>"
+               & S (Rev_Index .. S'First + Index));
+
+            Rev_Index := S'First;
             Skip_To_Char (S, Rev_Index, '(');
-
             Create
               (Command, Kernel,
                "vcs.log "
