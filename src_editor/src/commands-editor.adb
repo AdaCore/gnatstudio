@@ -18,12 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                              use Glib;
-with Gtk.Text_Iter;                     use Gtk.Text_Iter;
-with Traces;                            use Traces;
-with String_Utils;                      use String_Utils;
-with Src_Editor_Box;                    use Src_Editor_Box;
-with Src_Editor_Module;                 use Src_Editor_Module;
+with Glib;                     use Glib;
+with Glib.Convert;             use Glib.Convert;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Traces;                   use Traces;
+with String_Utils;             use String_Utils;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Src_Editor_Box;           use Src_Editor_Box;
+with Src_Editor_Module;        use Src_Editor_Module;
+with Interfaces.C;
 
 package body Commands.Editor is
 
@@ -166,12 +169,12 @@ package body Commands.Editor is
 
    procedure Add_Text
      (Item         : Editor_Command;
-      Text         : String;
+      UTF8         : String;
       Start_Line   : Integer := -1;
       Start_Column : Integer := -1)
    is
-      Text_Length : constant Integer := Text'Length;
-      First       : Natural := Item.Current_Text.all'First;
+      Text_Length : constant Integer := UTF8'Length;
+      First       : Natural := Item.Current_Text'First;
    begin
       while Item.Current_Text_Size + Text_Length
         > Item.Current_Text_Total_Length
@@ -179,7 +182,7 @@ package body Commands.Editor is
          Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
       end loop;
 
-      if Item.Current_Text_Total_Length > Item.Current_Text.all'Length then
+      if Item.Current_Text_Total_Length > Item.Current_Text'Length then
          declare
             New_Current_Text : String (1 .. Item.Current_Text_Total_Length);
          begin
@@ -187,14 +190,14 @@ package body Commands.Editor is
               Item.Current_Text (First .. First + Item.Current_Text_Size - 1);
             Free (Item.Current_Text);
             Item.Current_Text := new String'(New_Current_Text);
-            First := Item.Current_Text.all'First;
+            First := Item.Current_Text'First;
          end;
       end if;
 
       if Item.Edition_Mode = Insertion then
          Item.Current_Text
            (First + Item.Current_Text_Size
-              .. First + Item.Current_Text_Size + Text_Length - 1) := Text;
+              .. First + Item.Current_Text_Size + Text_Length - 1) := UTF8;
 
       else
          if Item.Current_Text_Size > 0 then
@@ -204,7 +207,7 @@ package body Commands.Editor is
             end loop;
          end if;
 
-         Item.Current_Text (First .. First + Text_Length - 1) := Text;
+         Item.Current_Text (First .. First + Text_Length - 1) := UTF8;
       end if;
 
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
@@ -320,9 +323,14 @@ package body Commands.Editor is
    function Execute
      (Command : access Editor_Replace_Slice_Type) return Boolean
    is
-      Iter       : Gtk_Text_Iter;
-      Result     : Boolean;
-      Editor     : Source_Editor_Box;
+      Iter   : Gtk_Text_Iter;
+      Result : Boolean;
+      Editor : Source_Editor_Box;
+
+      function g_utf8_strlen
+        (P : String; Max : Interfaces.C.size_t) return Long_Integer;
+      pragma Import (C, g_utf8_strlen);
+
    begin
       if not
         Is_Valid_Position
@@ -360,7 +368,11 @@ package body Commands.Editor is
          Gint (Command.Start_Column));
 
       if Command.End_Line_After = -1 then
-         Forward_Chars (Iter, Command.Text_After'Length, Result);
+         Forward_Chars
+           (Iter,
+            Gint (g_utf8_strlen
+              (Command.Text_After.all, Command.Text_After'Length)),
+            Result);
          Command.End_Line_After := Integer (Get_Line (Iter));
          Command.End_Column_After := Integer (Get_Line_Offset (Iter));
       end if;
@@ -437,7 +449,7 @@ package body Commands.Editor is
       Text         : String;
       Force_End    : Boolean := False)
    is
-      Iter : Gtk_Text_Iter;
+      Start_Iter, End_Iter : Gtk_Text_Iter;
    begin
       Item := new Editor_Replace_Slice_Type;
       Item.Buffer := Buffer;
@@ -447,17 +459,17 @@ package body Commands.Editor is
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
 
-      Item.Text_Before := new String'
-        (Get_Slice
-          (Buffer,
-           Gint (Start_Line),
-           Gint (Start_Column),
-           Gint (End_Line),
-           Gint (End_Column)));
-      Item.Text_After := new String'(Text);
-
       Get_Iter_At_Line_Offset
-        (Buffer, Iter, Gint (Start_Line), Gint (Start_Column));
+        (Buffer, Start_Iter, Gint (Start_Line), Gint (Start_Column));
+      Get_Iter_At_Line_Offset
+        (Buffer, End_Iter, Gint (End_Line), Gint (End_Column));
+
+      Item.Text_Before := new String'
+        (Get_Text (Buffer, Start_Iter, End_Iter, True));
+      Item.Text_After := new String'
+        (Glib.Convert.Convert
+           (Text, "UTF-8",
+            Get_Pref (Get_Kernel (Buffer), Default_Charset)));
    end Create;
 
 end Commands.Editor;
