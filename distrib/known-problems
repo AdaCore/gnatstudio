@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.0
 
+- C116-002 Current line highlighting sometimes highlights multiple lines.
+  Problem:    In some cases, for example when Reverting a file from the disk,
+              the color that is used to highlight the current line is visible
+              on multiple lines.
+  Workaround: Scroll the editor or move the cursor to remove the extra
+              highlighting.
+
 - C117-005 Crash when adding lines in new file
   Problem:    When editing a new file while the line numbers are displayed,
               adding a few lines will cause GPS to crash.
