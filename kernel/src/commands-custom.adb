@@ -58,6 +58,21 @@ package body Commands.Custom is
    function Commands_Count
      (Command : access Custom_Command'Class) return Natural;
    --  Return the number of commands that will be executed as part of Command.
+   --  If there are commands in an <on-failure> tag, these commands are taken
+   --  into account. Here's an example of command counting
+   --  <shell>bla</shell>             1
+   --  <external>hop</external>       2
+   --  <on-failure>
+   --     <shell>coin</shell>         3
+   --     <external>pouet</external>  4
+   --  </on-failure>
+   --  <shell>bar</shell>             5
+   --  <shell>foo</shell>             6
+
+   function Next_Command (N : Node_Ptr) return Node_Ptr;
+   --  Return the next command in the order described above
+   --  (see Commands_Count).
+   --  Return null if no next command was found.
 
    procedure Check_Save_Output
      (Kernel           : access Kernel_Handle_Record'Class;
@@ -171,10 +186,16 @@ package body Commands.Custom is
    is
       Filter : Parameters_Filter;
 
-      function Substitution (Param : String) return String;
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String;
       --  Check whether the command has a '%' + digit parameter
 
-      function Substitution (Param : String) return String is
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String
+      is
+         pragma Unreferenced (Quoted);
       begin
          if Param = "f" or else Param = "F" then
             if Filter = null then
@@ -339,7 +360,6 @@ package body Commands.Custom is
       else
          Insert (Output);
       end if;
-
    end Store_Command_Output;
 
    --------------------
@@ -379,6 +399,39 @@ package body Commands.Custom is
       end if;
    end Clear_Consoles;
 
+   ------------------
+   -- Next_Command --
+   ------------------
+
+   function Next_Command (N : Node_Ptr) return Node_Ptr is
+   begin
+      if N = null then
+         return null;
+      end if;
+
+      if N.Next /= null then
+         if N.Next.Tag.all = "on-failure" then
+            if N.Next.Child = null then
+               return Next_Command (N.Next);
+
+            else
+               return N.Next.Child;
+            end if;
+
+         else
+            return N.Next;
+         end if;
+      else
+         if N.Parent /= null
+           and then N.Parent.Tag.all = "on-failure"
+         then
+            return N.Parent.Next;
+         else
+            return null;
+         end if;
+      end if;
+   end Next_Command;
+
    --------------------
    -- Commands_Count --
    --------------------
@@ -386,17 +439,19 @@ package body Commands.Custom is
    function Commands_Count
      (Command : access Custom_Command'Class) return Natural
    is
-      N : Node_Ptr;
+      N     : Node_Ptr;
       Count : Natural := 0;
    begin
       if Command.Command /= null then
          return 1;
       else
          N := Command.XML;
+
          while N /= null loop
             Count := Count + 1;
-            N := N.Next;
+            N := Next_Command (N);
          end loop;
+
          return Count;
       end if;
    end Commands_Count;
@@ -412,13 +467,23 @@ package body Commands.Custom is
       Context          : Selection_Context_Access;
       Context_Is_Valid : out Boolean)
    is
-      N     : Node_Ptr;
+      N, M  : Node_Ptr;
       Index : Natural := 1;
 
-      function Substitution (Param : String) return String;
+      In_Loop_Commands : Natural := 0;
+      --  The number of command in the previous "on-failure" block, if the
+      --  previous block is indeed an "on-failure" block.
+
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String;
       --  Check whether the command has a '%' + digit parameter
 
-      function Substitution (Param : String) return String is
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String
+      is
+         pragma Unreferenced (Quoted);
          Sub_Index : Natural;
       begin
          if Param = "f" or else Param = "F" then
@@ -463,13 +528,28 @@ package body Commands.Custom is
             if Sub_Index <= Index - 1
               and then Sub_Index >= 1
             then
-               Save_Output (Index - Sub_Index) := True;
+               Save_Output (Index - Sub_Index - In_Loop_Commands) := True;
             end if;
          end if;
 
          return "";
       end Substitution;
 
+      procedure Substitute_Node (N : Node_Ptr);
+      --  Substitute the strings corresponding to node N.
+
+      procedure Substitute_Node (N : Node_Ptr) is
+         Tmp : constant String := Substitute
+           (N.Value.all,
+            Substitution_Char => '%',
+            Callback          => Substitution'Unrestricted_Access,
+            Recursive         => False);
+         pragma Unreferenced (Tmp);
+      begin
+         null;
+      end Substitute_Node;
+
+      Count : Natural;
    begin
       Context_Is_Valid := True;
       Save_Output := (others => False);
@@ -477,40 +557,35 @@ package body Commands.Custom is
       if Command.XML /= null then
          N := Command.XML;
          while N /= null and then Context_Is_Valid loop
-            declare
-               Tmp : constant String := Substitute
-                 (N.Value.all,
-                  Substitution_Char => '%',
-                  Callback          => Substitution'Unrestricted_Access,
-                  Recursive         => False);
-               pragma Unreferenced (Tmp);
-            begin
-               null;
-            end;
 
-            Index := Index + 1;
+            if N.Tag.all = "on-failure" then
+               M := N.Child;
+               Count := 0;
 
-            --  Check the "on-failure" attribute of <external> commands
-            if N.Tag.all = "external" then
-               declare
-                  Fail : constant String := Get_Attribute
-                    (N, "on-failure");
-               begin
-                  if Fail /= "" then
-                     declare
-                        Tmp : constant String := Substitute
-                          (Fail,
-                           Substitution_Char => '%',
-                           Callback        => Substitution'Unrestricted_Access,
-                           Recursive         => False);
-                        pragma Unreferenced (Tmp);
-                     begin
-                        null;
-                     end;
-                  end if;
-               end;
+               while M /= null and then Context_Is_Valid loop
+                  Substitute_Node (M);
+                  Index := Index + 1;
+                  Count := Count + 1;
+                  M := M.Next;
+               end loop;
+
+               Index := Index - 1;
+               In_Loop_Commands := Count;
+            else
+               Substitute_Node (N);
+               In_Loop_Commands := 0;
             end if;
 
+            if N.Tag.all = "external"
+              and then Get_Attribute
+                (N, "on-failure") /= ""
+            then
+               Insert
+                 (Kernel,
+                  -"Warning: attribute ""on-failure"" is no longer supported");
+            end if;
+
+            Index := Index + 1;
             N     := N.Next;
          end loop;
       end if;
@@ -590,6 +665,7 @@ package body Commands.Custom is
       while Node /= null loop
          if Node.Tag.all = "shell"
            or else Node.Tag.all = "external"
+           or else Node.Tag.all = "on-failure"
          then
             if Previous = null then
                Item.XML := Deep_Copy (Node);
@@ -652,13 +728,17 @@ package body Commands.Custom is
    is
       Success  : Boolean := True;
 
-      function Substitution (Param : String) return String;
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String;
       --  Substitution function for the various '%...' parameters
       --  Index is the number of the current command we are executing
       --  ??? What is the meaning of the comment about Index ?
 
-      function Dollar_Substitution (Param : String) return String;
-      --  Substitution function for the "$1" .. "$N" and "$*" parameters.
+      function Dollar_Substitution
+        (Param  : String;
+         Quoted : Boolean) return String;
+      --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters.
 
       function Execute_Simple_Command
         (Script          : Scripting_Language;
@@ -687,28 +767,83 @@ package body Commands.Custom is
       function Get_Show_Command (N : Node_Ptr) return Boolean;
       --  Return True if the command should be shown for N
 
-      function Get_Nth_Command (Cmd_Index : Integer) return Node_Ptr;
-      --  Return the nth command in the list
+      function Protect_Quoted
+        (S      : in String;
+         Quoted : Boolean) return String;
+      --  If Quoted is True, escape all quotes in S and return result,
+      --  otherwise return S.
+
+      --------------------
+      -- Protect_Quoted --
+      --------------------
+
+      function Protect_Quoted
+        (S      : in String;
+         Quoted : Boolean) return String is
+      begin
+         if Quoted then
+            declare
+               S2    : String (1 .. S'Length * 2);
+               Index : Natural := 1;
+            begin
+               for J in S'Range loop
+                  if S (J) = '"' or else S (J) = '\' then
+                     S2 (Index .. Index + 1) := '\' & S (J);
+                     Index := Index + 2;
+                  else
+                     S2 (Index) := S (J);
+                     Index := Index + 1;
+                  end if;
+               end loop;
+
+               return S2 (1 .. Index - 1);
+            end;
+         else
+            return S;
+         end if;
+      end Protect_Quoted;
 
       -------------------------
       -- Dollar_Substitution --
       -------------------------
 
-      function Dollar_Substitution (Param : String) return String is
-         Length : Natural;
-         Is_Num : Boolean;
-         Result : Natural;
+      function Dollar_Substitution
+        (Param  : String;
+         Quoted : Boolean) return String
+      is
+         Length    : Natural := 0;
+         Interval  : Natural;
+         Is_Num    : Boolean;
+         Result    : Natural;
+         Multiple  : Boolean := False;
+         First_Arg : Natural := 1;
       begin
          if Context.Args = null then
             return "";
          end if;
 
          if Param = "*" then
-            Length := 0;
+            Multiple := True;
 
-            for J in Context.Args'Range loop
+         elsif Param (Param'Last) = '-' then
+            Multiple := True;
+
+            First_Arg := Safe_Value
+              (Param (Param'First .. Param'Last - 1), Param'Length + 1);
+         end if;
+
+         if Multiple then
+            if Quoted then
+               Interval := 3;
+            else
+               Interval := 1;
+            end if;
+
+            for J in Context.Args'First - 1 + First_Arg ..
+              Context.Args'Last
+            loop
                if Context.Args (J) /= null then
-                  Length := Length + Context.Args (J).all'Length + 1;
+                  Length := Length + Context.Args (J).all'Length + Interval;
                end if;
             end loop;
 
@@ -716,16 +851,25 @@ package body Commands.Custom is
                Result : String (1 .. Length);
                Index  : Natural := 1;
             begin
-               for J in Context.Args'Range loop
+               for J in Context.Args'First - 1 + First_Arg ..
+                 Context.Args'Last
+               loop
                   if Context.Args (J) /= null then
-                     Result (Index .. Index + Context.Args (J).all'Length) :=
-                       Context.Args (J).all & ' ';
+                     if Interval = 1 then
+                        Result
+                          (Index .. Index + Context.Args (J).all'Length) :=
+                          Context.Args (J).all & ' ';
+                     else
+                        Result
+                          (Index .. Index + Context.Args (J).all'Length + 2) :=
+                          Context.Args (J).all & """ """;
+                     end if;
 
-                     Index := Index + Context.Args (J).all'Length + 1;
+                     Index := Index + Context.Args (J).all'Length + Interval;
                   end if;
                end loop;
 
-               return Result (1 .. Length - 1);
+               return Protect_Quoted (Result (1 .. Length - 1), Quoted);
             end;
 
          else
@@ -744,7 +888,7 @@ package body Commands.Custom is
                if Result in Context.Args'Range
                  and then Context.Args (Result) /= null
                then
-                  return Context.Args (Result).all;
+                  return Protect_Quoted (Context.Args (Result).all, Quoted);
                end if;
             end if;
          end if;
@@ -756,7 +900,10 @@ package body Commands.Custom is
       -- Substitution --
       ------------------
 
-      function Substitution (Param : String) return String is
+      function Substitution
+        (Param  : String;
+         Quoted : Boolean) return String
+      is
          File    : File_Selection_Context_Access;
          Project : Project_Type := No_Project;
          Num     : Integer;
@@ -769,15 +916,17 @@ package body Commands.Custom is
             File := File_Selection_Context_Access (Command.Execution.Context);
 
             if Param = "f" then
-               return Base_Name (File_Information (File));
+               return Protect_Quoted
+                 (Base_Name (File_Information (File)), Quoted);
             else
-               return Full_Name (File_Information (File)).all;
+               return Protect_Quoted
+                 (Full_Name (File_Information (File)).all, Quoted);
             end if;
 
          elsif Param = "d" then
             --  We know from Check_Save_Output that the context is valid
             File := File_Selection_Context_Access (Command.Execution.Context);
-            return Directory_Information (File);
+            return Protect_Quoted (Directory_Information (File), Quoted);
 
          elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
             Project := Project_From_Param (Param, Command.Execution.Context);
@@ -786,7 +935,8 @@ package body Commands.Custom is
                if Project = No_Project then
                   return "";
                else
-                  return "-P" & Project_Path (Project);
+                  return Protect_Quoted
+                    ("-P" & Project_Path (Project), Quoted);
                end if;
             end if;
 
@@ -796,10 +946,10 @@ package body Commands.Custom is
             end if;
 
             if Param = "p" or else Param = "P" then
-               return Project_Name (Project);
+               return Protect_Quoted (Project_Name (Project), Quoted);
 
             elsif Param = "pp" or else Param = "PP" then
-               return Project_Path (Project);
+               return Protect_Quoted (Project_Path (Project), Quoted);
 
             else
                Recurse := Param (Param'First + 1) = 'r';
@@ -848,7 +998,7 @@ package body Commands.Custom is
                            N : constant String := Name (File);
                         begin
                            Close (File);
-                           return N;
+                           return Protect_Quoted (N, Quoted);
                         end;
                      end;
 
@@ -881,7 +1031,7 @@ package body Commands.Custom is
                            end if;
                         end if;
 
-                        return To_String (Result);
+                        return Protect_Quoted (To_String (Result), Quoted);
                      end;
                   end if;
                end if;
@@ -921,15 +1071,18 @@ package body Commands.Custom is
                      if Output (Output'First) = '''
                        and then Output (Last) = '''
                      then
-                        return Output (Output'First + 1 .. Last - 1);
+                        return Protect_Quoted
+                          (Output (Output'First + 1 .. Last - 1), Quoted);
 
                      elsif Output (Output'First) = '"'
                        and then Output (Output'Last) = '"'
                      then
-                        return Output (Output'First + 1 .. Last - 1);
+                        return Protect_Quoted
+                          (Output (Output'First + 1 .. Last - 1), Quoted);
 
                      else
-                        return Output (Output'First .. Last);
+                        return Protect_Quoted
+                          (Output (Output'First .. Last), Quoted);
                      end if;
                   end;
                end if;
@@ -959,14 +1112,14 @@ package body Commands.Custom is
 
          Subst_Percent  : constant String := Substitute
            (Command_Line,
-            Substitution_Char => '%',
-            Callback          => Substitution'Unrestricted_Access,
+            Substitution_Char => '$',
+            Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
 
          Subst_Cmd_Line : constant String := Substitute
            (Subst_Percent,
-            Substitution_Char => '$',
-            Callback          => Dollar_Substitution'Unrestricted_Access,
+            Substitution_Char => '%',
+            Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
 
          Args           : String_List_Access;
@@ -1029,7 +1182,7 @@ package body Commands.Custom is
               Integer'Max (0, Total_In_Regexp);
             Command.Execution.Hide_Progress := Hide_Progress;
 
-            if Progress_Regexp /= ""then
+            if Progress_Regexp /= "" then
                Command.Execution.Progress_Matcher := new Pattern_Matcher'
                  (Compile (Progress_Regexp, Multiple_Lines));
             end if;
@@ -1065,22 +1218,6 @@ package body Commands.Custom is
             return False;
       end Execute_Simple_Command;
 
-      ---------------------
-      -- Get_Nth_Command --
-      ---------------------
-
-      function Get_Nth_Command (Cmd_Index : Integer) return Node_Ptr is
-         Index : Natural := 1;
-         N     : Node_Ptr := Command.XML;
-      begin
-         while Index < Cmd_Index loop
-            N := N.Next;
-            Index := Index + 1;
-         end loop;
-
-         return N;
-      end Get_Nth_Command;
-
       ----------------------
       -- Get_Show_Command --
       ----------------------
@@ -1100,7 +1237,6 @@ package body Commands.Custom is
       --------------------------
 
       function Execute_Next_Command return Boolean is
-         N : Node_Ptr;
          Show_Command : Boolean;
       begin
          if Command.Command /= null then
@@ -1109,9 +1245,9 @@ package body Commands.Custom is
             return False;
 
          else
-            N := Get_Nth_Command (Command.Execution.Cmd_Index);
-
-            while Success and then N /= null loop
+            while Success
+              and then Command.Execution.Current_Command /= null
+            loop
                Set_Progress
                  (Command,
                   Progress_Record'
@@ -1119,40 +1255,62 @@ package body Commands.Custom is
                      Current  => Command.Execution.Cmd_Index,
                      Total    => Command.Execution.Outputs'Length));
 
-               Show_Command := Get_Show_Command (N);
+               Show_Command := Get_Show_Command
+                 (Command.Execution.Current_Command);
 
-               if To_Lower (N.Tag.all) = "shell" then
+               if To_Lower (Command.Execution.Current_Command.Tag.all) =
+                 "shell"
+               then
                   Success := Execute_Simple_Command
                     (Lookup_Scripting_Language
                        (Command.Kernel,
-                        Get_Attribute (N, "lang", GPS_Shell_Name)),
-                     N.Value.all,
+                        Get_Attribute
+                          (Command.Execution.Current_Command,
+                           "lang",
+                           GPS_Shell_Name)),
+                     Command.Execution.Current_Command.Value.all,
                      Output_Location =>
-                       Get_Attribute (N, "output",
-                                      Command.Default_Output_Destination.all),
+                       Get_Attribute
+                         (Command.Execution.Current_Command, "output",
+                          Command.Default_Output_Destination.all),
                      Show_Command => Show_Command);
 
-               elsif To_Lower (N.Tag.all) = "external" then
+               elsif To_Lower (Command.Execution.Current_Command.Tag.all) =
+                 "external"
+               then
                   Success := Execute_Simple_Command
                     (null,
-                     N.Value.all,
+                     Command.Execution.Current_Command.Value.all,
                      Output_Location =>
-                       Get_Attribute (N, "output",
-                                      Command.Default_Output_Destination.all),
+                       Get_Attribute
+                         (Command.Execution.Current_Command, "output",
+                          Command.Default_Output_Destination.all),
                      Show_Command => Show_Command,
-                     Progress_Regexp   => Get_Attribute (N, "progress-regexp"),
+                     Progress_Regexp   =>
+                       Get_Attribute
+                         (Command.Execution.Current_Command,
+                          "progress-regexp"),
                      Current_In_Regexp =>
-                       Safe_Value (Get_Attribute (N, "progress-current")),
+                       Safe_Value
+                         (Get_Attribute
+                              (Command.Execution.Current_Command,
+                               "progress-current")),
                      Total_In_Regexp   =>
-                       Safe_Value (Get_Attribute (N, "progress-final")),
+                       Safe_Value
+                         (Get_Attribute
+                              (Command.Execution.Current_Command,
+                               "progress-final")),
                      Hide_Progress     => Case_Insensitive_Equal
-                       (Get_Attribute (N, "progress-hide", "true"), "true"));
+                       (Get_Attribute
+                          (Command.Execution.Current_Command,
+                           "progress-hide", "true"), "true"));
 
                   --  We'll have to run again to check for completion
                   return True;
                end if;
 
-               N := N.Next;
+               Command.Execution.Current_Command :=
+                 Command.Execution.Current_Command.Next;
                Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
             end loop;
 
@@ -1177,6 +1335,7 @@ package body Commands.Custom is
          end if;
       end Terminate_Command;
 
+      use type Glib.String_Ptr;
    begin
       --  If there was an external command executing:
       if Command.Execution /= null then
@@ -1186,35 +1345,49 @@ package body Commands.Custom is
 
          Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
            Command.Execution.Current_Output;
+
          Command.Execution.Current_Output := null;
          Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
 
+         Command.Execution.Current_Command :=
+           Command.Execution.Current_Command.Next;
+
          if Command.Execution.Process_Exit_Status /= 0 then
 
-            --  We were executing an external command that fail. Time to
-            --  execute the "on-failure" fallback
-            declare
-               N : constant Node_Ptr :=
-                 Get_Nth_Command (Command.Execution.Cmd_Index - 1);
-               Failure : constant String := Get_Attribute (N, "on-failure");
-               Lang    : constant String :=
-                 Get_Attribute (N, "on-failure-lang", GPS_Shell_Name);
-            begin
-               Trace (Me, "Command failed, executing failure command: "
-                      & Failure);
-               if Failure /= "" then
-                  Success := Execute_Simple_Command
-                    (Lookup_Scripting_Language (Command.Kernel, Lang),
-                     Failure,
-                     Output_Location =>
-                       Get_Attribute (N, "output",
-                                      Command.Default_Output_Destination.all),
-                     Show_Command => Get_Show_Command (N));
-               end if;
-            end;
+            if Command.Execution.Current_Command /= null
+              and then Command.Execution.Current_Command.Tag /= null
+              and then Command.Execution.Current_Command.Tag.all = "on-failure"
+            then
+               Command.Execution.Current_Command :=
+                 Command.Execution.Current_Command.Child;
 
-            Success := False;
-            return Terminate_Command;
+               --  Reset the exit status.
+               Command.Execution.Process_Exit_Status := 0;
+            else
+               Success := False;
+               return Terminate_Command;
+            end if;
+         else
+            --  Skip the "on-failure" commands if needed and increase the
+            --  counter accordingly.
+
+            if Command.Execution.Current_Command /= null
+              and then Command.Execution.Current_Command.Tag /= null
+              and then Command.Execution.Current_Command.Tag.all = "on-failure"
+            then
+               declare
+                  N : Node_Ptr := Command.Execution.Current_Command.Child;
+               begin
+                  while N /= null loop
+                     Command.Execution.Cmd_Index :=
+                       Command.Execution.Cmd_Index + 1;
+                     N := N.Next;
+                  end loop;
+               end;
+
+               Command.Execution.Current_Command :=
+                 Command.Execution.Current_Command.Next;
+            end if;
          end if;
 
       else
@@ -1233,6 +1406,7 @@ package body Commands.Custom is
             end if;
 
             Command.Execution.Cmd_Index   := 1;
+            Command.Execution.Current_Command := Command.XML;
             Ref (Command.Execution.Context);
          end;
 
