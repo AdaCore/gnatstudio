@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.IO;           use GNAT.IO;
 with Pixmaps_IDE;       use Pixmaps_IDE;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
@@ -162,15 +163,65 @@ package body Language.C is
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context is
    begin
-      return (Comment_Start_Length          => 2,
-              Comment_End_Length            => 2,
-              New_Line_Comment_Start_Length => 0,
-              Comment_Start                 => "/*",
-              Comment_End                   => "*/",
-              New_Line_Comment_Start        => "",
-              String_Delimiter              => '"',
-              Quote_Character               => '\',
-              Constant_Character            => ''');
+      return
+        (Comment_Start_Length          => 2,
+         Comment_End_Length            => 2,
+         New_Line_Comment_Start_Length => 0,
+         Comment_Start                 => "/*",
+         Comment_End                   => "*/",
+         New_Line_Comment_Start        => "",
+         String_Delimiter              => '"',
+         Quote_Character               => '\',
+         Constant_Character            => ''');
    end Get_Language_Context;
+
+   -------------------
+   -- Format_Source --
+   -------------------
+
+   procedure Format_Source
+     (Lang             : access C_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True) is
+   begin
+      Put (Buffer);
+   end Format_Source;
+
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang          : access C_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Result        : out Construct_List;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent := 0;
+      Next_Indent := 0;
+      Result := (null, null, null);
+   end Parse_Constructs;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access C_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent      := 0;
+      Next_Indent := 0;
+   end Next_Indentation;
 
 end Language.C;

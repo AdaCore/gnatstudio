@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.IO;     use GNAT.IO;
 
 package body Language.Java is
 
@@ -96,5 +97,54 @@ package body Language.Java is
               Quote_Character               => '\',
               Constant_Character            => ''');
    end Get_Language_Context;
+
+   -------------------
+   -- Format_Source --
+   -------------------
+
+   procedure Format_Source
+     (Lang             : access Java_Language;
+      Buffer           : String;
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True) is
+   begin
+      Put (Buffer);
+   end Format_Source;
+
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang          : access Java_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Result        : out Construct_List;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent := 0;
+      Next_Indent := 0;
+      Result := (null, null, null);
+   end Parse_Constructs;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access Java_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+   begin
+      Indent      := 0;
+      Next_Indent := 0;
+   end Next_Indentation;
 
 end Language.Java;
