@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VCS; use VCS;
+with Glide_Kernel;      use Glide_Kernel;
 with String_List_Utils; use String_List_Utils;
-with Glide_Kernel; use Glide_Kernel;
+with VCS;               use VCS;
 
 package Commands.VCS is
 
