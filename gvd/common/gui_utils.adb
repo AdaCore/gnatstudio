@@ -930,6 +930,10 @@ package body GUI_Utils is
       Buffer : String (1 .. Max);
       Current : Natural := Buffer'First;
    begin
+      if Key = 0 then
+         return "";
+      end if;
+
       case Key is
          when GDK_Shift_L
            | GDK_Shift_R
