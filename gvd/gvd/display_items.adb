@@ -1161,6 +1161,8 @@ package body Display_Items is
          It     : access Canvas_Item_Record'Class) return Boolean;
       --  If It is an alias of Item, and it wasn't displayed explicitly
       --  by the user, then remove it from the canvas as well.
+      --  Also remove It if it is currently hidden (alias detection), and was
+      --  linked to Item. The user probably expects it to be killed as well
 
       ----------------
       -- Free_Alias --
@@ -1173,6 +1175,12 @@ package body Display_Items is
       begin
          if Display_Item (It).Is_Alias_Of = Display_Item (Item)
            and then Display_Item (It).Is_Dereference
+         then
+            Free (Display_Item (It));
+
+         --  If It is hidden, and was linked to Item
+         elsif Display_Item (It).Is_Alias_Of /= null
+           and then Has_Link (Canvas, Item, It)
          then
             Free (Display_Item (It));
          end if;
@@ -1250,11 +1258,34 @@ package body Display_Items is
    is
       It : Display_Item := Display_Item (Item);
 
+      function Clean_Alias_Chain
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Avoid alias chains in the canvas (ie every Item was an alias of It,
+      --  it becomes an alias of It.Is_Alias_Of instead).
+      --  This way, all the Is_Alias_Of fields always reference real visible
+      --  items on the canvas.
+
       function Has_Alias
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
       --  True if Item is a possible alias of It.
       --  We only check the items before It in the list of items
+
+      -----------------------
+      -- Clean_Alias_Chain --
+      -----------------------
+
+      function Clean_Alias_Chain
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+      begin
+         if Display_Item (Item).Is_Alias_Of = It then
+            Display_Item (Item).Is_Alias_Of := It.Is_Alias_Of;
+         end if;
+         return True;
+      end Clean_Alias_Chain;
 
       ---------------
       -- Has_Alias --
@@ -1292,10 +1323,13 @@ package body Display_Items is
 
             if It2.Is_Dereference and then not It.Is_Dereference then
                It2.Is_Alias_Of := It;
+               It := It2;
+               For_Each_Item (Canvas, Clean_Alias_Chain'Unrestricted_Access);
                return False;
 
             elsif It.Is_Dereference and then not It2.Is_Dereference then
                It.Is_Alias_Of := It2;
+               For_Each_Item (Canvas, Clean_Alias_Chain'Unrestricted_Access);
                return False;
 
             elsif It.Is_Dereference and then It2.Is_Dereference then
@@ -1304,8 +1338,13 @@ package body Display_Items is
                  and then It2.Name'Length < It.Name'Length
                then
                   It.Is_Alias_Of := It2;
+                  For_Each_Item
+                    (Canvas, Clean_Alias_Chain'Unrestricted_Access);
                else
                   It2.Is_Alias_Of := It;
+                  It := It2;
+                  For_Each_Item
+                    (Canvas, Clean_Alias_Chain'Unrestricted_Access);
                end if;
                return False;
 
@@ -1313,7 +1352,7 @@ package body Display_Items is
             --  special link to reflect that fact.
             else
                Create_Link
-                 (Canvas, It, It2, "  =  ", Both_Arrow, Alias_Link => True);
+                 (Canvas, It, It2, "<=>", Both_Arrow, Alias_Link => True);
             end if;
          end if;
 
@@ -1377,7 +1416,6 @@ package body Display_Items is
          Replace : Boolean;
       begin
          if not Odd_Link (Link).Alias_Link then
-
             Src := Get_Src (Link);
             Dest := Get_Dest (Link);
             Replace := False;
