@@ -557,6 +557,8 @@ package body String_Utils is
    --------------
 
    function Strip_CR (Text : String) return String is
+      pragma Suppress (All_Checks);
+
       To       : String (1 .. Text'Length);
       Index_To : Positive := 1;
 
@@ -571,22 +573,45 @@ package body String_Utils is
       return To (1 .. Index_To - 1);
    end Strip_CR;
 
-   --------------
-   -- Strip_CR --
-   --------------
-
    procedure Strip_CR
      (Text     : in out String;
       Last     : out Integer;
-      CR_Found : out Boolean) is
+      CR_Found : out Boolean)
+   is
+      pragma Suppress (All_Checks);
+
+      J : Natural := Text'First;
    begin
       CR_Found := False;
-      Last := Text'First - 1;
 
-      for Index in Text'Range loop
-         if Text (Index) = ASCII.CR then
-            CR_Found := True;
-         else
+      if Text'Length = 0 then
+         Last := 0;
+         return;
+      end if;
+
+      loop
+         --  Manual unrolling for efficiency
+
+         exit when Text (J) = ASCII.CR or J = Text'Last;
+         J := J + 1;
+
+         exit when Text (J) = ASCII.CR or J = Text'Last;
+         J := J + 1;
+
+         exit when Text (J) = ASCII.CR or J = Text'Last;
+         J := J + 1;
+      end loop;
+
+      if Text (J) /= ASCII.CR then
+         Last := J;
+         return;
+      end if;
+
+      CR_Found := True;
+      Last := J - 1;
+
+      for Index in J + 1 .. Text'Last loop
+         if Text (Index) /= ASCII.CR then
             Last := Last + 1;
             Text (Last) := Text (Index);
          end if;
