@@ -825,18 +825,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
 
-      Selector_Show_Project_Hierarchy := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Prj-Editor-Selector-Show-Project-Hierarchy",
-         Default => False,
-         Blurb   => -("Whether the list of projects to modify through the"
-                      & " project properties dialog should be displayed"
-                      & " as a hierarchy of projects, or a simple sorted"
-                      & " list"),
-         Nick    => -"Show project hierarchy"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Selector_Show_Project_Hierarchy),
-         -"Project");
-
       -- Wizards --
 
       Wizard_Toc_Highlight_Color := Param_Spec_Color (Gnew_Color
