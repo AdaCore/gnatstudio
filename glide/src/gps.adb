@@ -431,9 +431,6 @@ procedure GPS is
            (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Tools & (-"Generate API doc")), False);
-
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, File & (-"New View")), False);
       end;
 
       --  Print a welcome message in the console, but before parsing the error
