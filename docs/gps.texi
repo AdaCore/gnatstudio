@@ -5930,7 +5930,7 @@ variable1,
     variable3 : Integer;
 @end smallexample
 
-@item RM style case indentation
+@item Case indentation
 @cindex case indentation
 Whether GPS should indent case statements with an extra level, as used in the
 Ada Reference Manual, e.g:
@@ -5943,7 +5943,7 @@ case Value is
 end case;
 @end smallexample
 
-If this preference is set to @code{False}, this would be indented as:
+If this preference is set to @code{Non_Rm_Style}, this would be indented as:
 
 @cindex example
 @smallexample
@@ -5952,6 +5952,11 @@ when others =>
    null;
 end case;
 @end smallexample
+
+By default (@code{Automatic}), GPS will choose to indent with an extra
+level or not based on the first @code{when} construct: if the first
+@code{when} is indented by an extra level, the whole case statement will
+be indented following the RM style.
 
 @item Reserved word casing
 How the editor should handle reserved words casing.
