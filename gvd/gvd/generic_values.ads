@@ -54,8 +54,10 @@ package Generic_Values is
    --  The unknown discriminant is issued so as to force the user to call the
    --  constructors defined in this package.
 
-   procedure Print (Value : Generic_Type) is abstract;
+   procedure Print (Value  : Generic_Type;
+                    Indent : Natural := 0) is abstract;
    --  Print Value on Standard_Output.
+   --  Indent is the indentation level.
    --  This function is intended for debug purposes only.
 
    procedure Clear_Value (Item : in out Generic_Type) is abstract;
@@ -68,29 +70,39 @@ package Generic_Values is
    --  Only the type-related fields are cloned, the value fields are reset to
    --  Null.
 
-   procedure Paint (Item   : Generic_Type;
-                    GC     : Gdk.GC.Gdk_GC;
-                    Font   : Gdk.Font.Gdk_Font;
-                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                    X, Y   : Glib.Gint := 0)
+   procedure Paint (Item    : Generic_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0)
       is abstract;
    --  Paint the item on the pixmap, that will be used to show the item in the
    --  canvas.
    --  The item should be drawn so that its upper-left corner is at coordinates
    --  (X, Y) in Pixmap.
-   --  Note also that the colors set in the GC need not be respected, and can
-   --  be freely changed. This is the responsability of this subprogram to
-   --  make sure the correct colors and/or font attributes are used.
+   --  Xref_GC is the graphic context to use when the text being displayed
+   --  is clickable by the user.
 
    procedure Size_Request (Item   : in out Generic_Type;
-                           Font   : Gdk.Font.Gdk_Font;
-                           Width  : out Glib.Gint;
-                           Height : out Glib.Gint)
+                           Font   : Gdk.Font.Gdk_Font)
       is abstract;
-   --  Request a specific size for the area where the item will be displayed
-   --  in the pixmap.
-   --  Note that the result might be cached in item for efficiency, thus
-   --  every time the font is changed this procedure should be called again.
+   --  Compute the size that Item needs to display itself on the screen.
+   --  The two fields Width and Height are initialized by this function.
+   --  This function is always guaranteed to be called when an item is resized,
+   --  its value is changed, or the font is changed.
+
+   function Get_Width (Item : Generic_Type) return Glib.Gint;
+   --  Return the width that Item needs to display itself on the screen.
+
+   function Get_Height (Item : Generic_Type) return Glib.Gint;
+   --  Return the height that Item needs to display itself on the screen.
+
+   procedure Propagate_Width (Item  : in out Generic_Type;
+                              Width : Glib.Gint);
+   --  Set a specific width for the item.
+   --  This width is propagated, with appropriate modifications, to the
+   --  children of Item.
 
    -----------------
    -- Simple_Type --
@@ -110,17 +122,6 @@ package Generic_Values is
    procedure Set_Value (Item : in out Simple_Type; Value : String);
    --  Assign a new value to Item.
    --  String is copied internally.
-
-   procedure Paint (Item   : Simple_Type;
-                    GC     : Gdk.GC.Gdk_GC;
-                    Font   : Gdk.Font.Gdk_Font;
-                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                    X, Y   : Glib.Gint := 0);
-
-   procedure Size_Request (Item   : in out Simple_Type;
-                           Font   : Gdk.Font.Gdk_Font;
-                           Width  : out Glib.Gint;
-                           Height : out Glib.Gint);
 
    -----------------
    -- Range Types --
@@ -249,16 +250,8 @@ package Generic_Values is
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
 
-   procedure Paint (Item   : Array_Type;
-                    GC     : Gdk.GC.Gdk_GC;
-                    Font   : Gdk.Font.Gdk_Font;
-                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                    X, Y   : Glib.Gint := 0);
-
-   procedure Size_Request (Item   : in out Array_Type;
-                           Font   : Gdk.Font.Gdk_Font;
-                           Width  : out Glib.Gint;
-                           Height : out Glib.Gint);
+   procedure Propagate_Width (Item  : in out Array_Type;
+                              Width : Glib.Gint);
 
    -------------
    -- Records --
@@ -331,16 +324,8 @@ package Generic_Values is
                       return Generic_Type_Access;
    --  Same as above, but for a specific field index.
 
-   procedure Paint (Item   : Record_Type;
-                    GC     : Gdk.GC.Gdk_GC;
-                    Font   : Gdk.Font.Gdk_Font;
-                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                    X, Y   : Glib.Gint := 0);
-
-   procedure Size_Request (Item   : in out Record_Type;
-                           Font   : Gdk.Font.Gdk_Font;
-                           Width  : out Glib.Gint;
-                           Height : out Glib.Gint);
+   procedure Propagate_Width (Item  : in out Record_Type;
+                              Width : Glib.Gint);
 
    ------------
    -- Unions --
@@ -354,11 +339,55 @@ package Generic_Values is
    function New_Union_Type (Num_Fields : Positive) return Generic_Type_Access;
    --  Create a new union type with a specific number of fields.
 
+   -------------
+   -- Classes --
+   -------------
 
+   type Class_Type is new Simple_Type with private;
+   type Class_Type_Access is access all Class_Type'Class;
+   --  This type represents a C++ class, or Ada tagged type.
+   --  It can have one or more ancestors, whose contents is also displayed when
+   --  the value of the variable is show.
+
+   function New_Class_Type (Num_Ancestors : Natural)
+                           return Generic_Type_Access;
+   --  Create a new class type, with a specific number of ancestors (parent
+   --  classes).
+
+   procedure Add_Ancestor (Item     : in out Class_Type;
+                           Num      : Positive;
+                           Ancestor : Class_Type_Access);
+   --  Defines one of the ancestors of item.
+   --  When the value of item, its components are parsed in the following
+   --  order: first, all the fields of the first ancestor, then all the fields
+   --  of the second ancestor, ..., then the fields of Item.
+   --  No copy of Ancestor is made, we just keep the pointer.
+
+   procedure Set_Child (Item  : in out Class_Type;
+                        Child : Record_Type_Access);
+   --  Record the child component of Item (where the fields of Item are
+   --  defined).
+
+   function Get_Child (Item : Class_Type) return Generic_Type_Access;
+   --  Return a pointer to the child.
+
+   function Get_Ancestor (Item : Class_Type;
+                          Num  : Positive)
+                         return Generic_Type_Access;
+   --  Return a pointer to the Num-th ancestor.
+
+   function Get_Num_Ancestors (Item : Class_Type) return Natural;
+   --  Return the number of ancestors.
+
+   procedure Propagate_Width (Item  : in out Class_Type;
+                              Width : Glib.Gint);
 
 private
 
-   type Generic_Type is abstract tagged null record;
+   type Generic_Type is abstract tagged record
+      Width, Height : Glib.Gint := 0;
+      --  These two fields are allocated by calls to Size_Request
+   end record;
    procedure Free is new Unchecked_Deallocation
      (Generic_Type'Class, Generic_Type_Access);
 
@@ -367,15 +396,23 @@ private
       Value : String_Access := null;
       --  The value, as displayed by the debugger
    end record;
-   procedure Print (Value : Simple_Type);
+   procedure Print (Value : Simple_Type; Indent : Natural := 0);
    procedure Clear_Value (Value : in out Simple_Type);
    function Clone (Value : Simple_Type) return Generic_Type_Access;
+   procedure Paint (Item    : Simple_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
+   procedure Size_Request (Item   : in out Simple_Type;
+                           Font   : Gdk.Font.Gdk_Font);
 
 
    type Range_Type is new Simple_Type with record
       Min, Max : Long_Integer;
    end record;
-   procedure Print (Value : Range_Type);
+   procedure Print (Value : Range_Type; Indent : Natural := 0);
    function Clone (Value : Range_Type) return Generic_Type_Access;
    --  Clear_Value is inherited from Simple_Type.
 
@@ -383,19 +420,25 @@ private
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
-   procedure Print (Value : Mod_Type);
+   procedure Print (Value : Mod_Type; Indent : Natural := 0);
    function Clone (Value : Mod_Type) return Generic_Type_Access;
    --  Clear_Value is inherited from Simple_Type.
 
 
    type Access_Type is new Simple_Type with null record;
-   procedure Print (Value : Access_Type);
+   procedure Print (Value : Access_Type; Indent : Natural := 0);
    function Clone (Value : Access_Type) return Generic_Type_Access;
    --  Clear_Value is inherited from Simple_Type.
+   procedure Paint (Item    : Access_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
 
 
    type Enum_Type is new Simple_Type with null record;
-   procedure Print (Value : Enum_Type);
+   procedure Print (Value : Enum_Type; Indent : Natural := 0);
    function Clone (Value : Enum_Type) return Generic_Type_Access;
    --  Clear_Value is inherited from Simple_Type.
 
@@ -427,13 +470,23 @@ private
       Item_Type   : Generic_Type_Access := null;
       Last_Value  : Natural := 0;
 
+      Index_Width : Glib.Gint := 0;
+
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.
 
-   procedure Print (Value : Array_Type);
+   procedure Print (Value : Array_Type; Indent : Natural := 0);
    procedure Clear_Value (Value : in out Array_Type);
    function Clone (Value : Array_Type) return Generic_Type_Access;
+   procedure Paint (Item    : Array_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
+   procedure Size_Request (Item   : in out Array_Type;
+                           Font   : Gdk.Font.Gdk_Font);
 
 
    ------------
@@ -447,20 +500,19 @@ private
    end record;
    type Repeat_Type_Access is access all Repeat_Type'Class;
 
-   procedure Print (Value : Repeat_Type);
+   procedure Print (Value : Repeat_Type; Indent : Natural := 0);
    procedure Clear_Value (Value : in out Repeat_Type);
    function Clone (Value : Repeat_Type) return Generic_Type_Access;
 
-   procedure Paint (Item   : Repeat_Type;
-                    GC     : Gdk.GC.Gdk_GC;
-                    Font   : Gdk.Font.Gdk_Font;
-                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                    X, Y   : Glib.Gint := 0);
+   procedure Paint (Item    : Repeat_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
 
    procedure Size_Request (Item   : in out Repeat_Type;
-                           Font   : Gdk.Font.Gdk_Font;
-                           Width  : out Glib.Gint;
-                           Height : out Glib.Gint);
+                           Font   : Gdk.Font.Gdk_Font);
 
 
 
@@ -496,16 +548,43 @@ private
    procedure Free is new Unchecked_Deallocation
      (Record_Type_Array, Record_Type_Array_Access);
 
-   procedure Print (Value : Record_Type);
+   procedure Print (Value : Record_Type; Indent : Natural := 0);
    procedure Clear_Value (Value : in out Record_Type);
    function Clone (Value : Record_Type) return Generic_Type_Access;
+   procedure Paint (Item    : Record_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
+   procedure Size_Request (Item   : in out Record_Type;
+                           Font   : Gdk.Font.Gdk_Font);
 
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
-
-   procedure Print (Value : Union_Type);
+   procedure Print (Value : Union_Type; Indent : Natural := 0);
    function Clone (Value : Union_Type) return Generic_Type_Access;
    --  Clear_Value is inherited from Record_Type.
+
+
+
+   type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
+
+   type Class_Type (Num_Ancestors : Natural) is new Simple_Type with record
+      Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
+      Child     : Record_Type_Access;
+   end record;
+   procedure Print (Value : Class_Type; Indent : Natural := 0);
+   procedure Clear_Value (Value : in out Class_Type);
+   function Clone (Value : Class_Type) return Generic_Type_Access;
+   procedure Paint (Item    : Class_Type;
+                    GC      : Gdk.GC.Gdk_GC;
+                    Xref_Gc : Gdk.GC.Gdk_GC;
+                    Font    : Gdk.Font.Gdk_Font;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y    : Glib.Gint := 0);
+   procedure Size_Request (Item   : in out Class_Type;
+                           Font   : Gdk.Font.Gdk_Font);
 
 end Generic_Values;
