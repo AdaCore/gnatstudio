@@ -41,7 +41,6 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
-with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
@@ -373,8 +372,6 @@ procedure GPS is
            (GPS.Kernel, File & (-"New View")), False);
       end;
 
-      Glide_Page.Load_Desktop (GPS);
-
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
 
@@ -409,6 +406,8 @@ procedure GPS is
          Recompute_View (GPS.Kernel);
       end if;
 
+      Glide_Page.Load_Desktop (GPS);
+
       --  Then load all the source files given on the command line.
 
       loop
@@ -426,17 +425,6 @@ procedure GPS is
       --  have the focus.
 
       Show_All (GPS);
-
-      if not File_Opened
-        and then not Has_Saved_Desktop (GPS.Kernel)
-      then
-         Open_Html
-           (GPS.Kernel,
-            Format_Pathname
-              (GPS.Prefix_Directory.all &
-               "/doc/gps/html/gps-welcome.html"));
-         Maximize_Children (Get_MDI (GPS.Kernel));
-      end if;
 
       if Splash /= null then
          Destroy (Splash);
