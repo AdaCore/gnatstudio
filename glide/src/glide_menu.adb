@@ -22,6 +22,7 @@ with Glib;                         use Glib;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Main;                     use Gtk.Main;
 with Gtk.Stock;                    use Gtk.Stock;
+with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selection;        use Gtkada.File_Selection;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -423,7 +424,8 @@ package body Glide_Menu is
           (Msg            => "Are you sure you want to quit ?",
            Dialog_Type    => Confirmation,
            Buttons        => Button_Yes or Button_No,
-           Default_Button => Button_No);
+           Default_Button => Button_No,
+           Parent         => Gtk_Window (Object));
    begin
       if Button = Button_Yes then
          Main_Quit;
