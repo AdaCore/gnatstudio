@@ -30,7 +30,7 @@ with Gtk.Widget;          use Gtk.Widget;
 
 with Odd_Intl;            use Odd_Intl;
 with Display_Items;       use Display_Items;
-with Generic_Values;      use Generic_Values;
+with Items;               use Items;
 with Odd.Code_Editors;    use Odd.Code_Editors;
 with Debugger;            use Debugger;
 with Odd.Process;         use Odd.Process;
@@ -224,7 +224,7 @@ package body Odd.Menus is
    function Item_Contextual_Menu
      (Canvas    : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Item      : access Display_Items.Display_Item_Record'Class;
-      Component : Generic_Values.Generic_Type_Access)
+      Component : Items.Generic_Type_Access)
      return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;

@@ -31,7 +31,7 @@ with Glib;
 
 with Odd.Code_Editors;
 with Display_Items;
-with Generic_Values;
+with Items;
 with Odd.Process;
 
 package Odd.Menus is
@@ -45,7 +45,7 @@ package Odd.Menus is
    function Item_Contextual_Menu
      (Canvas    : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Item      : access Display_Items.Display_Item_Record'Class;
-      Component : Generic_Values.Generic_Type_Access)
+      Component : Items.Generic_Type_Access)
      return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used when a specific
    --  component in an item is selected.

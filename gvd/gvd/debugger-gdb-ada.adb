@@ -24,6 +24,11 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Odd.Strings; use Odd.Strings;
 with Language.Debugger; use Language.Debugger;
+with Items;         use Items;
+with Items.Simples; use Items.Simples;
+with Items.Arrays;  use Items.Arrays;
+with Items.Records; use Items.Records;
+with Items.Classes; use Items.Classes;
 
 package body Debugger.Gdb.Ada is
 
@@ -69,7 +74,7 @@ package body Debugger.Gdb.Ada is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access) is
+      Result   : out Items.Generic_Type_Access) is
    begin
       case Type_Str (Index) is
          when '<' =>
@@ -251,7 +256,7 @@ package body Debugger.Gdb.Ada is
      (Lang       : access Gdb_Ada_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,

@@ -21,6 +21,11 @@
 with Odd.Strings; use Odd.Strings;
 with Language.Debugger; use Language.Debugger;
 
+with Items;         use Items;
+with Items.Simples; use Items.Simples;
+with Items.Arrays;  use Items.Arrays;
+with Items.Records; use Items.Records;
+
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Debugger.Gdb.C is
@@ -234,7 +239,7 @@ package body Debugger.Gdb.C is
      (Lang       : access Gdb_C_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Generic_Type_Access;
       Repeat_Num : out Positive)
    is
    begin

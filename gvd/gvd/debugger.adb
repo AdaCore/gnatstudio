@@ -20,7 +20,7 @@
 
 with GNAT.Expect;       use GNAT.Expect;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with Generic_Values;    use Generic_Values;
+with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
@@ -53,7 +53,7 @@ package body Debugger is
 
    function Parse_Type
      (Debugger : access Debugger_Root'Class;
-      Entity   : String) return Generic_Values.Generic_Type_Access
+      Entity   : String) return Items.Generic_Type_Access
    is
       Result   : Generic_Type_Access;
       Type_Str : String  := Type_Of (Debugger, Entity);
@@ -76,7 +76,7 @@ package body Debugger is
    procedure Parse_Value
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
-      Value       : in out Generic_Values.Generic_Type_Access;
+      Value       : in out Items.Generic_Type_Access;
       Value_Found : out Boolean)
    is
       Type_Str   : String := Value_Of (Debugger, Entity);

@@ -24,10 +24,9 @@
 --  See language.ads for a complete spec.
 
 with Language.Debugger.C;
+with Items.Arrays;
 
 package Debugger.Gdb.C is
-
-   use Generic_Values;
 
    type Gdb_C_Language is new
      Language.Debugger.C.C_Language with private;
@@ -37,13 +36,13 @@ package Debugger.Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access);
+      Result   : out Items.Generic_Type_Access);
 
    procedure Parse_Value
      (Lang       : access Gdb_C_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive);
 
    function Break_Exception
@@ -67,7 +66,7 @@ package Debugger.Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access);
+      Result    : out Items.Generic_Type_Access);
 
    procedure Parse_Record_Type
      (Lang      : access Gdb_C_Language;
@@ -75,7 +74,7 @@ package Debugger.Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
+      Result    : out Items.Generic_Type_Access;
       End_On    : String);
    --  End_On is ignored in the C implementation.
 
@@ -83,7 +82,7 @@ package Debugger.Gdb.C is
      (Lang     : access Gdb_C_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access);
+      Result   : in out Items.Arrays.Array_Type_Access);
 
    function Get_Language_Context (Lang : access Gdb_C_Language)
                                  return Language.Debugger.Language_Context;

@@ -24,10 +24,9 @@
 --  See language.ads for a complete spec.
 
 with Language.Debugger.Java;
+with Items.Arrays;
 
 package Debugger.Jdb.Java is
-
-   use Generic_Values;
 
    type Jdb_Java_Language is new
      Language.Debugger.Java.Java_Language with private;
@@ -37,13 +36,13 @@ package Debugger.Jdb.Java is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access);
+      Result   : out Items.Generic_Type_Access);
 
    procedure Parse_Value
      (Lang       : access Jdb_Java_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive);
 
    function Thread_List (Lang : access Jdb_Java_Language) return String;
@@ -62,7 +61,7 @@ package Debugger.Jdb.Java is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access);
+      Result    : out Items.Generic_Type_Access);
 
    procedure Parse_Record_Type
      (Lang      : access Jdb_Java_Language;
@@ -70,14 +69,14 @@ package Debugger.Jdb.Java is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
+      Result    : out Items.Generic_Type_Access;
       End_On    : String);
 
    procedure Parse_Array_Value
      (Lang     : access Jdb_Java_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access);
+      Result   : in out Items.Arrays.Array_Type_Access);
 
    function Get_Language_Context (Lang : access Jdb_Java_Language)
                                  return Language.Debugger.Language_Context;

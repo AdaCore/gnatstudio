@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Items;         use Items;
+with Items.Arrays;  use Items.Arrays;
+
 package body Debugger.Jdb.Java is
 
    use Language;
@@ -44,7 +47,7 @@ package body Debugger.Jdb.Java is
      (Lang       : access Jdb_Java_Language;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Generic_Type_Access;
       Repeat_Num : out Positive)
    is
    begin

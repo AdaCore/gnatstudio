@@ -19,7 +19,8 @@
 -----------------------------------------------------------------------
 
 with Debugger; use Debugger;
-with Generic_Values; use Generic_Values;
+with Items;
+with Items.Arrays;
 
 package Language.Debugger is
 
@@ -40,7 +41,7 @@ package Language.Debugger is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access) is abstract;
+      Result   : out Items.Generic_Type_Access) is abstract;
    --  Parse the type of Entity.
    --  Type_Str should contain the type as returned by the debugger.
    --  Entity is used to get the type of the fields or array items.
@@ -49,7 +50,7 @@ package Language.Debugger is
      (Lang       : access Language_Debugger;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive) is abstract;
    --  Parse the value of an entity, for the Ada language.
    --  Type_Str should contain the value, as returned by the debugger itself.
@@ -61,7 +62,7 @@ package Language.Debugger is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Values.Generic_Type_Access) is abstract;
+      Result    : out Items.Generic_Type_Access) is abstract;
    --  Parse the description of an array type.
    --  Index should point at the opening character of the array in Type_Str
    --  (ie "array " in gdb Ada, or "int [4]" in gdb C).
@@ -74,7 +75,7 @@ package Language.Debugger is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Values.Generic_Type_Access;
+      Result    : out Items.Generic_Type_Access;
       End_On    : String) is abstract;
    --  Parse the type describing a record.
    --  Index should pointer after the initial "record ", and the record is
@@ -87,7 +88,7 @@ package Language.Debugger is
      (Lang     : access Language_Debugger;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Generic_Values.Array_Type_Access) is abstract;
+      Result   : in out Items.Arrays.Array_Type_Access) is abstract;
    --  Parse the value of an array.
 
    type Language_Context (Record_Field_Length : Positive) is record
