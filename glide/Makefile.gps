@@ -58,7 +58,10 @@ endif
 
 ifeq ($(GLIDE_ROOT),True)
 
-   LN = ln -fs
+   ifdef LN
+   else
+      LN = ln -fs
+   endif
    default: do_links all
 
    do_links: force
