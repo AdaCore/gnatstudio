@@ -1660,11 +1660,11 @@ package body Python_Module is
          raise Invalid_Parameter;
       end if;
 
---  ??? This is never freed. We should have a callback so that when Item
---  is destroyed, Inst is destroyed
       --  The following call doesn't modify the refcounf of Item.
       Inst := new Python_Class_Instance_Record'
         (Class_Instance_Record with Script => Data.Script, Data => Item);
+
+      Py_INCREF (Item);
 
       return Inst;
 
