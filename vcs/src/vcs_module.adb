@@ -473,9 +473,6 @@ package body VCS_Module is
       VCS       : constant String := -"VCS";
 
    begin
-      Register_Idle_Function (Idle'Access);
-      Register_Error_Function (Handle_VCS_Error'Access, GObject (Kernel));
-
       Register_Menu
         (Kernel, "/_" & VCS, Ref_Item => -"Navigate", Add_Before => False);
 
