@@ -344,6 +344,28 @@ package body Src_Info.CPP is
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
+   ------------------------------
+   -- Parse_All_LI_Information --
+   ------------------------------
+
+   procedure Parse_All_LI_Information
+     (Handler                : access CPP_LI_Handler_Record;
+      List                   : in out LI_File_List;
+      In_Directory           : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String)
+   is
+      pragma Unreferenced (Handler);
+      pragma Unreferenced (Predefined_Source_Path);
+      pragma Unreferenced (Predefined_Object_Path);
+      pragma Unreferenced (List);
+      pragma Unreferenced (In_Directory);
+      pragma Unreferenced (Project);
+   begin
+      null;
+   end Parse_All_LI_Information;
+
    function Case_Insensitive_Identifiers
          (Handler : access CPP_LI_Handler_Record) return Boolean
    is
