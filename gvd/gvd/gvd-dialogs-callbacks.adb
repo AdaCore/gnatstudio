@@ -111,7 +111,7 @@ package body GVD.Dialogs.Callbacks is
          PD_Switch
            (Process.Debugger,
             Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
-            Mode => GVD.Types.Visible);
+            Mode => GVD.Types.Hidden);
 
          --  After switching to a new protection domain, we want the
          --  PD dialog to reflect that change immediately
