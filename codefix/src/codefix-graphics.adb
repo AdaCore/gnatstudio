@@ -27,8 +27,10 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Clist;              use Gtk.Clist;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
 
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
+with Glide_Intl;             use Glide_Intl;
 
 with Diff_Utils;             use Diff_Utils;
 with Vdiff_Pkg;              use Vdiff_Pkg;
@@ -57,11 +59,12 @@ package body Codefix.Graphics is
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager) is
+      Corrector       : Ptr_Correction_Manager;
+      Fixed_Cb        : Has_Been_Fixed := null) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
       Codefix.Graphics.Initialize
-        (Graphic_Codefix, Kernel, Current_Text, Corrector);
+        (Graphic_Codefix, Kernel, Current_Text, Corrector, Fixed_Cb);
    end Gtk_New;
 
    ----------------
@@ -72,16 +75,21 @@ package body Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager) is
+      Corrector       : Ptr_Correction_Manager;
+      Fixed_Cb        : Has_Been_Fixed := null) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
       Graphic_Codefix.Kernel := Kernel_Handle (Kernel);
       Graphic_Codefix.Current_Text := Current_Text;
       Graphic_Codefix.Corrector := Corrector;
+      Graphic_Codefix.Fixed_Cb := Fixed_Cb;
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
+
+      Graphic_Codefix.Start := True;
       Load_Next_Error (Graphic_Codefix);
+      Graphic_Codefix.Start := False;
    end Initialize;
 
    ----------
@@ -90,9 +98,6 @@ package body Codefix.Graphics is
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
-      --  Free (Graphic_Codefix.Current_Text.all);
-      --  Free (Graphic_Codefix.Corrector);
-
       Free (Graphic_Codefix.Vdiff_List);
       Destroy (Graphic_Codefix);
       --  Free_Parsers;  ??? Do I need to free parsers at the end of
@@ -155,15 +160,27 @@ package body Codefix.Graphics is
       end if;
 
       if Graphic_Codefix.Current_Error = Null_Error_Id then
-         declare
-            Final_Window : Final_Window_Access;
-         begin
-            Gtk_New (Final_Window);
-            Show_All (Final_Window);
-            Final_Window.Graphic_Codefix := Graphic_Codefix_Access
-              (Graphic_Codefix);
-            return;
-         end;
+         if Graphic_Codefix.Start then
+            declare
+               Tmp : Message_Dialog_Buttons;
+            begin
+               Tmp := Message_Dialog
+                 (Msg     => -"No fixable errors have been found",
+                  Buttons => Button_OK,
+                  Title   => -"No fixable error");
+               Quit (Graphic_Codefix);
+            end;
+         else
+            declare
+               Final_Window : Final_Window_Access;
+            begin
+               Gtk_New (Final_Window);
+               Show_All (Final_Window);
+               Final_Window.Graphic_Codefix := Graphic_Codefix_Access
+                 (Graphic_Codefix);
+               return;
+            end;
+         end if;
       end if;
 
       if Is_Fixed (Graphic_Codefix.Current_Error) then
@@ -189,6 +206,7 @@ package body Codefix.Graphics is
             Graphic_Codefix.Current_Text.all,
             Graphic_Codefix.Current_Error,
             1);
+         Graphic_Codefix.Fixed_Cb (Graphic_Codefix.Current_Error);
          Load_Next_Error (Graphic_Codefix);
          return;
       end if;
@@ -209,7 +227,6 @@ package body Codefix.Graphics is
          return;
       end if;
 
-      --  ???  Maybe an other function to print changes in notebook ?
       Show_All (Graphic_Codefix);
    end Load_Next_Error;
 
@@ -460,6 +477,8 @@ package body Codefix.Graphics is
          Graphic_Codefix.Current_Text.all,
          Graphic_Codefix.Current_Error,
          Data (Current_Command));
+
+      Graphic_Codefix.Fixed_Cb (Graphic_Codefix.Current_Error);
    end Valid_Current_Solution;
 
    ----------------------
