@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -35,7 +35,6 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 with GNAT.Regpat;          use GNAT.Regpat;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
-
 package body Glide_Consoles is
 
    Highlight_File : constant String := "#FF0000000000";
@@ -58,6 +57,15 @@ package body Glide_Consoles is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Restore the status of the console from a saved XML tree.
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Console : access Glide_Console_Record) is
+   begin
+      Delete_Text (Console.Text);
+   end Clear;
 
    -------------
    -- Gtk_New --
@@ -265,7 +273,6 @@ package body Glide_Consoles is
 
       return null;
    end Save_Desktop;
-
 
 begin
    Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions

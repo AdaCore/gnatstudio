@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -52,6 +52,9 @@ package Glide_Consoles is
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
+
+   procedure Clear (Console : access Glide_Console_Record);
+   --  Clear all the text in the Console.
 
 private
 
