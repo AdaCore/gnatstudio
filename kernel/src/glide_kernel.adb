@@ -939,6 +939,7 @@ package body Glide_Kernel is
       end if;
 
       Module := Get_Current_Module (Kernel);
+
       if Module /= null
         and then Module.Info.Default_Factory /= null
       then
@@ -947,11 +948,6 @@ package body Glide_Kernel is
 
          if Kernel.Current_Context /= null then
             Set_Context_Information (Kernel.Current_Context, Kernel, Module);
-         end if;
-
-         if Kernel.Current_Context = null then
-            Trace (Me, "Null context returned by the module "
-                   & Module.Info.Name);
          end if;
       end if;
 
@@ -1003,15 +999,15 @@ package body Glide_Kernel is
          end if;
       end Get_Project_Name;
 
-      MDI   : constant MDI_Window := Get_MDI (Handle);
+      MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant String := Handle.Home_Dir.all & "desktop";
       Project_Name : constant String := Get_Project_Name;
-      File  : File_Type;
-      N     : Node_Ptr;
-      M     : Node_Ptr;
-      Old   : Node_Ptr;
-      State : Gdk_Window_State;
-      X, Y  : Gint;
+      File         : File_Type;
+      N            : Node_Ptr;
+      M            : Node_Ptr;
+      Old          : Node_Ptr;
+      State        : Gdk_Window_State;
+      X, Y         : Gint;
 
    begin
       --  Read the previous contents of the file, to save the desktops for
@@ -1121,20 +1117,23 @@ package body Glide_Kernel is
    function Load_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean
    is
-      MDI    : constant MDI_Window := Get_MDI (Handle);
-      Node   : Node_Ptr;
-      File   : constant String := Handle.Home_Dir.all & "desktop";
-      Project_Name : constant String :=
+      MDI                  : constant MDI_Window := Get_MDI (Handle);
+      Node                 : Node_Ptr;
+      File                 : constant String :=
+        Handle.Home_Dir.all & "desktop";
+      Project_Name         : constant String :=
         Project_Path (Get_Project (Handle));
-      Child  : Node_Ptr;
-      Desktop_Node : Node_Ptr;
+      Child                : Node_Ptr;
+      Desktop_Node         : Node_Ptr;
       Default_Desktop_Node : Node_Ptr;
-      Width  : Gint := 640;
-      Height : Gint := 480;
-      X, Y   : Gint := -1;
-      State  : Gdk_Window_State := 0;
-      Main_Window : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Desktop_Loaded : constant Boolean := Main_Window.Desktop_Loaded;
+      Width                : Gint := 640;
+      Height               : Gint := 480;
+      X, Y                 : Gint := -1;
+      State                : Gdk_Window_State := 0;
+      Main_Window          : constant Glide_Window :=
+        Glide_Window (Handle.Main_Window);
+      Desktop_Loaded       : constant Boolean :=
+        Main_Window.Desktop_Loaded;
 
    begin
       Main_Window.Desktop_Loaded := True;
