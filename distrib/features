@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Multiple line comment/uncomment.
+
 New features in GPS 1.0.1
 
 - Windows port
@@ -76,4 +78,3 @@ New features in GPS 1.0.1
   editing the switches for one of the project's main files.
 
 - A mini-shell is now provided to be able to type GPS commands interactively
-
