@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -162,7 +162,7 @@ package body Glide_Kernel.Console is
         Find_MDI_Child_By_Name (MDI, -"Messages");
    begin
       if Child /= null then
-         Raise_Child (Child);
+         Raise_Child (Child, Give_Focus => False);
       end if;
    end Raise_Console;
 
