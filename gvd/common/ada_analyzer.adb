@@ -368,7 +368,7 @@ package body Ada_Analyzer is
       ---------------
 
       None   : constant := -1;
-      Spaces : constant String (1 .. 256) := (others => ' ');
+      Spaces : constant String (1 .. 512) := (others => ' ');
       --  Use to handle indentation in procedure Do_Indent below.
 
       Default_Extended : Extended_Token;
@@ -597,7 +597,7 @@ package body Ada_Analyzer is
                Info.Next               := Constructs.Current;
             end if;
 
-            Constructs.Last          := Constructs.Current;
+            Constructs.Last := Constructs.Current;
 
             if Value.Tagged_Type then
                Constructs.Current.Category := Cat_Class;
@@ -1043,7 +1043,6 @@ package body Ada_Analyzer is
               or else Prev_Token = Tok_Protected   --  protected type
             then
                Top_Token.Type_Declaration := True;
-
             else
                Push (Tokens, Temp);
             end if;
@@ -1701,6 +1700,13 @@ package body Ada_Analyzer is
 
       Clear (Tokens);
       Clear (Indents);
+
+   exception
+      when others =>
+         Prev_Indent    := 0;
+         Current_Indent := 0;
+         Clear (Tokens);
+         Clear (Indents);
    end Analyze_Ada_Source;
 
    --------------------
