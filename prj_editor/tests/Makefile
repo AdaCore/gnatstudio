@@ -1,8 +1,8 @@
 
-GNAT_SRC=../../../gnat/
+GNAT_SRC=../../gnat
 RUNTIME_HEAD=${shell gnatls -v | grep "gcc-lib" | head -1}
 RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
-GNAT_INC=${RUNTIME_INC} -aI../src -aO../obj -aI${GNAT_SRC} 
+GNAT_INC=${RUNTIME_INC} -aI../../common -aI../src -aO../obj -aI${GNAT_SRC} 
 
 CFLAGS=-g
 GNATMAKE_FLAGS=-gnaty -gnatwu -m ${CFLAGS} ${GNAT_INC} 
