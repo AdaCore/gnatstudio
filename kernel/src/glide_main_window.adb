@@ -45,7 +45,7 @@ with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glib.Values;               use Glib.Values;
-with Commands;                  use Commands;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Glide_Main_Window is
 
@@ -64,14 +64,15 @@ package body Glide_Main_Window is
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
 
-   type MDI_Child_Selection_Command is new Root_Command with record
+   type MDI_Child_Selection_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Move_To_Next : Boolean;
    end record;
    type MDI_Child_Selection_Command_Access is access all
      MDI_Child_Selection_Command'Class;
    function Execute
-     (Command : access MDI_Child_Selection_Command)
+     (Command : access MDI_Child_Selection_Command;
+      Event   : Gdk_Event)
       return Command_Return_Type;
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
@@ -277,22 +278,30 @@ package body Glide_Main_Window is
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := True;
-      Register_Key
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move to next window",
+         Command     => Command,
+         Description => -"Select the next window in GPS");
+      Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
-         Name           => "Move to next window",
+         Action          => "Move to next window",
          Default_Key    => GDK_Tab,
-         Default_Mod    => Mod1_Mask,
-         Command        => Command);
+         Default_Mod    => Mod1_Mask);
 
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := False;
-      Register_Key
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Move to previous window",
+         Command     => Command,
+         Description => -"Select the previous window in GPS");
+      Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
-         Name           => "Move to previous window",
+         Action         => "Move to previous window",
          Default_Key    => GDK_ISO_Left_Tab,
-         Default_Mod    => Mod1_Mask + Shift_Mask,
-         Command        => Command);
+         Default_Mod    => Mod1_Mask + Shift_Mask);
    end Register_Keys;
 
    -------------
@@ -300,12 +309,14 @@ package body Glide_Main_Window is
    -------------
 
    function Execute
-     (Command : access MDI_Child_Selection_Command)
-      return Command_Return_Type
-   is
-      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
-      Event  : constant Gdk_Event := Get_Event (Data);
+     (Command : access MDI_Child_Selection_Command;
+      Event   : Gdk_Event)
+      return Command_Return_Type is
    begin
+      if Event = null then
+         Trace (Me, "MANU: Execute has no current event");
+      end if;
+
       Check_Interactive_Selection_Dialog
         (Get_MDI (Command.Kernel), Event,
          Move_To_Next => Command.Move_To_Next);
