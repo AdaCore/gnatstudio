@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -610,20 +610,11 @@ package body Src_Editor_View is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
       case Get_Key_Val (Event) is
-         when GDK_Tab | GDK_Return | GDK_Linefeed
-           | GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End
-           | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right =>
+         when GDK_Tab | GDK_Return | GDK_Linefeed |
+           GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End |
+           GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right
+         =>
             End_Action (Buffer);
-
-         when GDK_LC_z | GDK_Z =>
-            if (Get_State (Event) and Control_Mask) /= 0 then
-               Undo (Buffer);
-            end if;
-
-         when GDK_LC_r | GDK_R =>
-            if (Get_State (Event) and Control_Mask) /= 0 then
-               Redo (Buffer);
-            end if;
 
          when others =>
             null;
