@@ -1418,6 +1418,7 @@ package body Src_Editor_Buffer is
    procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter) is
       Result_Ignored : Boolean;
    begin
+      --  ??? Can we use Gtk.Text_Iter.Forward_To_Line_End, and if not why not
       while not Is_End (Iter) and then not Ends_Line (Iter) loop
          Forward_Char (Iter, Result_Ignored);
       end loop;
@@ -1704,12 +1705,14 @@ package body Src_Editor_Buffer is
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
-         --  In case conversion failed
-
-         Insert_At_Cursor (Buffer, Contents.all);
-      else
-         Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+         --  In case conversion failed, use a default encoding so that we can
+         --  at least show something in the editor
+         UTF8 := Glib.Convert.Convert
+           (Contents.all, "UTF-8", "ISO-8859-1",
+            Ignore'Unchecked_Access, Length'Unchecked_Access);
       end if;
+
+      Insert_At_Cursor (Buffer, UTF8, Gint (Length));
 
       g_free (UTF8);
       Free (Contents);
