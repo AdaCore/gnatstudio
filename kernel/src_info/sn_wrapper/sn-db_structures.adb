@@ -97,8 +97,7 @@ package body SN.DB_Structures is
    --  Copy From C key or data pointer to To. Note that we do not have to care
    --  about the string ending. The fields indexes are computed using the C
    --  pointer From in the Parse_Pair procedures and they will be used to
-   --  reference the To Buffer_String. We just want to use the C convention
-   --  for the Buffer_String (i.e. start index is 0).
+   --  reference the To Buffer_String.
 
    ----------
    -- Copy --
