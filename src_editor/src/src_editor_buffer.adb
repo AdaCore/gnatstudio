@@ -617,8 +617,6 @@ package body Src_Editor_Buffer is
 
    procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class) is
    begin
-      Buffer.Blocks_Need_Parsing := True;
-
       if not Buffer.Parse_Blocks then
          return;
       end if;
@@ -626,6 +624,7 @@ package body Src_Editor_Buffer is
       Buffer.Blocks_Request_Timestamp := Clock;
 
       if not Buffer.Blocks_Timeout_Registered then
+         Buffer.Blocks_Need_Parsing := True;
          Buffer.Blocks_Timeout_Registered := True;
          Buffer.Blocks_Timeout := Buffer_Timeout.Add
            (Buffer_Recompute_Interval,
@@ -3922,14 +3921,14 @@ package body Src_Editor_Buffer is
       Category   : Natural;
       Last_Index : Natural;
    begin
+      if Line = 0 then
+         return;
+      end if;
+
       Category := Lookup_Category (Id);
 
       if Category = 0 then
          --  Could not identify highlighting category
-         return;
-      end if;
-
-      if Line = 0 then
          return;
       end if;
 
@@ -4036,6 +4035,8 @@ package body Src_Editor_Buffer is
       The_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
+         Highlight_Range (Editor, Id, 0, 1, 1, True);
+
          for J in Editor.Line_Data'Range loop
             Set_Line_Highlighting (Editor, J, Id, False);
          end loop;
