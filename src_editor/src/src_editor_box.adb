@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;             use Ada.Exceptions;
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Glib;                       use Glib;
 with Glib.Convert;
 with Glib.Object;                use Glib.Object;
@@ -163,13 +162,6 @@ package body Src_Editor_Box is
    --  Perform the initialization of the given editor box. If Source_Buffer
    --  is null, then a new buffer will automatically be created. Otherwise,
    --  the editor creates a new editor for the same Source_Buffer.
-
-   function Is_Entity_Letter (Char : Character) return Boolean;
-   --  Return True if the given letter is a valid letter for an entity name
-   --  (ie if the letter is either alphanumeric or an '_').
-
-   function Is_Operator_Letter (Char : Character) return Boolean;
-   --  Return True if the given letter is a valid operator.
 
    procedure Search_Entity_Bounds
      (Buffer       : access Source_Buffer_Record'Class;
@@ -1179,29 +1171,6 @@ package body Src_Editor_Box is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Focus_Out;
-
-   ----------------------
-   -- Is_Entity_Letter --
-   ----------------------
-
-   function Is_Entity_Letter (Char : Character) return Boolean is
-   begin
-      return Char = '_' or else Is_Alphanumeric (Char);
-   end Is_Entity_Letter;
-
-   ------------------------
-   -- Is_Operator_Letter --
-   ------------------------
-
-   function Is_Operator_Letter (Char : Character) return Boolean is
-   begin
-      case Char is
-         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
-            return True;
-         when others =>
-            return False;
-      end case;
-   end Is_Operator_Letter;
 
    --------------------------
    -- Search_Entity_Bounds --
