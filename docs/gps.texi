@@ -3733,9 +3733,11 @@ wizard (@pxref{The Project Wizard}). In fact, all pages but the
 read the description for these in the project wizard chapter.
 
 The general page gives access to more attributes than the general page
-of the project wizard does. In addition, you can select the name of all the
-external tools that GPS uses (compilers for the various languages,
-linker, pretty-printer, @dots{}).
+of the project wizard does. In addition, you can select the name of the
+external tools that GPS uses (such as compilers, debugger, @dots{}).
+
+See also @ref{Working in a Cross Environment} for more info on the
+@code{Cross environment} attributes.
 
 @item The project selector
 This area, in the top-right corner of the properties editor, contains
