@@ -56,6 +56,7 @@ with GNAT.Regexp;
 with GNAT.Regpat;
 with Glide_Kernel;
 with Gtk.Widget;
+with Gtkada.MDI;
 
 package Find_Utils is
 
@@ -111,7 +112,7 @@ package Find_Utils is
    --  The subprograms below will compute the fields as needed.
 
    procedure Set_Context
-     (Context  : access Search_Context;
+     (Context  : access Search_Context'Class;
       Look_For : String;
       Options  : Search_Options);
    --  Create a new search context
@@ -190,11 +191,6 @@ package Find_Utils is
    procedure Free (Context : in out Current_File_Context);
    --  Free the memory allocated for the context
 
-   procedure Set_Current_File
-     (Context : access Current_File_Context;
-      File    : String);
-   --  Set the name of the file to search
-
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -263,6 +259,9 @@ package Find_Utils is
    --  All_Occurences is set to True if the search will be used to find all the
    --  possible occurences the first time the user presses First. It could be
    --  used to provide a different algorithm or initial setup.
+   --
+   --  It shouldn't set the general information like the pattern and the
+   --  replacement pattern, since these are set automatically.
 
    -----------------------------
    -- Standard search support --
@@ -328,7 +327,7 @@ private
    package Directory_List is new Generic_List (Dir_Data_Access);
 
    type Current_File_Context is new Search_Context with record
-      Current_File         : GNAT.OS_Lib.String_Access;
+      Child                : Gtkada.MDI.MDI_Child;
       All_Occurences       : Boolean;
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural := 0;

@@ -21,6 +21,8 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Glib.Object;               use Glib.Object;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Widget;                use Gtk.Widget;
@@ -31,7 +33,6 @@ with Basic_Types;               use Basic_Types;
 with Boyer_Moore;               use Boyer_Moore;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
@@ -137,6 +138,12 @@ package body Find_Utils is
 
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
+
+   procedure Cancel_Search
+     (Child : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Called for a search in the current editor, when the editor has been
+   --  killed.
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -749,7 +756,7 @@ package body Find_Utils is
    -----------------
 
    procedure Set_Context
-     (Context  : access Search_Context;
+     (Context  : access Search_Context'Class;
       Look_For : String;
       Options  : Search_Options) is
    begin
@@ -787,7 +794,6 @@ package body Find_Utils is
    procedure Free (Context : in out Current_File_Context) is
    begin
       Free (Context.Next_Matches_In_File);
-      Free (Context.Current_File);
    end Free;
 
    procedure Free (Context : in out Files_Context) is
@@ -815,17 +821,6 @@ package body Find_Utils is
       Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
-
-   ----------------------
-   -- Set_Current_File --
-   ----------------------
-
-   procedure Set_Current_File
-     (Context : access Current_File_Context;
-      File    : String) is
-   begin
-      Context.Current_File := new String' (File);
-   end Set_Current_File;
 
    -------------------
    -- Set_File_List --
@@ -863,6 +858,21 @@ package body Find_Utils is
       end if;
    end Set_File_List;
 
+   -------------------
+   -- Cancel_Search --
+   -------------------
+
+   procedure Cancel_Search
+     (Child : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Child);
+   begin
+      --  No more search, since the editor has been killed
+      Search_Reset (Kernel);
+      --  Current_File_Context_Access (Context).Child := null;
+   end Cancel_Search;
+
    --------------------------
    -- Current_File_Factory --
    --------------------------
@@ -875,15 +885,22 @@ package body Find_Utils is
    is
       pragma Unreferenced (Extra_Information);
       Context : Current_File_Context_Access;
-      Editor : constant Source_Editor_Box :=
-        Find_Current_Editor (Kernel);
+      Child : MDI_Child := Find_Current_Editor (Kernel);
+
    begin
-      if Editor = null then
+      if Child = null then
          return null;
+
       else
          Context := new Current_File_Context;
-         Set_Current_File (Context, Get_Filename (Editor));
+         Context.Child := Child;
          Context.All_Occurences := All_Occurences;
+
+         Kernel_Callback.Connect
+           (Child, "destroy",
+            Kernel_Callback.To_Marshaller (Cancel_Search'Access),
+            Kernel_Handle (Kernel));
+
          return Search_Context_Access (Context);
       end if;
    end Current_File_Factory;
@@ -963,9 +980,7 @@ package body Find_Utils is
       Line, Column : Natural;
 
    begin
-      Open_File_Editor (Kernel, Filename => Context.Current_File.all);
-      Editor := Get_Source_Box_From_MDI
-        (Get_File_Editor (Kernel, Context.Current_File.all));
+      Editor := Get_Source_Box_From_MDI (Context.Child);
 
       if Editor = null then
          return False;
