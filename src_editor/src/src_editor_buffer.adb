@@ -3455,14 +3455,17 @@ package body Src_Editor_Buffer is
    procedure Add_Controls (Buffer : access Source_Buffer_Record) is
       Undo_Redo : Undo_Redo_Information;
    begin
-      Undo_Redo := Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id);
+      if not Buffer.Controls_Set then
+         Undo_Redo := Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id);
 
-      Set_Controls
-        (Buffer.Queue,
-         Undo_Redo.Undo_Button,
-         Undo_Redo.Redo_Button,
-         Undo_Redo.Undo_Menu_Item,
-         Undo_Redo.Redo_Menu_Item);
+         Set_Controls
+           (Buffer.Queue,
+            Undo_Redo.Undo_Button,
+            Undo_Redo.Redo_Button,
+            Undo_Redo.Undo_Menu_Item,
+            Undo_Redo.Redo_Menu_Item);
+      end if;
+
       Buffer.Controls_Set := True;
    end Add_Controls;
 
@@ -3472,7 +3475,10 @@ package body Src_Editor_Buffer is
 
    procedure Remove_Controls (Buffer : access Source_Buffer_Record) is
    begin
-      Unset_Controls (Buffer.Queue);
+      if Buffer.Controls_Set then
+         Unset_Controls (Buffer.Queue);
+      end if;
+
       Buffer.Controls_Set := False;
    end Remove_Controls;
 
