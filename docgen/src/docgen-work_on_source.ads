@@ -46,7 +46,8 @@ with Glide_Kernel;
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
@@ -67,7 +68,8 @@ package Docgen.Work_On_Source is
    --  Change also: Doc_TEXI_Subtitle !!!
 
    procedure Process_Unit_Index
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
       Options          : Docgen.All_Options;
       Converter        : Docgen.Doc_Subprogram_Type;
@@ -76,7 +78,8 @@ package Docgen.Work_On_Source is
    --  creates the index file for the packages
 
    procedure Process_Subprogram_Index
-     (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B                     : Backend_Handle;
+      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List : Docgen.Type_Entity_List.List;
       Options               : Docgen.All_Options;
       Converter             : Docgen.Doc_Subprogram_Type;
@@ -85,7 +88,8 @@ package Docgen.Work_On_Source is
    --  creates the index file for the subprograms
 
    procedure Process_Type_Index
-     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B               : Backend_Handle;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List : Docgen.Type_Entity_List.List;
       Options         : All_Options;
       Converter       : Doc_Subprogram_Type;
