@@ -64,7 +64,7 @@ package body Prj_API is
    function Find_Last_Declaration_Of
      (Parent     : Project_Node_Id;
       Attr_Name  : Types.Name_Id;
-      Attr_Index : Types.String_Id := Types.No_String) return Project_Node_Id;
+      Attr_Index : String := "") return Project_Node_Id;
    --  Find the last declaration for the attribute Attr_Name, in the
    --  declarative list contained in Parent.
    --  The returned value is the last such declaration, or Empty_Node if there
@@ -81,7 +81,7 @@ package body Prj_API is
       Pkg_Name           : String;
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : Types.String_Id := Types.No_String);
+      Attribute_Index    : String := "");
    --  Move any declaration for the attribute from the common part of the
    --  project into each branch of the nested case construct. Nothing is done
    --  if there is no such declaration.
@@ -89,14 +89,14 @@ package body Prj_API is
    function Attribute_Matches
      (Node            : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String_Id) return Boolean;
+      Attribute_Index : String) return Boolean;
    --  Return True if Node is an attribute declaration matching Attribute_Name
    --  and Attribute_Index.
 
    procedure Remove_Attribute_Declarations
      (Parent          : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String_Id);
+      Attribute_Index : String);
    --  Remove all declarations for Attribute_Name in the declarative item list
    --  of Parent.
 
@@ -214,7 +214,7 @@ package body Prj_API is
    function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Index_Name : String_Id := No_String;
+      Index_Name : String := "";
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
@@ -224,7 +224,12 @@ package body Prj_API is
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
       Set_Name_Of (Node, Name_Find);
-      Set_Associative_Array_Index_Of (Node, Index_Name);
+
+      if Index_Name /= "" then
+         Start_String;
+         Store_String_Chars (Index_Name);
+         Set_Associative_Array_Index_Of (Node, End_String);
+      end if;
 
       Add_At_End (Prj_Or_Pkg, Node);
       return Node;
@@ -1413,17 +1418,17 @@ package body Prj_API is
    function Attribute_Matches
      (Node            : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String_Id) return Boolean is
+      Attribute_Index : String) return Boolean is
    begin
       return Kind_Of (Node) = N_Attribute_Declaration
         and then Prj.Tree.Name_Of (Node) = Attribute_Name
         and then
-        ((Attribute_Index = No_String
+        ((Attribute_Index = ""
           and then Associative_Array_Index_Of (Node) = No_String)
-         or else (Attribute_Index /= No_String
+         or else (Attribute_Index /= ""
                   and then Associative_Array_Index_Of (Node) /= No_String
-                  and then String_Equal (Associative_Array_Index_Of (Node),
-                                         Attribute_Index)));
+                  and then Get_String (Associative_Array_Index_Of (Node)) =
+                  Attribute_Index));
    end Attribute_Matches;
 
    -----------------------------------
@@ -1433,7 +1438,7 @@ package body Prj_API is
    procedure Remove_Attribute_Declarations
      (Parent          : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String_Id)
+      Attribute_Index : String)
    is
       Decl : Project_Node_Id := First_Declarative_Item_Of (Parent);
       Previous : Project_Node_Id := Empty_Node;
@@ -1464,7 +1469,7 @@ package body Prj_API is
    function Find_Last_Declaration_Of
      (Parent  : Project_Node_Id;
       Attr_Name  : Name_Id;
-      Attr_Index : String_Id := No_String) return Project_Node_Id
+      Attr_Index : String := "") return Project_Node_Id
    is
       Decl, Expr : Project_Node_Id;
       Result : Project_Node_Id := Empty_Node;
@@ -1492,7 +1497,7 @@ package body Prj_API is
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String := "";
       Values             : GNAT.OS_Lib.Argument_List;
-      Attribute_Index    : Types.String_Id := Types.No_String;
+      Attribute_Index    : String := "";
       Prepend            : Boolean := False)
    is
       Attribute_N : Name_Id;
@@ -1606,7 +1611,7 @@ package body Prj_API is
       Pkg_Name           : String;
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : Types.String_Id := Types.No_String)
+      Attribute_Index    : String := "")
    is
       Parent : Project_Node_Id;
       Pkg  : Project_Node_Id := Empty_Node;
@@ -1685,7 +1690,7 @@ package body Prj_API is
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String := "";
       Value              : String;
-      Attribute_Index    : Types.String_Id := Types.No_String)
+      Attribute_Index    : String := "")
    is
       Attribute_N : Name_Id;
       Val : Project_Node_Id := Empty_Node;
@@ -1753,7 +1758,7 @@ package body Prj_API is
       Pkg_Name           : String := "";
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String;
-      Attribute_Index    : Types.String_Id := Types.No_String)
+      Attribute_Index    : String := "")
    is
       Attribute_N : Name_Id;
       Pkg : Project_Node_Id;
@@ -2854,17 +2859,4 @@ begin
    Snames.Initialize;
    Prj.Initialize;
    Prj.Tree.Initialize;
-
-   --  The names should be lower-case
-   Start_String;
-   Store_String_Chars ("ada");
-   Ada_String := End_String;
-
-   Start_String;
-   Store_String_Chars ("c");
-   C_String := End_String;
-
-   Start_String;
-   Store_String_Chars ("c++");
-   Cpp_String := End_String;
 end Prj_API;

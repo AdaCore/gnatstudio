@@ -40,9 +40,9 @@ package Prj_API is
    type Project_Node_Array_Access is access Project_Node_Array;
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
 
-   Ada_String : Types.String_Id;    --  See also Snames.Name_Ada
-   C_String   : Types.String_Id;    --  See also Snames.Name_C
-   Cpp_String : Types.String_Id;    --  See also Snames.Name_Cpp
+   Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
+   C_String   : constant String := "c";    --  See also Snames.Name_C
+   Cpp_String : constant String := "c++";  --  See also Snames.Name_Cpp
    --  Strings used for the various languages supported by Glide
 
    function Get_String (Str : Types.String_Id) return String;
@@ -163,7 +163,7 @@ package Prj_API is
    function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Index_Name : Types.String_Id := Types.No_String;
+      Index_Name : String := "";
       Kind : Variable_Kind := List)
       return Project_Node_Id;
    --  Create a new attribute.
@@ -180,7 +180,7 @@ package Prj_API is
       Pkg_Name           : String := "";
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String;
-      Attribute_Index    : Types.String_Id := Types.No_String);
+      Attribute_Index    : String := "");
    --  Remove all declarations for the attribute Attribute_Name in the current
    --  scenario. This effectively reverses to the default behavior for the
    --  attribute.
@@ -311,9 +311,9 @@ package Prj_API is
    --  Is_Default_Value is set to true if file-specific switches were not
    --  specified, and Value is in fact the list of default switches defined
    --  at the package level.
-   --  File can be No_Name if you want to find the default switches to use for
-   --  all files in the project. In that case, this procedure returns the
-   --  switches to use for Language
+   --  File can be the empty string if you want to find the default switches to
+   --  use for all files in the project. In that case, this procedure returns
+   --  the switches to use for Language
 
    function Length (Value : Variable_Value) return Integer;
    --  Return the number of elements in Value (1 if Value is of kind Single)
@@ -331,7 +331,7 @@ package Prj_API is
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String := "";
       Values             : GNAT.OS_Lib.Argument_List;
-      Attribute_Index    : Types.String_Id := Types.No_String;
+      Attribute_Index    : String := "";
       Prepend            : Boolean := False);
    --  Update the value of the attribute Attribute_Name in Project/Pkg_Name.
    --  If Pkg_Name is the empty string "", then the value is updated at the
@@ -349,7 +349,7 @@ package Prj_API is
       Scenario_Variables : Project_Node_Array;
       Attribute_Name     : String := "";
       Value              : String;
-      Attribute_Index    : Types.String_Id := Types.No_String);
+      Attribute_Index    : String := "");
    --  Same as above, but for an attribute that contains a single value.
 
    -----------
