@@ -153,7 +153,15 @@ package body Src_Editor_Module is
 
    procedure On_Save_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save As menu
+   --  File->Save As... menu
+
+   procedure On_Save_All_Editors
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save All Editors menu
+
+   procedure On_Save_All
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save All menu
 
    procedure On_Cut
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -301,7 +309,7 @@ package body Src_Editor_Module is
    function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box
    is
-      Child : MDI_Child := Find_Current_Editor (Kernel);
+      Child : constant MDI_Child := Find_Current_Editor (Kernel);
    begin
       if Child = null then
          return null;
@@ -702,6 +710,44 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_As;
+
+   -----------------
+   -- On_Save_All --
+   -----------------
+
+   procedure On_Save_All
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Ignore : Boolean;
+
+   begin
+      Ignore := Save_All_MDI_Children (Kernel, Force => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Save_All;
+
+   -------------------------
+   -- On_Save_All_Editors --
+   -------------------------
+
+   procedure On_Save_All_Editors
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Ignore : Boolean;
+
+   begin
+      Ignore := Save_All_Editors (Kernel, Force => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Save_All_Editors;
 
    ------------
    -- On_Cut --
@@ -1126,6 +1172,7 @@ package body Src_Editor_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File      : constant String := '/' & (-"File") & '/';
+      Save      : constant String := File & (-"Save") & '/';
       Edit      : constant String := '/' & (-"Edit") & '/';
       Navigate  : constant String := '/' & (-"Navigate") & '/';
       Mitem     : Gtk_Menu_Item;
@@ -1149,7 +1196,7 @@ package body Src_Editor_Module is
       --  Menus
 
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
-                     On_Open_File'Access, GDK_F3, Ref_Item => -"Close");
+                     On_Open_File'Access, GDK_F3, Ref_Item => -"Save");
       Register_Menu (Kernel, File & (-"Reopen"), Ref_Item => -"Open...",
                      Add_Before => False);
       Gtk_New (Mitem);
@@ -1161,10 +1208,15 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"New View", "", On_New_View'Access,
                      Ref_Item => -"Open...");
 
-      Register_Menu (Kernel, File, -"Save", Stock_Save, On_Save'Access,
-                     GDK_S, Control_Mask, Ref_Item => -"Close");
-      Register_Menu (Kernel, File, -"Save As...", Stock_Save_As,
-                     On_Save_As'Access, Ref_Item => -"Close");
+      Register_Menu (Kernel, Save, -"Current File", Stock_Save, On_Save'Access,
+                     GDK_S, Control_Mask, Ref_Item => -"Desktop");
+      Register_Menu (Kernel, Save, -"Current File As...", Stock_Save_As,
+                     On_Save_As'Access, Ref_Item => -"Desktop");
+      Register_Menu (Kernel, Save, -"All Editors", "",
+                     On_Save_All_Editors'Access, Sensitive => False,
+                     Ref_Item => -"Desktop");
+      Register_Menu (Kernel, Save, -"All", "",
+                     On_Save_All'Access, Ref_Item => -"Desktop");
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
