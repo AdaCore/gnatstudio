@@ -63,9 +63,9 @@ package body Items.Arrays is
          begin
             if Dim_Num /= 1 then
                return Index_String (Item, Index / Length, Dim_Num - 1)
-                 & "," & Dim;
+                 & "," & Dim (Dim'First + 1 .. Dim'Last);
             else
-               return Dim;
+               return Dim (Dim'First + 1 .. Dim'Last);
             end if;
          end;
       end if;
