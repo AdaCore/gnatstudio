@@ -48,6 +48,8 @@ with Items.Classes;     use Items.Classes;
 
 with Unchecked_Conversion;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Debugger.Gdb is
 
    use String_History;
@@ -199,6 +201,8 @@ package body Debugger.Gdb is
       Dialog         : Question_Dialog_Access;
       Index          : Natural;
       Question_Start : Natural;
+      Debugger       : Debugger_Access :=
+        Convert (To_Main_Debug_Window (Window), Descriptor).Debugger;
 
    begin
       --  Do we have a question ?
@@ -206,6 +210,20 @@ package body Debugger.Gdb is
       Question_Start := Match (Question_Filter_Pattern, Str);
 
       if Question_Start >= Str'First then
+
+         --  If we are processing an internal command, we cancel any question
+         --  dialog we might have, and silently fail
+         --  ??? For some reason, we can not use Interrupt here, and we have
+         --  to rely on the fact that "Cancel" is the first choice.
+
+         if Get_Command_Mode (Get_Process (Debugger)) = Internal then
+            Send (Debugger, "0",
+                  Mode => Internal,
+                  Empty_Buffer => False,
+                  Wait_For_Prompt => False);
+            return;
+         end if;
+
          Index := Question_Start;
 
          while Index < Str'Last loop
