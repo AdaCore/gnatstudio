@@ -1061,6 +1061,9 @@ selection.
      @item Set Breakpoint on Line @i{xx}
 Set a breakpoint on the line under the cursor, in the current file.
 
+     @item Set Breakpoint on @i{selection}
+Set a breakpoint at the begining of the subprogram named @i{selection}
+
      @item Continue Until Line @i{xx}
 Contine execution (the program must have been started previously) until a
 specified line.
