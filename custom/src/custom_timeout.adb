@@ -39,8 +39,9 @@ package body Custom_Timeout is
      (Timeout_Cst'Access, Action_Cst'Access);
 
    type Custom_Timeout is record
-      Handler : Timeout_Handler_Id;
-      Action  : Glide_Kernel.Scripts.Subprogram_Type;
+      Handler  : Timeout_Handler_Id;
+      Instance : Class_Instance;
+      Action   : Glide_Kernel.Scripts.Subprogram_Type;
    end record;
 
    type Custom_Timeout_Access is access Custom_Timeout;
@@ -101,11 +102,11 @@ package body Custom_Timeout is
 
    function Callback (D : in Custom_Timeout_Access) return Boolean is
       C : Callback_Data'Class := Create
-        (Get_Script (D.Action.all), Arguments_Count => 0);
-
+        (Get_Script (D.Action.all), Arguments_Count => 1);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
+      Set_Nth_Arg (C, 1, D.Instance);
       Tmp := Execute (D.Action, C);
       Free (C);
       return True;
@@ -133,8 +134,8 @@ package body Custom_Timeout is
          declare
             Inst    : constant Class_Instance :=
               Nth_Arg (Data, 1, Timeout_Class);
-            Timeout : constant Integer := Nth_Arg (Data, 2, 0);
-            Act     : constant Subprogram_Type := Nth_Arg (Data, 3, null);
+            Timeout : constant Integer := Nth_Arg (Data, 2);
+            Act     : constant Subprogram_Type := Nth_Arg (Data, 3);
          begin
             if Act = null then
                Set_Error_Msg
@@ -143,14 +144,14 @@ package body Custom_Timeout is
                return;
             end if;
 
-            if Timeout = 0 then
+            if Timeout <= 0 then
                Set_Error_Msg (Data, -"Cannot register a timeout for 0 ms.");
                return;
             end if;
 
             D := new Custom_Timeout;
+            D.Instance := Inst;
             D.Action := Act;
-
             D.Handler := Action_Timeout.Add
               (Guint32 (Timeout), Callback'Access, D);
 
