@@ -92,6 +92,13 @@ package GVD.Dialogs is
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the call stack window associated with a given tab.
 
+   procedure Highlight_Stack_Frame
+     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Frame    : Natural);
+   --  Highlights a specific frame in the call stack list for a specific
+   --  debugger.
+   --  Frame 1 is the first one visible in the list.
+
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
       Main_Window                : Gtk_Window;
