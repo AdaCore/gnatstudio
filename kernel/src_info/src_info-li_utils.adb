@@ -14,6 +14,13 @@ package body Src_Info.LI_Utils is
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point);
 
+   function Find_Declaration_Internal (
+      Declaration_Info_Ptr    : in E_Declaration_Info_List;
+      Symbol_Name             : in String;
+      Location                : in Point) return E_Declaration_Info_List;
+
+   function eq (str1 : String; str2 : String) return Boolean;
+
    -------------------------------------------------------------------------
 
    procedure Insert_Declaration (
@@ -173,40 +180,78 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Reference (
       Declaration_Info        : in out E_Declaration_Info_List;
+      File                    : in LI_File_Ptr;
       Source_Filename         : in String;
       Location                : in Point;
       Kind                    : Reference_Kind)
    is
-      pragma Unreferenced (Declaration_Info);
-      pragma Unreferenced (Source_Filename);
-      pragma Unreferenced (Location);
-      pragma Unreferenced (Kind);
+      R_Ptr : E_Reference_List;
    begin
-      null;
+      if R_Ptr = null then
+         Declaration_Info.Value.References := new E_Reference_Node;
+         Declaration_Info.Value.References.Next := null;
+         R_Ptr := Declaration_Info.Value.References;
+      else
+         R_Ptr := Declaration_Info.Value.References;
+         loop
+            exit when R_Ptr.Next = null;
+            R_Ptr := R_Ptr.Next;
+         end loop;
+         R_Ptr.Next := new E_Reference_Node;
+         R_Ptr.Next.Next := null;
+         R_Ptr := R_Ptr.Next;
+      end if;
+      R_Ptr.Value :=
+         (Location => (File => (LI => File,
+                                Part => Unit_Body,
+                                Source_Filename =>
+                                              new String'(Source_Filename)),
+                       Line => Location.Line,
+                       Column => Location.Column),
+          Kind => Kind);
    end Insert_Reference;
 
    function Find_Declaration (
       File                    : in LI_File_Ptr;
-      Name                    : in String;
-      Location                : in Point) return E_Declaration_Info_List
-   is
-      pragma Unreferenced (File);
-      pragma Unreferenced (Name);
-      pragma Unreferenced (Location);
+      Symbol_Name             : in String;
+      Location                : in Point) return E_Declaration_Info_List is
    begin
-      return null;
+      if (File = No_LI_File)
+            or else (File.LI.Body_Info = null)
+            or else (File.LI.Body_Info.Declarations = null) then
+         raise Declaration_Not_Found;
+      end if;
+      return Find_Declaration_Internal (File.LI.Body_Info.Declarations,
+                                        Symbol_Name,
+                                        Location);
    end Find_Declaration;
 
    function Find_Dependency_Declaration (
       File                    : in LI_File_Ptr;
-      Name                    : in String;
+      Symbol_Name             : in String;
+      Filename                : in String;
       Location                : in Point) return E_Declaration_Info_List
    is
-      pragma Unreferenced (File);
-      pragma Unreferenced (Name);
-      pragma Unreferenced (Location);
+      Dep_Ptr : Dependency_File_Info_List;
    begin
-      return null;
+      if (File = No_LI_File)
+            or else (File.LI.Dependencies_Info = null) then
+         raise Declaration_Not_Found;
+      end if;
+      Dep_Ptr := File.LI.Dependencies_Info;
+      loop
+         if Dep_Ptr = null then
+            raise Declaration_Not_Found;
+         end if;
+         exit when eq (Dep_Ptr.Value.File.Source_Filename.all, Filename);
+         Dep_Ptr := Dep_Ptr.Next;
+      end loop;
+      if Dep_Ptr.Value.Declarations = null then
+         raise Declaration_Not_Found;
+      end if;
+      return Find_Declaration_Internal (Dep_Ptr.Value.Declarations,
+                                        Symbol_Name,
+                                        Location);
    end Find_Dependency_Declaration;
 
    -------------------------------------------------------------------------
@@ -268,6 +313,37 @@ package body Src_Info.LI_Utils is
                     Column => Rename_Location.Column);
       end if;
    end Insert_Declaration_Internal;
+
+   function Find_Declaration_Internal (
+      Declaration_Info_Ptr    : in E_Declaration_Info_List;
+      Symbol_Name             : in String;
+      Location                : in Point) return E_Declaration_Info_List
+   is
+      D_Ptr : E_Declaration_Info_List;
+   begin
+      D_Ptr := Declaration_Info_Ptr;
+      loop
+         exit when D_Ptr = null;
+         if eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name)
+           and then (D_Ptr.Value.Declaration.Location.Line = Location.Line)
+           and then (D_Ptr.Value.Declaration.Location.Column = Location.Column)
+         then
+            return D_Ptr;
+         end if;
+         D_Ptr := D_Ptr.Next;
+      end loop;
+      raise Declaration_Not_Found;
+   end Find_Declaration_Internal;
+
+   function eq (str1 : String; str2 : String) return Boolean is
+   begin
+      if str1'Length /= str2'Length then
+         return False;
+      else
+         return str1 = str2;
+      end if;
+   end eq;
+
    -------------------------------------------------------------------------
 
 end Src_Info.LI_Utils;
