@@ -16,4 +16,8 @@ project Vsearch is
       for Default_Switches ("Ada") use ("-g", "-m");
    end Builder;
 
+   package Linker is
+      for Default_Switches ("Ada") use ("--LINK=../../glide/obj/gpslink");
+   end Linker;
+
 end Vsearch;
