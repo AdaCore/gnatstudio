@@ -28,6 +28,7 @@
 
 with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page; use Glide_Page;
+with Gtk.Box; use Gtk.Box;
 with Gtkada.MDI; use Gtkada.MDI;
 with Src_Editor_Box; use Src_Editor_Box;
 with GVD.Process; use GVD.Process;
@@ -36,6 +37,51 @@ package body Glide_Kernel.Editor is
 
    Default_Editor_Width  : constant := 400;
    Default_Editor_Height : constant := 400;
+
+   type Source_Box_Record is new Gtk_Hbox_Record with record
+      Editor : Source_Editor_Box;
+   end record;
+   type Source_Box is access all Source_Box_Record'Class;
+
+   procedure Gtk_New
+     (Box    : out Source_Box;
+      Editor : Source_Editor_Box);
+   --  Create a new source box.
+
+   procedure Initialize
+     (Box    : access Source_Box_Record'Class;
+      Editor : Source_Editor_Box);
+   --  Internal initialization function.
+
+   function Open_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : String) return Source_Editor_Box;
+   --  Open a file and return the handle associated with it.
+   --  ??? Need more comments.
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Box    : out Source_Box;
+      Editor : Source_Editor_Box) is
+   begin
+      Box := new Source_Box_Record;
+      Initialize (Box, Editor);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Box    : access Source_Box_Record'Class;
+      Editor : Source_Editor_Box) is
+   begin
+      Gtk.Box.Initialize_Hbox (Box);
+      Box.Editor := Editor;
+   end Initialize;
 
    ----------------
    -- New_Editor --
@@ -90,9 +136,9 @@ package body Glide_Kernel.Editor is
    -- Open_File --
    ---------------
 
-   procedure Open_File
+   function Open_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : String)
+      File   : String) return Source_Editor_Box
    is
       Top      : constant Glide_Window := Glide_Window (Kernel.Main_Window);
       MDI      : constant MDI_Window :=
@@ -104,7 +150,14 @@ package body Glide_Kernel.Editor is
 
    begin
       if File = "" then
-         return;
+         return null;
+      end if;
+
+      Child := Find_MDI_Child (MDI, File);
+
+      if Child /= null then
+         Raise_Child (Child);
+         return Source_Box (Get_Widget (Child)).Editor;
       end if;
 
       Gtk_New (Editor, Top.Kernel);
@@ -114,6 +167,17 @@ package body Glide_Kernel.Editor is
       Child := Put (MDI, Box);
       Set_Title (Child, File);
       Load_File (Editor, File, Success => Success);
+
+      return Editor;
+   end Open_File;
+
+   procedure Open_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : String)
+   is
+      Editor  : Source_Editor_Box;
+   begin
+      Editor := Open_File (Kernel, File);
    end Open_File;
 
    -----------
@@ -124,9 +188,13 @@ package body Glide_Kernel.Editor is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : String;
       Line   : Natural := 0;
-      Column : Natural := 0) is
+      Column : Natural := 0)
+   is
+      Edit : Source_Editor_Box;
    begin
-      Open_File (Kernel, File);
+      Edit := Open_File (Kernel, File);
+      Set_Cursor_Location (Edit, Line, Column);
+      Highlight_Line (Edit, Line);
    end Go_To;
 
 end Glide_Kernel.Editor;
