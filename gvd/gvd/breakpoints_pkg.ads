@@ -85,9 +85,23 @@ package Breakpoints_Pkg is
    end record;
    type Breakpoints_Access is access all Breakpoints_Record'Class;
 
+   type Breakpoint_Descriptor is record
+      null;
+   end record;
+
+   procedure Breakpoint_Editor (Descriptor : out Breakpoint_Descriptor);
+   --  Open a breakpoint editor and launch a main loop until the ok or cancel
+   --  button has been pressed.
+   --  Return the breakpoint descriptor.
+   --  Note that this is your responsibility to free the memory associated with
+   --  Descriptor, using Free below.
+
+   procedure Free (Descriptor : in out Breakpoint_Descriptor);
+   --  Free the dynamic memory associated with Descriptor.
+
+private
+
    procedure Gtk_New (Breakpoints : out Breakpoints_Access);
    procedure Initialize (Breakpoints : access Breakpoints_Record'Class);
-
-   Breakpoints : Breakpoints_Access;
 
 end Breakpoints_Pkg;

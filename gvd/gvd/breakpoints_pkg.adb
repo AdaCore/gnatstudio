@@ -26,6 +26,8 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
+with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
+with Gtk.Main;
 
 package body Breakpoints_Pkg is
 
@@ -50,8 +52,8 @@ begin
    Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
    Set_Title (Breakpoints, -"Breakpoints");
    Set_Policy (Breakpoints, True, True, False);
-   Set_Position (Breakpoints, Win_Pos_None);
-   Set_Modal (Breakpoints, False);
+   Set_Position (Breakpoints, Win_Pos_Center);
+   Set_Modal (Breakpoints, True);
 
    Gtk_New_Vbox (Breakpoints.Vbox1, False, 0);
    Add (Breakpoints, Breakpoints.Vbox1);
@@ -242,6 +244,9 @@ begin
 
    Gtk_New (Breakpoints.Advanced_Button, -"Advanced properties...");
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Advanced_Button, False, False, 0);
+   Button_Callback.Connect
+     (Breakpoints.Advanced_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Advanced_Bp_Clicked'Access));
    Set_Border_Width (Breakpoints.Advanced_Button, 6);
 
    Gtk_New_Hbox (Breakpoints.Hbox1, False, 0);
@@ -282,14 +287,23 @@ begin
 
    Gtk_New (Breakpoints.Add_Button, -"Add");
    Set_Flags (Breakpoints.Add_Button, Can_Default);
+   Button_Callback.Connect
+     (Breakpoints.Add_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Add_Bp_Clicked'Access));
    Add (Breakpoints.Vbuttonbox1, Breakpoints.Add_Button);
 
    Gtk_New (Breakpoints.Remove_Button, -"Remove");
    Set_Flags (Breakpoints.Remove_Button, Can_Default);
+   Button_Callback.Connect
+     (Breakpoints.Remove_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Remove_Bp_Clicked'Access));
    Add (Breakpoints.Vbuttonbox1, Breakpoints.Remove_Button);
 
    Gtk_New (Breakpoints.Remove_All_Button, -"Remove All");
    Set_Flags (Breakpoints.Remove_All_Button, Can_Default);
+   Button_Callback.Connect
+     (Breakpoints.Remove_All_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Remove_All_Bp_Clicked'Access));
    Add (Breakpoints.Vbuttonbox1, Breakpoints.Remove_All_Button);
 
    Gtk_New_Hseparator (Breakpoints.Hseparator1);
@@ -304,12 +318,33 @@ begin
 
    Gtk_New (Breakpoints.Ok_Button, -"OK");
    Set_Flags (Breakpoints.Ok_Button, Can_Default);
+   Button_Callback.Connect
+     (Breakpoints.Ok_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Ok_Bp_Clicked'Access));
    Add (Breakpoints.Hbuttonbox4, Breakpoints.Ok_Button);
 
    Gtk_New (Breakpoints.Cancel_Button, -"Cancel");
    Set_Flags (Breakpoints.Cancel_Button, Can_Default);
+   Button_Callback.Connect
+     (Breakpoints.Cancel_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Cancel_Bp_Clicked'Access));
    Add (Breakpoints.Hbuttonbox4, Breakpoints.Cancel_Button);
 
 end Initialize;
+
+procedure Breakpoint_Editor (Descriptor : out Breakpoint_Descriptor) is
+   Editor : Breakpoints_Access;
+
+begin
+   Gtk_New (Editor);
+   Show_All (Editor);
+   Gtk.Main.Main;
+   Destroy (Editor);
+end Breakpoint_Editor;
+
+procedure Free (Descriptor : in out Breakpoint_Descriptor) is
+begin
+   null;
+end Free;
 
 end Breakpoints_Pkg;
