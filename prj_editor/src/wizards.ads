@@ -91,6 +91,7 @@ package Wizards is
      (Wiz      : access Wizard_Record;
       Page_Num : Positive;
       Toc      : String := "";
+      Title    : String := "";
       Level    : Integer := 1);
    --  Set the table-of-contents entry to be used for the Page_Num-th page in
    --  the wizard.

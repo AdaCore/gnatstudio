@@ -177,12 +177,14 @@ package body Wizards is
       --  The Next button
       Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
+      Set_Flags (Wiz.Next, Can_Default);
 
       --  The Cancel and Apply button
       Wiz.Finish :=
         Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
       Wiz.Cancel :=
         Gtk_Button (Add_Button (Wiz, Stock_Cancel, Gtk_Response_Cancel));
+      Set_Flags (Wiz.Finish, Can_Default);
 
       Wiz.Current_Page := 1;
       Widget_Callback.Object_Connect
@@ -261,9 +263,11 @@ package body Wizards is
      (Wiz      : access Wizard_Record;
       Page_Num : Positive;
       Toc      : String := "";
+      Title    : String := "";
       Level    : Integer := 1)
    is
       Req : Gtk_Requisition;
+      Old : String_List_Access;
    begin
       pragma Assert (Page_Num <= Wiz.Toc'Last);
 
@@ -288,6 +292,17 @@ package body Wizards is
       end if;
 
       Wiz.Has_Toc := True;
+
+      if Page_Num > Wiz.Titles'Length then
+         Old := Wiz.Titles;
+         Wiz.Titles := new GNAT.OS_Lib.String_List (Old'First .. Page_Num);
+         Wiz.Titles (Old'Range) := Old.all;
+         Free (Old);
+      else
+         Free (Wiz.Titles (Page_Num));
+      end if;
+
+      Wiz.Titles (Page_Num) := new String' (Title);
    end Set_Toc;
 
    --------------
@@ -412,9 +427,11 @@ package body Wizards is
       if Wiz.Current_Page = Wiz.Pages'Last then
          Show (Finish_Button (Wiz));
          Hide (Next_Button (Wiz));
+         Grab_Default (Finish_Button (Wiz));
       else
          Hide (Finish_Button (Wiz));
          Show (Next_Button (Wiz));
+         Grab_Default (Next_Button (Wiz));
       end if;
    end Set_Current_Page;
 
