@@ -122,7 +122,7 @@ package body Src_Editor_Buffer.Blocks is
          --  ??? This needs to be optimized.
 
          if (not Block_Folded)
-           and then Current.Category in Enclosing_Entity_Category
+           and then Current.Category in Subprogram_Category
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
             declare
