@@ -25,27 +25,36 @@ with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with GUI_Utils;                   use GUI_Utils;
 with VFS;                         use VFS;
+with Pixmaps_IDE;                 use Pixmaps_IDE;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Event;                   use Gdk.Event;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
+with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Glide_Intl;                  use Glide_Intl;
 with Entities;                    use Entities;
+with Projects;                    use Projects;
 with Language;                    use Language;
 with Language_Handlers.Glide;     use Language_Handlers.Glide;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
+with Traces;                      use Traces;
 
 package body Outline_View is
+
+   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
 
@@ -66,9 +75,11 @@ package body Outline_View is
    --  Raise the existing explorer, or open a new one.
 
    type Outline_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Tree   : Gtk_Tree_View;
-      Kernel : Kernel_Handle;
-      File   : VFS.Virtual_File;
+      Tree      : Gtk_Tree_View;
+      Kernel    : Kernel_Handle;
+      File      : VFS.Virtual_File;
+      Icon      : Gdk_Pixbuf;
+      File_Icon : Gdk_Pixbuf;
    end record;
    type Outline_View_Access is access all Outline_View_Record'Class;
 
@@ -100,6 +111,82 @@ package body Outline_View is
      (Category : Language.Language_Category) return Language.Language_Category;
    --  Return Cat_Unknown if the category should be filtered out, and the
    --  name of the category to use otherwise.
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create the current context
+
+   function Outline_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access;
+   --  Context factory when creating contextual menus
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      Outline : constant Outline_View_Access := Outline_View_Access (Child);
+   begin
+      return Outline_Context_Factory
+        (Kernel       => Kernel,
+         Event_Widget => Outline.Tree,
+         Object       => Outline,
+         Event        => null,
+         Menu         => null);
+   end Default_Factory;
+
+   -----------------------------
+   -- Outline_Context_Factory --
+   -----------------------------
+
+   function Outline_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      Context : Entity_Selection_Context_Access;
+      Iter    : Gtk_Tree_Iter;
+      Outline : constant Outline_View_Access := Outline_View_Access (Object);
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Outline.Tree));
+      Path      : Gtk_Tree_Path;
+   begin
+      Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
+
+      if Iter /= Null_Iter then
+         Path := Get_Path (Model, Iter);
+         if not Path_Is_Selected (Get_Selection (Outline.Tree), Path) then
+            Set_Cursor (Outline.Tree, Path, null, False);
+         end if;
+         Path_Free (Path);
+
+         Context := new Entity_Selection_Context;
+         Set_Entity_Information
+           (Context       => Context,
+            Entity_Name   => Get_String (Model, Iter, 5),
+            Entity_Column => Integer (Get_Int (Model, Iter, 2)));
+         Set_File_Information
+           (Context => Context,
+            Project => Projects.No_Project,
+            File    => Outline.File,
+            Line    => Integer (Get_Int (Model, Iter, 1)));
+
+         return Selection_Context_Access (Context);
+      else
+         return null;
+      end if;
+   end Outline_Context_Factory;
 
    ---------------------
    -- Filter_Category --
@@ -187,9 +274,9 @@ package body Outline_View is
             Path := Get_Path (Model, Iter);
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);
-            Line       := Get_Int (Model, Iter, 1);
-            Column     := Get_Int (Model, Iter, 2);
-            Column_End := Get_Int (Model, Iter, 3);
+            Line       := Get_Int (Model, Iter, 2);
+            Column     := Get_Int (Model, Iter, 3);
+            Column_End := Get_Int (Model, Iter, 4);
 
             if Line /= -1 then
                Open_File_Editor
@@ -223,15 +310,24 @@ package body Outline_View is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
       Outline.Tree := Create_Tree_View
-        (Column_Types       => (1 => GType_String,
-                                2 => GType_Int,
-                                3 => GType_Int,
-                                4 => GType_Int),
-         Column_Names       => (1 => null),
+        (Column_Types       => (1 => Gdk.Pixbuf.Get_Type,
+                                2 => GType_String,
+                                3 => GType_Int,     --  line
+                                4 => GType_Int,     --  column
+                                5 => GType_Int,     --  column_end
+                                6 => GType_String), --  entity name
+         Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
-         Initial_Sort_On    => 1,
+         Initial_Sort_On    => 2,
          Selection_Mode     => Gtk.Enums.Selection_None);
       Add (Scrolled, Outline.Tree);
+
+      Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
+      Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
+
+      Modify_Font
+        (Outline.Tree,
+         Get_Pref_Font (Kernel, Glide_Kernel.Preferences.Default_Style));
 
       Return_Callback.Object_Connect
         (Outline.Tree,
@@ -239,6 +335,13 @@ package body Outline_View is
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Outline,
          After       => False);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Outline.Tree,
+         Object          => Outline,
+         ID              => Outline_View_Module,
+         Context_Func    => Outline_Context_Factory'Access);
    end Gtk_New;
 
    -------------
@@ -251,13 +354,14 @@ package body Outline_View is
    is
       Model      : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Outline.Tree));
-      Iter       : Gtk_Tree_Iter;
+      Iter, Root : Gtk_Tree_Iter;
       Lang       : Language_Access;
       Handler    : LI_Handler;
       Languages  : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Outline.Kernel));
       Constructs : Construct_List;
    begin
+      Trace (Me, "MANU: Refresh outline");
       Push_State (Outline.Kernel, Busy);
       Clear (Model);
 
@@ -266,11 +370,17 @@ package body Outline_View is
       Handler := Get_LI_Handler_From_File (Languages, File);
       Lang := Get_Language_From_File (Languages, File);
 
+      Append (Model, Root, Null_Iter);
+      Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
+      Set (Model, Root, 1, "File: " & Base_Name (File));
+      Set (Model, Root, 2, -1);
+
       if Handler = null or Lang = null then
-         Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0, "No outline available");
-         Set (Model, Iter, 1, -1);
+         Append (Model, Iter, Root);
+         Set (Model, Iter, 0, C_Proxy (Outline.Icon));
+         Set (Model, Iter, 1, "No outline available");
          Set (Model, Iter, 2, -1);
+         Set (Model, Iter, 3, -1);
       else
          Parse_File_Constructs
            (Handler, Languages, File, Constructs);
@@ -280,21 +390,25 @@ package body Outline_View is
                if Filter_Category (Constructs.Current.Category) /=
                  Cat_Unknown
                then
-                  Append (Model, Iter, Null_Iter);
-                  Set (Model, Iter, 0,
-                       Entity_Name_Of (Constructs.Current.all));
+                  Append (Model, Iter, Root);
+                  Set (Model, Iter, 0, C_Proxy (Outline.Icon));
                   Set (Model, Iter, 1,
-                       Gint (Constructs.Current.Sloc_Entity.Line));
+                       Entity_Name_Of (Constructs.Current.all));
                   Set (Model, Iter, 2,
-                       Gint (Constructs.Current.Sloc_Entity.Column));
+                       Gint (Constructs.Current.Sloc_Entity.Line));
                   Set (Model, Iter, 3,
+                       Gint (Constructs.Current.Sloc_Entity.Column));
+                  Set (Model, Iter, 4,
                        Gint (Constructs.Current.Sloc_Entity.Column
                              + Constructs.Current.Name'Length));
+                  Set (Model, Iter, 5, Constructs.Current.Name.all);
                end if;
             end if;
             Constructs.Current := Constructs.Current.Next;
          end loop;
       end if;
+
+      Expand_All (Outline.Tree);
 
       Pop_State (Outline.Kernel);
    end Refresh;
@@ -393,6 +507,7 @@ package body Outline_View is
       Register_Module
         (Module      => Outline_View_Module,
          Module_Name => "Outline_View",
+         Default_Context_Factory => Default_Factory'Access,
          Kernel      => Kernel);
 
       Register_Menu
