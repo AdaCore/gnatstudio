@@ -1527,6 +1527,7 @@ package body Project_Explorers is
          declare
             Prj  : Project_Id;
             Obj  : String_Id;
+            pragma Unreferenced (Obj);
             Dir  : constant String := Get_Directory_From_Node (Explorer, N);
 
          begin
@@ -1810,11 +1811,12 @@ package body Project_Explorers is
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
-      pragma Unreferenced (Kernel);
       T : constant Project_Explorer := Project_Explorer (Explorer);
       Iter         : Gtk_Tree_Iter;
       Dummy        : Boolean;
       Path         : Gtk_Tree_Path;
+      pragma Unreferenced (Kernel, Dummy);
+
    begin
       --  No project view => Clean up the tree
       if Get_Project_View (T.Kernel) = No_Project then
