@@ -530,25 +530,49 @@ package body Items.Classes is
 
    function Structurally_Equivalent
      (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
-      return Boolean is
+      return Boolean
+   is
+      Result : Boolean;
    begin
-      if not (Item2.all in Class_Type'Class)
-        or else Item1.Num_Ancestors /= Class_Type_Access (Item2).Num_Ancestors
-        or else not Structurally_Equivalent
-        (Item1.Child, Class_Type_Access (Item2).Child)
-      then
+      if Item2.all not in Class_Type'Class then
          return False;
       end if;
 
-      for A in Item1.Ancestors'Range loop
-         if not Structurally_Equivalent
-           (Item1.Ancestors (A), Class_Type_Access (Item2).Ancestors (A))
-         then
-            return False;
-         end if;
-      end loop;
+      Result := Item1.Num_Ancestors = Class_Type_Access (Item2).Num_Ancestors
+        and then Structurally_Equivalent
+        (Item1.Child, Class_Type_Access (Item2).Child);
 
-      return True;
+      if Result then
+         for A in Item1.Ancestors'Range loop
+            Result := Result
+              and then Structurally_Equivalent
+              (Item1.Ancestors (A), Class_Type_Access (Item2).Ancestors (A));
+         end loop;
+      end if;
+
+      --  We should consider two classes to be structurally equivalent if one
+      --  of them is an ancestor for the other, to handle the following case:
+      --    - type A is access Root'Class;
+      --  If a structure contains a field of type A, and there is already an
+      --  item of type Child (extending Root), it is possible that the type
+      --  pointed two is the same.
+      --
+      --  We only need to test the first parent, since this is the only one
+      --  whose data will have the same address.
+
+      if not Result then
+         if Item1.Num_Ancestors /= 0 then
+            Result := Result or else Structurally_Equivalent
+              (Item1.Ancestors (1), Item2);
+         end if;
+
+         if Class_Type_Access (Item2).Num_Ancestors /= 0 then
+            Result := Result or else Structurally_Equivalent
+              (Item1, Class_Type_Access (Item2).Ancestors (1));
+         end if;
+      end if;
+
+      return Result;
    end Structurally_Equivalent;
 
 end Items.Classes;
