@@ -250,8 +250,7 @@ package body GVD.Color_Combo is
       if Pixmap = null then
          Create_From_Xpm_D
            (Val,
-            Window      => null,
-            Colormap    => Get_System,
+            Window      => Get_Window (Combo),
             Mask        => Mask,
             Transparent => Null_Color,
             Data        => paint_xpm);
