@@ -196,8 +196,9 @@ package body Odd.Asm_Editors is
          Editor.Cache := new Cache_Data'
            (Low  => Low_Range,
             High => High_Range,
-            Data => S,
+            Data => new String'(Do_Tab_Expansion (S.all)),
             Next => Editor.Cache);
+         Free (S);
          Editor.Current_Range := Editor.Cache;
       end if;
 
@@ -332,7 +333,7 @@ package body Odd.Asm_Editors is
 
       Highlight_Range
         (Editor, Gint (Pos_Start), Gint (Pos_End),
-         Gint (Pos_Start), Line => 0,
+         Gint (Pos_Start - 1), Line => 0,
          Fore => Editor.Highlight_Color);
 
       Thaw (Get_Buttons (Editor));
