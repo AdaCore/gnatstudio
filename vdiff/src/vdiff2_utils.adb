@@ -38,12 +38,19 @@ package body Vdiff2_Utils is
    Remove_Style  : constant String  := "Remove_diff";
    Change_Style  : constant String  := "Change_diff";
 
+   function Add_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : String;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1) return String;
+
    procedure Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
-      Pos   : Natural;
-      Style : String := "";
-      Line  : String := "");
+      File   : String;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1);
    --  Add a line constaining Line in editor,at line Pos,
    --  using Style for color.
 
@@ -51,7 +58,8 @@ package body Vdiff2_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : String;
       Pos   : Natural;
-      Style : String := "");
+      Style : String := "";
+      Number : Natural := 1);
    --  Color a line constaining Line in editor,at line Pos,
    --  using Style for color.
 
@@ -111,8 +119,6 @@ package body Vdiff2_Utils is
    is
       pragma Unreferenced (File3);
       Link          : Diff_Occurrence_Link := Diff;
-      Line1         : Natural := 1;
-      Line2         : Natural := 1;
       Offset1       : Natural;
       Offset2       : Natural;
       Args_edit     : Argument_List := (1 => new String'(File1));
@@ -127,66 +133,47 @@ package body Vdiff2_Utils is
       while Link /= null loop
          case Link.Action is
             when Append =>
-               for J in Link.Range2.First .. Link.Range2.Last - 1 loop
-                  Add_Line (Kernel, File1, J, Old_Style);
-               end loop;
-
-               for J in Link.Range2.First .. Link.Range2.Last - 1 loop
-                  Highlight_Line (Kernel, File2, J, Append_Style);
-               end loop;
-
-               Line1 := Link.Range1.First;
-               Line2 := Link.Range2.Last;
-
+               Link.Range1.Mark := new String'
+                 (Add_Line (Kernel, File1, Link.Range1.First, Old_Style,
+                          Link.Range2.Last - Link.Range2.First));
+               Highlight_Line (Kernel, File2, Link.Range2.First,
+                               Append_Style,
+                               Link.Range2.Last - Link.Range2.First);
+               Link.Range2.Mark := new String'
+                 (Mark_Diff_Block (Kernel, File2, Link.Range2.First));
             when Change =>
                Offset1 := Link.Range1.Last - Link.Range1.First;
                Offset2 := Link.Range2.Last - Link.Range2.First;
-
-               for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Highlight_Line (Kernel, File1, J, Old_Style);
-               end loop;
-
-               for J in Link.Range2.First .. Link.Range2.Last - 1 loop
-                  Highlight_Line (Kernel, File2, J, Change_Style);
-               end loop;
+               Highlight_Line (Kernel, File1, Link.Range1.First,
+                               Old_Style, Offset1);
+               Highlight_Line (Kernel, File2, Link.Range2.First,
+                               Change_Style, Offset2);
 
                if Offset1 < Offset2 then
-                  for J in Offset1 .. Offset2 - 1 loop
-                     Add_Line (Kernel, File1,
-                               Link.Range1.First + J, Old_Style);
-                  end loop;
+                  Add_Line (Kernel, File1, Link.Range1.First, Old_Style,
+                            Offset2 - Offset1);
                elsif Offset1 > Offset2 then
-                  for J in Offset2 .. Offset1 - 1 loop
-                     Add_Line (Kernel, File2,
-                               Link.Range2.First + J, Change_Style);
-                  end loop;
+                  Add_Line (Kernel, File2, Link.Range2.First, Change_Style,
+                            Offset1 - Offset2);
                end if;
-
-               Line1 := Link.Range1.Last;
-               Line2 := Link.Range2.Last;
+               Link.Range1.Mark := new String'
+                 (Mark_Diff_Block (Kernel, File1, Link.Range1.First));
+               Link.Range2.Mark := new String'
+                 (Mark_Diff_Block (Kernel, File2, Link.Range2.First));
 
             when Delete =>
-               for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Highlight_Line (Kernel, File1, J, Old_Style);
-               end loop;
-
-               for J in Link.Range1.First .. Link.Range1.Last - 1 loop
-                  Add_Line (Kernel, File2, J, Remove_Style);
-               end loop;
-
-               Line1 := Link.Range1.Last;
-               Line2 := Link.Range2.First;
+               Highlight_Line (Kernel, File1, Link.Range1.First, Old_Style,
+                               Link.Range1.Last - Link.Range1.First);
+               Link.Range2.Mark := new String'
+                 (Add_Line (Kernel, File2, Link.Range2.First, Remove_Style,
+                            Link.Range1.Last - Link.Range1.First));
+               Link.Range1.Mark := new String'
+                 (Mark_Diff_Block (Kernel, File1, Link.Range1.First));
             when others =>
                null;
          end case;
-         Link.Range1.Mark := new String'
-           (Mark_Diff_Block (Kernel, File1, Link.Range1.First));
-         Link.Range2.Mark := new String'
-           (Mark_Diff_Block (Kernel, File2, Link.Range2.First));
          Link := Link.Next;
       end loop;
-      Line1 := Line2;
-      Line2 := Line1;
    end Show_Differences;
 
    ----------------------
@@ -246,27 +233,34 @@ package body Vdiff2_Utils is
    -- Add_Line --
    --------------
 
-   procedure Add_Line
+   function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
-      Pos   : Natural;
-      Style : String := "";
-      Line  : String := "")
+      File   : String;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1) return String
    is
       Args_Line : Argument_List := (1 => new String'(File),
                                     2 => new String'(Image (Pos)),
-                                    3 => new String'("1"),
-                                    4 => new String'(Line & ASCII.LF),
-                                    5 => new String'("0"),
-                                    6 => new String'("0"));
-      Args_Highlight : Argument_List := (1 => new String'(File),
-                                         2 => new String'(Style),
-                                         3 => new String'(Image (Pos)));
+                                    3 => new String'(Image (Number)),
+                                    4 => new String'(Style));
+      Res : constant String :=  Execute_GPS_Shell_Command
+                       (Kernel, "add_blank_lines", Args_Line);
    begin
-      Execute_GPS_Shell_Command (Kernel, "replace_text", Args_Line);
-      Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
       Free (Args_Line);
-      Free (Args_Highlight);
+      return Res;
+   end Add_Line;
+
+   procedure Add_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : String;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1) is
+      Dummy : constant String := Add_Line (Kernel, File, Pos, Style, Number);
+      pragma Unreferenced (Dummy);
+   begin
+      null;
    end Add_Line;
 
    --------------------
@@ -277,13 +271,18 @@ package body Vdiff2_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : String;
       Pos   : Natural;
-      Style : String := "")
+      Style : String := "";
+      Number : Natural := 1)
    is
       Args_Highlight : Argument_List := (1 => new String'(File),
                                          2 => new String'(Style),
-                                         3 => new String'(Image (Pos)));
+                                         3 => null);
    begin
-      Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
+      for J in 1 .. Number loop
+         Args_Highlight (3) := new String'(Image (Pos + J - 1));
+         Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
+         Free (Args_Highlight (3));
+      end loop;
       Free (Args_Highlight);
    end Highlight_Line;
 
