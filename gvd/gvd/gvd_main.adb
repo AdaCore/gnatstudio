@@ -240,24 +240,28 @@ begin
       --  ??? The following lines imply that program file is necessarily
       --  the last argument on the command line.
 
-      if Argument_Count /= 0 then
-         Program.Program := new String' (List (Argument_Count).all);
-      else
-         Program.Program := new String' ("");
-      end if;
+      --  if Argument_Count /= 0 then
+      --     Program.Program := new String' (List (Argument_Count).all);
+      --  else
+      --     Program.Program := new String' ("");
+      --  end if;
+
       Program.Remote_Host := new String' ("");
       Program.Remote_Target := new String' ("");
       Program.Protocol := new String' ("");
       Process_Tab.Descriptor := Program;
+
    else
       Process_Tab := Create_Debugger
         (Main_Debug_Window, Debug_Type, "", List (1 .. Index),
          Remote_Host => Remote_Host.all);
+
       if Argument_Count /= 0 then
          Program.Program := new String' (List (Argument_Count).all);
       else
          Program.Program := new String' ("");
       end if;
+
       Program.Remote_Host := new String' (Remote_Host.all);
       Program.Remote_Target := new String' ("");
       Program.Protocol := new String' ("");
