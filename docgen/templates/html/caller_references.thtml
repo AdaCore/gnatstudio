@@ -3,11 +3,11 @@
 @@--
 @@-- BLOCK       : block of text containing the references descriptions. This
 @@--               block has been rendered with another set of templates.
-@@-- INDENT      : spaces to be used for the indentation
+@@-- INDENT      : number of spaces to be used for the indentation
 @@--
 <TABLE BGCOLOR="white" WIDTH="100%">
 <TR><TD>
-<TR><TD><PRE>@_INDENT_@<B>Subprogram is called by:</B></PRE></TD>
+<TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>Subprogram is called by:</B></PRE></TD>
 <TR>
 @_BLOCK_@
 </TD></TR>

@@ -1,7 +1,7 @@
 @@--
 @@-- This template is used to output tagged types.
 @@--
-@@-- INDENT        : spaces to be used for the indentation
+@@-- INDENT        : number of spaces to be used for the indentation
 @@-- HAS_PARENTS   : TRUE if the type has a parent
 @@-- P_NAME        : parent's name
 @@-- P_REF_FILE    : parent's reference file (can be used in a link)
@@ -19,35 +19,35 @@
 <TR><TD>
 
 @@IF@@ @_HAS_PARENTS_@
-<TR><TD><PRE>@_INDENT_@<B>Parents</B></PRE></TD></TR>
-@@TABLE@@
-<TR><TD><PRE>@_INDENT_@
-@@IF@@ @_P_REF_FILE_@
-<A HREF="@_P_REF_FILE_@#@_P_DECL_LINE_@" TARGET="main">@_P_NAME_@</a>
+   <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>Parents</B></PRE></TD></TR>
+   @@TABLE@@
+      <TR><TD><PRE>@_REPEAT(" "):INDENT_@
+      @@IF@@ @_P_REF_FILE_@
+         <A HREF="@_P_REF_FILE_@#@_P_DECL_LINE_@" TARGET="main">@_P_NAME_@</a>
+      @@ELSE@@
+         @_P_NAME_@
+      @@END_IF@@
+      at&nbsp; @_P_DECL_FILE_@&nbsp;@_P_DECL_LINE_@:@_P_DECL_COLUMN_@
+      </PRE></TD><TR>
+   @@END_TABLE
 @@ELSE@@
-@_P_NAME_@
-@@END_IF@@
-at&nbsp; @_P_DECL_FILE_@&nbsp;@_P_DECL_LINE_@:@_P_DECL_COLUMN_@
-</PRE></TD><TR>
-@@END_TABLE
-@@ELSE@@
-<TR><TD><PRE>@_INDENT_@<B>No parent</B></PRE></TD></TR>
+   <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>No parent</B></PRE></TD></TR>
 @@END_IF@@
 
 @@IF@@ @_HAS_CHILDREN_@
-<TR><TD><PRE>@_INDENT_@<B>Children</B></PRE></TD></TR>
-@@TABLE@@
-<TR><TD><PRE>@_INDENT_@
-@@IF@@ @_C_REF_FILE_@
-<A HREF="@_C_REF_FILE_@#@_C_DECL_LINE_@" TARGET="main">@_C_NAME_@</a>
+   <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>Children</B></PRE></TD></TR>
+   @@TABLE@@
+      <TR><TD><PRE>@_REPEAT(" "):INDENT_@
+      @@IF@@ @_C_REF_FILE_@
+         <A HREF="@_C_REF_FILE_@#@_C_DECL_LINE_@" TARGET="main">@_C_NAME_@</a>
+      @@ELSE@@
+         @_C_NAME_@
+      @@END_IF@@
+      at&nbsp; @_C_DECL_FILE_@&nbsp;@_C_DECL_LINE_@:@_C_DECL_COLUMN_@
+      </PRE></TD><TR>
+   @@END_TABLE
 @@ELSE@@
-@_C_NAME_@
-@@END_IF@@
-at&nbsp; @_C_DECL_FILE_@&nbsp;@_C_DECL_LINE_@:@_C_DECL_COLUMN_@
-</PRE></TD><TR>
-@@END_TABLE
-@@ELSE@@
-<TR><TD><PRE>@_INDENT_@<B>No children</B></PRE></TD></TR>
+   <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>No children</B></PRE></TD></TR>
 @@END_IF@@
 
 </TD></TR>
