@@ -362,7 +362,7 @@ package body GVD_Module is
             declare
                Dir   : constant String := GNAT.OS_Lib.Normalize_Pathname
                  (Dir_Name (List (L).all),
-                  Get_Current_Dir,
+                  Dir_Name (Exec).all,
                   Resolve_Links => False);
                Found : Boolean := False;
             begin
