@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? Penser a detruire les pointeurs sur texte
-
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -39,10 +37,10 @@ use Test_Lib.Navigator;
 procedure Gnatfix is
 
    procedure Print_Help;
-   --  ???
+   --  Print the use mode of codefix.
 
    procedure Free_Objects;
-   --  ???
+   --  Free memory associated to object used in Gnatfix
 
    ----------------
    -- Print_Help --
@@ -63,10 +61,9 @@ procedure Gnatfix is
 
    procedure Free_Objects is
    begin
---      Free (Error_Red);
---      Free (Errors_List);
---      Free (Current_Text.all);
---      Free (Current_Text);
+      Free (Errors_List);
+      Free (Current_Text);
+      Free (Errors_Found);
       Free_Parsers;
    end Free_Objects;
 
@@ -92,8 +89,6 @@ begin
    else
       Put_Line ("Update error");
    end if;
-
---   Save (File_Interface (Errors_List.Current_Text.all));
 
    Free_Objects;
 end Gnatfix;
