@@ -41,7 +41,6 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -54,6 +53,7 @@ with Prj;                       use Prj;
 with Prj_API;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Welcome;                   use Welcome;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -303,6 +303,8 @@ procedure GPS is
       Key       : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
 
+      Screen : Welcome_Screen;
+
    begin
       --  Parse the system's RC file
       if Is_Regular_File (System_Rc) then
@@ -431,26 +433,16 @@ procedure GPS is
          Close (Directory);
       end if;
 
-      --  If we are still using the default project, we need to compute its
-      --  view now.
+      --  Load the project selected by the user
 
-      if Project_Name /= null then
-         Trace (Me, "Loading project: " & Project_Name.all);
-
-         if File_Extension (Project_Name.all) = Project_File_Extension then
-            Load_Project (GPS.Kernel, Project_Name.all);
-            Project_Viewers.Add_To_Reopen (GPS.Kernel, Project_Name.all);
-         else
-            Load_Project
-              (GPS.Kernel, Project_Name.all & Project_File_Extension);
-            Project_Viewers.Add_To_Reopen
-              (GPS.Kernel, Project_Name.all & Project_File_Extension);
-         end if;
-
-         Free (Project_Name);
+      if Project_Name = null then
+         Gtk_New (Screen, GPS.Kernel, "");
       else
-         Recompute_View (GPS.Kernel);
+         Gtk_New (Screen, GPS.Kernel, Project_Name.all);
       end if;
+
+      Run (Screen);
+      Destroy (Screen);
 
       --  Do the Show_All before loading the desktop, in case some of the
       --  widgets automatically loaded have something to hide
