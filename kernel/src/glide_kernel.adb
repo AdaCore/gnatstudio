@@ -33,7 +33,6 @@ with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -50,11 +49,7 @@ with Language.Ada;             use Language.Ada;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
 
-with Namet;                     use Namet;
 with Prj.Tree;                  use Prj.Tree;
-with Snames;                    use Snames;
-with Stringt;                   use Stringt;
-with Types;                     use Types;
 
 with Traces;                    use Traces;
 
@@ -103,14 +98,14 @@ package body Glide_Kernel is
 
       Values := (1 => new String' ("."));
       Update_Attribute_Value_In_Scenario
-        (Kernel.project,
+        (Kernel.Project,
          Scenario_Variables => Scenario_Variables (Kernel),
          Attribute_Name     => "source_dirs",
          Values             => Values);
       Free (Values (1));
 
       Update_Attribute_Value_In_Scenario
-        (Kernel.project,
+        (Kernel.Project,
          Scenario_Variables => Scenario_Variables (Kernel),
          Attribute_Name     => "object_dir",
          Value              => ".");
@@ -525,7 +520,7 @@ package body Glide_Kernel is
       Page       : Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
    begin
-      return Page.Process_MDI;
+      return Page.Process_Mdi;
    end Get_MDI;
 
    ---------------------------
