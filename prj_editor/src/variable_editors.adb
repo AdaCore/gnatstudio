@@ -20,6 +20,7 @@
 
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
+with Glib.Convert;             use Glib.Convert;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Combo;                use Gtk.Combo;
@@ -112,9 +113,9 @@ package body Variable_Editors is
       Internal
         (Get_Object (Tree_Store), Iter'Address,
          Default_Value_Column,  Boolean'Pos (Is_Default),
-         Value_Column,          Value & ASCII.NUL,
+         Value_Column,          Locale_To_UTF8 (Value) & ASCII.NUL,
          Editable_Column,       Boolean'Pos (Is_Editable),
-         Initial_Value_Column,  Value & ASCII.NUL);
+         Initial_Value_Column,  Locale_To_UTF8 (Value) & ASCII.NUL);
    end Variable_Editor_Set;
 
    -------------

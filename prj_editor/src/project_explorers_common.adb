@@ -114,7 +114,7 @@ package body Project_Explorers_Common is
    begin
       Append (Model, Iter, Base);
 
-      Set (Model, Iter, Absolute_Name_Column, Locale_To_UTF8 (File));
+      Set (Model, Iter, Absolute_Name_Column, File);
 
       Set (Model, Iter, Base_Name_Column,
            Locale_To_UTF8 (Base_Name (File)));
@@ -180,7 +180,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, Locale_To_UTF8 (File));
+      Set (Model, N, Absolute_Name_Column, File);
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Category_Node)));
@@ -224,7 +224,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, Locale_To_UTF8 (File));
+      Set (Model, N, Absolute_Name_Column, File);
 
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
@@ -522,7 +522,7 @@ package body Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return String is
    begin
-      return Get_String (Model, Node, Base_Name_Column);
+      return Locale_From_UTF8 (Get_String (Model, Node, Base_Name_Column));
    end Get_Base_Name;
 
    -----------------------
@@ -546,7 +546,7 @@ package body Project_Explorers_Common is
       Full_Path : Boolean := False)
       return String
    is
-      S : constant String := Get_String (Model, Node, Absolute_Name_Column);
+      S : constant String := Get_Absolute_Name (Model, Node);
    begin
       if S = "" then
          return "";
@@ -568,9 +568,7 @@ package body Project_Explorers_Common is
       Node  : Gtk_Tree_Iter)
       return String
    is
-      S : constant String :=
-        Get_String (Model,
-                    Node, Absolute_Name_Column);
+      S : constant String := Get_Absolute_Name (Model, Node);
    begin
       if S = "" then
          return "";
@@ -608,7 +606,7 @@ package body Project_Explorers_Common is
                return Name (C + 1 .. Name'Last);
             end if;
          end loop;
-         return Name;
+         return Locale_From_UTF8 (Name);
       end Entity_Base;
 
       Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
@@ -639,7 +637,7 @@ package body Project_Explorers_Common is
         or else Node_Type = Obj_Directory_Node
         or else Node_Type = Entity_Node
       then
-         File := new String'(Get_String (Model, Iter, Absolute_Name_Column));
+         File := new String'(Get_Absolute_Name (Model, Iter));
       end if;
 
       if File /= null then

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;            use Glib;
+with Glib.Convert;    use Glib.Convert;
 with Glib.Object;     use Glib.Object;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Dialog;      use Gtk.Dialog;
@@ -167,7 +168,8 @@ package body Scenario_Views is
       while not Done (Iter) loop
          --  We know this is a list of static strings
          String_To_Name_Buffer (Data (Iter));
-         Gtk_New (Item, Name_Buffer (Name_Buffer'First .. Name_Len));
+         Gtk_New (Item, Locale_To_UTF8
+                    (Name_Buffer (Name_Buffer'First .. Name_Len)));
          Add (List, Item);
          Iter := Next (Iter);
       end loop;
@@ -271,7 +273,6 @@ package body Scenario_Views is
 
       Widget_List.Free (Child);
 
-
       --  No project view => Clean up the scenario viewer
       if Get_Project (V.Kernel) = No_Project then
          Resize (V, Rows => 1, Columns => 4);
@@ -311,7 +312,8 @@ package body Scenario_Views is
                   View_Callback.To_Marshaller (Delete_Variable'Access),
                   (View => V, Var => Scenar_Var (J)));
 
-               Gtk_New (Label, External_Reference_Of (Scenar_Var (J)));
+               Gtk_New (Label, Locale_To_UTF8
+                        (External_Reference_Of (Scenar_Var (J))));
                Set_Alignment (Label, 0.0, 0.5);
                Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
                        Xpadding => 5);
