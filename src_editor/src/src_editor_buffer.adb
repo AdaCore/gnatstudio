@@ -228,6 +228,13 @@ package body Src_Editor_Buffer is
    procedure Initialize_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed after initialization.
 
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk_Text_Iter;
+      Line   : Gint;
+      Column : Gint);
+   --  Return the iter at position (Line, Column), tab expansion included.
+
    --------------------
    -- Automatic_Save --
    --------------------
@@ -1600,6 +1607,40 @@ package body Src_Editor_Buffer is
       end if;
    end Set_Cursor_Position;
 
+   ---------------------------------
+   -- Get_Iter_At_Screen_Position --
+   ---------------------------------
+
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk_Text_Iter;
+      Line   : Gint;
+      Column : Gint)
+   is
+      Result  : Boolean := True;
+      Current : Gint := 0;
+      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
+   begin
+      Assert (Me, Is_Valid_Position (Buffer, Line, 0),
+              "Invalid position for Set_Screen_Position "
+                & Get_Filename (Buffer) & Line'Img);
+
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
+
+      --  We have to test Result, in case Iter was pointing after the end of
+      --  the buffer.
+
+      while Result and then Current < Column loop
+         if Get_Char (Iter) = ASCII.HT then
+            Current := Current + Tab_Len - (Current mod Tab_Len);
+         else
+            Current := Current + 1;
+         end if;
+
+         Forward_Char (Iter, Result);
+      end loop;
+   end Get_Iter_At_Screen_Position;
+
    -------------------------
    -- Set_Screen_Position --
    -------------------------
@@ -1610,35 +1651,9 @@ package body Src_Editor_Buffer is
       Column  : Gint)
    is
       Start   : Gtk_Text_Iter;
-      Result  : Boolean := True;
-      Current : Gint := 0;
-      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
    begin
-      Assert (Me, Is_Valid_Position (Buffer, Line, 0),
-              "Invalid position for Set_Screen_Position "
-                & Get_Filename (Buffer) & Line'Img);
-
-      Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
-
-      --  We have to test Result, in case Iter was pointing after the end of
-      --  the buffer.
-
-      while Result and then Current < Column loop
-         if Get_Char (Start) = ASCII.HT then
-            Current := Current + Tab_Len - (Current mod Tab_Len);
-         else
-            Current := Current + 1;
-         end if;
-
-         Forward_Char (Start, Result);
-      end loop;
-
-      if Result then
-         Place_Cursor (Buffer, Start);
-      else
-         Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
-         Place_Cursor (Buffer, Start);
-      end if;
+      Get_Iter_At_Screen_Position (Buffer, Start, Line, Column);
+      Place_Cursor (Buffer, Start);
    end Set_Screen_Position;
 
    -------------------------
@@ -2069,16 +2084,26 @@ package body Src_Editor_Buffer is
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
-      End_Column   : Gint)
+      End_Column   : Gint;
+      Expand_Tabs  : Boolean := True)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+      if Expand_Tabs then
+         Get_Iter_At_Screen_Position
+           (Buffer, Start_Iter, Start_Line, Start_Column);
+         Get_Iter_At_Screen_Position (Buffer, End_Iter, End_Line, End_Column);
 
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      else
+         pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+         pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+         Get_Iter_At_Line_Offset
+           (Buffer, Start_Iter, Start_Line, Start_Column);
+         Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      end if;
+
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
       Move_Mark_By_Name (Buffer, "insert", End_Iter);
    end Select_Region;
