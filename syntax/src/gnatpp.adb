@@ -67,12 +67,15 @@ begin
    if File_Extension (Name) = ".c" then
       Analyze_C_Source
         (Buffer.all,
-         Indent_Params => (2, 2, 2, 8, False, Lower, Mixed, False, True),
+         Indent_Params =>
+           (2, 2, 2, 8, False, Unchanged, Unchanged, False,
+            True, False, False),
          Replace => Replace_Cb'Unrestricted_Access);
    else
       Analyze_Ada_Source
         (Buffer.all,
-         Indent_Params => (3, 2, 2, 8, True, Lower, Mixed, True, False),
+         Indent_Params =>
+           (3, 2, 2, 8, True, Lower, Smart_Mixed, True, False, True, True),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 
