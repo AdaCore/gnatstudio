@@ -63,10 +63,6 @@ package body Variable_Editors is
       Expr : String_List_Iterator);
    --  Same as above for a text widget
 
-   procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
-   --  Add all the possible values for type Typ into the List.
-
    procedure Resize_Text_Area
      (Text : access Value_Editor_Record'Class;
       Var : Project_Node_Id;
@@ -295,26 +291,6 @@ package body Variable_Editors is
          end if;
       end loop;
    end Display_Expr;
-
-   -------------------------
-   -- Add_Possible_Values --
-   -------------------------
-
-   procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id)
-   is
-      Iter : String_List_Iterator := Type_Values (Typ);
-      Item : Gtk_List_Item;
-   begin
-      while not Done (Iter) loop
-         --  We know this is a list of static strings
-         String_To_Name_Buffer (Data (Iter));
-         Gtk_New (Item, Name_Buffer (Name_Buffer'First .. Name_Len));
-         Add (List, Item);
-         Iter := Next (Iter);
-      end loop;
-      Show_All (List);
-   end Add_Possible_Values;
 
    -----------------
    -- Resize_Text --
