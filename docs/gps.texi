@@ -116,7 +116,7 @@ Editing Files
 Source Navigation
 * Support for Cross-References::
 * The Navigate Menu::
-* Source Navigation Contextual Menus::
+* Contextual Menus for Source Navigation::
 
 Project Handling
 * Description of the Projects::
@@ -1485,7 +1485,7 @@ a column number.
 
 @item A contextual menu
 Displayed when you right-click on any area of the source editor.
-See in particular @ref{Source Navigation Contextual Menus}
+See in particular @ref{Contextual Menus for Source Navigation}
 for more details.
 
 @item Syntax highlighting
@@ -2296,7 +2296,7 @@ GPS with unsaved files.
 @menu
 * Support for Cross-References::
 * The Navigate Menu::
-* Source Navigation Contextual Menus::
+* Contextual Menus for Source Navigation::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -2306,11 +2306,10 @@ GPS with unsaved files.
 @c --------------------------------------------------------------------
 
 @noindent
-GPS provides cross-references for entities, such as types, procedures,
-functions, variables, @dots{}, defined in your application. In addition
-GPS has advanced visual browsers like call graphs and entity graphs.  To
-support cross-references GPS needs help from external language-specific
-tools.
+GPS provides cross-reference navigation for program entities, such as
+types, procedures, functions, variables, @dots{}, defined in your
+application. The cross-reference support in GPS relies on
+language-specific tools as exlained below.
 
 @table @b
 @item Ada
@@ -2413,13 +2412,16 @@ Find previous occurrence of the current search.
 Go to the declaration/spec of the current entity. The current entity is
 determined by the word located around the cursor.
 This item is also accessible through the editor's contextual menu directly.
-This capability requires support for cross-references.
+This capability requires the availability of cross-reference information.
+@xref{Support for Cross-References}.
 
 @item Goto Body
 @cindex goto body
 Go to the body/implementation of the current entity.
 This item is also accessible through the editor's contextual menu directly.
-This capability requires support for cross-references.
+This capability requires the availability of cross-reference information.
+@xref{Support for Cross-References}.
+
 
 @item Goto Line...
 @cindex goto line
@@ -2468,13 +2470,13 @@ Go to next tag/location. @xref{The Locations Tree}.
 @end table
 
 @c --------------------------------------------------------------------
-@node Source Navigation Contextual Menus
-@section Source Navigation Contextual Menus
+@node Contextual Menus for Source Navigation
+@section Contextual Menus for Source Navigation
 @cindex contextual menu
 @c --------------------------------------------------------------------
 
 @noindent
-This contextual menu is available from any source editor by right-clicking.
+This contextual menu is available from any source editor.
 If you right click over an entity, or first select text, the contextual
 menu will apply to this selection or entity.
 
@@ -2507,13 +2509,13 @@ displaying references to the current entity or selection.
 @cindex call graph
 @cindex calls
 Open or raise the call graph browser on the specified entity and display all
-the functions called by @i{entity}. @xref{Call Graph}.
+the functions/procedures called by @i{entity}. @xref{Call Graph}.
 
 @item @i{Entity} is called by
 @cindex call graph
 @cindex called by
 Open or raise the call graph browser on the specified entity and display all
-the functions calling @i{entity}. @xref{Call Graph}.
+the functions/procedures calling @i{entity}. @xref{Call Graph}.
 
 Note that this capability requires a global look up in the project
 cross-references, which may take a significant amount of time the first
@@ -2587,29 +2589,29 @@ This section describes what the projects are, and what information
 they contain.
 
 The most important thing to note is that the projects used by GPS are
-the same as the ones used by GNAT itself. These are text files
-(using the extension @file{.gpr}) which can be edited either manually, with
-any text editor, or through the more advanced GPS interface.
+the same as the ones used by GNAT. These are text files (using the
+extension @file{.gpr}) which can be edited either manually, with any
+text editor, or through the more advanced GPS interface.
 
 The exact syntax of the project files is fully described in the GNAT
 User's Guide (@url{gnat_ug.html}) and GNAT Reference Manual
-(@url{gnat_rm.html}). This is a recommended reading in any case if you
-want to use the more advanced capabilities of the project files, which
-are not necessarily all supported by the graphical interface yet.
+(@url{gnat_rm.html}). This is recommended reading if you want to use
+some of the more advanced capabilities of project files which are not
+yet supported by the graphical interface.
 
-GPS cannot edit graphically all the aspects of the project files
-(variables for instance are not editable as such, since the GUI makes
-their use less necessary). However, it can load any project file, even
-those that you have edited manually. On the other hand, you can manually edit
-the project files created by GPS.
+GPS can load any project file, even those that you have been
+edited manually. Furthermore, you can manually edit project files
+created by GPS.
 
-You will usually not need to edit the project files manually, since several
-graphical tools are provided such as the project wizard
-(@ref{The Project Wizard}) and the properties editor(@ref{The
-Project Properties Editor}).
+Typically you will not need to edit project files manually, since several
+graphical tools such as the project wizard (@ref{The Project Wizard})
+and the properties editor(@ref{The Project Properties Editor}) are
+provided.
 
+@c The english of the following paragraph is unclear
+@c
 @cindex normalization of projects
-GPS doesn't preserver the layout of whole content of manually created
+GPS doesn't preserve the layout of whole content of manually created
 project after you have edited them in GPS. For instance, comments are
 not currently preserved. Likewise, multiple case statements in the
 project will be coalesced into a single case statement. This
@@ -2618,9 +2620,9 @@ semantic of the project in addition to the new settings.
 
 
 @cindex GNAT
-All the non graphical GNAT tools are project aware, meaning that the notion
-of project goes well beyond GPS' user interface, and most capabilities of
-the project file can be accessed without using GPS itself, making the
+All command-line GNAT tools are project aware, meaning that the notion
+of project goes well beyond GPS' user interface. Most capabilities
+of project files can be accessed without using GPS itself, making
 project files very attractive.
 
 @cindex Ada
@@ -2632,15 +2634,15 @@ and any change you make to the generated Makefiles will be lost the
 next time the tool is run.
 
 @cindex ADA_PROJECT_PATH
-GPS uses the same mechanisms to locate the project files as GNAT
-itself: the projects can be referenced in several ways:
+GPS uses the same mechanisms to locate project files as GNAT
+itself: 
 
 @itemize @bullet
 @item absolute paths
-@item relative paths
+@item relative paths.
 These paths, when used in a with line as described below, are relative
 to the location of the project that does the with.
-@item ADA_PROJECT_PATH
+@item ADA_PROJECT_PATH.
 If this environment variable is set, it contains a colon-separated (or
 semicolon under Windows) list of directories in which the project files are
 searched.
@@ -2651,25 +2653,25 @@ searched.
 @cindex project file
 
 @noindent
-The project files contain all the information that describe the
+Project files contain all the information that describe the
 organization of your source files, object files and executables.
 
 @cindex sub project
-Generally, one project file will not be enough to describe complex
+Generally, one project file will not be enough to describe a complex
 organization. In this case, you will create and use a project hierarchy,
 with a root project importing other sub projects. Each of the projects
-and sub projects is responsible for its own set of sources (recompile
+and sub projects is responsible for its own set of sources (compiling
 them with the appropriate switches, put the resulting files in the
 right directories, @dots{}).
 
 @cindex GNAT
-Each project contains the following information, among other things
-(see the GNAT user's guide for a full list)
+Each project contains the following information
+(see the GNAT user's guide for the full list)
 
 @itemize @bullet
 @item @b{List of imported projects}:
 @cindex imported project
-   When you are compiling some sources from this project, the compiler
+   When you are compiling sources from this project, the compiler
    (either through GNAT or the automatically generated Makefiles) will
    first make sure that all the imported projects have been correctly
    recompiled and are up-to-date. This way, dependencies between
@@ -2682,7 +2684,7 @@ Each project contains the following information, among other things
 
    One important rule is that each source file name must be unique in
    the project hierarchy (i.e. a file cannot be under control of two
-   different projects. This ensures that the same file will be found
+   different projects). This ensures that the same file will be found
    no matter what project is managing the source file that uses
 
 @item @b{List of source directories}:
@@ -2700,7 +2702,7 @@ Each project contains the following information, among other things
    among multiple object directories, you need to create multiple
    projects importing one another as appropriate.
 
-   When sources from imported sub projects are recompiled, the
+   When sources from imported sub-projects are recompiled, the
    resulting object files are put in the sub project's own object
    directory, and will never pollute the parent's object directory.
 
@@ -2739,7 +2741,7 @@ Each project contains the following information, among other things
 
 @item @b{Naming schemes}:
 @cindex naming scheme
-   The naming scheme refer to the way files are named for each
+   The naming scheme refers to the way files are named for each
    languages of the project. This is used by GPS to choose the language
    support to use when a source file is opened. This is also used to
    know what tools should be used to compile or otherwise work with a
@@ -2747,28 +2749,28 @@ Each project contains the following information, among other things
 
 @item @b{Embedded targets and cross environments}:
 @cindex cross environment
-   GPS fully supports cross environment work: GPS itself can run on a
-   machine and start all the compilation, run and debugger on a remote
-   host.
+   GPS supports cross environment software development: GPS itself can
+   run on a given host, such as GNU/Linux, while compilations, runs and
+   debugging occur on a different remote host, such as Sun/Solaris.
 
 @cindex VxWorks
-   It also supports embedded targets (VxWorks, @dots{}) by specifying alternate
-   names for the build and debug tools.
+   GPS also supports embedded targets (VxWorks, @dots{}) by specifying
+   alternate names for the build and debug tools.
 
    The project file contains the information required to log on the
    remote host.
 
 @item @b{Tools}:
 @cindex tools
-   The project files provide a simple way to change the compiler that
-   should be used to compile the source files, as well as the
-   underlying debugger to use.
+   Project files provide a simple way to specify the compiler and
+   debugger commands to use.
 
 @item @b{Switches}:
 @cindex switches
-   Each tool that is used by GPS (compiler, pretty-printer,
-   debugger, @dots{}) has its own set of switches. Moreover, these switches
-   may depend on what specific file is manipulated, and on its language.
+   Each tool that is used by GPS (compiler, pretty-printer, debugger,
+   @dots{}) has its own set of switches. Moreover, these switches may
+   depend on the specific file being processed, and the programming
+   language it is written in.
 
 @end itemize
 
@@ -2826,21 +2828,21 @@ scenarios.
 @cindex project attribute
 All the attributes of a project, except its list of imported projects,
 can be chosen based on the value of external variables, whose value is
-generally coming from the environment, or directly set in GPS (using
-the small area on top of the project explorer (@ref{The Project
-Explorer}).
+generally coming from the host computer environment, or directly set in
+GPS (using the small area on top of the project explorer (@ref{The
+Project Explorer}).
 
 @cindex compile
 @cindex debug
-This can for instance be used to compile all the sources either in
-debug mode (so that the executables can be run in the debugger), or in
-optimized mode (to reduce the space and increase the speed when delivering).
-In this case, all the attributes (source directories, tools, @dots{}) remain the
-same, except the switches. It would
-be more difficult to maintain a completely separate hierarchy of
-project, and it is much more efficient to create a new configuration
-variable and edit the switches for the appropriate scenario (@ref{The
-Project Properties Editor}).
+This facility can for instance be used to compile all the sources either
+in debug mode (so that the executables can be run in the debugger), or
+in optimized mode (to reduce the space and increase the speed when
+delivering the software).  In this configuration scenario, all the
+attributes (source directories, tools, @dots{}) remain the same, except
+for the compilation switches. It would be more difficult to maintain a
+completely separate hierarchy of project, and it is much more efficient
+to create a new configuration variable and edit the switches for the
+appropriate scenario (@ref{The Project Properties Editor}).
 
 
 @subsection Creating new configuration variables
@@ -2870,8 +2872,8 @@ the name of the variable. This name is used for two purposes:
 
 @item This is the name of the environment variable from which the
 initial value is read. When GPS is started, all configuration
-variables are initialized from the environment, although you can of
-course change them as many times as you want later on.
+variables are initialized from the host computer environment, although
+you can of course change its value later on inside GPS.
 
 @end itemize
 
@@ -2923,15 +2925,15 @@ the one you wish to use.
 
 @cindex project explorer
 As soon as a new value is selected, GPS will recompute the project
-explorer (in case the source directories, object directories or list
-of source files has changed). A number of things will also be updated
+explorer (in case source directories, object directories or list
+of source files have changed). A number of things will also be updated
 (like the list of executables in the @code{Compile}, @code{Run} and
 @code{Debug} menus).
 
 @cindex browsers
 @cindex call graph
 Currently, GPS will not recompute the contents of the various browsers
-(call graph, dependencies, @dots{}) for this new project. This would be too
+(call graph, dependencies, @dots{}) for this updated project. This would be too
 expensive to do every time the value changes, and therefore you need
 to explicitly request an update.
 
@@ -2995,7 +2997,7 @@ hierarchy.
 @cindex saving projects
 This item can be selected to save a single project in the hierarchy
 after it was modified. Modified but unsaved projects in the hierarchy
-have a special icon (an red exclamation mark is drawn on top of the
+have a special icon (a red exclamation mark is drawn on top of the
 standard icon). If you would rather save all the modified projects in
 a single step, use the menu bar item @code{Project->Save All}.
 
@@ -3033,7 +3035,7 @@ features of the project files that are not accessible graphically
 @cindex saving projects
 Any time one or several projects are modified, the contents of the
 explorer is automatically refreshed. No project is automatically
-saved. This provides a simple way to temporarily tests new values for
+saved. This provides a simple way to temporarily test new values for
 the project attributes.
 Unsaved modified projects are shown with a special icon in the project
 explorer, displaying a red exclamation mark on top of the standard
@@ -3074,13 +3076,13 @@ These commands are:
 @table @command
 @item New
 This menu will open the project wizard (@ref{The Project Wizard}), so
-that you can create new projects. On exit, the wizard asks whether the
-newly project should be loaded. If you select @code{Yes}, the newly
+that you can create new project. On exit, the wizard asks whether the
+newly created project should be loaded. If you select @code{Yes}, the new
 project will replace the currently loaded project hierarchy.
 
 @item Open
 This menu opens a file selection dialog, so that any existing project
-can be loaded in GPS. The newly loaded project replaces the currently
+can be loaded into GPS. The newly loaded project replaces the currently
 loaded project hierarchy. GPS works on a single project hierarchy at
 a time.
 
@@ -3129,11 +3131,11 @@ The project wizard allows you to create in a few steps a new project file.
 It has a number of pages, each dedicated to editing a specific set of
 attributes for the project.
 
-The most usual way to access this wizard is through the menu
-@code{Project->New...} On exit, the wizard will ask whether the newly
+The typical way to access this wizard is through the
+@code{Project->New...} menu. On exit, the wizard will ask whether the newly
 created project should replace the currently loaded ones.
 
-The project wizard is also activated when a new dependency is created
+The project wizard is also launched when a new dependency is created
 between two projects, through the contextual menu in the project
 explorer.
 
@@ -3181,7 +3183,7 @@ extend its parent project. Therefore, you will not be able to
 load this project in GPS until you have manually edited it.
 
 In this page, you should also select what languages the source files
-in this project are written in. Currently supported are @code{Ada},
+in this project are written in. Currently supported languages are @code{Ada},
 @code{C} and @code{C++}. Multiple languages can be used for a single
 project.
 
@@ -3200,8 +3202,8 @@ location of the project file).
 @c ------------------------------------------------------------------
 
 @noindent
-The second page in the project wizard selected which Version Control
-system is used for the source files of this project.
+The second page in the project wizard allows you to select which Version
+Control system is to be used for the source files of this project.
 
 GPS doesn't attempt to automatically guess what it should use, so you
 must specify it if you want the VCS operations to be available to you.
@@ -3210,7 +3212,7 @@ The two actions @code{Log checker} and @code{File checker} are the
 name and location of programs to be run just prior an actual commit of
 the files in the Version Control System. These should be used for
 instance if you wish to enforce style checks before a file is actually
-made available to the other persons in your team.
+made available to other developers in your team.
 
 If left blank, no program will be run.
 
@@ -3228,7 +3230,7 @@ If you do not specify any source directory, no source file will be
 associated with the project, since GPS wouldn't know where to look for
 them.
 
-To add source directories to the project, select the project in the
+To add source directories to the project, select a directory in the
 top frame, and click on the down arrow. This will add the directory to
 the bottom frame, which contains the current list of source directories.
 
@@ -3236,7 +3238,7 @@ You can also add a directory and all its subdirectories recursively by
 using the contextual menu in the top frame. This contextual menu also
 provides an entry to create new directories, if needed.
 
-To remove source directories from the project, select the project in
+To remove source directories from the project, select the directory in
 the bottom frame, and click on the up arrow, or use the contextual
 menu.
 
@@ -3246,7 +3248,7 @@ project.
 
 The relative sizes of the top and bottom frame can be changed by
 clicking on the separation line between the two frames and dragging
-the mouse up or down.
+the line up or down.
 
 @c ------------------------------------------------------------------
 @subsection Build Directory
@@ -3256,8 +3258,7 @@ the mouse up or down.
 
 @noindent
 The object directory is the location where the files resulting from
-the compilation of sources (@file{.o} files for instance) are put.
-
+the compilation of sources (e.g. @file{.o} files) are placed.
 One object directory is associated for each project.
 
 The exec directory is the location where the executables are put. By
@@ -3274,9 +3275,9 @@ languages supported by a given project.
 For example, all @file{.adb} files are Ada files, all @file{.c} files are
 C files.
 
-GPS is very flexible in that respect, and allows you to specify the
-default extension for the files in this language. GPS makes a
-distinction between spec (or header) files, which generally contains
+GPS is very flexible in this respect, and allows you to specify the
+default extension for the files in a given programming language. GPS makes a
+distinction between spec (or header) files, which generally contain
 no executable code, only declarations, and body files which contain
 the actual code. For languages other than Ada, this header file is
 used rather than the body file when you select @code{Go To
@@ -3308,7 +3309,7 @@ scheme. For instance, this let you specify that in addition to using
 considered as an Ada file.
 
 The list of exceptions is displayed in the bottom list of the naming
-scheme editor. To remove entries from that list, select the line you
+scheme editor. To remove entries from this list, select the line you
 want to remove, and then press the @key{Del} key.
 The contents of the lines can be edited interactively, by
 double-clicking on the line and column you want to edit.
@@ -3322,12 +3323,12 @@ the window, and press the update button.
 @c ------------------------------------------------------------------
 
 @noindent
-The main units for a project are the files that should be compiled and
+The main units of a project are the files that should be compiled and
 linked to obtain executables.
 
 Typically, for C applications, these are the files that contain the
 @code{main()} function. For Ada applications, these are the files that
-contain the main subprogram for the partition.
+contain the main subprogram each partition in the project.
 
 These files are treated specially by GPS. Some sub-menus of
 @code{Build} and @code{Debug} will have predefined entries for the
@@ -3397,7 +3398,7 @@ tool when it is called, without trying to represent it graphically.
 
 @noindent
 The project properties editor gives you access at any time to the properties
-of your projects. It is accessible through the menu
+of your project. It is accessible through the menu
 @code{Project->Edit Project Properties}, and through the contextual menu
 @code{Edit project properties} on any project item, e.g. from the Project
 View or the Project Browser.
@@ -3407,7 +3408,7 @@ non-existing directories, @dots{}), a warning dialog is displayed when you
 select the menu. This reminds you that the project might be only
 partially loaded, and editing it might result in the loss of data. In
 such cases, it is recommended that you edit the project file manually,
-which is doable directly from the pop-up dialog.
+which you can do directly from the pop-up dialog.
 
 Fix the project file as you would for any text file, and then reload
 it manually (through the @code{Project->Open...} or
@@ -3423,11 +3424,11 @@ it manually (through the @code{Project->Open...} or
 @image{project-properties}
 @end ifhtml
 
-This editor is divided into three parts:
+The project propoerties editor is divided in three parts:
 
 @table @b
 @item The attributes editor
-The contents of this editor is very similar to that of the project
+The contents of this editor are very similar to that of the project
 wizard (@pxref{The Project Wizard}). In fact, all pages but the
 @code{General} page are exactly the same, and you should therefore
 read the description for these in the project wizard chapter.
@@ -3441,7 +3442,7 @@ linker, pretty-printer, @dots{}).
 This area, in the top-right corner of the properties editor, contains
 a list of all the projects in the hierarchy. The value in the
 attributes editor is applied to all the selected projects in this
-selector. You can never unselect the project for which you activated
+selector. You cannot unselect the project for which you activated
 the contextual menu.
 
 Clicking on the right title bar (@code{Project}) of this selector will sort the
@@ -3459,10 +3460,10 @@ project hierarchy as displayed in the project explorer.
 This area, in the bottom-right corner of the properties editor, lists
 all the scenario variables declared for the project hierarchy. By
 selecting some or all of their values, you can chose to which scenario
-the modifications in attributes editor apply.
+the modifications in the attributes editor apply.
 
 Clicking on the left title bar (untitled, on the left of the @code{Scenario}
-label) will select all values of all variables.
+label) will select or unselect all values of all variables.
 
 To select all values of a given variable, click on the corresponding check
 button.
@@ -3487,8 +3488,8 @@ in black if they are specific to a given file.
 
 Double-clicking in the switches column allows you to edit the switches
 for a specific file. It is possible to edit the switches for multiple
-files at the same by selecting them before displaying the contextual
-menu (@code{Edit switches for all selected files}.
+files at the same time by selecting them before displaying the contextual
+menu (@code{Edit switches for all selected files}).
 
 When you double-click in one of the columns that contain the switches,
 a new dialog is opened that allows you to edit the switches specific to
@@ -3565,13 +3566,13 @@ by the selected project
 @item Show recursive dependencies
 @cindex show recursive dependencies
 This item will display all the dependencies recursively for the
-project (i.e. the project it imports directly, and the projects that
+project (i.e. the projects it imports directly, the projects that
 are imported by them, and so on).
 
 @item Show projects depending on
 @cindex show projects depending on
 This item plays the same role as the left arrow in the title bar, and
-display all the projects that import directly the selected project.
+displays all the projects that directly import the selected project.
 @end table
 
 @c --------------------------------------------------------------------
