@@ -217,7 +217,7 @@ package body VCS_Module is
 
    begin
       if Explorer = null then
-         Gtk_New (Explorer, Kernel, Ref);
+         Gtk_New (Explorer, Kernel);
          Set_Size_Request (Explorer, 400, 400);
          Child := Put (MDI, Explorer);
          Set_Title (Child, -"VCS Explorer");
