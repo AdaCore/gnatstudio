@@ -41,21 +41,22 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
-with Prj.Tree;   use Prj.Tree;
-with Prj;        use Prj;
-with Prj.Ext;    use Prj.Ext;
-with Prj_Normalize; use Prj_Normalize;
+with Prj.Tree;                 use Prj.Tree;
+with Prj;                      use Prj;
+with Prj.Ext;                  use Prj.Ext;
+with Prj_Normalize;            use Prj_Normalize;
 
-with Types;      use Types;
-with Stringt;    use Stringt;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
-with System;     use System;
+with Types;                    use Types;
+with Stringt;                  use Stringt;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with System;                   use System;
 
-with Prj_API;              use Prj_API;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Intl;           use Glide_Intl;
-with Traces;               use Traces;
+with Prj_API;                  use Prj_API;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Intl;               use Glide_Intl;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Variable_Editors is
 
@@ -542,7 +543,8 @@ package body Variable_Editors is
                   if Default then
                      Expr := External_Default (Var);
 
-                     if Kind_Of (Expr) /= N_Literal_String
+                     if Expr = Empty_Node
+                       or else Kind_Of (Expr) /= N_Literal_String
                        or else Get_String (String_Value_Of (Expr)) /= Name
                      then
                         if Id = No_String then
@@ -608,11 +610,19 @@ package body Variable_Editors is
       if Changed then
          Set_Project_Modified
            (Editor.Kernel, Get_Project (Editor.Kernel), True);
+
          --  Recompute the view so that the explorer is updated graphically.
+
          Recompute_View (Editor.Kernel);
          Variable_Changed (Editor.Kernel);
       end if;
+
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Update_Variable;
 
    ---------------------
