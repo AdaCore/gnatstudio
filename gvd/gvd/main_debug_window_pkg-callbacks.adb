@@ -737,7 +737,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      null;
+      Step_Into_Instruction (Tab.Debugger, True);
       Set_Busy_Cursor (Tab, False);
    end On_Step_Instruction1_Activate;
 
@@ -765,7 +765,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
-      null;
+      Step_Over_Instruction (Tab.Debugger, True);
       Set_Busy_Cursor (Tab, False);
    end On_Next_Instruction1_Activate;
 
