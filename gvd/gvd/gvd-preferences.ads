@@ -37,6 +37,9 @@ package Odd.Preferences is
    --  provides a better support for remote debuggers and the "interrupt"
    --  button, among other things.
 
+   Remote_Protocol : constant String := "rsh";
+   --  How to run a process on a remote machine ?
+
    ---------------------
    -- Explorer Window --
    ---------------------
