@@ -126,7 +126,8 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"Update", "", Update'Access);
       Register_Menu (Kernel, VCS, -"Start Editing", "", Open'Access);
-      Register_Menu (Kernel, VCS, -"View Diff", "", View_Diff'Access);
+      Register_Menu (Kernel, VCS, -"Compare against head", "",
+                     View_Diff'Access);
       Register_Menu (Kernel, VCS, -"Edit log", "", Edit_Log'Access);
       Register_Menu (Kernel, VCS, -"Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"Annotate", "", View_Annotate'Access);
