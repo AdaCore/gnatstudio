@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.0.1
 
+- Newly created projects sometimes have external variables
+  Problem:    If you have loaded a project with external variables in GPS,
+              the new projects created through Project->New will inherit
+              these variables.
+  Workaround: Remove the variables from the newly created projects by clicking
+              on the icon beside the variable's name in the explorer
+
 - No cross-reference for overloaded entities in C/C++
   Problem:    When selecting "goto declaration" for a C/C++ entity that has 
               multiple possible definitions (either overloaded or in a
