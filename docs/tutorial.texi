@@ -140,8 +140,8 @@ This will open the directory and display a list of source files located
 in this directory.
 
 Now, double click on @file{sdc.adb}: this will open a source editor on this
-file. You will notice that the source code is syntax-highlighted
-(keywords, comments, strings have different colors).
+file. The source code is syntax-highlighted: keywords, comments, strings and
+characters have different colors.
 
 As with many other properties, colors are configurable in GPS:
 
@@ -175,12 +175,8 @@ changes, otherwise clicking on @code{Cancel} will revert to the previous
 @noindent
 
 Select the menu @code{Build->Make->sdc.adb}: this will launch a complete
-build of the @i{sdc} application. You may also notice that a key binding
+build of the @i{sdc} application. Note also that a key binding
 is associated with this menu item (@key{F4}).
-
-If you look at the progress bar, you will notice that while the build is in
-progress the state of the compilation is displayed, giving you
-the current number of files compiled, and the number of remaining files.
 
 The build has generated a number of errors in a new window: the @i{Results}
 window, displayed in the bottom area.
@@ -210,6 +206,10 @@ and moving the cursor using the @key{Up} or @key{Down} keys.
 
 Press the @key{F4} key to build again. You will be asked to save the file
 @file{sdc.adb} before the build starts. Confirm by clicking on @code{Yes}.
+If you look at the progress bar, you will see that while the build is in
+progress the state of the compilation is displayed, giving you
+the current number of files compiled, and the number of remaining files.
+
 This should now report a successful build.
 
 @c --------------------------------------------------------------------
@@ -328,8 +328,8 @@ now activated.
 
 Use the menu @code{Debug->Data->Call Stack}: this opens a new area in
 the data window. If you select the contextual menu in the call stack,
-you will notice that various pieces of information can be displayed or
-removed in the call stack.  From this contextual menu, add the
+various pieces of information can be displayed or
+removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}, type @code{input.txt} in the
