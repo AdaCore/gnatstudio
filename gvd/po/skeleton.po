@@ -130,6 +130,9 @@ msgstr "Click in the 'Enb' column to change the status"
 msgid  "Clone"
 msgstr "Clone"
 
+msgid  "Close "
+msgstr "Close "
+
 msgid  "Close"
 msgstr "Close"
 
@@ -267,9 +270,6 @@ msgstr "Display Explorer Tree"
 
 msgid  "Display Expression..."
 msgstr "Display Expression..."
-
-msgid  "Display Files In Shared Libraries"
-msgstr "Display Files In Shared Libraries"
 
 msgid  "Display Grid Points"
 msgstr "Display Grid Points"
@@ -529,6 +529,9 @@ msgstr "Next Instruction"
 msgid  "No extension files"
 msgstr "No extension files"
 
+msgid  "(no file)"
+msgstr "(no file)"
+
 msgid  "Num"
 msgstr "Num"
 
@@ -645,6 +648,9 @@ msgstr "Refresh"
 
 msgid  "Regular expression"
 msgstr "Regular expression"
+
+msgid  "Reload Files"
+msgstr "Reload Files"
 
 msgid  "remote"
 msgstr "remote"

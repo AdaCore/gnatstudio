@@ -130,6 +130,9 @@ msgstr "Cliquer sur la colonne 'Act' pour changer le statut"
 msgid  "Clone"
 msgstr "Cloner"
 
+msgid  "Close "
+msgstr "Fermer "
+
 msgid  "Close"
 msgstr "Fermer"
 
@@ -267,9 +270,6 @@ msgstr "Afficher l'explorateur"
 
 msgid  "Display Expression..."
 msgstr "Afficher une expression..."
-
-msgid  "Display Files In Shared Libraries"
-msgstr "Recalculer la liste de fichiers"
 
 msgid  "Display Grid Points"
 msgstr "Afficher les points sur la grille"
@@ -529,6 +529,9 @@ msgstr "Instruction suivante"
 msgid  "No extension files"
 msgstr "Fichiers sans extension"
 
+msgid  "(no file)"
+msgstr "(pas de fichier)"
+
 msgid  "Num"
 msgstr "Num"
 
@@ -645,6 +648,9 @@ msgstr "Raffraichir"
 
 msgid  "Regular expression"
 msgstr "Expression reguliere"
+
+msgid  "Reload Files"
+msgstr "Recalculer la liste de fichiers"
 
 msgid  "remote"
 msgstr "distant"
