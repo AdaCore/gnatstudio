@@ -54,6 +54,7 @@ package Pixmaps_IDE is
    up_xpm                  : aliased Pixmap_Array;
    var_xpm                 : aliased Pixmap_Array;
    watch_xpm               : aliased Pixmap_Array;
+   mini_page_xpm           : aliased Pixmap_Array;
 
 private
    pragma Import (C, arrow_xpm, "arrow_xpm");
@@ -84,4 +85,5 @@ private
    pragma Import (C, up_xpm, "up_xpm");
    pragma Import (C, var_xpm, "var_xpm");
    pragma Import (C, watch_xpm, "watch_xpm");
+   pragma Import (C, mini_page_xpm, "mini_page_xpm");
 end Pixmaps_IDE;
