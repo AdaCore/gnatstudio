@@ -1,0 +1,61 @@
+Design of a Gtk GUI builder written in Ada.
+
+Key points:
+
+As generic as possible
+Object Oriented
+Pluggable
+Support for multiple-languages
+   This is partly done if we have backward-compatibility with Glade.
+
+Easy to add support for new widgets
+   Widgets should be definable through either XML or the gtk's .defs files
+   For instance, containers should define the function to use to add
+   new widgets, so as to ease as much as possible the work done by the
+   actual code generators.
+
+Compatible with Glade
+   At least as a converted, since Glade's file is probably too simple
+   We will need new tags for required libraries,...
+
+Bootstrapped
+Take ideas from Delphi:
+   Simple Menu Editor
+   Simple Properties editor, 2 tabs:
+     - properties
+     - callbacks (with complete list, and click to enable a callback, double
+       click to jump to the code)
+Easy to define common callback behavior: open other widget, close widget
+   More generally, have a "scenario editor" based either on the Canvas or
+   drag-and-drop to replace as much as possible explicit code with graphic
+   manipulations.
+   Contextual menus for instance should be doable entirely with the GUI,
+   likewise for cut-and-paste (?)
+
+Can define non top level window widgets
+Can easily be integrated with other tools (editor, project builder, cvs, ...)
+Easy handling of big GUIs with multiple developpers
+   Handling of merges, .... It should provide an easy way to split a
+   project into several smaller projects, or merge several projects.
+
+Infinite Undo/Redo capability
+Copy/Paste, with the capability to have multiple copies in a buffer
+Drag'n'Drop
+External code generators
+
+Possibility to edit the styles of the widgets (colors, ...)
+Should provide an easy way to set up the contextual help (per-widget,
+  per window,...
+
+====================
+High-level definition and implementation of standard functions:
+  - Creating a tree from a file or a tree (tab-separated for instance)
+  - Setting up tooltips
+  - "Busy cursor" around a callback.
+  - Initial banner a la Windows when starting an application
+  - Sorting columns of ctree/clists when clicking on the title of the
+    columns.
+  - Modal windows with new event loop (GtkAda.Dialogs)
+Predefined callbacks
+  - for instance for "delete_event" when we should not close the dialog.
+
