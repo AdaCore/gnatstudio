@@ -66,3 +66,5 @@ New features in GPS 2.0.0
 - Add support for global ChangeLog file. This file can be used to record
   revision history, GPS will extract, the revision history for a file to
   commit, from this file if present.
+
+- Add function name, under the current cursor location, into the status bar.
