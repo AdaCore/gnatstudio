@@ -37,7 +37,6 @@ with GUI_Utils;                 use GUI_Utils;
 with System;                    use System;
 with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Gdk.Color;                 use Gdk.Color;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -67,7 +66,6 @@ with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Style;                 use Gtk.Style;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtkada.Macro;              use Gtkada.Macro;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -339,8 +337,6 @@ package body KeyManager_Module is
 
    function Find_Parent
      (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter;
-   function Find_Parent
-     (Model : Gtk_Tree_Store; Context : String) return Gtk_Tree_Iter;
    --  Find the parent node for Context.
    --  Returns null if there is no such node
 
@@ -1039,31 +1035,12 @@ package body KeyManager_Module is
    -----------------
 
    function Find_Parent
-     (Model : Gtk_Tree_Store; Context : String) return Gtk_Tree_Iter
-   is
-      Parent : Gtk_Tree_Iter := Get_Iter_First (Model);
-   begin
-      while Parent /= Null_Iter loop
-         if Get_String (Model, Parent, Action_Column) = Context then
-            return Parent;
-         end if;
-         Next (Model, Parent);
-      end loop;
-
-      return Null_Iter;
-   end Find_Parent;
-
-   -----------------
-   -- Find_Parent --
-   -----------------
-
-   function Find_Parent
      (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter is
    begin
       if Filter = null or else Get_Name (Filter) = "" then
-         return Find_Parent (Model, -"General");
+         return Find_Node (Model, -"General", Action_Column);
       else
-         return Find_Parent (Model, Get_Name (Filter));
+         return Find_Node (Model, Get_Name (Filter), Action_Column);
       end if;
    end Find_Parent;
 
@@ -1524,7 +1501,6 @@ package body KeyManager_Module is
       Pane     : Gtk_Paned;
       Sep      : Gtk_Separator;
       Event    : Gtk_Event_Box;
-      Color    : Gdk_Color;
       Text     : Gtk_Text_View;
       Action   : Gtk_Widget;
       pragma Unreferenced (Widget, Num, Action);
@@ -1568,17 +1544,8 @@ package body KeyManager_Module is
 
       --  Name of current action
 
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Color := Parse ("#0e79bd");
-      --  ??? Should be shared with the preferences dialog and wizard
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
-
-      Gtk_New (Editor.Action_Name, "Current action");
-      Set_Alignment (Editor.Action_Name, 0.1, 0.5);
-      Add (Event, Editor.Action_Name);
+      Create_Blue_Label (Editor.Action_Name, Event);
+      Pack_Start (Hbox,  Event, Expand => False);
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Hbox, Sep, Expand => False);
@@ -1592,6 +1559,7 @@ package body KeyManager_Module is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Gtk_New (Text, Editor.Help);
       Set_Wrap_Mode (Text, Wrap_Word);
+      Set_Editable (Text, False);
       Add (Scrolled, Text);
 
       --  Buttons area
