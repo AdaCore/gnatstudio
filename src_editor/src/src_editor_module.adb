@@ -3100,6 +3100,24 @@ package body Src_Editor_Module is
            -"Scroll the current source editor so that the cursor is centerd",
          Src_Action_Context);
 
+      Command := new Delete_Command;
+      Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Delete_Command (Command.all).Kind := Word;
+      Delete_Command (Command.all).Count := 1;
+      Register_Action
+        (Kernel, "Delete word forward", Command,
+           -"Delete the word following the current cursor position",
+         Src_Action_Context);
+
+      Command := new Delete_Command;
+      Delete_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Delete_Command (Command.all).Kind := Word;
+      Delete_Command (Command.all).Count := -1;
+      Register_Action
+        (Kernel, "Delete word backward", Command,
+           -"Delete the word preceding the current cursor position",
+         Src_Action_Context);
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
