@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -118,7 +118,6 @@ package body Line_Sweep is
 
       procedure Insert
         (Line      : in out Line_Status;
-         Q         : in out Event_Queue;
          Edge      : Edge_Index;
          X         : Integer;
          Neighbor1 : out Edge_Index;
@@ -383,7 +382,6 @@ package body Line_Sweep is
 
       procedure Insert
         (Line      : in out Line_Status;
-         Q         : in out Event_Queue;
          Edge      : Edge_Index;
          X         : Integer;
          Neighbor1 : out Edge_Index;
@@ -701,7 +699,7 @@ package body Line_Sweep is
 
          case E1.Typ is
             when Source_Vertex =>
-               Insert (Line, Queue, E1.Edge1, E1.X, Neighbor1, Neighbor2);
+               Insert (Line, E1.Edge1, E1.X, Neighbor1, Neighbor2);
 
                if Neighbor1 /= No_Edge then
                   --  ??? Should test colinearity
