@@ -851,12 +851,6 @@ package body Convert.Adp is
          --  Ignore all other object directories but Build_Dir
          --  The other directories do not contain any object file anyway
 
-         Put_Line ("--  The object directories do not contain any");
-         Put_Line ("--  object file. A simple .gpr project file will");
-         Put_Line ("--  be generated, that assumes that all files");
-         Put_Line ("--  are build in " & Build_Dir);
-         New_Line;
-
          Create (File, Out_File, Short_Name & Gpr_Extension);
          Set_Output (File);
          Put_Line ("project " & Short_Name & " is");
@@ -868,10 +862,6 @@ package body Convert.Adp is
 
       elsif Object_Dirs_Count = 0 then
          --  No other object directory other than Build_Dir
-
-         Put_Line ("--  The .adp file contains a single object directory");
-         Put_Line ("--  where all ALI files will be found.");
-         New_Line;
 
          Create (File, Out_File, Short_Name & Gpr_Extension);
          Set_Output (File);
@@ -885,10 +875,6 @@ package body Convert.Adp is
       elsif Src_Dirs_Have_Unique_Obj_Dir then
          --  Associations are unique. Thus, we can generate a set of
          --  independent project files
-
-         Put_Line ("--  All source directories are associated with a unique");
-         Put_Line ("--  object directory");
-         New_Line;
 
          for P in 0 .. Object_Dirs_Count loop
             if P = 0 then
