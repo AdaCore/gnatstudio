@@ -20,11 +20,11 @@
 
 with Glib;
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.Handlers; use Gtk.Handlers;
 with Gdk.Pixmap;
 with Gdk.Window;
 with Gdk.Rectangle;
 with Gtk.Main;
-with Gtk.Handlers;
 with Gdk.Event;
 with Gdk.Window;
 
@@ -103,8 +103,6 @@ private
    type Widget_Type_Access is access all Widget_Type'Class;
 
    type User_Type_Access is access User_Type;
-   package Tooltip_Handler is new Gtk.Handlers.User_Callback
-     (Widget_Type, Tooltips);
 
    type Tooltips_Record is record
       Timeout : Glib.Guint32 := Default_Timeout;
@@ -137,19 +135,27 @@ private
       --  (See Draw_Tooltip specification for details).
    end record;
 
-   procedure Mouse_Moved_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips);
+   package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
+     (Widget_Type => Widget_Type,
+      Return_Type => Boolean,
+      User_Type   => Tooltips);
 
-   procedure Mouse_Enter_Cb
+   function Mouse_Moved_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips);
+      Tooltip :  Tooltips) return Boolean;
+   --  Callback for motion_notify_event
 
-   procedure Mouse_Leave_Cb
+   function Mouse_Enter_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips);
+      Tooltip :  Tooltips) return Boolean;
+   --  Callback for enter_notify_event
+
+   function Mouse_Leave_Cb
+     (Widget  : access Widget_Type'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip :  Tooltips) return Boolean;
+   --  Callback for leave_notify_event
 
 end GVD.Tooltips;
