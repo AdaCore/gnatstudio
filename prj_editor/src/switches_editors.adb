@@ -1712,7 +1712,7 @@ package body Switches_Editors is
 
             --  C++ compiler page
             when 4 =>
-               Gtk_New (Page, "C++", Compiler_Package, C_String, 2, 2,
+               Gtk_New (Page, "C++", Compiler_Package, Cpp_String, 2, 2,
                         Get_Tooltips (Kernel));
 
                Gtk_New (Frame, -"Code generation");
