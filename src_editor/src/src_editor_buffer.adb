@@ -1066,10 +1066,7 @@ package body Src_Editor_Buffer is
 
       Internal_Save_To_File
         (Buffer,
-         Create
-           (Full_Filename =>
-              Dir_Name (Buffer.Filename).all
-              & ".#" & Base_Name (Buffer.Filename)),
+         Autosaved_File (Buffer.Filename),
          True,
          Success);
       Buffer.Modified_Auto := False;
@@ -1143,7 +1140,6 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
-      Result : Boolean;
 
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X.
@@ -1177,9 +1173,7 @@ package body Src_Editor_Buffer is
          Buffer.Timeout_Registered := False;
 
          if Buffer.Filename /= VFS.No_File then
-            Delete_File
-              (Dir_Name (Buffer.Filename).all & ".#" &
-               Base_Name (Buffer.Filename), Result);
+            Delete (Autosaved_File (Buffer.Filename));
          end if;
       end if;
 
@@ -2750,9 +2744,7 @@ package body Src_Editor_Buffer is
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
 
          if Buffer.Filename /= VFS.No_File then
-            Delete (Create (Full_Filename =>
-                              Dir_Name (Buffer.Filename).all
-                            & ".#" & Base_Name (Buffer.Filename)));
+            Delete (Autosaved_File (Buffer.Filename));
          end if;
 
          Set_Modified (Buffer, False);
