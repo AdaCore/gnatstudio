@@ -29,6 +29,7 @@ with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Module;           use Src_Editor_Module;
 with Pango.Layout;                use Pango.Layout;
 
 with Traces;                      use Traces;
@@ -49,7 +50,8 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Traces; use Traces;
 with Gtk.Enums; use Gtk.Enums;
 
-with Commands; use Commands;
+with Commands;        use Commands;
+with Commands.Editor; use Commands.Editor;
 
 package body Src_Editor_Buffer.Line_Information is
 
@@ -465,7 +467,7 @@ package body Src_Editor_Buffer.Line_Information is
         Buffer.Editable_Lines;
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
 
-      Column : Integer;
+      Column : Integer := -1;
       Num    : Gint := 1;
       Height : Gint;
       Width  : Gint := -1;
@@ -593,45 +595,43 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end if;
 
-      for J in Columns_Config.all'Range loop
-         if Columns_Config.all (J).Identifier.all = Identifier then
-            Column := J;
+      --  The column has not been found: exit
 
-            --  The column has been found: update the stored data.
+      if Column = -1 then
+         return;
+      end if;
 
-            if Columns_Config.all (J).Stick_To_Data then
-               for K in Info'Range loop
-                  Buffer_Line := Get_Buffer_Line (Buffer, File_Line_Type (K));
+      --  The column has been found: update the stored data.
 
-                  if Buffer_Line /= 0 then
-                     Buffer_Lines (Buffer_Line).Side_Info_Data (Column).Info :=
-                       new Line_Information_Record'(Info (K));
-                     Buffer_Lines
-                       (Buffer_Line).Side_Info_Data (Column).Width :=
-                       Integer (Widths (K));
-                     Buffer_Lines
-                       (Buffer_Line).Side_Info_Data (Column).Set := True;
-                  end if;
-               end loop;
+      if Columns_Config.all (Column).Stick_To_Data then
+         for K in Info'Range loop
+            Buffer_Line := Get_Buffer_Line (Buffer, File_Line_Type (K));
 
-            else
-               for K in Info'Range loop
-                  Line := Editable_Line_Type (K);
-
-                  if Line /= 0 then
-                     Editable_Lines (Line).Side_Info_Data (Column).Info :=
-                       new Line_Information_Record'(Info (K));
-                     Editable_Lines
-                       (Line).Side_Info_Data (Column).Width :=
-                       Integer (Widths (K));
-                     Editable_Lines (Line).Side_Info_Data (Column).Set := True;
-                  end if;
-               end loop;
+            if Buffer_Line /= 0 then
+               Buffer_Lines (Buffer_Line).Side_Info_Data (Column).Info :=
+                 new Line_Information_Record'(Info (K));
+               Buffer_Lines
+                 (Buffer_Line).Side_Info_Data (Column).Width :=
+                 Integer (Widths (K));
+               Buffer_Lines
+                 (Buffer_Line).Side_Info_Data (Column).Set := True;
             end if;
+         end loop;
 
-            exit;
-         end if;
-      end loop;
+      else
+         for K in Info'Range loop
+            Line := Editable_Line_Type (K);
+
+            if Line /= 0 then
+               Editable_Lines (Line).Side_Info_Data (Column).Info :=
+                 new Line_Information_Record'(Info (K));
+               Editable_Lines
+                 (Line).Side_Info_Data (Column).Width :=
+                 Integer (Widths (K));
+               Editable_Lines (Line).Side_Info_Data (Column).Set := True;
+            end if;
+         end loop;
+      end if;
 
       --  If the line info width is bigger than the column width, resize the
       --  column and all columns.
@@ -784,16 +784,14 @@ package body Src_Editor_Buffer.Line_Information is
 
          if BL.all /= null then
             for Col in BL.all'Range loop
-               if Editable_Line /= 0 then
-                  Line_Info :=
-                    Editor.Line_Data
-                      (Current_Line).Side_Info_Data (Col);
+               Line_Info :=
+                 Editor.Line_Data
+                   (Current_Line).Side_Info_Data (Col);
 
-                  Draw_Info
-                    (Buffer_Line_Starting_X
-                       + Gint (BL.all (Col).Width - Line_Info.Width)
-                       + Gint (BL.all (Col).Starting_X));
-               end if;
+               Draw_Info
+                 (Buffer_Line_Starting_X
+                    + Gint (BL.all (Col).Width - Line_Info.Width)
+                    + Gint (BL.all (Col).Starting_X));
             end loop;
          end if;
 
@@ -892,6 +890,11 @@ package body Src_Editor_Buffer.Line_Information is
       Iter        : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
       Success     : Boolean;
+      Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
+      Command     : Remove_Blank_Lines_Command;
+      BL : Columns_Config_Access renames Editor.Buffer_Line_Info_Columns;
+      Column      : Integer := -1;
+      Width       : Integer;
    begin
       Buffer_Line := Get_Buffer_Line (Editor, Line);
 
@@ -918,20 +921,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       Apply_Tag (Editor, Editor.Non_Editable_Tag, Iter, End_Iter);
 
-      --  Shift down existing buffer lines
-
-      for J in Buffer_Line + Buffer_Line_Type (Number)
-        .. Editor.Line_Data'Last
-      loop
-         if Editor.Line_Data (J).Editable_Line > Line then
-            Editor.Line_Data (J).Editable_Line :=
-              Editor.Line_Data (J).Editable_Line - Editable_Line_Type (Number);
-         end if;
-      end loop;
-
       --  Shift down editable lines.
 
-      for J in Line .. Editor.Last_Editable_Line loop
+      for J in Line .. Editor.Editable_Lines'Last loop
          if Editor.Editable_Lines (J).Where = In_Buffer then
             Editor.Editable_Lines (J).Buffer_Line :=
               Editor.Editable_Lines (J).Buffer_Line
@@ -955,7 +947,48 @@ package body Src_Editor_Buffer.Line_Information is
       --  Create a command to remove the line information at the desired
       --  column.
 
-      return Create_Mark (Editor, "", Iter);
+      Mark := Create_Mark (Editor, "", Iter);
+
+      for J in BL.all'Range loop
+         if BL.all (J).Identifier.all = Block_Info_Column then
+            Command := new Remove_Blank_Lines_Command_Type;
+            Command.Buffer := Source_Buffer (Editor);
+            Command.Mark   := Mark;
+            Command.Number := Natural (Number);
+
+            Width := Integer (Get_Width (Remove_Blank_Lines_Pixbuf));
+
+            Unchecked_Free
+              (Editor.Line_Data (Buffer_Line).Side_Info_Data (J).Info);
+            Editor.Line_Data (Buffer_Line).Side_Info_Data (J) :=
+              (Info => new Line_Information_Record'
+                 (Text               => null,
+                  Image              => Remove_Blank_Lines_Pixbuf,
+                  Associated_Command => Command_Access (Command)),
+               Width => Width,
+               Set   => True);
+
+            Column := J;
+            exit;
+         end if;
+      end loop;
+
+      if Column /= -1 then
+         BL.all (Column).Width := Width;
+
+         for J in Column + 1 .. BL.all'Last loop
+            BL.all (J).Starting_X :=
+              BL.all (J - 1).Starting_X
+              + BL.all (J - 1).Width + 1;
+         end loop;
+
+         Recalculate_Side_Column_Width (Editor);
+         Side_Column_Configuration_Changed (Editor);
+      end if;
+
+      Side_Column_Changed (Editor);
+
+      return Mark;
    end Add_Blank_Lines;
 
    -----------------
@@ -1010,7 +1043,6 @@ package body Src_Editor_Buffer.Line_Information is
 
       Bottom_Line : Buffer_Line_Type;
       Ref_Editable_Line : Editable_Line_Type;
-
 
       procedure Expand_Lines
         (N : Buffer_Line_Type);
@@ -1105,10 +1137,12 @@ package body Src_Editor_Buffer.Line_Information is
 
          --  Shift down the existing lines.
 
-         for J in reverse Start + Number + 1 .. Buffer_Lines'Last loop
+         for J in reverse Start + Number .. Buffer_Lines'Last loop
             Buffer_Lines (J) := Buffer_Lines (J - Number);
 
-            if Buffer_Lines (J).Editable_Line /= 0 then
+            if Buffer.Modifying_Editable_Lines
+              and then Buffer_Lines (J).Editable_Line /= 0
+            then
                Buffer_Lines (J).Editable_Line
                  := Buffer_Lines (J).Editable_Line
                  + Editable_Line_Type (Number);
@@ -1120,7 +1154,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          --  Reset the newly inserted lines.
 
-         for J in 1 .. Number loop
+         for J in 0 .. Number - 1 loop
             Buffer_Lines (Start + J) := New_Line_Data;
             Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
               + Editable_Line_Type (J);
@@ -1151,23 +1185,25 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
+      Number : constant Buffer_Line_Type := End_Line - Start_Line;
+      EN     : constant Editable_Line_Type := Editable_Line_Type (Number);
 
    begin
       if End_Line <= Start_Line then
          return;
       end if;
 
-      --  Shift up remaining lines
+      for J in Start_Line + 1 .. Buffer_Lines'Last - Number loop
+         Buffer_Lines (J) := Buffer_Lines (J + Number);
 
-      for J in Start_Line + 1 .. Buffer_Lines'Last + Start_Line - End_Line loop
-         Buffer_Lines (J) := Buffer_Lines (End_Line + J - Start_Line);
+         if Buffer.Modifying_Editable_Lines then
+            if Buffer_Lines (J).Editable_Line /= 0 then
+               Buffer_Lines (J).Editable_Line :=
+                 Buffer_Lines (J).Editable_Line - EN;
 
-         if Buffer_Lines (J).Editable_Line /= 0 then
-            Buffer_Lines (J).Editable_Line :=
-              Buffer_Lines (J).Editable_Line
-              - Editable_Line_Type (End_Line - Start_Line);
-
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
+               Editable_Lines
+                 (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
+            end if;
          end if;
       end loop;
 
@@ -1177,7 +1213,8 @@ package body Src_Editor_Buffer.Line_Information is
         .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0 then
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
+            Editable_Lines
+              (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
          end if;
 
          Buffer_Lines (J) := New_Line_Data;
@@ -1188,5 +1225,101 @@ package body Src_Editor_Buffer.Line_Information is
            Editable_Line_Type (End_Line - Start_Line);
       end if;
    end Remove_Lines;
+
+   ------------------------
+   -- Remove_Blank_Lines --
+   ------------------------
+
+   procedure Remove_Blank_Lines
+     (Buffer : access Source_Buffer_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Natural)
+   is
+      Iter     : Gtk_Text_Iter;
+      End_Iter : Gtk_Text_Iter;
+      Success  : Boolean;
+      Buffer_Line_At_Blanks  : Buffer_Line_Type;
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Line_After_Blanks  : Editable_Line_Type;
+      Editable_Line_Before_Blanks : Editable_Line_Type;
+
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+
+      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+
+      Real_Number : Buffer_Line_Type;
+      Result      : Boolean := True;
+      Buffer_Line : Buffer_Line_Type;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Backward_Char (Iter, Success);
+
+      --  Compute the real number of blan lines.
+
+      Get_Iter_At_Line (Buffer, End_Iter, Get_Line (Iter));
+      Buffer_Line_At_Blanks := Buffer_Line_Type (Get_Line (Iter)) + 1;
+
+      Buffer_Line := Buffer_Line_At_Blanks + 1;
+
+      while Result and then Buffer_Lines (Buffer_Line).Editable_Line = 0 loop
+         Forward_Line (End_Iter, Result);
+         Buffer_Line := Buffer_Line + 1;
+      end loop;
+
+      Real_Number := Buffer_Line - Buffer_Line_At_Blanks;
+
+      if Number /= 0 and then Number < Natural (Real_Number) then
+         Real_Number := Buffer_Line_Type (Number);
+      end if;
+
+      --  Find the first editable line after the blanks.
+
+      for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
+         Editable_Line_After_Blanks := Get_Editable_Line (Buffer, J);
+         exit when Editable_Line_After_Blanks /= 0;
+      end loop;
+
+      --  Find the first editable line before the blanks.
+
+      for J in reverse Buffer_Lines'First .. Buffer_Line_At_Blanks loop
+         Editable_Line_Before_Blanks := Get_Editable_Line (Buffer, J);
+         exit when Editable_Line_Before_Blanks /= 0;
+      end loop;
+
+      Buffer.Modifying_Editable_Lines := False;
+      Buffer.Inserting := True;
+      Delete (Buffer, Iter, End_Iter);
+      Buffer.Inserting := False;
+      Buffer.Modifying_Editable_Lines := True;
+
+      for J in Buffer_Line_At_Blanks + 1 .. Buffer_Lines'Last loop
+         if Buffer_Lines (J).Editable_Line /= 0 then
+            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
+              Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
+              - Real_Number;
+         end if;
+      end loop;
+
+      --  If it was the last item in the column, delete the column.
+
+      Delete_Columns :
+      for Col in BL.all'Range loop
+         if BL.all (Col).Identifier.all = Block_Info_Column then
+            for J in Buffer_Lines'Range loop
+               exit Delete_Columns when
+                 Buffer_Lines (J).Side_Info_Data /= null
+                 and then Buffer_Lines (J).Side_Info_Data (Col).Info /= null;
+            end loop;
+
+            Remove_Line_Information_Column (Buffer, Block_Info_Column);
+            exit Delete_Columns;
+         end if;
+      end loop Delete_Columns;
+
+      --  Redraw the side column.
+
+      Side_Column_Configuration_Changed (Buffer);
+   end Remove_Blank_Lines;
 
 end Src_Editor_Buffer.Line_Information;
