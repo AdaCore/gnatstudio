@@ -84,7 +84,7 @@ package body Glide_Kernel.Console is
    --  Callback for File->Messages->Clear menu.
 
    function Interpret_Command_Handler
-     (Input  : in String;
+     (Input  : String;
       Kernel : access GObject_Record'Class) return String;
    --  Launch the command interpreter for Input and return the output.
 
@@ -93,10 +93,19 @@ package body Glide_Kernel.Console is
    -------------------------------
 
    function Interpret_Command_Handler
-     (Input  : in String;
-      Kernel : access GObject_Record'Class) return String is
+     (Input  : String;
+      Kernel : access GObject_Record'Class) return String
+   is
+      S : constant String := Interpret_Command (Kernel_Handle (Kernel), Input);
    begin
-      return Interpret_Command (Kernel_Handle (Kernel), Input);
+      if S = ""
+        or else S (S'Last) = ASCII.LF
+        or else S (S'Last) = ASCII.CR
+      then
+         return S;
+      else
+         return S & ASCII.LF;
+      end if;
    end Interpret_Command_Handler;
 
    -----------------------------
@@ -494,7 +503,7 @@ package body Glide_Kernel.Console is
       Raise_Child (Child);
 
       Gtk_New (Interactive,
-               ASCII.LF & "GPS> ",
+               "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
                Get_Pref (Kernel, Source_Editor_Font),
