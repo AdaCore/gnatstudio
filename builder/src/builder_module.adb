@@ -1085,10 +1085,10 @@ package body Builder_Module is
       Matched      : Match_Array (0 .. 3);
       Result       : Expect_Match;
       Matcher      : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
-         Multiple_Lines);
+        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
       Timeout      : Integer := 1;
-      Line_Matcher : constant Pattern_Matcher := Compile (".+");
+      Line_Matcher : constant Pattern_Matcher :=
+        Compile ("^.*?\n", Multiple_Lines);
       Buffer       : String_Access := new String (1 .. 1024);
       Buffer_Pos   : Natural := Buffer'First;
       Min_Size     : Natural;
@@ -1144,7 +1144,7 @@ package body Builder_Module is
                   Gdouble'Value
                     (S (Matched (3).First .. Matched (3).Last)) / 100.0);
                Set_Progress_Text
-                 (Top.Statusbar, S (S'First + 1 .. Matched (2).Last));
+                 (Top.Statusbar, S (S'First .. Matched (2).Last));
             end if;
          end;
       end loop;
