@@ -20,16 +20,12 @@
 
 package body Codefix is
 
-   ----------------------------------------------------------------------------
-   --  type Dynamic_String
-   ----------------------------------------------------------------------------
-
    ------------
-   -- Affect --
+   -- Assign --
    ------------
 
-   procedure Assign (This : in out Dynamic_String; Value : String) is
-      Garbage : Dynamic_String := This;
+   procedure Assign (This : in out String_Access; Value : String) is
+      Garbage : String_Access := This;
       --  Used to prevent usage like 'Assign (Str, Str.all)'
    begin
       This := new String'(Value);
@@ -37,18 +33,14 @@ package body Codefix is
    end Assign;
 
    ------------
-   -- Affect --
+   -- Assign --
    ------------
 
-   procedure Assign (This : in out Dynamic_String; Value : Dynamic_String) is
-      Garbage : Dynamic_String := This;
+   procedure Assign (This : in out String_Access; Value : String_Access) is
+      Garbage : String_Access := This;
       --  Used to prevent usage like 'Assign (Str, Str)'
    begin
-      if Value /= null then
-         This := new String'(Value.all);
-      else
-         This := null;
-      end if;
+      This := Clone (Value);
       Free (Garbage);
    end Assign;
 
@@ -56,56 +48,21 @@ package body Codefix is
    -- Get_Line --
    --------------
 
-   procedure Get_Line (This : in out Dynamic_String) is
+   procedure Get_Line (File : File_Type; This : in out String_Access) is
+      Len    : Natural;
+      Buffer : String (1 .. 2048);
    begin
-      Get_Line (Standard_Input, This);
+      --  We can't read lines longer than 2048 characters. Doesn't seem worth
+      --  it anyway, since we are dealing with source files.
+      Get_Line (File, Buffer, Len);
+      Assign (This,  Buffer (1 .. Len));
    end Get_Line;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   procedure Get_Line (File : File_Type; This : in out Dynamic_String) is
-      Len          : Natural;
-      Current_Size : Natural := 128;
-   begin
-      loop
-         declare
-            Buffer : String (1 .. Current_Size);
-         begin
-            Get_Line (File, Buffer, Len);
-            Assign (This,  String'(Buffer (1 .. Len)));
-            if Len < Current_Size then
-               return;
-            end if;
-         end;
-         Current_Size := Current_Size * 2;
-      end loop;
-   end Get_Line;
-
-   --------------
-   -- Put_Line --
-   --------------
-
-   procedure Put_Line (This : Dynamic_String) is
-   begin
-      Put_Line (Standard_Output, This);
-   end Put_Line;
-
-   --------------
-   -- Put_Line --
-   --------------
-
-   procedure Put_Line (File : File_Type; This : Dynamic_String) is
-   begin
-      Put_Line (File, This.all);
-   end Put_Line;
 
    -----------
    -- Clone --
    -----------
 
-   function Clone (This : Dynamic_String) return Dynamic_String is
+   function Clone (This : String_Access) return String_Access is
    begin
       if This = null then
          return null;
