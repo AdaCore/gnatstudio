@@ -11712,11 +11712,6 @@ Contains all the key bindings for the actions defined in GPS or in the
 custom files. This only contains the key bindings overridden through the
 key shortcuts editor (see @ref{The Key Manager Dialog}).
 
-   @item $HOME/.gps/actions.xml
-Contains the definition of all the actions that were defined through the
-graphical interface. This is loaded last, and overrides all actions defined
-elsewhere.
-
    @item $HOME/.gps/debugger.log
 @cindex log
 @cindex debugger
@@ -11797,15 +11792,6 @@ actions (e.g compilation) are on going.
    @item @i{prefix}/share/gps/gps-splash.jpg
 @cindex jpeg
 Splash screen displayed by default when GPS is started.
-
-   @item @i{prefix}/share/themes
-@cindex Gtk+
-@cindex theme
-Directory containing the Gtk+ predefined themes.
-
-   @item @i{prefix}/share/make
-Directory containing shared makefiles used by the multi-language build
-system.
 
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.
