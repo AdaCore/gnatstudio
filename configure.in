@@ -11,7 +11,7 @@ TARGET_LFLAGS=""
 EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
-HTML_BROWSER="netscape"
+HTML_BROWSER="mozilla"
 PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
@@ -201,7 +201,7 @@ case "${host}" in
 	EXEC_COMMAND="cmd /c start"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
-	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
+	HTML_BROWSER="explore"
 	PRINT_CMD=""
 	DIFF_CMD="windiff"
 	PATCH_CMD="winpatch"
