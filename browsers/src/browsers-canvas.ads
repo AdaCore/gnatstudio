@@ -82,11 +82,10 @@ package Browsers.Canvas is
    procedure Select_Item
      (Browser : access Glide_Browser_Record;
       Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Refresh : Refresh_Item_Func := null);
+      Refresh_Items : Boolean := False);
    --  Select Item.
-   --  If Refresh is not null, this will redraw all the items in the canvas,
-   --  which might affect there background color if they are linked to the
-   --  selected item.
+   --  If Refresh_Items is True, this will redraw all the items in the canvas,
+   --  by calling their Refresh subprogram
 
    -----------
    -- Items --
@@ -111,6 +110,12 @@ package Browsers.Canvas is
    --  this item, they should be added to Menu.
    --  null should be return if there is no special contextual for this
    --  item. In that case, the context for the browser itself will be used.
+
+   procedure Refresh (Browser : access Glide_Browser_Record'Class;
+                      Item    : access Glide_Browser_Item_Record);
+   --  Redraw the item to its double buffer.
+   --  This is used when changing for instance the background color of items.
+   --  By default, it only redraws the background color.
 
    -----------
    -- Links --

@@ -57,7 +57,7 @@ package body Browsers.Canvas is
    Selected_Item_Color : constant String := "#888888";
    --  <preference> Color to use to draw the selected item.
 
-   Parent_Linked_Item_Color : constant String := "#BBBBBB";
+   Parent_Linked_Item_Color : constant String := "#AAAAAA";
    Child_Linked_Item_Color : constant String := "#DDDDDD";
    --  <preference> Color to use to draw the items that are linked to the
    --  selected item.
@@ -513,7 +513,7 @@ package body Browsers.Canvas is
    procedure Select_Item
      (Browser : access Glide_Browser_Record;
       Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Refresh : Refresh_Item_Func := null)
+      Refresh_Items : Boolean := False)
    is
       function Refresh_Item
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -528,14 +528,14 @@ package body Browsers.Canvas is
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
-         Refresh (Browser, Buffered_Item (Item));
+         Refresh (Browser, Glide_Browser_Item (Item));
          return True;
       end Refresh_Item;
 
    begin
       Browser.Selected_Item := Canvas_Item (Item);
 
-      if Refresh /= null then
+      if Refresh_Items then
          --  ??? We should redraw only the items that were previously
          --  ??? highlighted, and the new ones.
          For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
@@ -597,5 +597,15 @@ package body Browsers.Canvas is
          end if;
       end if;
    end Draw_Link;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh (Browser : access Glide_Browser_Record'Class;
+                      Item : access Glide_Browser_Item_Record) is
+   begin
+      Draw_Item_Background (Browser, Item);
+   end Refresh;
 
 end Browsers.Canvas;
