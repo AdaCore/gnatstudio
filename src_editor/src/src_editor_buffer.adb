@@ -1789,7 +1789,7 @@ package body Src_Editor_Buffer is
             Ignore, Length, Result => Contents.all);
          g_free (UTF8);
 
-         if Terminator = Unknown then
+         if Terminator_Pref = Unchanged and then Terminator = Unknown then
             --  Check value of first line terminator and set Terminator
             --  accordingly.
 
@@ -1805,6 +1805,8 @@ package body Src_Editor_Buffer is
 
                elsif Contents (J) = ASCII.LF then
                   Terminator := LF;
+
+                  exit;
                end if;
             end loop;
 
@@ -1860,7 +1862,7 @@ package body Src_Editor_Buffer is
             Current := Current + 1;
          end loop;
 
-         if First < Length then
+         if First <= Length then
             if Blanks /= 0 then
                Bytes_Written :=
                  Write (FD, Contents (First)'Address, Blanks - First);
