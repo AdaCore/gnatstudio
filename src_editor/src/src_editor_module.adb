@@ -149,7 +149,7 @@ package body Src_Editor_Module is
 
    type Location_Idle_Data is record
       Edit : Source_Editor_Box;
-      Line, Column : Natural;
+      Line, Column, Column_End : Natural;
    end record;
 
    package Location_Idle is new Gtk.Main.Idle (Location_Idle_Data);
@@ -382,7 +382,7 @@ package body Src_Editor_Module is
             if Src /= null then
                Data.Edit := Src.Editor;
                Id := Location_Idle.Add
-                 (File_Edit_Callback'Access, (Src.Editor, 1, 1));
+                 (File_Edit_Callback'Access, (Src.Editor, 1, 1, 0));
 
                return Gtk_Widget (Src);
             end if;
@@ -825,9 +825,16 @@ package body Src_Editor_Module is
       Grab_Focus (D.Edit);
 
       if Is_Valid_Location (D.Edit, D.Line, D.Column) then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => True);
+         if D.Column_End /= 0
+           and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
+         then
+            Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
+         else
+            Set_Cursor_Location (D.Edit, D.Line, D.Column);
+         end if;
+
       elsif Is_Valid_Location (D.Edit, D.Line) then
-         Set_Cursor_Location (D.Edit, D.Line, Force_Focus => True);
+         Set_Cursor_Location (D.Edit, D.Line);
       end if;
 
       return False;
@@ -1474,17 +1481,19 @@ package body Src_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File      : constant String  := Get_String (Data (Data'First));
-            Line      : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column    : constant Gint    := Get_Int (Data (Data'First + 2));
-            Highlight : constant Boolean :=
-              Get_Boolean (Data (Data'First + 3));
-            New_File  : constant Boolean :=
-              Get_Boolean (Data (Data'First + 5));
-            The_Data  : Source_Editor_Module :=
+            File       : constant String  := Get_String (Data (Data'First));
+            Line       : constant Gint    := Get_Int (Data (Data'First + 1));
+            Column     : constant Gint    := Get_Int (Data (Data'First + 2));
+            Column_End : constant Gint    := Get_Int (Data (Data'First + 3));
+            Highlight  : constant Boolean :=
+              Get_Boolean (Data (Data'First + 4));
+            New_File   : constant Boolean :=
+              Get_Boolean (Data (Data'First + 6));
+            The_Data   : Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
-            Iter      : Child_Iterator := First_Child (MDI);
-            Child     : MDI_Child;
+            Iter       : Child_Iterator := First_Child (MDI);
+            Child      : MDI_Child;
+
          begin
             if Line = -1 then
                loop
@@ -1526,7 +1535,10 @@ package body Src_Editor_Module is
 
                   The_Data.Location_Open_Id := Location_Idle.Add
                     (Location_Callback'Access,
-                       (Edit, Natural (Line), Natural (Column)),
+                       (Edit,
+                        Natural (Line),
+                        Natural (Column),
+                        Natural (Column_End)),
                      Destroy => Location_Destroy'Access);
 
                   if Highlight then
