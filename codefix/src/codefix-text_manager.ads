@@ -75,6 +75,14 @@ package Codefix.Text_Manager is
    type Text_Interface is abstract tagged private;
    type Ptr_Text is access all Text_Interface'Class;
 
+   --  The abstract part of Text_Interface do not manage the offset line. That
+   --  means that if a line is added after line 1, and then a get line in line
+   --  2 is asked, nothing will be tell the Text_Interface that the old line 2
+   --  is now line 3. The problem is that error messages are all loaded before
+   --  all modifications, and after the first add / delete, their lines numbers
+   --  becomes to be incoherent. The implementation of Text_Interface should
+   --  take care of these problems.
+
    procedure Free (This : in out Ptr_Text);
    --  Free the memory associated to Ptr_Text and the object referenced.
 
@@ -281,8 +289,7 @@ package Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Upate changes of the Extract_Line in the representation of the text,
 
    procedure Free (This : in out Extract_Line);
@@ -425,8 +432,7 @@ package Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Upate changes of the Extract_Line in the representation of the text.
 
    procedure Replace_Word
