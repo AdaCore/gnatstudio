@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System; use System;
 with Glib; use Glib;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Widget; use Gtk.Widget;

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Main; use Gtk.Main;
-with Gtk.Widget; use Gtk.Widget;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Odd.Strings; use Odd.Strings;
 

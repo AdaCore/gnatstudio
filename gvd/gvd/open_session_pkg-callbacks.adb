@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Object; use Gtk.Object;
 with Gtk.Main; use Gtk.Main;
 with Gtk.Label; use Gtk.Label;
 with Gtk; use Gtk;
