@@ -37,7 +37,7 @@ package Gtkada.Toolbar is
 
    type Gtkada_Toolbar_Record is new
      Gtk.Toolbar.Gtk_Toolbar_Record with private;
-   --  Gtk.Handle_Box.Gtk_Handle_Box_Record with private;
+
    type Gtkada_Toolbar is access all Gtkada_Toolbar_Record'Class;
 
    procedure Gtk_New
