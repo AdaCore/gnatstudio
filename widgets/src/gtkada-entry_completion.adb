@@ -263,7 +263,7 @@ package body Gtkada.Entry_Completion is
       The_Entry.Completions := new String_Factory'
         (Completions => Completions);
 
-      The_Entry.Completion_Index := Positive'First;
+      The_Entry.Completion_Index := Integer'Last;
    end Set_Completions;
 
    ---------------------
@@ -275,7 +275,7 @@ package body Gtkada.Entry_Completion is
       Completions : Completions_Factory'Class) is
    begin
       Clear (The_Entry.List);
-      The_Entry.Completion_Index := Positive'First;
+      The_Entry.Completion_Index := Integer'Last;
 
       if The_Entry.Completions /= null then
          Destroy (The_Entry.Completions.all);
