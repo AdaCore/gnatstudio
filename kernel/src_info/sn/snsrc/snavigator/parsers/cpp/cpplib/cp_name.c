@@ -205,8 +205,9 @@ extern Name_t f_Name( void )
    case SN_THROW      :
    case SN_TRY        :
    case SN_USING      :
-      Name = f_NameCreate( ident( 0 ));
-      step( 1 );
+      //Name = f_NameCreate( ident( 0 ));
+      //step( 1 );
+      Name = f_ClassName();
       niveau--;
       if( test ) printf( "return OK\n" );
       return Name;

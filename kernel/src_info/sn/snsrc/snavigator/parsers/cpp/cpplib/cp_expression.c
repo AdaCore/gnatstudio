@@ -1187,7 +1187,12 @@ label:
 
             step( 1 );
 
-            if( f_IsNameSimpleTypeName( Name ))
+            /*
+             * disabled so that constructs like this:
+             *    f <long> (0)
+             * were not treated as constructor calls
+             */
+            if( 0 ) // f_IsNameSimpleTypeName( Name ))
             {
                ListExpr = expression_list_opt();
 

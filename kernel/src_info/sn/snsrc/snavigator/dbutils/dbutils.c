@@ -2351,6 +2351,8 @@ next:
 	}
 
 
+#undef BUG_TRACE
+#define BUG_TRACE 1
 static int
 search_for_symbol(char *global_class_name,char *local_class_name,
 	char *name,char *arg_types,int db_type,char *scope,char *ret_type,
@@ -2681,6 +2683,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 
 		pars.free(&pars);
 
+      printf ("sym_type = %s\n", sym_type);
 		if ( !strncmp (sym_type, SN_symbol_types[PAF_MBR_VAR_DEF], 2) )		/* "iv" ? */
 		{
 			RETURN_FROM_SEARCH(PAF_MBR_VAR_DEF);
@@ -2793,8 +2796,7 @@ static struct check_symbol_types {
 	{PAF_MACRO_DEF, FALSE, FALSE},	/* Macros such as BUFSIZE */
 	{PAF_GLOB_VAR_DEF, FALSE, FALSE},
 	{PAF_CONS_DEF, FALSE, FALSE},
-	{PAF_ENUM_CONST_DEF, FALSE, FALSE},
-	{PAF_TEMPLATE_ARG_DEF, TRUE, FALSE}
+	{PAF_ENUM_CONST_DEF, FALSE, FALSE}
 };
 
 int get_template_argument (const char* class_name, const char* fn_name,

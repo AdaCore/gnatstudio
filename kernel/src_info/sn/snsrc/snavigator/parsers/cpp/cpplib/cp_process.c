@@ -630,6 +630,7 @@ label4:
          object = Proc1.name;	/* 16.02.98 rigo */
          for (first_time = 1;;)
          {
+            char* ptr;
             scope_name   = get_scope( object );
             name         = get_name ( object );
 
@@ -640,6 +641,7 @@ label4:
                scope_global = scope_g;
             }
 
+            if ( ptr = strchr (name, '<') ) *ptr = 0;
             Proc.Type = get_function_type( scope_global
                                          , Proc1.scope
                                          , name
