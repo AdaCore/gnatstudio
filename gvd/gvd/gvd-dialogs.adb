@@ -869,6 +869,7 @@ package body GVD.Dialogs is
          Item := Gtk_List_Item (Get_Data (Children));
          Set_Text (Get_Entry (Dialog.Entry_Field),
                    Get (Gtk_Label (Get_Child (Item))));
+         Select_Region (Get_Entry (Dialog.Entry_Field), 0);
 
       else
          Set_Text (Get_Entry (Dialog.Entry_Field), "");
