@@ -130,9 +130,9 @@ package body Glide_Main_Window is
       Set_Active (Check, Get_Pref (Main_Window.Kernel, Save_Desktop_On_Exit));
 
       Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-      Button := Add_Button (Dialog, Stock_No,  Gtk_Response_No);
       Grab_Default (Button);
       Grab_Focus (Button);
+      Button := Add_Button (Dialog, Stock_No,  Gtk_Response_No);
 
       Show_All (Dialog);
 
