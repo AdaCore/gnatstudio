@@ -194,6 +194,7 @@ package Src_Info.Queries is
    --  Only the short path name is returned.
    --
    --  This method is based on LI files.
+   --  See also Prj_API.Other_File_Name for a method based on naming schemes
 
    ------------------
    -- Declarations --
