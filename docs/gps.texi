@@ -98,6 +98,10 @@ Source Navigation
 
 
 Project Handling
+* Description of the projects::
+* Scenarios and configuration variables::
+* The project wizard::
+* The project properties editor::
 
 Searching and Replacing
 
@@ -1136,27 +1140,10 @@ won't be detected.
 @noindent
 
 @c --------------------------------------------------------------------
-@node Project Handling
-@chapter Project Handling
+@c Project Handling
 @c --------------------------------------------------------------------
 
-@noindent
-To handle projects, GPS uses the GNAT project file facility, as described
-in the GNAT User's Guide (@url{gnat_ug.html}) and in the GNAT Reference
-Manual (@url{gnat_rm.html}). For a best use of the project capabilities, it
-is recommended to first become familiar with this documentation.
-
-The project files are text files following a syntax close to Ada, it is thus
-possible to edit and modify them by hand, as well as generating them and
-loading them within GPS, both manual and automatic generation can be
-mixed. For example, you can first generate projects automatically using
-the @i{Project Wizard}, and then modify them by hand.
-
-All the non graphical GNAT tools are project aware, meaning that the notion
-of project goes well beyond GPS' user interface, and most capabilities of
-the project file can be accessed without using GPS itself, making the
-project files very attractive.
-
+@include projects.texi
 
 @c --------------------------------------------------------------------
 @node Searching and Replacing
