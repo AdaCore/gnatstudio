@@ -582,61 +582,82 @@ package body Vdiff_Utils is
 
       while Current_Line /= null loop
 
-         if Last_Line_Number + 1 < Current_Line.Original_Position then
-            for J in 1 .. Num_Line_Sep loop
+         if Current_Line.File_Caption then
+
+            for J in 1 .. Num_Line_Sep / 2 loop
                Add_Line (List1, Default_Style);
                Add_Line (List2, Default_Style);
             end loop;
+
+            Add_Line (List1, Default_Style, 0, Current_Line.Old_Line.all);
+            Add_Line (List2, Default_Style, 0, Current_Line.New_Line.all);
+
+            for J in 1 .. Num_Line_Sep / 2 loop
+               Add_Line (List1, Default_Style);
+               Add_Line (List2, Default_Style);
+            end loop;
+
+            Offset_Line := 0;
+
+         else
+
+            if Last_Line_Number + 1 < Current_Line.Original_Position then
+               for J in 1 .. Num_Line_Sep loop
+                  Add_Line (List1, Default_Style);
+                  Add_Line (List2, Default_Style);
+               end loop;
+            end if;
+
+            Last_Line_Number := Current_Line.Original_Position;
+
+            case Current_Line.Action is
+               when Append =>
+                  Offset_Line := Offset_Line + 1;
+
+                  Add_Line (List1, Old_Style);
+                  Add_Line
+                    (List2,
+                     Append_Style,
+                     Current_Line.Original_Position + Offset_Line,
+                     Current_Line.New_Line.all);
+
+               when Change =>
+                  Add_Line
+                    (List1,
+                     Old_Style,
+                     Current_Line.Original_Position,
+                     Current_Line.Old_Line.all);
+                  Add_Line
+                    (List2,
+                     Change_Style,
+                     Current_Line.Original_Position + Offset_Line,
+                     Current_Line.New_Line.all);
+
+               when Delete =>
+                  Add_Line
+                    (List1,
+                     Old_Style,
+                     Current_Line.Original_Position,
+                     Current_Line.Old_Line.all);
+                  Add_Line (List2, Remove_Style);
+
+                  Offset_Line := Offset_Line - 1;
+
+               when Nothing =>
+                  Add_Line
+                    (List1,
+                     Default_Style,
+                     Current_Line.Original_Position,
+                     Current_Line.Old_Line.all);
+                  Add_Line
+                    (List2,
+                     Default_Style,
+                     Current_Line.Original_Position + Offset_Line,
+                     Current_Line.New_Line.all);
+
+            end case;
+
          end if;
-
-         Last_Line_Number := Current_Line.Original_Position;
-
-         case Current_Line.Action is
-            when Append =>
-               Offset_Line := Offset_Line + 1;
-
-               Add_Line (List1, Old_Style);
-               Add_Line
-                 (List2,
-                  Append_Style,
-                  Current_Line.Original_Position + Offset_Line,
-                  Current_Line.New_Line.all);
-
-            when Change =>
-               Add_Line
-                 (List1,
-                  Old_Style,
-                  Current_Line.Original_Position,
-                  Current_Line.Old_Line.all);
-               Add_Line
-                 (List2,
-                  Change_Style,
-                  Current_Line.Original_Position + Offset_Line,
-                  Current_Line.New_Line.all);
-
-            when Delete =>
-               Add_Line
-                 (List1,
-                  Old_Style,
-                  Current_Line.Original_Position,
-                  Current_Line.Old_Line.all);
-               Add_Line (List2, Remove_Style);
-
-               Offset_Line := Offset_Line - 1;
-
-            when Nothing =>
-               Add_Line
-                 (List1,
-                  Default_Style,
-                  Current_Line.Original_Position,
-                  Current_Line.Old_Line.all);
-               Add_Line
-                 (List2,
-                  Default_Style,
-                  Current_Line.Original_Position + Offset_Line,
-                  Current_Line.New_Line.all);
-
-         end case;
 
          Current_Line := Current_Line.Next;
 
