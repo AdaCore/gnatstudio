@@ -36,6 +36,7 @@ with Debugger;              use Debugger;
 with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Regpat;           use GNAT.Regpat;
 
 package body GVD.Dialogs.Callbacks is
 
@@ -68,8 +69,9 @@ package body GVD.Dialogs.Callbacks is
       --  holes, but info threads can have holes when e.g threads are
       --  terminated, see 9019-008.
 
-      Thread        : constant Gint := To_Gint (Params, 1) + 1;
-
+      Index         : constant Gint := To_Gint (Params, 1);
+      Str           : constant String :=
+        Get_Text (Gtk_Clist (Object), Index, 0);
       Top           : constant GVD_Dialog :=
         GVD_Dialog (Get_Toplevel (Object));
 
@@ -87,13 +89,19 @@ package body GVD.Dialogs.Callbacks is
         Process_User_Data.Get (Get_Nth_Page
           (Notebook, Get_Current_Page (Notebook)));
 
+      Matched       : Match_Array (0 .. 0);
+
    begin
       if Top = GVD_Dialog (Main_Window.Thread_Dialog) then
+         Match ("[0-9]+", Str, Matched);
          Thread_Switch
-           (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
+           (Process.Debugger,
+            Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+            Mode => GVD.Types.Visible);
+
       elsif Top = GVD_Dialog (Main_Window.Task_Dialog) then
          Task_Switch
-           (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
+           (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
       else
          raise Program_Error;
       end if;
