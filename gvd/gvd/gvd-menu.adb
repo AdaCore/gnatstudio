@@ -38,6 +38,7 @@ with GVD.Types;           use GVD.Types;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Basic_Types;         use Basic_Types;
+with Std_Dialogs;         use Std_Dialogs;
 with Histories;           use Histories;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Debugger;            use Debugger;
