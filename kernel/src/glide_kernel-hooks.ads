@@ -110,7 +110,7 @@ package Glide_Kernel.Hooks is
    ----------------
 
    type Hook_Type is (Unknown, Hook_Without_Args, Hook_With_Args,
-                      Hook_With_Args_And_Return);
+                      Hook_With_Shell_Args, Hook_With_Args_And_Return);
 
    procedure Create_Hook_Type
      (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -138,6 +138,52 @@ package Glide_Kernel.Hooks is
    --  Type_Name described the type of parameters for that hook. This should be
    --  the same value as given to Create_Hook_Type. The default value indicates
    --  that the hook doesn't have any argument
+
+   --------------------------------
+   -- Hooks with shell arguments --
+   --------------------------------
+   --  This type of hooks are used when a hook is created from a scripting
+   --  language directly
+
+   type Hook_Shell_Args_Record
+      is abstract new Glide_Kernel.Hook_Function_Record with null record;
+   type Hook_Shell_Args is access all Hook_Shell_Args_Record;
+
+   procedure Execute
+     (Hook   : Hook_Shell_Args_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Glide_Kernel.Scripts.Callback_Data'Class) is abstract;
+   --  First argument in Data is the name of the hook
+
+   type Shell_Args_Execute is access procedure
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data : Glide_Kernel.Scripts.Callback_Data'Class);
+   --  First argument in Data is the name of the hook
+
+   procedure Add_Hook
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Hook   : access Hook_Shell_Args_Record'Class;
+      Watch  : Glib.Object.GObject := null);
+   procedure Add_Hook
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name     : String;
+      Hook     : Shell_Args_Execute;
+      Watch    : Glib.Object.GObject := null);
+   --  See doc for Add_Hook above
+
+   procedure Remove_Hook
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Hook   : access Hook_Shell_Args_Record'Class);
+   --  See doc for Remove_Hook above
+
+   procedure Run_Hook
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name     : String;
+      Data     : Glide_Kernel.Scripts.Callback_Data'Class;
+      Set_Busy : Boolean := True);
+   --  See doc for Run_Hook above
 
    --------------------------
    -- Hooks with arguments --

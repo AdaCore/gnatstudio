@@ -93,6 +93,20 @@ package body Glide_Kernel.Hooks is
    --  See inherited doc
    --  This wrapper is used to give access to hooks from shell languages.
 
+   type Shell_Wrapper_Shell_Record is new Hook_Shell_Args_Record with record
+      Func   : GNAT.OS_Lib.String_Access;
+      Script : Scripting_Language;
+   end record;
+   type Shell_Wrapper_Shell is access all Shell_Wrapper_Shell_Record'Class;
+   procedure Destroy (Wrapper : in out Shell_Wrapper_Shell_Record);
+   procedure Execute
+     (Wrapper : Shell_Wrapper_Shell_Record;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Callback_Data'Class);
+   --  See inherited doc
+   --  This wrapper is used to give access to hooks defined in shell
+   --  languages
+
 
    type Shell_Wrapper_No_Args_Record is new Hook_No_Args_Record with record
       Func   : GNAT.OS_Lib.String_Access;
@@ -124,6 +138,11 @@ package body Glide_Kernel.Hooks is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands related to hooks
+
+   procedure General_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles all shell commands related to hooks defined from a scripting
+   --  language.
 
    procedure Remove_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -187,6 +206,18 @@ package body Glide_Kernel.Hooks is
      (Hook   : Simple_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class);
+   --  See inherited doc
+
+   type Simple_Shell_Args_Wrapper_Record
+     is new Hook_Shell_Args_Record with record
+      Func : Shell_Args_Execute;
+     end record;
+   type Simple_Shell_Args_Wrapper
+     is access all Simple_Shell_Args_Wrapper_Record'Class;
+   procedure Execute
+     (Hook   : Simple_Shell_Args_Wrapper_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Callback_Data'Class);
    --  See inherited doc
 
    type Simple_Return_Wrapper_Record is new Hook_Args_Return_Record with record
@@ -479,7 +510,7 @@ package body Glide_Kernel.Hooks is
          Push_State (Kernel_Handle (Kernel), Busy);
       end if;
 
-      Trace (Me, "Run_Hook: " & Name);
+      Trace (Me, "Run_No_Args_Hook: " & Name);
       if Info /= null then
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -570,7 +601,7 @@ package body Glide_Kernel.Hooks is
          Push_State (Kernel_Handle (Kernel), Busy);
       end if;
 
-      Trace (Me, "Run_Hook: " & Name);
+      Trace (Me, "Run_Args_Hook: " & Name);
       if Info /= null then
          N := First (Info.Funcs);
          while N /= Null_Node loop
@@ -587,6 +618,99 @@ package body Glide_Kernel.Hooks is
          Pop_State (Kernel_Handle (Kernel));
       end if;
    end Run_Hook;
+
+   --------------
+   -- Add_Hook --
+   --------------
+
+   procedure Add_Hook
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Hook   : access Hook_Shell_Args_Record'Class;
+      Watch  : Glib.Object.GObject := null) is
+   begin
+      Add_Hook
+        (Kernel, Name, Hook_Function (Hook), Hook_With_Shell_Args, Watch);
+   end Add_Hook;
+
+   --------------
+   -- Add_Hook --
+   --------------
+
+   procedure Add_Hook
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name     : String;
+      Hook     : Shell_Args_Execute;
+      Watch    : Glib.Object.GObject := null)
+   is
+      Wrap : Simple_Shell_Args_Wrapper := new Simple_Shell_Args_Wrapper_Record;
+   begin
+      Wrap.Func := Hook;
+      Add_Hook (Kernel, Name, Wrap, Watch);
+   end Add_Hook;
+
+   -----------------
+   -- Remove_Hook --
+   -----------------
+
+   procedure Remove_Hook
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Hook   : access Hook_Shell_Args_Record'Class) is
+   begin
+      Remove_Hook (Kernel, Name, Hook_Function (Hook));
+   end Remove_Hook;
+
+   --------------
+   -- Run_Hook --
+   --------------
+
+   procedure Run_Hook
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name     : String;
+      Data     : Glide_Kernel.Scripts.Callback_Data'Class;
+      Set_Busy : Boolean := True)
+   is
+      Info : constant Hook_Description_Access :=
+        Hook_Description_Access (Get (Kernel.Hooks, Name));
+      N    : List_Node := Null_Node;
+      F    : Hook_Function;
+   begin
+      if Set_Busy then
+         Push_State (Kernel_Handle (Kernel), Busy);
+      end if;
+
+      Trace (Me, "Run_Shell_Hook: " & Name);
+      if Info /= null then
+         N := First (Info.Funcs);
+         while N /= Null_Node loop
+            F := Hooks_List.Data (N);
+            Assert (Me, F.all in Hook_Shell_Args_Record'Class,
+                    "Hook expects arguments: " & Name
+                    & " " & External_Tag (F.all'Tag));
+            Execute (Hook_Shell_Args_Record'Class (F.all), Kernel, Data);
+            N := Next (N);
+         end loop;
+      else
+         Trace (Me, "No function in this hook");
+      end if;
+
+      if Set_Busy then
+         Pop_State (Kernel_Handle (Kernel));
+      end if;
+   end Run_Hook;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : Simple_Shell_Args_Wrapper_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Callback_Data'Class) is
+   begin
+      Hook.Func (Kernel, Data);
+   end Execute;
 
    -------------
    -- Execute --
@@ -746,6 +870,11 @@ package body Glide_Kernel.Hooks is
          "Common type for all hooks with no parameters",
          Hook_Without_Args,
          Default_Command_Handler'Access);
+      Create_Hook_Type
+        (Kernel, "general",
+         "Common type for all hooks created from a scripting language",
+         Hook_With_Shell_Args,
+         General_Command_Handler'Access);
       Register_Hook
         (Kernel, Preferences_Changed_Hook,
          -("Hook called when the value of some of the preferences"
@@ -881,6 +1010,30 @@ package body Glide_Kernel.Hooks is
    end Destroy;
 
    -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Wrapper : in out Shell_Wrapper_Shell_Record) is
+   begin
+      Free (Wrapper.Func);
+   end Destroy;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Wrapper : Shell_Wrapper_Shell_Record;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Callback_Data'Class)
+   is
+      Tmp : Boolean;
+      pragma Unreferenced (Kernel, Tmp);
+   begin
+      Tmp := Execute_Command (Wrapper.Script, Wrapper.Func.all, Data);
+   end Execute;
+
+   -------------
    -- Execute --
    -------------
 
@@ -913,6 +1066,19 @@ package body Glide_Kernel.Hooks is
          Show_Command => False,
          Errors => Error);
    end Execute;
+
+   -----------------------------
+   -- General_Command_Handler --
+   -----------------------------
+
+   procedure General_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Name : constant String := Nth_Arg (Data, 1);
+   begin
+      Run_Hook (Get_Kernel (Data), Name, Data);
+   end General_Command_Handler;
 
    -----------------------------
    -- Default_Command_Handler --
@@ -1026,6 +1192,7 @@ package body Glide_Kernel.Hooks is
             Wrapper  : Shell_Wrapper;
             Wrapper2 : Shell_Wrapper_No_Args;
             Wrapper3 : Shell_Wrapper_Return;
+            Wrapper4 : Shell_Wrapper_Shell;
          begin
             --  If we expect a hook with no arguments:
             if Info = null
@@ -1050,6 +1217,12 @@ package body Glide_Kernel.Hooks is
                Wrapper3.Hook   := new String'(Name);
                Wrapper3.Script := Get_Script (Data);
                Add_Hook (Get_Kernel (Data), Name, Wrapper3);
+
+            elsif Info.Profile = Hook_With_Shell_Args then
+               Wrapper4        := new Shell_Wrapper_Shell_Record;
+               Wrapper4.Func   := new String'(Func);
+               Wrapper4.Script := Get_Script (Data);
+               Add_Hook (Get_Kernel (Data), Name, Wrapper4);
 
             else
                Trace (Me, "Cannot connect to hook " & Name
