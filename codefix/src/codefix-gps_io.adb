@@ -24,6 +24,7 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_List_Utils;
 with String_Utils;          use String_Utils;
 with Projects.Registry;     use Projects.Registry;
+with Basic_Types;           use Basic_Types;
 
 package body Codefix.GPS_Io is
 
@@ -47,23 +48,23 @@ package body Codefix.GPS_Io is
       Cursor       : Text_Cursor'Class) return Mark_Abstr'Class
    is
       Result : GPS_Mark;
-      Args   : SL.List;
+      Args   : Argument_List :=
+        (1 => new String'("-l"),
+         2 => new String'(Image (Cursor.Line)),
+         3 => new String'("-c"),
+         4 => new String'(Image (Cursor.Col)),
+         5 => new String'("-L"),
+         6 => new String'("1"),
+         7 => new String'
+           (Get_Full_Path_From_File
+            (Registry        => Get_Registry (Current_Text.Kernel),
+             Filename        => Get_File_Name (Current_Text),
+             Use_Source_Path => True,
+             Use_Object_Path => False)));
    begin
-      SL.Append (Args, "-l");
-      SL.Append (Args, Image (Cursor.Line));
-      SL.Append (Args, "-c");
-      SL.Append (Args, Image (Cursor.Col));
-      SL.Append (Args, "-L");
-      SL.Append (Args, "1");
-      SL.Append
-        (Args, Get_Full_Path_From_File
-         (Registry        => Get_Registry (Current_Text.Kernel),
-          Filename        => Get_File_Name (Current_Text),
-          Use_Source_Path => True,
-          Use_Object_Path => False));
       Result.Id := new String'
         (Interpret_Command (Current_Text.Kernel, "create_mark", Args));
-      SL.Free (Args);
+      Free (Args);
       return Result;
    end Get_New_Mark;
 
@@ -123,17 +124,12 @@ package body Codefix.GPS_Io is
    ----------
 
    procedure Undo (This : in out Console_Interface) is
-      Args : SL.List;
+      Args : Argument_List := (1 => new String'(Get_File_Name (This)));
+      Ignore : constant String := Interpret_Command
+        (This.Kernel, "edit_undo", Args);
+      pragma Unreferenced (Ignore);
    begin
-      SL.Append (Args, Get_File_Name (This));
-
-      declare
-         Ignore : constant String := Interpret_Command
-           (This.Kernel, "edit_undo", Args);
-         pragma Unreferenced (Ignore);
-      begin
-         SL.Free (Args);
-      end;
+      Free (Args);
    end Undo;
 
    ---------
@@ -191,60 +187,60 @@ package body Codefix.GPS_Io is
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
-      New_Value : String)
-   is
-      Args : SL.List;
+      New_Value : String) is
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       if Cursor.Line /= 0 then
-         SL.Append (Args, "-l");
-         SL.Append (Args, Image (Cursor.Line));
-         SL.Append (Args, "-c");
-         SL.Append (Args, Image (Cursor.Col));
-         SL.Append
-           (Args, Get_Full_Path_From_File
-            (Registry        => Get_Registry (This.Kernel),
-             Filename        => Get_File_Name (This),
-             Use_Source_Path => True,
-             Use_Object_Path => False));
-         SL.Append (Args, "-a");
-         SL.Append (Args, Image (Len));
-         SL.Append (Args, "-b");
-         SL.Append (Args, "0");
-         SL.Append (Args, '"' & New_Value & '"');
-
          declare
+            Args : Argument_List :=
+              (1  => new String'("-l"),
+               2  => new String'(Image (Cursor.Line)),
+               3  => new String'("-c"),
+               4  => new String'(Image (Cursor.Col)),
+               5  => new String'
+                  (Get_Full_Path_From_File
+                   (Registry        => Get_Registry (This.Kernel),
+                    Filename        => Get_File_Name (This),
+                    Use_Source_Path => True,
+                    Use_Object_Path => False)),
+               6  => new String'("-a"),
+               7  => new String'(Image (Len)),
+               8  => new String'("-b"),
+               9  => new String'("0"),
+               10 => new String'('"' & New_Value & '"'));
+
             Ignore : constant String := Interpret_Command
               (This.Kernel, "replace_text", Args);
             pragma Unreferenced (Ignore);
          begin
-            SL.Free (Args);
+            Free (Args);
          end;
-      else
-         SL.Append (Args, "-l");
-         SL.Append (Args, "1");
-         SL.Append (Args, "-c");
-         SL.Append (Args, "1");
-         SL.Append
-           (Args, Get_Full_Path_From_File
-            (Registry        => Get_Registry (This.Kernel),
-             Filename        => Get_File_Name (This),
-             Use_Source_Path => True,
-             Use_Object_Path => False));
-         SL.Append (Args, "-a");
-         SL.Append (Args, "0");
-         SL.Append (Args, "-b");
-         SL.Append (Args, "0");
-         SL.Append (Args, '"' & New_Value & '"');
 
+      else
          declare
+            Args : Argument_List :=
+              (1  => new String'("-l"),
+               2  => new String'("1"),
+               3  => new String'("-c"),
+               4  => new String'("1"),
+               5  => new String'
+                  (Get_Full_Path_From_File
+                   (Registry        => Get_Registry (This.Kernel),
+                    Filename        => Get_File_Name (This),
+                    Use_Source_Path => True,
+                    Use_Object_Path => False)),
+               6  => new String'("-a"),
+               7  => new String'("0"),
+               8  => new String'("-b"),
+               9  => new String'("0"),
+               10 => new String'('"' & New_Value & '"'));
             Ignore : constant String := Interpret_Command
               (This.Kernel, "replace_text", Args);
             pragma Unreferenced (Ignore);
          begin
-            SL.Free (Args);
+            Free (Args);
          end;
       end if;
    end Replace;
@@ -258,7 +254,7 @@ package body Codefix.GPS_Io is
       Cursor      : Text_Cursor'Class;
       New_Line    : String)
    is
-      Line_Str        : String_Access;
+      Line_Str        : GNAT.OS_Lib.String_Access;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
       This.File_Modified.all := True;
@@ -284,29 +280,29 @@ package body Codefix.GPS_Io is
      (This : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
-      Args : SL.List;
+      Args : Argument_List :=
+        (1 => new String'("-l"),
+         2 => new String'(Image (Cursor.Line)),
+         3 => new String'("-c"),
+         4 => new String'(Image (Cursor.Col)),
+         5 => new String'
+            (Get_Full_Path_From_File
+             (Registry        => Get_Registry (This.Kernel),
+              Filename        => Get_File_Name (This),
+              Use_Source_Path => True,
+              Use_Object_Path => False)),
+         6 => new String'(""""""));  --  string composed of double quotes
+
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
-
-      SL.Append (Args, "-l");
-      SL.Append (Args, Image (Cursor.Line));
-      SL.Append (Args, "-c");
-      SL.Append (Args, Image (Cursor.Col));
-      SL.Append
-        (Args, Get_Full_Path_From_File
-         (Registry        => Get_Registry (This.Kernel),
-          Filename        => Get_File_Name (This),
-          Use_Source_Path => True,
-          Use_Object_Path => False));
-      SL.Append (Args, """""");  --  string composed of double quotes
 
       declare
          Ignore : constant String := Interpret_Command
            (This.Kernel, "replace_text", Args);
          pragma Unreferenced (Ignore);
       begin
-         SL.Free (Args);
+         Free (Args);
       end;
    end Delete_Line;
 
@@ -327,17 +323,19 @@ package body Codefix.GPS_Io is
    -- Read_File --
    ---------------
 
-   function Read_File (This : Console_Interface) return String_Access is
-      S    : String_Access;
-      Args : SL.List;
+   function Read_File (This : Console_Interface)
+      return GNAT.OS_Lib.String_Access
+   is
+      Args : Argument_List :=
+        (1 => new String'(Get_Full_Path_From_File
+           (Registry        => Get_Registry (This.Kernel),
+            Filename        => Get_File_Name (This),
+            Use_Source_Path => True,
+            Use_Object_Path => False)));
+      S    : constant GNAT.OS_Lib.String_Access :=
+        new String'(Interpret_Command (This.Kernel, "get_buffer", Args));
    begin
-      SL.Append (Args, Get_Full_Path_From_File
-                 (Registry        => Get_Registry (This.Kernel),
-                  Filename        => Get_File_Name (This),
-                  Use_Source_Path => True,
-                  Use_Object_Path => False));
-      S := new String'(Interpret_Command (This.Kernel, "get_buffer", Args));
-      SL.Free (Args);
+      Free (Args);
       return S;
    end Read_File;
 
@@ -367,11 +365,10 @@ package body Codefix.GPS_Io is
    ------------
 
    procedure Update (This : Console_Interface) is
-      File          : String_Access;
+      File          : GNAT.OS_Lib.String_Access;
       Current_Index : Natural := 0;
       Old_Index     : Natural := 0;
-      Last_Line     : String_Access;
-      Args          : SL.List;
+      Last_Line     : GNAT.OS_Lib.String_Access;
 
    begin
       if not This.File_Modified.all then
@@ -405,14 +402,19 @@ package body Codefix.GPS_Io is
          Old_Index     := Current_Index;
       end loop;
 
-      SL.Append (Args, Get_Full_Path_From_File
-                 (Registry        => Get_Registry (This.Kernel),
-                  Filename        => Get_File_Name (This),
-                  Use_Source_Path => True,
-                  Use_Object_Path => False));
-      This.Lines_Number.all := Natural'Value
-        (Interpret_Command (This.Kernel, "get_last_line", Args));
-      SL.Free (Args);
+      declare
+         Args : Argument_List :=
+           (1 => new String'
+              (Get_Full_Path_From_File
+               (Registry        => Get_Registry (This.Kernel),
+                Filename        => Get_File_Name (This),
+                Use_Source_Path => True,
+                Use_Object_Path => False)));
+      begin
+         This.Lines_Number.all := Natural'Value
+           (Interpret_Command (This.Kernel, "get_last_line", Args));
+         Free (Args);
+      end;
 
       This.File_Modified.all := False;
       Free (File);
