@@ -22,7 +22,6 @@ with Generic_List;
 with Language; use Language;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 package Codefix.Formal_Errors is
 
@@ -50,15 +49,15 @@ package Codefix.Formal_Errors is
    procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
-   package Extract_List is new Generic_List (Extract'Class, Free_Data);
-   use Extract_List;
+   package Command_List is new Generic_List (Text_Command'Class, Free_Data);
+   use Command_List;
 
-   subtype Solution_List is Extract_List.List;
+   subtype Solution_List is Command_List.List;
    --  This is a list of solutions proposed to solve an error.
 
-   function Get_Extract
+   function Get_Command
      (This     : Solution_List;
-      Position : Positive) return Extract'Class;
+      Position : Positive) return Text_Command'Class;
    --  Get the extract recorded in a solution list at the given position.
 
    procedure Free (This : in out Solution_List);
@@ -74,7 +73,7 @@ package Codefix.Formal_Errors is
       Str_Expected : String;
       Str_Red      : String := "";
       Format_Red   : String_Mode := Text_Ascii;
-      Caption      : String := "") return Extract;
+      Caption      : String := "") return Solution_List;
    --  This fonction replace Str_Red by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
@@ -82,7 +81,7 @@ package Codefix.Formal_Errors is
    function Wrong_Order
      (Current_Text                : Text_Navigator_Abstr'Class;
       Message                     : Error_Message;
-      First_String, Second_String : String) return Extract;
+      First_String, Second_String : String) return Solution_List;
    --  Seach the position of the second string from the position specified
    --  in the message to the beginning, and invert the two strings.
 
@@ -91,35 +90,33 @@ package Codefix.Formal_Errors is
       Message         : File_Cursor'Class;
       String_Expected : String;
       Add_Spaces      : Boolean := True;
-      Position        : Relative_Position := Specified) return Extract;
+      Position        : Relative_Position := Specified) return Solution_List;
    --  Add the missing keyword into the text.
 
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : File_Cursor'Class;
       String_Unexpected : String;
-      Mode              : String_Mode := Text_Ascii) return Extract;
+      Mode              : String_Mode := Text_Ascii) return Solution_List;
    --  Delete the unexpected string
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      Column_Expected : Natural := 0) return Extract;
+      Column_Expected : Natural := 0) return Solution_List;
    --  Try re-indent the line
 
    function With_Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String) return Extract;
+      Missing_Clause : String) return Solution_List;
    --  Add the missing clause in the text
-
-   type Case_Type is (Lower, Upper, Mixed);
 
    function Bad_Casing
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Correct_Word : String := "";
-      Word_Case    : Case_Type := Mixed) return Extract;
+      Word_Case    : Case_Type := Mixed) return Solution_List;
    --  Re-case the word
 
    function Not_Referenced
@@ -132,13 +129,13 @@ package Codefix.Formal_Errors is
 
    function First_Line_Pragma
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Extract;
+      Cursor       : File_Cursor'Class) return Solution_List;
    --  Move the pragma to the beginning of the file
 
    function Not_Modified
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Ada_List;
+      Name         : String) return Solution_List;
    --  Add 'constant' to the declaration of the variable Name. Create a new
    --  declaration if needed.
 
@@ -146,7 +143,7 @@ package Codefix.Formal_Errors is
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
       Solution_Cursors : Cursor_Lists.List;
-      Name             : String) return Extract_List.List;
+      Name             : String) return Solution_List;
    --  Add to the object Name the prefix of the package declared at the
    --  position Solution_Cursor. If the ambiguity can't be solved by this
    --  function, then Extract_List.List is empty.
@@ -154,12 +151,12 @@ package Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Object_Name  : String) return Ada_Instruction;
+      Object_Name  : String) return Solution_List;
    --  Remove the conversion at made at Cursor position.
 
    function Move_With_To_Body
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Ada_List;
+      Cursor       : File_Cursor'Class) return Solution_List;
    --  Move all use and with clauses to the body, if needed. Otherwise, their
    --  are just deleted.
 
@@ -181,7 +178,8 @@ private
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Name         : String;
-      Move_To      : File_Cursor := Null_File_Cursor) return Ada_List;
+      Move_To      : File_Cursor := Null_File_Cursor)
+     return Text_Command'Class;
 
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 
