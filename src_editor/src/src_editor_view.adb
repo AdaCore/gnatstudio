@@ -206,7 +206,6 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position.
 
-
    type Preferences_Hook_Record is new Hook_No_Args_Record with record
       View : Source_View;
    end record;
@@ -257,6 +256,24 @@ package body Src_Editor_View is
    procedure Speed_Bar_Size_Allocate_Cb
      (Widget : access Gtk_Widget_Record'Class);
    --  Callback for an "size_allocate" signal on the speed bar.
+
+   procedure Register_Idle_Column_Redraw (View : Source_View);
+   --  Register an idle redrawing of the side columns.
+
+   ---------------------------------
+   -- Register_Idle_Column_Redraw --
+   ---------------------------------
+
+   procedure Register_Idle_Column_Redraw (View : Source_View) is
+   begin
+      if Realized_Is_Set (View)
+        and then not View.Idle_Redraw_Registered
+      then
+         View.Idle_Redraw_Registered := True;
+         View.Idle_Redraw_Id := Source_View_Idle.Add
+           (Idle_Column_Redraw'Access, View);
+      end if;
+   end Register_Idle_Column_Redraw;
 
    --------------------
    -- Scroll_Timeout --
@@ -457,7 +474,7 @@ package body Src_Editor_View is
 
       Get_Geometry (Win, X, Y, W, H, D);
       Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
-      Redraw_Speed_Column (User);
+      Register_Idle_Column_Redraw (User);
    end Invalidate_Window;
 
    -----------------------------------
@@ -477,14 +494,6 @@ package body Src_Editor_View is
       end if;
 
       Invalidate_Window (User);
-
-      if Realized_Is_Set (User)
-        and then not User.Idle_Redraw_Registered
-      then
-         User.Idle_Redraw_Registered := True;
-         User.Idle_Redraw_Id := Source_View_Idle.Add
-           (Idle_Column_Redraw'Access, User);
-      end if;
 
    exception
       when E : others =>
@@ -529,13 +538,7 @@ package body Src_Editor_View is
          User.Side_Column_Buffer := null;
       end if;
 
-      if Realized_Is_Set (User)
-        and then not User.Idle_Redraw_Registered
-      then
-         User.Idle_Redraw_Registered := True;
-         User.Idle_Redraw_Id := Source_View_Idle.Add
-           (Idle_Column_Redraw'Access, User);
-      end if;
+      Register_Idle_Column_Redraw (User);
 
    exception
       when E : others =>
@@ -562,11 +565,7 @@ package body Src_Editor_View is
 
       User.Buffer_Top_Line := 0;
 
-      if not User.Idle_Redraw_Registered then
-         User.Idle_Redraw_Registered := True;
-         User.Idle_Redraw_Id := Source_View_Idle.Add
-           (Idle_Column_Redraw'Access, User);
-      end if;
+      Register_Idle_Column_Redraw (User);
 
    exception
       when E : others =>
