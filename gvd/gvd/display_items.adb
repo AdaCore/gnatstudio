@@ -421,7 +421,7 @@ package body Display_Items is
       Name : String;
       Deref_Name : String) return Boolean is
    begin
-      --  Do not detect aliases with that are already aliases, so as to
+      --  Do not detect aliases that are already aliases, so as to
       --  avoid chains of aliases.
       --  Note also that X.all can not be an alias of X, so as to properly
       --  display string parameters in Ada (they appear otherwise as access
