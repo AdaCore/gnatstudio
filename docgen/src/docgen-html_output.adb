@@ -928,21 +928,23 @@ package body Docgen.Html_Output is
                      Loc_End := Sloc_End.Index;
                   end if;
 
-                  Find_Declaration
-                    (LI_Unit,
-                     File_Name,
-                     Text (Loc_Start .. Loc_End),
-                     Sloc_Start.Line + Entity_Line - 1,
-                     Sloc_Start.Column + Loc_Start - Sloc_Start.Index,
-                     Entity_Info,
-                     Status);
+                  if LI_Unit /= No_LI_File then
+                     Find_Declaration
+                       (LI_Unit,
+                        File_Name,
+                        Text (Loc_Start .. Loc_End),
+                        Sloc_Start.Line + Entity_Line - 1,
+                        Sloc_Start.Column + Loc_Start - Sloc_Start.Index,
+                        Entity_Info,
+                        Status);
 
-                  if Status = Success or Status = Fuzzy_Match then
-                     if Link_Should_Be_Set then
-                        if Special_Link_Should_Be_Set then
-                           Create_Special_Link_To_Body;
-                        elsif Regular_Link_Should_Be_Set then
-                           Create_Regular_Link;
+                     if Status = Success or Status = Fuzzy_Match then
+                        if Link_Should_Be_Set then
+                           if Special_Link_Should_Be_Set then
+                              Create_Special_Link_To_Body;
+                           elsif Regular_Link_Should_Be_Set then
+                              Create_Regular_Link;
+                           end if;
                         end if;
                      end if;
                   end if;
