@@ -85,6 +85,11 @@ package body Debugger.Gdb is
    --  assumed to end on a string like End_On.
    --  This function is also used to parse the variant part of a record.
 
+   function Is_Simple_Ada_Type (Str : String) return Boolean;
+   --  Return True if Str is a simple Ada type, like integer, ...
+
+   pragma Inline (Is_Simple_Ada_Type);
+
 
    generic
       Array_Item_Separator : Character := ',';
@@ -157,37 +162,54 @@ package body Debugger.Gdb is
          Index := Index + 4;  --  skips ' .. '
          Parse_Num (Type_Str, Index, R.Dimensions (Num_Dim).Last);
          Num_Dim := Num_Dim + 1;
-         Index := Index + 2;  --  skips ', '
+         Index := Index + 2;  --  skips ', ' or ') '
       end loop;
 
       --  Skip the type of the items
 
-      while Index <= Type_Str'Last
-        and then Type_Str (Index) /= ' '
-        and then Type_Str (Index) /= ASCII.LF
-      loop
-         Index := Index + 1;
-      end loop;
+      Index := Index + 3; --  skips 'of '
+      I := Index;
+      Skip_To_Char (Type_Str, Index, ' ');
 
-      --  Get the type of the items.
-      --  Note that we can not simply do a "ptype" on the string we read
-      --  after "of ", since we might not be in the right context, for
-      --  instance if Entity is something like "Foo::entity".
-      --  Thus, we have to do a "ptype" directly on the first item of the
-      --  array.
+      --  If we have a simple type, no need to ask gdb, for efficiency reasons.
 
-      for J in 1 .. R.Num_Dimensions loop
-         Append (Index_Str, Long_Integer'Image (R.Dimensions (J).First));
-         if J /= R.Num_Dimensions then
-            Append (Index_Str, ",");
-         end if;
-      end loop;
+      if Is_Simple_Ada_Type (Type_Str (I .. Index - 1)) then
+         R.Item_Type := new Simple_Type;
 
-      R.Item_Type := Parse_Type
-        (Debugger, Entity & "(" & To_String (Index_Str) & ")");
+      else
+
+         --  Get the type of the items.
+         --  Note that we can not simply do a "ptype" on the string we read
+         --  after "of ", since we might not be in the right context, for
+         --  instance if Entity is something like "Foo::entity".
+         --  Thus, we have to do a "ptype" directly on the first item of the
+         --  array.
+
+         for J in 1 .. R.Num_Dimensions loop
+            Append (Index_Str, Long_Integer'Image (R.Dimensions (J).First));
+            if J /= R.Num_Dimensions then
+               Append (Index_Str, ",");
+            end if;
+         end loop;
+
+         R.Item_Type := Parse_Type
+           (Debugger, Entity & "(" & To_String (Index_Str) & ")");
+      end if;
 
       Result := Generic_Type_Access (R);
    end Parse_Array_Type_Ada;
+
+   ------------------------
+   -- Is_Simple_Ada_Type --
+   ------------------------
+
+   function Is_Simple_Ada_Type (Str : String) return Boolean is
+   begin
+      return Str = "boolean"
+        or else Str = "integer"
+        or else Str = "natural"
+        or else Str = "character";
+   end Is_Simple_Ada_Type;
 
    ---------------------------
    -- Parse_Record_Type_Ada --
@@ -315,8 +337,14 @@ package body Debugger.Gdb is
             I := Index;
             Skip_To_Char (Type_Str, Index, ';');
 
-            R.Fields (Num_Fields).Value := Parse_Type
-              (Debugger, Entity & "." & R.Fields (Num_Fields).Name.all);
+            --  If we have a simple type, no need to ask gdb, for efficiency reasons.
+
+            if Is_Simple_Ada_Type (Type_Str (I .. Index - 1)) then
+               R.Fields (Num_Fields).Value := new Simple_Type;
+            else
+               R.Fields (Num_Fields).Value := Parse_Type
+                 (Debugger, Entity & "." & R.Fields (Num_Fields).Name.all);
+            end if;
             Index := Index + 1;
             Num_Fields := Num_Fields + 1;
          end if;
@@ -484,8 +512,7 @@ package body Debugger.Gdb is
             else
                Skip_To_Char (Type_Str, Index, '>');
                Index := Index + 1;
-               Result := new Simple_Type'(Address  => System.Null_Address,
-                                          Value    => null);
+               Result := new Simple_Type;
             end if;
 
          when 'a' =>
@@ -621,7 +648,7 @@ package body Debugger.Gdb is
                --  parsed anyway).
 
                if Looking_At (Type_Str, Index, "<repeats ") then
-                  Result := new Repeat_Type'(Address => System.Null_Address,
+                  Result := new Repeat_Type'(Address => null,
                                              Repeat_Num => 0,
                                              Value   => Result);
                   Index := Index + 9;
@@ -683,7 +710,7 @@ package body Debugger.Gdb is
               := new Array_Item_Array (1 .. 1);
             Array_Type_Access (Result).Values (1)
               := (Index => 0,
-                  Value => new Simple_Type'(Address => System.Null_Address,
+                  Value => new Simple_Type'(Address => null,
                                             Value   => new String'(S)));
          end;
 
@@ -867,8 +894,8 @@ package body Debugger.Gdb is
         := new Pipes_Id'(Non_Blocking_Spawn ("gdb", Null_List,
                                              Buffer_Size => 0));
 
-      Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
-      Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
+--        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
+--        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
       Wait_Prompt (Debugger);
       Send (Debugger.Process.all, "set prompt (gdb)");
       Wait_Prompt (Debugger);
