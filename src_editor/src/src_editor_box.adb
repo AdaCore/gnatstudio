@@ -400,6 +400,7 @@ package body Src_Editor_Box is
                   Image (L) & ':' & Image (C + Entity_Name'Length),
                   Highlight_Sloc => False,
                   Mode => Error);
+               Pop_State (Kernel_Handle (Kernel));
                return;
             end if;
 
@@ -414,6 +415,7 @@ package body Src_Editor_Box is
       when E : Unsupported_Language =>
          Insert (Kernel, Exception_Message (E),
                  Mode => Glide_Kernel.Console.Error);
+         Pop_State (Kernel_Handle (Kernel));
 
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
