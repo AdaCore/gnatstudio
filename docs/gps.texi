@@ -2086,6 +2086,10 @@ Paste the contents of the clipboard to the current cursor position.
 @cindex select all
 Select the whole contents of the current source editor.
 
+@item Insert File...
+Open a file selection dialog and insert the contents of this file in
+the current source editor, at the current cursor location.
+
 @item Comment Lines
 @cindex comment
 Comment the current selection or line based on the current programming
