@@ -7768,17 +7768,6 @@ to avoid splitting switches each time a space is encountered.
 @node Defining tool switches
 @subsection Defining tool switches
 @cindex <switches>
-@cindex <title>
-@cindex <check>
-@cindex <spin>
-@cindex <radio>
-@cindex <combo>
-@cindex <popup>
-@cindex <dependency>
-@cindex <expansion>
-@cindex <combo-entry>
-@cindex <radio-entry>
-@cindex <entry>
 @c --------------------------------------------------------------------------
 
 @noindent
@@ -7867,6 +7856,7 @@ Here are the valid children for @code{<switches>}:
 
 @table @code
 @item <title>
+@cindex <title>
 This tag, which accepts the @code{line} and @code{column} attributes, is used
 to give a name to a specific frame.
 The value of the tag is the title itself. You do not have to specify
@@ -7888,12 +7878,14 @@ switches editor.
 
 
 @item <check>
+@cindex <check>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
 and @code{tip} attributes. It creates a toggle button. When the latter is
 active, the text defined in the switch attribute is added as is
 to the command line. This tag doesn't have any value or child tags.
 
 @item <spin>
+@cindex <spin>
 This tag acceps the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{tip}, @code{min}, @code{max} and @code{default} attributes.
 This switch will add the contents of the @code{switch} attribute followed by
@@ -7903,6 +7895,8 @@ If the current value of the widget is equal to the @code{default} attribute,
 then nothing is added to the command line.
 
 @item <radio>
+@cindex <radio>
+@cindex <radio-entry>
 This tag accepts the @code{line} and @code{column} attributes. It groups any
 number of children, each of which is associated with its own switch. However,
 only one of the children can be selected at any given time.
@@ -7910,7 +7904,32 @@ only one of the children can be selected at any given time.
 The children must have the tag @code{radio-entry}. This tag accepts the
 attributes @code{label}, @code{switch} and @code{tip}.
 
+@item <field>
+@cindex <field>
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
+and @code{tip} attributes. This tag describes a text edition field, which can
+contain any text the user types. This text will be prefixed by the value of
+the @code{switch} attribute, and a space. If no text is entered in the field
+by the user, nothing is put on the command line.
+
+This tag accepts two extra attributes:
+
+   @table @code
+   @item as-directory  (optional)
+   @cindex as-directory
+   If this attribute is specified and set to "true", then an extra "Browse"
+   button is displayed, so that the user can easily select a directory.
+
+   @item as-file (optional)
+   @cindex as-file
+   This attribute is similar to @code{as-directory}, but opens a dialog to
+   select a file instead of a directory. If both attributes are set to "true",
+   the user will select a file.
+   @end table
+
 @item <combo>
+@cindex <combo>
+@cindex <combo-entry>
 This tags accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{tip}, @code{noswitch} and @code{nodigit} attributes.
 
@@ -7928,6 +7947,7 @@ The tag @code{<combo>} accepts any number of @code{combo-entry} children tags,
 each of which accepts the @code{label} and @code{value} attribute.
 
 @item <popup>
+@cindex <popup>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{lines}
 and @code{columns} attributes. This displays a simply button that, when
 clicked, displays a dialog with some extra switches. This dialog, just as the
@@ -7938,6 +7958,7 @@ This tag accepts any number of children, which are the same as the
 @code{<switches>} attribute itself.
 
 @item <dependency>
+@cindex <dependency>
 This tag is used to describe a relationship between two switches. It is used
 for instance when the "Debug Information" switch is selected for "Make", which
 forces it for the Ada compiler as well.
@@ -7964,6 +7985,8 @@ It has its own set of attributes:
    @end table
 
 @item <expansion>
+@cindex <expansion>
+@cindex <entry>
 This tag is used to describe how switches can be grouped together on the
 command line to keep it shorter. It is also used to define aliases between
 switches.
