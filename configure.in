@@ -1,5 +1,5 @@
 AC_REVISION($Revision$)
-AC_INIT(common/sdefault.adb.in)
+AC_INIT(common/src/sdefault.adb.in)
 
 AC_CANONICAL_SYSTEM
 
@@ -16,7 +16,7 @@ AC_SUBST(EXEC_PREFIX)
 GCC_VERSION=`$CC -dumpversion`
 AC_SUBST(GCC_VERSION)
 
-AC_OUTPUT(common/sdefault.adb)
+AC_OUTPUT(common/src/sdefault.adb)
 
 
 
