@@ -18,14 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text; use Gtk.Text;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Object; use Gtk.Object;
+with Gtk.Window;      use Gtk.Window;
+with Gtk.Box;         use Gtk.Box;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.Text;        use Gtk.Text;
+with Gtk.Button;      use Gtk.Button;
 
 package Log_Editor_Window_Pkg is
 

@@ -18,15 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Old_Editable; use Gtk.Old_Editable;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Log_Editor; use Callbacks_Log_Editor;
+with Glib;                 use Glib;
+with Gtk;                  use Gtk;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Stock;            use Gtk.Stock;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
+with Gtk.Hbutton_Box;      use Gtk.Hbutton_Box;
 
 package body Log_Editor_Window_Pkg is
 

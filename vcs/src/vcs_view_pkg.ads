@@ -19,12 +19,10 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Text; use Gtk.Text;
-with Gtk.Button; use Gtk.Button;
+with Gtk.Text;   use Gtk.Text;
 
-with Gtk.Tree_View; use Gtk.Tree_View;
+with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
