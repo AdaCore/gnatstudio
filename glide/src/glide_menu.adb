@@ -769,7 +769,7 @@ package body Glide_Menu is
       Win  : Project_Editor;
 
    begin
-      Gtk_New (Win, Get_Project_File_Name (Top.Kernel));
+      Gtk_New (Win, Top.Kernel);
       Show_All (Win);
    end On_Edit_Project;
 
