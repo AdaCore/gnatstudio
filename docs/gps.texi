@@ -1219,7 +1219,7 @@ A simple way to dock a window is to select it, and then select the
 menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
 there is a more intuitive way to do the same thing.
 
-In some cases GPS will change the color and size of the title (name) of a 
+In some cases GPS will change the color and size of the title (name) of a
 window in the notebook tab. This indicates that the window content
 has been updated, but the window wasn't visible. Typically,
 this is used to indicate that new messages have been written in the
@@ -2634,7 +2634,7 @@ next time the tool is run.
 
 @cindex ADA_PROJECT_PATH
 GPS uses the same mechanisms to locate project files as GNAT
-itself: 
+itself:
 
 @itemize @bullet
 @item absolute paths
@@ -6597,6 +6597,17 @@ the project file to which the file belongs.
 @item %P
 If the expansion is done in a source editor, this is the full path
 name to the project file (directory and base name).
+
+@item %O
+Used for recursive aliases expansion. This special character will expand
+the text seen before it in the current alias, after replacement of the
+parameters and possibly other recursive expansions. This is similar to pressing
+@key{control-o} (or any key you have defined for alias expansion) in the
+expanded form of the alias.
+
+You cannot expand an alias recursively when already expanding that alias. For
+instance, if the alias expansion for @i{procedure} contains @i{procedure%O},
+the inner procedure will not be expanded.
 
 @end table
 
