@@ -327,7 +327,6 @@ package body Src_Editor_Module is
          Infos := new Line_Information_Array (Line1 .. Line2);
 
          for J in Infos'Range loop
-            Infos (J).Line := J;
             Infos (J).Text := new String' (Image (J));
          end loop;
 
