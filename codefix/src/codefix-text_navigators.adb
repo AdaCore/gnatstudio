@@ -26,4 +26,19 @@ package body Codefix.Text_Navigators is
       return new Unique_File;
    end New_Text_Interface;
 
+   function Get_Body_Or_Spec (This : Text_Navigator; File_Name : String)
+     return String is
+      pragma Unreferenced (This);
+   begin
+      --  ??? Should ask the project for the body file instead
+      case File_Name (File_Name'Last) is
+         when 'b' =>
+            return File_Name (File_Name'First .. File_Name'Last - 1) & 's';
+         when 's' =>
+            return File_Name (File_Name'First .. File_Name'Last - 1) & 'b';
+         when others =>
+            raise Codefix_Panic;
+      end case;
+   end Get_Body_Or_Spec;
+
 end Codefix.Text_Navigators;

@@ -34,4 +34,8 @@ package Codefix.Text_Navigators is
    function New_Text_Interface (This : Text_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
+   function Get_Body_Or_Spec (This : Text_Navigator; File_Name : String)
+     return String;
+   --  Change the .ads to .adb, or .adb to .ads
+
 end Codefix.Text_Navigators;
