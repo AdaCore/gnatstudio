@@ -237,7 +237,7 @@ the Data, Explorer, Source and Debugger windows.
 To create a new debugger, see also the @ref{new debugger menu}.
 
    @item Exit.
-Exit GVD.
+Save the window settings and exit GVD.
 @end itemize
 
 @subsection Edit
@@ -407,17 +407,18 @@ Color used for modified items in the memory view.
 @end itemize
 
 @item Helpers.
+@anchor{helpers menu}
 Helpers are external programs that are used by GVD to perform specific
 actions.
 
 @itemize @bullet
 @item Edit Sources.
 Program used by the @i{Edit Current Source} menu. Special arguments are
-@c{%f} that is replaced by the full path name to the current file, using forward
-slashes as the directory separator, and @c{%l} that is replacd by the current
-line number.
+@code{%f} that is replaced by the full path name to the current file, using
+forward slashes as the directory separator, and @code{%l} that is replaced by
+the current line number.
 This value is superceded by the environment variable
-@c{GVD_EDITOR} if it exists.
+@code{GVD_EDITOR} if it exists (see also @ref{GVD_EDITOR}).
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
 @item List Processes.
@@ -537,10 +538,6 @@ Clear the debugger console window.
    @item Refresh.
       Refresh all the items displayed in the Data Window.
 @end itemize
-
-@iftex
-@image{memory-view, 14cm}
-@end iftex
 
 @subsection Help
 Online help is currently not available within GVD.
@@ -767,6 +764,10 @@ a pointer).
 @node The Memory Window
 @section The Memory Window
 @c --------------------------------------------------------------------
+
+@iftex
+@image{memory-view, 14cm}
+@end iftex
 
 @noindent
 The memory window allows you to dump contents of the memory given
@@ -1164,18 +1165,7 @@ This should launch gdb on the remote machine.
 Note that on some systems, rsh is called differently, in particular under
 HPUX, the remote shell capability is called remsh. For those systems, and
 also in order to use other remote utilities such as ssh/scp, you can change
-the default remote shell and copy by either using the @ref{preferences menu}
-or creating by hand (using any text editor) a file called
-$HOME/.gvd/preferences (%HOME%\.gvd\preferences under Windows) that will
-look like:
-
-@smallexample
-<?xml version="1.0"?>
-<preferences>
-  <Remote_Protocol>ssh</Remote_Protocol>
-  <Remote_Copy>scp</Remote_Copy>
-</preferences>
-@end smallexample
+the default remote shell and copy by using the @ref{helpers menu}.
 
 After ensuring that you have the proper set up in place, to run the debugger on
 a remote host @i{remote}, either invoke GVD as
@@ -1282,8 +1272,8 @@ Windows) if GVD_HOME is not set, or to $GVD_HOME/.gvd (resp. %GVD_HOME%\.gvd)
 if set.
 
    @item GVD_EDITOR.
-Override the default editor as found in the @ref{preferences menu},
-Helpers section.
+@anchor{GVD_EDITOR}
+Override the default editor as found in the @ref{helpers menu}.
 
 @end itemize
 
