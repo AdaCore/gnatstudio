@@ -30,6 +30,7 @@ with Odd.Process; use Odd.Process;
 with Debugger;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect; use GNAT.Expect;
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -46,6 +47,10 @@ procedure Odd_Main is
    Index             : Natural := 0;
    Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
    Button            : Message_Dialog_Buttons;
+   Root              : String_Access;
+   Home              : String_Access;
+   Remote_Host       : String_Access;
+   Skip_Argument     : Boolean := False;
 
    procedure Init;
    --  Set up environment for Odd.
@@ -58,9 +63,6 @@ procedure Odd_Main is
    --  by ASCII.LF characters at the most appropriate place.
 
    procedure Init is
-      Root : String_Access;
-      Home : String_Access;
-
    begin
       Root := Getenv ("GVD_ROOT");
       Home := Getenv ("HOME");
@@ -70,7 +72,6 @@ procedure Odd_Main is
            Directory_Separator & "locale");
          Bind_Text_Domain ("Gvd", Root.all & Directory_Separator & "share" &
            Directory_Separator & "locale");
-         Free (Root);
       end if;
 
       if Home /= null then
@@ -92,8 +93,6 @@ procedure Odd_Main is
                   Error, Button_OK,
                   Justification => Justify_Left);
          end;
-
-         Free (Home);
       end if;
 
       --  ??? This should be moved in a future "preferences" package, so as to
@@ -102,7 +101,6 @@ procedure Odd_Main is
       Add_File_Extension (new Ada_Language, "\.ads$");
       Add_File_Extension (new C_Language, "\.c$");
       Add_File_Extension (new C_Language, "\.h$");
-
    end Init;
 
    function Format (Str : String; Columns : Positive) return String is
@@ -155,30 +153,47 @@ begin
    Gtk_New (Main_Debug_Window);
 
    for J in 1 .. Argument_Count loop
-      if Argument (J) = "--tty" then
-         --  Install input handler to receive commands from an external
-         --  IDE while handling GtkAda events.
-
-         Main_Debug_Window.TTY_Mode := True;
-         Id := Standard_Input_Package.Add
-           (0, Input_Read, Input_Available'Access,
-            Main_Debug_Window.all'Access);
-
-      elsif Argument (J) = "--debug" then
-         Main_Debug_Window.Debug_Mode := True;
-
-      elsif Argument (J) = "--jdb" then
-         Debug_Type := Debugger.Jdb_Type;
+      if Skip_Argument then
+         Skip_Argument := False;
       else
-         Index := Index + 1;
-         List (Index) := new String' (Argument (J));
+         if Argument (J) = "--tty" then
+            --  Install input handler to receive commands from an external
+            --  IDE while handling GtkAda events.
+
+            Main_Debug_Window.TTY_Mode := True;
+            Id := Standard_Input_Package.Add
+              (0, Input_Read, Input_Available'Access,
+               Main_Debug_Window.all'Access);
+
+         elsif Argument (J) = "--debug" then
+            Main_Debug_Window.Debug_Mode := True;
+
+         elsif Argument (J) = "--jdb" then
+            Debug_Type := Debugger.Jdb_Type;
+
+         elsif Argument (J) = "--host" then
+            Remote_Host := new String' (Argument (J + 1));
+            Skip_Argument := True;
+
+         else
+            Index := Index + 1;
+            List (Index) := new String' (Argument (J));
+         end if;
       end if;
    end loop;
 
    --  ??? Should set the executable here, so that we can use Set_Executable
    --  and get initialization for free.
-   Process_Tab := Create_Debugger
-     (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
+
+   if Remote_Host = null then
+      Process_Tab := Create_Debugger
+        (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
+   else
+      Process_Tab := Create_Debugger
+        (Main_Debug_Window, Debug_Type, "", List (1 .. Index),
+         Remote_Host => Remote_Host.all);
+   end if;
+
    Show_All (Main_Debug_Window);
 
    loop
@@ -194,6 +209,9 @@ begin
    Destroy (Main_Debug_Window);
 
 exception
+   when Process_Died =>
+      Put_Line ("The underlying debugger died prematurely. Exiting...");
+
    when E : others =>
       Bug_Dialog (E);
       Destroy (Main_Debug_Window);
