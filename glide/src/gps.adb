@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -65,11 +65,12 @@ with Ada.Text_IO;                 use Ada.Text_IO;
 with Traces;                      use Traces;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Welcome;                     use Welcome;
+with Welcome_Page;                use Welcome_Page;
 with DDE;
 with GUI_Utils;                   use GUI_Utils;
 with Remote_Connections;
 with System;
-with VFS;
+
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 --  Modules registered by GPS.
@@ -1401,7 +1402,7 @@ procedure GPS is
       if not File_Opened
         and then not Has_User_Desktop (GPS.Kernel)
       then
-         Open_Html (GPS.Kernel, VFS.Create_From_Base ("gps-welcome.html"));
+         Display_Welcome_Page (GPS.Kernel);
       end if;
 
       if Splash /= null then
