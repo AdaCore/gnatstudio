@@ -1166,6 +1166,10 @@ menu @code{Window->Maximize All}, or click on the middle button on the
 right of the title bar of any window (this button shows two small
 squares, and will toggle between maximized and unmaximized states.
 
+You can also double-click on the title bar of any of the window, or in the
+tabs that appear at the bottom when multiple windows are stored in the
+central area.
+
 
 @item unmaximized windows
 @cindex unmaximized
