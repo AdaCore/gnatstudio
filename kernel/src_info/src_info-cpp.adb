@@ -60,10 +60,11 @@ package body Src_Info.CPP is
    --------------------
 
    type Symbol_Handler is access procedure
-     (Sym : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Sym_Default_Handler
@@ -71,84 +72,98 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CON_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FU_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_EC_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_T_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_UN_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IU_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MD_Handler
      (Sym     : FIL_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
    ---------------------
@@ -181,6 +196,7 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Fu_To_Gv_Handler
@@ -188,60 +204,70 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Fu_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Con_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_E_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ec_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ma_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Mi_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Cl_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_T_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Un_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
    -------------------
@@ -313,6 +339,7 @@ package body Src_Info.CPP is
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    --  Attempts to find class declaration among this Handler.File declarations
    --  and dependency declarations. If not found, creates it.
@@ -323,6 +350,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
+      Project_View     : Prj.Project_Id;
       List_Of_Files : in out LI_File_List);
    --  Process the SN databases to create the LI structure for
    --  Source_Filename. Source_Filename is the name of the file as it appears
@@ -338,13 +366,6 @@ package body Src_Info.CPP is
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String;
    pragma Inline (Get_SN_Dir);
-
-   function Up_To_Date
-     (Full_Source_Filename : String;
-      SN_Dir               : String;
-      Xrefs                : Xref_Pool) return Boolean;
-   --  Checks if given source file is up-to-date with corresponding
-   --  xref file. Return true if SN DB needed to be updated.
 
    procedure Refer_Type
      (Type_Name          : String;
@@ -391,28 +412,6 @@ package body Src_Info.CPP is
    --  for the method. Returns null if not found or
    --  forward declaration is in another file which
    --  has not been yet processed
-
-   ----------------
-   -- Up_To_Date --
-   ----------------
-
-   function Up_To_Date
-     (Full_Source_Filename : String;
-      SN_Dir               : String;
-      Xrefs                : Xref_Pool) return Boolean
-   is
-      Xref_File : String :=
-        Name_As_Directory (SN_Dir) & Xref_Filename_For
-          (Full_Source_Filename, SN_Dir, Xrefs).all;
-   begin
-      if To_Timestamp (File_Time_Stamp (Full_Source_Filename)) >
-         To_Timestamp (File_Time_Stamp (Xref_File))
-      then
-         return False;
-      else
-         return True;
-      end if;
-   end Up_To_Date;
 
    ----------------------------
    -- Generate_LI_For_Source --
@@ -475,14 +474,17 @@ package body Src_Info.CPP is
             --  1. Its xref file is invalid (just created)
             --  2. Source is newer than xref file
 
+            Xref_File_Name := Xref_Filename_For
+              (File, Handler.DB_Dir.all, Handler.Xrefs);
+
             if not Is_Xref_Valid (File, Handler.Xrefs)
-              or else not Up_To_Date (File, Handler.DB_Dir.all, Handler.Xrefs)
+              or else To_Timestamp (File_Time_Stamp (File)) >
+                To_Timestamp (File_Time_Stamp
+                   (Handler.DB_Dir.all & Xref_File_Name.all))
             then
                Num_Source_Files := Num_Source_Files + 1;
-               Trace (Info_Stream, "Updating " & File);
 
-               Xref_File_Name := Xref_Filename_For
-                 (File, Handler.DB_Dir.all, Handler.Xrefs);
+               Set_Valid (File, True, Handler.Xrefs);
 
                --  Remove the current xref file if it exists, since
                --  cbrowser opens it in append mode.
@@ -624,7 +626,6 @@ package body Src_Info.CPP is
       end loop;
    end Close_DB_Files;
 
-
    ------------------
    -- Process_File --
    ------------------
@@ -633,6 +634,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
+      Project_View     : Prj.Project_Id;
       List_Of_Files : in out LI_File_List)
    is
       P               : Pair_Ptr;
@@ -659,7 +661,8 @@ package body Src_Info.CPP is
          begin
             --  apply corresponding symbol handler
             Symbol_Handlers (Sym.Symbol)
-              (Sym, Handler, File, List_Of_Files, Module_Typedefs);
+              (Sym, Handler, File, List_Of_Files, Project_View,
+               Module_Typedefs);
             Free (Sym);
          exception
             when others =>
@@ -774,7 +777,7 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Process_File (Full_Filename, Handler, File, List);
+      Process_File (Full_Filename, Handler, File, Project, List);
 
    exception
       when E : others =>
@@ -915,6 +918,7 @@ package body Src_Info.CPP is
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Sym       : FIL_Table;
@@ -933,7 +937,8 @@ package body Src_Info.CPP is
             Sym.File_Name      := CL_Tab.File_Name;
             Sym.Start_Position := CL_Tab.Start_Position;
             Sym.Identifier     := CL_Tab.Name;
-            Sym_CL_Handler (Sym, Handler, File, List, Module_Type_Defs);
+            Sym_CL_Handler
+              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File         => File,
@@ -956,7 +961,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
                LI_Full_Filename   => Handler.DB_Dir.all &
                  Xref_Filename_For
@@ -968,17 +973,9 @@ package body Src_Info.CPP is
                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
                Referred_Filename  => CL_Tab.Buffer
                  (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all
-                 & Xref_Filename_For (CL_Tab.Buffer
-                   (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
-                    Handler.DB_Dir.all,
-                    Handler.Xrefs).all,
                Location           => CL_Tab.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1204,17 +1201,18 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Class_Desc : CType_Description;
       Class_Def  : CL_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-   begin
 
+   begin
       Info ("Fu_To_Cl_Handler: " & Ref_Id);
 
       Find_Class
@@ -1244,7 +1242,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
                LI_Full_Filename   => Handler.DB_Dir.all &
                  Xref_Filename_For
@@ -1256,17 +1254,9 @@ package body Src_Info.CPP is
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Referred_Filename  => Class_Def.Buffer
                  (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all & Xref_Filename_For
-                 (Class_Def.Buffer
-                    (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -1280,13 +1270,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all &
-                 Xref_Filename_For
-                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
@@ -1295,8 +1280,6 @@ package body Src_Info.CPP is
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1321,6 +1304,7 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -1359,7 +1343,8 @@ package body Src_Info.CPP is
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
-            Sym_CON_Handler (Sym, Handler, File, List, Module_Type_Defs);
+            Sym_CON_Handler
+              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -1407,7 +1392,7 @@ package body Src_Info.CPP is
 
             if Desc.Parent_Point = Invalid_Point then
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For (Var.Buffer
@@ -1422,17 +1407,10 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For (Var.Buffer
-                      (Var.File_Name.First .. Var.File_Name.Last),
-                    Handler.DB_Dir.all, Handler.Xrefs).all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -1448,15 +1426,8 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all &
-                    Xref_Filename_For (Var.Buffer
-                      (Var.File_Name.First .. Var.File_Name.Last),
-                       Handler.DB_Dir.all, Handler.Xrefs).all,
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename.all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -1493,9 +1464,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Enum_Desc : CType_Description;
@@ -1533,7 +1505,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
                LI_Full_Filename   => Handler.DB_Dir.all &
                  Xref_Filename_For (Ref.Buffer
@@ -1545,17 +1517,9 @@ package body Src_Info.CPP is
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Referred_Filename  => Enum_Def.Buffer
                  (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all
-                 & Xref_Filename_For (Enum_Def.Buffer
-                     (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
-                                      Handler.DB_Dir.all,
-                                      Handler.Xrefs).all,
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -1569,12 +1533,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all &
-                 Xref_Filename_For (Ref.Buffer
-                   (Ref.File_Name.First .. Ref.File_Name.Last),
-                    Handler.DB_Dir.all, Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
@@ -1583,8 +1543,6 @@ package body Src_Info.CPP is
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1609,9 +1567,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info  : E_Declaration_Info_List;
       Enum_Const : EC_Table;
       Ref_Id     : constant String := Ref.Buffer
@@ -1636,12 +1595,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Handler.DB_Dir.all &
-                 Xref_Filename_For (Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all, Handler.Xrefs).all,
                List              => List,
                Symbol_Name       => Ref_Id,
                Source_Filename   =>
@@ -1649,8 +1604,6 @@ package body Src_Info.CPP is
                Location          => Enum_Const.Start_Position,
                Kind              => Enumeration_Literal,
                Scope             => Global_Scope,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
 
@@ -1664,7 +1617,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
                LI_Full_Filename  => Handler.DB_Dir.all &
                  Xref_Filename_For
@@ -1677,13 +1630,6 @@ package body Src_Info.CPP is
                Scope             => Global_Scope,
                Referred_Filename => Enum_Const.Buffer
                  (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all &
-                 Xref_Filename_For (Enum_Const.Buffer
-                    (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
-                     Handler.DB_Dir.all, Handler.Xrefs).all,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -1711,9 +1657,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       P              : Pair_Ptr;
       Fn             : FU_Table;
       Fn_Tmp         : FU_Table;
@@ -1858,14 +1805,8 @@ package body Src_Info.CPP is
                --  function is in the current file, but used before
                --  declaration. Create forward declaration
                Insert_Declaration
-                 (Handler            => LI_Handler (Handler),
+                 (Handler            => Handler,
                   File               => File,
-                  LI_Full_Filename   => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List               => List,
                   Symbol_Name        => Ref_Id,
                   Source_Filename    => Ref.Buffer
@@ -1873,8 +1814,6 @@ package body Src_Info.CPP is
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
-                  DB_Directory       => Handler.DB_Dir.all,
-                  Xrefs              => Handler.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          else
@@ -1888,7 +1827,7 @@ package body Src_Info.CPP is
 
             if Decl_Info = null then
                Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Handler),
+                 (Handler            => Handler,
                   File               => File,
                   LI_Full_Filename   => Handler.DB_Dir.all &
                     Xref_Filename_For
@@ -1902,14 +1841,6 @@ package body Src_Info.CPP is
                   Scope              => Global_Scope,
                   Referred_Filename  => Buffer
                     (Filename.First .. Filename.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all &
-                    Xref_Filename_For
-                    (Buffer (Filename.First .. Filename.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory       => Handler.DB_Dir.all,
-                  Xrefs              => Handler.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          end if;
@@ -1961,6 +1892,7 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -1996,7 +1928,8 @@ package body Src_Info.CPP is
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
-            Sym_GV_Handler (Sym, Handler, File, List, Module_Type_Defs);
+            Sym_GV_Handler
+              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -2042,7 +1975,7 @@ package body Src_Info.CPP is
 
             if Desc.Parent_Point = Invalid_Point then
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -2057,19 +1990,10 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Var.Buffer
-                       (Var.File_Name.First .. Var.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -2084,17 +2008,8 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Var.Buffer
-                       (Var.File_Name.First .. Var.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename.all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -2130,9 +2045,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Macro  : MA_Table;
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -2160,14 +2076,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Ref_Id,
                Source_Filename    => Ref.Buffer
@@ -2175,8 +2085,6 @@ package body Src_Info.CPP is
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2191,7 +2099,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
                LI_Full_Filename  => Handler.DB_Dir.all
                  & Xref_Filename_For
@@ -2206,15 +2114,6 @@ package body Src_Info.CPP is
                Scope             => Global_Scope,
                Referred_Filename => Macro.Buffer
                  (Macro.File_Name.First .. Macro.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Macro.Buffer
-                    (Macro.File_Name.First .. Macro.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -2243,9 +2142,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       P             : Pair_Ptr;
       Fn            : MI_Table;
       MDecl         : MD_Table;
@@ -2436,13 +2336,8 @@ package body Src_Info.CPP is
                --  method is in the current file, but used before
                --  declaration. Create forward declaration
                Insert_Declaration
-                 (Handler            => LI_Handler (Handler),
+                 (Handler            => Handler,
                   File               => File,
-                  LI_Full_Filename   => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List               => List,
                   Symbol_Name        => Ref_Id,
                   Source_Filename    => Ref.Buffer
@@ -2450,8 +2345,6 @@ package body Src_Info.CPP is
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
-                  DB_Directory       => Handler.DB_Dir.all,
-                  Xrefs              => Handler.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
 
@@ -2476,7 +2369,7 @@ package body Src_Info.CPP is
                      & "ref_fname = "
                      & Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last));
                Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Handler),
+                 (Handler            => Handler,
                   File               => File,
                   LI_Full_Filename   => Handler.DB_Dir.all &
                     Xref_Filename_For
@@ -2490,14 +2383,6 @@ package body Src_Info.CPP is
                   Scope              => Global_Scope,
                   Referred_Filename  => Filename_Buf
                     (Filename.First .. Filename.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Filename_Buf (Filename.First .. Filename.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory       => Handler.DB_Dir.all,
-                  Xrefs              => Handler.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          end if;
@@ -2574,8 +2459,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Typedef   : T_Table;
       Ref_Id    : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -2621,13 +2508,8 @@ package body Src_Info.CPP is
             if Desc.Ancestor_Point = Invalid_Point then
                --  unknown parent
                Insert_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Source_Filename   => Ref.Buffer
@@ -2635,19 +2517,12 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builin type
                Insert_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Source_Filename   => Ref.Buffer
@@ -2656,19 +2531,12 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
                Insert_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Source_Filename   => Ref.Buffer
@@ -2678,8 +2546,6 @@ package body Src_Info.CPP is
                   Parent_Filename   => Desc.Ancestor_Filename.all,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -2711,7 +2577,7 @@ package body Src_Info.CPP is
             if Desc.Ancestor_Point = Invalid_Point then
                --  unknown parent
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -2726,20 +2592,11 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builtin type
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -2754,20 +2611,11 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
                Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Handler),
+                 (Handler           => Handler,
                   File              => File,
                   LI_Full_Filename  => Handler.DB_Dir.all
                     & Xref_Filename_For
@@ -2783,15 +2631,6 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                  Referred_LI_Filename =>
-                    Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  DB_Directory      => Handler.DB_Dir.all,
-                  Xrefs             => Handler.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -2821,9 +2660,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Union_Desc : CType_Description;
@@ -2861,7 +2701,7 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
                LI_Full_Filename   => Handler.DB_Dir.all
                  & Xref_Filename_For
@@ -2873,18 +2713,9 @@ package body Src_Info.CPP is
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Referred_Filename  => Union_Def.Buffer
                  (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
-               Referred_LI_Filename =>
-                 Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Union_Def.Buffer
-                    (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                Location           => Union_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2898,13 +2729,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => LI_Handler (Handler),
+              (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
@@ -2913,8 +2739,6 @@ package body Src_Info.CPP is
                Location           => Union_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
-               DB_Directory       => Handler.DB_Dir.all,
-               Xrefs              => Handler.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -2939,9 +2763,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info  : E_Declaration_Info_List;
       Desc       : CType_Description;
       Class_Def  : CL_Table;
@@ -2971,14 +2796,9 @@ package body Src_Info.CPP is
       end if;
 
       Insert_Declaration
-        (Handler               => LI_Handler (Handler),
+        (Handler               => Handler,
          File                  => File,
-         LI_Full_Filename      => Handler.DB_Dir.all
-            & Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
-            List                  => List,
+         List                  => List,
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename       =>
@@ -2987,8 +2807,6 @@ package body Src_Info.CPP is
          Kind                  => Record_Type,
          Scope                 => Global_Scope,
          End_Of_Scope_Location => Class_Def.End_Position,
-         DB_Directory          => Handler.DB_Dir.all,
-         Xrefs                 => Handler.Xrefs,
          Declaration_Info      => Decl_Info);
 
       --  Adjust EOS reference kind
@@ -3020,9 +2838,7 @@ package body Src_Info.CPP is
          if Success then -- if found, add it to parent list
             Add_Parent
               (Decl_Info,
-               Handler => LI_Handler (Handler),
-               DB_Directory => Handler.DB_Dir.all,
-               Xrefs => Handler.Xrefs,
+               Handler => CPP_LI_Handler (Handler),
                List => List,
                Parent_Filename => Super_Def.Buffer
                  (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
@@ -3051,8 +2867,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Desc              : CType_Description;
       Var               : GV_Table;
       Success           : Boolean;
@@ -3094,14 +2912,9 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Source_Filename   =>
@@ -3109,19 +2922,12 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Source_Filename   =>
@@ -3131,8 +2937,6 @@ package body Src_Info.CPP is
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this variable
@@ -3176,9 +2980,11 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, File, List, Module_Type_Defs);
+      pragma Unreferenced
+        (Handler, File, List, Project_View, Module_Type_Defs);
    begin
       Info ("Sym_Default_Hanlder: """
             & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -3195,9 +3001,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -3206,22 +3013,15 @@ package body Src_Info.CPP is
       Info ("Sym_E_Hanlder: """ & E_Id & """");
 
       Insert_Declaration
-        (Handler           => LI_Handler (Handler),
+        (Handler           => Handler,
          File              => File,
-         LI_Full_Filename  => Handler.DB_Dir.all
-            & Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
-            List              => List,
+         List              => List,
          Symbol_Name       => E_Id,
          Source_Filename   =>
            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Type,
          Scope             => Global_Scope,
-         DB_Directory      => Handler.DB_Dir.all,
-         Xrefs             => Handler.Xrefs,
          Declaration_Info  => Decl_Info);
    end Sym_E_Handler;
 
@@ -3234,9 +3034,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       Ec_Id     : constant String := Sym.Buffer
         (Sym.Identifier.First ..  Sym.Identifier.Last);
@@ -3271,14 +3072,9 @@ package body Src_Info.CPP is
 
       if Has_Enum then -- corresponding enumeration found
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       => Ec_Id,
             Source_Filename   =>
               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
@@ -3287,18 +3083,12 @@ package body Src_Info.CPP is
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
             Scope             => Global_Scope,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Fail ("could not find enum for '" & Ec_Id & "'");
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
             List              => List,
             Symbol_Name       => Ec_Id,
             Source_Filename   =>
@@ -3306,8 +3096,6 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Scope             => Global_Scope,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
       end if;
    end Sym_EC_Handler;
@@ -3321,9 +3109,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
       P            : Pair_Ptr;
@@ -3398,14 +3187,9 @@ package body Src_Info.CPP is
 
       --  create declaration (if it has not been already created)
       Insert_Declaration
-        (Handler           => LI_Handler (Handler),
+        (Handler           => Handler,
          File              => File,
-         LI_Full_Filename  => Handler.DB_Dir.all
-            & Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
-            List              => List,
+         List              => List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -3413,8 +3197,6 @@ package body Src_Info.CPP is
          Location          => First_FD_Pos,
          Kind              => Target_Kind,
          Scope             => Global_Scope,
-         DB_Directory      => Handler.DB_Dir.all,
-         Xrefs             => Handler.Xrefs,
          Declaration_Info  => Decl_Info);
 
       --  for all subsequent declarations, add reference to the first decl
@@ -3443,15 +3225,12 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info      : E_Declaration_Info_List := null;
       Target_Kind    : E_Kind;
 
-      --  ??? MANU: where is this memory freed
-      Sym_Type       : String_Access :=
-        new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
-      tmp_int        : Integer;
       P              : Pair_Ptr;
       FU_Tab         : FU_Table;
       MI_Tab         : MI_Table;
@@ -3499,6 +3278,7 @@ package body Src_Info.CPP is
                    Class_Decl_Info,
                    File,
                    List,
+                   Project_View,
                    Module_Type_Defs);
                if Class_Decl_Info /= null then
                   Ref := Class_Decl_Info.Value.References;
@@ -3611,12 +3391,8 @@ package body Src_Info.CPP is
 
       if Decl_Info = null then
          Insert_Declaration
-           (Handler               => LI_Handler (Handler),
+           (Handler               => Handler,
             File                  => File,
-            LI_Full_Filename      => Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
             List                  => List,
             Symbol_Name           => Fu_Id,
             Source_Filename       =>
@@ -3625,8 +3401,6 @@ package body Src_Info.CPP is
             Kind                  => Target_Kind,
             Scope                 => Global_Scope,
             End_Of_Scope_Location => End_Position,
-            DB_Directory          => Handler.DB_Dir.all,
-            Xrefs                 => Handler.Xrefs,
             Declaration_Info      => Decl_Info);
       else
          Set_End_Of_Scope (Decl_Info, End_Position);
@@ -3641,57 +3415,56 @@ package body Src_Info.CPP is
             Body_Entity);
       end if;
 
-
       --  Declaration inserted. Now we need to check the body for external
       --  references.
 
-      tmp_int := 1;
-      To_String (Sym.Symbol, Sym_Type, tmp_int);
       Set_Cursor
         (Handler.SN_Table (TO),
          Position => By_Key,
          Key => Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep &
                 Fu_Id &
-                Field_Sep & Sym_Type.all,
+                Field_Sep & To_String (Sym.Symbol),
          Exact_Match => False);
 
       loop
-            P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
-            exit when P = null;
+         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+         exit when P = null;
 
-            begin
-               Ref := Parse_Pair (P.all);
-               if Sym.Symbol = MI then
-                  Our_Ref := Cmp_Arg_Types
-                    (Ref.Buffer,
-                     MI_Tab.Buffer,
-                     Ref.Caller_Argument_Types,
-                     MI_Tab.Arg_Types);
-               else
-                  Our_Ref := Cmp_Arg_Types
-                    (Ref.Buffer,
-                     FU_Tab.Buffer,
-                     Ref.Caller_Argument_Types,
-                     FU_Tab.Arg_Types);
-               end if;
+         begin
+            Ref := Parse_Pair (P.all);
+            if Sym.Symbol = MI then
+               Our_Ref := Cmp_Arg_Types
+                 (Ref.Buffer,
+                  MI_Tab.Buffer,
+                  Ref.Caller_Argument_Types,
+                  MI_Tab.Arg_Types);
+            else
+               Our_Ref := Cmp_Arg_Types
+                 (Ref.Buffer,
+                  FU_Tab.Buffer,
+                  Ref.Caller_Argument_Types,
+                  FU_Tab.Arg_Types);
+            end if;
 
-               if Our_Ref
-                  and then Fu_To_Handlers (Ref.Referred_Symbol) /= null then
-                  Fu_To_Handlers (Ref.Referred_Symbol)
-                    (Ref, Handler, File, List, Module_Type_Defs);
-               end if;
+            if Our_Ref
+              and then Fu_To_Handlers (Ref.Referred_Symbol) /= null
+            then
+               Fu_To_Handlers (Ref.Referred_Symbol)
+                 (Ref, Handler, File, List, Project_View, Module_Type_Defs);
+            end if;
+            Free (Ref);
+
+         exception
+            when others =>
+               --  unexpected exception in Fu_To_XX handler
                Free (Ref);
-            exception
-               when others =>
-                  --  unexpected exception in Fu_To_XX handler
-                  Free (Ref);
-                  --  ??? Probably we want to report this exception and
-                  --  continue to work further, but now we reraise that
-                  --  exception
-                  raise;
-            end;
+               --  ??? Probably we want to report this exception and
+               --  continue to work further, but now we reraise that
+               --  exception
+               raise;
+         end;
 
-            Free (P);
+         Free (P);
       end loop;
 
       if Sym.Symbol = MI then
@@ -3714,8 +3487,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Desc              : CType_Description;
       Var               : GV_Table;
       Success           : Boolean;
@@ -3758,14 +3533,9 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Source_Filename   =>
@@ -3773,19 +3543,12 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Source_Filename   =>
@@ -3795,8 +3558,6 @@ package body Src_Info.CPP is
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
@@ -3837,28 +3598,40 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      Full_Included : constant String := Find_File
+        (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Include_Path (Project_View, Recursive => True),
+         Predefined_Path => "");
+
    begin
       Info ("Sym_IU_Handler: """
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+            & " depends on " & Full_Included
             & """");
-
-      Insert_Dependency
-        (Handler           => LI_Handler (Handler),
-         File              => File,
-         LI_Full_Filename  => Xref_Filename_For
-           (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Handler.DB_Dir.all,
-            Handler.Xrefs).all,
-         List              => List,
-         Referred_Filename =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Referred_LI_Filename => Xref_Filename_For
-           (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Handler.DB_Dir.all,
-            Handler.Xrefs).all);
+      if Full_Included = "" then
+         Info ("File not found on path: "
+               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         Insert_Dependency
+           (Handler           => Handler,
+            File              => File,
+            List              => List,
+            Source_Filename   => Sym.Buffer
+              (Sym.File_Name.First .. Sym.File_Name.Last),
+            Referred_Filename => Sym.Buffer
+              (Sym.Identifier.First .. Sym.Identifier.Last));
+      else
+         Insert_Dependency
+           (Handler           => Handler,
+            File              => File,
+            List              => List,
+            Source_Filename   => Sym.Buffer
+              (Sym.File_Name.First .. Sym.File_Name.Last),
+            Referred_Filename => Full_Included);
+      end if;
    end Sym_IU_Handler;
 
    --------------------
@@ -3870,8 +3643,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Inst_Var        : IV_Table;
       Decl_Info       : E_Declaration_Info_List;
       Success         : Boolean;
@@ -3918,14 +3693,9 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Handler.DB_Dir.all
-               & Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
-               List              => List,
+            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Source_Filename   =>
@@ -3933,17 +3703,11 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
-            Declaration_Info  => Decl_Info,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs);
+            Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => LI_Handler (Handler),
+           (Handler           => Handler,
             File              => File,
-            LI_Full_Filename  => Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -3954,8 +3718,6 @@ package body Src_Info.CPP is
             Scope             => Local_Scope,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
-            DB_Directory      => Handler.DB_Dir.all,
-            Xrefs             => Handler.Xrefs,
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this field
@@ -3985,9 +3747,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
       Info ("Sym_MA_Handler: """
@@ -3995,12 +3758,8 @@ package body Src_Info.CPP is
             & """");
 
       Insert_Declaration
-        (Handler           => LI_Handler (Handler),
+        (Handler           => Handler,
          File              => File,
-         LI_Full_Filename  => Xref_Filename_For
-           (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Handler.DB_Dir.all,
-            Handler.Xrefs).all,
          List              => List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -4009,8 +3768,6 @@ package body Src_Info.CPP is
          Location          => Sym.Start_Position,
          Kind              => Unresolved_Entity,
          Scope             => Global_Scope,
-         DB_Directory      => Handler.DB_Dir.all,
-         Xrefs             => Handler.Xrefs,
          Declaration_Info  => tmp_ptr);
    end Sym_MA_Handler;
 
@@ -4023,6 +3780,7 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Target_Kind  : E_Kind;
@@ -4096,7 +3854,7 @@ package body Src_Info.CPP is
            (Handler,
             Class_Def,
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Class_Decl_Info, File, List, Module_Type_Defs);
+            Class_Decl_Info, File, List, Project_View, Module_Type_Defs);
          if Class_Decl_Info /= null then
             Insert_Reference
               (Class_Decl_Info,
@@ -4131,14 +3889,9 @@ package body Src_Info.CPP is
 
       --  create declaration (if it has not been already created)
       Insert_Declaration
-        (Handler           => LI_Handler (Handler),
+        (Handler           => Handler,
          File              => File,
-         LI_Full_Filename  => Handler.DB_Dir.all
-            & Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
-            List              => List,
+         List              => List,
          Symbol_Name       =>
             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -4146,8 +3899,6 @@ package body Src_Info.CPP is
          Location          => First_MD_Pos,
          Kind              => Target_Kind,
          Scope             => Global_Scope,
-         DB_Directory      => Handler.DB_Dir.all,
-         Xrefs             => Handler.Xrefs,
          Declaration_Info  => Decl_Info);
 
       --  for all subsequent declarations, add reference to the first decl
@@ -4174,8 +3925,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Decl_Info  : E_Declaration_Info_List;
       Desc       : CType_Description;
       Success    : Boolean;
@@ -4206,12 +3959,8 @@ package body Src_Info.CPP is
          if Desc.Ancestor_Point = Invalid_Point then
             --  unknown parent
             Insert_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List              => List,
                Symbol_Name       => Identifier,
                Source_Filename   =>
@@ -4219,8 +3968,6 @@ package body Src_Info.CPP is
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
 
          elsif Desc.Ancestor_Point = Predefined_Point then
@@ -4228,14 +3975,9 @@ package body Src_Info.CPP is
             --  ??? Builtin_Name is not used anywhere. We should
             --  use it (e.g. for a field like Predefined_Type_Name)
             Insert_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Handler.DB_Dir.all
-                  & Xref_Filename_For
-                    (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
-                  List              => List,
+               List              => List,
                Symbol_Name       => Identifier,
                Source_Filename   =>
                  Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
@@ -4243,19 +3985,13 @@ package body Src_Info.CPP is
                Parent_Location   => Predefined_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
 
          else
             --  Set parent location to ancestor location
             Insert_Declaration
-              (Handler           => LI_Handler (Handler),
+              (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Xref_Filename_For
-                 (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List              => List,
                Symbol_Name       => Identifier,
                Source_Filename   =>
@@ -4265,8 +4001,6 @@ package body Src_Info.CPP is
                Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
-               DB_Directory      => Handler.DB_Dir.all,
-               Xrefs             => Handler.Xrefs,
                Declaration_Info  => Decl_Info);
 
          end if;
@@ -4288,9 +4022,10 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Union_Def : UN_Table;
@@ -4310,12 +4045,8 @@ package body Src_Info.CPP is
 
       if Success then
          Insert_Declaration
-           (Handler               => LI_Handler (Handler),
+           (Handler               => Handler,
             File                  => File,
-            LI_Full_Filename      => Xref_Filename_For
-              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Handler.DB_Dir.all,
-               Handler.Xrefs).all,
             List                  => List,
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -4325,8 +4056,6 @@ package body Src_Info.CPP is
             Kind                  => Record_Type,
             Scope                 => Global_Scope,
             End_Of_Scope_Location => Union_Def.End_Position,
-            DB_Directory          => Handler.DB_Dir.all,
-            Xrefs                 => Handler.Xrefs,
             Declaration_Info      => Decl_Info);
 
          Insert_Reference
@@ -4341,6 +4070,26 @@ package body Src_Info.CPP is
          Free (Union_Def);
       end if;
    end Sym_UN_Handler;
+
+   ----------------
+   -- Get_DB_Dir --
+   ----------------
+
+   function Get_DB_Dir (Handler : access CPP_LI_Handler_Record)
+      return String is
+   begin
+      return Handler.DB_Dir.all;
+   end Get_DB_Dir;
+
+   ---------------
+   -- Get_Xrefs --
+   ---------------
+
+   function Get_Xrefs (Handler : access CPP_LI_Handler_Record)
+      return SN.Xref_Pools.Xref_Pool is
+   begin
+      return Handler.Xrefs;
+   end Get_Xrefs;
 
 end Src_Info.CPP;
 

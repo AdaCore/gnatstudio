@@ -108,6 +108,15 @@ package Src_Info.CPP is
       Success : out Boolean);
    --  Just wrapper for internal Add to support extended testing
 
+   function Get_DB_Dir (Handler : access CPP_LI_Handler_Record) return String;
+   pragma Inline (Get_DB_Dir);
+   --  Return the directory that contains the source navigator files
+
+   function Get_Xrefs (Handler : access CPP_LI_Handler_Record)
+      return SN.Xref_Pools.Xref_Pool;
+   pragma Inline (Get_Xrefs);
+   --  Return the database for the mapping from source files to xref files.
+
 private
 
    type Iterator_State_Type is
