@@ -242,7 +242,7 @@ package body Odd.Dialogs is
       Main_Window      : Gtk_Window;
       Backtrace        : Backtrace_Array) is
    begin
-      Initialize (Backtrace_Dialog, -"Backtrace", Main_Window);
+      Initialize (Backtrace_Dialog, -"Call Stack", Main_Window);
       Button_Callback.Connect
         (Backtrace_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
