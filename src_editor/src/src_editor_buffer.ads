@@ -37,6 +37,7 @@
 with Glib;             use Glib;
 with Gtk;
 with Gtk.Text_Buffer;
+with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtkada.Types;
@@ -278,6 +279,12 @@ package Src_Editor_Buffer is
    --  Restore all highlighted regions to unhighlighted. Only the region
    --  highlighting is canceled, the other potential highlightings (line,
    --  syntax) are preserved.
+
+   procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  This is a temporary implementation of Gtk.Text_Iter.Forward_To_Line_End
+   --  because the gtk+ one is broken at the moment, and causes Critical
+   --  warnings.
+   --  ??? Remove this procedure when the problem is fixed.
 
 private
 
