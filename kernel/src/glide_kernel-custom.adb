@@ -221,8 +221,18 @@ package body Glide_Kernel.Custom is
    begin
       --  Don't do this at declaration time, since we want to catch exceptions
 
-      Node := Parse_Buffer
-        ("<?xml version=""1.0""?><Root>" & Customization & "</Root>");
+      --  If the string appears to be a complete file, accept it as is
+      if Customization'Length > 5
+        and then Customization (Customization'First .. Customization'First + 4)
+          = "<?xml"
+      then
+         Node := Parse_Buffer (Customization);
+
+      else
+         --  else enclose it
+         Node := Parse_Buffer
+           ("<?xml version=""1.0""?><Root>" & Customization & "</Root>");
+      end if;
 
       --  If the custom files have already been loaded, this means that all
       --  modules have been registered and are read to listen to events. We
@@ -232,7 +242,7 @@ package body Glide_Kernel.Custom is
 
       if Node /= null then
          if Kernel.Custom_Files_Loaded then
-            Execute_Customization_String (Kernel, Node, Hard_Coded);
+            Execute_Customization_String (Kernel, Node.Child, Hard_Coded);
             Free (Node);
          else
             N := Kernel.Customization_Strings;
