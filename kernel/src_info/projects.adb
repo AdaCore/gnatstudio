@@ -1195,8 +1195,25 @@ package body Projects is
       Num_Languages : Natural := 0;
       Val : Variable_Value;
       Value : String_List_Id;
-      Found : Boolean := False;
       P : Project_Type;
+
+      procedure Add_Language
+        (Lang : in out Argument_List; Index : in out Natural; Str : String);
+      --  Add a new language in the list, if not already there
+
+      procedure Add_Language
+        (Lang : in out Argument_List; Index : in out Natural; Str : String) is
+      begin
+         for L in Lang'First .. Index - 1 loop
+            if Lang (L).all = Str then
+               return;
+            end if;
+         end loop;
+
+         Lang (Index) := new String'(Str);
+         Index := Index + 1;
+      end Add_Language;
+
    begin
       loop
          P := Current (Iter);
@@ -1210,46 +1227,35 @@ package body Projects is
       Iter := Start (Project, Recursive);
 
       declare
-         Lang  : Argument_List (1 .. Num_Languages);
+         --  If no project defines the language attribute, then they have
+         --  Ada as an implicit language. Save space for it.
+         Lang  : Argument_List (1 .. Num_Languages + 1);
          Index : Natural := Lang'First;
       begin
          loop
             P := Current (Iter);
             exit when P = No_Project;
 
-            Val := Get_Attribute_Value (P, Languages_Attribute);
-            Value := Val.Values;
-            Found := False;
+            if not Attribute_Is_Defined (P, Languages_Attribute) then
+               Add_Language (Lang, Index, "ada");
 
-            while Value /= Nil_String loop
-               declare
-                  Str : constant String :=
-                    Get_String (String_Elements.Table (Value).Value);
-               begin
-                  for L in Lang'First .. Index - 1 loop
-                     if Lang (L).all = Str then
-                        Found := True;
-                        exit;
-                     end if;
-                  end loop;
+            else
+               Val := Get_Attribute_Value (P, Languages_Attribute);
+               Value := Val.Values;
 
-                  if not Found then
-                     Lang (Index) := new String'(Str);
-                     Index := Index + 1;
-                  end if;
-               end;
-
-               Value := String_Elements.Table (Value).Next;
-            end loop;
+               while Value /= Nil_String loop
+                  Add_Language
+                    (Lang, Index,
+                     Get_String (String_Elements.Table (Value).Value));
+                  Value := String_Elements.Table (Value).Next;
+               end loop;
+            end if;
 
             Next (Iter);
          end loop;
 
-         if Index = Lang'First then
-            return (1 => new String'(Ada_String));
-         else
-            return Lang (Lang'First .. Index - 1);
-         end if;
+         --  If no project specified the
+         return Lang (Lang'First .. Index - 1);
       end;
    end Get_Languages;
 
