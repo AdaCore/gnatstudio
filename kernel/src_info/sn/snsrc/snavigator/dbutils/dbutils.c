@@ -1027,8 +1027,9 @@ db_remove_file_def(int softdel,char *file)
 	int     del;
 	int     del_fil;
 
-	printf("Deleting %s\n",file);	/* Informs SN which files is being deleted. */
-	fflush(stdout);
+	printf("Deleting %s\n",file);
+	/* Informs SN which files is being deleted. */
+	/* fflush(stdout); */
 
 	if (!dbp)
 	{
@@ -1248,8 +1249,8 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 		fn = file_del_key.field_value[3];
 		if (strcmp(last_del_fname, fn) != 0)
 		{
-			printf("Deleting %s\n", fn);
-			fflush(stdout);
+		        printf("Deleting %s\n", fn);
+			/* fflush(stdout); */
 			strcpy(last_del_fname, fn);
 		}
 
@@ -1365,9 +1366,9 @@ db_insert_entry(int type,char *key_buf,char *data_buf)
 
 		state = put_file_db(key_buf,group,p);
 		if (state == 0)
-		{
-			db_remove_file_def(0,key_buf);
-		}
+		  {
+		    db_remove_file_def(0,key_buf);
+		  }
 
 		return;
 	}
