@@ -1611,6 +1611,8 @@ package body Glide_Kernel is
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
 
+      Free (Handle.Default_Desktop);
+
       if Handle.Current_Context /= null then
          Unref (Handle.Current_Context);
       end if;
