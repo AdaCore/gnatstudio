@@ -254,7 +254,8 @@ package body Project_Viewers is
    --  Return the contextual menu to use for the project viewer
 
    procedure Project_Editor_Contextual
-     (Context   : access Selection_Context'Class;
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add new entries, when needed, to the contextual menus from other
    --  modules.
@@ -946,7 +947,8 @@ package body Project_Viewers is
    -------------------------------
 
    procedure Project_Editor_Contextual
-     (Context   : access Selection_Context'Class;
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Item : Gtk_Menu_Item;
