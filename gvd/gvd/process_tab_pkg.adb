@@ -38,7 +38,7 @@ with GVD.Canvas;      use GVD.Canvas;
 
 package body Process_Tab_Pkg is
 
-   Signals : constant Chars_Ptr_Array :=
+   Signals : constant chars_ptr_array :=
      (1 => New_String ("executable_changed"));
    Class_Record : GObject_Class := Uninitialized_Class;
 
