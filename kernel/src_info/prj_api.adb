@@ -230,7 +230,8 @@ package body Prj_API is
    --------------------
 
    function Create_Project (Name, Path : String) return Project_Node_Id is
-      D       : constant String := Path & Name & Project_File_Extension;
+      D       : constant String :=
+        Path & To_File_Name (Name) & Project_File_Extension;
       Project : constant Project_Node_Id := Default_Project_Node (N_Project);
       Project_Name : Name_Id;
 
@@ -2601,13 +2602,14 @@ package body Prj_API is
       New_Path      : String;
       Report_Errors : Output.Output_Proc := null)
    is
-      D : constant String := New_Path & New_Name & Project_File_Extension;
-      Full_Path : String_Id := No_String;
-      Old : Project_Node_Id;
-      Name : Name_Id;
-      Old_Name : Name_Id;
-      Imported : Project_Node_Id;
-      Iterator : Imported_Project_Iterator := Start (Root_Project);
+      D           : constant String :=
+        New_Path & To_File_Name (New_Name) & Project_File_Extension;
+      Full_Path   : String_Id := No_String;
+      Old         : Project_Node_Id;
+      Name        : Name_Id;
+      Old_Name    : Name_Id;
+      Imported    : Project_Node_Id;
+      Iterator    : Imported_Project_Iterator := Start (Root_Project);
       With_Clause : Project_Node_Id;
 
    begin
@@ -2617,6 +2619,7 @@ package body Prj_API is
       Name := Name_Find;
 
       Old := Find_Project_In_Hierarchy (Root_Project, Name);
+
       if Old /= Empty_Node
         and then Old /= Project
       then
@@ -2663,8 +2666,9 @@ package body Prj_API is
 
          while With_Clause /= Empty_Node loop
             if Project_Node_Of (With_Clause) = Project then
-
+               --  ??? Should we use Name or the corresponding file name here
                Set_Name_Of (With_Clause, Name);
+
                Set_Path_Name_Of (With_Clause, Path_Name_Of (Project));
 
                if Full_Path = No_String then
@@ -4549,15 +4553,17 @@ package body Prj_API is
          return False;
       end if;
 
-      if Name (Name'First) not in 'a' .. 'z' then
+      if Name (Name'First) not in 'a' .. 'z'
+        and then Name (Name'First) not in 'A' .. 'Z'
+      then
          return False;
       end if;
 
       for N in Name'First + 1 .. Name'Last loop
          if Name (N) not in 'a' .. 'z'
+           and then Name (N) not in 'A' .. 'Z'
            and then Name (N) not in '0' .. '9'
            and then Name (N) /= '_'
-           and then Name (N) /= '.'
          then
             return False;
          end if;
