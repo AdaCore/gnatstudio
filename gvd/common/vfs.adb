@@ -435,6 +435,10 @@ package body VFS is
    is
       function To_Address is new Ada.Unchecked_Conversion
         (chars_ptr, System.Address);
+
+      procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
+      pragma Import (C, C_Free, "free");
+
       Written : aliased Natural;
       Read    : aliased Natural;
       S       : chars_ptr;
@@ -451,7 +455,7 @@ package body VFS is
             Written := Write (File.FD, Str'Address, Str'Length);
          else
             Written := Write (File.FD, To_Address (S), Written);
-            Free (S);
+            C_Free (S);
          end if;
       else
          Written := Write (File.FD, Str'Address, Str'Length);
