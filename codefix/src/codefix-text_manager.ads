@@ -208,14 +208,14 @@ package Codefix.Text_Manager is
      (This     : Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
       Category : Language_Category := Cat_Unknown)
-     return String;
+      return String;
    --  Return the entire prefix of the first unit of category after the cursor.
 
    function Get_Right_Paren
      (This   : Text_Interface'Class;
       Cursor : Text_Cursor'Class;
       Current_Line : String)
-   return Text_Cursor'Class;
+      return Text_Cursor'Class;
    --  Return the right paren corresponding to the one in the cursor.
 
    procedure Next_Word
