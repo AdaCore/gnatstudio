@@ -20,11 +20,12 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Language.Ada;              use Language.Ada;
+with Src_Info;                  use Src_Info;
+with Src_Info.Queries;          use Src_Info.Queries;
 
 package body Docgen.Html_Output is
 
@@ -123,7 +124,7 @@ package body Docgen.Html_Output is
       Info    : Doc_Info) is
    begin
 
-      Ada.Text_IO.Put_Line (File, "<h4><PRE> "  &
+      Ada.Text_IO.Put_Line (File, "<h4><PRE>"  &
                             Info.Package_Desc_Description.all &
                             " </PRE></H4>");
 
@@ -151,11 +152,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Package_List,
+                   Info.Doc_LI_Unit,
                    Info.Package_Header.all,
                    Info.Package_Entity.File_Name.all,
                    Info.Package_Entity.Short_Name.all,
                    Info.Package_Entity.Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -178,11 +182,14 @@ package body Docgen.Html_Output is
                             "width=""100%""><TR><TD> <PRE>");
 
       Format_HTML (File,
-                   Info.With_List,
+                   Info.Doc_LI_Unit,
                    Info.With_Header.all,
                    Info.With_File.all,
                    "",
-                   0,
+                   First_File_Line,
+                   Info.With_Header_Line,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    False);
@@ -213,11 +220,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Var_List,
+                   Info.Doc_LI_Unit,
                    Info.Var_Header.all,
                    Info.Var_Entity.File_Name.all,
                    Info.Var_Entity.Short_Name.all,
                    Info.Var_Entity.Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -249,11 +259,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Exception_List,
+                   Info.Doc_LI_Unit,
                    Info.Exception_Header.all,
                    Info.Exception_Entity.File_Name.all,
                    Info.Exception_Entity.Short_Name.all,
                    Info.Exception_Entity.Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -285,11 +298,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Type_List,
+                   Info.Doc_LI_Unit,
                    Info.Type_Header.all,
                    Info.Type_Entity.File_Name.all,
                    Info.Type_Entity.Short_Name.all,
                    Info.Type_Entity.Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -322,11 +338,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Entry_List,
+                   Info.Doc_LI_Unit,
                    Info.Entry_Header.all,
                    Info.Entry_Entity.File_Name.all,
                    Info.Entry_Entity.Short_Name.all,
                    Info.Entry_Entity.Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -446,11 +465,14 @@ package body Docgen.Html_Output is
       end if;
 
       Format_HTML (File,
-                   Info.Subprogram_List,
+                   Info.Doc_LI_Unit,
                    Info.Subprogram_Header.all,
                    Info.Subprogram_Entity.File_Name.all,
                    Info.Subprogram_Entity.Short_Name.all,
                    Info.Subprogram_Entity.Line,
+                   Info.Subprogram_Entity.Line_In_Body,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    False,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
@@ -472,18 +494,29 @@ package body Docgen.Html_Output is
    -----------------
 
    procedure Format_HTML
-     (File          : Ada.Text_IO.File_Type;
-      Entity_List   : Type_Entity_List.List;
-      Text          : String;
-      File_Name     : String;
-      Entity_Name   : String;
-      Entity_Line   : Natural;
-      Is_Body       : Boolean;
-      Process_Body  : Boolean;
-      Do_Checks     : Boolean) is
+     (File             : Ada.Text_IO.File_Type;
+      LI_Unit          : LI_File_Ptr;
+      Text             : String;
+      File_Name        : String;
+      Entity_Name      : String;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_List.List;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Do_Check_Pack    : Boolean) is
+      pragma Unreferenced (Do_Check_Pack);
 
       --  global variables for the callback function
       Last_Index, Last_Line : Natural;
+      Loc_Start, Loc_End    : Natural;
+      Point_In_Column       : Natural;
+
+      procedure Set_Name_Tags
+        (Input_Text : String);
+      --  sets a "<A name="lind_number"> <A>" in front of each line in the
+      --  given strings (if in body file) and writes it to the doc file.
 
       function HTML_Callback
         (Entity         : Language_Entity;
@@ -497,6 +530,38 @@ package body Docgen.Html_Output is
       --  track of the current position in the original string.
 
       -------------------
+      -- Set_Name_Tags --
+      -------------------
+
+      procedure Set_Name_Tags
+        (Input_Text : String) is
+         Last_Written : Natural;
+
+         HTML_Name_Head   : constant String := "<A name=""";
+         HTML_Name_Middle : constant String := """>";
+         HTML_Name_End    : constant String := "</A>";
+
+      begin
+         Last_Written := Input_Text'First - 1;
+         for J in Input_Text'First .. Input_Text'Last loop
+            if Input_Text (J) = ASCII.LF then
+               Last_Line := Last_Line + 1;
+               Ada.Text_IO.Put (File, Input_Text
+                                     (Last_Written + 1 .. J) &
+                                   HTML_Name_Head &
+                                   Integer'Image
+                                     (Last_Line + Entity_Line - 1) &
+                                   HTML_Name_Middle &
+                                   HTML_Name_End);
+               Last_Written := J;
+            end if;
+         end loop;
+         Ada.Text_IO.Put (File,
+                             Input_Text
+                               (Last_Written + 1 .. Input_Text'Last));
+      end Set_Name_Tags;
+
+      -------------------
       -- HTML_Callback --
       -------------------
 
@@ -507,11 +572,8 @@ package body Docgen.Html_Output is
          Partial_Entity : Boolean) return Boolean is
          pragma Unreferenced (Partial_Entity);
 
-         Entity_Node      : TEL.List_Node;
-
-         HTML_Name_Head   : constant String := "<A name=""";
-         HTML_Name_Middle : constant String := """>";
-         HTML_Name_End    : constant String := "</A>";
+         Entity_Info : Entity_Information;
+         Status      : Find_Decl_Or_Body_Query_Status;
 
          HTML_Comment_Prefix : constant String := "<FONT color=""green"">";
          HTML_Comment_Suffix : constant String := "</FONT>";
@@ -553,22 +615,10 @@ package body Docgen.Html_Output is
          --  check if a regular link to the body should be set
          --  (a regular link is a link to the entity's declaration)
 
-         function Is_Called_Reference_Found
-           (Line_Nr     : Natural;
-            Source_File : String;
-            Called_Node :  Entity_List_Information) return Boolean;
-         --  looks in the Called_List if the entity is called called in the
-         --  given file at the given line.
-
          procedure Replace_HTML_Tags
            (Input_Text : String);
          --  replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
          --  and writes the output to the doc file.
-
-         procedure Set_Name_Tags
-           (Input_Text : String);
-         --  sets a "<A name="lind_number"> <A>" in front of each line in the
-         --  given strings (if in body file) and writes it to the doc file.
 
          ---------------------
          -- Callback_Output --
@@ -601,34 +651,6 @@ package body Docgen.Html_Output is
             Last_Line  := Sloc_End.Line;
          end Callback_Output;
 
-         -------------------
-         -- Set_Name_Tags --
-         -------------------
-
-         procedure Set_Name_Tags
-           (Input_Text : String) is
-            Last_Written : Natural;
-         begin
-            Last_Written := Input_Text'First - 1;
-            if Is_Body then
-               for J in Input_Text'First .. Input_Text'Last loop
-                  if Input_Text (J) = ASCII.LF then
-                     Last_Line := Last_Line + 1;
-                     Ada.Text_IO.Put (File, Input_Text
-                                        (Last_Written + 1 .. J) &
-                                        HTML_Name_Head &
-                                          Integer'Image (Last_Line) &
-                                          HTML_Name_Middle &
-                                            HTML_Name_End);
-                     Last_Written := J;
-                  end if;
-               end loop;
-            end if;
-            Ada.Text_IO.Put (File,
-                             Input_Text
-                               (Last_Written + 1 .. Input_Text'Last));
-         end Set_Name_Tags;
-
          ---------------------------------
          -- Create_Special_Link_To_Body --
          ---------------------------------
@@ -636,13 +658,13 @@ package body Docgen.Html_Output is
          procedure Create_Special_Link_To_Body is
             Spec_File : constant String :=
               GNAT.Directory_Operations.File_Name
-                (TEL.Data (Entity_Node).File_Name.all);
+                (Get_Declaration_File_Of (Entity_Info));
          begin
             if Sloc_Start.Line > Last_Line then
-               Set_Name_Tags (Text (Last_Index .. Sloc_Start.Index - 1));
+               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
             else
                Ada.Text_IO.Put (File,
-                                Text (Last_Index .. Sloc_Start.Index - 1));
+                                Text (Last_Index .. Loc_Start - 1));
             end if;
 
             Ada.Text_IO.Put (File,
@@ -651,13 +673,12 @@ package body Docgen.Html_Output is
                                           .. Spec_File'Last - 4) &
                              "_adb.htm" &
                              "#" &
-                             Integer'Image
-                               (TEL.Data (Entity_Node).Line_In_Body) &
+                             Integer'Image (Line_In_Body) &
                              """>" &
-                             Text (Sloc_Start.Index ..  Sloc_End.Index) &
+                             Text (Loc_Start ..  Loc_End) &
                              "</A>");
 
-            Last_Index := Sloc_End.Index + 1;
+            Last_Index := Loc_End + 1;
          end Create_Special_Link_To_Body;
 
          -------------------------
@@ -665,26 +686,33 @@ package body Docgen.Html_Output is
          -------------------------
 
          procedure Create_Regular_Link is
+            Line_To_Use : Natural;
          begin
             if Sloc_Start.Line > Last_Line then
-               Set_Name_Tags (Text (Last_Index .. Sloc_Start.Index - 1));
+               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
             else
                Ada.Text_IO.Put (File,
-                                Text (Last_Index .. Sloc_Start.Index - 1));
+                                Text (Last_Index .. Loc_Start - 1));
+            end if;
+
+            if Get_Kind (Entity_Info).Kind = Package_Kind then
+               Line_To_Use := First_File_Line;
+            else
+               Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
             end if;
 
             Ada.Text_IO.Put (File,
                              "<A href=""" &
                              GNAT.Directory_Operations.File_Name
                                (Get_Html_File_Name
-                                  (TEL.Data (Entity_Node).File_Name.all)) &
+                                  (Get_Declaration_File_Of (Entity_Info))) &
                              "#" &
-                             Integer'Image (TEL.Data (Entity_Node).Line) &
+                               Integer'Image (Line_To_Use) &
                              """>" &
-                             Text (Sloc_Start.Index .. Sloc_End.Index) &
+                             Text (Loc_Start .. Loc_End) &
                              "</A>");
 
-            Last_Index := Sloc_End.Index + 1;
+            Last_Index := Loc_End + 1;
          end Create_Regular_Link;
 
          ------------------------
@@ -693,49 +721,40 @@ package body Docgen.Html_Output is
 
          function Link_Should_Be_Set return Boolean is
          begin
-            return
-            --  check if the entity name is also the identiefier name
-              TEL.Data (Entity_Node).Short_Name.all
-              = To_Lower (Text (Sloc_Start.Index ..
-                                           Sloc_End.Index))
-            --  and the lines for the entity found in the list
-            --  are the same as for the entity passed to Format_HTML,
-            --  in the spec of in the body (in the latter case
-            --  it's important to look at the declaration line in the
-            --  body but also all references where it is called.
-            --  Or No Checks should be made.
-              and ((not Is_Body and
-                      TEL.Data (Entity_Node).Line =
-                      Entity_Line)
-                   or (Is_Body and
-                         TEL.Data (Entity_Node).Line_In_Body =
-                         Sloc_Start.Line)
-                   or (Is_Body and
-                         (TEL.Data (Entity_Node).Kind =
-                            Procedure_Entity or
-                              TEL.Data (Entity_Node).Kind
-                              = Function_Entity or
-                              TEL.Data (Entity_Node).Kind
-                              = Entry_Entity) and
-                             Is_Called_Reference_Found
-                               (Sloc_Start.Line,
-                                File_Name,
-                                TEL.Data (Entity_Node)))
-                   or not Do_Checks)
-            --  and the kind of the entity is not Other_Entity
-            --  ONLY possible: subprograms, exceptions,tasks,
-            --  types and packages
-              and TEL.Data (Entity_Node).Kind /= Other_Entity
-              and TEL.Data (Entity_Node).Kind /= Var_Entity
-            --  and this line is not the declararion of the entity
-            --  (allowed for subprograms + tasks)
-              and (not (TEL.Data (Entity_Node).Line
-                          = Sloc_Start.Line and
-                            TEL.Data (Entity_Node).File_Name.all
-                            = File_Name) or
-                         TEL.Data (Entity_Node).Kind =
-                         Procedure_Entity or
-                           TEL.Data (Entity_Node).Kind = Function_Entity);
+
+            --  if no links should be set to entities declared in not
+            --  processed source files => filter them out
+            return (Link_All or
+              Source_File_In_List (Source_File_List,
+                                   Get_Declaration_File_Of (Entity_Info)))
+            --  create no links if it is the declaration line itself;
+            --  only if it's a subprogram or entry in a spec sometimes
+            --  a link CAN be created to it body, so don't filter these ones.
+              and
+                ((GNAT.Directory_Operations.File_Name
+                    (Get_Declaration_File_Of (Entity_Info)) /=
+                   GNAT.Directory_Operations.File_Name (File_Name) or
+                    Get_Declaration_Line_Of (Entity_Info) /=
+                    Sloc_Start.Line + Entity_Line - 1)
+                   or (not Is_Body and
+                         (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+                          or Get_Kind (Entity_Info).Kind = Procedure_Kind
+                          or Get_Kind (Entity_Info).Kind =
+                          Function_Or_Operator)))
+            --  if in the spec: no links for entities defined in supbrogram
+            --  or within types
+              and (Is_Body or
+                     not (Is_Defined_In_Subprogram
+                       (Entity_Name,
+                        Get_Name (Entity_Info),
+                        Get_Unit_Name (LI_Unit,
+                                       GNAT.Directory_Operations.File_Name
+                                         (File_Name)))
+                   and
+                   (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+                          or Get_Kind (Entity_Info).Kind = Procedure_Kind
+                          or Get_Kind (Entity_Info).Kind =
+                          Function_Or_Operator)));
          end Link_Should_Be_Set;
 
          --------------------------------
@@ -744,17 +763,15 @@ package body Docgen.Html_Output is
 
          function Special_Link_Should_Be_Set return Boolean is
          begin
+
             --  checks if a special link, a link not to a declaration,
             --  should be set.
             return
             not Is_Body and
               Process_Body and
-              TEL.Data (Entity_Node).Line_In_Body > 0 and
-              (TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                 TEL.Data (Entity_Node).Kind = Function_Entity
-
-               or TEL.Data (Entity_Node).Kind = Entry_Entity
-                 );
+            (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+               or Get_Kind (Entity_Info).Kind = Procedure_Kind
+               or Get_Kind (Entity_Info).Kind = Function_Or_Operator);
          end Special_Link_Should_Be_Set;
 
          --------------------------------
@@ -767,46 +784,11 @@ package body Docgen.Html_Output is
             return
             --  no subprograms/tasks are processed here,
             --  if working on a spec file
-            (not (TEL.Data (Entity_Node).Kind =
-                    Procedure_Entity or
-                    TEL.Data (Entity_Node).Kind =
-                    Entry_Entity or
-                     TEL.Data (Entity_Node).Kind
-                     = Function_Entity) or Is_Body) and
-            --  and don't link if it is the entity itself, which
-            --  was found in its header => except for subprograms/tasks
-            --  (above) which are linked to the body, no linking
-            --  here.
-              To_Lower (TEL.Data (Entity_Node).Short_Name.all) /=
-              To_Lower (Entity_Name);
+            (not (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+                  or Get_Kind (Entity_Info).Kind = Procedure_Kind
+                  or Get_Kind (Entity_Info).Kind = Function_Or_Operator)
+               or Is_Body);
          end Regular_Link_Should_Be_Set;
-
-         ---------------------------------
-         --  Is_Called_Reference_Found  --
-         ---------------------------------
-
-         function Is_Called_Reference_Found
-           (Line_Nr     : Natural;
-            Source_File : String;
-            Called_Node : Entity_List_Information) return Boolean is
-
-            use Type_Reference_List;
-
-            Ref_Node : List_Node;
-         begin
-            if not Is_Empty (Called_Node.Called_List) then
-               Ref_Node := First (Called_Node.Called_List);
-               for J in 1 .. Length (Called_Node.Called_List) loop
-                  if Data (Ref_Node).Line = Line_Nr and
-                    Data (Ref_Node).File_Name.all =
-                    GNAT.Directory_Operations.File_Name (Source_File) then
-                     return True;
-                  end if;
-                  Ref_Node := Next (Ref_Node);
-               end loop;
-            end if;
-            return False;
-         end Is_Called_Reference_Found;
 
          -----------------------
          -- Replace_HTML_Tags --
@@ -826,7 +808,7 @@ package body Docgen.Html_Output is
                   Last_Index := J + 1;
                elsif Input_Text (J) = '>' then
                   Ada.Text_IO.Put (File, Input_Text (Last_Index .. J - 1) &
-                                "&glt;");
+                                "&gt;");
                   Last_Index := J + 1;
                elsif Input_Text (J) = '&' then
                   Ada.Text_IO.Put (File, Input_Text (Last_Index .. J - 1) &
@@ -854,27 +836,46 @@ package body Docgen.Html_Output is
                   HTML_Char_Prefix, HTML_Char_Suffix, False);
             when Identifier_Text =>   --  perhaps links can be set:
 
-               --  look in the list, if the identifier is there
-               --  if found => try to  make a link;
-               --  if not found => ignore!
-               if not TEL.Is_Empty (Entity_List) then
+               Loc_Start := Sloc_Start.Index;
 
-                  Entity_Node := TEL.First (Entity_List);
-                  for J in 1 .. TEL.Length (Entity_List) loop
+               --  take apart parsed entites with any "."'s in the middle
+               for J in 1 .. 1 +
+                 Count_Points (Text (Sloc_Start.Index .. Sloc_End.Index)) loop
 
+                  Point_In_Column :=
+                    Get_String_Index (Text (Loc_Start .. Sloc_End.Index),
+                                      Loc_Start, ".");
+                  if Point_In_Column > 0 then
+                     Loc_End := Point_In_Column - 1;
+                  else
+                     Loc_End := Sloc_End.Index;
+                  end if;
+
+                  Find_Declaration (LI_Unit,
+                                    GNAT.Directory_Operations.File_Name
+                                      (File_Name),
+                                    Text (Loc_Start .. Loc_End),
+                                    Sloc_Start.Line + Entity_Line - 1,
+                                    Sloc_Start.Column +
+                                      (Loc_Start - Sloc_Start.Index),
+                                    Entity_Info,
+                                    Status);
+
+                  if Status = Success or Status = Fuzzy_Match then
                      if Link_Should_Be_Set then
                         if Special_Link_Should_Be_Set then
                            Create_Special_Link_To_Body;
                         elsif Regular_Link_Should_Be_Set then
                            Create_Regular_Link;
                         end if;
-                        return False;
                      end if;
+                  end if;
 
-                     Entity_Node := TEL.Next (Entity_Node);
-                  end loop;
+                  if Point_In_Column > 0 then
+                     Loc_Start := Point_In_Column + 1;
+                  end if;
+               end loop;
 
-               end if;
             when others => null;
          end case;
          return False;
@@ -893,7 +894,8 @@ package body Docgen.Html_Output is
 
       --  write the rest of the text, since the last found parsed entity
       if Last_Index < Text'Last then
-         Ada.Text_IO.Put (File, Text (Last_Index .. Text'Last));
+         Set_Name_Tags (Text (Last_Index .. Text'Last));
+         --  Ada.Text_IO.Put (File, Text (Last_Index .. Text'Last));
       end if;
    end Format_HTML;
 
@@ -1162,11 +1164,14 @@ package body Docgen.Html_Output is
       Info   : in out Doc_Info) is
    begin
       Format_HTML (File,
-                   Info.Body_Entity_List,
+                   Info.Doc_LI_Unit,
                    Info.Body_Text.all,
                    Info.Body_File.all,
                    "",
-                   0,
+                   First_File_Line,
+                   No_Body_Line_Needed,
+                   Info.Doc_File_List,
+                   Info.Doc_Info_Options.Link_All,
                    True,
                    Info.Doc_Info_Options.Process_Body_Files,
                    True);
