@@ -20,12 +20,14 @@
 
 with Gdk.Pixbuf;
 with Gtk.Container;        use Gtk.Container;
+with Gtk.Widget;           use Gtk.Widget;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Main_Window;    use Glide_Main_Window;
 
+with GVD.Process;          use GVD.Process;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
 
 package body GVD.Text_Box.Source_Editor.Glide is
@@ -151,22 +153,31 @@ package body GVD.Text_Box.Source_Editor.Glide is
    procedure Set_Line
      (Editor      : access GEdit_Record;
       Line        : Natural;
-      Set_Current : Boolean := True)
+      Set_Current : Boolean := True;
+      Process     : Gtk_Widget)
    is
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Tab     : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Process);
 
+      Prev_Current_Line : Integer := Get_Current_Source_Line (Tab);
+      Prev_File         : String  := Get_Current_Source_File (Tab);
    begin
+      if Editor.Current_File = null then
+         return;
+      end if;
+
       if Set_Current
-        and then Editor.Line /= 0
+        and then Prev_Current_Line /= 0
       then
          Add_Line_Information
            (Kernel,
-            Editor.Current_File.all,
+            Prev_File,
             "Editor",
             --  ??? maybe we should get that from elsewhere.
             new Line_Information_Array'
-            (1 => Line_Information_Record' (Line => Editor.Line,
-                                            Text => null,
+            (1 => Line_Information_Record' (Line  => Prev_Current_Line,
+                                            Text  => null,
                                             Image => Gdk.Pixbuf.Null_Pixbuf,
                                             Associated_Command => null)));
       end if;
@@ -186,10 +197,12 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Editor",
             --  ??? maybe we should get that from elsewhere.
             new Line_Information_Array'
-            (1 => Line_Information_Record' (Line => Editor.Line,
-                                            Text => null,
+            (1 => Line_Information_Record' (Line  => Line,
+                                            Text  => null,
                                             Image => Current_Line_Pixbuf,
                                             Associated_Command => null)));
+
+         Set_Current_Source_Location (Tab, Editor.Current_File.all, Line);
       end if;
    end Set_Line;
 
