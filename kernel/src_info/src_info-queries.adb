@@ -2508,6 +2508,8 @@ package body Src_Info.Queries is
       --  No more entities to display in the current file ?
 
       if Iterator.Current_Decl = null then
+         Iterator.Reference    := null;
+         Iterator.New_Decl     := True;
          Next_File;
 
       elsif Iterator.Reference /= null then
