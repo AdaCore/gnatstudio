@@ -737,6 +737,7 @@ package Glide_Kernel.Modules is
    --  This context is emitted when the user clicks in the location. It is
    --  mostly used for error messages. The line and column information are
    --  the references in the error message.
+   --  Line and columns are stored as Line_Information and Column_Information
 
    type Message_Context is new File_Selection_Context with private;
    type Message_Context_Access is access all Message_Context;
