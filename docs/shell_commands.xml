@@ -1495,6 +1495,9 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
      <example lang="python">
          GPS.HTML.browse ("gps.html")
          will open the GPS documentation in the internal browser
+
+         GPS.HTML.browse ("http://host.com/my/document")
+         will download documentation from the web
      </example>
   </shell_doc>
 
