@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -329,16 +329,19 @@ package body External_Editor_Module is
                if Command = Custom_Command then
                   Args := Argument_String_To_List
                     (Get_Pref (Kernel, Custom_Editor));
+
                else
                   Args := Argument_String_To_List (Command);
                end if;
             end;
 
-            Path := Locate_Exec_On_Path (Args (Args'First).all);
+            if Args'Length /= 0 then
+               Path := Locate_Exec_On_Path (Args (Args'First).all);
 
-            if Path /= null then
-               Free (Path);
-               Match := True;
+               if Path /= null then
+                  Free (Path);
+                  Match := True;
+               end if;
             end if;
 
             Free (Args.all);
