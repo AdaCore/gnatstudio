@@ -148,6 +148,12 @@ package body Src_Editor_Box is
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
 
+   procedure Status_Changed_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box);
+   --  Reflect the change in buffer status.
+
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -220,12 +226,6 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the "Goto spec <-> body" contextual menu
-
-   procedure File_Saved
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for "File_Saved_Signal".
 
    procedure Find_Closest_Match
      (Source : access Source_Editor_Box_Record'Class;
@@ -813,22 +813,8 @@ package body Src_Editor_Box is
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
       Line   : Gint;
-      Column : Gint)
-   is
-      Modified_Buffer : constant Boolean :=
-        Get_Modified (Box.Source_Buffer);
-
+      Column : Gint) is
    begin
-      if Modified_Buffer /= Box.Modified then
-         if Modified_Buffer then
-            Set_Text (Box.Modified_Label, -"Modified");
-         else
-            Set_Text (Box.Modified_Label, -"Unmodified");
-         end if;
-
-         Box.Modified := Modified_Buffer;
-      end if;
-
       --  In the source buffer, the Line and Column indexes start from
       --  0. It is more natural to start from one, so the Line and Column
       --  number displayed are incremented by 1 to start from 1.
@@ -837,6 +823,30 @@ package body Src_Editor_Box is
         (Box.Cursor_Loc_Label,
          Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column)));
    end Show_Cursor_Position;
+
+   ----------------------------
+   -- Status_Changed_Handler --
+   ----------------------------
+
+   procedure Status_Changed_Handler
+     (Buffer : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Box    : Source_Editor_Box)
+   is
+      pragma Unreferenced (Buffer, Params);
+
+   begin
+      case Get_Status (Box.Source_Buffer) is
+         when Unmodified =>
+            Set_Text (Box.Modified_Label, -"Unmodified");
+
+         when Saved =>
+            Set_Text (Box.Modified_Label, -"Saved");
+
+         when Modified =>
+            Set_Text (Box.Modified_Label, -"Modified");
+      end case;
+   end Status_Changed_Handler;
 
    -------------------------------------
    -- Cursor_Position_Changed_Handler --
@@ -872,6 +882,7 @@ package body Src_Editor_Box is
 
    begin
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
+      Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
 
       if Box.Default_GC /= null then
@@ -902,7 +913,6 @@ package body Src_Editor_Box is
       Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Data           : Editor_Tooltip_Data;
-      Command        : Check_Modified_State;
 
    begin
       Glib.Object.Initialize (Box);
@@ -980,12 +990,22 @@ package body Src_Editor_Box is
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
 
+      --  Connect to source buffer signals.
+
       Box.Cursor_Handler := Box_Callback.Connect
         (Box.Source_Buffer,
          "cursor_position_changed",
          Cursor_Position_Changed_Handler'Access,
          User_Data => Source_Editor_Box (Box),
          After     => True);
+
+      Box.Status_Handler := Box_Callback.Connect
+        (Box.Source_Buffer,
+         "status_changed",
+         Status_Changed_Handler'Access,
+         User_Data => Source_Editor_Box (Box),
+         After     => True);
+
       Box_Callback.Connect
         (Box.Source_View,
          "destroy",
@@ -1020,45 +1040,7 @@ package body Src_Editor_Box is
          Object          => Box,
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
-
-      --  Callback for the File_Saved_Signal
-      Kernel_Callback.Object_Connect
-        (Kernel, File_Saved_Signal,
-         File_Saved'Access,
-         Slot_Object => Box,
-         User_Data   => Kernel);
-
-      --  Create the queue change hook that will be called every
-      --  time the state of the queue associated to the buffer changes.
-
-      Create
-        (Command, Source_Editor_Box (Box), Get_Queue (Box.Source_Buffer));
-      Add_Queue_Change_Hook
-        (Get_Queue (Box.Source_Buffer),
-         Command_Access (Command),
-         "State_Check");
    end Initialize_Box;
-
-   ----------------
-   -- File_Saved --
-   ----------------
-
-   procedure File_Saved
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
-   is
-      pragma Unreferenced (Kernel);
-      Box  : Source_Editor_Box := Source_Editor_Box (Widget);
-      File : constant String := Get_String (Nth (Args, 1));
-   begin
-      if Get_Filename (Box.Source_Buffer) = File then
-         Box.Saved_Position := Get_Position (Get_Queue (Box.Source_Buffer));
-      end if;
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end File_Saved;
 
    ------------------
    -- Box_Scrolled --
@@ -1162,8 +1144,9 @@ package body Src_Editor_Box is
    is
       B : Boolean;
    begin
-      if Get_Text (Editor.Modified_Label) = (-"Unmodified") then
-         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => False);
+      if Get_Status (Editor.Source_Buffer) = Unmodified then
+         B := Check_Timestamp
+           (Editor.Source_Buffer, Ask_User => False, Force => True);
       else
          B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True);
 
@@ -1660,7 +1643,6 @@ package body Src_Editor_Box is
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source));
       Box.Writable := Source.Writable;
-      Box.Modified := Source.Modified;
 
       Set_Filename (Box, Get_Filename (Source));
 
@@ -1742,7 +1724,14 @@ package body Src_Editor_Box is
    function Modified
      (Editor   : access Source_Editor_Box_Record) return Boolean is
    begin
-      return Editor.Modified;
+      case Get_Status (Editor.Source_Buffer) is
+         when Modified =>
+            return True;
+
+         when Unmodified | Saved =>
+            return False;
+
+      end case;
    end Modified;
 
    ------------------
@@ -1782,7 +1771,7 @@ package body Src_Editor_Box is
       if Success then
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
-         Editor.Modified := False;
+
          Editor.Writable := Is_Writable_File (Filename);
 
          if Editor.Writable then
@@ -1813,7 +1802,7 @@ package body Src_Editor_Box is
       Set_Cursor_Location (Editor, 1, 1);
       Set_Filename (Editor.Source_Buffer, Filename);
       Set_Text (Editor.Modified_Label, -"Unmodified");
-      Editor.Modified := False;
+
       Editor.Writable := True;
       Set_Text (Editor.Read_Only_Label, -"Writable");
    end Load_Empty_File;
@@ -1954,7 +1943,6 @@ package body Src_Editor_Box is
 
       if Success then
          Set_Text (Editor.Modified_Label, -"Saved");
-         Editor.Modified := False;
       end if;
    end Save_To_File;
 
@@ -2160,7 +2148,7 @@ package body Src_Editor_Box is
          Text);
 
       External_End_Action (Editor.Source_Buffer);
-      Enqueue (Get_Queue (Editor.Source_Buffer), Command_Access (C));
+      Enqueue (Editor.Source_Buffer, Command_Access (C));
    end Replace_Slice;
 
    ----------------
@@ -2338,36 +2326,6 @@ package body Src_Editor_Box is
       Remove_Line_Information_Column
         (Editor.Source_Buffer, Identifier);
    end Remove_Line_Information_Column;
-
-   ------------------------
-   -- Get_Saved_Position --
-   ------------------------
-
-   function Get_Saved_Position
-     (Editor : access Source_Editor_Box_Record) return Integer is
-   begin
-      return Editor.Saved_Position;
-   end Get_Saved_Position;
-
-   ------------------------
-   -- Set_Modified_State --
-   ------------------------
-
-   procedure Set_Modified_State
-     (Editor   : access Source_Editor_Box_Record;
-      Modified : Boolean) is
-   begin
-      if Editor.Modified /= Modified then
-         Editor.Modified := Modified;
-         Set_Modified (Editor.Source_Buffer, Modified);
-
-         if Modified then
-            Set_Text (Editor.Modified_Label, -"Modified");
-         else
-            Set_Text (Editor.Modified_Label, -"Unmodified");
-         end if;
-      end if;
-   end Set_Modified_State;
 
    ------------------
    --  Create_Mark --
