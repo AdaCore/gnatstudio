@@ -377,9 +377,6 @@ package body Gtkada.MDI is
         (MDI_Class_Record, Size_Allocate_MDI'Access);
       Set_Default_Size_Allocate_Handler
         (MDI_Layout_Class_Record, Size_Allocate_MDI_Layout'Access);
-      --  Widget_Callback.Connect
-      --    (MDI, "size_allocate",
-      --     Widget_Callback.To_Marshaller (Size_Allocate_MDI'Access));
       Return_Callback.Connect
         (MDI, "button_press_event",
          Return_Callback.To_Marshaller (Button_Pressed_MDI'Access));
@@ -695,6 +692,7 @@ package body Gtkada.MDI is
            (M.Handles (Top), Get_Black_GC (Get_Style (M)),
             First, Handle_Size - 1, Last, Handle_Size - 1);
       end if;
+
       return False;
    end Expose_MDI;
 
@@ -1801,7 +1799,7 @@ package body Gtkada.MDI is
       Return_Callback.Connect
         (Child, "motion_notify_event",
          Return_Callback.To_Marshaller (Button_Motion'Access));
-      --  Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
+      Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
       Widget_Callback.Connect
         (Child, "destroy",
          Widget_Callback.To_Marshaller (Destroy_Child'Access));
