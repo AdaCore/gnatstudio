@@ -1238,7 +1238,10 @@ package body GVD.Process is
 
       Debugger.Exiting := True;
 
-      --  Remove the notebook page.
+      --  Switch to another page before removing the debugger.
+      --  Otherwise, "switch_page" would be emitted after the debugger is dead,
+      --  and Update_Dialogs would be called with a non-existent debugger.
+      Next_Page (Notebook);
 
       Close (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Paned));
