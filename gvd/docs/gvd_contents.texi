@@ -134,21 +134,91 @@ Here is a detailed list of the menu items that can be found in the menu bar:
 @section The Debugger Menu
 @c --------------------------------------------------------------------
 
-The debugger entry in the menu bar provides operations that act at a
+The @code{Debug} entry in the menu bar provides operations that act at a
 global level. Key shortcuts are available for the most common operations, and
 are displayed in the menus themselves.
 Here is a detailed list of the menu items that can be found in the menu bar:
 @end ifset
 
 @ifclear GPS
+@subsection Program
+@end ifclear
 
-@subsection File
 @table @b
+@ifclear GPS
+   @item Run/Start...
+@end ifclear
+@ifset GPS
+   @item Run...
+@end ifset
+Opens a dialog window allowing you to specify the arguments to pass to the
+program to be debugged, and whether this program should be stopped at the
+beginning of the main subprogram. If you confirm by clicking on the @i{OK}
+button, the program will be launched according to the arguments entered.
+
+   @item Step
+Execute the program until it reaches a different source line.
+
+   @item Step Instruction
+Execute the program for one machine instruction only.
+
+   @item Next
+Execute the program until it reaches the next source line, 
+stepping over subroutine calls.
+
+   @item Next Instruction
+Execute the program until it reaches the next machine instruction,
+stepping over subroutine calls.
+
+   @item Finish
+Continue execution until selected stack frame returns.
+
+   @item Continue
+Continue execution of the program being debugged.
+
+   @item Interrupt
+Asynchronously interrupt the program being debugged. Note that depending on
+the state of the program, you may stop it in low-level system code that does
+not have debug information, or in some cases, not even a coherent state. Use
+of breakpoints is preferable to interrupting programs. Interrupting programs
+is nevertheless indispensable in some situations, for example when the
+program appears to be in an infinite (or at least very time-consuming) loop.
+
+@ifset GPS
+   @item Terminate
+Terminate your debug session, by closing the data window and the debugger
+console, as well as terminating the underlying debugger (e.g @code{gdb}) used
+to handle the low level debugging.
+@end ifset
+
+@end table
+
+@ifclear GPS
+@subsection File
+@end ifclear
+@ifset GPS
+@subsection Debug
+@end ifset
+
+@table @b
+
+@ifclear GPS
    @item Open Program...
+@end ifclear
+@ifset GPS
+   @item Connect to Board...
+Opens a simple dialog to connect to a remote board. This option is only
+relevant to cross debuggers.
+
+   @item Load File...
+@end ifset
+
 @anchor{open program menu}
 Opens a file selection dialog that allows you to choose a program to
 debug. The program to debug is either an executable for native debugging, or
 a partially linked module for cross environments (e.g VxWorks).
+
+@ifclear GPS
 Do not use this menu to edit a source file, see the @ref{The Explorer Window},
 or the @ref{open source menu}.
 
@@ -167,13 +237,7 @@ the debugger will run on the current machine (the machine on which GVD is
 running), so you only need to specify a value if you want to do remote debugging.
 For more information, see @ref{Debugging a program remotely}.
 
-   @item Open Core Dump...
-@anchor{core files}
-This will open a file selection dialog that allows you to debug a core file
-instead of debugging a running process. Note that you must first specify an
-executable to debug, by either using the @ref{open program menu}, or
-by specifying the name of the executable on the command line (@pxref{Command
-Line Options}).
+@end ifclear
 
    @item Add Symbols...
 Add the symbols from a given file/module. This corresponds to the gdb
@@ -182,6 +246,13 @@ targets, where the modules can be loaded independently of the debugger.
 For instance, if a module is loaded on the target while GVD is running,
 it is absolutely required to use this functionality, otherwise GVD/gdb won't 
 be able to work properly.
+
+@ifclear GPS
+   @item Open Core Dump...
+@anchor{core files}
+This will open a file selection dialog that allows you to debug a core file
+instead of debugging a running process. Note that you must first specify an
+executable to debug before loading a core file.
 
    @item Edit Source
 Launches an external editor that will open the file currently displayed
@@ -215,7 +286,10 @@ Opens a dialog similar to the @i{Open Session} dialog, allowing you to specify
 the name of the session to save, and what sub-sessions/debuggers to save.
 By default, this will save all the sub-sessions ran in GVD since start up.
 
-   @item Attach To Process...
+@end ifclear
+@c GPS
+
+   @item Attach...
 Instead of starting a program to debug, you can instead attach GVD to an
 already running process. To do so, you need to specify the process id
 of the process you want to debug. The process might be busy in an
@@ -223,11 +297,23 @@ infinite loop, or waiting for event processing. Note that as for
 @ref{core files}, you need to specify an executable before attaching to a
 process.
 
-   @item Detach Process
+   @item Detach
 Detaches the currently debugged process from the underlying debugger.
 This means that the executable will continue to run outside GVD. You can use
 the @i{Attach To Process} menu later to re-attach to this process.
 
+@ifset GPS
+   @item Debug Core File...
+@anchor{core files}
+This will open a file selection dialog that allows you to debug a core file
+instead of debugging a running process. Note that you must first specify an
+executable to debug before loading a core file.
+
+   @item Kill
+Kills the process being debugged.
+@end ifset
+
+@ifclear GPS
    @item Change Directory...
 Open a directory selection dialog to change the directory in the underlying
 debugger. This is useful before executing a process, or when loading a
@@ -242,7 +328,12 @@ To create a new debugger, see also the @ref{new debugger menu}.
 
    @item Exit
 Saves the window settings and exit GVD.
+@end ifclear
+@c GPS
+
 @end table
+
+@ifclear GPS
 
 @subsection Edit
 The only item currently available in this menu is the preferences menu.
@@ -479,52 +570,10 @@ netscape -no-session-management
 
 @end table
 
-@end ifclear
-@c GPS
-
-@subsection Program
-@table @b
-   @item Run/Start...
-Opens a dialog window allowing you to specify the arguments to pass to the
-program to be debugged, and whether this program should be stopped at the
-beginning of the main subprogram. If you confirm by clicking on the @i{OK}
-button, the program will be launched according to the arguments entered.
-
-   @item Step
-Execute the program until it reaches a different source line.
-
-   @item Step Instruction
-Execute the program for one machine instruction only.
-
-   @item Next
-Execute the program until it reaches the next source line, 
-stepping over subroutine calls.
-
-   @item Next Instruction
-Execute the program until it reaches the next machine instruction,
-stepping over subroutine calls.
-
-   @item Finish
-Continue execution until selected stack frame returns.
-
-   @item Continue
-Continue execution of the program being debugged.
-
-   @item Interrupt
-Asynchronously interrupt the program being debugged. Note that depending on
-the state of the program, you may stop it in low-level system code that does
-not have debug information, or in some cases, not even a coherent state. Use
-of breakpoints is preferable to interrupting programs. Interrupting programs
-is nevertheless indispensable in some situations, for example when the
-program appears to be in an infinite (or at least very time-consuming) loop.
-
-@end table
-
-@ifclear GPS
-
 @subsection Command
+
 @table @b
-   @item Command History...
+   @item Command History
 Opens a dialog with the list of commands executed in the current session.
 You can select any number of items in this list and replay the selection
 automatically.
@@ -583,6 +632,12 @@ the following commands. Failing to do so will result in blank windows.
       different protection domain, simply click on it. A @c{*} character
       indicates the current protection domain.
 
+@ifset GPS
+   @item Assembly
+      Opens a new window displaying an assembly dump of the current code
+      being executed.
+@end ifset
+
    @item Edit Breakpoints
       Opens an advanced window to create and modify any kind of breakpoint
       (see @ref{The Breakpoint Editor}).
@@ -617,6 +672,18 @@ the following commands. Failing to do so will result in blank windows.
    @item Refresh
       Refreshes all the items displayed in the Data Window.
 @end table
+
+@ifset GPS
+@subsection Session
+
+@table @b
+   @item Command History
+Opens a dialog with the list of commands executed in the current session.
+You can select any number of items in this list and replay the selection
+automatically.
+
+@end table
+@end ifset
 
 @ifclear GPS
 
@@ -1131,8 +1198,8 @@ Highlights the file containing the current execution point.
 
 @ifset GPS
 @c --------------------------------------------------------------------
-@node Using the Source Editors when Debugging
-@section Using the Source Editors when Debugging
+@node Using the Source Editor when Debugging
+@section Using the Source Editor when Debugging
 @c --------------------------------------------------------------------
 
 @noindent
@@ -1145,9 +1212,9 @@ Highlights the file containing the current execution point.
 In this area, blue dots are present next to lines for which the debugger
 has debug information, in other words, lines that have been compiled with
 debug information and for which the compiler has generated some code.
-Currently, GVD does not check whether you try to set a breakpoint on a dotted
-line or not, and it will simply send the breakpoint command to the underlying
-debugger. This will usually (e.g in the case of gdb) result in setting a
+Currently, there is no check when you try to set a breakpoint on a non dotted
+line: this will simply send the breakpoint command to the underlying
+debugger, and usually (e.g in the case of gdb) result in setting a
 breakpoint at the closest location that matches the file and line that you
 specified.
      @item Current line executed
