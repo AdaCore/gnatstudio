@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -464,6 +464,15 @@ package Browsers.Canvas is
    --  Return the context to use for a contextual menu in the canvas.
    --  This version takes care of checking whether the user clicked on an item,
    --  and adds the standard menu entries
+
+   ----------------------
+   -- Exporting canvas --
+   ----------------------
+
+   function Get_Pixbuf
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf;
+   --  Return a pixbuf containing the contents of Browser.
+   --  The returned pixbuf should be unref'ed when no longer used.
 
 private
 
