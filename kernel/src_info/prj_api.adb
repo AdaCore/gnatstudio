@@ -1809,10 +1809,13 @@ package body Prj_API is
                Set_Current_Item_Node
                  (Tmp, Clone_Node (Current_Item_Node (Node), True));
 
-               if Kind_Of (Case_Items (Parent)) = N_Case_Item then
+               if Kind_Of (Case_Items (Parent)) = N_Case_Item
+                 or else Kind_Of (Case_Items (Parent)) = N_Project_Declaration
+               then
                   Set_Next_Declarative_Item
                     (Tmp, First_Declarative_Item_Of (Case_Items (Parent)));
                   Set_First_Declarative_Item_Of (Case_Items (Parent), Tmp);
+
                else
                   Set_Next_Declarative_Item
                     (Tmp, Next_Declarative_Item (Case_Items (Parent)));
