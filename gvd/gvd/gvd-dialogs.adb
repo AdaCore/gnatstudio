@@ -206,10 +206,34 @@ package body GVD.Dialogs is
       end;
    end Update;
 
+   -----------------------------
+   -- Show_Call_Stack_Columns --
+   -----------------------------
+
+   procedure Show_Call_Stack_Columns
+     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Process  : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Debugger);
+      Filter   : constant Stack_List_Filter :=
+        Process.Backtrace_Filter;
+      List     : Gtk_Clist := Process.Stack_List;
+   begin
+      Set_Column_Visibility (List, 0, (Filter and Frame_Num) /= 0);
+      Set_Column_Visibility (List, 1, (Filter and Subprog_Name) /= 0);
+      Set_Column_Visibility (List, 2, (Filter and Params) /= 0);
+      Set_Column_Visibility (List, 3, (Filter and File_Location) /= 0);
+      Set_Column_Visibility (List, 4, (Filter and Program_Counter) /= 0);
+   end Show_Call_Stack_Columns;
+
+   -----------------------
+   -- Update_Call_Stack --
+   -----------------------
+
    procedure Update_Call_Stack
      (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Temp     : Chars_Ptr_Array (0 .. 2);
+      Temp     : Chars_Ptr_Array (0 .. 4);
       Row      : Gint;
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
@@ -217,6 +241,8 @@ package body GVD.Dialogs is
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
       List     : Gtk_Clist := Debugger_Process_Tab (Debugger).Stack_List;
       Columns  : Gint;
+      Index    : Integer;
+      Subp     : String_Access;
 
    begin
       --  Do nothing if the stack list has been hidden
@@ -244,15 +270,19 @@ package body GVD.Dialogs is
 
       if Len > 0 then
          for J in 1 .. Len loop
-            if Columns = 1 then
-               Temp (0) := Strings.New_String (Bt (J).Subprogram.all);
-            else
-               Temp (0) := Strings.New_String (Bt (J).Program_Counter.all);
-            end if;
+            --  ??? We currently consider that the list of parameters always
+            --  starts at the first '(' character encountered
+            Subp := Bt (J).Subprogram;
+            Index := Subp'First;
+            while Index <= Subp'Last and then Subp (Index) /= '(' loop
+               Index := Index + 1;
+            end loop;
 
-            Temp (1) := Strings.New_String (Bt (J).Subprogram.all);
-            Temp (2) := Strings.New_String (Bt (J).Source_Location.all);
-
+            Temp (0) := Strings.New_String (Natural'Image (Bt (J).Frame_Id));
+            Temp (1) := Strings.New_String (Subp (Subp'First .. Index - 1));
+            Temp (2) := Strings.New_String (Subp (Index .. Subp'Last));
+            Temp (3) := Strings.New_String (Bt (J).Source_Location.all);
+            Temp (4) := Strings.New_String (Bt (J).Program_Counter.all);
             Row := Append (List, Temp);
             Free (Temp);
          end loop;
