@@ -28,17 +28,17 @@ begin
      (Next_Button (Wiz), "clicked",
       Wiz_Cb.To_Marshaller (Custom_Next'Unrestricted_Access), Wiz);
 
-   Gtk_New (Lab, "On Page 1");
-   Add_Page (Wiz, Lab, "Step1");
+--     Gtk_New (Lab, "On Page 1");
+--     Add_Page (Wiz, Lab, "Step1");
 
-   Gtk_New (Lab, "On Page 11 (next is page 4)");
-   Add_Page (Wiz, Lab, "Step11", Level => 2);
+--     Gtk_New (Lab, "On Page 11 (next is page 4)");
+--     Add_Page (Wiz, Lab, "Step11", Level => 2);
 
-   Gtk_New (Lab, "On Page 3");
-   Add_Page (Wiz, Lab, "Step3");
+--     Gtk_New (Lab, "On Page 3");
+--     Add_Page (Wiz, Lab, "Step3");
 
-   Gtk_New (Lab, "On Page 4");
-   Add_Page (Wiz, Lab, "Step4");
+--     Gtk_New (Lab, "On Page 4");
+--     Add_Page (Wiz, Lab, "Step4");
 
    Set_Page (Wiz, 1);
    Show_All (Wiz);
