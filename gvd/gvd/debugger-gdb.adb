@@ -2481,8 +2481,8 @@ package body Debugger.Gdb is
 
             Skip_To_Char (Type_Str, Index, ':');
             Index := Index + 2;
-            Parse_Array_Value
-              (Lang, Type_Str, Index, Array_Type_Access (Result));
+            Internal_Parse_Value
+              (Lang, Type_Str, Index, Result, Repeat_Num, Parent);
 
          elsif Type_Str (Index) /= Context.Array_Start
            or else (Index + 5 <= Type_Str'Last
