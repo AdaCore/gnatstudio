@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -365,17 +365,15 @@ package body Project_Properties is
             Append (Items, "gnatmake");
             Append (Items, "powerpc-wrs-vxworks-gnatmake");
             Append (Items, "powerpc-wrs-vxworksae-gnatmake");
+            Append (Items, "powerpc-elf-gnatmake");
             Append (Items, "i386-wrs-vxworks-gnatmake");
             Append (Items, "m68k-wrs-vxworks-gnatmake");
             Append (Items, "mips-wrs-vxworks-gnatmake");
             Append (Items, "sparc-wrs-vxworks-gnatmake");
             Append (Items, "sparc64-wrs-vxworks-gnatmake");
-            Append (Items, "arm-wrs-vxworks-gnatmake");
             Append (Items, "xscale-wrs-vxworks-gnatmake");
-            Append (Items, "alpha-dec-vxworks-gnatmake");
             Append (Items, "powerpc-xcoff-lynxos-gnatmake");
             Append (Items, "gnaampmake");
-            Append (Items, "jgnatmake");
             Set_Popdown_Strings (Combo, Items);
             Free_String_List (Items);
 
@@ -435,17 +433,15 @@ package body Project_Properties is
          Append (Items, "gnatls");
          Append (Items, "powerpc-wrs-vxworks-gnatls");
          Append (Items, "powerpc-wrs-vxworksae-gnatls");
+         Append (Items, "powerpc-elf-gnatls");
          Append (Items, "i386-wrs-vxworks-gnatls");
          Append (Items, "m68k-wrs-vxworks-gnatls");
          Append (Items, "mips-wrs-vxworks-gnatls");
          Append (Items, "sparc-wrs-vxworks-gnatls");
          Append (Items, "sparc64-wrs-vxworks-gnatls");
-         Append (Items, "arm-wrs-vxworks-gnatls");
          Append (Items, "xscale-wrs-vxworks-gnatls");
-         Append (Items, "alpha-dec-vxworks-gnatls");
          Append (Items, "powerpc-xcoff-lynxos-gnatls");
          Append (Items, "gnaampls");
-         Append (Items, "jgnatls");
          Set_Popdown_Strings (Combo, Items);
          Free_String_List (Items);
          Editor.Gnatls := Get_Entry (Combo);
@@ -483,14 +479,13 @@ package body Project_Properties is
       Append (Items, "gdb");
       Append (Items, "powerpc-wrs-vxworks-gdb");
       Append (Items, "powerpc-wrs-vxworksae-gdb");
+      Append (Items, "powerpc-elf-gdb");
       Append (Items, "i386-wrs-vxworks-gdb");
       Append (Items, "m68k-wrs-vxworks-gdb");
       Append (Items, "mips-wrs-vxworks-gdb");
       Append (Items, "sparc-wrs-vxworks-gdb");
       Append (Items, "sparc64-wrs-vxworks-gdb");
-      Append (Items, "arm-wrs-vxworks-gdb");
       Append (Items, "xscale-wrs-vxworks-gdb");
-      Append (Items, "alpha-dec-vxworks-gdb");
       Append (Items, "powerpc-xcoff-lynxos-gdb");
       Set_Popdown_Strings (Combo, Items);
       Free_String_List (Items);
