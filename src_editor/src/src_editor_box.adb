@@ -752,7 +752,6 @@ package body Src_Editor_Box is
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
       else
          Box.Source_Buffer := Source;
-         Set_Language (Box.Source_Buffer, Lang => Lang);
       end if;
 
       Gtk_New (Box.Source_View, Box.Source_Buffer,
