@@ -1081,7 +1081,7 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-
+      EN : constant Editable_Line_Type := Editable_Line_Type (Number);
       Bottom_Line : Buffer_Line_Type;
       Ref_Editable_Line : Editable_Line_Type;
 
@@ -1168,109 +1168,40 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Original_Text_Inserted := True;
 
       else
-         Bottom_Line := Buffer_Line_Type (Get_Line_Count (Buffer));
+         --  Figure out whether we need to expand the line arrays.
+
+         Bottom_Line := Buffer_Line_Type'Max
+           (Buffer_Line_Type (Get_Line_Count (Buffer)),
+            Buffer_Line_Type (Buffer.Last_Editable_Line)) + Number;
 
          if Buffer_Lines'Last < Bottom_Line then
             Expand_Lines (Bottom_Line);
          end if;
 
-         if Editable_Lines'Last
-           < Buffer.Last_Editable_Line + Editable_Line_Type (Number)
-         then
-            Expand_Lines (Buffer_Line_Type (Buffer.Last_Editable_Line));
-         end if;
-
-         --  Shift down the existing lines.
 
          for J in reverse Start + Number .. Buffer_Lines'Last loop
             Buffer_Lines (J) := Buffer_Lines (J - Number);
 
             if Buffer.Modifying_Editable_Lines
-              and then Buffer_Lines (J).Editable_Line /= 0
+              and then Buffer_Lines (J - Number).Editable_Line /= 0
             then
                Buffer_Lines (J).Editable_Line
-                 := Buffer_Lines (J).Editable_Line
-                 + Editable_Line_Type (Number);
-
-               if Editable_Lines
-                 (Buffer_Lines (J).Editable_Line).Where = In_Buffer
-               then
-                  Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
-                    := J;
-               end if;
+                 := Buffer_Lines (J - Number).Editable_Line + EN;
             end if;
          end loop;
 
-         if not Lines_Are_Real (Buffer)
-           and then Buffer.Modifying_Editable_Lines
-         then
-            declare
-               EN : constant Editable_Line_Type := Editable_Line_Type (Number);
-               El : Editable_Line_Type := Ref_Editable_Line;
-               Ref_Line_In_Buffer : Editable_Line_Type := 1;
-               --  The next editable line that is in a buffer.
 
-               procedure Find_Next_Line_In_Buffer;
-               --  Find the next visible editable line.
+         if Buffer.Modifying_Editable_Lines then
+            for Line in reverse
+              Ref_Editable_Line + EN .. Buffer.Last_Editable_Line + EN
+            loop
+               Editable_Lines (Line) := Editable_Lines (Line - EN);
 
-               procedure Find_Next_Line_In_Buffer is
-               begin
-                  for J in Ref_Line_In_Buffer + 1 .. Editable_Lines'Last loop
-                     if Editable_Lines (J).Where = In_Buffer then
-                        Ref_Line_In_Buffer := J;
-                        return;
-                     end if;
-                  end loop;
-               end Find_Next_Line_In_Buffer;
-
-            begin
-               --  ??? This implementation assumes that the first editable
-               --  line is always in the buffer. In this true ?
-
-               while El <= Editable_Lines'Last loop
-                  if Editable_Lines (El).Where = In_Mark then
-                     --  Find the whole range of lines to move down.
-
-                     for K in El .. Editable_Lines'Last loop
-                        if Editable_Lines (K).Where = In_Buffer then
-                           Ref_Line_In_Buffer := K;
-
-                           --  Lines from El to K - 1 should be moved down EN.
-
-                           declare
-                              Editable_Lines_To_Move : constant
-                                Editable_Line_Array :=
-                                  Editable_Lines (El .. K - 1);
-                           begin
-                              for NL in El .. El + EN - 1 loop
-                                 Editable_Lines (NL) :=
-                                   (Where          => In_Buffer,
-                                    Buffer_Line    =>
-                                      Editable_Lines
-                                        (Ref_Line_In_Buffer).Buffer_Line,
-                                    Side_Info_Data =>
-                                      Editable_Lines
-                                        (Ref_Line_In_Buffer).Side_Info_Data);
-
-                                 Find_Next_Line_In_Buffer;
-                              end loop;
-
-                              Editable_Lines (El + EN .. K - 1 + EN) :=
-                                Editable_Lines_To_Move;
-                           end;
-
-                           El := K + EN;
-                           exit;
-                        end if;
-                     end loop;
-
-                  else
-                     El := El + 1;
-                  end if;
-               end loop;
-            end;
-
-            Side_Column_Configuration_Changed (Buffer);
+               if Editable_Lines (Line).Where = In_Buffer then
+                  Editable_Lines (Line).Buffer_Line
+                    := Editable_Lines (Line - EN).Buffer_Line + Number;
+               end if;
+            end loop;
          end if;
 
          --  Reset the newly inserted lines.
@@ -1279,22 +1210,23 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_Lines (Start + J) := New_Line_Data;
             Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
               + Editable_Line_Type (J);
-
-            if Editable_Lines
-              (Buffer_Lines (Start + J).Editable_Line).Where = In_Buffer
-            then
-               Editable_Lines
-                 (Buffer_Lines (Start + J).Editable_Line).Buffer_Line :=
-                 Start + J;
-            end if;
-
             Create_Side_Info (Buffer, Start + J);
          end loop;
 
          if Buffer.Modifying_Editable_Lines then
-            Buffer.Last_Editable_Line := Buffer.Last_Editable_Line +
-              Editable_Line_Type (Number);
+
+            for J in 0 .. EN - 1 loop
+               Editable_Lines (Ref_Editable_Line + J) :=
+                 (Where       => In_Buffer,
+                  Buffer_Line => Start + Buffer_Line_Type (J),
+                  Side_Info_Data => null);
+               Create_Side_Info (Buffer, Ref_Editable_Line + J);
+            end loop;
+
+            Buffer.Last_Editable_Line := Buffer.Last_Editable_Line + EN;
          end if;
+
+         Side_Column_Configuration_Changed (Buffer);
       end if;
    end Add_Lines;
 
@@ -1330,113 +1262,53 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer_Lines (J) := Buffer_Lines (J + Number);
 
          if Buffer.Modifying_Editable_Lines then
-            if Buffer_Lines (J).Editable_Line /= 0 then
+            if Buffer_Lines (J + Number).Editable_Line /= 0 then
                Buffer_Lines (J).Editable_Line :=
-                 Buffer_Lines (J).Editable_Line - EN;
-
-               if Editable_Lines
-                 (Buffer_Lines (J).Editable_Line).Where = In_Buffer
-               then
-                  Editable_Lines
-                    (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
-               end if;
+                 Buffer_Lines (J + Number).Editable_Line - EN;
             end if;
          end if;
       end loop;
 
-      if not Lines_Are_Real (Buffer)
-        and then Buffer.Modifying_Editable_Lines
-      then
+      if Buffer.Modifying_Editable_Lines then
          declare
-            EN : constant Editable_Line_Type := Editable_Line_Type (Number);
-            El : Editable_Line_Type := Editable_Lines'Last;
-            Ref_Line_In_Buffer : Editable_Line_Type
-              := Editable_Lines'Last + 1;
-            --  The next editable line that is in a buffer.
-
-            procedure Find_Next_Line_In_Buffer;
-            --  Find the next visible editable line.
-
-            procedure Find_Next_Line_In_Buffer is
-            begin
-               for J in reverse
-                 Editable_Lines'First .. Ref_Line_In_Buffer - 1
-               loop
-                  if Editable_Lines (J).Where = In_Buffer then
-                     Ref_Line_In_Buffer := J;
-                     return;
-                  end if;
-               end loop;
-            end Find_Next_Line_In_Buffer;
-
+            --  This is a trick: we are removing EN lines in the middle of the
+            --  array, and moving the soft boundary of the array up EN lines.
+            --  Instead of freeing memory here and allocating some at the
+            --  bottom of this subprogram, we simply move the allocated
+            --  structures down directly.
+            Lines_To_Report : Editable_Line_Array (1 .. EN);
          begin
-            Find_Next_Line_In_Buffer;
+            Lines_To_Report := Editable_Lines
+              (Buffer_Lines (Start_Line).Editable_Line
+               .. Buffer_Lines (Start_Line).Editable_Line + EN - 1);
 
+            for J in Buffer_Lines (Start_Line).Editable_Line
+              .. Buffer.Last_Editable_Line - EN
             loop
-               if Editable_Lines (El).Where = In_Mark then
-                  --  Find the whole range of lines to move up
+               Editable_Lines (J) := Editable_Lines (J + EN);
 
-                  for K in reverse Editable_Lines'First .. El loop
-                     if Editable_Lines (K).Where = In_Buffer then
-                        Ref_Line_In_Buffer := K;
-
-                        --  Lines from K + 1 to El should be moved up EN.
-
-                        declare
-                           Editable_Lines_To_Move : constant
-                             Editable_Line_Array :=
-                               Editable_Lines (K + 1 .. El);
-                        begin
-                           for NL in reverse El - EN + 1 .. El loop
-                              Editable_Lines (NL) :=
-                                (Where          => In_Buffer,
-                                 Buffer_Line    =>
-                                   Editable_Lines
-                                     (Ref_Line_In_Buffer).Buffer_Line,
-                                 Side_Info_Data =>
-                                   Editable_Lines
-                                     (Ref_Line_In_Buffer).Side_Info_Data);
-
-                              Find_Next_Line_In_Buffer;
-                           end loop;
-
-                           Editable_Lines (K - EN + 1 .. El - EN) :=
-                             Editable_Lines_To_Move;
-                        end;
-
-                        El := K - EN;
-                        exit;
-                     end if;
-                  end loop;
-               else
-                  exit when Editable_Lines (El).Buffer_Line <= End_Line;
-                  El := El - 1;
+               if Editable_Lines (J).Where = In_Buffer then
+                  Editable_Lines (J).Buffer_Line :=
+                    Editable_Lines (J + EN).Buffer_Line - Number;
                end if;
             end loop;
+
+            Editable_Lines
+              (Buffer.Last_Editable_Line - EN + 1 ..
+                 Buffer.Last_Editable_Line) := Lines_To_Report;
          end;
 
-         Side_Column_Configuration_Changed (Buffer);
+         Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;
       end if;
 
       --  Reset bottom lines
+      --  ??? Should this be made a simple allocation ?
 
       for J in Buffer_Line_Type'Max
         (Start_Line + 1, Buffer_Lines'Last - Number) .. Buffer_Lines'Last
       loop
-         if Buffer_Lines (J).Editable_Line /= 0
-           and then Buffer.Modifying_Editable_Lines
-           and then Editable_Lines
-             (Buffer_Lines (J).Editable_Line).Where = In_Buffer
-         then
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
-         end if;
-
          Buffer_Lines (J) := New_Line_Data;
       end loop;
-
-      if Buffer.Modifying_Editable_Lines then
-         Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;
-      end if;
    end Remove_Lines;
 
    ------------------------
@@ -1498,6 +1370,8 @@ package body Src_Editor_Buffer.Line_Information is
          if Buffer_Lines (J).Editable_Line /= 0
            and then Editable_Lines
              (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+           and then Editable_Lines
+             (Buffer_Lines (J).Editable_Line).Buffer_Line /= 0
          then
             Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
@@ -1620,7 +1494,6 @@ package body Src_Editor_Buffer.Line_Information is
                Line_Data : Editable_Line_Data :=
                  (Where          => In_Mark,
                   Side_Info_Data => Editable_Lines (L).Side_Info_Data,
-                  Mark           => null,
                   Text           => null);
             begin
                Line_Data.Text := new String'
@@ -1649,7 +1522,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Shift up editable lines.
 
-      for J in Line_End + 1 .. Editable_Lines'Last loop
+      for J in Line_End + 1 .. Buffer.Last_Editable_Line loop
          if Editable_Lines (J).Where = In_Buffer then
             Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
               - Buffer_Line_Type (Number_Of_Lines_Folded);
@@ -1884,11 +1757,14 @@ package body Src_Editor_Buffer.Line_Information is
          return False;
       end if;
 
-      Buffer.Modifying_Real_Lines := True;
-
       for L in reverse Editable_Lines'First .. Line loop
          if Editable_Lines (L).Where = In_Buffer then
-            Buffer_Line := Get_Buffer_Line (Buffer, L);
+            Buffer_Line := Editable_Lines (L).Buffer_Line;
+
+            if Buffer_Lines (Buffer_Line).Block /= null then
+               Buffer_Line := Editable_Lines
+                 (Buffer_Lines (Buffer_Line).Block.First_Line).Buffer_Line;
+            end if;
 
             if Buffer_Lines (Buffer_Line).Side_Info_Data /= null
               and then Buffer_Lines
@@ -1907,7 +1783,6 @@ package body Src_Editor_Buffer.Line_Information is
                       (not Fold and then
                          Command.all in Unhide_Editable_Lines_Type'Class))
                then
-                  Buffer.Modifying_Real_Lines := False;
                   Returned := Execute (Command);
                   return True;
                end if;
@@ -1917,7 +1792,6 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      Buffer.Modifying_Real_Lines := False;
       return False;
    end Fold_Unfold_Line;
 
@@ -2150,5 +2024,64 @@ package body Src_Editor_Buffer.Line_Information is
 
       return Positive (Get_Line_Offset (Iter) + 1);
    end Get_Column;
+
+   ------------------
+   -- Flatten_Area --
+   ------------------
+
+   function Flatten_Area
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return Boolean
+   is
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+      Command        : Command_Access;
+      Returned       : Command_Return_Type;
+      Result         : Boolean := False;
+      pragma Unreferenced (Returned);
+   begin
+      --  There is nothing to do if the lines are real.
+
+      if Lines_Are_Real (Buffer) then
+         return False;
+      end if;
+
+      --  Unfold all the lines.
+
+      for Line in Start_Line .. End_Line loop
+         if Editable_Lines (Line).Where /= In_Buffer then
+            Result := True;
+            Unfold_Line (Buffer, Line);
+         end if;
+      end loop;
+
+      --  Remove all blank lines.
+
+      for Line in Buffer.Editable_Lines (Start_Line).Buffer_Line ..
+        Buffer.Editable_Lines (End_Line).Buffer_Line
+      loop
+         if Buffer_Lines (Line).Side_Info_Data /= null
+           and then Buffer_Lines
+             (Line).Side_Info_Data
+             (Buffer.Block_Highlighting_Column).Info /= null
+         then
+            Command :=
+              Buffer_Lines (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+
+            if Command /= null
+              and then Command.all in
+                Remove_Blank_Lines_Command_Type'Class
+            then
+               Result := True;
+               Returned := Execute (Command);
+            end if;
+         end if;
+      end loop;
+
+      return Result;
+   end Flatten_Area;
 
 end Src_Editor_Buffer.Line_Information;
