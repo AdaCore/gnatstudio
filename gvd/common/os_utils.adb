@@ -148,9 +148,7 @@ package body OS_Utils is
       Result : Expect_Match;
 
    begin
-      Non_Blocking_Spawn
-        (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-         Err_To_Out  => True);
+      Non_Blocking_Spawn (Fd, Program_Name, Args, Err_To_Out  => True);
       Success := True;
 
       loop
