@@ -447,29 +447,32 @@ package body Debugger is
       Cmd              : String;
       Mode             : Command_Type)
    is
-      Process : Debugger_Process_Tab := Convert (Debugger.Window, Debugger);
+      Process : Debugger_Process_Tab;
    begin
       Set_Command_In_Process (Get_Process (Debugger), False);
       Process_Post_Processes (Get_Process (Debugger));
 
       --  Not an internal command, not in text mode (for testing purposes...)
 
-      if Mode /= Internal and then Debugger.Window /= null then
+      if Debugger.Window /= null then
+         if Mode /= Internal then
+            Process := Convert (Debugger.Window, Debugger);
 
-         --  Postprocessing (e.g handling of auto-update).
+            --  Postprocessing (e.g handling of auto-update).
 
-         if Is_Context_Command (Debugger, Cmd) then
-            Context_Changed (Process);
-         elsif Is_Execution_Command (Debugger, Cmd) then
-            Process_Stopped (Process);
+            if Is_Context_Command (Debugger, Cmd) then
+               Context_Changed (Process);
+            elsif Is_Execution_Command (Debugger, Cmd) then
+               Process_Stopped (Process);
+            end if;
+
+            Update_Breakpoints
+              (Process, Force => Is_Break_Command (Debugger, Cmd));
          end if;
 
-         Update_Breakpoints
-           (Process, Force => Is_Break_Command (Debugger, Cmd));
+         Set_Busy_Cursor (Process, False);
+         Unregister_Dialog (Process);
       end if;
-
-      Set_Busy_Cursor (Process, False);
-      Unregister_Dialog (Process);
    end Send_Internal_Post;
 
    ----------
