@@ -20,4 +20,14 @@
 
 with Generic_Stack;
 
-package Indent_Stack is new Generic_Stack (Integer);
+package Indent_Stack is
+
+   type Indent_Type is record
+      Level       : Integer;
+      Align_Arrow : Natural;
+      --  The column on which to align arrow delimiters
+   end record;
+
+   package Stack is new Generic_Stack (Indent_Type);
+
+end Indent_Stack;
