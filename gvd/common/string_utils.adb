@@ -641,7 +641,7 @@ package body String_Utils is
    begin
       for J in Result'First .. Result'Last loop
          if Result (J) = '.' then
-               Result (J) := '-';
+            Result (J) := '-';
          end if;
       end loop;
 
