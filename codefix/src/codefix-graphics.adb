@@ -186,11 +186,10 @@ package body Codefix.Graphics is
                  (Msg     => -"No fixable errors have been found",
                   Buttons => Button_OK,
                   Title   => -"No fixable error");
-               Quit (Graphic_Codefix);
             end;
-         else
-            return;
          end if;
+
+         return;
       end if;
 
       if Is_Fixed (Graphic_Codefix.Current_Error) then
@@ -278,8 +277,8 @@ package body Codefix.Graphics is
          Previous_File     : String_Access := new String'("");
          Total_Nb_Files    : constant Natural :=
            Get_Nb_Files (Extended_Extract);
-      begin
 
+      begin
          Current_Line := Get_First_Line (Extended_Extract);
          First_Iterator := new Text_Iterator;
          Current_Iterator := First_Iterator;
@@ -392,9 +391,11 @@ package body Codefix.Graphics is
          Append (Graphic_Codefix.Vdiff_List, Proposition);
       end Add_Tab;
 
-      --  begin of Load_Error
+   begin  -- of Load_Error
+      if Graphic_Codefix.Current_Error = Null_Error_Id then
+         return;
+      end if;
 
-   begin
       Current_Sol := First (Get_Solutions (Graphic_Codefix.Current_Error));
       Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
@@ -415,7 +416,6 @@ package body Codefix.Graphics is
                Insert
                  (Graphic_Codefix.Kernel,
                   "Fix of current error is no longer pertinent");
-
                return;
          end;
 
@@ -464,6 +464,10 @@ package body Codefix.Graphics is
    is
       Current_Command : Command_List.List_Node;
    begin
+      if Graphic_Codefix.Current_Error = Null_Error_Id then
+         return;
+      end if;
+
       Current_Command := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
       while Get_Caption (Data (Current_Command)) /=
