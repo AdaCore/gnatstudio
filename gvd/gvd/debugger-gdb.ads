@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -210,42 +210,37 @@ package Debugger.Gdb is
       Frame    : Positive;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Break_Subprogram
+   procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Break_Source
+   procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Break_Exception
+   procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Break_Address
+   procedure Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Break_Regexp
+   procedure Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -605,32 +605,32 @@ package body Debugger.Jdb is
    -- Break_Subprogram --
    ----------------------
 
-   function Break_Subprogram
+   procedure Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+      Mode      : Command_Type := Hidden)
    is
       pragma Unreferenced (Temporary);
    begin
       Send (Debugger, "stop in " & Name, Mode => Mode);
-      return 0;   --   ??? How do we get the breakpoint identifier
    end Break_Subprogram;
 
    ------------------
    -- Break_Source --
    ------------------
 
-   function Break_Source
+   procedure Break_Source
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+      Mode      : Command_Type := Hidden)
    is
       pragma Unreferenced (Temporary);
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
+
    begin
       Pos := File'Last;
 
@@ -652,19 +652,18 @@ package body Debugger.Jdb is
             "stop at " & File (File'First .. Pos) & ':' &
             Str (Str'First + 1 .. Str'Last),
             Mode => Mode);
-      return 0;
    end Break_Source;
 
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   function Break_Exception
+   procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+      Mode      : Command_Type := Hidden)
    is
       pragma Unreferenced (Temporary);
    begin
@@ -673,41 +672,38 @@ package body Debugger.Jdb is
       else
          Send (Debugger, "catch " & Name, Mode => Mode);
       end if;
-      return 0;
    end Break_Exception;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   function Break_Address
+   procedure Break_Address
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
+      Mode       : Command_Type := Hidden)
    is
       pragma Unreferenced (Debugger, Address, Temporary, Mode);
    begin
       raise Unknown_Command;
       --  Error ("Break on address not supported in jdb");
-      return 0;
    end Break_Address;
 
    ------------------
    -- Break_Regexp --
    ------------------
 
-   function Break_Regexp
+   procedure Break_Regexp
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
+      Mode       : Command_Type := Hidden)
    is
       pragma Unreferenced (Debugger, Regexp, Temporary, Mode);
    begin
       raise Unknown_Command;
       --  Error ("Break on regular expression not support in jdb");
-      return 0;
    end Break_Regexp;
 
    ------------------------------
