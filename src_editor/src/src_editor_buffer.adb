@@ -920,10 +920,14 @@ package body Src_Editor_Buffer is
       if Buffer.Lang /= Lang then
          Buffer.Lang := Lang;
          Get_Bounds (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-         if Buffer.Lang /= null then
-            Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-         else
-            Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
+
+         --  Do not try to highlight an empty buffer
+         if not Is_End (Buffer_Start_Iter) then
+            if Buffer.Lang /= null then
+               Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
+            else
+               Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
+            end if;
          end if;
       end if;
    end Set_Language;
