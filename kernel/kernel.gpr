@@ -1,11 +1,16 @@
 with "../gnat";
 with "../gtkada/gtkada";
-with "../gvd/gvd";
 with "../common/common";
+with "../widgets/widgets";
 
 project Kernel is
 
-   for Source_Dirs use ("src", "../prj_editor/src", "../src_editor/src");
+   for Source_Dirs use
+     ("src",
+      "../prj_editor/src",
+      "../src_editor/src",
+      "../gvd/common",
+      "../gvd/gvd");
    --  Note: We add prj_editor and src_editor in the source path rather than
    --  as a project dependency since this would create a circular dependency.
    --  To avoid recompiling the prj and src editor files in the project, we
@@ -22,6 +27,8 @@ project Kernel is
       "glide_kernel-console.ads",
       "glide_kernel-editor.adb",
       "glide_kernel-editor.ads",
+      "glide_kernel-help.adb",
+      "glide_kernel-help.ads",
       "glide_kernel-modules.adb",
       "glide_kernel-modules.ads",
       "glide_kernel-preferences.adb",
