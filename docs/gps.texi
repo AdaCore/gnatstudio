@@ -1049,7 +1049,7 @@ to press the @code{Next} button (or the equivalent shortcut
 
 However, if you press this check box, the search widget will start
 searching for all occurrences right away, and put the results in a new
-window called @code{Results} (initially found in the bottom dock of
+window called @code{Locations} (initially found in the bottom dock of
 the GPS window). You can press the search at any time by pressing
 Stop. It will then stop when the next occurrence is found.
 
