@@ -17,9 +17,10 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Glide_Intl;           use Glide_Intl;
 with Basic_Types;          use Basic_Types;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Diff_Utils2;          use Diff_Utils2;
@@ -220,6 +221,8 @@ package body Vdiff2_Command is
       Item   : in out Diff_Head)
    is
       Tmp : Diff_List;
+      Button     : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
    begin
       Unhighlight_Difference (Kernel, Item);
       if Item.File3 = VFS.No_File then
@@ -233,14 +236,17 @@ package body Vdiff2_Command is
       end if;
 
       if Tmp = Diff_Chunk_List.Null_List then
-         Trace (Me, "no difference found it's not normal");
-      else
-         Free_List (Item.List);
-         Item.List := Tmp;
+         Button := Message_Dialog
+           (Msg     => -"No differences found.",
+            Buttons => Button_OK,
+            Parent  => Get_Main_Window (Kernel));
+         return;
       end if;
-      --  ??? Just For the Moment
-         Item.Current_Node := First (Item.List);
-         Modify_Differences (Kernel, Item, Id);
+
+      Free_List (Item.List);
+      Item.List := Tmp;
+      Item.Current_Node := First (Item.List);
+      Modify_Differences (Kernel, Item, Id);
    end Reload_Difference;
 
 
