@@ -26,14 +26,15 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Language.Ada;              use Language.Ada;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
+with String_Utils;              use String_Utils;
 
 package body Docgen.Html_Output is
 
    package TEL renames Type_Entity_List;
 
    procedure Doc_HTML_Create
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : in out Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : in out Doc_Info) is
    begin
       case Info.Info_Type is
          when Open_Info             => Doc_HTML_Open (File, Info);
@@ -55,7 +56,7 @@ package body Docgen.Html_Output is
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
          when Body_Line_Info        => Doc_HTML_Body (File, Info);
-         when others => null;
+         when others                => null;
       end case;
 
    end Doc_HTML_Create;
@@ -65,19 +66,22 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Open
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
       Ada.Text_IO.Put_Line (File, "<HTML>");
       Ada.Text_IO.Put_Line (File, "<HEAD>");
-      Ada.Text_IO.Put_Line (File, "<TITLE>" &
-                            Info.Open_Title.all &
-                            "</TITLE>");
-      Ada.Text_IO.Put_Line (File, "<META name=""generator"" " &
-                            "CONTENT=""DocGen ");
-      Ada.Text_IO.Put_Line (File, "<META http-equiv=""Content-" &
-                            "Type"" content=""" &
-                            "text/html; charset=" & "ISO-8859-1" & """>");
+      Ada.Text_IO.Put_Line
+        (File, "<TITLE>" &
+         Info.Open_Title.all &
+         "</TITLE>");
+      Ada.Text_IO.Put_Line
+        (File, "<META name=""generator"" " &
+         "CONTENT=""DocGen ");
+      Ada.Text_IO.Put_Line
+        (File, "<META http-equiv=""Content-" &
+         "Type"" content=""" &
+         "text/html; charset=" & "ISO-8859-1" & """>");
       Ada.Text_IO.Put_Line (File, "</HEAD>");
       Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
    end Doc_HTML_Open;
@@ -87,10 +91,10 @@ package body Docgen.Html_Output is
    --------------------
 
    procedure Doc_HTML_Close
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info)
+   is
       pragma Unreferenced (Info);
-
    begin
       Ada.Text_IO.Put_Line (File, "</BODY>");
       Ada.Text_IO.Put_Line (File, "</HTML>");
@@ -101,16 +105,18 @@ package body Docgen.Html_Output is
    -----------------------
 
    procedure Doc_HTML_Subtitle
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
       Ada.Text_IO.Put_Line (File, "<BR>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
-                            "width=""100%""><TR><TD> ");
-      Ada.Text_IO.Put_Line (File, "<H3> "  &
-                            Info.Subtitle_Name.all &
-                            " </H3>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#9999FF"" " &
+         "width=""100%""><TR><TD> ");
+      Ada.Text_IO.Put_Line
+        (File, "<H3> "  &
+         Info.Subtitle_Name.all &
+         " </H3>");
       Ada.Text_IO.Put_Line (File, "</TD></TR></TABLE>");
       Ada.Text_IO.New_Line (File);
    end Doc_HTML_Subtitle;
@@ -120,14 +126,13 @@ package body Docgen.Html_Output is
    ------------------------
 
    procedure Doc_HTML_Pack_Desc
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-
-      Ada.Text_IO.Put_Line (File, "<h4><PRE>"  &
-                            Info.Package_Desc_Description.all &
-                            " </PRE></H4>");
-
+      Ada.Text_IO.Put_Line
+        (File, "<h4><PRE>"  &
+         Info.Package_Desc_Description.all &
+         " </PRE></H4>");
       Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Pack_Desc;
 
@@ -136,16 +141,18 @@ package body Docgen.Html_Output is
    ----------------------
 
    procedure Doc_HTML_Package
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      --  The mark for the HMTL browser to be able to find the position
 
-      --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Package_Entity.Line)
-                            & """></A>  <BR>");
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Package_Entity.Line)
+         & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Package_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
@@ -175,25 +182,30 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_With
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.With_Header.all,
-                   Info.With_File.all,
-                   "",
-                   Info.With_Header_Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   False);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.With_Header.all,
+         Info.With_File.all,
+         "",
+         Info.With_Header_Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         False);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, "<HR> ");
@@ -204,34 +216,37 @@ package body Docgen.Html_Output is
    ------------------
 
    procedure Doc_HTML_Var
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      --  The mark for the HMTL browser to be able to find the position
 
-      --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Var_Entity.Line)
-                            & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Var_Entity.Line)
+         & """></A>  <BR>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Var_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Var_Header.all,
-                   Info.Var_Entity.File_Name.all,
-                   Info.Var_Entity.Short_Name.all,
-                   Info.Var_Entity.Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Var_Header.all,
+         Info.Var_Entity.File_Name.all,
+         Info.Var_Entity.Short_Name.all,
+         Info.Var_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, Info.Var_Description.all);
@@ -243,34 +258,37 @@ package body Docgen.Html_Output is
    ------------------------
 
    procedure Doc_HTML_Exception
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      --  The mark for the HMTL browser to be able to find the position
 
-      --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Exception_Entity.Line)
-                            & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Exception_Entity.Line)
+         & """></A>  <BR>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Exception_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Exception_Header.all,
-                   Info.Exception_Entity.File_Name.all,
-                   Info.Exception_Entity.Short_Name.all,
-                   Info.Exception_Entity.Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Exception_Header.all,
+         Info.Exception_Entity.File_Name.all,
+         Info.Exception_Entity.Short_Name.all,
+         Info.Exception_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, Info.Exception_Description.all);
@@ -282,39 +300,41 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Type
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      --  The mark for the HMTL browser to be able to find the position
 
-      --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Type_Entity.Line)
-                            & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Type_Entity.Line)
+         & """></A>  <BR>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Type_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Type_Header.all,
-                   Info.Type_Entity.File_Name.all,
-                   Info.Type_Entity.Short_Name.all,
-                   Info.Type_Entity.Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Type_Header.all,
+         Info.Type_Entity.File_Name.all,
+         Info.Type_Entity.Short_Name.all,
+         Info.Type_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, Info.Type_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
-
    end Doc_HTML_Type;
 
    --------------------
@@ -322,39 +342,41 @@ package body Docgen.Html_Output is
    --------------------
 
    procedure Doc_HTML_Entry
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
+      --  The mark for the HMTL browser to be able to find the position
 
-      --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Entry_Entity.Line)
-                            & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Entry_Entity.Line)
+         & """></A>  <BR>");
 
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Entry_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Entry_Header.all,
-                   Info.Entry_Entity.File_Name.all,
-                   Info.Entry_Entity.Short_Name.all,
-                   Info.Entry_Entity.Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Entry_Header.all,
+         Info.Entry_Entity.File_Name.all,
+         Info.Entry_Entity.Short_Name.all,
+         Info.Entry_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, Info.Entry_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
-
    end Doc_HTML_Entry;
 
    -------------------------
@@ -397,60 +419,59 @@ package body Docgen.Html_Output is
 
             Node := TRL.First (Local_List);
 
-            --  for every reference found write the information to doc file
+            --  For every reference found write the information to doc file
+
             for J in 1 .. TRL.Length (Local_List) loop
+               --  Check if the creating of a link is possible
 
-               --  check if the creating of a link is possible
                if TRL.Data (Node).Set_Link then
+                  --  If a called subprogram => link to spec
 
-                  --  if a called subprogram => link to spec
                   if Called_Subp then
-                     Suffix :=
-                       new String'("_" &
-                                   Body_Suffix (TRL.Data (Node).File_Name.all)
-                                   & ".htm");
+                     Suffix := new String'
+                       ("_" & Body_Suffix (TRL.Data (Node).File_Name.all)
+                        & ".htm");
                   else
-                     Suffix :=
-                       new String'("_" &
-                                   Spec_Suffix (TRL.Data (Node).File_Name.all)
-                                   & ".htm");
+                     Suffix := new String'
+                       ("_" & Spec_Suffix (TRL.Data (Node).File_Name.all)
+                        & ".htm");
                   end if;
 
                   declare
                      Body_File : constant String :=
                        File_Name_Without_Suffix
                          (TRL.Data (Node).File_Name.all)
-                     & Suffix.all;
+                       & Suffix.all;
                   begin
                      Ada.Text_IO.Put_Line
                        (File,
                         "<TR><TD><A href="""
                         & Body_File & "#"
-                        & Integer'Image (TRL.Data (Node).Line)
+                        & Image (TRL.Data (Node).Line)
                         & """>"
                         & TRL.Data
                           (Node).Subprogram_Name.all
-                        & "</A></TD><TD> in &nbsp&nbsp<I>"
+                        & "</A></TD><TD> at &nbsp<I>"
                         & TRL.Data (Node).File_Name.all
-                        & "</I></TD><TD>, line: "
-                        & Integer'Image (TRL.Data (Node).Line)
-                        & "</TD><TD>, column: "
-                        & Integer'Image (TRL.Data (Node).Column)
+                        & "</I></TD><TD>:"
+                        & Image (TRL.Data (Node).Line)
+                        & "</TD><TD>:"
+                        & Image (TRL.Data (Node).Column)
                         & "</TD><TR>");
                   end;
                --  no link at all
-               else Ada.Text_IO.Put_Line (File,
-                                          "<TR><TD>"
-                                          & TRL.Data (Node).Subprogram_Name.all
-                                          & "</TD><TD> in &nbsp&nbsp<I>"
-                                          & TRL.Data (Node).File_Name.all
-                                          & "</I></TD><TD>, line: "
-                                          & Integer'Image
-                                            (TRL.Data (Node).Line)
-                                          & "</TD><TD>, column: "
-                                          & Integer'Image
-                                            (TRL.Data (Node).Column)
-                                          & "</TD></TR>");
+               else
+                  Ada.Text_IO.Put_Line
+                    (File,
+                     "<TR><TD>"
+                     & TRL.Data (Node).Subprogram_Name.all
+                     & "</TD><TD> at &nbsp<I>"
+                     & TRL.Data (Node).File_Name.all
+                     & "</I></TD><TD>:"
+                     & Image (TRL.Data (Node).Line)
+                     & "</TD><TD>:"
+                     & Image (TRL.Data (Node).Column)
+                     & "</TD></TR>");
                end if;
                Node := TRL.Next (Node);
             end loop;
@@ -459,34 +480,38 @@ package body Docgen.Html_Output is
       end Print_Ref_List;
 
    begin  --  Doc_HTML_Subprogram
+      --  The mark for the HMTL browser to be able to find the position
 
-   --  the mark for the HMTL browser to be able to find the position
-      Ada.Text_IO.Put_Line (File, "  <A name="""
-                            & Integer'Image (Info.Subprogram_Entity.Line)
-                            & """></A>  <BR> ");
-      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
-                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Subprogram_Entity.Line)
+         & """></A>  <BR> ");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
       if Info.Subprogram_Entity.Is_Private then
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Subprogram_Header.all,
-                   Info.Subprogram_Entity.File_Name.all,
-                   Info.Subprogram_Entity.Short_Name.all,
-                   Info.Subprogram_Entity.Line,
-                   Info.Subprogram_Entity.Line_In_Body,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Subprogram_Header.all,
+         Info.Subprogram_Entity.File_Name.all,
+         Info.Subprogram_Entity.Short_Name.all,
+         Info.Subprogram_Entity.Line,
+         Info.Subprogram_Entity.Line_In_Body,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
 
-      --  write the description to doc file
+      --  Write the description to doc file
+
       Ada.Text_IO.Put_Line (File, Info.Subprogram_Description.all);
       Ada.Text_IO.Put_Line (File, " <BR>  ");
 
@@ -540,32 +565,31 @@ package body Docgen.Html_Output is
       -- Set_Name_Tags --
       -------------------
 
-      procedure Set_Name_Tags
-        (Input_Text : String) is
-         Last_Written : Natural;
-
+      procedure Set_Name_Tags (Input_Text : String) is
+         Last_Written     : Natural;
          HTML_Name_Head   : constant String := "<A name=""";
          HTML_Name_Middle : constant String := """>";
          HTML_Name_End    : constant String := "</A>";
 
       begin
          Last_Written := Input_Text'First - 1;
+
          for J in Input_Text'First .. Input_Text'Last loop
             if Input_Text (J) = ASCII.LF then
                Last_Line := Last_Line + 1;
-               Ada.Text_IO.Put (File, Input_Text
-                                     (Last_Written + 1 .. J) &
-                                   HTML_Name_Head &
-                                   Integer'Image
-                                     (Last_Line + Entity_Line - 1) &
-                                   HTML_Name_Middle &
-                                   HTML_Name_End);
+               Ada.Text_IO.Put
+                 (File, Input_Text (Last_Written + 1 .. J) &
+                  HTML_Name_Head &
+                  Image (Last_Line + Entity_Line - 1) &
+                  HTML_Name_Middle &
+                  HTML_Name_End);
                Last_Written := J;
             end if;
          end loop;
-         Ada.Text_IO.Put (File,
-                             Input_Text
-                               (Last_Written + 1 .. Input_Text'Last));
+
+         Ada.Text_IO.Put
+           (File,
+            Input_Text (Last_Written + 1 .. Input_Text'Last));
       end Set_Name_Tags;
 
       -------------------
@@ -679,11 +703,10 @@ package body Docgen.Html_Output is
                              File_Name_Without_Suffix (Spec_File) &
                              "_" &
                              Body_Suffix (Spec_File)
-                             & ".htm" &
-                             "#" &
-                             Integer'Image (Line_In_Body) &
+                             & ".htm#" &
+                             Image (Line_In_Body) &
                              """>" &
-                             Text (Loc_Start ..  Loc_End) &
+                             Text (Loc_Start .. Loc_End) &
                              "</A>");
 
             Last_Index := Loc_End + 1;
@@ -715,7 +738,7 @@ package body Docgen.Html_Output is
                                (Get_Html_File_Name
                                   (Get_Declaration_File_Of (Entity_Info))) &
                              "#" &
-                               Integer'Image (Line_To_Use) &
+                             Image (Line_To_Use) &
                              """>" &
                              Text (Loc_Start .. Loc_End) &
                              "</A>");
@@ -907,9 +930,8 @@ package body Docgen.Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
                             "width=""100%""><TR><TD>");
       Ada.Text_IO.Put_Line (File, " <H1>  Package <I>");
-      Ada.Text_IO.Put_Line (File, " <A NAME=""" &
-                            Integer'Image (Info.Header_Line)
-                            & """>");
+      Ada.Text_IO.Put_Line
+        (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
 
       --  check if should set a link to the body file
       if Info.Header_Link and
@@ -1123,13 +1145,15 @@ package body Docgen.Html_Output is
      (File    : in Ada.Text_IO.File_Type;
       Info    : Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, " <A href=""" & Info.Item_Doc_File.all
-                            & "#" & Integer'Image (Info.Item_Line)
-                            & """ target=""main""> "
-                            & Info.Item_Name.all & "</A>");
+      Ada.Text_IO.Put_Line
+        (File, " <A href=""" & Info.Item_Doc_File.all
+         & "#" & Image (Info.Item_Line)
+         & """ target=""main""> "
+         & Info.Item_Name.all & "</A>");
 
-      Ada.Text_IO.Put_Line (File, " <BR> &nbsp&nbsp&nbsp&nbsp&nbsp in " &
-                            Info.Item_File.all);
+      Ada.Text_IO.Put_Line
+        (File, " <BR> &nbsp&nbsp&nbsp&nbsp&nbsp in " &
+         Info.Item_File.all);
       Ada.Text_IO.New_Line (File);
       Ada.Text_IO.Put_Line (File, "<BR>");
       Ada.Text_IO.New_Line (File);
