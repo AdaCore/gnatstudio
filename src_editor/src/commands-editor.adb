@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,10 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;        use Glib;
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Glib;          use Glib;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Traces;        use Traces;
+with String_Utils;  use String_Utils;
 
 package body Commands.Editor is
+
+   Me : Debug_Handle := Create ("Commands.Editor");
 
    ---------------------
    -- Is_Null_Command --
@@ -51,14 +55,11 @@ package body Commands.Editor is
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
       Line          : Integer;
-      Column        : Integer)
-   is
-      String_Buffer : String (1 .. 512);
-      pragma Warnings (Off, String_Buffer);
+      Column        : Integer) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
-      Item.Current_Text := new String' (String_Buffer);
+      Item.Current_Text := new String (1 .. 512);
       Item.Edition_Mode := Mode;
       Item.User_Executed := User_Executed;
       Item.Line := Line;
@@ -127,40 +128,55 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
-     (Command : access Editor_Command_Type) return Boolean
-   is
-      First : Natural := Command.Current_Text.all'First;
+   function Execute (Command : access Editor_Command_Type) return Boolean is
+      First : constant Natural := Command.Current_Text'First;
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
       else
-         if Command.Edition_Mode = Insertion then
-            Set_Cursor_Position (Command.Buffer,
-                                 Gint (Command.Line),
-                                 Gint (Command.Column));
+         if not Is_Valid_Position
+           (Command.Buffer, Gint (Command.Line), Gint (Command.Column))
+         then
+            --  This should never happen. If it does, it probably means
+            --  that a command with wrong settings has been recorded.
 
-            Insert (Command.Buffer,
-                    Gint (Command.Line),
-                    Gint (Command.Column),
-                    Command.Current_Text
-                      (First .. First + Command.Current_Text_Size - 1),
-                    False);
+            Trace (Me, "Invalid location: " &
+                   Image (Command.Line) & ':' & Image (Command.Column));
+            Command_Finished (Command, True);
 
-         elsif Command.Edition_Mode = Deletion then
-            Delete (Command.Buffer,
-                    Gint (Command.Line),
-                    Gint (Command.Column),
-                    Gint (Command.Current_Text_Size),
-                    False);
-
-            Set_Cursor_Position (Command.Buffer,
-                                 Gint (Command.Line),
-                                 Gint (Command.Column));
+            return True;
          end if;
+
+         case Command.Edition_Mode is
+            when Insertion =>
+               Set_Cursor_Position
+                 (Command.Buffer,
+                  Gint (Command.Line),
+                  Gint (Command.Column));
+               Insert
+                 (Command.Buffer,
+                  Gint (Command.Line),
+                  Gint (Command.Column),
+                  Command.Current_Text
+                    (First .. First + Command.Current_Text_Size - 1),
+                  False);
+
+            when Deletion =>
+               Delete
+                 (Command.Buffer,
+                  Gint (Command.Line),
+                  Gint (Command.Column),
+                  Gint (Command.Current_Text_Size),
+                  False);
+               Set_Cursor_Position
+                 (Command.Buffer,
+                  Gint (Command.Line),
+                  Gint (Command.Column));
+         end case;
       end if;
 
       Command_Finished (Command, True);
+
       return True;
    end Execute;
 
@@ -198,17 +214,40 @@ package body Commands.Editor is
       Iter       : Gtk_Text_Iter;
       Result     : Boolean;
    begin
-      Replace_Slice (Command.Buffer,
-                     Gint (Command.Start_Line),
-                     Gint (Command.Start_Column),
-                     Gint (Command.End_Line_Before),
-                     Gint (Command.End_Column_Before),
-                     Command.Text_After.all,
-                     False);
-      Get_Iter_At_Line_Offset (Command.Buffer,
-                               Iter,
-                               Gint (Command.Start_Line),
-                               Gint (Command.Start_Column));
+      if not
+        Is_Valid_Position
+          (Command.Buffer,
+           Gint (Command.Start_Line), Gint (Command.Start_Column))
+        or else not Is_Valid_Position
+          (Command.Buffer,
+           Gint (Command.End_Line_Before), Gint (Command.End_Column_Before))
+      then
+         --  This should never happen. If it does, it probably means
+         --  that a command with wrong settings has been recorded.
+
+         Trace (Me, "Invalid location: start:" &
+                Image (Command.Start_Line) & ':' &
+                Image (Command.Start_Column) & " end: " &
+                Image (Command.End_Line_Before) & ':' &
+                Image (Command.End_Column_Before));
+         Command_Finished (Command, True);
+
+         return True;
+      end if;
+
+      Replace_Slice
+        (Command.Buffer,
+         Gint (Command.Start_Line),
+         Gint (Command.Start_Column),
+         Gint (Command.End_Line_Before),
+         Gint (Command.End_Column_Before),
+         Command.Text_After.all,
+         False);
+      Get_Iter_At_Line_Offset
+        (Command.Buffer,
+         Iter,
+         Gint (Command.Start_Line),
+         Gint (Command.Start_Column));
 
       if Command.End_Line_After = -1 then
          Forward_Chars (Iter, Command.Text_After.all'Length, Result);
@@ -243,15 +282,15 @@ package body Commands.Editor is
    ------------
 
    procedure Create
-     (Item          : out Editor_Replace_Slice;
-      Buffer        : Source_Buffer;
-      Start_Line    : Integer;
-      Start_Column  : Integer;
-      End_Line      : Integer;
-      End_Column    : Integer;
-      Text          : String)
+     (Item         : out Editor_Replace_Slice;
+      Buffer       : Source_Buffer;
+      Start_Line   : Integer;
+      Start_Column : Integer;
+      End_Line     : Integer;
+      End_Column   : Integer;
+      Text         : String)
    is
-      Iter     : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
    begin
       Item := new Editor_Replace_Slice_Type;
       Item.Buffer := Buffer;
@@ -271,7 +310,6 @@ package body Commands.Editor is
 
       Get_Iter_At_Line_Offset (Buffer, Iter,
                                Gint (Start_Line), Gint (Start_Column));
-
    end Create;
 
 end Commands.Editor;
