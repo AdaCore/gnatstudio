@@ -72,12 +72,23 @@ package Glide_Result_View is
       Length             : Natural := 0;
       Highlight          : Boolean := False;
       Highlight_Category : String := "";
-      Quiet              : Boolean := False);
+      Quiet              : Boolean := False;
+      Remove_Duplicates  : Boolean := True;
+      Enable_Counter     : Boolean := True);
    --  Insert a new location in the result view.
    --  This is similar to Insert, except it creates the result view if
    --  necessary.
    --  If Quiet is True, the locations window will not be raised, and the
    --  cursor will not jump to the first location.
+   --  If Remove_Duplicates is True, remove the duplicates while inserting
+   --  the items.
+   --  If Enable_Counter is True, enable the counting of the items on-the-fly.
+   --  See Recount_Category below.
+
+   procedure Recount_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String);
+   --  Update the counters for Category.
 
    procedure Remove_Category
      (View          : access Result_View_Record'Class;
