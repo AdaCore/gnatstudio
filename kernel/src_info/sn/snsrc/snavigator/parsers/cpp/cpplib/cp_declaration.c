@@ -2171,9 +2171,8 @@ void f_TemplateArguments (char* str, int lineno, int charno) {
 
     while ( ptr && *ptr && *ptr != '>' ) {
 
-        if ( !(end = strchr (ptr, ',')) ) {
-            end = ptr + strlen (ptr);
-        }
+        if ( !(end = strchr (ptr, ',')) && !(end = strchr (ptr, '>')) )
+            return;
 
         c = *end;
         *end = 0;
@@ -2181,8 +2180,8 @@ void f_TemplateArguments (char* str, int lineno, int charno) {
         Type = f_TypeFromString (ptr);
 
         if ( Type != 0 ) {
-            f_TypeBasic (Type, lineno, charno);
-            f_TypeDestroy (Type);
+            Type = f_TypeBasic (Type, lineno, charno);
+            if ( Type ) f_TypeDestroy (Type);
         }
 
         ptr = end + 1;
