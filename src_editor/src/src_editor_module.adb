@@ -2313,6 +2313,7 @@ package body Src_Editor_Module is
         Get_History (Get_History (Kernel).all, Open_From_Path_History);
 
    begin
+      Push_State (Kernel,  Busy);
       Gtk_New (Open_File_Dialog,
                Title  => -"Open file from project",
                Parent => Get_Main_Window (Kernel),
@@ -2367,6 +2368,8 @@ package body Src_Editor_Module is
          Unchecked_Free (List2);
       end;
 
+      Pop_State (Kernel);
+
       if Run (Open_File_Dialog) = Gtk_Response_OK then
 
          --  Look for the file in the project. If the file cannot be found,
@@ -2378,11 +2381,11 @@ package body Src_Editor_Module is
             Full : constant Virtual_File :=
               Create (Text, Kernel, Use_Object_Path => False);
          begin
-            if Is_Regular_File (Full) then
-               Add_To_History
-                 (Get_History (Kernel).all, Open_From_Path_History,
-                  Full_Name (Full).all);
+            Add_To_History
+              (Get_History (Kernel).all, Open_From_Path_History,
+               Full_Name (Full).all);
 
+            if Is_Regular_File (Full) then
                Open_File_Editor
                  (Kernel, Full,
                   Enable_Navigation => True,
@@ -2765,8 +2768,8 @@ package body Src_Editor_Module is
                     (1 => new String'(Full_Name (File).all),
                      2 => new String'(Image (J)),
                      3 => new String'("1"));
-                  Line : constant String :=
-                    Execute_GPS_Shell_Command (Kernel, "get_chars", Args);
+                  Line : constant String := Execute_GPS_Shell_Command
+                    (Kernel, "Editor.get_chars", Args);
                begin
                   Free (Args);
                   Length := Length + Line'Length;
@@ -2814,7 +2817,8 @@ package body Src_Editor_Module is
                            4 => new String'(S),
                            5 => new String'("0"), --  before
                            6 => new String'(Image (Length))); --  after
-                  Execute_GPS_Shell_Command (Kernel, "replace_text", Args);
+                  Execute_GPS_Shell_Command
+                    (Kernel, "Editor.replace_text", Args);
                   Free (Args);
                end;
             end;
@@ -3183,6 +3187,8 @@ package body Src_Editor_Module is
       Extra              : Files_Extra_Scope;
       Recent_Menu_Item   : Gtk_Menu_Item;
       Command            : Interactive_Command_Access;
+      Editor_Class       : constant Class_Type := New_Class
+        (Kernel, "Editor", "Interface to all editor-related commands");
 
       Src_Action_Context : constant Action_Filter :=
         new Src_Editor_Action_Context;
@@ -3498,6 +3504,8 @@ package body Src_Editor_Module is
             & " then the location of the cursor is not changed if the file"
             & " is already opened in an editor. If force is set to true,"
             & " a reload is forced in case the file is already open."),
+         Class         => Editor_Class,
+         Static_Method => True,
          Minimum_Args => 1,
          Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
@@ -3514,6 +3522,8 @@ package body Src_Editor_Module is
              & " Use the command goto_mark to jump to this mark."),
          Minimum_Args => 1,
          Maximum_Args => 4,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3525,6 +3535,8 @@ package body Src_Editor_Module is
              & " If line is not specified, mark all lines in file."),
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
@@ -3539,6 +3551,8 @@ package body Src_Editor_Module is
              & " Create a mark at beginning of block and return its ID."),
          Minimum_Args => 3,
          Maximum_Args => 4,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3551,6 +3565,8 @@ package body Src_Editor_Module is
              & " If number is specified, remove only the n first lines"),
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3562,6 +3578,8 @@ package body Src_Editor_Module is
            -("Fold the block around line."),
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3573,6 +3591,8 @@ package body Src_Editor_Module is
            -("Unfold the block around line."),
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3584,6 +3604,8 @@ package body Src_Editor_Module is
              & " If line is not specified, unmark all lines in file."),
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
@@ -3596,6 +3618,8 @@ package body Src_Editor_Module is
              & " category."),
          Minimum_Args => 2,
          Maximum_Args => 5,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
@@ -3607,6 +3631,8 @@ package body Src_Editor_Module is
            -("Remove highlights for a portion of a line in a file."),
          Minimum_Args => 2,
          Maximum_Args => 5,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
@@ -3618,6 +3644,8 @@ package body Src_Editor_Module is
              & " format for color is ""#RRGGBB""."),
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
@@ -3628,6 +3656,8 @@ package body Src_Editor_Module is
            -"Set the background color for the editors for file.",
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3638,6 +3668,8 @@ package body Src_Editor_Module is
            -"Jump to the location of the mark corresponding to identifier.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3648,6 +3680,8 @@ package body Src_Editor_Module is
            -"Delete the mark corresponding to identifier.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3666,6 +3700,8 @@ package body Src_Editor_Module is
              & " selection."),
          Minimum_Args => 1,
          Maximum_Args => 5,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3676,6 +3712,8 @@ package body Src_Editor_Module is
          Description  => -"Returns the current line of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3686,6 +3724,8 @@ package body Src_Editor_Module is
          Description  => -"Returns the current column of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3696,6 +3736,8 @@ package body Src_Editor_Module is
          Description  => -"Returns the current file of mark.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3706,6 +3748,8 @@ package body Src_Editor_Module is
          Description  => -"Returns the number of the last line in file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3717,6 +3761,8 @@ package body Src_Editor_Module is
            -"Returns starting line number for block enclosing line.",
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3728,6 +3774,8 @@ package body Src_Editor_Module is
            -"Returns ending line number for block enclosing line.",
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3739,6 +3787,8 @@ package body Src_Editor_Module is
            -"Returns type for block enclosing line.",
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3750,6 +3800,8 @@ package body Src_Editor_Module is
            -"Returns nested level for block enclosing line.",
          Minimum_Args => 2,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3761,6 +3813,8 @@ package body Src_Editor_Module is
            -"Returns current cursor line number.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3772,6 +3826,8 @@ package body Src_Editor_Module is
            -"Returns current cursor column number.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3783,6 +3839,8 @@ package body Src_Editor_Module is
              & " column, if not specified, is 1."),
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3794,6 +3852,8 @@ package body Src_Editor_Module is
            -"Returns the text contained in the current buffer for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3807,6 +3867,8 @@ package body Src_Editor_Module is
              & " and the buffer status will not be modified"),
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3821,6 +3883,8 @@ package body Src_Editor_Module is
              & " be at the beginning and/or the end of the line."),
          Minimum_Args => 4,
          Maximum_Args => 6,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3833,6 +3897,8 @@ package body Src_Editor_Module is
            & " window is not an editor."),
          Minimum_Args => Indent_Cmd_Parameters'Length - 1,
          Maximum_Args => Indent_Cmd_Parameters'Length,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3842,6 +3908,8 @@ package body Src_Editor_Module is
          Description  => -"Undo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3851,6 +3919,8 @@ package body Src_Editor_Module is
          Description  => -"Redo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3860,6 +3930,8 @@ package body Src_Editor_Module is
          Description  => -"Close all file editors for file_name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3871,6 +3943,8 @@ package body Src_Editor_Module is
            & " If all is true, then all files are saved"),
          Minimum_Args => 0,
          Maximum_Args => Save_Cmd_Parameters'Length,
+         Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
@@ -3914,6 +3988,7 @@ package body Src_Editor_Module is
          Description  => -"Synchronize the scrolling between multiple editors",
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Class        => Editor_Class,
          Handler      => Edit_Command_Handler'Access);
 
       --  Register the search functions
