@@ -254,6 +254,9 @@ package Glide_Kernel is
    --  Free the memory associated with the module. By default, this does
    --  nothing.
 
+   function Get_Name (Module : Module_ID) return String;
+   --  return the name of the module
+
    function Get_Current_Module
      (Kernel : access Kernel_Handle_Record) return Module_ID;
    --  Return the module the currently selected MDI child belongs to.

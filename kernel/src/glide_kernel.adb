@@ -900,6 +900,15 @@ package body Glide_Kernel is
       return Get_Module_From_Child (C);
    end Get_Current_Module;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Module : Module_ID) return String is
+   begin
+      return Module.Info.Name;
+   end Get_Name;
+
    -------------------------
    -- Get_Current_Context --
    -------------------------
@@ -1199,6 +1208,9 @@ package body Glide_Kernel is
             Kernel_Desktop.Restore_Desktop
               (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
          end if;
+
+         --  Report a context changed, so that all views can update themselves
+         Context_Changed (Handle);
 
          Free (Node);
 
