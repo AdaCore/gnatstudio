@@ -67,7 +67,9 @@ with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 
 package body Glide_Menu is
 
-   Highlight_File : constant String := "#FF0000000000";
+   Highlight_File        : constant String := "#FF0000000000";
+   Default_Editor_Width  : constant := 400;
+   Default_Editor_Height : constant := 400;
 
    function Get_Current_Editor
      (Top : Glide_Window) return Source_Editor_Box;
@@ -190,13 +192,13 @@ package body Glide_Menu is
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Run->Build menu
+   --  Build->Build menu
 
    procedure On_Run
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Run->Run menu
+   --  Build->Run menu
 
    procedure On_Debug_Executable
      (Object : Data_Type_Access;
@@ -311,6 +313,8 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Top      : constant Glide_Window := Glide_Window (Object);
+      MDI      : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
       Filename : constant String :=
         File_Selection_Dialog (Title => "Open File", Must_Exist => True);
       Success : Boolean;
@@ -325,9 +329,9 @@ package body Glide_Menu is
 
       Gtk_New (Editor, Top.Kernel);
       Gtk_New (Box, Editor);
+      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
       Attach (Editor, Box);
-      Child := Put
-        (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
+      Child := Put (MDI, Box);
       Set_Title (Child, Filename);
       Load_File (Editor, Filename, Success => Success);
    end On_Open_File;
@@ -378,6 +382,8 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Top    : constant Glide_Window := Glide_Window (Object);
+      MDI    : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
       Editor : Source_Editor_Box;
       Box    : Source_Box;
       Child  : MDI_Child;
@@ -385,9 +391,9 @@ package body Glide_Menu is
    begin
       Gtk_New (Editor, Top.Kernel);
       Gtk_New (Box, Editor);
+      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
       Attach (Editor, Box);
-      Child := Put
-        (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
+      Child := Put (MDI, Box);
       Show_All (Box);
       Set_Title (Child, "No Name");
    end On_New_File;
@@ -1252,15 +1258,19 @@ package body Glide_Menu is
          Gtk_New (-"/_Project/Edit...", "",
                   Stock_Properties, On_Edit_Project'Access),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
+         Gtk_New (-"/_Project/Make API-Doc", "", null),
+         Gtk_New (-"/_Project/sep2", Item_Type => Separator),
          Gtk_New (-"/_Project/Task Manager", "", null),
 
-         Gtk_New (-"/_Run", Item_Type => Branch),
-         Gtk_New (-"/_Run/Check File", "", null),
-         Gtk_New (-"/_Run/Compile File", "", Stock_Convert, null),
-         Gtk_New (-"/_Run/Build", "", Stock_Refresh, On_Build'Access),
-         Gtk_New (-"/_Run/Build Library", "", null),
-         Gtk_New (-"/_Run/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Run/Run...", "", Stock_Execute, On_Run'Access),
+         Gtk_New (-"/_Build", Item_Type => Branch),
+         Gtk_New (-"/_Build/Check File", "", null),
+         Gtk_New (-"/_Build/Compile File", "", Stock_Convert, null),
+         Gtk_New (-"/_Build/Make", "", Stock_Refresh, On_Build'Access),
+         Gtk_New (-"/_Build/Build Library", "", null),
+         Gtk_New (-"/_Build/sep1", Item_Type => Separator),
+         Gtk_New (-"/_Build/Stop Build", "", Stock_Stop, null),
+         Gtk_New (-"/_Build/sep2", Item_Type => Separator),
+         Gtk_New (-"/_Build/Execute...", "", Stock_Execute, On_Run'Access),
 
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
@@ -1305,7 +1315,6 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools", Item_Type => Branch),
          Gtk_New (-"/_Tools/Pretty Print", "", null),
          Gtk_New (-"/_Tools/Generate Body", "", On_Generate_Body'Access),
-         Gtk_New (-"/_Tools/Generate HTML...", "", null),
          Gtk_New (-"/_Tools/Class Browser...", "", null),
          Gtk_New (-"/_Tools/Dependency Browser...", "", null),
          Gtk_New (-"/_Tools/Call Graph...", "", null),
