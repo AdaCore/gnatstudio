@@ -48,6 +48,13 @@ package Glide_Kernel.Console is
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
 
+   procedure Parse_File_Locations
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Text           : String;
+      Category       : String);
+   --  Perform a basic parsing on Text, and add any found file locations
+   --  to the results view in Category.
+
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
    --  If the message window is present in the MDI, raise it.
 

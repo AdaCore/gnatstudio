@@ -28,6 +28,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GNAT.IO;              use GNAT.IO;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Regpat;          use GNAT.Regpat;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -190,6 +191,88 @@ package body Glide_Kernel.Console is
          end if;
       end if;
    end Insert;
+
+   --------------------------
+   -- Parse_File_Locations --
+   --------------------------
+
+   procedure Parse_File_Locations
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Text           : String;
+      Category       : String)
+   is
+      File_Location : constant Pattern_Matcher :=
+        Compile (Get_Pref (Kernel, File_Pattern));
+      File_Index : constant Integer :=
+        Integer (Get_Pref (Kernel, File_Pattern_Index));
+      Line_Index : constant Integer :=
+        Integer (Get_Pref (Kernel, Line_Pattern_Index));
+      Col_Index  : constant Integer :=
+        Integer (Get_Pref (Kernel, Column_Pattern_Index));
+      Matched    : Match_Array (0 .. 9);
+      Start      : Natural := Text'First;
+      Last       : Natural;
+      Real_Last  : Natural;
+      Line       : Natural := 1;
+      Column     : Natural := 1;
+   begin
+      while Start <= Text'Last loop
+         --  Parse Text line by line and look for file locations
+
+         while Start < Text'Last
+           and then (Text (Start) = ASCII.CR
+                     or else Text (Start) = ASCII.LF)
+         loop
+            Start := Start + 1;
+         end loop;
+
+         Real_Last := Start;
+
+         while Real_Last < Text'Last
+           and then Text (Real_Last + 1) /= ASCII.CR
+           and then Text (Real_Last + 1) /= ASCII.LF
+         loop
+            Real_Last := Real_Last + 1;
+         end loop;
+
+         Match (File_Location, Text (Start .. Real_Last), Matched);
+
+         if Matched (0) /= No_Match then
+            if Matched (Line_Index) /= No_Match then
+               Line := Integer'Value
+                 (Text
+                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
+
+               if Line <= 0 then
+                  Line := 1;
+               end if;
+            end if;
+
+            if Matched (Col_Index) = No_Match then
+               Last := Matched (Line_Index).Last;
+            else
+               Last := Matched (Col_Index).Last;
+               Column := Integer'Value
+                 (Text (Matched (Col_Index).First ..
+                            Matched (Col_Index).Last));
+
+               if Column <= 0 then
+                  Column := 1;
+               end if;
+            end if;
+
+            Insert_Result
+              (Kernel,
+               Category,
+               Text
+                 (Matched (File_Index).First .. Matched (File_Index).Last),
+               Text (Last + 1 .. Real_Last),
+               Positive (Line), Positive (Column), 0);
+         end if;
+
+         Start := Real_Last + 1;
+      end loop;
+   end Parse_File_Locations;
 
    -------------------
    -- Raise_Console --
