@@ -1652,12 +1652,6 @@ package body Project_Viewers is
 
       begin
          if File /= VFS.No_File then
-            if Base_Dir = "" then
-               if Is_Directory (Dir_Name (File)) then
-                  Change_Dir (Dir_Name (File));
-               end if;
-            end if;
-
             Add_Main_File (Ed, Base_Name (File));
          end if;
       end Add_File;
