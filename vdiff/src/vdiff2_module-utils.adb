@@ -205,6 +205,7 @@ package body Vdiff2_Module.Utils is
            (Kernel, VFile (J),
             VRange (J).First,
             VStyle (J).all, VOffset (J));
+
          if VOffset (J) < Offset_Max then
             Tmp := new String'
               (Add_Line
