@@ -1189,6 +1189,28 @@ package body Codefix.Errors_Parser is
                                 (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
+   -----------------------
+   -- Pragma_Missplaced --
+   -----------------------
+
+   procedure Initialize (This : in out Pragma_Missplaced) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+         (Compile ("pragma must be first line of file")));
+   end Initialize;
+
+   procedure Correct
+     (This         : Pragma_Missplaced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
+   begin
+      Append (Solutions,
+              First_Line_Pragma (Current_Text,
+                                 Message));
+   end Correct;
+
 begin
    Add_Parser (new Agregate_Misspelling);
    Add_Parser (new Double_Misspelling);
@@ -1223,6 +1245,7 @@ begin
    Add_Parser (new Bad_Casing_Declared);
    Add_Parser (new Bad_Casing_Keyword);
    Add_Parser (new Object_Not_Referenced);
+   Add_Parser (new Pragma_Missplaced);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;

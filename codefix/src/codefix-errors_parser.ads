@@ -33,7 +33,8 @@ package Codefix.Errors_Parser is
       Wrong_Indentation,
       Missing_With,
       Wrong_Case,
-      Unit_Not_Referenced);
+      Unit_Not_Referenced,
+      Pragma_Should_Begin);
    --  Those subcatgeroies are the reals categories of errors that an user can
    --  choose to correct or not.
 
@@ -551,6 +552,20 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Correct case problems with declared words etc.
+   --  Correct problems like 'sth is not referenced'.
+
+   type Pragma_Missplaced is new Error_Parser (Pragma_Should_Begin, 1)
+      with null record;
+
+   procedure Initialize (This : in out Pragma_Missplaced);
+
+   procedure Correct
+     (This         : Pragma_Missplaced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Correct problem 'pragma must be first line of'.
+
 
 end Codefix.Errors_Parser;
