@@ -1,5 +1,8 @@
 New features in GPS 1.1.0
 
+- Can now choose between no, simple or extended indentation for each language
+  See documentation for more details.
+
 - Background colors in the text editor can be chosen
 
 - System files and implicit dependencies can be seen in the file dependency
