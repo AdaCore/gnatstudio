@@ -63,7 +63,7 @@ package Commands.External is
 private
 
    package String_List_Idle is
-      new Gtk.Main.Timeout (External_Command_Access);
+     new Gtk.Main.Timeout (External_Command_Access);
 
    type External_Command is new Root_Command with record
       Kernel  : Kernel_Handle;
