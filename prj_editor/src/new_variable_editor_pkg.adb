@@ -133,7 +133,7 @@ begin
    Set_Flags (New_Variable_Editor.Delete_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Delete_Variable);
 
-   Gtk_New_From_Stock (New_Variable_Editor.New_Variable, Stock_New);
+   Gtk_New_From_Stock (New_Variable_Editor.New_Variable, Stock_Add);
    Set_Flags (New_Variable_Editor.New_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
 
