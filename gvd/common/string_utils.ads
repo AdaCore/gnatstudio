@@ -319,6 +319,12 @@ package String_Utils is
    --  if part of the string is surrounded by triple quotes, any special
    --  character is ignored till the closing triple quotes. This is the same
    --  behavior as in Python, and is needed for easier quoting of string.
+   --
+   --  Here is the output in some cases:
+   --     "foo"       -> "foo"       (quotes preserved)
+   --     """foo"""   -> foo         (quotes removed when at beginning and end)
+   --     ("""foo""") -> ("""foo""") (quotes preserved in middle)
+   --     foo\"foo    -> foo\"foo    (backslash not removed from output)
 
    function Protect
      (S : String; Protect_Quotes : Boolean := True) return String;
