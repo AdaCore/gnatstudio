@@ -48,4 +48,10 @@ package String_List_Utils is
      return Boolean;
    --  Return True if S is in L.
 
+   procedure Add_Unique_Sorted
+     (L : in out String_List.List;
+      S : String);
+   --  Insert S in L, sorted, if S does not already exist in L.
+   --  L is supposed to be sorted before calling this subprogram.
+
 end String_List_Utils;

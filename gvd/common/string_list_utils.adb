@@ -111,4 +111,43 @@ package body String_List_Utils is
       return False;
    end Is_In_List;
 
+   ------------------------
+   --  Add_Unique_Sorted --
+   ------------------------
+
+   procedure Add_Unique_Sorted
+     (L : in out String_List.List;
+      S : String)
+   is
+      N : List_Node;
+      P : List_Node;
+   begin
+      if Is_Empty (L) then
+         Append (L, S);
+
+         return;
+      end if;
+
+      N := First (L);
+
+      while N /= Null_Node
+        and then Data (N) < S
+      loop
+         P := N;
+         N := Next (N);
+      end loop;
+
+      if P = Null_Node then
+         Prepend (L, S);
+      else
+         if N /= Null_Node
+           and then Data (N) = S
+         then
+            return;
+         else
+            Append (L, P, S);
+         end if;
+      end if;
+   end Add_Unique_Sorted;
+
 end String_List_Utils;
