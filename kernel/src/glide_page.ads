@@ -44,4 +44,9 @@ package Glide_Page is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
 
+   procedure Load_Desktop
+     (Page   : access Glide_Page_Record'Class;
+      Window : access Glide_Window_Record'Class);
+   --  Load a saved desktop, if any, and create the console if needed.
+
 end Glide_Page;

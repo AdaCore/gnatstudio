@@ -47,8 +47,6 @@ package body Glide_Page is
      (Page   : access Glide_Page_Record'Class;
       Window : access Glide_Window_Record'Class)
    is
-      Child : MDI_Child;
-      Iter  : Child_Iterator;
       Edit  : Glide.GEdit;
 
    begin
@@ -56,7 +54,19 @@ package body Glide_Page is
       GVD.Process.Initialize (Page, Window, Source_Editor (Edit));
       Set_Priorities
         (Page.Process_Mdi, (Left => 1, Right => 4, Top => 2, Bottom => 3));
+   end Initialize;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   procedure Load_Desktop
+     (Page   : access Glide_Page_Record'Class;
+      Window : access Glide_Window_Record'Class)
+   is
+      Child : MDI_Child;
+      Iter  : Child_Iterator;
+   begin
       if Load_Desktop (Window.Kernel) then
          Iter := First_Child (Page.Process_Mdi);
 
@@ -80,7 +90,7 @@ package body Glide_Page is
          Dock_Child (Child);
          Raise_Child (Child);
       end if;
-   end Initialize;
+   end Load_Desktop;
 
    --------------
    -- Set_Busy --
