@@ -25,8 +25,13 @@
 --     <case_exceptions>
 --        <word>OS_Lib</word>
 --        <word>GNAT</word>
+--        <substring>IO</substring>
 --     </case_exceptions>
 --  </custom_section>
+--
+--  <word>       : A full case exception word.
+--  <substring>  : A substring exception. A substring is defined as a part
+--                 of the word separated by underscores.
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
@@ -41,14 +46,24 @@ package body Case_Handling is
 
    Me : constant Debug_Handle := Create ("Case_Handling");
 
+   procedure Add_Exception
+     (HTable    : in out Exceptions_Table;
+      Str       : String;
+      Read_Only : Boolean);
+   --  Add Str exception in HTable
+
+   procedure Remove_Exception (HTable : in out Exceptions_Table; Str : String);
+   --  Remove str exception from the HTable
+
    ----------
    -- Free --
    ----------
 
    procedure Free (N : in out W_Node) is
-      procedure Free is new Ada.Unchecked_Deallocation (String, Word_Access);
+      procedure Unchecked_Free is
+        new Ada.Unchecked_Deallocation (String, Word_Access);
    begin
-      Free (N.Word);
+      Unchecked_Free (N.Word);
    end Free;
 
    ----------------
@@ -110,10 +125,61 @@ package body Case_Handling is
    ---------------
 
    procedure Set_Case
-     (C      : in Casing_Exceptions;
+     (C      : Casing_Exceptions;
       Word   : in out String;
       Casing : Casing_Type)
    is
+      procedure Set_Substring_Exception
+        (Word   : in out String;
+         L_Word : String;
+         Found  : out Boolean);
+      --  Apply substring exception to word if possible and set Found to true
+      --  in this case.
+
+      -----------------------------
+      -- Set_Substring_Exception --
+      -----------------------------
+
+      procedure Set_Substring_Exception
+        (Word   : in out String;
+         L_Word : String;
+         Found  : out Boolean)
+      is
+         procedure Apply (Substring : String);
+         --  Check if a substring exception exists for this substring and
+         --  apply it.
+
+         procedure Apply (Substring : String) is
+            N : W_Node;
+         begin
+            N := String_Hash_Table.Get (C.S.all, Substring);
+
+            if N.Word /= null then
+               Word (Substring'Range) := N.Word.all;
+               Found := True;
+            end if;
+         end Apply;
+
+         First : Natural;
+      begin
+         Found := False;
+
+         First := L_Word'First - 1;
+
+         --  Look for all substring in this word
+
+         for K in L_Word'Range loop
+            if L_Word (K) = '_' then
+               Apply (L_Word (First + 1 .. K - 1));
+               First := K;
+            end if;
+         end loop;
+
+         --  Apply to the last one
+
+         Apply (L_Word (First + 1 .. L_Word'Last));
+      end Set_Substring_Exception;
+
       L_Word : String (Word'Range);
       N      : W_Node;
    begin
@@ -138,7 +204,21 @@ package body Case_Handling is
 
       if N.Word = null then
          --  No case exception for this word, or case exceptions feature
-         --  not activated.
+         --  not activated. Check now for substring exceptions.
+
+         if C.S /= null then
+            declare
+               Found : Boolean;
+            begin
+               Set_Substring_Exception (Word, L_Word, Found);
+               if Found then
+                  --  Some substring exceptions have been found, return now
+                  return;
+               end if;
+            end;
+         end if;
+
+         --  No casing exceptions found, apply standard rules
 
          case Casing is
             when Unchanged =>
@@ -170,28 +250,67 @@ package body Case_Handling is
    -------------------
 
    procedure Add_Exception
+     (HTable    : in out Exceptions_Table;
+      Str       : String;
+      Read_Only : Boolean) is
+   begin
+      String_Hash_Table.Set
+        (HTable.all, To_Lower (Str), (Read_Only, new String'(Str)));
+   end Add_Exception;
+
+   procedure Add_Exception
      (C         : in out Casing_Exceptions;
       Word      : String;
       Read_Only : Boolean) is
    begin
-      String_Hash_Table.Set
-        (C.E.all, To_Lower (Word), (Read_Only, new String'(Word)));
+      Add_Exception (C.E, Word, Read_Only);
    end Add_Exception;
+
+   -----------------------------
+   -- Add_Substring_Exception --
+   -----------------------------
+
+   procedure Add_Substring_Exception
+     (C         : in out Casing_Exceptions;
+      Substring : String;
+      Read_Only : Boolean) is
+   begin
+      Add_Exception (C.S, Substring, Read_Only);
+   end Add_Substring_Exception;
 
    ----------------------
    -- Remove_Exception --
    ----------------------
 
-   procedure Remove_Exception (C : in out Casing_Exceptions; Word : String) is
-      L_Word : constant String := To_Lower (Word);
-      N      : W_Node;
+   procedure Remove_Exception
+     (HTable : in out Exceptions_Table;
+      Str    : String)
+   is
+      L_Str : constant String := To_Lower (Str);
+      N     : W_Node;
    begin
-      N := String_Hash_Table.Get (C.E.all, L_Word);
+      N := String_Hash_Table.Get (HTable.all, L_Str);
 
       if not N.Read_Only then
-         String_Hash_Table.Remove (C.E.all, To_Lower (Word));
+         String_Hash_Table.Remove (HTable.all, L_Str);
       end if;
    end Remove_Exception;
+
+   procedure Remove_Exception (C : in out Casing_Exceptions; Word : String) is
+   begin
+      Remove_Exception (C.E, Word);
+   end Remove_Exception;
+
+   --------------------------------
+   -- Remove_Substring_Exception --
+   --------------------------------
+
+   procedure Remove_Substring_Exception
+     (C         : in out Casing_Exceptions;
+      Substring : String) is
+   begin
+      Remove_Exception (C.S, Substring);
+   end Remove_Substring_Exception;
 
    ---------------------
    -- Load_Exceptions --
@@ -213,8 +332,8 @@ package body Case_Handling is
          if File = null then
             Trace (Me, Err.all);
             Free (Err);
-         else
 
+         else
             --  Get node exceptions
 
             Child := File.Child;
@@ -224,7 +343,14 @@ package body Case_Handling is
             Child := Child.Child;
 
             while Child /= null loop
-               Add_Exception (C, Child.Value.all, Read_Only);
+               if Child.Tag.all = "word" then
+                  Add_Exception (C, Child.Value.all, Read_Only);
+               elsif Child.Tag.all = "substring" then
+                  Add_Substring_Exception (C, Child.Value.all, Read_Only);
+               else
+                  Trace (Exception_Handle,
+                         "Unknown casing exceptions node " & Child.Tag.all);
+               end if;
                Child := Child.Next;
             end loop;
 
@@ -248,32 +374,58 @@ package body Case_Handling is
       Iter            : String_Hash_Table.Iterator;
       N               : W_Node;
    begin
-      File     := new Node;
-      File.Tag := new String'("custom_section");
+      if C.E /= null or else C.S /= null then
+         File     := new Node;
+         File.Tag := new String'("custom_section");
 
-      Ada_Child     := new Node;
-      Ada_Child.Tag := new String'("case_exceptions");
-      Add_Child (File, Ada_Child);
+         Ada_Child     := new Node;
+         Ada_Child.Tag := new String'("case_exceptions");
+         Add_Child (File, Ada_Child);
 
-      String_Hash_Table.Get_First (C.E.all, Iter);
+         --  Word exceptions
 
-      loop
-         N := String_Hash_Table.Get_Element (Iter);
-         exit when N = Null_Node;
+         if C.E /= null then
+            String_Hash_Table.Get_First (C.E.all, Iter);
 
-         if not N.Read_Only then
-            Child       := new Node;
-            Child.Tag   := new String'("word");
-            Child.Value := new String'(N.Word.all);
-            Add_Child (Ada_Child, Child);
+            loop
+               N := String_Hash_Table.Get_Element (Iter);
+               exit when N = Null_Node;
+
+               if not N.Read_Only then
+                  Child       := new Node;
+                  Child.Tag   := new String'("word");
+                  Child.Value := new String'(N.Word.all);
+                  Add_Child (Ada_Child, Child);
+               end if;
+
+               String_Hash_Table.Get_Next (C.E.all, Iter);
+            end loop;
          end if;
 
-         String_Hash_Table.Get_Next (C.E.all, Iter);
-      end loop;
+         --  Substring exceptions
 
-      Trace (Me, "Saving " & Filename);
-      Print (File, Filename);
-      Free (File);
+         if C.S /= null then
+            String_Hash_Table.Get_First (C.S.all, Iter);
+
+            loop
+               N := String_Hash_Table.Get_Element (Iter);
+               exit when N = Null_Node;
+
+               if not N.Read_Only then
+                  Child       := new Node;
+                  Child.Tag   := new String'("substring");
+                  Child.Value := new String'(N.Word.all);
+                  Add_Child (Ada_Child, Child);
+               end if;
+
+               String_Hash_Table.Get_Next (C.S.all, Iter);
+            end loop;
+         end if;
+
+         Trace (Me, "Saving " & Filename);
+         Print (File, Filename);
+         Free (File);
+      end if;
    end Save_Exceptions;
 
    -------------
@@ -284,8 +436,17 @@ package body Case_Handling is
       procedure Free is new Ada.Unchecked_Deallocation
         (String_Hash_Table.HTable, Exceptions_Table);
    begin
+      --  Word exceptions
+
       if C.E /= null then
          String_Hash_Table.Reset (C.E.all);
+         Free (C.E);
+      end if;
+
+      --  Substring exceptions
+
+      if C.S /= null then
+         String_Hash_Table.Reset (C.S.all);
          Free (C.E);
       end if;
    end Destroy;
