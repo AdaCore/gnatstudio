@@ -31,7 +31,8 @@ with System;                    use System;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
+with String_Utils;              use String_Utils;
 with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -45,15 +46,15 @@ with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Info;                  use Src_Info;
 
-with Glide_Kernel.Timeout;
-with Prj_API;                  use Prj_API;
-with Namet;                    use Namet;
+with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Prj_API;                   use Prj_API;
+with Namet;                     use Namet;
 with Generic_List;
 
-with Language;                 use Language;
-with Language.Ada;             use Language.Ada;
-with Language.C;               use Language.C;
-with Language.Cpp;             use Language.Cpp;
+with Language;                  use Language;
+with Language.Ada;              use Language.Ada;
+with Language.C;                use Language.C;
+with Language.Cpp;              use Language.Cpp;
 
 with Prj.Tree;                  use Prj.Tree;
 
@@ -80,6 +81,9 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record'Class);
    --  Re-initialize the Source Info structure.
    --  ??? Needs more comments.
+
+   function Process_Anim (Data : Process_Data) return Boolean;
+   --  Process_Timeout callback to handle image animations.
 
    -------------
    -- Gtk_New --
@@ -118,7 +122,7 @@ package body Glide_Kernel is
       --  these values from the output of gnatls -v...
 
       Load_Preferences
-        (Handle, Home_Dir & Directory_Separator & "preferences");
+        (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
 
       --  ??? Shouldn't use naming schemes instead ? This duplicates the
       --  information uselessly.
@@ -357,7 +361,8 @@ package body Glide_Kernel is
       Create
         (File,
          Mode => Out_File,
-         Name => Handle.Home_Dir.all & Directory_Separator & "desktop");
+         Name =>
+           String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop");
       Set_Output (File);
 
       Print (Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI));
@@ -377,7 +382,7 @@ package body Glide_Kernel is
         (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
       Node : Node_Ptr;
       File : constant String :=
-        Handle.Home_Dir.all & Directory_Separator & "desktop";
+        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
 
    begin
       if Is_Regular_File (File) then
@@ -424,7 +429,7 @@ package body Glide_Kernel is
    ----------
 
    procedure Free (Context : in out Selection_Context_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Ada.Unchecked_Deallocation
         (Selection_Context'Class, Selection_Context_Access);
    begin
       Destroy (Context.all);
@@ -529,6 +534,15 @@ package body Glide_Kernel is
       return Glide_Window (Handle.Main_Window).Toolbar;
    end Get_Toolbar;
 
+   ------------------
+   -- Process_Anim --
+   ------------------
+
+   function Process_Anim (Data : Process_Data) return Boolean is
+   begin
+      return Anim_Cb (Data.Kernel);
+   end Process_Anim;
+
    ----------------
    -- Push_State --
    ----------------
@@ -551,9 +565,9 @@ package body Glide_Kernel is
       end if;
 
       if Window.State_Level = 0 and then Window.Timeout_Id = 0 then
-         Window.Timeout_Id := Glide_Kernel.Timeout.Add
+         Window.Timeout_Id := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-            Anim_Cb'Access, Kernel_Handle (Handle));
+            Process_Anim'Access, (Kernel_Handle (Handle), null, null));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
