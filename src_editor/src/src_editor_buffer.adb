@@ -492,13 +492,10 @@ package body Src_Editor_Buffer is
                --  Need to recompute iter, since the slice replacement that
                --  we just did has invalidated iter.
 
-               Get_Iter_At_Line_Offset (Buffer, Pos, Line, 0);
-               Forward_Chars
-                 (Pos,
-                  Gint (Indent + Next_Indent +
-                        2 * Slice_Length - Offset - Index - Blanks + 3),
-                  Result);
+               Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, 0);
+               Forward_Chars (Pos, Gint (Next_Indent), Result);
                Place_Cursor (Buffer, Pos);
+               Forward_Chars (Pos, Gint (Slice_Length - Blanks + 1), Result);
 
                Buffer.Inserting := False;
                g_free (C_Str);
