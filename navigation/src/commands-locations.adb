@@ -32,6 +32,7 @@ package body Commands.Locations is
       Filename       : String;
       Line           : Natural := 0;
       Column         : Natural := 0;
+      Column_End     : Natural := 0;
       Highlight_Line : Boolean := True) is
    begin
       Item := new Source_Location_Command_Type;
@@ -39,6 +40,7 @@ package body Commands.Locations is
       Item.Filename := new String' (Filename);
       Item.Line := Line;
       Item.Column := Column;
+      Item.Column_End := Column_End;
       Item.Highlight_Line := Highlight_Line;
    end Create;
 
@@ -102,6 +104,7 @@ package body Commands.Locations is
                            Command.Filename.all,
                            Command.Line,
                            Command.Column,
+                           Command.Column_End,
                            Command.Highlight_Line,
                            False);
       else

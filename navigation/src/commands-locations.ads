@@ -36,6 +36,7 @@ package Commands.Locations is
       Filename       : String;
       Line           : Natural := 0;
       Column         : Natural := 0;
+      Column_End     : Natural := 0;
       Highlight_Line : Boolean := True);
    --  Create a new Source_Location_Command with the specified
    --  coordinates. Filename must be an absolute file name.
@@ -59,6 +60,7 @@ private
       Filename       : String_Access;
       Line           : Natural := 0;
       Column         : Natural := 0;
+      Column_End     : Natural := 0;
       Highlight_Line : Boolean := True;
    end record;
 
