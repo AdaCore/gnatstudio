@@ -78,7 +78,7 @@ package body GVD.Menus is
 
    type Call_Stack_Record is record
       Process : Debugger_Process_Tab;
-      Filter  : Stack_List_Filter;
+      Mask    : Stack_List_Mask;
    end record;
 
    --------------------
@@ -144,9 +144,9 @@ package body GVD.Menus is
       Item    : Item_Record);
    --  Hide all the subcomponents of the selected item.
 
-   procedure Change_Filter
+   procedure Change_Mask
      (Widget : access Gtk_Menu_Item_Record'Class;
-      Filter : Call_Stack_Record);
+      Mask   : Call_Stack_Record);
    --  Toggle the display of a specific column in the Stack_List window.
 
    --------------------------
@@ -306,19 +306,19 @@ package body GVD.Menus is
       end if;
    end Set_Value;
 
-   -------------------
-   -- Change_Filter --
-   -------------------
+   -----------------
+   -- Change_Mask --
+   -----------------
 
-   procedure Change_Filter
+   procedure Change_Mask
      (Widget : access Gtk_Menu_Item_Record'Class;
-      Filter : Call_Stack_Record)
+      Mask   : Call_Stack_Record)
    is
    begin
-      Filter.Process.Backtrace_Filter :=
-        Filter.Process.Backtrace_Filter xor Filter.Filter;
-      Show_Call_Stack_Columns (Filter.Process);
-   end Change_Filter;
+      Mask.Process.Backtrace_Mask :=
+        Mask.Process.Backtrace_Mask xor Mask.Mask;
+      Show_Call_Stack_Columns (Mask.Process);
+   end Change_Mask;
 
    --------------------------------
    -- Contextual_Background_Menu --
@@ -579,35 +579,35 @@ package body GVD.Menus is
          Append (Menu, Mitem);
          Call_Stack_Cb.Connect
            (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
             (Debugger_Process_Tab (Process), Frame_Num));
 
          Gtk_New (Mitem, Label => -"Toggle Subprogram Name");
          Append (Menu, Mitem);
          Call_Stack_Cb.Connect
            (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
             (Debugger_Process_Tab (Process), Subprog_Name));
 
          Gtk_New (Mitem, Label => -"Toggle Parameters");
          Append (Menu, Mitem);
          Call_Stack_Cb.Connect
            (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
             (Debugger_Process_Tab (Process), Params));
 
          Gtk_New (Mitem, Label => -"Toggle File Location");
          Append (Menu, Mitem);
          Call_Stack_Cb.Connect
            (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
             (Debugger_Process_Tab (Process), File_Location));
 
          Gtk_New (Mitem, Label => -"Toggle Program Counter");
          Append (Menu, Mitem);
          Call_Stack_Cb.Connect
            (Mitem, "activate",
-            Call_Stack_Cb.To_Marshaller (Change_Filter'Access),
+            Call_Stack_Cb.To_Marshaller (Change_Mask'Access),
             (Debugger_Process_Tab (Process), Program_Counter));
 
          Show_All (Menu);

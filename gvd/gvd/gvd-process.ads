@@ -70,13 +70,13 @@ package GVD.Process is
    -- Backtrace window --
    ----------------------
 
-   type Stack_List_Filter is mod 2 ** 16;
-   Frame_Num       : constant Stack_List_Filter := 2 ** 0;
-   Subprog_Name    : constant Stack_List_Filter := 2 ** 1;
-   Params          : constant Stack_List_Filter := 2 ** 2;
-   File_Location   : constant Stack_List_Filter := 2 ** 3;
-   Program_Counter : constant Stack_List_Filter := 2 ** 4;
-   All_Info        : constant Stack_List_Filter := 2 ** 5 - 1;
+   type Stack_List_Mask is mod 2 ** 16;
+   Frame_Num       : constant Stack_List_Mask := 2 ** 0;
+   Subprog_Name    : constant Stack_List_Mask := 2 ** 1;
+   Params          : constant Stack_List_Mask := 2 ** 2;
+   File_Location   : constant Stack_List_Mask := 2 ** 3;
+   Program_Counter : constant Stack_List_Mask := 2 ** 4;
+   All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
    --  Lists the information to be displayed in the stack list window.
 
    ---------------------------
@@ -156,7 +156,7 @@ package GVD.Process is
 
       Input_Id                : Glib.Gint := 0;
 
-      Backtrace_Filter : Stack_List_Filter :=
+      Backtrace_Mask : Stack_List_Mask :=
         Subprog_Name or Params;
       --  What columns to be displayed in the stack list window
 

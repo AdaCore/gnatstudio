@@ -215,15 +215,15 @@ package body GVD.Dialogs is
    is
       Process  : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Debugger);
-      Filter   : constant Stack_List_Filter :=
-        Process.Backtrace_Filter;
+      Mask   : constant Stack_List_Mask :=
+        Process.Backtrace_Mask;
       List     : Gtk_Clist := Process.Stack_List;
    begin
-      Set_Column_Visibility (List, 0, (Filter and Frame_Num) /= 0);
-      Set_Column_Visibility (List, 1, (Filter and Subprog_Name) /= 0);
-      Set_Column_Visibility (List, 2, (Filter and Params) /= 0);
-      Set_Column_Visibility (List, 3, (Filter and File_Location) /= 0);
-      Set_Column_Visibility (List, 4, (Filter and Program_Counter) /= 0);
+      Set_Column_Visibility (List, 0, (Mask and Frame_Num) /= 0);
+      Set_Column_Visibility (List, 1, (Mask and Subprog_Name) /= 0);
+      Set_Column_Visibility (List, 2, (Mask and Params) /= 0);
+      Set_Column_Visibility (List, 3, (Mask and File_Location) /= 0);
+      Set_Column_Visibility (List, 4, (Mask and Program_Counter) /= 0);
    end Show_Call_Stack_Columns;
 
    -----------------------
