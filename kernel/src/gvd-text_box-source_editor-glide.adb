@@ -138,10 +138,14 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
-      Free (Editor.Current_File);
-      Editor.Current_File := new String' (File_Name);
-      Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False,
-                        Enable_Navigation => False);
+      if Editor.Current_File = null
+        or else Editor.Current_File.all /= File_Name
+      then
+         Free (Editor.Current_File);
+         Editor.Current_File := new String' (File_Name);
+         Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False,
+                           Enable_Navigation => False);
+      end if;
    end Load_File;
 
    -------------------------
