@@ -18,55 +18,112 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Gtk.Alignment;       use Gtk.Alignment;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Combo;           use Gtk.Combo;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.List;            use Gtk.List;
-with Gtk.List_Item;       use Gtk.List_Item;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Frame;           use Gtk.Frame;
-with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Radio_Button;    use Gtk.Radio_Button;
-with Gtk.Text;            use Gtk.Text;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glib;                     use Glib;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.List;                 use Gtk.List;
+with Gtk.List_Item;            use Gtk.List_Item;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gui_Support;              use Gui_Support;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
+with Prj.Ext;    use Prj.Ext;
+with Prj_Normalize; use Prj_Normalize;
 
-with Namet;      use Namet;
-with Stringt;    use Stringt;
 with Types;      use Types;
+with Stringt;    use Stringt;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;     use System;
-with Ada.Text_IO; use Ada.Text_IO;
 
-with Prj_API;       use Prj_API;
-with Value_Editors; use Value_Editors;
-with Glide_Kernel;  use Glide_Kernel;
+with Prj_API;              use Prj_API;
+with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Intl;           use Glide_Intl;
+with Traces;               use Traces;
 
 package body Variable_Editors is
 
-   procedure Display_Expr
-     (Editable : access Gtk_Text_Record'Class;
-      Expr : String_List_Iterator);
-   --  Same as above for a text widget
+   Me : Debug_Handle := Create ("Variable_Editors");
 
-   procedure Resize_Text_Area
-     (Text : access Value_Editor_Record'Class;
-      Var : Project_Node_Id;
-      Max_Lines : Natural);
-   --  Resize a text area depending on the number of lines that need to be
-   --  displayed in it. At most Max_Lines at displayed, a scrolled window is
-   --  provided otherwise.
+   New_Value_Name : constant String := -"<Enter value name>";
+   --  Name used for the new variables.
 
    function Get_Nth_Environment (Index : Natural) return chars_ptr;
    pragma Import (C, Get_Nth_Environment, "get_nth_environment");
    --  Return the string describing the nth environment variable. The strings
    --  have the format "name=value".
+
+   procedure Variable_Editor_Set
+     (Tree_Store  : access Gtk_Tree_Store_Record'Class;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Is_Default  : Boolean;
+      Value       : String;
+      Is_Editable : Boolean := False);
+   --  Convenient function to populate the tree.
+
+   procedure New_Variable (Editor : access Gtk_Widget_Record'Class);
+   procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class);
+   procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class);
+   --  Callback for the buttons at the bottom of the possible values list
+
+   procedure Edited_Callback
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "edited" signal
+
+   Default_Value_Column : constant := 0;
+   Value_Column         : constant := 1;
+   Editable_Column      : constant := 2;
+   Initial_Value_Column : constant := 3;
+   Column_Types : constant GType_Array :=
+     (Default_Value_Column => GType_Boolean,
+      Value_Column         => GType_String,
+      Editable_Column      => GType_Boolean,
+      Initial_Value_Column => GType_String);
+
+   -------------------------
+   -- Variable_Editor_Set --
+   -------------------------
+
+   procedure Variable_Editor_Set
+     (Tree_Store  : access Gtk_Tree_Store_Record'Class;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Is_Default  : Boolean;
+      Value       : String;
+      Is_Editable : Boolean := False)
+   is
+      procedure Internal
+        (Tree, Iter : System.Address;
+         Col1 : Gint; Value1 : Gint;
+         Col2 : Gint; Value2 : String;
+         Col3 : Gint; Value3 : Gint;
+         Col4 : Gint; Value4 : String;
+         Final : Gint := -1);
+      pragma Import (C, Internal, "gtk_tree_store_set");
+   begin
+      Internal
+        (Get_Object (Tree_Store), Iter'Address,
+         Default_Value_Column,  Boolean'Pos (Is_Default),
+         Value_Column,          Value & ASCII.NUL,
+         Editable_Column,       Boolean'Pos (Is_Editable),
+         Initial_Value_Column,  Value & ASCII.NUL);
+   end Variable_Editor_Set;
 
    -------------
    -- Gtk_New --
@@ -75,38 +132,83 @@ package body Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
-      Scenario_Variable_Only : Boolean)
+      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node)
    is
-      use Widget_List;
-      Item : Gtk_List_Item;
-      Str : String_Id;
-      Index : Natural := 0;
-      S : chars_ptr;
+      Item          : Gtk_List_Item;
+      Index         : Natural := 0;
+      S             : chars_ptr;
+      Col           : Gtk_Tree_View_Column;
+      Col_Number    : Gint;
+      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
+      Button        : Gtk_Widget;
+      Iter          : Gtk_Tree_Iter;
+      E             : String_List_Iterator;
+      Expr          : Project_Node_Id;
+      Is_Default    : Boolean;
    begin
       Editor := new New_Var_Edit_Record;
       Editor.Var := Var;
       Editor.Kernel := Kernel_Handle (Kernel);
-      Initialize (Editor);
+      New_Variable_Editor_Pkg.Initialize (Editor);
+      Set_Transient_For (Editor, Get_Main_Window (Kernel));
 
-      Configure (Editor.Enumeration_Value, Kernel);
-      Configure (Editor.List_Value, Kernel);
-      Configure (Editor.Single_Value, Kernel);
+      Set_Mode (Get_Selection (Editor.Values_List), Selection_Single);
 
-      Set_Variable_Kind (Editor.Single_Value, Prj.Single);
-      Set_Visible_Lines (Editor.Single_Value, 1);
-      Allow_References (Editor.Enumeration_Value, False);
+      --  Create the model that contains the data to show in the tree
 
-      --  Force toggle of the button, so that widgets are set sensitive
-      --  appropriately.
+      Gtk_New (Editor.Model, Column_Types'Length, Column_Types);
+      Set_Model (Editor.Values_List, Gtk_Tree_Model (Editor.Model));
 
-      Set_Active (Editor.Get_Environment, False);
-      Set_Active (Editor.Get_Environment, True);
+      --  Create the cell renderers that are needed to display the tree view
+
+      Gtk_New (Editor.Editable_Renderer);
+
+      Gtk_New (Toggle_Renderer);
+      Set_Radio_And_Callback
+        (Editor.Model, Toggle_Renderer, Default_Value_Column);
+
+      --  Add the columns to the tree view, and associated them with the
+      --  appropriate cell renderers.
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (Editor.Values_List, Col);
+      Set_Title (Col, -"Default");
+      Pack_Start (Col, Toggle_Renderer, False);
+
+      Add_Attribute (Col, Toggle_Renderer, "active", Default_Value_Column);
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (Editor.Values_List, Col);
+      Set_Title (Col, -"Value");
+      Pack_Start (Col, Editor.Editable_Renderer, True);
+      Add_Attribute (Col, Editor.Editable_Renderer, "text", Value_Column);
+      Add_Attribute
+        (Col, Editor.Editable_Renderer, "editable", Editable_Column);
+
+      Set_Editable_And_Callback
+        (Editor.Model, Editor.Editable_Renderer, Value_Column);
+      Widget_Callback.Object_Connect
+        (Editor.Editable_Renderer, "edited", Edited_Callback'Access, Editor);
+
+      --  Add the dialog buttons at the bottom. This is done so that Run can be
+      --  called on the dialog.
+
+      Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+
+      Widget_Callback.Object_Connect
+        (Editor.New_Variable, "clicked",
+         Widget_Callback.To_Marshaller (New_Variable'Access), Editor);
+      Widget_Callback.Object_Connect
+        (Editor.Rename_Variable, "clicked",
+         Widget_Callback.To_Marshaller (Rename_Variable'Access), Editor);
+      Widget_Callback.Object_Connect
+        (Editor.Delete_Variable, "clicked",
+         Widget_Callback.To_Marshaller (Delete_Variable'Access), Editor);
 
       --  Fill the list of existing environment variables before we put the
       --  currently referenced variable (in case it doesn't represent an
       --  existing one.
-      --  ??? Should be sorted.
 
       loop
          S := Get_Nth_Environment (Index);
@@ -120,354 +222,380 @@ package body Variable_Editors is
             end loop;
             Gtk_New (Item, S2 (S2'First .. J - 1));
             Show (Item);
-            Add (Get_List (Editor.List_Env_Variables), Item);
+            Add (Get_List (Editor.Variable_Name), Item);
             Index := Index + 1;
          end;
       end loop;
 
-      --  If we are editing scenario variables, some of the fields can not
-      --  be modified (or the variable would no longer be valid for a scenario.
-
-      if Scenario_Variable_Only then
-         Set_Sensitive (Editor.Get_Environment, False);
-         Destroy (Editor.Untyped_List_Variable);
-         Destroy (Editor.Untyped_Alignment);
-         Destroy (Editor.Untyped_Single_Variable);
-         Destroy (Editor.Single_Alignment);
-      end if;
-
       --  Fill the information for the variable
 
       if Var /= Empty_Node then
-         Set_Title (Editor, "Editing a variable");
+         Set_Text (Get_Entry (Editor.Variable_Name),
+                   Get_String (Get_Environment (Var)));
 
-         Editor.Name_Was_Changed := True;
-         Get_Name_String (Name_Of (Var));
-         Set_Text (Editor.Variable_Name,
-                   Name_Buffer (Name_Buffer'First .. Name_Len));
-         Editor.Name_Was_Changed := False;
-
-         Str := Get_Environment (Var);
-         Set_Active (Editor.Get_Environment, Str /= No_String);
-
-         if Str /= No_String then
-            String_To_Name_Buffer (Str);
-            Set_Text (Get_Entry (Editor.List_Env_Variables),
-                      Name_Buffer (Name_Buffer'First .. Name_Len));
+         Expr := External_Default_Of
+           (Current_Term (First_Term (Expression_Of (Var))));
+         if Expr /= Empty_Node
+           and then Kind_Of (Expr) /= N_Literal_String
+         then
+            Expr := Empty_Node;
          end if;
 
-         --  ??? Should be moved in prj_api
-         if Kind_Of (Var) = N_Variable_Declaration then
-            if Expression_Kind_Of (Var) = Single then
-               Set_Active (Editor.Untyped_Single_Variable, True);
-               Display_Expr (Editor.Single_Value, Value_Of (Var));
-            else
-               Set_Active (Editor.Untyped_List_Variable, True);
-               Display_Expr (Editor.List_Value, Value_Of (Var));
+         Is_Default := True;
+
+         E := Type_Values (Var);
+         while not Done (E) loop
+            Append (Editor.Model, Iter, Null_Iter);
+
+            if Expr /= Empty_Node then
+               Is_Default := String_Equal
+                 (String_Value_Of (Data (E)), String_Value_Of (Expr));
             end if;
 
-         else  --  Typed variable
-            Set_Active (Editor.Typed_Variable, True);
-            Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
-         end if;
+            Variable_Editor_Set
+              (Editor.Model, Iter,
+               Is_Default => Is_Default,
+               Value => Get_String (String_Value_Of (Data (E))),
+               Is_Editable => False);
 
-         Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Update");
-      else
-         Set_Label (Editor.Name_Frame, "Name");
-         Set_Active (Editor.Env_Must_Be_Defined, True);
-         Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Add");
+            Is_Default := False;
+            E := Next (E);
+         end loop;
       end if;
    end Gtk_New;
 
-   ------------------
-   -- Display_Expr --
-   ------------------
+   ---------------------
+   -- Edited_Callback --
+   ---------------------
 
-   procedure Display_Expr
-     (Editable : access Gtk_Text_Record'Class;
-      Expr : String_List_Iterator)
+   procedure Edited_Callback
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
    is
-      Term, N : Project_Node_Id;
-      E : String_List_Iterator := Expr;
-      Pos : Gint := Get_Position (Editable);
+      M : Gtk_Tree_Store := Gtk_Tree_Store (New_Var_Edit (Editor).Model);
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Iter        : Gtk_Tree_Iter;
    begin
-      Realize (Editable); --  Make sure that the Value_Editors are realized
-      while not Done (E) loop
-         if Kind_Of (Data (E)) = N_Literal_String then
-            String_To_Name_Buffer (String_Value_Of (Data (E)));
-            Insert_Text
-              (Editable, Name_Buffer (Name_Buffer'First .. Name_Len), Pos);
-
-         else
-            Term := First_Term (Data (E));
-            while Term /= Empty_Node loop
-               N := Current_Term (Term);
-
-               case Kind_Of (N) is
-                  when N_Variable_Reference =>
-                     Get_Name_String (Name_Of (N));
-                     Insert_Text
-                       (Editable,
-                        "${" & Name_Buffer (Name_Buffer'First .. Name_Len)
-                        & '}',
-                        Pos);
-
-                  when N_Literal_String =>
-                     String_To_Name_Buffer (String_Value_Of (N));
-                     Insert_Text
-                       (Editable,
-                        Name_Buffer (Name_Buffer'First .. Name_Len),
-                        Pos);
-
-                  when others =>
-                     Put_Line ("Display_Expr: " & Kind_Of (N)'Img);
-                     raise Program_Error;
-               end case;
-
-               Term := Next_Term (Term);
-            end loop;
-         end if;
-
-         E := Next (E);
-         if not Done (E) then
-            Insert_Text (Editable, "" & ASCII.LF, Pos);
-         end if;
-      end loop;
-      Set_Position (Editable, 0);
-   end Display_Expr;
+      --  Once a cell has been edited, it is no longer editable, until the user
+      --  presses the Rename button.
+      Iter := Get_Iter_From_String (M, Path_String);
+      Set (M, Iter, Editable_Column, False);
+   end Edited_Callback;
 
    ------------------
-   -- Display_Expr --
+   -- New_Variable --
    ------------------
 
-   procedure Display_Expr
-     (Editable : access Gtk_Entry_Record'Class;
-      Expr : String_List_Iterator)
-   is
-      Term, N : Project_Node_Id;
-      E : String_List_Iterator := Expr;
+   procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
+      E    : New_Var_Edit := New_Var_Edit (Editor);
+      Iter : Gtk_Tree_Iter;
    begin
-      Realize (Editable); --  Make sure that the Value_Editors are realized
-      while not Done (E) loop
-         if Kind_Of (Data (E)) = N_Literal_String then
-            String_To_Name_Buffer (String_Value_Of (Data (E)));
-            Append_Text
-              (Editable, Name_Buffer (Name_Buffer'First .. Name_Len));
+      --  Add a new entry. This will become the default value if this is also
+      --  the first one in the list.
+      Iter := Get_Iter_Root (E.Model);
+      Append (E.Model, Iter, Null_Iter);
+      Variable_Editor_Set
+        (E.Model, Iter,
+         Is_Default  => Iter = Null_Iter,
+         Value       => New_Value_Name,
+         Is_Editable => True);
+   end New_Variable;
 
-         else
-            Term := First_Term (Data (E));
-            while Term /= Empty_Node loop
-               N := Current_Term (Term);
+   ---------------------
+   -- Rename_Variable --
+   ---------------------
 
-               case Kind_Of (N) is
-                  when N_Variable_Reference =>
-                     Get_Name_String (Name_Of (N));
-                     Append_Text
-                       (Editable,
-                        "${" & Name_Buffer (Name_Buffer'First .. Name_Len)
-                        & '}');
-
-                  when N_Literal_String =>
-                     String_To_Name_Buffer (String_Value_Of (N));
-                     Append_Text
-                       (Editable,
-                        Name_Buffer (Name_Buffer'First .. Name_Len));
-
-                  when others =>
-                     Put_Line ("Display_Expr: " & Kind_Of (N)'Img);
-                     raise Program_Error;
-               end case;
-
-               Term := Next_Term (Term);
-            end loop;
-         end if;
-
-         E := Next (E);
-         if not Done (E) then
-            Append_Text (Editable, "" & ASCII.LF);
-         end if;
-      end loop;
-   end Display_Expr;
-
-   -----------------
-   -- Resize_Text --
-   -----------------
-
-   procedure Resize_Text_Area
-     (Text : access Value_Editor_Record'Class;
-      Var : Project_Node_Id;
-      Max_Lines : Natural)
-   is
-      Iter : String_List_Iterator := Value_Of (Var);
-      Num_Lines : Natural := 0;
+   procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
+      E           : New_Var_Edit := New_Var_Edit (Editor);
+      Iter        : Gtk_Tree_Iter := Null_Iter;
+      Success     : Boolean;
+      Selection   : Gtk_Tree_Selection := Get_Selection (E.Values_List);
    begin
-      while not Done (Iter) loop
-         Num_Lines := Num_Lines + 1;
-         Iter := Next (Iter);
-      end loop;
+      Success := Get_Selected (Selection, E.Model, Iter);
+      if Success then
+         Set (E.Model, Iter, Editable_Column, True);
+         Set_Cursor
+           (E.Values_List,
+            Path => Get_Path (E.Model, Iter),
+            Focus_Column => Get_Column (E.Values_List, Value_Column),
+            Start_Editing => True);
+      end if;
+   end Rename_Variable;
 
-      Num_Lines := Natural'Min (Num_Lines, Max_Lines);
-      Set_Visible_Lines (Text, Num_Lines);
-   end Resize_Text_Area;
+   ---------------------
+   -- Delete_Variable --
+   ---------------------
+
+   procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
+      E           : New_Var_Edit := New_Var_Edit (Editor);
+      Iter        : Gtk_Tree_Iter := Null_Iter;
+      Success     : Boolean;
+      Selection   : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+   begin
+      Success := Get_Selected (Selection, E.Model, Iter);
+      if Success then
+         Remove (E.Model, Iter);
+      end if;
+   end Delete_Variable;
 
    ---------------------
    -- Update_Variable --
    ---------------------
 
-   procedure Update_Variable (Editor : access New_Var_Edit_Record) is
-      V : Validity := Valid;
-      Value : Value_Editor;
-      Parent : Project_Node_Id;
-      Expr : Project_Node_Id;
-      Button : Message_Dialog_Buttons;
+   function Update_Variable (Editor : access New_Var_Edit_Record)
+     return Boolean
+   is
+      New_Name : constant String :=
+        Get_Text (Get_Entry (Editor.Variable_Name));
+      Var : Project_Node_Id := Editor.Var;
+      Changed  : Boolean := False;
+      Iter     : Gtk_Tree_Iter;
+      Val_Iter : String_List_Iterator;
+      Found    : Boolean;
+      Num_Rows : Natural := 0;
+      Message  : Message_Dialog_Buttons;
    begin
-      if Get_Active (Editor.Typed_Variable) then
-         Value := Editor.Enumeration_Value;
-      elsif Get_Active (Editor.Untyped_List_Variable) then
-         Value := Editor.List_Value;
-      else
-         Value := Editor.Single_Value;
+      if New_Name = "" then
+         Message := Message_Dialog
+           (Msg     => -"You must specify a name for the variable",
+            Buttons => Button_OK,
+            Parent  => Gtk_Window (Editor));
+         return False;
       end if;
 
-      --  The name of the variable mustn't be empty
+      Iter := Get_Iter_Root (Editor.Model);
+      while Iter /= Null_Iter loop
+         if Get_String (Editor.Model, Iter, Value_Column) /=
+           New_Value_Name
+         then
+            Num_Rows := Num_Rows + 1;
+         end if;
+         Next (Editor.Model, Iter);
+      end loop;
 
-      if Get_Text (Editor.Variable_Name) = "" then
-         Button := Message_Dialog
-           ("The name of the variable must be specified",
-            Dialog_Type => Gtkada.Dialogs.Error,
-            Buttons     => Button_OK,
-            Help_Msg    =>
-              "Fill the first field at the top of the variable editor",
-            Title       => "Invalid variable description");
-         return;
+      if Num_Rows = 0 then
+         Message := Message_Dialog
+           (Msg     => -"You must specify some possible values",
+            Buttons => Button_OK,
+            Parent  => Gtk_Window (Editor));
+         return False;
       end if;
 
-      --  For environment variables, the name mustn't be empty. We already
-      --  know the default value is legal, since the user cannot enter
-      --  anything illegal anyway.
-
-      if Get_Active (Editor.Get_Environment)
-        and then Get_Text (Get_Entry (Editor.List_Env_Variables)) = ""
-      then
-         Button := Message_Dialog
-           ("The environment variable name must be specified",
-            Dialog_Type => Gtkada.Dialogs.Error,
-            Buttons     => Button_OK,
-            Help_Msg    =>
-              "Fill the Name field in the ""importing"" section",
-            Title       => "Invalid variable description");
-         return;
-      end if;
-
-
-      if V = Valid then
-         V := Check_Validity (Value);
-      end if;
-
-      case V is
-         when Valid =>
-            Expr := Get_Value (Value, Get_Project (Editor.Kernel));
-
-            if Editor.Var = Empty_Node then
-               Parent := Get_Project (Editor.Kernel);
-
-               if Get_Active (Editor.Typed_Variable) then
-                  Editor.Var := Create_Typed_Variable
-                    (Parent,
-                     Name => Get_Text (Editor.Variable_Name),
-                     Typ  => Expr);
-               else
-                  Editor.Var := Create_Variable
-                    (Parent,
-                     Name => Get_Text (Editor.Variable_Name),
-                     Kind => Expression_Kind_Of (Expr));
+      if Get_String (Get_Environment (Var)) /= New_Name then
+         declare
+            Vars : constant Project_Node_Array :=
+              Scenario_Variables (Editor.Kernel);
+         begin
+            for V in Vars'Range loop
+               if New_Name = Get_String (Get_Environment (Vars (V))) then
+                  Message := Message_Dialog
+                    (Msg     => -"There is already a variable with this name",
+                     Buttons => Button_OK,
+                     Parent  => Gtk_Window (Editor));
+                  return False;
                end if;
+            end loop;
+         end;
+      end if;
 
-            else
+      Normalize (Get_Project (Editor.Kernel), Recurse => True);
+
+      --  Create the variable if necessary
+
+      if Var = Empty_Node then
+         Var := Create_Type (Get_Project (Editor.Kernel), New_Name & "_Type");
+         Var := Create_Typed_Variable
+           (Get_Project (Editor.Kernel), New_Name, Var,
+            Add_Before_First_Case_Or_Pkg => True);
+         Set_Value_As_External (Var, New_Name);
+      end if;
+
+      --  Rename the value appropriately (this has to be done separately, so
+      --  that the case statements are changed appropriately).
+
+      if Editor.Var /= Empty_Node then
+         Iter := Get_Iter_Root (Editor.Model);
+         while Iter /= Null_Iter loop
+            Num_Rows := Num_Rows + 1;
+
+            if Editor.Var /= Empty_Node then
                declare
-                  N : constant String := Get_Text (Editor.Variable_Name);
+                  Old_Val : constant String :=
+                    Get_String (Editor.Model, Iter, Initial_Value_Column);
+                  New_Val : constant String :=
+                    Get_String (Editor.Model, Iter, Value_Column);
                begin
-                  Get_Name_String (Name_Of (Editor.Var));
-                  if Name_Buffer (Name_Buffer'First .. Name_Len) /= N then
-                     Name_Len := N'Length;
-                     Name_Buffer (Name_Buffer'First .. Name_Len) := N;
-                     Set_Name_Of (Editor.Var, Name_Find);
-                  end if;
+                  if Old_Val /= New_Val then
+                     Trace (Me, "Renaming value for variable "
+                            & Get_String (Get_Environment (Var))
+                            & " from " & Old_Val & " to " & New_Val);
 
-                  --  Note: the order is important below, since some of the
-                  --  widgets might not exist if the variable editor is
-                  --  configured for scenario variables only.
-
-                  if Get_Active (Editor.Typed_Variable) then
-                     Set_Expression_Kind_Of (Editor.Var, Single);
-                  elsif Get_Active (Editor.Untyped_List_Variable) then
-                     Set_Expression_Kind_Of (Editor.Var, Prj.List);
-                  else
-                     Set_Expression_Kind_Of (Editor.Var, Single);
+                     Start_String;
+                     Store_String_Chars (New_Val);
+                     Rename_Value_For_External_Variable
+                       (Get_Project (Editor.Kernel),
+                        Ext_Variable_Name =>
+                          Get_String (Get_Environment (Var)),
+                        Old_Value_Name => Old_Val,
+                        New_Value_Name => End_String);
+                     Changed := True;
                   end if;
                end;
             end if;
 
-            if Get_Active (Editor.Typed_Variable) then
-               --  ??? Should delete previous type
-               Get_Name_String (Name_Of (Editor.Var));
-               Name_Buffer (Name_Len + 1 .. Name_Len + 5) := "_Type";
-               Name_Len := Name_Len + 5;
-               Set_Name_Of (Expr, Name_Find);
-               Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
-               Set_String_Type_Of (Editor.Var, Expr);
-            end if;
+            Next (Editor.Model, Iter);
+         end loop;
 
-            --  If this is an environment variable, set this correctly.
-            if Get_Active (Editor.Get_Environment) then
-               if not Get_Active (Editor.Env_Must_Be_Defined) then
-                  Set_Value_As_External
-                    (Editor.Var,
-                     Get_Text (Get_Entry (Editor.List_Env_Variables)),
-                     Get_Text (Get_Entry (Editor.Default_Env_Variable)));
-               else
-                  Set_Value_As_External
-                    (Editor.Var,
-                     Get_Text (Get_Entry (Editor.List_Env_Variables)), "");
+         --  Delete the values that no longer exist
+
+         Val_Iter := Type_Values (Var);
+         while not Done (Val_Iter) loop
+            Found := False;
+
+            Iter := Get_Iter_Root (Editor.Model);
+            while Iter /= Null_Iter loop
+               if Get_String (Editor.Model, Iter, Value_Column) =
+                 Get_String (String_Value_Of (Data (Val_Iter)))
+               then
+                  Found := True;
+                  exit;
                end if;
+               Next (Editor.Model, Iter);
+            end loop;
 
-            else
-               Set_Expression_Of (Editor.Var, Expr);
+            if not Found then
+               Remove_Value (Get_Project (Editor.Kernel),
+                             Get_String (Get_Environment (Var)),
+                             Get_String (String_Value_Of (Data (Val_Iter))));
+               Changed := True;
             end if;
 
-            Recompute_View (Editor.Kernel);
-            --  ??? We don't really need to recompute the whole view, since
-            --  ??? after all we only added a variable that doesn't have any
-            --  ??? influence yet.
-            --
-            --  ??? We should register that the project is no longer normalized
+            Val_Iter := Next (Val_Iter);
+         end loop;
+      end if;
 
-            Destroy (Editor);
+      --  Add the new values
 
-         when others =>
-            Put_Line ("Validity = " & V'Img);
+      declare
+         Values : String_Id_Array (1 .. Num_Rows);
+            Num_Values : Natural := Values'First - 1;
+      begin
+         Iter := Get_Iter_Root (Editor.Model);
+         while Iter /= Null_Iter loop
+            Found := False;
 
-      end case;
+            declare
+               Name : constant String := Get_String
+                 (Editor.Model, Iter, Value_Column);
+               Default : Boolean := Boolean_Get
+                 (Editor.Model, Iter, Default_Value_Column);
+               Id : String_Id := No_String;
+            begin
+               if Name /= New_Value_Name then
+                  Val_Iter := Type_Values (Var);
+                  while not Done (Val_Iter) loop
+                     if Name =
+                       Get_String (String_Value_Of (Data (Val_Iter)))
+                     then
+                        Found := True;
+                        exit;
+                     end if;
+
+                     Val_Iter := Next (Val_Iter);
+                  end loop;
+
+                  if not Found then
+                     Num_Values := Num_Values + 1;
+                     Start_String;
+                     Store_String_Chars (Name);
+                     Id := End_String;
+                     Values (Num_Values) := Id;
+                     Trace (Me, "Adding new value " & Name & " for "
+                            & Get_String (Get_Environment (Var)));
+                  end if;
+
+                  if Default then
+                     if Id = No_String then
+                        Start_String;
+                        Store_String_Chars (Name);
+                        Id := End_String;
+                     end if;
+
+                     Trace (Me, "Setting default value of "
+                            & Get_String (Get_Environment (Var))
+                            & " to " & Name);
+                     Set_Default_Value_For_External_Variable
+                       (Get_Project (Editor.Kernel),
+                        Get_String (Get_Environment (Var)),
+                        Id);
+                  end if;
+               end if;
+            end;
+
+            Next (Editor.Model, Iter);
+         end loop;
+
+         if Num_Values >= Values'First then
+            Add_Scenario_Variable_Values
+              (Get_Project (Editor.Kernel),
+               Get_Environment (Var),
+               Values (Values'First .. Num_Values));
+            Changed := True;
+         end if;
+      end;
+
+      --  Has the variable been renamed ? This should be done last, so that
+      --  the previous calls above work with the old name
+
+      if Get_String (Get_Environment (Var)) /= New_Name then
+         Trace (Me, "Renaming variable "
+                & Get_String (Get_Environment (Var))
+                & " to " & New_Name);
+         Start_String;
+         Store_String_Chars (New_Name);
+         Rename_External_Variable
+           (Get_Project (Editor.Kernel),
+            Old_Name => Get_String (Get_Environment (Var)),
+            New_Name => End_String);
+         Changed := True;
+      end if;
+
+      if Editor.Var = Empty_Node then
+         if External_Default (Var) /= Empty_Node then
+            Prj.Ext.Add
+              (New_Name,
+               Get_String (String_Value_Of (External_Default (Var))));
+         else
+            Iter := Get_Iter_Root (Editor.Model);
+            Prj.Ext.Add
+              (New_Name, Get_String (Editor.Model, Iter, Value_Column));
+         end if;
+      end if;
+
+      if Changed then
+         Variable_Changed (Editor.Kernel);
+      end if;
+      return True;
    end Update_Variable;
 
-   ------------------
-   -- Name_Changed --
-   ------------------
+   ---------------------
+   -- On_Add_Variable --
+   ---------------------
 
-   procedure Name_Changed (Editor : access New_Var_Edit_Record) is
+   procedure On_Add_Variable
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Edit : New_Var_Edit;
    begin
-      if Editor.Var /= Empty_Node
-        and then not Editor.Name_Was_Changed
-      then
-         Editor.Name_Was_Changed := True;
-         Get_Name_String (Name_Of (Editor.Var));
-
-         --  ??? With GtkAda 2.0, the label of the frame simply disappears when
-         --  it is changed dynamically like this.
-         Set_Label (Editor.Name_Frame,
-                    "Name (old name was "
-                    & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");
-      end if;
-   end Name_Changed;
+      Gtk_New (Edit, Get_Kernel (Context));
+      Show_All (Edit);
+      while Run (Edit) = Gtk_Response_OK
+        and then not Update_Variable (Edit)
+      loop
+         null;
+      end loop;
+      Destroy (Edit);
+   end On_Add_Variable;
 
 end Variable_Editors;
