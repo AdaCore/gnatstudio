@@ -161,8 +161,6 @@ package body Browsers.Call_Graph is
       Include_Reads  : Boolean;
       Category       : String_Access;
    end record;
-   package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
-   pragma Unreferenced (Entity_Iterator_Idle);
 
    type Examine_Callback is record
       --  The following three fields are only set for graphical callbacks
@@ -1141,8 +1139,8 @@ package body Browsers.Call_Graph is
       Include_Writes : Boolean;
       Include_Reads  : Boolean)
    is
-      Data     : Entity_Idle_Data;
-      C        : Xref_Commands.Generic_Asynchronous_Command_Access;
+      Data : Entity_Idle_Data;
+      C    : Xref_Commands.Generic_Asynchronous_Command_Access;
 
    begin
       if Info /= No_Entity_Information then
@@ -1180,16 +1178,15 @@ package body Browsers.Call_Graph is
               (Kernel, Command_Access (C), True, "xrefs");
 
          exception
-            when others =>
+            when E : others =>
                Destroy (Data.Iter);
-               raise;
+               Trace (Me, "Unexpected exception " & Exception_Information (E));
          end;
       end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
-         Pop_State (Kernel_Handle (Kernel));
    end Find_All_References_Internal;
 
    -----------------------------------------
@@ -1357,72 +1354,80 @@ package body Browsers.Call_Graph is
          Entity_Context := Entity_Selection_Context_Access (Context);
 
          if Has_Entity_Name_Information (Entity_Context) then
-            Gtk_New (Item, Label => -"References");
-            Gtk_New (Submenu);
-            Set_Submenu (Item, Gtk_Widget (Submenu));
-            Append (Menu, Item);
+            Push_State (Get_Kernel (Context), Busy);
 
             --  Check the entity right away. This will return False if either
             --  the entity isn't a subprogram, or we couldn't find the
             --  declaration. In both cases, we wouldn't be able to draw the
-            --  callgraph anyway.
+            --  call graph anyway.
 
             declare
-               Name : constant String :=
+               Name   : constant String :=
                  Krunch (Entity_Name_Information (Entity_Context));
-            begin
+               Entity : constant Src_Info.Queries.Entity_Information :=
+                 Get_Entity (Entity_Context);
 
-               if Is_Subprogram (Get_Entity (Entity_Context)) then
-                  Gtk_New (Item, Label => Name & (-" calls"));
+            begin
+               if Entity /= No_Entity_Information then
+                  Gtk_New (Item, Label => -"References");
+                  Gtk_New (Submenu);
+                  Set_Submenu (Item, Gtk_Widget (Submenu));
+                  Append (Menu, Item);
+
+                  if Is_Subprogram (Entity) then
+                     Gtk_New (Item, Label => Name & (-" calls"));
+                     Append (Submenu, Item);
+                     Context_Callback.Connect
+                       (Item, "activate",
+                        Context_Callback.To_Marshaller
+                          (Edit_Entity_Call_Graph_From_Contextual'Access),
+                        Selection_Context_Access (Context));
+
+                     Gtk_New (Item, Label => Name & (-" is called by"));
+                     Append (Submenu, Item);
+                     Context_Callback.Connect
+                       (Item, "activate",
+                        Context_Callback.To_Marshaller
+                          (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+                        Selection_Context_Access (Context));
+                  end if;
+
+                  Gtk_New (Item, Label => (-"Find all references to ") & Name);
                   Append (Submenu, Item);
                   Context_Callback.Connect
                     (Item, "activate",
                      Context_Callback.To_Marshaller
-                       (Edit_Entity_Call_Graph_From_Contextual'Access),
+                       (Find_All_References_From_Contextual'Access),
                      Selection_Context_Access (Context));
 
-                  Gtk_New (Item, Label => Name & (-" is called by"));
+                  Gtk_New
+                    (Item, Label => (-"Find all local references to ") & Name);
                   Append (Submenu, Item);
                   Context_Callback.Connect
                     (Item, "activate",
                      Context_Callback.To_Marshaller
-                       (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+                       (Find_All_Local_References_From_Contextual'Access),
+                     Selection_Context_Access (Context));
+
+                  Gtk_New (Item, Label => (-"Find all writes to ") & Name);
+                  Append (Submenu, Item);
+                  Context_Callback.Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                       (Find_All_Writes_From_Contextual'Access),
+                     Selection_Context_Access (Context));
+
+                  Gtk_New (Item, Label => (-"Find all reads of ") & Name);
+                  Append (Submenu, Item);
+                  Context_Callback.Connect
+                    (Item, "activate",
+                     Context_Callback.To_Marshaller
+                       (Find_All_Reads_From_Contextual'Access),
                      Selection_Context_Access (Context));
                end if;
-
-               Gtk_New (Item, Label => (-"Find all references to ") & Name);
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Find_All_References_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New
-                 (Item, Label => (-"Find all local references to ") & Name);
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Find_All_Local_References_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Item, Label => (-"Find all writes to ") & Name);
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Find_All_Writes_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Item, Label => (-"Find all reads of ") & Name);
-               Append (Submenu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Find_All_Reads_From_Contextual'Access),
-                  Selection_Context_Access (Context));
             end;
+
+            Pop_State (Get_Kernel (Context));
          end if;
       end if;
 
@@ -1436,22 +1441,23 @@ package body Browsers.Call_Graph is
    ------------------------
 
    function Contextual_Factory
-     (Item  : access Entity_Item_Record;
+     (Item    : access Entity_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event, Browser);
       Context : constant Selection_Context_Access :=
         new Entity_Selection_Context;
-      Mitem : Gtk_Image_Menu_Item;
-      Pix   : Gtk_Image;
+      Mitem   : Gtk_Image_Menu_Item;
+      Pix     : Gtk_Image;
+
    begin
       if not Is_Predefined_Entity (Item.Entity) then
          Set_File_Information
            (File_Selection_Context_Access (Context),
-            File         => Get_Declaration_File_Of (Item.Entity),
-            Line         => Get_Declaration_Line_Of (Item.Entity));
+            File => Get_Declaration_File_Of (Item.Entity),
+            Line => Get_Declaration_Line_Of (Item.Entity));
       end if;
 
       Set_Entity_Information
