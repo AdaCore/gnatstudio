@@ -37,7 +37,7 @@ package body Commands.External is
    -- Local subprograms --
    -----------------------
 
-   procedure Free is new Ada.Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (External_Command, External_Command_Access);
 
    function Atomic_Command (D : External_Command_Access) return Boolean;
@@ -57,7 +57,7 @@ package body Commands.External is
       Free (D.Command);
       Free (D.Dir);
       Free (D.Output);
-      Free (D_Copy);
+      Unchecked_Free (D_Copy);
    end Destroy;
 
    ------------
@@ -190,6 +190,14 @@ package body Commands.External is
                    & Command.Dir.all,
                  False, True, Error);
          return False;
+
+      when Invalid_Process =>
+         Insert (Command.Kernel,
+                 -"Could not launch command "
+                   & Command.Command.all,
+                 False, True, Error);
+         return False;
+
    end Execute;
 
 end Commands.External;
