@@ -313,9 +313,9 @@ package Src_Editor_Buffer is
    --  Redo last undone command.
 
    function Do_Indentation
-     (Buffer      : Source_Buffer;
-      From, To    : Gtk.Text_Iter.Gtk_Text_Iter;
-      Force       : Boolean := False) return Boolean;
+     (Buffer   : Source_Buffer;
+      From, To : Gtk.Text_Iter.Gtk_Text_Iter;
+      Force    : Boolean := False) return Boolean;
    --  Reindent a specific range of lines (the ones containing From to To).
    --  Indentation depend on the language and the setup the user has chosen
    --  (either simple or extended indentation).
@@ -330,6 +330,13 @@ package Src_Editor_Buffer is
       Force             : Boolean := False) return Boolean;
    --  Same as above, but for the current line (or current selection if there
    --  is one and Current_Line_Only is False).
+
+   function Do_Refill (Buffer : Source_Buffer) return Boolean;
+   --  Refill selected text or the current line if no selection is active. The
+   --  text is wrapped depending on the right margin defined by the column
+   --  highlight preference. This routine handles simple text and comments.
+   --  The indentation and comment detection is done according to the first
+   --  line selected.
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
    --  Return true if auto-indentation is supported for this buffer, and if
