@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,23 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;             use Glib.Object;
-with Gtk.Main;                use Gtk.Main;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Glib.Object;                 use Glib.Object;
+with Gtk.Main;                    use Gtk.Main;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
 
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Ada.Exceptions;          use Ada.Exceptions;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Ada.Exceptions;              use Ada.Exceptions;
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Intl;              use Glide_Intl;
+with Glide_Intl;                  use Glide_Intl;
 
-with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
-with Make_Suite_Window_Pkg;   use Make_Suite_Window_Pkg;
-with Make_Test_Window_Pkg;    use Make_Test_Window_Pkg;
+with Make_Harness_Window_Pkg;     use Make_Harness_Window_Pkg;
+with Make_Suite_Window_Pkg;       use Make_Suite_Window_Pkg;
+with Make_Test_Window_Pkg;        use Make_Test_Window_Pkg;
 
-with Traces;                  use Traces;
+with Traces;                      use Traces;
 
 package body Aunit_Module is
 
@@ -64,7 +64,7 @@ package body Aunit_Module is
       pragma Unreferenced (Widget);
       Make_Test_Window : Make_Test_Window_Access;
    begin
-      Gtk_New (Make_Test_Window);
+      Gtk_New (Make_Test_Window, Kernel);
       Show_All (Make_Test_Window);
       Gtk.Main.Main;
 
@@ -99,7 +99,7 @@ package body Aunit_Module is
       pragma Unreferenced (Widget);
       Make_Suite_Window : Make_Suite_Window_Access;
    begin
-      Gtk_New (Make_Suite_Window);
+      Gtk_New (Make_Suite_Window, Kernel);
       Show_All (Make_Suite_Window);
       Gtk.Main.Main;
 
@@ -131,7 +131,7 @@ package body Aunit_Module is
       pragma Unreferenced (Widget);
       Make_Harness_Window : Make_Harness_Window_Access;
    begin
-      Gtk_New (Make_Harness_Window);
+      Gtk_New (Make_Harness_Window, Kernel);
       Show_All (Make_Harness_Window);
       Gtk.Main.Main;
 
@@ -183,4 +183,5 @@ package body Aunit_Module is
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Edit, Menu_Item, Ref_Item => -"Preferences");
    end Register_Module;
+
 end Aunit_Module;
