@@ -366,4 +366,22 @@ package body Generic_List is
       end if;
    end Head;
 
+   ------------------
+   -- Replace_Head --
+   ------------------
+
+   procedure Replace_Head
+     (L : List;
+      D : Data_Type) is
+   begin
+      if L = null
+        or else L.Element = null
+      then
+         raise List_Empty;
+      else
+         Free (L.Element.all);
+         L.Element := new Data_Type' (D);
+      end if;
+   end Replace_Head;
+
 end Generic_List;

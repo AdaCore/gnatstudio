@@ -87,6 +87,11 @@ package Generic_List is
    --  Return the first element contained in the list.
    --  Raise List_Empty if L is empty;
 
+   procedure Replace_Head
+     (L : List;
+      D : Data_Type);
+   --  Free the element at head of L and replace it by D.
+
    List_Empty : exception;
 
 private
