@@ -58,7 +58,12 @@ is
    end Shell_Open;
 
 begin
-   if not Shell_Open (Full_Name (Help_File).all) then
+   if Shell_Open (Full_Name (Help_File).all) then
+      Insert
+        (Kernel,
+         -"Launching default browser to view " & Full_Name (Help_File).all,
+         Mode => Info);
+   else
       Insert
         (Kernel,
          -"Could not display help file " & Full_Name (Help_File).all,
