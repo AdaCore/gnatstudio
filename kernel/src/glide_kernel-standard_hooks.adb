@@ -1,0 +1,771 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2003                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glide_Kernel;               use Glide_Kernel;
+with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
+with VFS;                        use VFS;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with System;                     use System;
+with Gdk.Pixbuf;                 use Gdk.Pixbuf;
+with Commands;                   use Commands;
+with Traces;                     use Traces;
+with Basic_Types;
+with String_Utils;               use String_Utils;
+with Glide_Intl;                 use Glide_Intl;
+
+package body Glide_Kernel.Standard_Hooks is
+
+   Me : constant Debug_Handle := Create ("Standard_Hooks");
+
+   Open_File_Hook_Type : constant String := "open_file";
+   File_Line_Hook_Type : constant String := "file_line";
+   Location_Hook_Type  : constant String := "location";
+   Html_Hook_Type      : constant String := "html";
+   Diff_Hook_Type      : constant String := "diff";
+   --  The various names to describe the hook types defined in this package
+
+   procedure General_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : Virtual_File;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True);
+   --  Create the Mime info for adding/creating/removing line information,
+   --  and send it.
+   --  If File is an empty string, send the Mime for all open buffers.
+
+   procedure Open_File_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Line_Information_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Location_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Html_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Diff_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles calls to run_hook from the shell for the various hooks
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Action_Item) is
+      procedure Unchecked_Free is
+        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
+   begin
+      if X /= null then
+         Free (X.all);
+         Unchecked_Free (X);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Information_Record) is
+   begin
+      Free (X.Text);
+
+      if X.Associated_Command /= null then
+         Destroy (X.Associated_Command);
+      end if;
+   end Free;
+
+   ------------------------------
+   -- General_Line_Information --
+   ------------------------------
+
+   procedure General_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : Virtual_File;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True)
+   is
+      Data : File_Line_Hooks_Args :=
+        (Hooks_Data with
+         Identifier_Length => Identifier'Length,
+         Identifier        => Identifier,
+         File              => File,
+         Info              => Info,
+         Stick_To_Data     => Stick_To_Data,
+         Every_Line        => Every_Line,
+         Normalize         => Normalize);
+   begin
+      if File /= VFS.No_File then
+         if not Run_Hook_Until_Success
+           (Kernel, File_Line_Action_Hook, Data, Set_Busy => False)
+         then
+            Trace (Me, "No file editor with line info display "
+                   & "capability was registered");
+         end if;
+
+      else
+         declare
+            Files : constant VFS.File_Array := Open_Files (Kernel);
+         begin
+            for Node in Files'Range loop
+               Data.File := Files (Node);
+
+               if not Run_Hook_Until_Success
+                 (Kernel, File_Line_Action_Hook, Data, Set_Busy => False)
+               then
+                  Trace (Me, "No file editor with line info display "
+                         & "capability was registered");
+               end if;
+            end loop;
+         end;
+      end if;
+   end General_Line_Information;
+
+   ----------------------
+   -- Add_Editor_Label --
+   ----------------------
+
+   procedure Add_Editor_Label
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : Virtual_File;
+      Identifier : String;
+      Label      : String)
+   is
+      Infos  : Line_Information_Data;
+
+   begin
+      Infos := new Line_Information_Array (-1 .. -1);
+      Infos (-1).Text := new String'(Label);
+
+      Add_Line_Information
+        (Kernel,
+         File,
+         Identifier,
+         Infos);
+   end Add_Editor_Label;
+
+   ------------------------------------
+   -- Create_Line_Information_Column --
+   ------------------------------------
+
+   procedure Create_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : Virtual_File;
+      Identifier     : String;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True)
+   is
+      A_Access : Line_Information_Data;
+   begin
+      A_Access := new Line_Information_Array (0 .. 0);
+
+      General_Line_Information
+        (Kernel,
+         File,
+         Identifier,
+         A_Access,
+         Stick_To_Data,
+         Every_Line,
+         Normalize);
+      Unchecked_Free (A_Access);
+   end Create_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : Virtual_File;
+      Identifier     : String)
+   is
+      A : Line_Information_Array (1 .. 0);
+   begin
+      General_Line_Information (Kernel, File, Identifier,
+                                new Line_Information_Array'(A));
+   end Remove_Line_Information_Column;
+
+   --------------------------
+   -- Add_Line_Information --
+   --------------------------
+
+   procedure Add_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : Virtual_File;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      Normalize      : Boolean := True) is
+   begin
+      General_Line_Information
+        (Kernel, File, Identifier, Info, Normalize => Normalize);
+   end Add_Line_Information;
+
+   -------------------------
+   -- Add_Location_Action --
+   -------------------------
+
+   procedure Add_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : Virtual_File;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String;
+      Action        : Action_Item)
+   is
+      Data : Location_Hooks_Args :=
+        (Hooks_Data with Ident_Length => Identifier'Length,
+         Identifier   => Identifier,
+         Cat_Length   => Category'Length,
+         Category     => Category,
+         File         => File,
+         Line         => Line,
+         Column       => Column,
+         Mes_Length   => Message'Length,
+         Message      => Message,
+         Action       => Action);
+   begin
+      if Run_Hook_Until_Success
+        (Kernel, Location_Action_Hook, Data, Set_Busy => False)
+      then
+         Trace (Me, "No location viewer registered.");
+      end if;
+   end Add_Location_Action;
+
+   ----------------------------
+   -- Remove_Location_Action --
+   ----------------------------
+
+   procedure Remove_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : Virtual_File;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String) is
+   begin
+      Add_Location_Action
+        (Kernel, Identifier,
+         Category, File, Line, Column, Message, null);
+   end Remove_Location_Action;
+
+   ------------------------
+   -- Clear_Highlighting --
+   ------------------------
+
+   procedure Clear_Highlighting
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : Virtual_File) is
+   begin
+      if Is_Open (Kernel, Filename) then
+         Open_File_Editor
+           (Kernel,
+            Filename,
+            0, 0,
+            Enable_Navigation => False);
+      end if;
+   end Clear_Highlighting;
+
+   ----------------------
+   -- Open_File_Editor --
+   ----------------------
+
+   procedure Open_File_Editor
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : VFS.Virtual_File;
+      Line              : Natural := 1;
+      Column            : Natural := 1;
+      Column_End        : Natural := 0;
+      Enable_Navigation : Boolean := True;
+      New_File          : Boolean := True;
+      Force_Reload      : Boolean := False)
+   is
+      Data : constant Source_File_Hooks_Args :=
+        (Hooks_Data with
+         File              => Filename,
+         Line              => Line,
+         Column            => Column,
+         Column_End        => Column_End,
+         Enable_Navigation => Enable_Navigation,
+         New_File          => New_File,
+         Force_Reload      => Force_Reload);
+   begin
+      if Enable_Navigation then
+         declare
+            Length : constant Integer := Integer'Max (0, Column_End - Column);
+            Args   : Argument_List :=
+              (new String'("edit"),
+               new String'(Full_Name (Filename).all),
+               new String'(Image (Line)),
+               new String'(Image (Column)),
+               new String'(Image (Length)));
+         begin
+            Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
+            Basic_Types.Free (Args);
+         end;
+      end if;
+
+      if not Run_Hook_Until_Success (Kernel, Open_File_Action_Hook, Data) then
+         Trace (Me, "No file editor was registered");
+      end if;
+   end Open_File_Editor;
+
+   ------------------------
+   -- Close_File_Editors --
+   ------------------------
+
+   procedure Close_File_Editors
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : Virtual_File)
+   is
+      Data : constant Source_File_Hooks_Args :=
+        (Hooks_Data with
+         File              => Filename,
+         Line              => -1,
+         Column            => 0,
+         Column_End        => 0,
+         Enable_Navigation => False,
+         New_File          => False,
+         Force_Reload      => False);
+   begin
+      if not Run_Hook_Until_Success (Kernel, Open_File_Action_Hook, Data) then
+         Trace (Me, "No file editor was registered");
+      end if;
+   end Close_File_Editors;
+
+   ---------------
+   -- Open_Html --
+   ---------------
+
+   procedure Open_Html
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : Virtual_File;
+      Enable_Navigation : Boolean := True)
+   is
+      Full   : constant String := Full_Name (Filename).all;
+      Anchor : Natural := Index (Full, "#");
+   begin
+      if Anchor = 0 then
+         Anchor := Full'Last + 1;
+      end if;
+
+      declare
+         Data : constant Html_Hooks_Args :=
+           (Hooks_Data with
+            Anchor_Length     => Full'Last - Anchor,
+            File              => Create (Full (Full'First .. Anchor - 1)),
+            Enable_Navigation => Enable_Navigation,
+            Anchor            => Full (Anchor + 1 .. Full'Last));
+      begin
+         if not Run_Hook_Until_Success (Kernel, Html_Action_Hook, Data) then
+            Trace (Me, "No html viewer was registered");
+         end if;
+      end;
+   end Open_Html;
+
+   -------------------------
+   -- Display_Differences --
+   -------------------------
+
+   procedure Display_Differences
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Orig_File      : Virtual_File := VFS.No_File;
+      New_File       : Virtual_File := VFS.No_File;
+      Diff_File      : Virtual_File)
+   is
+      Data : constant Diff_Hooks_Args :=
+        (Hooks_Data with Orig_File, New_File, Diff_File);
+   begin
+      if not Run_Hook_Until_Success (Kernel, Diff_Action_Hook, Data) then
+         Trace (Me, "No diff viewer registered");
+      end if;
+   end Display_Differences;
+
+   --------------------------------
+   -- Open_File_Run_Hook_Handler --
+   --------------------------------
+
+   procedure Open_File_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : Source_File_Hooks_Args;
+      pragma Unreferenced (Command);
+   begin
+      Args := (Hooks_Data with
+               File              => Get_File
+                 (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+               Line              => Nth_Arg (Data, 3),
+               Column            => Nth_Arg (Data, 4),
+               Column_End        => Nth_Arg (Data, 5),
+               Enable_Navigation => Nth_Arg (Data, 6),
+               New_File          => Nth_Arg (Data, 7),
+               Force_Reload      => Nth_Arg (Data, 8));
+      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+   end Open_File_Run_Hook_Handler;
+
+   ---------------------------------------
+   -- Line_Information_Run_Hook_Handler --
+   ---------------------------------------
+
+   procedure Line_Information_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Identifier : constant String := Nth_Arg (Data, 2);
+      Args   : constant File_Line_Hooks_Args :=
+        (Hooks_Data with
+         Identifier_Length => Identifier'Length,
+         Identifier        => Identifier,
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
+         Info              => null,
+         Stick_To_Data     => Nth_Arg (Data, 4),
+         Every_Line        => Nth_Arg (Data, 5),
+         Normalize         => Nth_Arg (Data, 6));
+      pragma Unreferenced (Command);
+   begin
+      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+   end Line_Information_Run_Hook_Handler;
+
+   -------------------------------
+   -- Location_Run_Hook_Handler --
+   -------------------------------
+
+   procedure Location_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Identifier : constant String := Nth_Arg (Data, 2);
+      Category   : constant String := Nth_Arg (Data, 3);
+      Message    : constant String := Nth_Arg (Data, 4);
+      Args   : constant Location_Hooks_Args :=
+        (Hooks_Data with
+         Ident_Length      => Identifier'Length,
+         Identifier        => Identifier,
+         Cat_Length        => Category'Length,
+         Category          => Category,
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))),
+         Line              => Nth_Arg (Data, 5),
+         Column            => Nth_Arg (Data, 6),
+         Mes_Length        => Message'Length,
+         Message           => Message,
+         Action            => null);
+      pragma Unreferenced (Command);
+   begin
+      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+   end Location_Run_Hook_Handler;
+
+   ---------------------------
+   -- Html_Run_Hook_Handler --
+   ---------------------------
+
+   procedure Html_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Anchor : constant String := Nth_Arg (Data, 4);
+      Args   : constant Html_Hooks_Args :=
+        (Hooks_Data with
+         File              => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+         Enable_Navigation => Nth_Arg (Data, 3),
+         Anchor_Length     => Anchor'Length,
+         Anchor            => Anchor);
+      pragma Unreferenced (Command);
+   begin
+      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+   end Html_Run_Hook_Handler;
+
+   ---------------------------
+   -- Diff_Run_Hook_Handler --
+   ---------------------------
+
+   procedure Diff_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : Diff_Hooks_Args;
+      pragma Unreferenced (Command);
+   begin
+      Args := (Hooks_Data with
+               Orig_File         => Get_File
+                 (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
+               New_File          => Get_File
+                 (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
+               Diff_File         => Get_File
+                 (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))));
+      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+   end Diff_Run_Hook_Handler;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Source_File_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Open_File_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Source_File_Hooks_Args) return Boolean
+   is
+      Error : aliased Boolean;
+      Tmp   : constant Boolean := Execute_Command
+        (Script,
+         Command & "(""" & Hook_Name
+         & """, GPS.File (""" & Full_Name (Data.File).all & """),"
+         & Natural'Image (Data.Line) & ", "
+         & Natural'Image (Data.Column) & ", "
+         & Natural'Image (Data.Column_End) & ", "
+         & Natural'Image (Boolean'Pos (Data.Enable_Navigation)) & ", "
+         & Natural'Image (Boolean'Pos (Data.New_File)) & ", "
+         & Natural'Image (Boolean'Pos (Data.Force_Reload)) & ")",
+         Errors => Error'Unrestricted_Access);
+   begin
+      Trace (Me, "Shell command returned " & Tmp'Img & "--");
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : File_Line_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return File_Line_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : File_Line_Hooks_Args) return Boolean
+   is
+      Error : aliased Boolean;
+   begin
+      --  ??? Python specific
+      return Execute_Command
+        (Script,
+         Command & "(""" & Hook_Name & """, """ & Data.Identifier
+         & """, GPS.File (""" & Full_Name (Data.File).all & """),"
+         & Integer'Image (Boolean'Pos (Data.Stick_To_Data)) & ","
+         & Integer'Image (Boolean'Pos (Data.Every_Line)) & ","
+         & Integer'Image (Boolean'Pos (Data.Normalize)) & ")",
+         Show_Command => False,
+         Errors => Error'Access) = "1";
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Location_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Location_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Location_Hooks_Args) return Boolean
+   is
+      Error : aliased Boolean;
+   begin
+      --  ??? Python specific
+      return Execute_Command
+        (Script,
+         Command & "(""" & Hook_Name & ""","
+         & """" & Data.Identifier & ""","
+         & """" & Data.Category & ""","
+         & "GPS.File (""" & Full_Name (Data.File).all & """),"
+         & Integer'Image (Data.Line) & ","
+         & Integer'Image (Data.Column) & ","
+         & """" & Data.Message & """)",
+         Show_Command => False,
+         Errors => Error'Unrestricted_Access) = "1";
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Html_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Html_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Html_Hooks_Args) return Boolean
+   is
+      Error : aliased Boolean;
+   begin
+      --  ??? Python specific
+      return Execute_Command
+        (Script,
+         Command & "(""" & Hook_Name & ""","
+         & "GPS.File (""" & Full_Name (Data.File).all & """),"
+         & Integer'Image (Boolean'Pos (Data.Enable_Navigation)) & ","
+         & Data.Anchor & ")",
+         Show_Command => False,
+         Errors => Error'Unrestricted_Access) = "1";
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Diff_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Diff_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Diff_Hooks_Args) return Boolean
+   is
+      Error : aliased Boolean;
+   begin
+      --  ??? Python specific
+      return Execute_Command
+        (Script,
+         Command & "(""" & Hook_Name
+           & """, GPS.File (""" & Full_Name (Data.Orig_File).all & """),"
+           & """, GPS.File (""" & Full_Name (Data.New_File).all & """),"
+           & """, GPS.File (""" & Full_Name (Data.Diff_File).all & """))",
+         Show_Command => False,
+         Errors => Error'Unrestricted_Access) = "1";
+   end Execute_Shell;
+
+   ---------------------------
+   -- Register_Action_Hooks --
+   ---------------------------
+
+   procedure Register_Action_Hooks
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Create_Hook_Type
+        (Kernel, Open_File_Hook_Type,
+        -("Common type for all hooks related to opening files." & ASCII.LF
+          & "Arguments are the following: (file, line, column, column_end,"
+          & " enable_navigation, new_file, force_reload)"),
+         Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Open_File_Action_Hook,
+         -("Hook called when a file needs to be opened or closed"),
+         Type_Name => Open_File_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, File_Line_Hook_Type,
+         -("Common type for all hooks displaying information on the side of"
+           & " editors." & ASCII.LF
+           & "Arguments are the following: (identifier, file, info,"
+           & " stick_to_data, every_line, normalize)"),
+          Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Open_File_Action_Hook,
+         -("Hook called to request the display of new information on the side"
+           & " of the editors"),
+         Type_Name => File_Line_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, Location_Hook_Type,
+         -("Common type for all hooks displaying information on the side of"
+           & " location window." & ASCII.LF
+           & "Arguments are the following: (identifier, category, file, line,"
+           & " column, message)"),
+         Hook_With_Args_And_Return, Location_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Location_Action_Hook,
+         -("Hook called to request the display of new information on the side"
+           & " of the location window"),
+         Type_Name => Location_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, Html_Hook_Type,
+         -("Common type for all hooks displaying HTML files." & ASCII.LF
+           & "Arguments are the following: (file, enable_navigation, anchor)"),
+         Hook_With_Args_And_Return, Html_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Html_Action_Hook,
+         -("Hook called to request the display of HTML files"),
+         Type_Name => Html_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, Diff_Hook_Type,
+         -("Common type for all hooks displaying comparison window." & ASCII.LF
+           & "Arguments are the following: (orig_file, ref_file, diff_file)"),
+         Hook_With_Args_And_Return, Diff_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Diff_Action_Hook,
+         -("Hook called to request the display of the comparison window"),
+         Type_Name => Diff_Hook_Type);
+   end Register_Action_Hooks;
+
+end Glide_Kernel.Standard_Hooks;
