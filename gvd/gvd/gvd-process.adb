@@ -1323,20 +1323,17 @@ package body GVD.Process is
          Widget      : Gtk_Widget;
       begin
          Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
+
          if Widget = null then
             --  This means that GVD is part of GPS
+
             Widget := Get_Widget
               (Window.Factory, -"/Debug/Data/Protection Domains");
          end if;
 
          if Widget /= null then
             Info_WTX (Process.Debugger, WTX_Version);
-
-            if WTX_Version = 3 then
-               Set_Sensitive (Widget, True);
-            else
-               Set_Sensitive (Widget, False);
-            end if;
+            Set_Sensitive (Widget, WTX_Version >= 3);
          end if;
       end;
 
