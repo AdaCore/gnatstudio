@@ -1678,15 +1678,8 @@ In addition to the standard keys used to navigate in the editor (up, down,
 right, left, page up, page down), the integrated editor provides a number of
 key bindings allowing easy navigation in the file.
 
-The key bindings are listed below in two sections: the common key bindings,
-always available; the Emacs key bindings, available as an option.
-
 In addition, there are several ways to define new key bindings, see
 @ref{Defining text aliases} and @ref{Binding actions to keys}.
-
-@table @b
-@item Common key bindings
-@cindex key
 
 @table @key
 @item Ctrl-Shift-
@@ -1745,75 +1738,6 @@ Delete end of the current word.
 
 @item Ctrl-backspace
 Delete beginning of the current word.
-
-@end table
-
-@item Emacs key bindings
-@cindex emacs
-@cindex key
-The following key bindings are activated if you select the @i{Emacs} key theme
-in the preferences dialog (@xref{The Preferences Dialog}.), and may override
-common keys (e.g. @key{Ctrl-a}).
-
-@table @key
-@item Ctrl-b
-Move the cursor one character on the left
-
-@c @item Ctrl-f  overridden by find
-
-@c @item Alt-b  overridden by Build menu
-
-@item Shift-Alt-b
-Select the previous word (backward).
-
-@c @item Alt-f  overridden by File menu
-
-@item Shift-Alt-f
-Select the next word (forward).
-
-@item Ctrl-a
-Go to the beginning of the line
-
-@item Ctrl-e
-Go to the end of the line
-
-@item Ctrl-d
-Delete the next character
-
-@c @item Alt-d  overridden by Debug menu
-@c Delete to the end of the word
-
-@item Ctrl-k
-Delete the end of the line. If the cursor is already at the end of the line,
-remove the line separator.
-
-@item Alt-\
-Delete all space characters around the cursor.
-
-@item Alt-space
-Replace all space characters around the cursor by a single space.
-
-@item Alt-<
-Go to the beginning of the file
-
-@item Alt->
-Go to the end of the file
-
-@c @item Ctrl-p overridden by find previous
-
-@item Shift-Ctrl-p
-Select from cursor to one line up.
-
-@c @item Ctrl-n  overridden by find next
-
-@item Shift-Ctrl-n
-Select from cursor to one line down.
-
-@item Ctrl-j
-Join the current and the next lines and leave a single space between the
-two. This is similar to the @key{J} key in the @i{vi} editor.
-This is a useful extension compared to the default Emacs key bindings.
-@end table
 
 @end table
 
@@ -5535,13 +5459,6 @@ on themes.
 @cindex font
 The default font used in GPS
 
-@item Key theme
-@cindex key theme
-@cindex emacs
-Name of key theme to use. The key themes determines the key bindings used by
-the various visual objects, in particular the source editor.
-Values currently supported are @code{Emacs} and @code{Default}
-
 @item Character set
 @cindex character set
 @cindex ISO-8859-1
@@ -6217,8 +6134,8 @@ configurable aspect of GPS.
 
 For instance, color themes are a convenient way to change all colors in
 GPS at once, according to predefined choices (strongly contrasted colors,
-monochrome,...). It is also possible to have key themes, which set a number
-of key bindings at once to emulate various editors.
+monochrome,...). It is also possible to have key themes, defining a set
+of key bindings to emulate e.g. other editors.
 
 Any number of themes can be activated at the same time through the
 preferences dialog (@code{Edit->Preferences}). This dialog contains a list
