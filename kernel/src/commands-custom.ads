@@ -224,6 +224,9 @@ private
    procedure Update_From_Editor
      (Component : access Shell_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure To_XML
+     (Component   : access Shell_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr);
    function Component_Editor
      (Kernel    : access Kernel_Handle_Record'Class;
       Component : access External_Component_Record)
@@ -232,6 +235,9 @@ private
      (Component : access External_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
    procedure Free (Component : in out External_Component_Record);
+   procedure To_XML
+     (Component   : access External_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See doc for inherited subprograms
 
 
@@ -275,5 +281,11 @@ private
       --  The current context for the execution of the command. If this is
       --  null, no command is currently executing
    end record;
+
+   procedure To_XML
+     (Command     : access Custom_Command;
+      Action_Node : Glib.Xml_Int.Node_Ptr);
+   --  See doc for inherited subprograms
+
 
 end Commands.Custom;

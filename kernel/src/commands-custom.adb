@@ -62,6 +62,8 @@ package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom", Off);
 
+   Output_Use_Default : constant String := "<use default>";
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -90,6 +92,7 @@ package body Commands.Custom is
    --  This widget is used to graphically edit a custom command
 
    type Custom_Component_Editor is record
+      Kernel       : Kernel_Handle;
       Command      : Gtk_Entry;
       Show_Command : Gtk_Check_Button;
       Output       : Gtk_Entry;
@@ -1673,9 +1676,17 @@ package body Commands.Custom is
    procedure Update_From_Editor
      (Command : access Custom_Command; Editor : Gtk.Widget.Gtk_Widget)
    is
-      pragma Unreferenced (Command, Editor);
+      Ed : constant Command_Editor_Widget := Command_Editor_Widget (Editor);
    begin
-      null;
+      Command.Default_Show_Command := Get_Active (Ed.Show_Command);
+      Free (Command.Default_Output_Destination);
+
+      if Get_Active (Ed.Show_Output) then
+         Command.Default_Output_Destination :=
+           new String'(Get_Text (Ed.Output));
+      else
+         Command.Default_Output_Destination := new String'(No_Output);
+      end if;
    end Update_From_Editor;
 
    -----------
@@ -1707,6 +1718,7 @@ package body Commands.Custom is
       Box   : Gtk_Box;
       Label : Gtk_Label;
    begin
+      Custom.Kernel := Kernel_Handle (Kernel);
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Editor, Box, Expand => False);
       Gtk_New    (Label, -"Command: ");
@@ -1739,10 +1751,10 @@ package body Commands.Custom is
                -("Name of the window in which the output of the command should"
                  & " be displayed. A new window will be created if necessary."
                  & " This value can be inherited from the action's own setup"
-                 & " by specifying ""<use default>"""));
+                 & " by specifying """ & Output_Use_Default & """"));
 
       if Component.Output = null then
-         Set_Text (Custom.Output, -"<use default>");
+         Set_Text (Custom.Output, Output_Use_Default);
       else
          Set_Text (Custom.Output, Component.Output.all);
       end if;
@@ -1800,9 +1812,15 @@ package body Commands.Custom is
      (Component : access Shell_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Component, Editor);
+      Ed : constant Shell_Component_Editor := Shell_Component_Editor (Editor);
    begin
-      null;
+      Component.Show_Command := Get_Active (Ed.Custom.Show_Command);
+      Free (Component.Output);
+      Component.Output := new String'(Get_Text (Ed.Custom.Output));
+      Free (Component.Command);
+      Component.Command := new String'(Get_Text (Ed.Custom.Command));
+      Component.Script := Lookup_Scripting_Language
+        (Ed.Custom.Kernel, Get_Text (Get_Entry (Ed.Lang)));
    end Update_From_Editor;
 
    ----------------------
@@ -1893,9 +1911,20 @@ package body Commands.Custom is
      (Component : access External_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Component, Editor);
+      Ed : constant External_Component_Editor :=
+        External_Component_Editor (Editor);
    begin
-      null;
+      Component.Show_Command := Get_Active (Ed.Custom.Show_Command);
+      Free (Component.Output);
+      Component.Output := new String'(Get_Text (Ed.Custom.Output));
+      Free (Component.Command);
+      Component.Command := new String'(Get_Text (Ed.Custom.Command));
+
+      Free (Component.Progress_Regexp);
+      Component.Progress_Regexp := new String'(Get_Text (Ed.Regexp));
+      Component.Progress_Current := Natural (Get_Value_As_Int (Ed.Current));
+      Component.Progress_Final   := Natural (Get_Value_As_Int (Ed.Final));
+      Component.Progress_Hide    := Get_Active (Ed.Hide);
    end Update_From_Editor;
 
    --------------
@@ -1907,5 +1936,111 @@ package body Commands.Custom is
    begin
       return Component.Command.all;
    end Get_Name;
+
+   ------------
+   -- To_XML --
+   ------------
+
+   procedure To_XML
+     (Command     : access Custom_Command;
+      Action_Node : Glib.Xml_Int.Node_Ptr)
+   is
+      Parent, Tmp : Node_Ptr;
+   begin
+      Set_Attribute (Action_Node, "output",
+                     Command.Default_Output_Destination.all);
+
+      if not Command.Default_Show_Command then
+         Set_Attribute (Action_Node, "show-command", "false");
+      end if;
+
+      Parent := Action_Node;
+
+      for C in Command.Components'Range loop
+         if C /= Command.Components'First
+           and then Command.Components (C).On_Failure_For >
+             Command.Components (C - 1).On_Failure_For
+         then
+            Tmp := new Node;
+            Tmp.Tag := new String'("on-failure");
+            Add_Child (Parent, Tmp, Append => True);
+            Parent := Tmp;
+         end if;
+
+         To_XML (Command.Components (C).Component, Parent);
+
+         if C /= Command.Components'Last
+           and then Command.Components (C).On_Failure_For >
+             Command.Components (C + 1).On_Failure_For
+         then
+            Parent := Parent.Parent;
+         end if;
+      end loop;
+   end To_XML;
+
+   ------------
+   -- To_XML --
+   ------------
+
+   procedure To_XML
+     (Component   : access Shell_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr)
+   is
+      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
+   begin
+      Node.Tag := new String'("shell");
+      Node.Value := new String'(Component.Command.all);
+      Add_Child (Action_Node, Node, Append => True);
+
+      if not Component.Show_Command then
+         Set_Attribute (Node, "show-command", "false");
+      end if;
+
+      if Component.Output /= null
+        and then Component.Output.all /= Output_Use_Default
+      then
+         Set_Attribute (Node, "output", Component.Output.all);
+      end if;
+
+      Set_Attribute (Node, "lang", Get_Name (Component.Script));
+   end To_XML;
+
+   ------------
+   -- To_XML --
+   ------------
+
+   procedure To_XML
+     (Component   : access External_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr)
+   is
+      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
+   begin
+      Node.Tag := new String'("external");
+      Node.Value := new String'(Component.Command.all);
+      Add_Child (Action_Node, Node, Append => True);
+
+      if not Component.Show_Command then
+         Set_Attribute (Node, "show-command", "false");
+      end if;
+
+      if Component.Output /= null
+        and then Component.Output.all /= Output_Use_Default
+      then
+         Set_Attribute (Node, "output", Component.Output.all);
+      end if;
+
+      if Component.Progress_Regexp.all /= "" then
+         Set_Attribute (Node, "progress-regexp",
+                        Component.Progress_Regexp.all);
+         Set_Attribute (Node, "progress-current",
+                        Image (Component.Progress_Current));
+         Set_Attribute (Node, "progress-final",
+                        Image (Component.Progress_Final));
+
+         if not Component.Progress_Hide then
+            Set_Attribute (Node, "progress-hide", "false");
+         end if;
+      end if;
+   end To_XML;
 
 end Commands.Custom;
