@@ -315,6 +315,14 @@ package body VFS_Module is
       Mitem   : Gtk_Menu_Item;
 
    begin
+      return;
+
+      pragma Warnings (Off);
+
+      --  ??? Disabled for now, incomplete. In particular, delete should
+      --  not be the first entry. Also, the graphical views are not
+      --  resynchronized when a file is deleted.
+
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
