@@ -23,9 +23,9 @@ with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -46,18 +46,18 @@ with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
-with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
-with Prj_API;                   use Prj_API;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Prj_Normalize;             use Prj_Normalize;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+
+with Projects.Traces;           use Projects.Traces;
 
 package body Project_Properties is
    use Widget_List;
@@ -92,21 +92,21 @@ package body Project_Properties is
       Pages              : Widget_Array_Access;
       --  The pages that have been registered.
 
-      Project_View       : Prj.Project_Id;
+      Project            : Project_Type;
       Kernel             : Kernel_Handle;
    end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
    procedure Gtk_New
-     (Editor       : out Properties_Editor;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class);
+     (Editor  : out Properties_Editor;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class);
    --  Create a new properties editor
 
    procedure Initialize
-     (Editor       : access Properties_Editor_Record'Class;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class);
+     (Editor  : access Properties_Editor_Record'Class;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
    procedure Command_Set_Sensitive
@@ -119,9 +119,9 @@ package body Project_Properties is
    --  Called when the editor is destroyed
 
    function Create_General_Page
-     (Editor       : access Properties_Editor_Record'Class;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class)
+     (Editor  : access Properties_Editor_Record'Class;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    --  Create the "General" page for the project properties
 
@@ -134,17 +134,38 @@ package body Project_Properties is
    --  Return the list of supported languages selected graphically by the
    --  user. The caller must free the returned array
 
+   function Paths_Are_Relative
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
+      return Boolean;
+   --  Return True if the paths in the project should be relative paths
+
+   ------------------------
+   -- Paths_Are_Relative --
+   ------------------------
+
+   function Paths_Are_Relative
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
+      return Boolean
+   is
+   begin
+      case Get_Paths_Type (Project) is
+         when Relative  => return True;
+         when Absolute  => return False;
+         when From_Pref => return Get_Pref (Kernel, Generate_Relative_Paths);
+      end case;
+   end Paths_Are_Relative;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Editor       : out Properties_Editor;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class) is
+     (Editor  : out Properties_Editor;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class) is
    begin
       Editor := new Properties_Editor_Record;
-      Initialize (Editor, Project_View, Kernel);
+      Initialize (Editor, Project, Kernel);
    end Gtk_New;
 
    ---------------
@@ -175,9 +196,9 @@ package body Project_Properties is
    -------------------------
 
    function Create_General_Page
-     (Editor       : access Properties_Editor_Record'Class;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class)
+     (Editor  : access Properties_Editor_Record'Class;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Button2      : Gtk_Button;
@@ -185,10 +206,8 @@ package body Project_Properties is
       Check        : Gtk_Check_Button;
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
-      Project_Languages : Argument_List :=  Get_Languages (Project_View);
+      Project_Languages : Argument_List :=  Get_Languages (Project);
       Ent     : Gtk_GEntry;
-      Project : constant Project_Node_Id := Get_Project_From_View
-        (Project_View);
       Combo        : Gtk_Combo;
       Items        : Gtk.Enums.String_List.Glist;
       Frame        : Gtk_Frame;
@@ -230,7 +249,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Name);
       Set_Width_Chars (Editor.Name, 0);
-      Set_Text (Editor.Name, Project_Name (Project_View));
+      Set_Text (Editor.Name, Project_Name (Project));
       Pack_Start (Hbox, Editor.Name, Expand => True);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
@@ -251,7 +270,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Path);
       Set_Width_Chars (Editor.Path, 0);
-      Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
+      Set_Text (Editor.Path, Project_Directory (Project));
       Pack_Start (Hbox, Editor.Path, Expand => True);
 
       Gtk_New (Button2, -"Browse");
@@ -263,8 +282,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
       Set_Active
-        (Editor.Use_Relative_Paths,
-         Project_Uses_Relative_Paths (Kernel, Project));
+        (Editor.Use_Relative_Paths, Paths_Are_Relative (Kernel, Project));
       Pack_Start (Box, Editor.Use_Relative_Paths);
       Set_Tip (Get_Tooltips (Kernel), Editor.Use_Relative_Paths,
                -("If this field is activated, then all the path information in"
@@ -356,7 +374,7 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-                 (Project_View, Compiler_Command_Attribute,
+                 (Project, Compiler_Command_Attribute,
                   Ide_Package, Default => "gnatmake",
                   Index => Languages (L).all));
 
@@ -366,7 +384,7 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-                 (Project_View, Compiler_Command_Attribute,
+                 (Project, Compiler_Command_Attribute,
                   Ide_Package, Default => "gcc",
                   Index => Languages (L).all));
          end if;
@@ -425,7 +443,7 @@ package body Project_Properties is
          Set_Text
            (Editor.Gnatls,
             Get_Attribute_Value
-            (Project_View, Gnatlist_Attribute,
+            (Project, Gnatlist_Attribute,
              Ide_Package, Default => "gnatls"));
 
          Set_Sensitive (Editor.Gnatls, Get_Active (Ada_Check));
@@ -471,7 +489,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Debugger,
          Get_Attribute_Value
-         (Project_View, Debugger_Command_Attribute,
+         (Project, Debugger_Command_Attribute,
           Ide_Package, Default => "gdb"));
 
       --  Configuration frame
@@ -503,7 +521,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Global_Pragmas,
          Get_Attribute_Value
-         (Project_View, Global_Pragmas_Attribute,
+         (Project, Global_Pragmas_Attribute,
           Builder_Package, Default => ""));
 
       Gtk_New (Button2, -"Browse");
@@ -535,7 +553,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Local_Pragmas,
          Get_Attribute_Value
-         (Project_View, Local_Pragmas_Attribute,
+         (Project, Local_Pragmas_Attribute,
           Compiler_Package, Default => ""));
 
       Gtk_New (Button2, -"Browse");
@@ -579,7 +597,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Tools_Host,
          Get_Attribute_Value
-         (Project_View, Remote_Host_Attribute,
+         (Project, Remote_Host_Attribute,
           Ide_Package, Default => ""));
 
       --  Program host
@@ -604,7 +622,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Program_Host,
          Get_Attribute_Value
-         (Project_View, Program_Host_Attribute,
+         (Project, Program_Host_Attribute,
           Ide_Package, Default => ""));
 
       --  Protocol
@@ -635,7 +653,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Protocol,
          Get_Attribute_Value
-         (Project_View, Protocol_Attribute,
+         (Project, Protocol_Attribute,
           Ide_Package, Default => ""));
 
       Free (Languages);
@@ -649,10 +667,10 @@ package body Project_Properties is
    ----------------
 
    procedure Initialize
-     (Editor       : access Properties_Editor_Record'Class;
-      Project_View : Prj.Project_Id;
-      Kernel       : access Kernel_Handle_Record'Class)
-   is
+     (Editor  : access Properties_Editor_Record'Class;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class)
+  is
       Label        : Gtk_Label;
       Main_Note    : Gtk_Notebook;
       Button       : Gtk_Widget;
@@ -663,8 +681,7 @@ package body Project_Properties is
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
-         Title  => -"Properties for "
-           & Project_Name (Project_View),
+         Title  => -"Properties for " & Project_Name (Project),
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Policy
@@ -687,7 +704,7 @@ package body Project_Properties is
 
       Gtk_New (Label, -"General");
       Append_Page
-        (Main_Note, Create_General_Page (Editor, Project_View, Kernel), Label);
+        (Main_Note, Create_General_Page (Editor, Project, Kernel), Label);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack_Start (Main_Box, Box, Expand => True, Fill => True);
@@ -696,16 +713,15 @@ package body Project_Properties is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Box, Label, Expand => False);
 
-      Gtk_New
-        (Editor.Prj_Selector, Kernel, Get_Project_From_View (Project_View));
+      Gtk_New (Editor.Prj_Selector, Kernel, Project);
       Pack_Start (Box, Editor.Prj_Selector, Expand => True, Fill => True);
 
       Gtk_New (Editor.Selector, Kernel);
       Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
 
-      Editor.Project_View := Project_View;
-      Editor.Kernel       := Kernel_Handle (Kernel);
-      Editor.Pages        := new Widget_Array
+      Editor.Project := Project;
+      Editor.Kernel  := Kernel_Handle (Kernel);
+      Editor.Pages   := new Widget_Array
         (1 .. Project_Editor_Pages_Count (Kernel));
 
       Show_All (Editor);
@@ -719,8 +735,7 @@ package body Project_Properties is
 
          Gtk_New (Label, Get_Label (Page));
          Editor.Pages (E) := Widget_Factory
-           (Page, Project_View,
-            Project_Path (Project_View), Editor.Kernel);
+           (Page, Project, Project_Path (Project), Editor.Kernel);
          Append_Page (Main_Note, Editor.Pages (E), Label);
       end loop;
 
@@ -759,7 +774,7 @@ package body Project_Properties is
             Refresh
               (Page         => Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
                Widget       => Ed.Pages (Page),
-               Project_View => Ed.Project_View,
+               Project      => Ed.Project,
                Languages    => Get_Languages (Ed));
             Free (Languages);
          end;
@@ -809,8 +824,8 @@ package body Project_Properties is
    ---------------------
 
    procedure Edit_Properties
-     (Project_View : Prj.Project_Id;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Project : Project_Type;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
@@ -820,9 +835,9 @@ package body Project_Properties is
 
       function Process_General_Page
         (Editor : Properties_Editor;
-         Project : Project_Node_Id;
-         Project_View : Project_Id;
-         Scenario_Variables : Project_Node_Array)
+         Project : Project_Type;
+         Scenario_Variables : Scenario_Variable_Array;
+         Project_Renamed_Or_Moved : Boolean)
          return Boolean;
       --  Modify the attributes set on the general page
 
@@ -841,28 +856,44 @@ package body Project_Properties is
 
       function Process_General_Page
         (Editor : Properties_Editor;
-         Project : Project_Node_Id;
-         Project_View : Project_Id;
-         Scenario_Variables : Project_Node_Array)
+         Project : Project_Type;
+         Scenario_Variables : Scenario_Variable_Array;
+         Project_Renamed_Or_Moved : Boolean)
          return Boolean
       is
-         Changed : Boolean := False;
-         Ent     : Gtk_GEntry;
-         Check   : Gtk_Check_Button;
-         Relative : constant Boolean := Get_Active (Editor.Use_Relative_Paths);
+         Changed  : Boolean := False;
+         Ent      : Gtk_GEntry;
+         Check    : Gtk_Check_Button;
+         Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
       begin
+         --  If we are moving the project through the GUI, then we need to
+         --  convert the paths to absolute or the semantics changes.
+
+         if Project_Renamed_Or_Moved then
+            Relative := False;
+         end if;
+
          --  Convert the paths if necessary
-         if Relative /= Project_Uses_Relative_Paths (Kernel, Project) then
-            Set_Project_Uses_Relative_Paths (Kernel, Project, Relative);
+         if Relative /= Paths_Are_Relative (Kernel, Project) then
+            if Relative then
+               Set_Paths_Type (Project, Projects.Relative);
+            else
+               Set_Paths_Type (Project, Absolute);
+            end if;
+
             Changed := Changed
               or Convert_Paths (Project                => Project,
                                 Use_Relative_Paths     => Relative,
                                 Update_With_Statements => True);
+
+            if Changed then
+               Trace (Me, "Paths have changed relative/absolute");
+            end if;
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Gnatls) /= Get_Attribute_Value
-           (Project_View, Gnatlist_Attribute, Ide_Package,
+           (Project, Gnatlist_Attribute, Ide_Package,
             Default => "gnatls")
          then
             Update_Attribute_Value_In_Scenario
@@ -875,9 +906,9 @@ package body Project_Properties is
             Trace (Me, "gnatls changed");
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
-           (Project_View, Debugger_Command_Attribute, Ide_Package,
+           (Project, Debugger_Command_Attribute, Ide_Package,
             Default => "gdb")
          then
             Update_Attribute_Value_In_Scenario
@@ -893,11 +924,11 @@ package body Project_Properties is
          declare
             New_Languages : Argument_List := Get_Languages (Editor);
          begin
-            if Project_View /= No_Project then
+            if Project /= No_Project then
 
                declare
                   Project_Languages : Argument_List :=
-                    Get_Languages (Project_View);
+                    Get_Languages (Project);
                   Different : Boolean;
                begin
                   for J in Editor.Languages'Range loop
@@ -908,12 +939,12 @@ package body Project_Properties is
                         Different := False;
                         if To_Lower (Languages (J).all) = "ada" then
                            Different := Get_Attribute_Value
-                             (Project_View, Compiler_Command_Attribute,
+                             (Project, Compiler_Command_Attribute,
                               Ide_Package, Default => "gnatmake",
                               Index => Languages (J).all) /= Get_Text (Ent);
                         else
                            Different := Get_Attribute_Value
-                             (Project_View, Compiler_Command_Attribute,
+                             (Project, Compiler_Command_Attribute,
                               Ide_Package, Default => "gcc",
                               Index => Languages (J).all) /= Get_Text (Ent);
                         end if;
@@ -975,9 +1006,9 @@ package body Project_Properties is
             Free (New_Languages);
          end;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
-           (Project_View, Remote_Host_Attribute,
+           (Project, Remote_Host_Attribute,
             Ide_Package, Default => "")
          then
             Changed := True;
@@ -999,9 +1030,9 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Program_Host) /= Get_Attribute_Value
-           (Project_View, Program_Host_Attribute,
+           (Project, Program_Host_Attribute,
             Ide_Package, Default => "")
          then
             Changed := True;
@@ -1023,9 +1054,9 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Protocol) /= Get_Attribute_Value
-           (Project_View, Protocol_Attribute,
+           (Project, Protocol_Attribute,
             Ide_Package, Default => "")
          then
             Changed := True;
@@ -1047,9 +1078,9 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Global_Pragmas) /= Get_Attribute_Value
-           (Project_View, Global_Pragmas_Attribute,
+           (Project, Global_Pragmas_Attribute,
             Builder_Package, Default => "")
          then
             Changed := True;
@@ -1071,9 +1102,9 @@ package body Project_Properties is
             end if;
          end if;
 
-         if Project_View = No_Project
+         if Project = No_Project
            or else Get_Text (Editor.Local_Pragmas) /= Get_Attribute_Value
-           (Project_View, Local_Pragmas_Attribute,
+           (Project, Local_Pragmas_Attribute,
             Compiler_Package, Default => "")
          then
             Changed := True;
@@ -1101,13 +1132,12 @@ package body Project_Properties is
 
       Editor  : Properties_Editor;
       Changed : Boolean := False;
-      Project : constant Project_Node_Id :=
-        Get_Project_From_View (Project_View);
       Response : Gtk_Response_Type;
       Response2 : Message_Dialog_Buttons;
+      Project_Renamed_Or_Moved : Boolean := False;
 
    begin
-      Gtk_New (Editor, Project_View, Kernel);
+      Gtk_New (Editor, Project, Kernel);
 
       loop
          Response := Run (Editor);
@@ -1141,13 +1171,13 @@ package body Project_Properties is
                New_Path : constant String :=
                  Name_As_Directory (Get_Text (Editor.Path));
             begin
-               if (New_Name /= Project_Name (Project_View)
-                   or else New_Path /= Dir_Name (Project_Path (Project_View)))
+               if (New_Name /= Project_Name (Project)
+                   or else New_Path /= Project_Directory (Project))
                  and then Is_Regular_File
-                 (New_Path & New_File & Prj.Project_File_Extension)
+                 (New_Path & New_File & Project_File_Extension)
                then
                   Response2 := Message_Dialog
-                    (Msg => New_Path & New_File & Prj.Project_File_Extension
+                    (Msg => New_Path & New_File & Project_File_Extension
                      & (-" already exists. Do you want to overwrite ?"),
                      Buttons => Button_Yes or Button_No,
                      Dialog_Type => Error,
@@ -1169,55 +1199,11 @@ package body Project_Properties is
             New_Name : constant String := Get_Text (Editor.Name);
             New_Path : constant String :=
               Name_As_Directory (Get_Text (Editor.Path));
-            Relative : Boolean := Get_Active
-              (Editor.Use_Relative_Paths);
-
          begin
-            --  We normalize the project automatically. If the project is not
-            --  modified after all, it doesn't matter since we are not going to
-            --  save the project.
-
-            if not Has_Been_Normalized (Project) then
-               Normalize (Project, Recurse => False);
-            end if;
-
-            --  If we are moving the project through the GUI, then we need to
-            --  convert the paths to absolute or the semantics changes.
-
-            if New_Name /= Project_Name (Project_View)
-              or else New_Path /= Dir_Name (Project_Path (Project_View))
+            if New_Name /= Project_Name (Project)
+              or else New_Path /= Project_Directory (Project)
             then
-               Relative := False;
-            end if;
-
-            --  Convert the paths if necessary
-
-            if Relative /= Project_Uses_Relative_Paths (Kernel, Project) then
-               Set_Project_Uses_Relative_Paths (Kernel, Project, Relative);
-               Changed := Changed
-                 or Convert_Paths (Project                => Project,
-                                   Use_Relative_Paths     => Relative,
-                                   Update_With_Statements => True);
-               if Changed then
-                  Trace (Me, "Paths have changed relative/absolute");
-               end if;
-            end if;
-
-            if New_Name /= Project_Name (Project_View)
-              or else New_Path /= Dir_Name (Project_Path (Project_View))
-            then
-               --  Mark all the importing projects as modified
-               declare
-                  Importing : constant Project_Id_Array :=
-                    Find_All_Projects_Importing
-                    (Root_Project => Get_Project (Kernel),
-                     Project      => Project_View);
-               begin
-                  for P in Importing'Range loop
-                     Set_Project_Modified
-                       (Kernel, Get_Project_From_View (Importing (P)), True);
-                  end loop;
-               end;
+               Project_Renamed_Or_Moved := True;
 
                Rename_And_Move
                  (Root_Project  => Get_Project (Kernel),
@@ -1237,31 +1223,22 @@ package body Project_Properties is
             end if;
          end;
 
-         if Changed then
-            Set_Project_Modified (Kernel, Project, True);
-         end if;
-
          declare
-            Vars         : constant Project_Node_Array :=
+            Vars         : constant Scenario_Variable_Array :=
               Scenario_Variables (Kernel);
             Saved_Values : Argument_List := Get_Current_Scenario (Vars);
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
-            View         : Project_Id;
          begin
-            while Current (Prj_Iter) /= Empty_Node loop
-               if not Has_Been_Normalized (Current (Prj_Iter)) then
-                  Normalize (Current (Prj_Iter), Recurse => False);
-               end if;
-
+            while Current (Prj_Iter) /= No_Project loop
                declare
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
                begin
                   while not At_End (Scenar_Iter) loop
                      --  Set the scenario
                      declare
-                        Curr : Argument_List := Current (Scenar_Iter);
-                        Is_Env  : Boolean := True;
+                        Curr   : Argument_List := Current (Scenar_Iter);
+                        Is_Env : Boolean := True;
                      begin
                         Set_Environment (Vars, Curr);
 
@@ -1271,23 +1248,14 @@ package body Project_Properties is
                         end loop;
 
                         Free (Curr);
-
-                        --  If the scenario is the one selected by the user,
-                        --  then we know the project view already
-                        if Is_Env then
-                           View := Current (Prj_Iter);
-                        else
-                           View := No_Project;
-                        end if;
                      end;
 
                      if Process_General_Page
-                       (Editor, Current (Prj_Iter), View, Vars)
+                       (Editor, Current (Prj_Iter), Vars,
+                        Project_Renamed_Or_Moved)
                      then
                         Trace (Me, "General page modified the project");
                         Changed := True;
-                        Set_Project_Modified
-                          (Kernel, Current (Prj_Iter), True);
                      end if;
 
                      --  Modify each projects
@@ -1300,22 +1268,15 @@ package body Project_Properties is
                         if ((Get_Flags (Ed) and Multiple_Projects) /= 0
                             or else Current (Prj_Iter) = Project)
                         then
-                           declare
-                              Result : constant Project_Node_Array :=
-                                Project_Editor
-                                (Ed, Current (Prj_Iter), View,
-                                 Kernel, Editor.Pages (P),
-                                 Vars,
-                                 Ref_Project => Project);
-                           begin
-                              for R in Result'Range loop
-                                 Trace (Me, "Project modified on page "
-                                        & P'Img);
-                                 Changed := True;
-                                 Set_Project_Modified
-                                   (Kernel, Result (R), True);
-                              end loop;
-                           end;
+                           if Project_Editor
+                             (Ed, Current (Prj_Iter),
+                              Kernel, Editor.Pages (P),
+                              Vars,
+                              Ref_Project => Project)
+                           then
+                              Trace (Me, "Project modified on page " & P'Img);
+                              Changed := True;
+                           end if;
                         end if;
                      end loop;
 
@@ -1335,6 +1296,8 @@ package body Project_Properties is
             Recompute_View (Kernel);
          end if;
       end if;
+
+      Trace_Pretty_Print (Me, Project);
 
       Destroy (Editor);
       Free (Languages);

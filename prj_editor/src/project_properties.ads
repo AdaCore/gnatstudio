@@ -26,13 +26,13 @@
 
 with Glib.Object;
 with Glide_Kernel;
-with Prj;
+with Projects;
 
 package Project_Properties is
 
    procedure Edit_Properties
-     (Project_View : Prj.Project_Id;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Project : Projects.Project_Type;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Edit the properties for Project_View.
 
    procedure Edit_Project_Properties
