@@ -561,7 +561,7 @@ package body Format is
       Char          : Character;
       PChar         : Character;
       Padding       : Integer;
-  
+
       procedure Handle_Two_Chars (Second_Char : Character);
       --  Handle a two char operator, whose second char is Second_Char.
 
@@ -836,7 +836,7 @@ package body Format is
       Indentation : Integer;
       Index       : Word;
 
-   begin   
+   begin
       if not Indent_Done then
          Start := Line_Start (Buffer, Prec);
          Index := Start;
@@ -1000,7 +1000,7 @@ package body Format is
                      null;
                end case;
 
-               pragma Debug (Put_Line ("end " & Val'IMG));
+               pragma Debug (Put_Line ("end " & Val'Img));
             end if;
 
             Num_Spaces := Num_Spaces - Indent_Level;
@@ -1100,8 +1100,6 @@ package body Format is
 
                else
                   Val := Top (Tokens);
-
-                  --  Should have a more complete case statement here ???
 
                   if Val /= Tok_Package then
                      Pop (Tokens);
@@ -1274,6 +1272,9 @@ package body Format is
       First : Natural;
       Tmp   : Line_Buffer;
       Prev  : Line_Buffer;
+      pragma Warnings (Off, Prev);
+      --  GNAT will issue a "warning: "Prev" may be null" which cannot occur
+      --  since Prev is set to Tmp at the end of each iteration.
 
    begin
       loop
