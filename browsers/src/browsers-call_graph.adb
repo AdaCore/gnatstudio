@@ -74,6 +74,9 @@ package body Browsers.Call_Graph is
    --  If True, then every time an item is added to the call graph we check,
    --  and if no to dependency exists, the right arrow is not displayed.
 
+   Locations_At_A_Time : constant := 300;
+   --  Number of locations that will be inserted in the locations view in
+   --  each idle processing.
 
    ------------------------
    -- Call graph browser --
@@ -1200,35 +1203,46 @@ package body Browsers.Call_Graph is
       Result  : out Command_Return_Type)
    is
       Location : File_Location;
+      Count    : Integer := 0;
    begin
-      if At_End (Data.Iter.all) then
-         Recount_Category
-           (Data.Kernel, Data.Category.all & Get_Name (Data.Entity));
-         Result := Success;
-      else
-         if Get (Data.Iter.all) /= No_Entity_Reference then
-            if (Data.Include_Writes
-                and then Is_Write_Reference (Get_Kind (Get (Data.Iter.all))))
-              or else
-                (Data.Include_Reads
-                 and then Is_Read_Reference (Get_Kind (Get (Data.Iter.all))))
-            then
-               Location := Get_Location (Get (Data.Iter.all));
-               Print_Ref
-                 (Data.Kernel, Location,
-                  Get_Name (Data.Entity),
-                  Data.Category.all & Get_Name (Data.Entity));
+      Result := Execute_Again;
+
+      while Count < Locations_At_A_Time
+        and then Result = Execute_Again
+      loop
+         if At_End (Data.Iter.all) then
+            Recount_Category
+              (Data.Kernel, Data.Category.all & Get_Name (Data.Entity));
+            Result := Success;
+         else
+            if Get (Data.Iter.all) /= No_Entity_Reference then
+               if (Data.Include_Writes
+                   and then Is_Write_Reference
+                     (Get_Kind (Get (Data.Iter.all))))
+                 or else
+                   (Data.Include_Reads
+                    and then Is_Read_Reference
+                      (Get_Kind (Get (Data.Iter.all))))
+               then
+                  Location := Get_Location (Get (Data.Iter.all));
+                  Print_Ref
+                    (Data.Kernel, Location,
+                     Get_Name (Data.Entity),
+                     Data.Category.all & Get_Name (Data.Entity));
+               end if;
             end if;
+
+            Next (Data.Iter.all);
+
+            Set_Progress
+              (Command,
+               (Running,
+                Get_Current_Progress (Data.Iter.all),
+                Get_Total_Progress (Data.Iter.all)));
          end if;
 
-         Next (Data.Iter.all);
-
-         Set_Progress (Command,
-                       (Running,
-                        Get_Current_Progress (Data.Iter.all),
-                        Get_Total_Progress (Data.Iter.all)));
-         Result := Execute_Again;
-      end if;
+         Count := Count + 1;
+      end loop;
    end Find_Next_Reference;
 
    ----------------------------------
