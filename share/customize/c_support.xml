@@ -84,6 +84,22 @@
       </switches>
    </tool>
 
+   <tool name="C Linker" package="Linker" index="c">
+      <language>C</language>
+      <switches lines="1">
+         <check label="Strip symbols" switch="-s" />
+         <check label="Debug information" switch="-g" />
+      </switches>
+   </tool>
+
+   <tool name="C++ Linker" package="Linker" index="c++">
+      <language>C++</language>
+      <switches lines="1">
+         <check label="Strip symbols" switch="-s" />
+         <check label="Debug information" switch="-g" />
+      </switches>
+   </tool>
+
    <vsearch-pattern>
      <name>C: -&gt;MEMBER</name>
      <regexp>\s*(\w+)\s*[^(]</regexp>
