@@ -163,6 +163,11 @@ package body Outline_View is
    procedure Clear (Outline : access Outline_View_Record'Class);
    --  Clear the contents of the outline view, and reset all marks
 
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been saved
+
    ----------------------
    -- Location_Changed --
    ----------------------
@@ -665,10 +670,45 @@ package body Outline_View is
            (Kernel  => Kernel_Handle (Kernel),
             Context => Get_Current_Context (Kernel));
          On_Context_Changed (Kernel, Data'Unchecked_Access);
+
+
+         Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access,
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, Preferences_Changed_Hook,
+                   Preferences_Changed'Access,
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, Location_Changed_Hook, Location_Changed'Access,
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, File_Saved_Hook, File_Saved'Access,
+                   Watch => GObject (Outline));
       end if;
 
       return Child;
    end Open_Outline;
+
+   ----------------
+   -- File_Saved --
+   ----------------
+
+   procedure File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Outline : Outline_View_Access;
+      Child   : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+
+         if Outline.File = D.File then
+            Refresh (Outline);
+         end if;
+      end if;
+   end File_Saved;
 
    ------------------------
    -- On_Context_Changed --
@@ -776,10 +816,6 @@ package body Outline_View is
             Nick    => -"Link with editor"));
       Register_Property
         (Kernel, Param_Spec (Outline_View_Link_Editor), -"Outline");
-
-      Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access);
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
-      Add_Hook (Kernel, Location_Changed_Hook, Location_Changed'Access);
    end Register_Module;
 
 end Outline_View;
