@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -62,6 +62,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -85,6 +86,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -113,6 +115,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -130,6 +133,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -147,6 +151,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -164,6 +169,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Files : String_List.List := Get_Selected_Files (Kernel);
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
@@ -180,6 +186,7 @@ package body VCS_View_API is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       Item : Gtk_Menu_Item;
    begin
       Gtk_New (Item, Label => -"VCS Update");
