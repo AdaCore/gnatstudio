@@ -1195,6 +1195,7 @@ package body Src_Editor_Module is
       File : Glib.String_Ptr;
       Data : Location_Idle_Data;
       Id   : Idle_Handler_Id;
+      pragma Unreferenced (Id);
    begin
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
@@ -1715,9 +1716,9 @@ package body Src_Editor_Module is
    procedure On_Open_From_Path
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Label  : Gtk_Label;
       Button : Gtk_Widget;
+      pragma Unreferenced (Widget, Button);
       Id     : Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
@@ -1803,8 +1804,8 @@ package body Src_Editor_Module is
    procedure On_New_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Editor : Source_Box;
+      pragma Unreferenced (Widget, Editor);
    begin
       Editor := Open_File (Kernel, File => "");
 
@@ -1873,9 +1874,8 @@ package body Src_Editor_Module is
    procedure On_Save_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
       Ignore : Boolean;
+      pragma Unreferenced (Widget, Ignore);
 
    begin
       Ignore := Save_All_MDI_Children (Kernel, Force => True);
@@ -1892,9 +1892,8 @@ package body Src_Editor_Module is
    procedure On_Save_All_Editors
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
       Ignore : Boolean;
+      pragma Unreferenced (Widget, Ignore);
 
    begin
       Ignore := Save_All_Editors (Kernel, Force => True);
