@@ -777,27 +777,6 @@ package body Commands.Custom is
       function Get_Show_Command (N : Node_Ptr) return Boolean;
       --  Return True if the command should be shown for N
 
-      function Protect_Quoted
-        (S      : in String;
-         Quoted : Boolean) return String;
-      --  If Quoted is True, escape all quotes in S and return result,
-      --  otherwise return S.
-
-      --------------------
-      -- Protect_Quoted --
-      --------------------
-
-      function Protect_Quoted
-        (S      : in String;
-         Quoted : Boolean) return String is
-      begin
-         if Quoted then
-            return String_Utils.Protect (S);
-         else
-            return S;
-         end if;
-      end Protect_Quoted;
-
       -------------------------
       -- Dollar_Substitution --
       -------------------------
@@ -861,7 +840,8 @@ package body Commands.Custom is
                      else
                         declare
                            Protect : constant String :=
-                             Protect_Quoted (Context.Args (J).all, Quoted);
+                             String_Utils.Protect (Context.Args (J).all,
+                                                   Protect_Quotes => Quoted);
                         begin
                            Result
                              (Index .. Index + Protect'Length + 2) :=
@@ -874,7 +854,8 @@ package body Commands.Custom is
                end loop;
 
                if Interval = 1 then
-                  return Protect_Quoted (Result (1 .. Index - 1), Quoted);
+                  return String_Utils.Protect
+                    (Result (1 .. Index - 1), Protect_Quotes => Quoted);
                else
                   return Result (1 .. Index - 4);
                end if;
@@ -896,7 +877,8 @@ package body Commands.Custom is
                if Result in Context.Args'Range
                  and then Context.Args (Result) /= null
                then
-                  return Protect_Quoted (Context.Args (Result).all, Quoted);
+                  return String_Utils.Protect
+                    (Context.Args (Result).all, Protect_Quotes => Quoted);
                end if;
             end if;
          end if;
@@ -957,17 +939,20 @@ package body Commands.Custom is
             File := File_Selection_Context_Access (Command.Execution.Context);
 
             if Param = "f" then
-               return Protect_Quoted
-                 (Base_Name (File_Information (File)), Quoted);
+               return String_Utils.Protect
+                 (Base_Name (File_Information (File)),
+                  Protect_Quotes => Quoted);
             else
-               return Protect_Quoted
-                 (Full_Name (File_Information (File)).all, Quoted);
+               return String_Utils.Protect
+                 (Full_Name (File_Information (File)).all,
+                  Protect_Quotes => Quoted);
             end if;
 
          elsif Param = "d" then
             --  We know from Check_Save_Output that the context is valid
             File := File_Selection_Context_Access (Command.Execution.Context);
-            return Protect_Quoted (Directory_Information (File), Quoted);
+            return String_Utils.Protect
+              (Directory_Information (File), Protect_Quotes => Quoted);
 
          elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
             Project := Project_From_Param (Param, Command.Execution.Context);
@@ -976,8 +961,8 @@ package body Commands.Custom is
                if Project = No_Project then
                   return "";
                else
-                  return Protect_Quoted
-                    ("-P" & Project_Path (Project), Quoted);
+                  return String_Utils.Protect
+                    ("-P" & Project_Path (Project), Protect_Quotes => Quoted);
                end if;
             end if;
 
@@ -987,10 +972,12 @@ package body Commands.Custom is
             end if;
 
             if Param = "p" or else Param = "P" then
-               return Protect_Quoted (Project_Name (Project), Quoted);
+               return String_Utils.Protect
+                 (Project_Name (Project), Protect_Quotes => Quoted);
 
             elsif Param = "pp" or else Param = "PP" then
-               return Protect_Quoted (Project_Path (Project), Quoted);
+               return String_Utils.Protect
+                 (Project_Path (Project), Protect_Quotes => Quoted);
 
             else
                Recurse := Param (Param'First + 1) = 'r';
@@ -1039,7 +1026,8 @@ package body Commands.Custom is
                            N : constant String := Name (File);
                         begin
                            Close (File);
-                           return Protect_Quoted (N, Quoted);
+                           return String_Utils.Protect
+                             (N, Protect_Quotes => Quoted);
                         end;
                      end;
 
@@ -1072,7 +1060,8 @@ package body Commands.Custom is
                            end if;
                         end if;
 
-                        return Protect_Quoted (To_String (Result), Quoted);
+                        return String_Utils.Protect
+                          (To_String (Result), Protect_Quotes => Quoted);
                      end;
                   end if;
                end if;
@@ -1106,18 +1095,21 @@ package body Commands.Custom is
                   if Output (Output'First) = '''
                     and then Output (Last) = '''
                   then
-                     return Protect_Quoted
-                       (Output (Output'First + 1 .. Last - 1), Quoted);
+                     return String_Utils.Protect
+                       (Output (Output'First + 1 .. Last - 1),
+                        Protect_Quotes => Quoted);
 
                   elsif Output (Output'First) = '"'
                     and then Output (Output'Last) = '"'
                   then
-                     return Protect_Quoted
-                       (Output (Output'First + 1 .. Last - 1), Quoted);
+                     return String_Utils.Protect
+                       (Output (Output'First + 1 .. Last - 1),
+                        Protect_Quotes => Quoted);
 
                   else
-                     return Protect_Quoted
-                       (Output (Output'First .. Last), Quoted);
+                     return String_Utils.Protect
+                       (Output (Output'First .. Last),
+                        Protect_Quotes => Quoted);
                   end if;
                end;
             end if;
