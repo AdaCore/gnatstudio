@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
+--                      Copyright (C) 2000-2005                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -968,7 +968,12 @@ package body String_Utils is
 
          Between_Curly := False;
 
-         if Str (First) = '{' then
+         if Str (First) = Substitution_Char then
+            --  We are escaping the Substitution_Char by doubling it.
+            Result := Result & Substitution_Char;
+            First := First + 1;
+
+         elsif Str (First) = '{' then
             Between_Curly := True;
             Last := Last + 1;
 
