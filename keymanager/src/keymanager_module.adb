@@ -256,7 +256,7 @@ package body KeyManager_Module is
    --  Get or create a secondary keymap in Table.
 
    function Find_Parent
-     (Model : Gtk_Tree_Store; Context : Action_Context) return Gtk_Tree_Iter;
+     (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter;
    function Find_Parent
      (Model : Gtk_Tree_Store; Context : String) return Gtk_Tree_Iter;
    --  Find the parent node for Context.
@@ -784,13 +784,12 @@ package body KeyManager_Module is
    -----------------
 
    function Find_Parent
-     (Model : Gtk_Tree_Store; Context : Action_Context) return Gtk_Tree_Iter
-   is
+     (Model : Gtk_Tree_Store; Filter : Action_Filter) return Gtk_Tree_Iter is
    begin
-      if Context = null then
+      if Filter = null or else Get_Name (Filter) = "" then
          return Find_Parent (Model, -"General");
       else
-         return Find_Parent (Model, Get_Name (Context));
+         return Find_Parent (Model, Get_Name (Filter));
       end if;
    end Find_Parent;
 
@@ -912,8 +911,7 @@ package body KeyManager_Module is
                else
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
                   if Action /= No_Action then
-                     Parent := Find_Parent
-                       (Editor.Model, Get_Context (Action.Filter));
+                     Parent := Find_Parent (Editor.Model, Action.Filter);
                      if Parent /= Null_Iter then
                         Parent := Children (Editor.Model, Parent);
                         while Parent /= Null_Iter loop
@@ -963,14 +961,14 @@ package body KeyManager_Module is
          Action := Get (Action_Iter);
          exit when Action = No_Action;
 
-         Parent := Find_Parent (Editor.Model, Get_Context (Action.Filter));
+         Parent := Find_Parent (Editor.Model, Action.Filter);
          if Parent = Null_Iter then
-            if Get_Context (Action.Filter) = null then
+            if Action.Filter = null or else Get_Name (Action.Filter) = "" then
                Parent := Set (Editor.Model, Null_Iter, -"General");
             else
                Parent := Set
                  (Editor.Model, Null_Iter,
-                  Get_Name (Get_Context (Action.Filter)));
+                  Get_Name (Action.Filter));
             end if;
          end if;
 
