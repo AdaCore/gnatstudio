@@ -2102,8 +2102,9 @@ package body Src_Editor_Buffer is
             begin
                if Str.Length > 0 then
                   declare
-                     Contents : constant String :=
-                       Locale_From_UTF8 (Str.Contents (1 .. Str.Length));
+                     Contents : constant String := Glib.Convert.Convert
+                       (Str.Contents (1 .. Str.Length),
+                        Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8");
                   begin
                      if Strip_Blank then
                         Index := Contents'Length;
