@@ -71,10 +71,6 @@ package body Docgen_Module is
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
 
-      One_Document_File     : Param_Spec_Boolean;
-      --  Used for TexInfo: True, if the project.texi file should be
-      --  build and the package files should be included there later.
-
       Link_All_References   : Param_Spec_Boolean;
       --  Should links be created to entities whose declaration files
       --  aren't being processed
@@ -323,8 +319,6 @@ package body Docgen_Module is
          Get_Pref
            (Kernel, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
          Get_Pref (Kernel, Docgen_Module (Docgen_Module_ID).Show_References),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).One_Document_File),
          Get_Pref
            (Kernel, Docgen_Module (Docgen_Module_ID).Link_All_References),
          Get_Pref
@@ -604,7 +598,8 @@ package body Docgen_Module is
 
       --  <frameset> is not supported by internal HTML viewer. Users will
       --  have to configure GPS so that it uses an external browser if they
-      --  want a sooth docgen integration.
+      --  want a smooth docgen integration.
+
       Open_Html
         (Kernel,
          Filename => Create
@@ -735,21 +730,6 @@ package body Docgen_Module is
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_ID).Show_References),
-         -"Documentation");
-
-      --  ??? docgen cannot generate texinfo at this time so the following call
-      --  is a bit anticipated.
-
-      Docgen_Module (Docgen_Module_ID).One_Document_File := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Doc-Texi-Single",
-            Default => False,
-            Blurb   =>
-              -("Whether Docgen should generate doc in one file (TexInfo"),
-            Nick    => -"Single file (for TexInfo)"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).One_Document_File),
          -"Documentation");
 
       Docgen_Module (Docgen_Module_ID).Link_All_References :=
