@@ -25,6 +25,7 @@ with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
+with Errout;      use Errout;
 with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
@@ -32,6 +33,7 @@ with Output;      use Output;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 
@@ -273,19 +275,22 @@ package body Glide_Kernel.Project is
 
       Output.Set_Special_Output (Report_Error'Unrestricted_Access);
       Free (Kernel.Scenario_Variables);
-      Kernel.Project_Is_Default := False;
       Prj.Part.Parse (New_Project, Project, True);
 
       if New_Project /= Empty_Node then
          Kernel.Project := New_Project;
-         Kernel.Project_View := No_Project;
-         Project_Changed (Kernel);
-         Recompute_View (Kernel);
+         Kernel.Project_Is_Default := False;
       else
          Trace (Me, "Couldn't load or parse the project " & Project);
          Console.Insert (Kernel, -"Couldn't parse the project " & Project);
+         Console.Insert (Kernel, -"Using default project instead");
+         Kernel.Project := Create_Default_Project ("default", Get_Current_Dir);
+         Kernel.Project_Is_Default := True;
       end if;
 
+      Kernel.Project_View := No_Project;
+      Project_Changed (Kernel);
+      Recompute_View (Kernel);
       Reset_Normalized_Flag (Kernel.Project);
       Output.Set_Special_Output (null);
 
@@ -386,6 +391,7 @@ package body Glide_Kernel.Project is
       --  Evaluate the current project
 
       Prj.Reset;
+      Errout.Initialize;
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
          Report_Error'Unrestricted_Access);
