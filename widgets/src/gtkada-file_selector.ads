@@ -108,8 +108,7 @@ package Gtkada.File_Selector is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access)
-     is abstract;
+      Text      : out String_Access) is abstract;
    --  This is the function that is called every time that a file could
    --  be shown in the file explorer.
    --  Dir is the directory the file is in.
@@ -154,6 +153,7 @@ private
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access);
+   --  ???
 
    -----------------
    -- Filter_List --
@@ -168,6 +168,9 @@ private
    end record;
 
    type File_Selector_Window_Record is new Gtk_Window_Record with record
+      --  ??? Fields that do not need to be referenced directly should not
+      --  be in this record, but only declared as local variables in Initialize
+
       Filters : Filter_List;
 
       Moving_Through_History : Boolean := True;
