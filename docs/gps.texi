@@ -6576,6 +6576,24 @@ core, and can be tested and executed interactively.
 The goal of such scripts is to be able to help automate processes such
 as builds, automatic generation of graphs,@dots{}
 
+These languages all have a separate console associated with them,
+which you can open from the @code{Tools} menu. In each of these
+console, GPS will display a prompt, at which you can type interactive
+commands. These console provide completion of the command names
+through the @key{tab} key.
+
+For instance, in the GPS shell console you can start typing
+@smallexample
+GPS> File
+@endsmallexample
+then press the @key{tab} key, which will list all the functions whose
+name starts with "File".
+
+@ifset python
+A similar feature is available in the python console, which also
+provides completion for all the standard python commands and modules.
+@end ifset
+
 All the scripting languages share the same set of commands exported by
 GPS, thanks to a abstract interface defined in the GPS core. As a
 result, GPS modules do not have to be modified when new scripting
@@ -7094,6 +7112,37 @@ specify e.g @option{-g -O2} for the @option{CFLAGS} switches.
 @item The GPS main window is not displayed
 If when launching GPS, nothing happens, you can try to rename the @file{.gps}
 directory (see @ref{Files}) to start from a fresh set up.
+
+@item My project have several files with the same name. How can import it in GPS?
+GPS's projects do not allow implicit overriding of sources file, ie
+you cannot have multiple times the same file in the project
+hierarchy. The reason is that GPS needs to know exactly where the file
+is, and shouldn't have to guess which occurrence to use.
+
+There are several solutions to handle this, which are used to build
+GPS itself.
+
+@itemize @bullet
+@item use scenario variables in the project
+The idea is that you define various scenarios in your project (For
+instance compiling in "debug" mode or "production" mode), and change
+the source directories depending on this setup.  Such projects can be
+edited directly from GPS (in the project properties editor, this is
+the right part of the window, as described in this documentation).  On
+top of the project explorer (left part of the GPS main window), you
+have a combo box displayed for each of the variable, allowing a very
+fast switch of scenario depending on what you want to build.
+
+@item use extending projects
+These projects cannot currently be edited through GPS, and you will
+have to edit these by hand. See the GNAT user's guide for more
+information. 
+
+The idea behind this is that you can have a local overriding of some
+source files from the command build/source setup (if you are working
+on a small part of the whole system, you do not want to copy the
+million or more lines of code on your local machine)
+@itemize
 
 @end table
 
