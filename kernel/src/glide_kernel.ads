@@ -44,6 +44,7 @@ with Prj;
 with Prj_API;
 with Src_Info;
 with Src_Info.Queries;
+with String_List_Utils;
 with System;
 with Ada.Unchecked_Conversion;
 with Default_Preferences;
@@ -244,7 +245,7 @@ package Glide_Kernel is
 
    procedure Find_Next_Body
      (Kernel      : access Kernel_Handle_Record;
-      Lib_Info    : Src_Info.Li_File_Ptr;
+      Lib_Info    : Src_Info.LI_File_Ptr;
       File_Name   : String;
       Entity_Name : String;
       Line        : Positive;
@@ -270,7 +271,7 @@ package Glide_Kernel is
 
    type Module_ID_Information (<>) is private;
    type Module_ID_Record is tagged private;
-   type Module_ID is access all Module_Id_Record'Class;
+   type Module_ID is access all Module_ID_Record'Class;
    --  Module identifier. Each of the registered module in Glide has such a
    --  identifier, that contains its name and all the callbacks associated with
    --  the module.
@@ -399,6 +400,14 @@ package Glide_Kernel is
    --  If the user has refused to save the widget, return False,
    --  otherwise return True.
    --  Child is the widget that put directly in the MDI.
+
+   type Module_Command_Function is access function
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  A function called when an interactive command is issued.
+   --  Command is the command to be issued with parameters Args.
+   --  This function must NOT modify of free the contents of Args.
 
    type Module_Tooltip_Handler is access procedure
      (Context : access Selection_Context'Class;
@@ -613,6 +622,17 @@ package Glide_Kernel is
 
 private
 
+   type Command_Information is record
+      Command         : GNAT.OS_Lib.String_Access;
+      Help            : GNAT.OS_Lib.String_Access;
+      Command_Handler : Module_Command_Function;
+   end record;
+
+   procedure Free (X : in out Command_Information);
+   --  Free memory associated with X.
+
+   package Command_List is new Generic_List (Command_Information);
+
    function Get_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the predefined Object_Path associated to the given Kernel Handle.
@@ -652,6 +672,9 @@ private
    --  Destroy the data stored in Data.
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
+      Commands_List : Command_List.List;
+      --  The list of all registered command
+
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.
 
@@ -667,7 +690,7 @@ private
       --  The current project view. This is the same Project, after it has been
       --  evaluated based on the current value of the environment variables.
 
-      Projects_Data : Project_Hash.Project_Htable.Htable;
+      Projects_Data : Project_Hash.Project_Htable.HTable;
       --  Information stored about each loaded project (and the imported
       --  projects).
       --  ??? This wouldn't be necessary if we could save user data in
