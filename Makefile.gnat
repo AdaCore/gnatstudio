@@ -75,6 +75,8 @@ GNAT_SOURCES= \
   osint.adb \
   output.ads \
   output.adb \
+  prj-attr-pm.adb \
+  prj-attr-pm.ads \
   prj-attr.ads \
   prj-attr.adb \
   prj-com.ads \
