@@ -39,6 +39,10 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
 with Ada.Command_Line;          use Ada.Command_Line;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Language.Ada;              use Language.Ada;
+with Language.C;                use Language.C;
+with Language.Cpp;              use Language.Cpp;
 with Prj;                       use Prj;
 with Src_Info;                  use Src_Info;
 
@@ -79,6 +83,7 @@ procedure Glide2 is
    Prefix         : String_Access;
    Dir            : String_Access;
    File_Opened    : Boolean := False;
+   Handler        : Language_Handlers.Glide.Glide_Language_Handler;
 
    procedure Init_Settings;
    --  Set up environment for Glide.
@@ -191,9 +196,29 @@ begin
    Glide_Consoles.Register_Module (Glide.Kernel);
    Navigation_Module.Register_Module (Glide.Kernel);
 
-   --  Register all LI parsers
+   --  Register the supported languages
 
-   Src_Info.Register_LI_Handler (new Src_Info.ALI.ALI_Handler_Record, "ada");
+   Handler := Glide_Language_Handler (Get_Language_Handler (Glide.Kernel));
+   Register_Language (Handler, "ada", Ada_Lang);
+   Add_Language_Info
+     (Handler, "ada",
+      LI                  => new Src_Info.ALI.ALI_Handler_Record,
+      Default_Spec_Suffix => ".ads",
+      Default_Body_Suffix => ".adb");
+
+   Register_Language (Handler, "c",   C_Lang);
+   Add_Language_Info
+     (Handler, "c",
+      LI                  => null,
+      Default_Spec_Suffix => ".h",
+      Default_Body_Suffix => ".c");
+
+   Register_Language (Handler, "c++", Cpp_Lang);
+   Add_Language_Info
+     (Handler, "c++",
+      LI                  => null,
+      Default_Spec_Suffix => ".h",
+      Default_Body_Suffix => ".cc");
 
    --  ??? Should have a cleaner way of initializing Log_File
 
