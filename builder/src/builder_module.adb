@@ -279,8 +279,6 @@ package body Builder_Module is
       Set_Sensitive (Find_Menu_Item
         (Kernel, Build & (-"Compile File")), Sensitive);
       Set_Sensitive (Find_Menu_Item (Kernel, Build & (-"Make")), Sensitive);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Build & (-"Custom...")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Build & (-"Stop Build")), not Sensitive);
    end Set_Sensitive_Menus;
@@ -305,6 +303,7 @@ package body Builder_Module is
       Project_Name : constant String := Get_Project_File_Name (K);
       Langs        : Argument_List := Get_Languages (Project_View);
       Syntax       : Command_Syntax;
+      State_Pushed : Boolean := False;
 
    begin
       Lower_Case (Langs (Langs'First).all);
@@ -398,6 +397,7 @@ package body Builder_Module is
          Highlight_Sloc => False, Add_LF => True);
 
       Push_State (K, Processing);
+      State_Pushed := True;
       Set_Sensitive_Menus (K, False);
 
       Top.Interrupted := False;
@@ -420,6 +420,10 @@ package body Builder_Module is
 
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
+         if State_Pushed then
+            Pop_State (K);
+         end if;
    end On_Build;
 
    ---------------------
@@ -996,6 +1000,7 @@ package body Builder_Module is
                         File    => Exec));
                end;
             end loop;
+
             Free (Mains);
          end;
 
@@ -1016,8 +1021,18 @@ package body Builder_Module is
              File    => ""));
       end if;
 
+      Gtk_New (Mitem, -"Custom...");
+      Append (Menu1, Mitem);
+      Kernel_Callback.Connect
+        (Mitem, "activate",
+         Kernel_Callback.To_Marshaller (On_Custom'Access),
+         User_Data => Kernel);
+      Add_Accelerator
+        (Mitem, "activate", Get_Default_Accelerators (Kernel),
+         GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
+
       --  Should be able to run any program
-      Gtk_New (Mitem, -"any...");
+      Gtk_New (Mitem, -"Any...");
       Append (Menu2, Mitem);
       Set_Sensitive (Mitem, False);
 
@@ -1037,6 +1052,7 @@ package body Builder_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Build : constant String := '/' & (-"Build") & '/';
+      Make  : constant String := Build & (-"Make") & '/';
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
    begin
@@ -1060,7 +1076,7 @@ package body Builder_Module is
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
-      Register_Menu (Kernel, Build, -"Custom...", "",
+      Register_Menu (Kernel, Make, -"Custom...", "",
                      On_Custom'Access, null, GDK_F9);
 
       Register_Menu (Kernel, Build, -"Recompute Xref information", "",
