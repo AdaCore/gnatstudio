@@ -106,6 +106,9 @@ package Codefix.Text_Manager is
    procedure Free_Data (This : in out Mark_Abstr'Class);
    --  Free the memory associated to a Mark_Abstr.
 
+   procedure Free (This : in out Ptr_Mark);
+   --  Free the memory associated toa Ptr_Mark.
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -399,7 +402,8 @@ package Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Offset_Line  : in out Integer);
    --  Upate changes of the Extract_Line in the representation of the text,
 
    procedure Free (This : in out Extract_Line);
