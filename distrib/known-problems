@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D604-014 Defining the same action multiple times crashes GPS
+  Problem:    If you create the same action multiple times in your XML files
+              through the <action> tag, GPS will misbehave or even crash
+              when menus execute that action.
+  Workaround: Make sure the actions are defined only once
+
 - D601-008 Custom files: Incorrect handling of spaces in "switch" attribute
   Problem:    If you are defining a new tool in an XML file, GPS doesn't
               report an error if the switch contains a space, and fails in
