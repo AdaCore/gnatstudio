@@ -11,7 +11,6 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Status_Bar; use Gtk.Status_Bar;
-with Gtk.Button; use Gtk.Button;
 package Vdiff_Pkg is
 
    type Vdiff_Record is new Gtk_Window_Record with record
