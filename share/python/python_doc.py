@@ -77,6 +77,18 @@ class Help_Wrapper:
    def getdoc (self, object): 
       try:
          try:
+            ## The __doc__ string for static methods is the fully qualified
+            ## name of the entity -- if it was exported from GPS
+            doc=object.__doc__
+            if doc:
+               static_doc = self.doc.getdoc (doc)
+               if static_doc:
+                  return static_doc
+               return doc
+         except:
+            pass
+
+         try:
             module=object.__module__
             if module == None:
                ## Work around for limitation in older versions of pythons: no
