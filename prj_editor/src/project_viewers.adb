@@ -3587,8 +3587,9 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Level);
       N : Node_Ptr := Node;
-      N2 : Node_Ptr;
+      N2, Child : Node_Ptr;
       Creator : XML_Switches;
+      Valid : Boolean;
    begin
       while N /= null loop
          if N.Tag.all = "tool" then
@@ -3602,12 +3603,38 @@ package body Project_Viewers is
                   N2 := N.Child;
                   while N2 /= null loop
                      if N2.Tag.all = "switches" then
-                        Creator := new XML_Switches_Record'
-                          (Switches_Page_Creator_Record with
-                           XML_Node  => Deep_Copy (N2),
-                           Tool_Name => new String'(Tool_Name),
-                           Languages => Get_Languages_From_Tool_Node (N));
-                        Register_Switches_Page (Kernel, Creator);
+                        Valid := True;
+
+                        Child := N2.Child;
+                        while Child /= null loop
+                           if Child.Tag.all /= "title"
+                             and then Child.Tag.all /= "check"
+                             and then Child.Tag.all /= "spin"
+                             and then Child.Tag.all /= "radio"
+                             and then Child.Tag.all /= "combo"
+                             and then Child.Tag.all /= "popup"
+                             and then Child.Tag.all /= "dependency"
+                             and then Child.Tag.all /= "expansion"
+                           then
+                              Insert (Kernel,
+                                      -("Invalid child tag for <switches>"
+                                        & " in customization files: <")
+                                      & Child.Tag.all & '>',
+                                      Mode => Glide_Kernel.Console.Error);
+                              Valid := False;
+                           end if;
+
+                           Child := Child.Next;
+                        end loop;
+
+                        if Valid then
+                           Creator := new XML_Switches_Record'
+                             (Switches_Page_Creator_Record with
+                              XML_Node  => Deep_Copy (N2),
+                              Tool_Name => new String'(Tool_Name),
+                              Languages => Get_Languages_From_Tool_Node (N));
+                           Register_Switches_Page (Kernel, Creator);
+                        end if;
                      end if;
 
                      N2 := N2.Next;
