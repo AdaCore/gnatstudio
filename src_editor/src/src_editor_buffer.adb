@@ -1163,6 +1163,8 @@ package body Src_Editor_Buffer is
       Set_Modified (Buffer, False);
       Close (FD);
 
+      Free (Buffer.Filename);
+      Buffer.Filename := new String' (Filename);
       Buffer.Timestamp := To_Timestamp
         (File_Time_Stamp (Get_Filename (Buffer)));
 
