@@ -563,7 +563,7 @@ package body Browsers.Dependency_Items is
          Pop_State (Kernel_Handle (Kernel));
          Insert (Kernel, "Query unsupported for this language",
                  Mode => Glide_Kernel.Console.Error);
-         Destroy (Data.Iter);
+         --  No need to free Data, which hasn't been created at this point
 
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
