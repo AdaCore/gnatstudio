@@ -616,8 +616,8 @@ package body Src_Editor_Module is
          declare
             File     : constant String := Nth_Arg (Data, 1);
          begin
-            Line   := Nth_Arg (Data, 2, Default => 1);
-            Column := Nth_Arg (Data, 3, Default => 1);
+            Line   := Nth_Arg (Data, 2, Default => 0);
+            Column := Nth_Arg (Data, 3, Default => 0);
             Length := Nth_Arg (Data, 4, Default => 0);
 
             if Is_Absolute_Path (File) then
@@ -2925,7 +2925,8 @@ package body Src_Editor_Module is
       Recent_Menu_Item : Gtk_Menu_Item;
       Command          : Interactive_Command_Access;
 
-      Src_Key_Context  : constant Key_Context := new Src_Editor_Key_Context;
+      Src_Action_Context  : constant Action_Context :=
+        new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application
 
@@ -2934,43 +2935,42 @@ package body Src_Editor_Module is
       Source_Editor_Module (Src_Editor_Module_Id).Kernel :=
         Kernel_Handle (Kernel);
 
+      Register_Context (Kernel, Src_Action_Context);
+
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Indent current line",
-         Command, -"Auto-indent the current line or block of lines");
+         Command, -"Auto-indent the current line or block of lines",
+         Src_Action_Context);
       Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
          Action      => "Indent current line",
-         Default_Key => GDK_Tab,
-         Default_Mod => Control_Mask,
-         Context     => Src_Key_Context);
+         Default_Key => "control-Tab");
 
       Command := new Completion_Command;
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Complete identifier", Command,
          -("Completion the current identifier based on the"
-           & " contents of the editor"));
+           & " contents of the editor"),
+         Src_Action_Context);
       Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
          Action      => "Complete identifier",
-         Default_Key => GDK_slash,
-         Default_Mod => Control_Mask,
-         Context     => Src_Key_Context);
+         Default_Key => "control-slash");
 
       Command := new Jump_To_Delimiter_Command;
       Jump_To_Delimiter_Command (Command.all).Kernel :=
         Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Jump to matching delimiter", Command,
-         -"Jump to the matching delimiter ()[]{}");
+         -"Jump to the matching delimiter ()[]{}",
+         Src_Action_Context);
       Bind_Default_Key
         (Handler     => Get_Key_Handler (Kernel),
          Action      => "Jump to matching delimiter",
-         Default_Key => GDK_apostrophe,
-         Default_Mod => Control_Mask,
-         Context     => Src_Key_Context);
+         Default_Key => "control-apostrophe");
 
       Register_Module
         (Module                  => Src_Editor_Module_Id,
@@ -3177,7 +3177,9 @@ package body Src_Editor_Module is
          Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 3),
          Description  => -"Open a file editor for file_name." & ASCII.LF
            & (-"Length is the number of characters to select after the"
-              & " cursor."),
+              & " cursor. If line and column are set to 0 (the default),"
+              & " then the location of the cursor is not changed if the file"
+              & " is already opened in an editor."),
          Minimum_Args => 1,
          Maximum_Args => 4,
          Handler      => Edit_Command_Handler'Access);
