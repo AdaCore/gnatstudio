@@ -971,7 +971,7 @@ package body Glide_Kernel.Scripts is
                Project := Get_Data (Data, 1);
                Set_Return_Value_As_List (Data);
                Iter := Find_All_Projects_Importing
-                 (Get_Project (Kernel), Project, Include_Self => True);
+                 (Project, Include_Self => True);
 
                loop
                   P := Current (Iter);
