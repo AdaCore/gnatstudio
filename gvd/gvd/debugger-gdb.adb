@@ -2152,6 +2152,7 @@ package body Debugger.Gdb is
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
       Index : Integer := S'Last;
       SNF : constant String := -"No ";
+      --  Error messages can be "No definition..." or "No symbol..."
    begin
       if S (S'First .. S'First + SNF'Length - 1) = SNF then
          return "";
