@@ -31,8 +31,10 @@
 with Prj;
 with Prj.Tree;
 with Glib.Object;
+with GNAT.OS_Lib;
 with Gtk.Handlers;
 with Gtk.Window;
+with Src_Info;
 
 package Glide_Kernel is
 
@@ -46,6 +48,42 @@ package Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
+
+   procedure Set_Source_Path
+     (Handle : access Kernel_Handle_Record;
+      Path   : String);
+   --  Set the Source_Path for the given Kernel Handle.
+
+   function Get_Source_Path
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return the Source_Path associated to the given Kernel Handle.
+   --  Return the empty string if no source path has been set yet.
+
+   procedure Set_Object_Path
+     (Handle : access Kernel_Handle_Record;
+      Path   : String);
+   --  Set the Object_Path for the given Kernel Handle.
+
+   function Get_Object_Path
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return the Object_Path associated to the given Kernel Handle.
+   --  Return the empty string if no object path has been set yet.
+
+   procedure Reset_Source_Info_List
+     (Handle : access Kernel_Handle_Record);
+   --  Re-initialize the Source Info structure.
+
+   function Get_Source_Info_List
+     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
+   --  Return the Source Information List for the given Kernel Handle
+
+   procedure Parse_ALI_File
+     (Handle       : access Kernel_Handle_Record;
+      ALI_Filename : String;
+      Unit         : out Src_Info.LI_File_Ptr;
+      Success      : out Boolean);
+   --  Parse the given ALI file and return the new LI_File_Ptr created if
+   --  the parsing was successful.
 
    ---------------------
    -- Signal emission --
@@ -99,6 +137,18 @@ private
 
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main glide window
+
+      Source_Path : GNAT.OS_Lib.String_Access;
+      --  The path of the sources used to compile the project which are not
+      --  directly part of the project (eg the Ada run-time files).
+
+      Object_Path : GNAT.OS_Lib.String_Access;
+      --  The path for the object files associated the sources in the
+      --  Source Path above.
+
+      Source_Info_List : Src_Info.LI_File_List;
+      --  The semantic information associated to the files for the current
+      --  project.
    end record;
 
 end Glide_Kernel;
