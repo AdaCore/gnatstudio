@@ -66,22 +66,22 @@ package body Project_Properties is
      (Widget_Array, Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
-      record
-         Name        : Gtk.GEntry.Gtk_Entry;
-         Path        : Gtk.GEntry.Gtk_Entry;
-         Gnatls      : Gtk.GEntry.Gtk_Entry;
-         Compiler    : Gtk.GEntry.Gtk_Entry;
-         Debugger    : Gtk.GEntry.Gtk_Entry;
-         Compilers   : Widget_Array_Access;
-         Languages   : Widget_Array_Access;
-         Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+   record
+      Name               : Gtk.GEntry.Gtk_Entry;
+      Path               : Gtk.GEntry.Gtk_Entry;
+      Gnatls             : Gtk.GEntry.Gtk_Entry;
+      Compiler           : Gtk.GEntry.Gtk_Entry;
+      Debugger           : Gtk.GEntry.Gtk_Entry;
+      Compilers          : Widget_Array_Access;
+      Languages          : Widget_Array_Access;
+      Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
 
-         Pages       : Widget_Array_Access;
-         --  The pages that have been registered.
+      Pages              : Widget_Array_Access;
+      --  The pages that have been registered.
 
-         Project_View : Prj.Project_Id;
-         Kernel       : Kernel_Handle;
-      end record;
+      Project_View       : Prj.Project_Id;
+      Kernel             : Kernel_Handle;
+   end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
    procedure Gtk_New
@@ -319,9 +319,9 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-               (Project_View, Compiler_Command_Attribute,
-                Ide_Package, Default => "gnatmake",
-                Index => Languages (L).all));
+                 (Project_View, Compiler_Command_Attribute,
+                  Ide_Package, Default => "gnatmake",
+                  Index => Languages (L).all));
 
          else
             Gtk_New (Ent);
@@ -332,9 +332,9 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-               (Project_View, Compiler_Command_Attribute,
-                Ide_Package, Default => "gcc",
-                Index => Languages (L).all));
+                 (Project_View, Compiler_Command_Attribute,
+                  Ide_Package, Default => "gcc",
+                  Index => Languages (L).all));
          end if;
 
          Editor.Languages (L) := Gtk_Widget (Check);
@@ -663,9 +663,9 @@ package body Project_Properties is
 
                   if Get_Active (Check)
                     and then Get_Attribute_Value
-                    (Project_View, Compiler_Command_Attribute,
-                     Ide_Package, Default => "",
-                     Index => Languages (J).all) /= Get_Text (Ent)
+                      (Project_View, Compiler_Command_Attribute,
+                       Ide_Package, Default => "",
+                       Index => Languages (J).all) /= Get_Text (Ent)
                   then
                      Update_Attribute_Value_In_Scenario
                        (Project  => Project,
