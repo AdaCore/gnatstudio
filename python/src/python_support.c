@@ -32,8 +32,15 @@ PyObject * ada_Py_InitModule4
 
 PyObject * ada_pycfunction_newex (PyMethodDef *ml, PyObject* self, PyObject* module) {
   PyObject* method = PyCFunction_New (ml, self);
+
+#if (PY_MAJOR_VERSION > 2 \
+     || (PY_MAJOR_VERSION == 2 \
+	 && (PY_MINOR_VERSION > 3 \
+	     || (PY_MINOR_VERSION == 3 \
+		 && PY_MICRO_VERSION >= 3))))
   ((PyCFunctionObject*)method)->m_module = module;
   Py_XINCREF (module);
+#endif
 }
 
 void ada_py_print_refcount (PyObject* obj, char* msg) {
