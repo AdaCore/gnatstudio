@@ -157,6 +157,7 @@ package Glide_Kernel.Preferences is
 
    Default_HL_Line_Color     : Param_Spec_Color;
    Default_HL_Region_Color   : Param_Spec_Color;
+   Block_Folding             : Param_Spec_Boolean;
    Current_Line_Color        : Param_Spec_Color;
    Current_Block_Color       : Param_Spec_Color;
 

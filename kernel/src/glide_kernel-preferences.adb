@@ -305,6 +305,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
 
+      Block_Folding := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Block-Folding",
+         Default => False,
+         Blurb   =>
+           -"Should the editor enable block folding",
+         Nick    => -"Block folding"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Block_Folding), -"Editor");
+
       Source_Editor_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Default-Font",
          Default => "Courier 10",
