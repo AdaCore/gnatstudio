@@ -346,8 +346,6 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Projects.Error_Report)
    is
-      Processing_Correct : Boolean := True;
-
       procedure Report_Error (S : String; Project : Project_Id);
       --  Handler called when the project parser finds an error
 
@@ -361,8 +359,6 @@ package body Projects.Registry is
                        & ": " & S);
             end if;
          end if;
-
-         Processing_Correct := False;
       end Report_Error;
 
       View : Project_Id;
@@ -379,7 +375,7 @@ package body Projects.Registry is
          Report_Error'Unrestricted_Access);
 
       --  Parsing failed ? => revert to the default project
-      if (View = Prj.No_Project or else not Processing_Correct)
+      if View = Prj.No_Project
         and then not Is_Default (Registry.Data.Root)
       then
          Load_Default_Project (Registry, Get_Current_Dir);
