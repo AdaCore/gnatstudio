@@ -19,6 +19,7 @@
 #include "next_xpm"
 #include "nexti_xpm"
 #include "package_xpm"
+#include "paint_xpm"
 #include "plot_xpm"
 #include "print_xpm"
 #include "rotate_xpm"
