@@ -326,8 +326,6 @@ package body Browsers.Canvas is
       end if;
 
       if Context = null then
-         Unlock (Get_Default_Accelerators (Kernel));
-
          Context := new Selection_Context;
 
          Gtk_New (Mitem, Label => -"Refresh");
@@ -380,8 +378,6 @@ package body Browsers.Canvas is
          Gtk_New (Mitem, Label => -"Zoom");
          Append (Menu, Mitem);
          Set_Submenu (Mitem, Zooms_Menu);
-
-         Lock (Get_Default_Accelerators (Kernel));
       end if;
 
       return Context;
