@@ -280,9 +280,6 @@ package Glide_Kernel is
    function Scope_To_String (Scope : Src_Info.E_Scope) return String;
    --  Return a printable string for the scope.
 
-   function Kind_To_String (Kind : Src_Info.E_Kind) return String;
-   --  Return a printable string for the entity kind.
-
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
       Filename : String) return Boolean;

@@ -1427,7 +1427,6 @@ package body Glide_Kernel is
          Col2, Value2, Col3, Value3 : Gint;
          Col4 : Gint; Value4 : String;
          Col5 : Gint; Value5 : Gint;
-         Col6 : Gint; Value6 : Gint;
          Final : Gint := -1);
       pragma Import (C, Set, "gtk_tree_store_set");
 
@@ -1436,8 +1435,7 @@ package body Glide_Kernel is
          1 => GType_Int,
          2 => GType_Int,
          3 => GType_String,
-         4 => GType_Int,
-         5 => GType_Int);
+         4 => GType_Int);
 
       Iter      : Entity_Declaration_Iterator;
       Candidate : Entity_Information;
@@ -1454,6 +1452,7 @@ package body Glide_Kernel is
       View      : Gtk_Tree_View;
       Col       : Gtk_Tree_View_Column;
       Col_Num   : Gint;
+      Index     : Gint := 1;
       pragma Unreferenced (Col_Num);
 
    begin
@@ -1526,9 +1525,9 @@ package body Glide_Kernel is
               1, Gint (Get_Declaration_Line_Of (Candidate)),
               2, Gint (Get_Declaration_Column_Of (Candidate)),
               3, Entity_Name & ASCII.NUL,
-              4, E_Scope'Pos (Get_Scope (Candidate)),
-              5, E_Kind'Pos (Get_Kind (Candidate)));
+              4, Index);
 
+         Index := Index + 1;
          Destroy (Candidate);
 
          Next (Iter);
@@ -1545,13 +1544,18 @@ package body Glide_Kernel is
          if Run (Dialog) = Gtk_Response_OK then
             Status := Success;
             Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-            Decl := Create
-              (Name   => Entity_Name,
-               Line   => Positive (Get_Int (Model, It, 1)),
-               Column => Natural (Get_Int (Model, It, 2)),
-               Scope  => E_Scope'Val (Get_Int (Model, It, 4)),
-               Kind   => E_Kind'Val (Get_Int (Model, It, 5)),
-               File   => Get_String (Model, It, 0));
+
+            Index := Get_Int (Model, It, 4);
+
+            Iter := Find_All_Possible_Declarations
+              (Lib_Info    => Lib_Info,
+               Entity_Name => Entity_Name);
+            while Index /= 1 loop
+               Next  (Iter);
+            end loop;
+
+            Decl := Get (Iter);
+            Destroy (Iter);
          end if;
 
          Destroy (Dialog);
@@ -1682,65 +1686,5 @@ package body Glide_Kernel is
          when Static_Local => return -"static";
       end case;
    end Scope_To_String;
-
-   --------------------
-   -- Kind_To_String --
-   --------------------
-
-   function Kind_To_String (Kind : Src_Info.E_Kind) return String is
-   begin
-      --  ??? Would be nice to do it as a primitive subprogram of the
-      --  LI_Handlers, unfortunately they currently don't have access to
-      --  Glide_Intl for proper translations.
-
-      case Kind is
-         when Overloaded_Entity            => return "???";
-         when Unresolved_Entity            => return -"unknown";
-         when Access_Object                => return -"pointer";
-         when Access_Type                  => return -"access type";
-         when Array_Object                 => return -"array";
-         when Array_Type                   => return -"array type";
-         when Boolean_Object               => return -"boolean";
-         when Boolean_Type                 => return -"boolean type";
-         when Class_Wide_Object            => return -"class wide";
-         when Class_Wide_Type              => return -"class wide type";
-         when Decimal_Fixed_Point_Object   => return -"decimal fixed point";
-         when Decimal_Fixed_Point_Type     =>
-            return -"decimal fixed point type";
-         when Entry_Or_Entry_Family        => return -"entry";
-         when Enumeration_Literal          => return -"enumeration literal";
-         when Enumeration_Object           => return -"enumeration";
-         when Enumeration_Type             => return -"enumeration type";
-         when Exception_Entity             => return -"exception";
-         when Floating_Point_Object        => return -"floating point";
-         when Floating_Point_Type          => return -"floating point type";
-         when Generic_Class                => return -"generic class";
-         when Generic_Function_Or_Operator => return -"generic function";
-         when Generic_Package              => return -"generic package";
-         when Generic_Procedure            => return -"generic procedure";
-         when Label_On_Block               => return -"block label";
-         when Label_On_Loop                => return -"loop label";
-         when Label_On_Statement           => return -"statement label";
-         when Modular_Integer_Object       => return -"unsigned integer";
-         when Modular_Integer_Type         => return -"unsigned integer type";
-         when Named_Number                 => return -"named number";
-         when Non_Generic_Function_Or_Operator => return -"function";
-         when Non_Generic_Package          => return -"package";
-         when Non_Generic_Procedure        => return -"procedure";
-         when Ordinary_Fixed_Point_Object  => return -"fixed point";
-         when Ordinary_Fixed_Point_Type    => return -"fixed point type";
-         when Private_Type                 => return -"private type";
-         when Protected_Object             => return -"protected object";
-         when Protected_Type               => return -"protected type";
-         when Record_Object                => return -"record";
-         when Record_Type                  => return -"record type";
-         when Signed_Integer_Object        => return -"integer";
-         when Signed_Integer_Type          => return -"integer type";
-         when String_Object                => return -"string";
-         when String_Type                  => return -"string type";
-         when Task_Object                  => return -"task";
-         when Task_Type                    => return -"task type";
-      end case;
-   end Kind_To_String;
 
 end Glide_Kernel;
