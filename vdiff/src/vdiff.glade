@@ -25,13 +25,13 @@
 
   <widget>
     <class>GtkVBox</class>
-    <name>vbox1</name>
+    <name>main_box</name>
     <homogeneous>False</homogeneous>
     <spacing>5</spacing>
 
     <widget>
       <class>GtkToolbar</class>
-      <name>toolbar1</name>
+      <name>toolbar</name>
       <border_width>4</border_width>
       <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
       <type>GTK_TOOLBAR_ICONS</type>
@@ -449,7 +449,7 @@
 
     <widget>
       <class>GtkStatusbar</class>
-      <name>statusbar1</name>
+      <name>statusbar</name>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
