@@ -228,6 +228,7 @@ Python FAQ
 * Redirecting the output to specific windows::
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
+* Automatically loading python files at startup::
 @end ifset
 
 Environment
@@ -10441,6 +10442,7 @@ Python inside GPS. This is not a general Python discussion.
 * Redirecting the output to specific windows::
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
+* Automatically loading python files at startup::
 @end menu
 
 @c -------------------------------------------
@@ -10687,6 +10689,51 @@ are correctly interpreted by tools such as @file{a2ps} which can be used
 to convert the text file into a postscript document.
 
 @end ifset
+
+@c -------------------------------------------
+@node Automatically loading python files at startup 
+@subsubsection Automatically loading python files at startup
+
+@noindent
+At startup, GPS will automatically load a few python files. This include
+the file @file{autoexec.py} in its installation directory
+@file{share/gps/python}, as well as all the files that each user has put
+in his own @file{$HOME/.gps/python_startup} directory.
+
+However, it is often the case that companies or groups create some internal
+python files to enhance GPS. The question is how these are made available
+to each GPS user.
+
+@itemize @bullet
+@item Each user can install them in his @file{$HOME/.gps/python_startup} directory
+@item The system administrator copies them in GPS installation directory in @file{<prefix>/share/gps/python}
+@item The system administrator copies them to any directory on your system. This directory then needs to
+ be added by each user to his @code{PYTHONPATH} environment variable. You
+ can alternatively modify the small @file{gps} wrapper script to do this
+ automatically on startup
+@end itemize
+
+The above steps will make your files available to GPS, but will not execute
+them automatically (apart for the first solution described above).
+
+If you want to automatically execute a script, there are again a number of
+possibilities:
+
+@itemize @bullet
+@item Modify the file @file{autoexec.py} installed by GPS in
+@file{<prefix>/share/gps/python/}, and add an @code{import} statement for
+each python package to execute.
+
+This will need to be redone after each new installation of GPS
+
+@item Ask the users to select what packages they want to load, and ask them
+to create a file (named for instance @code{myautoexec.py}) which contains one
+import statement for each package to load, as in
+
+@smallexample
+import common_package1, common_package2
+@end smallexample
+@end itemize
 
 @c --------------------------------------------------------------------
 @node Hooks
