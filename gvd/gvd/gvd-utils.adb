@@ -84,10 +84,10 @@ package body GVD.Utils is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False)
    is
-     Max_Events : constant := 30;
-     Cursor     : Gdk_Cursor;
-     Num_Events : Positive;
-     Event      : Gdk_Event;
+      Max_Events : constant := 30;
+      Cursor     : Gdk_Cursor;
+      Num_Events : Positive;
+      Event      : Gdk_Event;
 
    begin
       if Busy then
