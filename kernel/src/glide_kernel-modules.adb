@@ -715,6 +715,30 @@ package body Glide_Kernel.Modules is
       Sensitive   : Boolean := True)
    is
       Item  : Gtk_Menu_Item;
+   begin
+      Item := Register_Menu
+        (Kernel, Parent_Path, Text, Stock_Image, Callback,
+         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive);
+   end Register_Menu;
+
+   -------------------
+   -- Register_Menu --
+   -------------------
+
+   function Register_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Text        : String;
+      Stock_Image : String := "";
+      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True;
+      Sensitive   : Boolean := True)
+     return Gtk_Menu_Item
+   is
+      Item  : Gtk_Menu_Item;
       Image : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
 
@@ -741,6 +765,8 @@ package body Glide_Kernel.Modules is
         (Item, "activate",
          Kernel_Callback.To_Marshaller (Callback),
          Kernel_Handle (Kernel));
+
+      return Item;
    end Register_Menu;
 
    -----------------
