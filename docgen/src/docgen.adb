@@ -166,6 +166,8 @@ procedure Docgen is
                Options.Comments_Under := True;
             elsif S = "-info" then
                Options.Info_Output := True;
+            elsif S = "-ref" then
+               Options.References := True;
             elsif S = "-private" then
                Options.Show_Private := True;
             elsif S (1 .. 9) = "-docpath=" and S'Last > 9 then
@@ -353,7 +355,7 @@ exception
                                "{ .ads-files }");
       Put_Line (Current_Error, "   [ -info ] [ -ic ] [ -under]" &
                 "[ -private] [ -texi ] ");
-      Put_Line (Current_Error, "   [ -docpath=DIR ]");
+      Put_Line (Current_Error, "  [ -ref] [ -docpath=DIR ]");
       New_Line (Current_Error);
       Put_Line (Current_Error, "DESCRIPTION");
       New_Line (Current_Error);
@@ -373,6 +375,7 @@ exception
                 " declared as Private");
       Put_Line (Current_Error, "   -texi     The output format should" &
                 " be TexInfo.");
+      Put_Line (Current_Error, "   -ref      Search also for the references");
       Put_Line (Current_Error, "   -docpath=DIR   the subdirectory for the" &
                 " doc files");
       Put_Line (Current_Error, "                  The last character is" &
