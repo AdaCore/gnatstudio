@@ -53,7 +53,7 @@ package String_Utils is
       Char     : Character;
       Step     : Integer := 1);
    --  Skip every character up to the first occurence of Char in the string.
-   --  If no occurence found, then Index is set over Type_Str'Last
+   --  If no occurrence found, then Index is set over Type_Str'Last.
 
    procedure Skip_To_String
      (Type_Str  : String;
