@@ -286,6 +286,9 @@ When you specify a -P switch on the command line, or if there is only one
 project file in the current directory, GPS will start immediately with
 the project file specified, instead of displaying the welcome dialog.
 
+In addition, if you specify source files on the command line, GPS will also
+start immediately, using the default project if no project is specified.
+
 @c --------------------------------------------------------------------
 @node The Menu Bar
 @section The Menu Bar
@@ -528,7 +531,7 @@ type @code{help} at the prompt, or @code{help} followed by the name of a
 command, to get more information about a specific command.
 
 @cindex key
-You can use the @key{up} and @key{down} arrows to navigate through the
+You can use the @key{up} and @key{down} keys to navigate through the
 history of commands.
 
 The intent is to provide all the commands available in GPS via the GPS
@@ -592,7 +595,7 @@ windows are not destroyed when the application terminates.
 
 @cindex key
 @cindex menu
-To close an execution window, click on the arrow icon on the top right corner
+To close an execution window, click on the cross icon on the top right corner
 of the window, or use the menu @code{File->Close}, or the menu
 @code{Window->Close} or the key binding @key{Ctrl-W}.
 
@@ -2684,10 +2687,10 @@ preference, and an editing area to modify its value. If you leave to mouse
 over the label, a tool tip will be displayed giving an on-line help on the
 preference.
 
-The preferences dialog is composed of nine areas, accessible through the
-tabs at the left of the dialog, labeled @i{General}, @i{Messages},
-@i{Visual diff}, @i{Editor}, @i{Languages}, @i{Project}, @i{Browsers},
-@i{Debugger}, @i{Helpers}. Each page corresponds to a section of preferences.
+The preferences dialog is composed of eight areas, accessible through the
+tabs at the left of the dialog, labeled @i{General}, @i{Editor}, @i{Debugger},
+@i{Helpers}, @i{Browsers}, @i{Visual Diff}, @i{Messages}, @i{Project}.
+Each page corresponds to a section of preferences.
 
 @table @b
 @item General
@@ -2763,10 +2766,6 @@ If False, closing the window associated with a floating item will put the item
 back in the main GPS window, but will not destroy it. If True, the item is
 destroyed.
 
-@item Title font
-@cindex font
-Font used in the title bar of the items.
-
 @item Background color
 @cindex color
 Color to use for the background of the MDI.
@@ -2781,80 +2780,6 @@ Color to use for the title bar of selected items.
 
 @end table
 
-@end table
-
-@item Messages
-@cindex messages
-@table @i
-@item Color highlighting
-@cindex color
-Color used to highlight text in the messages window
-
-@item Show build progress
-@cindex build
-@cindex build progress
-Whether the progress bar should show progress during builds
-
-@item File pattern
-@cindex file pattern
-@cindex location
-Pattern used to detect file locations from the messages window.
-This is particularly useful when using an external tool such as a compiler
-or a search tool, so that GPS will highlight and allow navigation through source
-locations. This is a standard system V regular expression containing two
-or three parenthesized subexpressions corresponding to the file, line and
-column patterns.
-
-@item File index
-@cindex file index
-Index of filename in the file pattern
-
-@item Line index
-@cindex line index
-Index of the line number in the file pattern
-
-@item Column index
-@cindex column index
-Index of the column number in the file pattern
-@end table
-
-@item Visual diff
-@cindex visual diff
-@cindex file comparison
-@table @i
-@item Context length
-@cindex context length
-The number of lines displayed before and after each chunk of differences.
-Specifying -1 will display the whole file.
-
-@item Diff command
-@cindex diff
-@cindex -u
-@cindex -c
-Command used to compute differences between two files.
-Arguments can also be specified. The visual diff expects a standard diff
-output with no context (that is, no @code{-c} nor @code{-u} switch).
-Arguments of interest may include (this will depend on the version of diff
-used):
-
-@table @b
-@item -b
-Ignore changes in amount of white space.
-
-@item -B
-Ignore changes that just insert or delete blank lines.
-
-@item -i
-Ignore changes in case; consider upper and lower case letters equivalent.
-
-@item -w
-Ignore white space when comparing lines.
-
-@end table
-
-@item Patch command
-@cindex patch
-Command used to apply a patch. Arguments can also be specified.
 @end table
 
 @item Editor
@@ -2901,25 +2826,6 @@ needs to be explicitly called by the user.
 
 @end table
 
-@item Keys
-@cindex key
-
-@table @b
-@item Auto-indentation
-@cindex indentation
-Key used for auto-indenting lines or block of lines.
-
-@item Completion
-@cindex completion
-Key used for automatic completion of identifiers.
-
-@item Jump to delimiter
-@cindex delimiter
-Key used for moving the cursor to the corresponding delimiter.
-Delimiters include parentheses, brackets, and braces.
-
-@end table
-
 @item Fonts & Colors
 @cindex font
 @cindex color
@@ -2957,19 +2863,8 @@ The font used to display comments.
 @cindex font
 The font used to display strings.
 
-@item Tooltip font
-@cindex font
-The font used to display tool tips in the source editor.
-
 @end table
 
-@end table
-
-@item Languages
-@cindex language
-Provide preferences specific to a programming language.
-
-@table @i
 @item Ada
 @cindex Ada
 
@@ -3049,73 +2944,22 @@ The number of spaces for the default indentation.
 
 @end table
 
-@end table
-
-@item Project
-@cindex project
-@table @i
-@item Relative paths
-@cindex relative path
-Whether paths should be absolute or relative when the projects are modified.
-
-@item Show project hierarchy
-@cindex project hierarchy
-Whether the list of projects to modify through the project properties dialog
-should be displayed as a hierarchy of projects, or a simple sorted list.
-
-@end table
-
-@item Browsers
-@cindex browsers
-@table @i
-@item General
+@item Keys
+@cindex key
 
 @table @b
-@item Links font
-@cindex font
-Font used to draw the links between items.
+@item Auto-indentation
+@cindex indentation
+Key used for auto-indenting lines or block of lines.
 
-@item Link color
-@cindex color
-Color used to draw the links between unselected items.
+@item Completion
+@cindex completion
+Key used for automatic completion of identifiers.
 
-@item Selected link color
-@cindex color
-Color to use for links between selected items.
-
-@item Ancestor items color
-@cindex color
-Color to use for the background of the items linked to the selected item.
-
-@item Offspring items color
-@cindex color
-Color to use for the background of the items linked from the selected item.
-
-@item Vertical layout
-@cindex vertical layout
-Whether the layout of the graph should be vertical (@i{True}) or
-horizontal (@i{False}).
-
-@item Selected item color
-@cindex color
-Color to use to draw the selected item.
-
-@end table
-
-@item File Dependencies
-
-@table @b
-@item Show system files
-@cindex Ada
-@cindex C
-Whether the system files (Ada runtime or standard C include files) should be
-visible in the browser.
-
-@item Show implicit dependencies
-@cindex implicit dependency
-@cindex dependency
-If False, then only the explicit dependencies are shown in the browser.
-Otherwise, all dependencies, even implicit, are displayed.
+@item Jump to delimiter
+@cindex delimiter
+Key used for moving the cursor to the corresponding delimiter.
+Delimiters include parentheses, brackets, and braces.
 
 @end table
 
@@ -3127,12 +2971,6 @@ Otherwise, all dependencies, even implicit, are displayed.
 @item General
 
 @table @b
-@item Fixed font
-@cindex font
-@cindex fixed font
-Set the font used for displaying text in the data window, memory view and
-the debugger console.
-
 @item Color highlighting
 @cindex color
 Color used for highlighting in the debugger console.
@@ -3163,11 +3001,6 @@ program being debugged does not require input, or that if it does, input
 is handled outside GPS. For example, when you attach to a running process,
 this process already has a separate associated terminal.
 
-@end table
-
-@item Source
-
-@table @b
 @item Show lines with code
 Specifies whether blue dots should be displayed in the source editor for lines
 that contain code. If set to @i{False}, gray dots will be displayed instead
@@ -3206,17 +3039,8 @@ Indicates color to be used to highlight fields that have changed since the last 
 @item Item name
 Indicates font to be used for the name of the item.
 
-@item Item value
-Indicates font to be used to display the value of the item.
-
-@item Debugger output
-Indicates font to be used to display output from the debugger.
-
 @item Item type
 Indicates font to be used to display the type of the item.
-
-@item Annotations
-Font used for the links between two items.
 
 @item Detect aliases
 @cindex aliases
@@ -3236,9 +3060,6 @@ Color used for highlighted items.
 
 @item Selection
 Color used for selected items.
-
-@item Modified
-Color used for modified items.
 
 @end table
 
@@ -3268,6 +3089,155 @@ Program used to execute commands externally.
 @cindex print
 @anchor{Print Command}
 Program used to print files.
+
+@end table
+
+@item Browsers
+@cindex browsers
+@table @i
+@item General
+
+@table @b
+@item Selected item color
+@cindex color
+Color to use to draw the selected item.
+
+@item Background color
+@cindex color
+Color used to draw the background of the browsers.
+
+@item Hyper link color
+@cindex color
+Color used to draw the hyper links in the items.
+
+@item Selected link color
+@cindex color
+Color to use for links between selected items.
+
+@item Default link color
+@cindex color
+Color used to draw the links between unselected items.
+
+@item Ancestor items color
+@cindex color
+Color to use for the background of the items linked to the selected item.
+
+@item Offspring items color
+@cindex color
+Color to use for the background of the items linked from the selected item.
+
+@item Vertical layout
+@cindex vertical layout
+Whether the layout of the graph should be vertical (@i{True}) or
+horizontal (@i{False}).
+
+@end table
+
+@item File Dependencies
+
+@table @b
+@item Show system files
+@cindex Ada
+@cindex C
+Whether the system files (Ada runtime or standard C include files) should be
+visible in the browser.
+
+@item Show implicit dependencies
+@cindex implicit dependency
+@cindex dependency
+If False, then only the explicit dependencies are shown in the browser.
+Otherwise, all dependencies, even implicit, are displayed.
+
+@end table
+
+@end table
+
+@item Visual diff
+@cindex visual diff
+@cindex file comparison
+@table @i
+@item Context length
+@cindex context length
+The number of lines displayed before and after each chunk of differences.
+Specifying -1 will display the whole file.
+
+@item Diff command
+@cindex diff
+@cindex -u
+@cindex -c
+Command used to compute differences between two files.
+Arguments can also be specified. The visual diff expects a standard diff
+output with no context (that is, no @code{-c} nor @code{-u} switch).
+Arguments of interest may include (this will depend on the version of diff
+used):
+
+@table @b
+@item -b
+Ignore changes in amount of white space.
+
+@item -B
+Ignore changes that just insert or delete blank lines.
+
+@item -i
+Ignore changes in case; consider upper and lower case letters equivalent.
+
+@item -w
+Ignore white space when comparing lines.
+
+@end table
+
+@item Patch command
+@cindex patch
+Command used to apply a patch. Arguments can also be specified.
+@end table
+
+@item Messages
+@cindex messages
+@table @i
+@item Color highlighting
+@cindex color
+Color used to highlight text in the messages window
+
+@item Show build progress
+@cindex build
+@cindex build progress
+Whether the progress bar should show progress during builds
+
+@item File pattern
+@cindex file pattern
+@cindex location
+Pattern used to detect file locations from the messages window.
+This is particularly useful when using an external tool such as a compiler
+or a search tool, so that GPS will highlight and allow navigation through source
+locations. This is a standard system V regular expression containing two
+or three parenthesized subexpressions corresponding to the file, line and
+column patterns.
+
+@item File index
+@cindex file index
+Index of filename in the file pattern
+
+@item Line index
+@cindex line index
+Index of the line number in the file pattern
+
+@item Column index
+@cindex column index
+Index of the column number in the file pattern
+
+@end table
+
+@item Project
+@cindex project
+@table @i
+@item Relative paths
+@cindex relative path
+Whether paths should be absolute or relative when the projects are modified.
+
+@item Show project hierarchy
+@cindex project hierarchy
+Whether the list of projects to modify through the project properties dialog
+should be displayed as a hierarchy of projects, or a simple sorted list.
 
 @end table
 
