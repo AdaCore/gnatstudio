@@ -387,15 +387,16 @@ package body Ada_Analyzer is
       pragma Warnings (Off, Default_Extended);
       --  Use default values to initialize this pseudo constant.
 
-      Indent_Level    : Natural renames Indent_Params.Indent_Level;
-      Indent_Continue : Natural renames Indent_Params.Indent_Continue;
-      Indent_Decl     : Natural renames Indent_Params.Indent_Decl;
-      Indent_With     : constant := 5;
-      Indent_Use      : constant := 4;
-      Indent_When     : constant := 5;
-      Indent_Record   : Natural renames Indent_Params.Indent_Level;
+      Indent_Level       : Natural renames Indent_Params.Indent_Level;
+      Indent_Continue    : Natural renames Indent_Params.Indent_Continue;
+      Indent_Decl        : Natural renames Indent_Params.Indent_Decl;
+      Indent_With        : constant := 5;
+      Indent_Use         : constant := 4;
+      Indent_When        : constant := 5;
+      Indent_Record      : Natural renames Indent_Params.Indent_Level;
+      Indent_Case_Extra  : Boolean renames Indent_Params.Indent_Case_Extra;
 
-      Buffer_Length   : constant Natural := Buffer'Last;
+      Buffer_Length      : constant Natural := Buffer'Last;
 
       ---------------
       -- Variables --
@@ -1059,7 +1060,10 @@ package body Ada_Analyzer is
          elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
             Do_Indent (Prec, Num_Spaces);
             Push (Tokens, Temp);
-            Num_Spaces := Num_Spaces + Indent_Level;
+
+            if Indent_Case_Extra then
+               Num_Spaces := Num_Spaces + Indent_Level;
+            end if;
 
          elsif Prev_Token /= Tok_End and then
            (Reserved = Tok_If
@@ -1222,7 +1226,9 @@ package body Ada_Analyzer is
                      Pop (Tokens);
 
                   when Tok_Case =>
-                     Num_Spaces := Num_Spaces - Indent_Level;
+                     if Indent_Case_Extra then
+                        Num_Spaces := Num_Spaces - Indent_Level;
+                     end if;
 
                   when Tok_Record =>
                      --  If the "record" keyword was on its own line
@@ -1659,6 +1665,9 @@ package body Ada_Analyzer is
             Prev_Prev_Token := Prev_Token;
 
             case Buffer (P) is
+               when '#' =>
+                  Prev_Token := Tok_Pound;
+
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
                   Char := Buffer (Prev_Char (P));
