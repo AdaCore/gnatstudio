@@ -47,6 +47,7 @@ with Odd.Explorer;        use Odd.Explorer;
 with Odd.Menus;           use Odd.Menus;
 with Odd.Process;         use Odd.Process;
 with Process_Proxies;     use Process_Proxies;
+with Odd.Strings;         use Odd.Strings;
 
 with Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -713,7 +714,8 @@ package body Odd.Code_Editors is
          end if;
 
          Editor.Explorer :=
-           Explore (Editor, Editor.Buffer.all, Editor.Lang, Jump_To'Access);
+           Explore (Editor, Editor.Buffer.all, Editor.Lang,
+                    Base_File_Name (Editor.Current_File.all), Jump_To'Access);
          Show_All (Editor.Explorer);
          Add (Editor.Explorer_Scroll, Editor.Explorer);
       end if;

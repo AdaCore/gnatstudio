@@ -38,10 +38,11 @@ package Odd.Explorer is
    --  Widget is the Window parameter given to Explore below.
 
    function Explore
-     (Window  : access Gtk_Widget_Record'Class;
-      Buffer  : String;
-      Lang    : Language.Language_Access;
-      Handler : Explorer_Handler := null) return Gtk_Ctree;
+     (Window    : access Gtk_Widget_Record'Class;
+      Buffer    : String;
+      Lang      : Language.Language_Access;
+      File_Name : String;
+      Handler   : Explorer_Handler := null) return Gtk_Ctree;
    --  Parse the entities present in buffer.
    --  Return a grapihcal tree representing these entities.
    --  See Explorer_Handler above for a description of Handler.

@@ -104,10 +104,11 @@ package body Odd.Explorer is
    -------------
 
    function Explore
-     (Window  : access Gtk_Widget_Record'Class;
-      Buffer  : String;
-      Lang    : Language.Language_Access;
-      Handler : Explorer_Handler := null) return Gtk_Ctree
+     (Window    : access Gtk_Widget_Record'Class;
+      Buffer    : String;
+      Lang      : Language.Language_Access;
+      File_Name : String;
+      Handler   : Explorer_Handler := null) return Gtk_Ctree
    is
       Matches            : Match_Array (0 .. 10);
 
@@ -122,6 +123,7 @@ package body Odd.Explorer is
       Folder_Open_Pixmap : Gdk_Pixmap;
       Folder_Open_Mask   : Gdk_Bitmap;
       Node               : Gtk_Ctree_Node;
+      Root               : Gtk_Ctree_Node;
 
    begin
       Gtk_New (Tree, 1);
@@ -151,6 +153,11 @@ package body Odd.Explorer is
         (Folder_Pixmap, Get_Window (Window), Folder_Mask, Null_Color,
          mini_folder_xpm);
 
+      Root := Insert_Node
+        (Tree, null, null, Null_Array + File_Name,
+         5, Null_Pixmap, Null_Bitmap, Null_Pixmap, Null_Bitmap, False, True);
+
+
       --  For each category, parse the file
 
       for C in Categories'Range loop
@@ -173,7 +180,7 @@ package body Odd.Explorer is
 
                   if Internal_Cat (Cat).Node = null then
                      Internal_Cat (Cat).Node := Insert_Node
-                       (Tree, null, null,
+                       (Tree, Root, null,
                         Null_Array + Categories (Cat).Name.all,
                         5, Folder_Pixmap, Folder_Mask,
                         Folder_Open_Pixmap, Folder_Open_Mask,
