@@ -366,16 +366,20 @@ package Src_Editor_Buffer is
    --  Emit the signal to the kernel saying that an area in the source
    --  has been revealed.
 
+   function Check_Timestamp_And_Reload
+     (Buffer        : access Source_Buffer_Record;
+      Interactive   : Boolean;
+      Always_Reload : Boolean) return Boolean;
+   --  Check whether the timestamp changed on the disk.
+   --  If yes, then
+   --    if Interactive is True, display a dialog asking the user whether he
+   --      wants to reload the file.
+   --    if Interactive is False, reload the file without asking.
+   --  In Always_Reload, then the file will always be reloaded.
+
    function Check_Timestamp
-     (Buffer : access Source_Buffer_Record;
-      Ask_User : Boolean := False;
-      Force    : Boolean := False) return Boolean;
-   --  Check whether the timestamp changed on the disk. If yes, ask the user
-   --  whether he really wants to edit (unless Ask_User is False). False is
-   --  returned if the timestamp is more recent, and the user doesn't want to
-   --  force the edition.
-   --  If Force, then the buffer will be updated in any case, withouth checking
-   --  the timestamp.
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Check whether the timestamp changed on the disk.
 
    procedure Ref (Buffer : access Source_Buffer_Record);
    --  Should be called every time that a view is showing Buffer.
