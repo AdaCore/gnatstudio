@@ -5,3 +5,4 @@
 #include "needs_merge_xpm"
 #include "needs_update_xpm"
 #include "not_registered_xpm"
+#include "added_file_xpm"
