@@ -231,6 +231,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.File">
       <description>Represents a source file of your application</description>
+      <see_also name="GPS.File.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.File.__str__">
@@ -361,6 +362,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.Entity">
       <description>Represents an entity from the source, based on the location of its declaration</description>
+      <see_also name="GPS.Entity.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Entity.__str__">
@@ -497,6 +499,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.FileLocation">
       <description>Represents a location in a file</description>
+      <see_also name="GPS.FileLocation.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.FileLocation.__str__">
@@ -565,6 +568,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.Project">
       <description>Represents a project file</description>
+      <see_also name="GPS.Project.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Project.__str__">
@@ -1266,6 +1270,7 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.FileContext">
       <description>Represents an context that contains file information</description>
+      <see_also name="GPS.FileContext.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.FileContext.__init__">
@@ -1297,6 +1302,7 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.AreaContext">
       <description>Represents an context that contains file information and a range of lines currently selected</description>
+      <see_also name="GPS.AreaContext.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.AreaContext.__init__">
@@ -1322,6 +1328,7 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.EntityContext">
       <description>Represents an context that contains entity information</description>
+      <see_also name="GPS.EntityContext.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.EntityContext.__init__">
@@ -1349,6 +1356,7 @@ If the line and column are not specified, then the current selection is returned
   <shell_doc name="GPS.Help">
      <description>This class gives access to the external documentation for shell commands. This external documentation is stored in the file shell_commands.xml, part of the GPS installation, and is what you are currently seeing.
 You almost never need to use this class yourself, since it is used implicitly by Python when you call the help(object) command at the GPS prompt</description>
+      <see_also name="GPS.Help.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Help.__init__">
@@ -1411,6 +1419,7 @@ format of the gps_index.xml files</description>
   <shell_doc name="GPS.Codefix">
       <description>This class gives access to GPS's features for automatically fixing compilation errors</description>
       <see_also name="GPS.CodefixError" />
+      <see_also name="GPS.Codefix.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.parse"
@@ -1460,6 +1469,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
   <shell_doc name="GPS.CodefixError">
       <description>This class represents a fixable error in the compilation output</description>
       <see_also name="GPS.Codefix" />
+      <see_also name="GPS.CodefixError.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.CodefixError.__init__">
@@ -1521,6 +1531,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
          my_out.set_console ()
          print "c"      ##  Prints in python console       
       </example>
+      <see_also name="GPS.Console.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Console.__init__">
@@ -1565,6 +1576,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
          Toolbar.entry %1 "foo"
          ToolbarEntry.add %1 "Choice1" "on_selected"action"
      </example>
+      <see_also name="GPS.Toolbar.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Toolbar.__init__">
@@ -1604,6 +1616,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
   <shell_doc name="GPS.ToolbarEntry">
       <description>This class represents an entry in the GPS toolbar. The user can interactively select one of multiple values through this widget</description>
       <see_also name="GPS.Toolbar"/>
+      <see_also name="GPS.ToolbarEntry.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.ToolbarEntry.__init__">
@@ -1696,6 +1709,7 @@ class My_Gdb (GPS.Process):
 
 My_Gdb()
       </example>
+      <see_also name="GPS.Process.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Process.__init__">
@@ -1752,6 +1766,7 @@ on_match is subprogram called with the parameters:
 
   <shell_doc name="GPS.Hook">
       <description>General interface to hooks. Hooks are commands executed when some specific events occur in GPS, and allow you to customize some of the aspects of GPS</description>
+      <see_also name="GPS.Hook.__init__()" />
  </shell_doc>
 
   <shell_doc name="GPS.Hook.__init__">
@@ -1945,6 +1960,7 @@ The regular expression specifies how locations are recognized. By default, it ma
 
   <shell_doc name="GPS.Debugger">
      <description>Interface to debugger related commands</description>
+      <see_also name="GPS.Debugger.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Debugger.__init__">
@@ -1973,6 +1989,7 @@ The regular expression specifies how locations are recognized. By default, it ma
                type="color" /&gt;""")
         print "color is " + GPS.Preference ("custom-adb-file-color").get()
      </example>
+      <see_also name="GPS.Preference.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Preference.__init__">
@@ -2003,6 +2020,7 @@ The regular expression specifies how locations are recognized. By default, it ma
 
   <shell_doc name="GPS.GUI" >
      <description>This is an abstract class (ie no instances of it can be created from your code, which represents a graphical element of the GPS interface</description>
+      <see_also name="GPS.GUI.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.GUI.__init__">
@@ -2042,6 +2060,7 @@ The regular expression specifies how locations are recognized. By default, it ma
 
   <shell_doc name="GPS.Menu" >
       <description>This class is a general interface to the menu system in GPS. It gives you control over which menus should be active, what should be executed when the menu is selected by the user,...</description>
+      <see_also name="GPS.Menu.__init__()" />
   </shell_doc>
 
   <shell_doc name="GPS.Menu.__init__">
