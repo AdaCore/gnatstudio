@@ -40,11 +40,12 @@ package Codefix_Module is
    end record;
    type Codefix_Session is access all Codefix_Session_Record;
 
-   function Create_Submenu
+   procedure Create_Submenu
      (Kernel       : access Kernel_Handle_Record'Class;
+      Menu         : access Gtk.Menu.Gtk_Menu_Record'Class;
       Session      : access Codefix_Session_Record;
-      Error        : Error_Id) return Gtk_Menu;
-   --  Return a menu with all the possible fixes for Error
+      Error        : Error_Id);
+   --  Add to menu all the possible fixes for Error
 
    procedure Create_Pixmap_And_Category
      (Kernel       : access Kernel_Handle_Record'Class;

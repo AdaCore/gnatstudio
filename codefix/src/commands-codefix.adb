@@ -46,8 +46,9 @@ package body Commands.Codefix is
       end if;
 
       if Get_Number_Of_Fixes (Command.Error) > 1 then
-         Menu := Create_Submenu
-           (Command.Kernel, Command.Session, Command.Error);
+         Gtk_New (Menu);
+         Create_Submenu
+           (Command.Kernel, Menu, Command.Session, Command.Error);
          Show_All (Menu);
          Popup (Menu);
          return Success;

@@ -620,7 +620,6 @@ package body Codefix_Module is
    is
       pragma Unreferenced (Object);
       Location      : Message_Context_Access;
-      Menu_Item     : Gtk_Menu_Item;
       Session       : Codefix_Session;
       Error         : Error_Id;
 
@@ -646,8 +645,6 @@ package body Codefix_Module is
             return;
          end if;
 
-         Gtk_New (Menu_Item, -"Code fixing");
-
          Error := Search_Error
            (Session.Corrector.all,
             File    => File_Information (Location),
@@ -656,10 +653,7 @@ package body Codefix_Module is
             Message => Message_Information (Location));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
-            Set_Submenu
-              (Menu_Item,
-               Create_Submenu (Get_Kernel (Context), Session, Error));
-            Append (Menu, Menu_Item);
+            Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
          end if;
       end if;
 
@@ -681,8 +675,12 @@ package body Codefix_Module is
         (Module                  => Module_ID (Codefix_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Codefix_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => Codefix_Contextual_Menu'Access);
+         Priority                => Default_Priority);
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name    => "Code Fixing",
+         Submenu => Codefix_Contextual_Menu'Access);
 
       --  ??? Disabled for now, as the UI is not quite ready yet.
 
@@ -1069,16 +1067,15 @@ package body Codefix_Module is
    -- Create_Submenu --
    --------------------
 
-   function Create_Submenu
+   procedure Create_Submenu
      (Kernel       : access Kernel_Handle_Record'Class;
+      Menu         : access Gtk.Menu.Gtk_Menu_Record'Class;
       Session      : access Codefix_Session_Record;
-      Error        : Error_Id) return Gtk_Menu
+      Error        : Error_Id)
    is
-      Menu          : Gtk_Menu;
       Solution_Node : Command_List.List_Node;
       Mitem         : Codefix_Menu_Item;
    begin
-      Gtk_New (Menu);
       Solution_Node := First (Get_Solutions (Error));
 
       while Solution_Node /= Command_List.Null_Node loop
@@ -1094,8 +1091,6 @@ package body Codefix_Module is
 
          Solution_Node := Next (Solution_Node);
       end loop;
-
-      return Menu;
    end Create_Submenu;
 
    -------------
