@@ -1,5 +1,7 @@
 New features in GPS 1.1.0
 
+- Current line can be highlighted in source editors
+
 - Active MDI windows can now be changed with the keyboard
 
 - New mode in the MDI: all windows can be automatically set as floating
