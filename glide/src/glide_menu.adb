@@ -19,24 +19,26 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
+with Gtk.Box;                      use Gtk.Box;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Main;                     use Gtk.Main;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
-with Gtkada.File_Selection;        use Gtkada.File_Selection;
+with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 
 with Glide_Intl;              use Glide_Intl;
 
 with GVD.Menu;                use GVD.Menu;
+with GVD.Types;               use GVD.Types;
 with GVD.Status_Bar;          use GVD.Status_Bar;
 with GVD.Process;             use GVD.Process;
-with GVD.Types;               use GVD.Types;
 with Debugger;                use Debugger;
 
 with Glide_Kernel;            use Glide_Kernel;
+with Glide_Kernel.Help;       use Glide_Kernel.Help;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
@@ -161,7 +163,7 @@ package body Glide_Menu is
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Edit->Goto Declaration<->Body
+   --  Navigate->Goto Declaration<->Body
 
    procedure On_Open_Project
      (Object : Data_Type_Access;
@@ -294,9 +296,7 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Filename : constant String :=
-        File_Selection_Dialog (Title => "Open File", Must_Exist => True);
-
+      Filename : constant String := Select_File (Title => -"Open File");
    begin
       if Filename = "" then
          return;
@@ -320,11 +320,11 @@ package body Glide_Menu is
    is
       File_Selector   : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector, "/", Get_Current_Dir, "Open Project");
+      Gtk_New (File_Selector, "/", Get_Current_Dir, -"Open Project");
       Register_Filter (File_Selector, Prj_File_Filter);
 
       declare
-         Filename : constant String :=  Select_File (File_Selector);
+         Filename : constant String := Select_File (File_Selector);
       begin
          if Filename /= "" then
             Load_Project (Glide_Window (Object).Kernel, Filename);
@@ -382,9 +382,7 @@ package body Glide_Menu is
       Success : Boolean;
    begin
       declare
-         Name : constant String :=
-           File_Selection_Dialog (Title => "Save File As...");
-
+         Name : constant String := Select_File (-"Save File As");
       begin
          Save_To_File (Glide_Window (Object).Kernel, Name, Success);
       end;
@@ -421,7 +419,7 @@ package body Glide_Menu is
    is
       Button : constant Message_Dialog_Buttons :=
         Message_Dialog
-          (Msg            => "Are you sure you want to quit ?",
+          (Msg            => -"Are you sure you want to quit ?",
            Dialog_Type    => Confirmation,
            Buttons        => Button_Yes or Button_No,
            Default_Button => Button_No,
@@ -670,7 +668,9 @@ package body Glide_Menu is
             if Matched (0) = No_Match then
                Console.Insert (Top.Kernel, S, Add_LF => False);
             else
-               Print_Message (Top.Statusbar, Help, S (S'First + 1 .. S'Last));
+               Print_Message
+                 (Top.Statusbar, GVD.Status_Bar.Help,
+                  S (S'First + 1 .. S'Last));
             end if;
          end;
       end loop;
@@ -682,9 +682,13 @@ package body Glide_Menu is
 
          if Top.Interrupted then
             Top.Interrupted := False;
-            Print_Message (Top.Statusbar, Help, -"build interrupted.");
+            Print_Message
+              (Top.Statusbar, GVD.Status_Bar.Help,
+               -"build interrupted.");
          else
-            Print_Message (Top.Statusbar, Help, -"build completed.");
+            Print_Message
+              (Top.Statusbar, GVD.Status_Bar.Help,
+               -"build completed.");
          end if;
 
          Close (Fd);
@@ -980,9 +984,11 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
+      Top    : constant Glide_Window := Glide_Window (Object);
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
-      File1  : constant String := File_Selection_Dialog ("Select First File");
+      File1  : constant String := Select_File (-"Select First File");
+      Child  : MDI_Child;
 
    begin
       if File1 = "" then
@@ -990,8 +996,7 @@ package body Glide_Menu is
       end if;
 
       declare
-         File2 : constant String :=
-           File_Selection_Dialog ("Select Second File");
+         File2 : constant String := Select_File (-"Select Second File");
 
       begin
          if File2 = "" then
@@ -1003,8 +1008,11 @@ package body Glide_Menu is
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
          Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
-         Show_All (Vdiff);
-         --  ??? Free (Result);
+         Show_All (Vdiff.Main_Box);
+         Child := Put (Get_MDI (Top.Kernel), Vdiff);
+
+         --  ??? Connect to destroy signal so that we can free result:
+         --  Free (Result);
       end;
 
    exception
@@ -1019,9 +1027,13 @@ package body Glide_Menu is
    procedure On_Manual
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top : constant Glide_Window := Glide_Window (Object);
    begin
-      null;
+      --  ??? Should use Top.Prefix
+      Display_Help
+        (Top.Kernel, "/opt/gtk-1.3/doc/GtkAda/gtkada_rm/gtkada_rm_toc.html");
 
    exception
       when E : others =>
@@ -1056,19 +1068,19 @@ package body Glide_Menu is
    ----------------------
 
    function Glide_Menu_Items return Gtk_Item_Factory_Entry_Access is
-      File        : constant String := "/_" & (-"File")    & '/';
-      Edit        : constant String := "/_" & (-"Edit")    & '/';
-      Gotom       : constant String := "/_" & (-"Goto")    & '/';
-      Project     : constant String := "/_" & (-"Project") & '/';
-      Build       : constant String := "/_" & (-"Build")   & '/';
+      File        : constant String := "/_" & (-"File")     & '/';
+      Edit        : constant String := "/_" & (-"Edit")     & '/';
+      Gotom       : constant String := "/_" & (-"Navigate") & '/';
+      Project     : constant String := "/_" & (-"Project")  & '/';
+      Build       : constant String := "/_" & (-"Build")    & '/';
       Debug_Sub   : constant String := (-"Debug")          & '/';
       Debug       : constant String := "/_" & Debug_Sub;
       Data_Sub    : constant String := (-"Data")           & '/';
       Session_Sub : constant String := (-"Session")        & '/';
-      Tools       : constant String := "/_" & (-"Tools")   & '/';
-      Compare_Sub : constant String := (-"Compare")        & '/';
+      Tools       : constant String := "/_" & (-"Tools")    & '/';
+      Compare_Sub : constant String :=        (-"Compare")  & '/';
       Window      : constant String := "/_" & (-"Window");
-      Help        : constant String := "/_" & (-"Help")    & '/';
+      Help        : constant String := "/_" & (-"Help")     & '/';
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
@@ -1186,8 +1198,13 @@ package body Glide_Menu is
 
          Gtk_New (Window),
 
-         Gtk_New (Help & (-"Glide Manual"), "F1",
-                  Stock_Help, On_Manual'Access),
+         Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
+                  On_Manual'Access),
+         Gtk_New (Help & (-"GNAT User's Guide"), "", null),
+         Gtk_New (Help & (-"GNAT Reference Manual"), "", null),
+         Gtk_New (Help & (-"Ada 95 Reference Manual"), "", null),
+         Gtk_New (Help & (-"Using the GNU Debugger"), "", null),
+         Gtk_New (Help & (-"Using GCC"), "", null),
          Gtk_New (Help & (-"About Glide"), "", On_About_Glide'Access));
    end Glide_Menu_Items;
 
