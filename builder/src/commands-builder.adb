@@ -114,11 +114,12 @@ package body Commands.Builder is
       Parse_File_Locations
         (Kernel,
          Output,
-         Category,
-         True,
-         Style_Category,
-         Warning_Category,
-         Quiet => Quiet);
+         Category           => Category,
+         Highlight          => True,
+         Highlight_Category => Category,
+         Style_Category     => Style_Category,
+         Warning_Category   => Warning_Category,
+         Quiet              => Quiet);
 
    exception
       when E : others =>
