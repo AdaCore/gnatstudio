@@ -667,8 +667,8 @@ package Src_Editor_Buffer is
       --  The indentation offset, of the block (ie typically the column of the
       --  starting entity).
 
-      First_Line        : Buffer_Line_Type := 0;
-      Last_Line         : Buffer_Line_Type := 0;
+      First_Line        : Editable_Line_Type := 0;
+      Last_Line         : Editable_Line_Type := 0;
       --  Indicate the lines that bound the block.
 
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
@@ -920,6 +920,11 @@ private
    type Columns_Config_Access is access Line_Info_Display_Array_Access;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Info_Display_Array_Access, Columns_Config_Access);
+
+   function Get_String
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
+   --  Return the entire editable string.
+   --  The caller is responsible for freeing the returned value.
 
    --------------------------
    -- Source_Buffer_Record --
