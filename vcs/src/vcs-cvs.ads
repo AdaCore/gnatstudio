@@ -26,12 +26,12 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;
-
---  This package provide a CVS object implementating the VCS abstract
+--  This package provides a CVS object implementating the VCS abstract
 --  specification.
 --
 --  See package VCS for a complete spec of this package.
+
+with Basic_Types;    use Basic_Types;
 
 package VCS.CVS is
 
@@ -40,29 +40,57 @@ package VCS.CVS is
 
    type CVS_Access is access all CVS_Record'Class;
 
-   procedure Open (Rep : access CVS_Record; Dir_Name : in String);
+   function Get_Status
+     (Rep         : access CVS_Record;
+      Filenames   : String_List.List;
+      Get_Status  : Boolean          := True;
+      Get_Version : Boolean          := True;
+      Get_Tags    : Boolean          := False;
+      Get_Users   : Boolean          := False)
+     return File_Status_List.List;
 
-   procedure Close (Rep : access CVS_Record);
+   function Local_Get_Status
+     (Rep         : access CVS_Record;
+      Filenames   :        String_List.List)
+     return File_Status_List.List;
 
-   function Is_Open (Rep : access CVS_Record) return Boolean;
-
-   procedure Read
-     (Rep : access CVS_Record;
-      Ent : out VCS_Entry);
-
-   procedure Add (Rep : access CVS_Record; Name : String);
-
-   procedure Remove (Rep : access CVS_Record; Name : String);
+   procedure Open
+     (Rep       : access CVS_Record;
+      Name      : String;
+      User_Name : String := "");
 
    procedure Commit
      (Rep  : access CVS_Record;
       Name : String;
       Log  : String);
 
-   procedure Checkout (Rep : access CVS_Record; Name : String);
+   procedure Update (Rep : access CVS_Record; Name : String);
+
+   procedure Merge (Rep : access CVS_Record; Name : String);
+
+   procedure Add (Rep : access CVS_Record; Name : String);
+
+   procedure Remove (Rep : access CVS_Record; Name : String);
+
+   function Diff
+     (Rep       : access CVS_Record;
+      File_Name : String;
+      Version_1 : String := "";
+      Version_2 : String)
+     return String_List.List;
+
+   function Log
+      (Rep       : access CVS_Record;
+       File_Name : String)
+      return String_List.List;
+
+   function Success (Rep : access CVS_Record) return Boolean;
+
+   function Get_Message (Rep : access CVS_Record) return String;
 
 private
    type CVS_Record is new VCS_Record with record
-      Dir : Ada.Text_IO.File_Type;
+      Success : Boolean := False;
+      Message : String_Access;
    end record;
 end VCS.CVS;
