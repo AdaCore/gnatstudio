@@ -566,4 +566,7 @@ exception
       end if;
 
       Help;
+
+   when E : others =>
+      Trace (Me, "Unexpected exception: " & Exception_Information (E));
 end GPS;
