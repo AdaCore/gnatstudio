@@ -137,6 +137,28 @@ package body VCS.Generic_VCS is
       Text   : String) return File_Status_List.List;
    --  Parse the status for Text using Parser.
 
+   function Describe_Action
+     (Ref    : access Generic_VCS_Record;
+      Action : VCS_Action) return String;
+   --  Return a description of Action.
+
+   ---------------------
+   -- Describe_Action --
+   ---------------------
+
+   function Describe_Action
+     (Ref    : access Generic_VCS_Record;
+      Action : VCS_Action) return String
+   is
+      use type GNAT.OS_Lib.String_Access;
+   begin
+      if Ref.Labels (Action) = null then
+         return -"VCS command";
+      else
+         return Ref.Labels (Action).all;
+      end if;
+   end Describe_Action;
+
    -------------------
    -- Lookup_Action --
    -------------------
@@ -278,6 +300,7 @@ package body VCS.Generic_VCS is
       Index  : Natural := 1;
 
       use type GNAT.OS_Lib.String_List_Access;
+
    begin
       if The_Action = No_Action then
          return;
@@ -317,7 +340,8 @@ package body VCS.Generic_VCS is
                (null,
                 null,
                 Dir,
-                Args));
+                Args,
+                new String'(Describe_Action (Ref, Dir_Action))));
 
             Launch_Background_Command
               (Kernel,
@@ -420,7 +444,8 @@ package body VCS.Generic_VCS is
                (null,
                 null,
                 Dir,
-                Args));
+                Args,
+                new String'(Describe_Action (Ref, Action))));
 
             Launch_Background_Command
               (Kernel,
@@ -483,7 +508,8 @@ package body VCS.Generic_VCS is
          (null,
           Create_File_Context (Kernel, File),
           Dir,
-          Args));
+          Args,
+          new String'(Describe_Action (Ref, Action))));
 
       Launch_Background_Command
         (Kernel,
