@@ -174,30 +174,6 @@ package body Src_Info.Debug is
       end if;
    end Dump_LI_File_Ptr;
 
-   ----------------------------
-   -- Dump_LI_File_From_Name --
-   ----------------------------
-
-   procedure Dump_LI_File_From_Name
-     (LIFL : LI_File_List; Unit_Name : String)
-   is
-      pragma Unreferenced (LIFL, Unit_Name);
-   begin
-      null;
-      --  ??? Will be implemented later...
-   end Dump_LI_File_From_Name;
-
-   ----------
-   -- Dump --
-   ----------
-
-   procedure Dump (LIFL : LI_File_List) is
-      pragma Unreferenced (LIFL);
-   begin
-      null;
-      --  ??? Will be implemented later...
-   end Dump;
-
    ----------------------
    -- Dump_Source_File --
    ----------------------

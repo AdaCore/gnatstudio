@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                             G P S                                 --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -39,14 +39,6 @@
 package Src_Info.Debug is
 
    procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr);
-
-   procedure Dump_LI_File_From_Name
-     (LIFL : LI_File_List; Unit_Name : String);
-   --  Print to Stdout a text representation of the LI_File whose
-   --  unit name is Unit_Name. Print "Unknown unit 'xyz'" if no such
-   --  Unit_Name was found.
-
-   procedure Dump (LIFL : LI_File_List);
 
    procedure Force_Parsing (LIFP : LI_File_Ptr);
    --  Force a parsing of the LI file on disk the next time
