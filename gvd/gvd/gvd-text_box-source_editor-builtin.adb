@@ -170,6 +170,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record);
    --  Callback for the "display variable" contextual menu item.
 
+   procedure Graph_Print_Dereferenced_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record);
+   --  Callback for the "display <variable>.all" contextual menu item.
+
    procedure View_Into_Memory
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
@@ -486,6 +491,23 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller
            (Print_Dereferenced_Variable'Access),
+         Data);
+
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
+      Gtk_New
+        (Mitem,
+         Label => -"Display " &
+           Dereference_Name (Get_Language (Data.Process.Debugger), Entity));
+
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Data.Auto_Refresh := True;
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller
+           (Graph_Print_Dereferenced_Variable'Access),
          Data);
 
       if Entity'Length = 0 then
@@ -1171,6 +1193,29 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             Output_Command => True);
       end if;
    end Graph_Print_Variable;
+
+   --------------------------
+   -- Graph_Print_Variable --
+   --------------------------
+
+   procedure Graph_Print_Dereferenced_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record) is
+   begin
+      if Br.Auto_Refresh then
+         Process_User_Command
+           (Br.Process,
+            "graph display " &
+              Dereference_Name (Get_Language (Br.Process.Debugger), Br.Name),
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Br.Process,
+            "graph print " &
+              Dereference_Name (Get_Language (Br.Process.Debugger), Br.Name),
+            Output_Command => True);
+      end if;
+   end Graph_Print_Dereferenced_Variable;
 
    ----------------------
    -- View_Into_Memory --
