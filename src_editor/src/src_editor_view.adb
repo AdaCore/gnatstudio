@@ -230,12 +230,6 @@ package body Src_Editor_View is
       return Boolean;
    --  Return True if the cursor is currently visible on screen
 
-   function Get_Line_Height
-     (View : access Gtk_Text_View_Record'Class;
-      Line : Gtk_Text_Iter) return Gint;
-   pragma Inline (Get_Line_Height);
-   --  Return the height of the line in the window.
-
    procedure Remove_Synchronization
      (View : access Source_View_Record'Class);
    --  Remove the synchronized scrolling loop related to this editor.
@@ -660,20 +654,6 @@ package body Src_Editor_View is
                 "Unexpected exception: " & Exception_Information (E));
    end Size_Allocated;
 
-   ---------------------
-   -- Get_Line_Height --
-   ---------------------
-
-   function Get_Line_Height
-     (View : access Gtk_Text_View_Record'Class;
-      Line : Gtk_Text_Iter) return Gint
-   is
-      Rect : Gdk_Rectangle;
-   begin
-      Get_Iter_Location (View, Line, Rect);
-      return Rect.Height;
-   end Get_Line_Height;
-
    --------------------------------
    -- Speed_Bar_Size_Allocate_Cb --
    --------------------------------
@@ -964,8 +944,6 @@ package body Src_Editor_View is
          if View.Highlight_Current then
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
-
-            Line_Height := Get_Line_Height (View, Cursor_Iter) - 1;
 
             Draw_Rectangle
               (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
