@@ -962,13 +962,13 @@ package body Src_Editor_Module is
          end;
       elsif Command = "add_blank_lines" then
          declare
-            Filename : constant String  := Nth_Arg (Data, 1);
-            Line     : constant Integer := Nth_Arg (Data, 2);
-            Number   : constant Integer := Nth_Arg (Data, 3);
-            Child    : MDI_Child;
-            GC       : Gdk.Gdk_GC;
-            Box      : Source_Box;
-
+            Filename    : constant String  := Nth_Arg (Data, 1);
+            Line        : constant Integer := Nth_Arg (Data, 2);
+            Number      : constant Integer := Nth_Arg (Data, 3);
+            Child       : MDI_Child;
+            GC          : Gdk.Gdk_GC;
+            Box         : Source_Box;
+            Mark_Record : Mark_Identifier_Record;
          begin
             Child := Find_Editor (Kernel, Filename);
 
@@ -981,16 +981,27 @@ package body Src_Editor_Module is
                GC := Id.Blank_Lines_GC;
             end if;
 
-            if Child = null then
-               Set_Error_Msg (Data, -"file not open");
-            else
+            if Child /= null then
+               Mark_Record.Child := Child;
                Box := Source_Box (Get_Widget (Child));
 
                if Line >= 0 and then Number > 0 then
-                  Add_Blank_Lines
-                    (Box.Editor, Editable_Line_Type (Line),
-                     GC, "", Number);
+                  --  Create a new mark record and insert it in the list.
+
+                  Mark_Record.File := new String'(Filename);
+                  Mark_Record.Id := Id.Next_Mark_Id;
+
+                  Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
+                  Mark_Record.Length := 0;
+                  Mark_Record.Mark :=
+                    Add_Blank_Lines
+                      (Box.Editor, Editable_Line_Type (Line),
+                       GC, "", Number);
+                  Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
+                  Set_Return_Value (Data, Image (Mark_Record.Id));
                end if;
+            else
+               Set_Error_Msg (Data, -"file not open");
             end if;
          end;
       end if;
@@ -3304,10 +3315,12 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "add_blank_lines",
          Params       => "(file, start_line, number_of_lines, [category])",
+         Return_Value => "string",
          Description  =>
            -("Adds number_of_lines non-editable lines to the buffer editing"
              & " file, starting at line start_line."
-             & " If category is specified, use it for highlighting"),
+             & " If category is specified, use it for highlighting."
+             & " Create a mark at beginning of block and return its ID."),
          Minimum_Args => 3,
          Maximum_Args => 4,
          Handler      => Edit_Command_Handler'Access);
