@@ -146,7 +146,11 @@ DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
 compile: libobjects$(AR_EXT) $(ADA_SOURCES)
 
 libobjects$(AR_EXT): $(OBJECTS)
+ifeq ($(strip $(filter-out %sh,$(SHELL))),)
+	(cd $(OBJ_DIR); $(AR) $(AR_FLAGS) $@ $(strip $(OBJECTS)))
+else
 	$(AR) $(AR_FLAGS) $(OBJ_DIR)/libobjects$(AR_EXT) $(OBJ_FILES)
+endif
 
 # Linking rules
 
@@ -282,6 +286,7 @@ clean:
 	$(RM) $(OBJ_DIR)/*.ali
 	$(RM) $(OBJ_DIR)/b~*
 	$(RM) $(OBJ_DIR)/b_*
+	$(RM) $(OBJ_DIR)/*$(AR_EXT)
 	$(RM) $(OBJ_DIR)/$(EXEC)
 	$(RM) $(DEP_FILES)
 
