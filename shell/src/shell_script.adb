@@ -116,7 +116,9 @@ package body Shell_Script is
       On_Destroy : Destroy_Handler := null);
    function Get_Script (Instance : access Shell_Class_Instance_Record)
       return Scripting_Language;
-   procedure Primitive_Free (Instance : in out Shell_Class_Instance_Record);
+   procedure Primitive_Free
+     (Instance     : in out Shell_Class_Instance_Record;
+      Free_Pointer : out Boolean);
    --  See doc from inherited subprogram
 
    procedure Free_Instance (Instance : in out Shell_Class_Instance);
@@ -1846,9 +1848,11 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class) is
+      Value    : access Glib.Object.GObject_Record'Class)
+   is
+      Free_Pointer : Boolean;
    begin
-      Primitive_Free (Instance.all);
+      Primitive_Free (Instance.all, Free_Pointer);
       Instance.Data := (Data => Object, Obj => GObject (Value));
       Ref (Value);
    end Set_Data;
@@ -1859,9 +1863,11 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : Integer) is
+      Value    : Integer)
+   is
+      Free_Pointer : Boolean;
    begin
-      Primitive_Free (Instance.all);
+      Primitive_Free (Instance.all, Free_Pointer);
       Instance.Data := (Data => Integers, Int => Value);
    end Set_Data;
 
@@ -1872,9 +1878,11 @@ package body Shell_Script is
    procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
       Value      : System.Address;
-      On_Destroy : Destroy_Handler := null) is
+      On_Destroy : Destroy_Handler := null)
+   is
+      Free_Pointer : Boolean;
    begin
-      Primitive_Free (Instance.all);
+      Primitive_Free (Instance.all, Free_Pointer);
       Instance.Data := (Data       => Addresses,
                         Addr       => Value,
                         On_Destroy => On_Destroy);
@@ -1885,9 +1893,11 @@ package body Shell_Script is
    --------------
 
    procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : String) is
+     (Instance : access Shell_Class_Instance_Record; Value : String)
+   is
+      Free_Pointer : Boolean;
    begin
-      Primitive_Free (Instance.all);
+      Primitive_Free (Instance.all, Free_Pointer);
       Instance.Data := (Data => Strings, Str => new String'(Value));
    end Set_Data;
 
@@ -1895,7 +1905,9 @@ package body Shell_Script is
    -- Primitive_Free --
    --------------------
 
-   procedure Primitive_Free (Instance : in out Shell_Class_Instance_Record) is
+   procedure Primitive_Free
+     (Instance     : in out Shell_Class_Instance_Record;
+      Free_Pointer : out Boolean) is
    begin
       case Instance.Data.Data is
          when Object =>
@@ -1917,6 +1929,10 @@ package body Shell_Script is
             end if;
             Instance.Data.Addr := System.Null_Address;
       end case;
+
+      --  Do not free the pointer, since the instance is kept in a list
+      --  anyway.
+      Free_Pointer := False;
    end Primitive_Free;
 
 end Shell_Script;

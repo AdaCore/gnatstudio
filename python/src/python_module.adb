@@ -265,7 +265,9 @@ package body Python_Module is
       On_Destroy : Destroy_Handler := null);
    function Get_Script (Instance : access Python_Class_Instance_Record)
       return Scripting_Language;
-   procedure Primitive_Free (Instance : in out Python_Class_Instance_Record);
+   procedure Primitive_Free
+     (Instance     : in out Python_Class_Instance_Record;
+      Free_Pointer : out Boolean);
    procedure Ref (Instance : access Python_Class_Instance_Record);
    --  See doc from inherited subprogram
 
@@ -2078,9 +2080,12 @@ package body Python_Module is
    -- Primitive_Free --
    --------------------
 
-   procedure Primitive_Free (Instance : in out Python_Class_Instance_Record) is
+   procedure Primitive_Free
+     (Instance     : in out Python_Class_Instance_Record;
+      Free_Pointer : out Boolean) is
    begin
       Py_DECREF (Instance.Data);
+      Free_Pointer := True;
    end Primitive_Free;
 
    ---------

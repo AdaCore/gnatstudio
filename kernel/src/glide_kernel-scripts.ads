@@ -327,10 +327,15 @@ package Glide_Kernel.Scripts is
    --  In the case of a GObject, the reference counting for the object is
    --  increased or decreased as appropriate.
 
-   procedure Primitive_Free (Instance : in out Class_Instance_Record)
+   procedure Primitive_Free
+     (Instance     : in out Class_Instance_Record;
+      Free_Pointer : out Boolean)
       is abstract;
    --  Primitive operation for Free. Do not call directly, only through Free
    --  below.
+   --  If Free_Pointer is set to True, the point to the Class_Instance should
+   --  also be freed. This should only be set to False for shell languages that
+   --  keep the instances in their own table.
 
    procedure Free (Instance : access Class_Instance_Record'Class);
    --  Free the class instance.
