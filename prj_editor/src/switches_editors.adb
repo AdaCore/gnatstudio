@@ -18,24 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Check_Button;    use Gtk.Check_Button;
-with Gtk.Combo;           use Gtk.Combo;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.List;            use Gtk.List;
-with Gtk.Notebook;        use Gtk.Notebook;
-with Gtk.Radio_Button;    use Gtk.Radio_Button;
-with Gtk.Spin_Button;     use Gtk.Spin_Button;
-with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Button;           use Gtk.Button;
+with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Combo;            use Gtk.Combo;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Handlers;         use Gtk.Handlers;
+with Gtk.List;             use Gtk.List;
+with Gtk.Notebook;         use Gtk.Notebook;
+with Gtk.Radio_Button;     use Gtk.Radio_Button;
+with Gtk.Spin_Button;      use Gtk.Spin_Button;
+with Gtk.Stock;            use Gtk.Stock;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Case_Util;       use GNAT.Case_Util;
 
 with Prj_API;              use Prj_API;
 with Prj_Normalize;        use Prj_Normalize;
@@ -208,7 +209,7 @@ package body Switches_Editors is
          declare
             Lang : String := Languages (J).all;
          begin
-            Lower_Case (Lang);
+            To_Lower (Lang);
 
             if Lang = "ada" then
                Pages := Pages or Ada_Page or Pretty_Printer_Page;
@@ -1516,7 +1517,7 @@ package body Switches_Editors is
                Lang : String := Get_Language_From_File
                  (Get_Language_Handler (Switches.Kernel), Files (F).all);
             begin
-               Lower_Case (Lang);
+               To_Lower (Lang);
 
                if Lang = "ada" then
                   Pages := Pages or Ada_Page or Pretty_Printer_Page;
