@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
@@ -30,6 +31,7 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtkada.File_Selection;     use Gtkada.File_Selection;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Text;                  use Gtk.Text;
@@ -40,6 +42,8 @@ with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 with Prj_API;                   use Prj_API;
 with String_Utils;              use String_Utils;
+with Basic_Types;               use Basic_Types;
+with Language_Handlers;         use Language_Handlers;
 
 package body Project_Properties is
 
@@ -52,6 +56,7 @@ package body Project_Properties is
          Compiler    : Gtk.GEntry.Gtk_Entry;
          Debugger    : Gtk.GEntry.Gtk_Entry;
          Convert     : Gtk.Check_Button.Gtk_Check_Button;
+         Languages   : Gtk.Table.Gtk_Table;
       end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
@@ -70,6 +75,12 @@ package body Project_Properties is
    procedure Browse_Location (Editor : access Gtk_Widget_Record'Class);
    --  Open a directory selector for the new location of the project file
 
+   procedure Command_Set_Sensitive
+     (Check : access Glib.Object.GObject_Record'Class;
+      Ent   : GObject);
+   --  Set Ent to sensitive or insensitive state, depending on whether Check is
+   --  active or not.
+
    -------------
    -- Gtk_New --
    -------------
@@ -83,6 +94,17 @@ package body Project_Properties is
       Initialize (Editor, Project_View, Kernel);
    end Gtk_New;
 
+   ---------------------------
+   -- Command_Set_Sensitive --
+   ---------------------------
+
+   procedure Command_Set_Sensitive
+     (Check : access Glib.Object.GObject_Record'Class;
+      Ent   : GObject) is
+   begin
+      Set_Sensitive (Gtk_Widget (Ent), Get_Active (Gtk_Check_Button (Check)));
+   end Command_Set_Sensitive;
+
    ----------------
    -- Initialize --
    ----------------
@@ -95,7 +117,11 @@ package body Project_Properties is
       Button  : Gtk_Widget;
       Button2 : Gtk_Button;
       Label   : Gtk_Label;
+      Check   : Gtk_Check_Button;
       Table   : Gtk_Table;
+      Languages : String_Array := Known_Languages
+        (Get_Language_Handler (Kernel));
+      Ent     : Gtk_GEntry;
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -104,19 +130,21 @@ package body Project_Properties is
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
 
-      Gtk_New (Table, Rows => 6, Columns => 3, Homogeneous => False);
+      Gtk_New (Table, Rows => 7, Columns => 3, Homogeneous => False);
       Pack_Start
         (Get_Vbox (Editor), Table, Expand => True, Fill => True);
 
       Gtk_New (Label, -"Name:");
-      Attach (Table, Label, 0, 1, 0, 1, Xoptions => 0);
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 0, 1, Xoptions => Fill);
       Gtk_New (Editor.Name);
       Attach (Table, Editor.Name, 1, 3, 0, 1);
 
       Set_Text (Editor.Name, Project_Name (Project_View));
 
       Gtk_New (Label, -"Path:");
-      Attach (Table, Label, 0, 1, 1, 2, Xoptions => 0);
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 1, 2, Xoptions => Fill);
       Gtk_New (Editor.Path);
       Attach (Table, Editor.Path, 1, 2, 1, 2);
       Set_Width_Chars (Editor.Path, 40);
@@ -135,7 +163,8 @@ package body Project_Properties is
       Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
 
       Gtk_New (Label, -"Main files:");
-      Attach (Table, Label, 0, 1, 3, 4, Xoptions => 0);
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill);
       Gtk_New (Editor.Executables);
       Attach (Table, Editor.Executables, 1, 3, 3, 4);
 
@@ -143,7 +172,8 @@ package body Project_Properties is
       Set_Sensitive (Label, False);
 
       Gtk_New (Label, -"Gnatls command:");
-      Attach (Table, Label, 0, 1, 4, 5, Xoptions => 0);
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill);
       Gtk_New (Editor.Gnatls);
       Attach (Table, Editor.Gnatls, 1, 3, 4, 5);
       Set_Text
@@ -151,7 +181,8 @@ package body Project_Properties is
          Get_Attribute_Value (Project_View, Gnatlist_Attribute, Ide_Package));
 
       Gtk_New (Label, -"Debugger command:");
-      Attach (Table, Label, 0, 1, 5, 6, Xoptions => 0);
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill);
       Gtk_New (Editor.Debugger);
       Attach (Table, Editor.Debugger, 1, 3, 5, 6);
       Set_Text
@@ -161,6 +192,42 @@ package body Project_Properties is
 
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+
+      Gtk_New (Label, -"Compiler commands:");
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill);
+      Gtk_New (Editor.Languages, Rows => Languages'Length, Columns => 2,
+               Homogeneous => False);
+      Attach (Table, Editor.Languages, 1, 3, 6, 7);
+
+      for L in Languages'Range loop
+         Gtk_New (Check, Languages (L).all);
+         Attach (Editor.Languages, Check, 0, 1,
+                 Guint (L - Languages'First),
+                 Guint (L - Languages'First + 1),
+                 Xoptions => Fill);
+
+         Gtk_New (Ent);
+         Set_Sensitive (Ent, False);
+         Attach (Editor.Languages, Ent, 1, 2,
+                 Guint (L - Languages'First),
+                 Guint (L - Languages'First + 1));
+         Set_Text (Ent,
+                   Get_Attribute_Value
+                     (Project_View, Compiler_Command_Attribute,
+                      Ide_Package, Default => "",
+                      Index => Languages (L).all));
+
+         Object_User_Callback.Connect
+           (Check, "toggled",
+            Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
+            User_Data => GObject (Ent));
+
+         Set_Active (Check, False);
+      end loop;
+
+
+      Free (Languages);
    end Initialize;
 
    ---------------------
