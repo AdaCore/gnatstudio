@@ -432,8 +432,6 @@ package body GVD.Preferences is
       end if;
 
       Set (Hide_Delay, Guint' (5000));
-      Set (String (Remote_Protocol), "rsh");
-      Set (String (Remote_Copy), "rcp");
       Set (Display_Explorer, True);
       Set (String (File_Name_Bg_Color), "#BEBEBE");
       Set (String (Editor_Font), "Courier");
@@ -483,6 +481,8 @@ package body GVD.Preferences is
       Set (String (List_Processes),
            "ps x 2> /dev/null || ps -ef 2> /dev/null || ps");
       Set (String (Default_External_Editor), "glide %f -emacs +%l");
+      Set (String (Remote_Protocol), "rsh");
+      Set (String (Remote_Copy), "rcp");
 
       Tab_Size_Cached := Get_Pref (Tab_Size);
    end Set_Default_Preferences;
@@ -497,12 +497,6 @@ package body GVD.Preferences is
       Set_Sensitive (Dialog.Label13, False);
       Set_Sensitive (Dialog.Button_Hint_Popup_Check, False);
       Set_Sensitive (Dialog.Button_Hint_Status_Check, False);
-
-      --  Automatic display of variable values
-      --  ??? Should give access to the other values
-      Set_Sensitive (Dialog.Variable_Status_Check, False);
-      Set_Active (Dialog.Variable_Popup_Check,
-                  Get_Pref (Tooltips_In_Source) /= None);
 
       --  Warn if multiple instances of GVD are running
       Set_Sensitive (Dialog.Warn_Multiple_Check, False);
@@ -539,9 +533,17 @@ package body GVD.Preferences is
       Set_Active
         (Dialog.Show_Lines_Code_Check, Get_Pref (Editor_Show_Line_With_Code));
 
+      --  Automatic display of variable values
+      --  ??? Should give access to the other values
+      Set_Active (Dialog.Tooltips_Check,
+                  Get_Pref (Tooltips_In_Source) /= None);
+
       --  Syntax highlighting
       Set_Active
-        (Dialog.Syntax_Hilight_Check, Get_Pref (Do_Color_Highlighting));
+        (Dialog.Syntax_Highlight_Check, Get_Pref (Do_Color_Highlighting));
+
+      --  Strip Carriage Return
+      Set_Active (Dialog.Strip_Cr_Check, Get_Pref (Should_Strip_CR));
 
       --  Entities color
       Set_Color (Dialog.Comment_Color_Combo, Get_Pref (Comments_Color));
@@ -606,7 +608,7 @@ package body GVD.Preferences is
 
       --  Command window
       Set_Color
-        (Dialog.Debug_Higlight_Combo, Get_Pref (Debugger_Highlight_Color));
+        (Dialog.Debug_Highlight_Combo, Get_Pref (Debugger_Highlight_Color));
       Font_Combo_Select
         (Dialog.Debug_Font_Combo,
          Get_Pref (Debugger_Font),
@@ -618,9 +620,9 @@ package body GVD.Preferences is
 
       --  Helpers
       Set_Text (Dialog.Edit_Source_Entry, Get_Pref (Default_External_Editor));
-      Set_Sensitive (Dialog.Get_Core_File_Entry, False);
       Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
-      Set_Sensitive (Dialog.Web_Browser_Entry, False);
+      Set_Text (Dialog.Remote_Shell_Entry, Get_Pref (Remote_Protocol));
+      Set_Text (Dialog.Remote_Copy_Entry, Get_Pref (Remote_Copy));
    end Fill_Dialog;
 
    ---------------------
@@ -630,7 +632,7 @@ package body GVD.Preferences is
    procedure Set_From_Dialog
      (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
    begin
-      if Get_Active (Dialog.Variable_Popup_Check) then
+      if Get_Active (Dialog.Tooltips_Check) then
          Set (Tooltips_In_Source, Simple, True);
       else
          Set (Tooltips_In_Source, None, True);
@@ -645,8 +647,9 @@ package body GVD.Preferences is
            True);
       Set (Editor_Show_Line_With_Code,
            Get_Active (Dialog.Show_Lines_Code_Check), True);
-      Set (Do_Color_Highlighting, Get_Active (Dialog.Syntax_Hilight_Check),
+      Set (Do_Color_Highlighting, Get_Active (Dialog.Syntax_Highlight_Check),
            True);
+      Set (Should_Strip_CR, Get_Active (Dialog.Strip_Cr_Check), True);
       Set (Comments_Color, Get_Color (Dialog.Comment_Color_Combo), True);
       Set (Strings_Color, Get_Color (Dialog.String_Color_Combo), True);
       Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
@@ -666,13 +669,16 @@ package body GVD.Preferences is
            True);
       Set (Display_Grid, Get_Active (Dialog.Display_Grid_Check), True);
       Set (Align_Items_On_Grid, Get_Active (Dialog.Align_Grid_Check), True);
-      Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Higlight_Combo),
+      Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Highlight_Combo),
            True);
       Set (Debugger_Font, Debugger_Font_Size, Dialog.Debug_Font_Combo, True);
       Set (String (Default_External_Editor),
            Get_Chars (Dialog.Edit_Source_Entry), True);
       Set (String (List_Processes), Get_Chars (Dialog.List_Processes_Entry),
            True);
+      Set (String (Remote_Protocol), Get_Chars (Dialog.Remote_Shell_Entry),
+           True);
+      Set (String (Remote_Copy), Get_Chars (Dialog.Remote_Copy_Entry), True);
    end Set_From_Dialog;
 
 begin

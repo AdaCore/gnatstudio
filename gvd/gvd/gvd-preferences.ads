@@ -216,15 +216,15 @@ package GVD.Preferences is
    Value_Font : constant String_Font := "Value_Font";
    --  Font used to display the value of the item.
 
+   Value_Font_Size : constant String_Gint := "Value_Font_Size";
+   --  Size of the font used to display the value of the item.
+
    Command_Font : constant String_Font := "Command_Font";
    --  Font used to display the value for the commands
    --    graph print `...`  or graph display `...`
 
    Type_Font : constant String_Font := "Type_Font";
    --  Font used to display the type of the item.
-
-   Value_Font_Size : constant String_Gint := "Value_Font_Size";
-   --  Size of the font used to display the value of the item.
 
    Type_Font_Size : constant String_Gint := "Type_Font_Size";
    --  Size of the font used to display the type of the item.
@@ -266,7 +266,7 @@ package GVD.Preferences is
 
    -------------------
    -- Memory Window --
-      -------------------
+   -------------------
 
    Memory_View_Font : constant String_Font := "Memory_View_Font";
    --  Font use in the memory view window.
