@@ -11,14 +11,14 @@ gvd
 DEPENDENCIES= \
 kbody \
 common \
+widgets \
 syntax \
 vdiff \
 aunit \
 prj_editor \
 src_editor \
 hypergrep \
-glide \
-widgets
+glide
 
 all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
 
