@@ -887,4 +887,20 @@ package body Interactive_Consoles is
       return Get_Text (Start, The_End);
    end Get_Chars;
 
+   -----------------
+   -- Get_History --
+   -----------------
+
+   function Get_History
+     (Console : access Interactive_Console_Record)
+      return GNAT.OS_Lib.String_List_Access is
+   begin
+      if Console.History = null then
+         return null;
+      else
+         return Get_History
+           (Console.History.all, History_Key (Console.Key.all));
+      end if;
+   end Get_History;
+
 end Interactive_Consoles;

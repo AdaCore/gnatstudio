@@ -133,6 +133,11 @@ package Interactive_Consoles is
    procedure Grab_Focus (Console : access Interactive_Console_Record);
    --  Grab the focus on the console text view.
 
+   function Get_History
+     (Console : access Interactive_Console_Record)
+      return GNAT.OS_Lib.String_List_Access;
+   --  Return the command history.
+
 private
 
    type Interactive_Console_Record is new
