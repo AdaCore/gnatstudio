@@ -1,7 +1,8 @@
 project Sdc is
 
-   for Languages use ("ada");
-   for Source_Dirs use ("common", "struct");
+  for Languages use ("Ada", "C");
+  for Source_Dirs use ("common", "struct", "matrix_handling");
+
    for Main use ("sdc.adb");
    type Build_Type is ("PRODUCTION", "DEBUG");
    Build : Build_Type := external ("Build", "DEBUG");
@@ -15,6 +16,7 @@ project Sdc is
               ("-gnatwe", "-gnaty", "-gnato", "-g");
             for Switches ("screen_output.adb") use
               ("-gnatwe", "-gnaty", "-g");
+            for Default_Switches ("c") use ("-g");
 
          when "PRODUCTION" =>
             for Default_Switches ("ada") use
