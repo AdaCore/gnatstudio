@@ -38,7 +38,7 @@ package Commands.External is
                List   : String_List.List) return Boolean;
    --  Parses the output of a command, contained in List.
    --  Return True if the command was executed successfully.
-   --  The parameters should be freed by this function.
+   --  This function should NOT modify data referenced by Head and List.
 
    procedure Create
      (Item         : out External_Command_Access;
