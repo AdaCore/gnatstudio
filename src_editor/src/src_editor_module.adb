@@ -76,6 +76,7 @@ package body Src_Editor_Module is
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       Location_Open_Id         : Idle_Handler_Id := 0;
+      Display_Line_Numbers     : Boolean;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -310,26 +311,30 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
+      Id : Source_Editor_Module
+        := Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
       File  : constant String := Get_String (Nth (Args, 1));
    begin
-      Create_Line_Information_Column
-        (Kernel,
-         File,
-         Src_Editor_Module_Name,
-         Stick_To_Data => False,
-         Every_Line    => True);
+      if Id.Display_Line_Numbers then
+         Create_Line_Information_Column
+           (Kernel,
+            File,
+            Src_Editor_Module_Name,
+            Stick_To_Data => False,
+            Every_Line    => True);
 
-      Infos := new Line_Information_Array (1 .. 1);
-      Infos (1).Text := new String' ("   1");
+         Infos := new Line_Information_Array (1 .. 1);
+         Infos (1).Text := new String' ("   1");
 
-      Add_Line_Information
-        (Kernel,
-         File,
-         Src_Editor_Module_Name,
-         Infos);
+         Add_Line_Information
+           (Kernel,
+            File,
+            Src_Editor_Module_Name,
+            Infos);
 
-      Unchecked_Free (Infos);
+         Unchecked_Free (Infos);
+      end if;
 
    exception
       when E : others =>
@@ -1938,10 +1943,19 @@ package body Src_Editor_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Id : Source_Editor_Module := Source_Editor_Module (Src_Editor_Module_Id);
+      Id : Source_Editor_Module
+        := Source_Editor_Module (Src_Editor_Module_Id);
+      Pref_Display_Line_Numbers : Boolean
+        := Get_Pref (Kernel, Display_Line_Numbers);
    begin
+      if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
+         return;
+      end if;
+
+      Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
+
       --  Connect necessary signal to display line numbers.
-      if Get_Pref (Kernel, Display_Line_Numbers) then
+      if Pref_Display_Line_Numbers then
          if Id.Source_Lines_Revealed_Id = No_Handler then
             Id.Source_Lines_Revealed_Id :=
               Kernel_Callback.Connect
@@ -1955,6 +1969,13 @@ package body Src_Editor_Module is
                  File_Edited_Signal,
                  File_Edited_Cb'Access,
                  Kernel);
+
+            Create_Line_Information_Column
+              (Kernel,
+               "",
+               Src_Editor_Module_Name,
+               Stick_To_Data => False,
+               Every_Line    => True);
          end if;
 
       elsif Id.Source_Lines_Revealed_Id /= No_Handler then
@@ -1964,6 +1985,8 @@ package body Src_Editor_Module is
            (Kernel, Id.File_Edited_Id);
          Id.Source_Lines_Revealed_Id := No_Handler;
          Id.File_Edited_Id := No_Handler;
+
+         Remove_Line_Information_Column (Kernel, "", Src_Editor_Module_Name);
       end if;
    end Preferences_Changed;
 
