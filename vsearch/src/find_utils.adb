@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -131,23 +131,6 @@ package body Find_Utils is
 
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Result : in out Match_Result_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Match_Result, Match_Result_Access);
-   begin
-      if Result /= null then
-         for R in Result'Range loop
-            Unchecked_Free (Result (R));
-         end loop;
-
-         Unchecked_Free (Result);
-      end if;
-   end Free;
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -719,19 +702,32 @@ package body Find_Utils is
    -----------------
 
    procedure Set_Context
-     (Context : access Search_Context;
+     (Context  : access Search_Context;
       Look_For : String;
       Options  : Search_Options) is
    begin
       Free (Context.all);
-      Context.Look_For := new String' (Look_For);
-      Context.Options  := Options;
+      Context.Look_For       := new String' (Look_For);
+      Context.Options        := Options;
       Context.BM_Initialized := False;
    end Set_Context;
 
    ----------
    -- Free --
    ----------
+
+   procedure Free (Result : in out Match_Result_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Match_Result, Match_Result_Access);
+   begin
+      if Result /= null then
+         for R in Result'Range loop
+            Unchecked_Free (Result (R));
+         end loop;
+
+         Unchecked_Free (Result);
+      end if;
+   end Free;
 
    procedure Free (Context : in out Search_Context) is
    begin
@@ -741,9 +737,10 @@ package body Find_Utils is
       Free_Match_Array (Context.Sub_Matches);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   procedure Free (Context : in out Current_File_Context) is
+   begin
+      Free (Context.Next_Matches_In_File);
+   end Free;
 
    procedure Free (Context : in out Files_Context) is
    begin
@@ -754,10 +751,6 @@ package body Find_Utils is
       Free (Search_Context (Context));
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Context : in out Search_Context_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Search_Context'Class, Search_Context_Access);
@@ -767,10 +760,6 @@ package body Find_Utils is
          Unchecked_Free (Context);
       end if;
    end Free;
-
-   ----------
-   -- Free --
-   ----------
 
    procedure Free (Context : in out Files_Project_Context) is
    begin
@@ -919,12 +908,27 @@ package body Find_Utils is
             Match :=
               Context.Next_Matches_In_File (Context.Last_Match_Returned);
             Unhighlight_All (Editor);
-            Highlight_Region
-              (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
-            Set_Cursor_Location (Editor, Match.Line, Match.Column);
-            return True;
+
+            if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
+               Highlight_Region
+                 (Editor,
+                  Match.Line, Match.Column,
+                  Match.Line, Match.End_Column);
+               Set_Cursor_Location (Editor, Match.Line, Match.Column);
+
+               return True;
+
+            else
+               --  ??? Contents of buffer has changed. See comment below about
+               --  the use of tags.
+
+               Unhighlight_All (Editor);
+               Free (Context.Next_Matches_In_File);
+               return False;
+            end if;
 
          else
+            Unhighlight_All (Editor);
             Free (Context.Next_Matches_In_File);
             return False;
          end if;
@@ -950,6 +954,9 @@ package body Find_Utils is
          return False;
       end if;
 
+      --  ??? Should use tags to take into account changes in the buffer
+      --  between two searches.
+
       Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
       Match :=
         Context.Next_Matches_In_File (Context.Last_Match_Returned);
@@ -973,7 +980,7 @@ package body Find_Utils is
       pragma Unreferenced (Search_Backward);
    begin
       --  If there are still some matches in the current file that we haven't
-      --  returned , do it now.
+      --  returned, do it now.
 
       if Context.Next_Matches_In_File /= null then
          Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
