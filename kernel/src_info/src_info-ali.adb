@@ -42,6 +42,13 @@ package body Src_Info.ALI is
    --  ??? but this is not terribly important since most of the time, only the
    --  ??? Run-time file are krunched, and we know that their max_len is 8.
 
+   Full_Naming_Scheme_Handling : constant Boolean := True;
+   --  <preference> Should be set to True if different naming schemes can be
+   --  seen in various subprojects (ie naming_scheme1 for project A and a
+   --  different naming_scheme2 for project B).
+   --  This must be synchronized with the matching constant in
+   --  Src_Info.Prj_Utils.
+
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
    --  the Sdep table.
@@ -450,7 +457,9 @@ package body Src_Info.ALI is
       Subunit_Name     : Name_Id := No_Name;
       Project          : Prj.Project_Id;
       Source_Path      : String;
-      File             : out Source_File) is
+      File             : out Source_File)
+   is
+      Prj : Project_Id;
    begin
       --  Search algorithm:
       --  =================
@@ -526,15 +535,19 @@ package body Src_Info.ALI is
       --
       --    end loop Strip_Loop;
 
+      if Full_Naming_Scheme_Handling then
+         Prj := Get_Project_From_File
+           (Project, Get_Name_String (Source_Filename));
+      else
+         Prj := Project;
+      end if;
+
       if Subunit_Name = No_Name then
          Get_Unit_Source_File
-           (List, Source_Filename,
-            --  Project,
-            Get_Project_From_File (Project, Get_Name_String (Source_Filename)),
-            Source_Path, File);
+           (List, Source_Filename, Prj, Source_Path, File);
       else
          Get_Subunit_Source_File
-           (List, New_ALI, Source_Filename, Subunit_Name, Project, File);
+           (List, New_ALI, Source_Filename, Subunit_Name, Prj, File);
       end if;
    end Get_Source_File;
 
@@ -579,7 +592,9 @@ package body Src_Info.ALI is
 
       Spec_Id := Search_Filename (Naming.Specifications, Source_Filename);
 
-      --  If found then search if we can find the associated body
+      --  If found then search if we can find the associated body. We should
+      --  always use the ALI file from the body if available, since it contains
+      --  much more information.
 
       if Spec_Id /= No_Array_Element then
          --  Search the body exception list for any filename with the same
@@ -639,93 +654,95 @@ package body Src_Info.ALI is
          return;
       end if;  --  filename found in spec exception list
 
-      --  Is this a body, according to the naming scheme?
+      --  Else if both Spec_Id and Body_Id were null
 
-      if Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Filename), Project) = Unit_Body
-      then
-         Get_Unit_Source_File
-           (List, Source_Filename, Source_Filename, Unit_Body,
-            Project, Source_Path, File);
-         return;
-      end if;
+      case Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Filename), Project)
+      is
 
-      --  Is this a source, according to the naming scheme?
-      --  (it should be, or that would be a bug)
+         --  Is this a body, according to the naming scheme?
 
-      if Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Filename), Project) = Unit_Spec
-      then
-         declare
-            Unit_Name : constant Name_Id :=
-               Get_Unit_Name (Source_Filename, Project);
-         begin
-            if Unit_Name = No_Name then
-               --  This is a bug...
-               Trace (Me, "Get_Unit_Source_File: no unit name");
-               raise ALI_Internal_Error;
-            end if;
+         when Unit_Body =>
+            Get_Unit_Source_File
+              (List, Source_Filename, Source_Filename, Unit_Body,
+               Project, Source_Path, File);
 
-            --  Search in the body exception list
-            Body_Id := Search_Filename (Naming.Bodies, Unit_Name);
+         --  Is this a spec, according to the naming scheme?
+         --  (it should be, or that would be a bug)
 
-            if Body_Id /= No_Array_Element then
-               Get_Unit_Source_File
-                  (List, Source_Filename, Get_Filename (Body_Id),
-                   Unit_Body, Project, Source_Path, File);
-               return;
-            end if;
-
-            --  Search the project units list
-            Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
-            Filename := Get_Body_Filename (Prj_Unit);
-
-            if Get_Body_Filename (Prj_Unit) /= No_Name then
-               if Filename = Source_Filename then
-                  Part := Unit_Body;
-               else
-                  Part := Unit_Spec;
+         when Unit_Spec =>
+            declare
+               Unit_Name : constant Name_Id :=
+                 Get_Unit_Name (Source_Filename, Project);
+            begin
+               if Unit_Name = No_Name then
+                  --  This is a bug...
+                  Trace (Me, "Get_Unit_Source_File: no unit name");
+                  raise ALI_Internal_Error;
                end if;
 
-               Get_Unit_Source_File
-                  (List, Source_Filename, Filename,
-                   Part, Project, Source_Path, File);
-               return;
-            end if;
+               --  Search in the body exception list
+               Body_Id := Search_Unit_Name (Naming.Bodies, Unit_Name);
 
-            --  Search the source path
-            Filename := Get_Body_Filename (Unit_Name, Naming);
-            Dir :=
-              Locate_Regular_File (Get_Name_String (Filename), Source_Path);
-
-            if Dir /= null then
-               if Filename = Source_Filename then
-                  Part := Unit_Body;
-               else
-                  Part := Unit_Spec;
+               if Body_Id /= No_Array_Element then
+                  Get_Unit_Source_File
+                    (List, Source_Filename, Get_Filename (Body_Id),
+                     Unit_Body, Project, Source_Path, File);
+                  return;
                end if;
 
-               Free (Dir);
+               --  Search the project units list
+               Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
+               Filename := Get_Body_Filename (Prj_Unit);
+
+               if Get_Body_Filename (Prj_Unit) /= No_Name then
+                  if Filename = Source_Filename then
+                     Part := Unit_Body;
+                  else
+                     Part := Unit_Spec;
+                  end if;
+
+                  Get_Unit_Source_File
+                    (List, Source_Filename, Filename,
+                     Part, Project, Source_Path, File);
+                  return;
+               end if;
+
+               --  Search the source path
+               Filename := Get_Body_Filename (Unit_Name, Naming);
+               Dir :=
+                 Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+
+               if Dir /= null then
+                  if Filename = Source_Filename then
+                     Part := Unit_Body;
+                  else
+                     Part := Unit_Spec;
+                  end if;
+
+                  Free (Dir);
+                  Get_Unit_Source_File
+                    (List, Source_Filename, Filename, Part,
+                     Project, Source_Path, File);
+                  return;
+               end if;
+
+               --  The body was not found anywhere, so this is a spec only file
                Get_Unit_Source_File
-                 (List, Source_Filename, Filename, Part,
+                 (List, Source_Filename, Source_Filename, Unit_Spec,
                   Project, Source_Path, File);
                return;
-            end if;
+            end;
 
-            --  The body was not found anywhere, so this is a spec only file
-            Get_Unit_Source_File
-              (List, Source_Filename, Source_Filename, Unit_Spec,
-               Project, Source_Path, File);
-            return;
-         end;
-      end if;
+            --  If we reach this point, then there is a bug somewhere
 
-      --  If we reach this point, then there is a bug somewhere
-      Trace (Me, "Get_Unit_Source_File: reached the end unexpectedly "
-             & Get_Name_String (Source_Filename)
-             & " in project "
-             & Get_Name_String (Projects.Table (Project).Name));
-      raise ALI_Internal_Error;
+         when Unit_Separate =>
+            Trace (Me, "Get_Unit_Source_File: reached the end unexpectedly "
+                   & Get_Name_String (Source_Filename)
+                   & " in project "
+                   & Get_Name_String (Projects.Table (Project).Name));
+            raise ALI_Internal_Error;
+      end case;
    end Get_Unit_Source_File;
 
    procedure Get_Unit_Source_File
@@ -1288,16 +1305,11 @@ package body Src_Info.ALI is
       UId         : Unit_Id;
       WId         : With_Id)
    is
-      Prj_Data         : Project_Data renames Prj.Projects.Table (Project);
-      Naming           : Naming_Data renames Prj_Data.Naming;
       U                : Unit_Record renames Units.Table (UId);
       W                : With_Record renames Withs.Table (WId);
 
-      --  ??? We do not use the right naming scheme here, in case the withed
-      --  ??? unit belongs to another project
-
       Withed_File_Name : constant String :=
-        Get_Source_Filename (W.Uname, Naming);
+        Get_Source_Filename (W.Uname, Project);
       Krunched_Name    : constant String := Krunch (Withed_File_Name);
       Current_Sep      : File_Info_Ptr_List;
       Current_Dep      : Dependency_File_Info_List;
@@ -1306,6 +1318,9 @@ package body Src_Info.ALI is
    begin
       --  Check that we did not with ourselves nor our separates in which
       --  case the with line does not contain any information we need.
+      --  The test is done based on unit names, so that we don't have to
+      --  compute the source filename, which could be expensive with different
+      --  naming schems
 
       if New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
@@ -1811,6 +1826,7 @@ package body Src_Info.ALI is
       Prj_Unit       : Prj.Com.Unit_Id;
       Dir            : String_Access;
       Filename       : Name_Id;
+      Part           : Unit_Part;
 
    begin
       --  Store the source filename in the Namet buffer and get its Name ID
@@ -1904,9 +1920,10 @@ package body Src_Info.ALI is
 
       --  Is this a body, according to the naming scheme?
 
-      if Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Name_Id), Project) = Unit_Body
-      then
+      Part := Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Name_Id), Project);
+
+      if Part = Unit_Body then
          declare
             Ali : constant String := Get_ALI_Filename (Source_Name_Id);
          begin
@@ -1920,9 +1937,7 @@ package body Src_Info.ALI is
       --  to make sure that it matches the naming scheme. Otherwise, return
       --  the empty string.
 
-      if Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Name_Id), Project) /= Unit_Spec
-      then
+      if Part /= Unit_Spec then
          Trace (Me, "No ALI-7 file for " & Source_Filename);
          return "";
       end if;
