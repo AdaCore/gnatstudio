@@ -19,15 +19,11 @@ clean:
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir) $(sharedir)/make
-	$(MKDIR) $(sharedir)/gps/customize
+	$(MKDIR) $(sharedir)/gps
 	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/make
 	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/make
-	$(INSTALL_DATA) share/ada_support.xml $(sharedir)/gps/customize
-	$(INSTALL_DATA) share/c_support.xml $(sharedir)/gps/customize
-	$(INSTALL_DATA) share/gpr.xml $(sharedir)/gps/customize
-	$(INSTALL_DATA) share/gnatstub.xml $(sharedir)/gps/customize
-	$(INSTALL_DATA) share/gnatpp.xml $(sharedir)/gps/customize
-	$(INSTALL_DATA) share/python.xml $(sharedir)/gps/customize
+	(cd share; tar cf - customize/) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - python/)    | (cd $(sharedir)/gps; tar xf -)
 	$(MAKE) -C docs install
 
 install: install-common
