@@ -689,7 +689,9 @@ package body Debugger.Gdb is
    ----------------
 
    procedure Initialize (Debugger : access Gdb_Debugger) is
-      Num : Expect_Match;
+      Num  : Expect_Match;
+      Lang : Language_Access;
+
    begin
       --  Wait for initial output and prompt (and display it in the window)
       Wait
@@ -763,7 +765,9 @@ package body Debugger.Gdb is
          --  advantage of the adainit symbol in case of Ada executables.
          --  This is particularly important in case of cross environments.
 
-         if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+         Lang := Get_Language (Debugger);
+
+         if Lang /= null and then Lang.all in Gdb_Ada_Language'Class then
             --  Switch to C language to avoid possible ambiguities
 
             Switch_Language (Debugger, "c");
