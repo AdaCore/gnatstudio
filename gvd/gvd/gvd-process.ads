@@ -90,7 +90,7 @@ package Odd.Process is
    --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
    --
    --    Generated each time the context of the debuggee is changed (this
-   --    includes process_stopped and also thread switching, ...).
+   --    includes thread switching, ...).
    --
    --  - "executable_changed"
    --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
@@ -139,7 +139,7 @@ package Odd.Process is
 
       Descriptor : Program_Descriptor;
       --  This is used to store the launching method.
-      --  (Added for handling sessions.)
+      --  (Added to handle sessions)
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -180,7 +180,7 @@ package Odd.Process is
    --  ??? This needs documentation.
 
    function Get_Num (Tab : Debugger_Process_Tab) return Glib.Gint;
-   --  Return the number of the notebook page which contains the process tab.
+   --  Return the number identifying the debugger associated with a process tab
 
    function Convert
      (Main_Debug_Window : access
@@ -222,7 +222,7 @@ package Odd.Process is
 
    procedure Context_Changed
      (Debugger : access Debugger_Process_Tab_Record'Class);
-   --  Emit the "context_changed" and "process_stopped" signal.
+   --  Emit the "context_changed" signal.
 
    procedure Executable_Changed
      (Debugger : access Debugger_Process_Tab_Record'Class;
@@ -288,8 +288,7 @@ package Odd.Process is
 
    function Toggle_Breakpoint_State
      (Process        : access Debugger_Process_Tab_Record;
-      Breakpoint_Num : Integer)
-     return Boolean;
+      Breakpoint_Num : Integer) return Boolean;
    --  Toggle the enabled/disabled state of a specific breakpoint in the
    --  current process, and return the new state.
    --  The internal list of breakpoints is also updated, but no command is
