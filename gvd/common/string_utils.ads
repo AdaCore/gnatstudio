@@ -120,6 +120,13 @@ package String_Utils is
    --  Return the extension of the file (ie the part after the last '.'),
    --  or "" if there is none.
 
+   function Suffix_Matches
+     (File_Name : String; Suffix : String) return Boolean;
+   --  Return true if File_Name has the given Suffix. This is more general
+   --  than extensions, since it doesn't need to start after a '.'.
+   --  Note that this function also return False when Filename = Extension
+   --  as this does not make sense for a source filename.
+
    function Reduce (S : String) return String;
    --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
    --  and replace multiple spaces with a single one.

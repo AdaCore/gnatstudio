@@ -740,4 +740,15 @@ package body String_Utils is
       end case;
    end Number_Of_Digits;
 
+   --------------------
+   -- Suffix_Matches --
+   --------------------
+
+   function Suffix_Matches
+     (File_Name : String; Suffix : String) return Boolean
+   is
+   begin
+      return Tail (File_Name, Suffix'Length) = Suffix;
+   end Suffix_Matches;
+
 end String_Utils;
