@@ -28,55 +28,23 @@
 --
 --  This package is used to output a project file from a project file tree.
 
-with Prj.Tree;  use Prj.Tree;
-with Types;     use Types;
+with Prj.Tree;
 
 package Prj.PP is
 
-   --  The following access to procedure types are used
-   --  to redirect output when calling Pretty_Print.
-
-   type Write_Empty_Line_Ap is access procedure;
-
    type Write_Char_Ap is access procedure (C : Character);
+   type Write_Str_Ap  is access procedure (S : String);
 
-   type Write_Str_Ap is access procedure (S : String);
-
-   type Write_Line_Ap is access procedure (S : String);
-
-   type Start_Line_Ap is access procedure (Indent : Natural);
-
-   type Output_String_Ap is access procedure (S : String_Id);
-
-   type Output_Name_Ap is
-     access procedure (Name       : Name_Id;
-                       Capitalize : Boolean := True);
-
-   procedure Initialize (W_Empty_Line : Write_Empty_Line_Ap;
-                         W_Char       : Write_Char_Ap;
-                         W_Str        : Write_Str_Ap;
-                         W_Line       : Write_Line_Ap;
-                         S_Line       : Start_Line_Ap;
-                         O_String     : Output_String_Ap;
-                         O_Name       : Output_Name_Ap;
-                         Inc          : Positive);
-   --  Initialize the project pretty printer.
-   --  This procedure need to be called before calling
-   --  Pretty_Print, only if the default putput procedures
-   --  need to be changed.
-   --  The default output procedures send text to the current
-   --  output.
-
-   procedure Pretty_Print (Project : Project_Node_Id);
+   procedure Pretty_Print
+     (Project   : Prj.Tree.Project_Node_Id;
+      Increment : Positive := 3;
+      W_Char : Write_Char_Ap := null;
+      W_Str  : Write_Str_Ap  := null);
    --  Output a project file, using either the default output
    --  routines, or the ones specified by a call to Initialize.
-
-private
-
-   procedure Output_Statistics;
-   --  This procedure can be used after one or more calls to Pretty_Print
-   --  to display what Project_Node_Kinds have not been exercised
-   --  by the call(s) to Pretty_Print.
-   --  It is used only for testing.
+   --  Increment is the number of spaces for each indentation level.
+   --
+   --  W_Char and W_Str can be used to change the default output
+   --  procedures. The default values force the output to Standard_Output.
 
 end Prj.PP;
