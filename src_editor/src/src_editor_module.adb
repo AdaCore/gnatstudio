@@ -390,9 +390,7 @@ package body Src_Editor_Module is
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
 
-   procedure Fill_Marks
-     (Kernel : Kernel_Handle;
-      File   : String);
+   procedure Fill_Marks (Kernel : Kernel_Handle; File : String);
    --  Create the marks on the buffer corresponding to File, if File has just
    --  been open.
 
@@ -401,10 +399,15 @@ package body Src_Editor_Module is
    -----------------------
 
    function Console_Has_Focus
-     (Kernel : access Kernel_Handle_Record'Class) return Boolean is
+     (Kernel : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
-      return Get_Widget (Get_Focus_Child (Get_MDI (Kernel))).all in
-        Interactive_Console_Record'Class;
+      if Child = null then
+         return False;
+      else
+         return Get_Widget (Child).all in Interactive_Console_Record'Class;
+      end if;
    end Console_Has_Focus;
 
    ----------
