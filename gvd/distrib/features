@@ -1,6 +1,8 @@
 New features in GVD 2.0.0
 
 - [9403-007] GVD shows the main source file in the explorer when it opens.
+- [9305-023] The columns size and visibility for the stack window are now
+  memorized from one session to another.
 - [9325-017] The fields in the "New Debugger" dialog are now filled with
   parameters from the command line.
 - [9305-037] A message dialog now pops up when trying to detach a process
