@@ -103,7 +103,7 @@ package body Dynamic_Arrays is
            T.Table (Index + 1 .. T.P.Next_To_Last - 1);
          T.P.Next_To_Last := Index_Type'Pred (T.P.Next_To_Last);
 
-         if T.P.Next_To_Last = First - 1 then
+         if T.P.Next_To_Last = First then
             --  Might as well save some memory
             Free (T);
          end if;
