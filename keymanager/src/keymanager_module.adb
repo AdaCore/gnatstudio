@@ -1950,26 +1950,31 @@ package body KeyManager_Module is
       Register_Menu
         (Kernel, Edit_Menu, -"_Key shortcuts",
          Callback => On_Edit_Keys'Access);
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Start Recording",
-         Callback => On_Start_Recording'Access);
-      Register_Menu
-        (Kernel, Macro_Menu, -"S_top Recording",
-         Callback   => On_Stop_Recording'Access,
-         Accel_Key  => GDK_Escape,
-         Accel_Mods => Control_Mask,
-         Sensitive  => False);
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Play",
-         Callback  => On_Play_Macro'Access,
-         Sensitive => False);
-      Register_Menu
-        (Kernel, Macro_Menu, -"Load...",
-         Callback  => On_Load_Macro'Access);
-      Register_Menu
-        (Kernel, Macro_Menu, -"_Save As...",
-         Callback  => On_Save_Macro'Access,
-         Sensitive => False);
+
+      --  ??? For now disable these menus since this is a work in progress
+
+      if False then
+         Register_Menu
+           (Kernel, Macro_Menu, -"_Start Recording",
+            Callback => On_Start_Recording'Access);
+         Register_Menu
+           (Kernel, Macro_Menu, -"S_top Recording",
+            Callback   => On_Stop_Recording'Access,
+            Accel_Key  => GDK_Escape,
+            Accel_Mods => Control_Mask,
+            Sensitive  => False);
+         Register_Menu
+           (Kernel, Macro_Menu, -"_Play",
+            Callback  => On_Play_Macro'Access,
+            Sensitive => False);
+         Register_Menu
+           (Kernel, Macro_Menu, -"Load...",
+            Callback  => On_Load_Macro'Access);
+         Register_Menu
+           (Kernel, Macro_Menu, -"_Save As...",
+            Callback  => On_Save_Macro'Access,
+            Sensitive => False);
+      end if;
 
       Register_Command
         (Kernel,
