@@ -960,7 +960,9 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Arguments = "" and then Debugger.Remote_Target /= null then
+      if Arguments = "" and then Debugger.Remote_Target /= null
+        and then Debugger.Executable /= null
+      then
          Send
            (Debugger,
             "run " & Get_Module (Debugger.Executable.all), Mode => Mode);
