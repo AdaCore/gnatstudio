@@ -13,7 +13,7 @@ DEVCLEAN=
 all : ../lib/db_capi.o $(DEVALL)
 
 ../lib/db_capi.o : db_capi.c
-	$(CC) $(INCLUDES) -c $< -o $@
+	$(CC) $(INCLUDES) -g -c $< -o $@
 
 clean :
 	$(RM) ../lib/db_capi.o $(DEVCLEAN)
