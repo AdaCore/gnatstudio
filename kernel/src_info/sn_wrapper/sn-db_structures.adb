@@ -539,7 +539,7 @@ package body SN.DB_Structures is
       tab            : FU_Table;
       cur_pos        : Integer;
       Len            : Integer;
-      Num_Of_Fileds  : Integer := Get_Field_Count (Key_Data_Pair.Key);
+      Num_Of_Fileds  : constant Integer := Get_Field_Count (Key_Data_Pair.Key);
       Field_Offset   : Integer := 0;
    begin
       Len := Get_Total_Length (Key_Data_Pair.Key) +
