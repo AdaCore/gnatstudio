@@ -1799,6 +1799,7 @@ package body Default_Preferences is
 
       Gtk_New (Model, (0 => GType_String, 1 => GType_Object));
       Gtk_New (View, Model);
+      Unref (Model);
       Set_Headers_Visible (View, False);
 
       Gtk_New (Col);
