@@ -54,9 +54,6 @@ package GVD is
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
-   Color_Selection : constant String := "@COLOR_SELECTION@";
-   --  Background color used to select items in the data window.
-
    Need_To_Strip_CR : constant Boolean := @STRIP_CR@;
    --  True on systems where lines are separated by both LF and CR.
 
