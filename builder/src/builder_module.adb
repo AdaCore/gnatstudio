@@ -514,7 +514,7 @@ package body Builder_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
-      if not Save_All_MDI_Children
+      if not Save_MDI_Children
         (Kernel, Force => Get_Pref (Kernel, Auto_Save))
       then
          Free (Args);
@@ -726,9 +726,7 @@ package body Builder_Module is
             return;
          end if;
 
-         if Save_Child (Kernel, Get_File_Editor (Kernel, File), Force => False)
-           = Cancel
-         then
+         if not Save_MDI_Children (Kernel, Force => False) then
             return;
          end if;
 
@@ -805,7 +803,7 @@ package body Builder_Module is
          return;
       end if;
 
-      if not Save_All_MDI_Children
+      if not Save_MDI_Children
         (Kernel, Force => Get_Pref (Kernel, Auto_Save))
       then
          return;
@@ -1008,7 +1006,7 @@ package body Builder_Module is
          Fd      : Process_Descriptor_Access;
 
       begin
-         if not Save_All_MDI_Children
+         if not Save_MDI_Children
            (Kernel, Force => Get_Pref (Kernel, Auto_Save))
          then
             return;
