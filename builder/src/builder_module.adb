@@ -159,12 +159,14 @@ package body Builder_Module is
         & Scenario_Variables_Cmd_Line (Kernel)
         & " ";
       Id        : Timeout_Handler_Id;
+      Context   : Selection_Context_Access := Get_Current_Context (Kernel);
 
    begin
-      if Get_Current_Explorer_Context (Kernel) /= null then
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
          Title := new String'
-           (File_Information (File_Selection_Context_Access (
-             Get_Current_Explorer_Context (Kernel))));
+           (File_Information (File_Selection_Context_Access (Context)));
       else
          return;
       end if;
@@ -212,12 +214,12 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Context : constant Selection_Context_Access :=
-        Get_Current_Explorer_Context (Kernel);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
 
    begin
-      if Context = null then
+      if Context = null
+        or else not (Context.all in File_Selection_Context'Class)
+      then
          return;
       end if;
 
@@ -265,8 +267,12 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+
    begin
-      if Get_Current_Explorer_Context (Kernel) = null then
+      if Context = null
+        or else not (Context.all in File_Selection_Context'Class)
+      then
          return;
       end if;
 
@@ -278,8 +284,7 @@ package body Builder_Module is
 
          --  ??? Should get the name of the real main
          File    : constant String :=
-           File_Information (File_Selection_Context_Access
-             (Get_Current_Explorer_Context (Kernel)));
+           File_Information (File_Selection_Context_Access (Context));
          Fd      : Process_Descriptor_Access;
          Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;
