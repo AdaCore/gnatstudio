@@ -305,12 +305,12 @@ package Language is
       ------------------------
 
       Cat_Package,
+      Cat_Namespace,
       Cat_Procedure,
       Cat_Function,
       Cat_Task,
       Cat_Protected,
       Cat_Entry,
-      Cat_Namespace,
       Cat_Constructor,
       Cat_Destructor,
       Cat_Method,
@@ -350,6 +350,9 @@ package Language is
    subtype Enclosing_Entity_Category is Language_Category
      range Cat_Package .. Cat_Method;
 
+   subtype Subprogram_Category is Enclosing_Entity_Category
+     range Cat_Procedure .. Cat_Method;
+
    subtype Data_Type_Category is Language_Category
      range Cat_Class .. Cat_Variable;
 
@@ -371,6 +374,9 @@ package Language is
 
       Name            : Basic_Types.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token.
+
+      Profile         : Basic_Types.String_Access;
+      --  Subprogram profile, if Category is in Subprogram_Category.
 
       Sloc_Start      : Source_Location;
       --  Location of beginning of the construct

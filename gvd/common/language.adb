@@ -201,6 +201,7 @@ package body Language is
          exit when Info = null;
 
          Free (Info.Name);
+         Free (Info.Profile);
          Tmp := Info;
          Info := Info.Next;
          Free (Tmp);
