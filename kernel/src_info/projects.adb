@@ -100,9 +100,7 @@ package body Projects is
       View_Is_Complete : Boolean := False;
       --  True if the view for the project was correctly computed
 
-      Status : Project_Status := From_File;
-      --  True if the current project is the default project (ie is not
-      --  associated with a file on the disk)
+      Status : Project_Status := Default;
    end record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
