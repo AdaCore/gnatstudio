@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -77,13 +77,14 @@ package Glide_Kernel.Project is
    --  This is the equivalent function of Find_Source_File for object files.
    --  This also works for ali files.
 
-   function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
+   function Scenario_Variables
+     (Kernel : access Kernel_Handle_Record'Class)
       return Prj_API.Project_Node_Array;
    --  Return a list of all the scenario variables. This list is cached, so
    --  that future calls are fast.
    --  See also the signal "variable_changed" for the kernel.
    --  ??? This should be independent from any actual node, since the nodes
-   --  ??? might be freed at some point.
+   --  might be freed at some point.
 
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
@@ -92,7 +93,8 @@ package Glide_Kernel.Project is
    --
    --  ??? What do we do if the project couldn't be loaded.
 
-   function Get_Project (Handle : access Kernel_Handle_Record'Class)
+   function Get_Project
+     (Handle : access Kernel_Handle_Record'Class)
       return Prj.Tree.Project_Node_Id;
    --  Return the current project tree. This tree can be fully manipulated, and
    --  extended. However, you should reevaluate the view after you have
@@ -110,15 +112,14 @@ package Glide_Kernel.Project is
    --  This emits the "project_view_changed" signal.
 
    function Scenario_Variables_Cmd_Line
-     (Handle : access Kernel_Handle_Record'Class)
-      return String;
+     (Handle : access Kernel_Handle_Record'Class) return String;
    --  Return the command line to use to set up the scenario variables when
    --  calling an external tool that handles project files
 
    function Directory_In_Source_Path
      (Handle         : access Kernel_Handle_Record'Class;
       Directory_Name : String) return Boolean;
-   --  Return True if Directory_name belongs to the source path defined for the
+   --  Return True if Directory_Name belongs to the source path defined for the
    --  current view of the project.
 
    function File_In_Project_View

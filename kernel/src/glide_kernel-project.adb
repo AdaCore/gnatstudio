@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -35,6 +35,7 @@ with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 
 with Traces;  use Traces;
+with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body Glide_Kernel.Project is
@@ -118,7 +119,7 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
-         Insert (Kernel, S, Mode => Glide_Kernel.Console.Error);
+         Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
       end Report_Error;
 
       New_Project : Project_Node_Id;
@@ -135,8 +136,7 @@ package body Glide_Kernel.Project is
          Recompute_View (Kernel);
       else
          Trace (Me, "Couldn't load or parse the project " & Project);
-         Insert
-           (Kernel, Text => "Couldn't parse the project " & Project);
+         Console.Insert (Kernel, -"Couldn't parse the project " & Project);
       end if;
 
       Reset_Normalized_Flag (Kernel.Project);
@@ -178,7 +178,7 @@ package body Glide_Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          if not Handle.Project_Is_Default then
-            Insert (Handle, S, Mode => Glide_Kernel.Console.Error);
+            Console.Insert (Handle, S, Mode => Console.Error, Add_LF => True);
          end if;
       end Report_Error;
 
