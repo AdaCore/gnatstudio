@@ -671,7 +671,6 @@ package body Aliases_Module is
          end loop;
 
          if First < Text'First then
-            First := Last + 1;
             exit;
          end if;
 
