@@ -1545,7 +1545,7 @@ package body Src_Info.Queries is
    function Find_Entity_Scope
      (Scope : Scope_List; Entity : Entity_Information) return Scope_Tree_Node
    is
-      L : Scope_List := Scope;
+      L      : Scope_List := Scope;
       Result : Scope_Tree_Node;
    begin
       while L /= null loop
@@ -1555,6 +1555,7 @@ package body Src_Info.Queries is
             end if;
 
             Result := Find_Entity_Scope (L.Contents, Entity);
+
             if Result /= null then
                return Result;
             end if;
@@ -1562,12 +1563,9 @@ package body Src_Info.Queries is
 
          L := L.Sibling;
       end loop;
+
       return null;
    end Find_Entity_Scope;
-
-   -----------------------
-   -- Find_Entity_Scope --
-   -----------------------
 
    function Find_Entity_Scope
      (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
@@ -1592,6 +1590,7 @@ package body Src_Info.Queries is
 
       if Result = null then
          File := Lib_Info.LI.Separate_Info;
+
          while File /= null loop
             Result := Find_Entity_Scope (File.Value.Scope_Tree, Entity);
             exit when Result /= null;
@@ -4171,6 +4170,20 @@ package body Src_Info.Queries is
          return Create (Iter.Current.Value.Declaration);
       end if;
    end Get;
+
+   ----------------------------
+   -- Is_Declaration_File_Of --
+   ----------------------------
+
+   function Is_Declaration_File_Of
+     (Entity : Entity_Information; File : VFS.Virtual_File) return Boolean is
+   begin
+      if Is_Predefined_Entity (Entity) then
+         return File = VFS.No_File;
+      else
+         return File = Entity.Decl_File;
+      end if;
+   end Is_Declaration_File_Of;
 
    ----------------
    -- Is_Subtype --
