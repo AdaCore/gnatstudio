@@ -2520,7 +2520,7 @@ tabs at the left of the dialog, labeled @i{General}, @i{Messages},
 @item General
 
 The general preferences are composed of two pages available at the top of the
-right area: @i{General} and @i{MDI}
+right area: @i{General} and @i{Windows}
 
 @table @i
 @item General
@@ -2567,9 +2567,13 @@ to use.
 @cindex tool bar
 Whether the tool bar should show both text and icons, or only icons.
 
+@item Save desktop on exit
+@cindex desktop
+Whether the desktop (size and positions of all windows) should be saved when
+exiting.
 @end table
 
-@item MDI
+@item Windows
 @cindex MDI
 @cindex Multiple Document Interface
 This section specifies preferences that apply to the @i{Multiple Document
@@ -2690,6 +2694,13 @@ Command used to apply a patch. Arguments can also be specified.
 @cindex strip blanks
 Whether the editor should remove trailing blanks when saving a file.
 
+@item Line terminator
+@cindex line terminator
+Choose between @i{Unix}, @i{Windows} and @i{Unchanged} line terminators when
+saving files. Choosing @i{Unchanged} will use the original line terminator
+when saving the file; @i{Unix} will use LF line terminators;
+@i{Windows} will use CRLF line terminators.
+
 @item Display line numbers
 @cindex display lilne numbers
 Whether the line numbers should be displayed in file editors.
@@ -2706,6 +2717,21 @@ The period (in seconds) after which a source editor is automatically saved.
 Each modified file is saved under a file called @code{.#filename}, which is
 removed on the next explicit save operation.
 
+@item External editor
+@cindex external editor
+The default external editor to use.
+
+@item Always use external editor
+True if all editions should be done with the external editor. This will
+deactivate completely the internal editor. False if the external editor
+needs to be explicitly called by the user.
+
+@end table
+
+@item Keys
+@cindex key
+
+@table @b
 @item Auto-indentation
 @cindex indentation
 Key used for auto-indenting lines or block of lines.
@@ -2718,15 +2744,6 @@ Key used for automatic completion of identifiers.
 @cindex delimiter
 Key used for moving the cursor to the corresponding delimiter.
 Delimiters include parentheses, brackets, and braces.
-
-@item External editor
-@cindex external editor
-The default external editor to use.
-
-@item Always use external editor
-True if all editions should be done with the external editor. This will
-deactivate completely the internal editor. False if the external editor
-needs to be explicitly called by the user.
 
 @end table
 
