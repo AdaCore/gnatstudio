@@ -1232,6 +1232,12 @@ package body Project_Explorers is
 
       Success := Expand_Row (T.Tree, Path, False);
 
+      Set_Node_Type
+        (T.Tree.Model,
+         Node,
+         Get_Node_Type (T.Tree.Model, Node),
+         True);
+
       Scroll_To_Cell
         (T.Tree,
          Path, null, True,
@@ -1258,6 +1264,14 @@ package body Project_Explorers is
       Node      : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
       Node_Type : constant Node_Types := Get_Node_Type (E.Tree.Model, Node);
    begin
+      --  Redraw the pixmap.
+
+      Set_Node_Type
+        (E.Tree.Model,
+         Node,
+         Get_Node_Type (E.Tree.Model, Node),
+         False);
+
       --  We need to reset the contents of files (Entities,...), so that the
       --  next time the node is open, the entities are recomputed.
       --  No need to do so for the contents of projects or directories, since
@@ -1491,7 +1505,7 @@ package body Project_Explorers is
                   declare
                      Prj_Name : constant String
                        := Project_Name
-                         (Get_Project_From_Node (Explorer, N, True));
+                         (Get_Project_From_Node (Explorer, N, False));
                   begin
                      Index := Imported'First;
                      while Index <= Imported'Last loop
