@@ -26,14 +26,6 @@ Known Problems fixed in GPS 2.1.0
               paste operations are sometimes performed during the scroll.
   Workaround: Scroll using the pg-up/down keys or the scrollbar.
 
-- D701-001 Can't edit file-specific switches
-  Problem:    If you select the menu "Edit switches for <file>", the project
-              file is not modified
-  Workaround: Edit the project by hand through "Edit project source file"
-              contextual menu, or add support for C and C++ in your project,
-              and select the menu Project->Recompute Project after modifying the
-              switches
-
 - D707-010 In the Locations View, line numbers are hard to read
   Problem:     On the currently selected line in the locations view, the line
                and column number are written in black on a dark blue background
