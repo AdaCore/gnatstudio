@@ -52,8 +52,6 @@ with GVD.Strings;           use GVD.Strings;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body GVD.Explorer is
 
    type Node_Data (Length : Integer) is record

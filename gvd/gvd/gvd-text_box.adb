@@ -41,8 +41,6 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Strings;         use GVD.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body GVD.Text_Boxes is
 
    Layout_Width : constant := 20;

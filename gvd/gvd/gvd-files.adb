@@ -23,7 +23,6 @@ with GVD.Preferences;       use GVD.Preferences;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GVD.Strings;           use GVD.Strings;
-with Ada.Text_IO;           use Ada.Text_IO;
 with Gtkada.Intl;           use Gtkada.Intl;
 pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
