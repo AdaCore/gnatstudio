@@ -331,6 +331,9 @@ package Glide_Kernel.Modules is
    --  or in some external files).
    --  This function should expect Project_View to be No_Project in some cases,
    --  when called from the project wizard.
+   --  This subprogram should call Show_All on the returned widget. This allows
+   --  it to hide some of the components when necessary. The caller should not
+   --  force a Show_All on the widget.
 
    function Project_Editor
      (Page         : access Project_Editor_Page_Record;
