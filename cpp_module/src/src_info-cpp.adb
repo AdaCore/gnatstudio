@@ -24,6 +24,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
 
 with Projects;             use Projects;
+with Projects.Editor;      use Projects.Editor;
 with Projects.Registry;    use Projects.Registry;
 with Src_Info;             use Src_Info;
 with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
@@ -100,11 +101,8 @@ package body Src_Info.CPP is
 
    procedure Insert_Declaration
      (File                  : in out LI_File_Ptr;
-      List                  : LI_File_List;
       Symbol_Name           : String;
       Location              : SN.Point;
-      Parent_Filename       : VFS.Virtual_File := VFS.No_File;
-      Parent_Location       : SN.Point := SN.Invalid_Point;
       Kind                  : E_Kind;
       Scope                 : E_Scope;
       End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
@@ -126,16 +124,25 @@ package body Src_Info.CPP is
    procedure Insert_Declaration
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : SN.Point;
-      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
-      Parent_Location         : SN.Point := SN.Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
       Rename_Location         : SN.Point := SN.Invalid_Point);
    --  Inserts declaration into specified E_Declaration_Info_List
+
+   procedure Set_Parent_Location
+     (File            : LI_File_Ptr;
+      List            : LI_File_List;
+      Declaration     : in out E_Declaration_Info_List;
+      Parent_Filename : VFS.Virtual_File := VFS.No_File;
+      Parent_Location : SN.Point := SN.Invalid_Point;
+      Parent_Name     : String := "");
+   --  Set the location of the parent type of Declaration. This is added to
+   --  any currently defined parent type
+   --  Parent_Name is needed only for predefined entities, ie when
+   --  Parent_Location is set to SN.Predefined_Point
 
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
@@ -145,6 +152,8 @@ package body Src_Info.CPP is
       Parent_Location  : SN.Point);
    --  Add a new parent entity to the list of parents for
    --  Declaration_Info. This is mostly used for multiple-inheritance.
+   --  ??? Best to use Set_Parent_Location instead, this one appears to be
+   --  incorrect
 
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
@@ -326,15 +335,14 @@ package body Src_Info.CPP is
       Insert_Declaration
         (D_Ptr,
          Referred_LI,
-         List,
          Symbol_Name,
          Location,
-         Parent_Filename,
-         Parent_Location,
          Kind,
          Scope,
          End_Of_Scope_Location,
          Rename_Location);
+      Set_Parent_Location
+        (Referred_LI, List, D_Ptr, Parent_Filename, Parent_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
@@ -344,11 +352,8 @@ package body Src_Info.CPP is
 
    procedure Insert_Declaration
      (File                    : in out LI_File_Ptr;
-      List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
-      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
-      Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
@@ -382,11 +387,8 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Declaration_Info,
          File,
-         List,
          Symbol_Name,
          Location,
-         Parent_Filename,
-         Parent_Location,
          Kind,
          Scope,
          End_Of_Scope_Location,
@@ -400,17 +402,12 @@ package body Src_Info.CPP is
    procedure Insert_Declaration
      (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      List                    : LI_File_List;
       Symbol_Name             : String;
       Location                : Point;
-      Parent_Filename         : VFS.Virtual_File := VFS.No_File;
-      Parent_Location         : Point := Invalid_Point;
       Kind                    : E_Kind;
       Scope                   : E_Scope;
       End_Of_Scope_Location   : Point := Invalid_Point;
-      Rename_Location         : Point := Invalid_Point)
-   is
-      Tmp_LI_File_Ptr : LI_File_Ptr;
+      Rename_Location         : Point := Invalid_Point) is
    begin
       if D_Ptr = null then
          return;
@@ -424,53 +421,6 @@ package body Src_Info.CPP is
          Line   => Location.Line,
          Column => Location.Column);
       D_Ptr.Value.Declaration.Kind := Kind;
-
-      if Parent_Location = Invalid_Point then
-         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
-           (Value => Null_File_Location,
-            Kind  => Parent_Type,
-            Predefined_Entity_Name => No_Name,
-            Next  => null);
-
-      elsif Parent_Location = Predefined_Point then
-         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
-           (Value => Predefined_Entity_Location,
-            Kind  => Parent_Type,
-            Predefined_Entity_Name => No_Name,
-            Next  => null);
-
-      else
-         --  Processing parent information
-
-         if File.LI.Body_Info /= null
-           and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
-           Base_Name (Parent_Filename)
-         then
-            Tmp_LI_File_Ptr := File;
-
-         else
-            --  Find the parent LI, or create a stub for it.
-
-            Create_Stub_For_File
-              (LI            => Tmp_LI_File_Ptr,
-               Handler       => CPP_LI_Handler (File.LI.Handler),
-               List          => List,
-               Full_Filename => Parent_Filename);
-         end if;
-         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
-           (Value => (File   => (LI              => Tmp_LI_File_Ptr,
-                                 Part            => Unit_Body,
-                                 Source_Filename => null),
-                      Line   => Parent_Location.Line,
-                      Column => Parent_Location.Column),
-            Kind  => Parent_Type,
-            Predefined_Entity_Name => No_Name,
-            Next  => null);
-
-         --  ??? what does the procedure look like to support multiple
-         --  inheritance?
-      end if;
-
       D_Ptr.Value.Declaration.Scope := Scope;
 
       if End_Of_Scope_Location = Invalid_Point then
@@ -500,6 +450,62 @@ package body Src_Info.CPP is
       end if;
    end Insert_Declaration;
 
+   -------------------------
+   -- Set_Parent_Location --
+   -------------------------
+
+   procedure Set_Parent_Location
+     (File            : LI_File_Ptr;
+      List            : LI_File_List;
+      Declaration     : in out E_Declaration_Info_List;
+      Parent_Filename : VFS.Virtual_File := VFS.No_File;
+      Parent_Location : SN.Point := SN.Invalid_Point;
+      Parent_Name     : String := "")
+   is
+      Tmp_LI_File_Ptr : LI_File_Ptr;
+   begin
+      if Parent_Location = Invalid_Point then
+         null;
+
+      elsif Parent_Location = Predefined_Point then
+         Declaration.Value.Declaration.Parent_Location :=
+           new File_Location_Node'
+             (Value                  => Predefined_Entity_Location,
+              Kind                   => Container_Type,
+              Predefined_Entity_Name => Get_String (Parent_Name),
+              Next           => Declaration.Value.Declaration.Parent_Location);
+
+      else
+         --  Processing parent information
+
+         if File.LI.Body_Info /= null
+           and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
+           Base_Name (Parent_Filename)
+         then
+            Tmp_LI_File_Ptr := File;
+
+         else
+            --  Find the parent LI, or create a stub for it.
+            Create_Stub_For_File
+              (LI            => Tmp_LI_File_Ptr,
+               Handler       => CPP_LI_Handler (File.LI.Handler),
+               List          => List,
+               Full_Filename => Parent_Filename);
+         end if;
+
+         Declaration.Value.Declaration.Parent_Location :=
+           new File_Location_Node'
+             (Value => (File   => (LI              => Tmp_LI_File_Ptr,
+                                   Part            => Unit_Body,
+                                   Source_Filename => null),
+                        Line   => Parent_Location.Line,
+                        Column => Parent_Location.Column),
+              Kind  => Container_Type,
+              Predefined_Entity_Name => No_Name,
+              Next  => Declaration.Value.Declaration.Parent_Location);
+      end if;
+   end Set_Parent_Location;
+
    ----------------
    -- Add_Parent --
    ----------------
@@ -514,6 +520,8 @@ package body Src_Info.CPP is
       FL_Ptr          : File_Location_List;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
+      --  Isn't this a duplicate of Set_Parent_Location
+
       Assert (Fail_Stream, Declaration_Info /= null, "Invalid declaration");
 
       if Declaration_Info.Value.Declaration.Parent_Location = null then
@@ -554,7 +562,7 @@ package body Src_Info.CPP is
                               Source_Filename => null),
                    Line   => Parent_Location.Line,
                    Column => Parent_Location.Column),
-         Kind => Parent_Type,
+         Kind => Container_Type,
          Predefined_Entity_Name => No_Name,
          Next  => null);
    end Add_Parent;
@@ -648,7 +656,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;  --  Unreferenced
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
+      List             : LI_File_List;            --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);   --  Unreferenced
    procedure Sym_EC_Handler
      (Sym              : FIL_Table;
@@ -679,7 +687,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
+      List             : LI_File_List;           --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);  --  Unreferenced
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
@@ -704,7 +712,7 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;  --  Unreferenced
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
+      List             : LI_File_List;             --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);    --  Unreferenced
    procedure Sym_MD_Handler
      (Sym              : FIL_Table;
@@ -2763,7 +2771,6 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Location           => Class_Def.Start_Position,
@@ -2903,7 +2910,7 @@ package body Src_Info.CPP is
                   Referred_Filename => Create
                     (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Create (Desc.Parent_Filename.all),
+                  Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
             end if;
 
@@ -3006,7 +3013,6 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
@@ -3063,7 +3069,6 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Declaration
               (File              => File,
-               List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False, False),
@@ -3535,7 +3540,6 @@ package body Src_Info.CPP is
             --  declaration. Create forward declaration
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -3705,7 +3709,7 @@ package body Src_Info.CPP is
                   Referred_Filename => Create
                     (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Create (Desc.Parent_Filename.all),
+                  Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -3786,7 +3790,7 @@ package body Src_Info.CPP is
 
             if Decl_Info = null then
                Fail ("unable to create declaration for instance variable "
-                       & Ref_Id);
+                     & Ref_Id & ' ' & Ref_Class);
                Free (Var);
                return;
             end if;
@@ -3880,7 +3884,7 @@ package body Src_Info.CPP is
                   Referred_Filename => Create
                     (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Create (Desc.Parent_Filename.all),
+                  Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -3945,7 +3949,6 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Ref_Id,
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity_Kind,
@@ -4126,7 +4129,6 @@ package body Src_Info.CPP is
             --  declaration. Create forward declaration
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -4257,7 +4259,6 @@ package body Src_Info.CPP is
                --  unknown parent
                Insert_Declaration
                  (File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
@@ -4267,25 +4268,26 @@ package body Src_Info.CPP is
                --  typedef for builtin type
                Insert_Declaration
                  (File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
-                  Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
+               Set_Parent_Location
+                 (File, List, Decl_Info, VFS.No_File, Predefined_Point,
+                  Parent_Name => Desc.Builtin_Name.all);
             else
                --  parent type found
                Insert_Declaration
                  (File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
-                  Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Create (Desc.Ancestor_Filename.all),
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
+               Set_Parent_Location
+                 (File, List, Decl_Info, Desc.Ancestor_Filename,
+                  Desc.Ancestor_Point);
             end if;
          end if;
 
@@ -4352,7 +4354,7 @@ package body Src_Info.CPP is
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Create (Desc.Ancestor_Filename.all),
+                  Parent_Filename   => Desc.Ancestor_Filename,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
                   Referred_Filename => Create
@@ -4452,7 +4454,6 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               List               => List,
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
@@ -4530,7 +4531,6 @@ package body Src_Info.CPP is
 
       Insert_Declaration
         (File                  => File,
-         List                  => List,
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location              => Sym.Start_Position,
@@ -4665,7 +4665,6 @@ package body Src_Info.CPP is
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4675,15 +4674,16 @@ package body Src_Info.CPP is
       else
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
+         Set_Parent_Location
+           (File, List, Decl_Info,
+            Parent_Location   => Desc.Parent_Point,
+            Parent_Filename   => Desc.Parent_Filename);
 
             --  add reference to the type of this variable
          if Desc.Is_Template then
@@ -4747,7 +4747,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, Module_Type_Defs);
+      pragma Unreferenced (Handler, Module_Type_Defs, List);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -4757,7 +4757,6 @@ package body Src_Info.CPP is
 
       Insert_Declaration
         (File              => File,
-         List              => List,
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Kind_Entity,
@@ -4814,19 +4813,19 @@ package body Src_Info.CPP is
       if Has_Enum then -- corresponding enumeration found
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => (Enumeration_Literal, False, False, False),
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
+         Set_Parent_Location
+           (File, List, Decl_Info,
+            Parent_Location   => Desc.Parent_Point,
+            Parent_Filename   => Desc.Parent_Filename);
       else
          Fail ("could not find enum for '" & Ec_Id & "'");
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => (Enumeration_Literal, False, False, False),
@@ -4937,7 +4936,6 @@ package body Src_Info.CPP is
       if Decl_Info = null then
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_FD_Pos,
@@ -5183,7 +5181,6 @@ package body Src_Info.CPP is
       if Decl_Info = null then
          Insert_Declaration
            (File                  => File,
-            List                  => List,
             Symbol_Name           => Fu_Id,
             Location              => Start_Position,
             Kind                  => Target_Kind,
@@ -5349,7 +5346,6 @@ package body Src_Info.CPP is
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -5359,15 +5355,16 @@ package body Src_Info.CPP is
       else
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
+         Set_Parent_Location
+           (File, List, Decl_Info,
+            Parent_Location   => Desc.Parent_Point,
+            Parent_Filename   => Desc.Parent_Filename);
 
          --  add reference to the type of this variable
          if Desc.Is_Template then
@@ -5488,6 +5485,7 @@ package body Src_Info.CPP is
 
       if not Is_Open (Handler.SN_Table (IV)) then
          --  IV table does not exist, nothing to do ...
+         Fail ("IV table is closed");
          return;
       end if;
 
@@ -5550,6 +5548,7 @@ package body Src_Info.CPP is
       Free (Class_Def);
 
       if not Success then
+         Fail ("Failed to determine type of instance");
          --  Cannot determine type of this instance variable
          Free (Inst_Var);
          return;
@@ -5558,7 +5557,6 @@ package body Src_Info.CPP is
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -5568,15 +5566,25 @@ package body Src_Info.CPP is
       else
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Create (Desc.Parent_Filename.all),
             Declaration_Info  => Decl_Info);
+
+         if Desc.Builtin_Name /= null then
+            Set_Parent_Location
+              (File, List, Decl_Info,
+               Parent_Location   => Desc.Parent_Point,
+               Parent_Filename   => Desc.Parent_Filename,
+               Parent_Name       => Desc.Builtin_Name.all);
+         else
+            Set_Parent_Location
+              (File, List, Decl_Info,
+               Parent_Location   => Desc.Parent_Point,
+               Parent_Filename   => Desc.Parent_Filename);
+         end if;
 
             --  add reference to the type of this field
          Refer_Type
@@ -5607,7 +5615,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, Module_Type_Defs);
+      pragma Unreferenced (Handler, List, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
       --  Info ("Sym_MA_Handler: """
@@ -5616,7 +5624,6 @@ package body Src_Info.CPP is
 
       Insert_Declaration
         (File              => File,
-         List              => List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location          => Sym.Start_Position,
@@ -5647,11 +5654,11 @@ package body Src_Info.CPP is
       MI_File      : LI_File_Ptr;
 
    begin
-      --  Info ("Sym_MD_Hanlder: """
-      --      & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
-      --      & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
-      --      & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-      --      & """");
+--        Info ("Sym_MD_Hanlder: """
+--            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
+--            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
+--            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+--            & """");
 
       --  Find this symbol
       Find
@@ -5745,7 +5752,6 @@ package body Src_Info.CPP is
       if Decl_Info = null then
          Insert_Declaration
            (File              => File,
-            List              => List,
             Symbol_Name       =>
                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_MD_Pos,
@@ -5887,7 +5893,6 @@ package body Src_Info.CPP is
             --  unknown parent
             Insert_Declaration
               (File              => File,
-               List              => List,
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
@@ -5900,27 +5905,29 @@ package body Src_Info.CPP is
             --  use it (e.g. for a field like Predefined_Type_Name)
             Insert_Declaration
               (File              => File,
-               List              => List,
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
-               Parent_Location   => Predefined_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
+            Set_Parent_Location
+              (File, List, Decl_Info,
+               Parent_Location   => Predefined_Point,
+               Parent_Name       => Desc.Builtin_Name.all);
 
          else
             --  Set parent location to ancestor location
             Insert_Declaration
               (File              => File,
-               List              => List,
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
-               Parent_Filename   => Create (Desc.Ancestor_Filename.all),
-               Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
-
+            Set_Parent_Location
+              (File, List, Decl_Info,
+               Parent_Filename   => Desc.Ancestor_Filename,
+               Parent_Location   => Desc.Ancestor_Point);
          end if;
 
       else
@@ -5942,7 +5949,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Module_Type_Defs, List);
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Union_Def : UN_Table;
@@ -5963,7 +5970,6 @@ package body Src_Info.CPP is
       if Success then
          Insert_Declaration
            (File                  => File,
-            List                  => List,
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location              => Sym.Start_Position,
@@ -6127,7 +6133,6 @@ package body Src_Info.CPP is
                if Desc.Parent_Point = Invalid_Point then
                   Insert_Declaration
                     (File              => File,
-                     List              => List,
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
@@ -6137,15 +6142,16 @@ package body Src_Info.CPP is
                else
                   Insert_Declaration
                     (File              => File,
-                     List              => List,
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
-                     Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Create (Desc.Parent_Filename.all),
                      Declaration_Info  => Decl_Info);
+                  Set_Parent_Location
+                    (File, List, Decl_Info,
+                     Parent_Location   => Desc.Parent_Point,
+                     Parent_Filename   => Desc.Parent_Filename);
 
                   --  add reference to the type of this variable
                   if Desc.Is_Template then
@@ -6415,7 +6421,6 @@ package body Src_Info.CPP is
             then
                Insert_Declaration
                  (File             => File,
-                  List             => List,
                   Symbol_Name      =>
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
@@ -6442,7 +6447,6 @@ package body Src_Info.CPP is
                if Desc.Parent_Point = Invalid_Point then
                   Insert_Declaration
                     (File             => File,
-                     List             => List,
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
@@ -6452,15 +6456,16 @@ package body Src_Info.CPP is
                else
                   Insert_Declaration
                     (File             => File,
-                     List             => List,
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
                      Kind             => Type_To_Object (Desc.Kind),
                      Scope            => Local_Scope,
-                     Parent_Location  => Desc.Parent_Point,
-                     Parent_Filename  => Create (Desc.Parent_Filename.all),
                      Declaration_Info => Decl_Info);
+                  Set_Parent_Location
+                    (File, List, Decl_Info,
+                     Parent_Location  => Desc.Parent_Point,
+                     Parent_Filename  => Desc.Parent_Filename);
                end if;
 
                if Arg.Attributes = SN_TA_VALUE then
