@@ -1737,6 +1737,10 @@ package body Src_Editor_Buffer is
 
       Get_Screen_Position (Buffer, L, C);
 
+      if Buffer.Cursor_Set_Explicitely > 0 then
+         Buffer.Cursor_Set_Explicitely := Buffer.Cursor_Set_Explicitely - 1;
+      end if;
+
       Emit_By_Name
         (Get_Object (Buffer), "cursor_position_changed" & ASCII.NUL,
          Line   => Gint (Get_Editable_Line (Buffer, Buffer_Line_Type (L + 1))),
@@ -2951,6 +2955,7 @@ package body Src_Editor_Buffer is
          --  valid, so we can safely get the iterator at this position.
 
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+         Buffer.Cursor_Set_Explicitely := 2;
          Place_Cursor (Buffer, Iter);
       end if;
    end Set_Cursor_Position;
@@ -3633,6 +3638,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
+      Buffer.Cursor_Set_Explicitely := 2;
       Move_Mark_By_Name (Buffer, "insert", End_Iter);
    end Select_Region;
 
@@ -5436,5 +5442,15 @@ package body Src_Editor_Buffer is
       Side_Column_Configuration_Changed (Buffer);
       Side_Column_Changed (Buffer);
    end Refresh_Side_Column;
+
+   ------------------------------
+   -- Position_Set_Explicitely --
+   ------------------------------
+
+   function Position_Set_Explicitely
+     (Buffer : access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Cursor_Set_Explicitely > 0;
+   end Position_Set_Explicitely;
 
 end Src_Editor_Buffer;
