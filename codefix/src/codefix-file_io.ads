@@ -40,15 +40,13 @@ package Codefix.File_Io is
    function Get
      (This   : File_Interface;
       Cursor : Text_Cursor'Class;
-      Len    : Natural)
-     return String;
+      Len    : Natural) return String;
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
    function Get_Line
      (This   : File_Interface;
-      Cursor : Text_Cursor'Class)
-      return String;
+      Cursor : Text_Cursor'Class) return String;
    --  Get all character from the column and the line specified by the cursor
    --  to the end of the line.
 
@@ -78,9 +76,7 @@ package Codefix.File_Io is
    --  Initialize the structure of the Text_Interface. Get all data from the
    --  disk.
 
-   function Read_File
-     (This : File_Interface)
-     return Dynamic_String;
+   function Read_File (This : File_Interface) return Dynamic_String;
    --  Get the entire file in a Dynamic_String.
 
    procedure Update (This : File_Interface);
