@@ -1413,31 +1413,17 @@ package body Project_Viewers is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item : Gtk_Menu_Item;
       Project : constant String := '/' & (-"Project");
    begin
-      Gtk_New (Menu_Item, -"New...");
-      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Open...");
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_New_Project'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Edit...");
-      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Open...",
-                     Add_Before => False);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Edit_Project'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Save all");
-      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
-                     Add_Before => False);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (Save_All_Projects'Access),
-         Kernel_Handle (Kernel));
+      Register_Menu (Kernel, Project,
+                     -"New...", "", On_New_Project'Access,
+                     Ref_Item => -"Open...");
+      Register_Menu (Kernel, Project,
+                     -"Edit...", "", On_Edit_Project'Access,
+                     Ref_Item => -"Open...");
+      Register_Menu (Kernel, Project,
+                     -"Save All", "", Save_All_Projects'Access,
+                     Ref_Item => -"Edit...");
    end Initialize_Module;
 
    ---------------------
