@@ -23,7 +23,6 @@ with Gtk.Table; use Gtk.Table;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Frame; use Gtk.Frame;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Glide_Kernel;
 
@@ -41,7 +40,7 @@ package Vsearch_Pkg is
       Pattern_Combo : Gtk_Combo;
       Pattern_Entry : Gtk_Entry;
       Buttons_Hbox : Gtk_Hbox;
-      Options_Frame : Gtk_Frame;
+      Options_Frame : Gtk_Box;
       Options_Vbox : Gtk_Table;
       Select_Editor_Check : Gtk_Check_Button;
       Search_All_Check : Gtk_Check_Button;
@@ -49,6 +48,7 @@ package Vsearch_Pkg is
       Whole_Word_Check : Gtk_Check_Button;
       Auto_Hide_Check : Gtk_Check_Button;
       Regexp_Check : Gtk_Check_Button;
+      Context_Specific : Gtk_Box;
    end record;
    type Vsearch_Access is access all Vsearch_Record'Class;
 

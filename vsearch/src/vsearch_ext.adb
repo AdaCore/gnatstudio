@@ -33,7 +33,6 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Image;             use Gtk.Image;
 with Gtk.Label;             use Gtk.Label;
@@ -42,7 +41,6 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Selection;         use Gtk.Selection;
 with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Table;             use Gtk.Table;
 with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
 with Gtk.Tooltips;          use Gtk.Tooltips;
 with Gtk.Widget;            use Gtk.Widget;
@@ -753,7 +751,7 @@ package body Vsearch_Ext is
             end if;
 
          else
-            --  ??? +6 is for the notebook's border on each side
+            --  ??? +16 is for the notebook's border on each side
             --  Never resize in width, only in height
 
             Size_Request (Vsearch, Req);
@@ -761,7 +759,7 @@ package body Vsearch_Ext is
               (Get_MDI (Vsearch.Kernel),
                Child => Child,
                Width  => 0,
-               Height => Req.Height + 6);
+               Height => Req.Height + 16);
          end if;
       end if;
    end Resize_If_Needed;
@@ -844,15 +842,14 @@ package body Vsearch_Ext is
                         (Data.Mask and Search_Backward) /= 0);
 
          if Vsearch.Extra_Information /= null then
-            Remove (Vsearch.Table, Vsearch.Extra_Information);
+            Remove (Vsearch.Context_Specific, Vsearch.Extra_Information);
             Vsearch.Extra_Information := null;
          end if;
 
          if Data.Extra_Information /= null then
-            Attach
-              (Vsearch.Table, Data.Extra_Information,
-               0, 2, 4, 5, Fill, 0, 2, 0);
-            Show_All (Vsearch.Table);
+            Pack_Start (Vsearch.Context_Specific,
+                        Data.Extra_Information, Expand => False);
+            Show_All (Vsearch.Context_Specific);
             Vsearch.Extra_Information := Data.Extra_Information;
          end if;
 

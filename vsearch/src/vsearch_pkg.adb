@@ -24,6 +24,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Glide_Intl; use Glide_Intl;
 with Gtk.Tooltips; use Gtk.Tooltips;
 with Glide_Kernel; use Glide_Kernel;
+with Gtk.Frame;    use Gtk.Frame;
 
 package body Vsearch_Pkg is
 
@@ -41,11 +42,11 @@ package body Vsearch_Pkg is
    is
       pragma Suppress (All_Checks);
       Tooltips : Gtk_Tooltips;
+      Frame      : Gtk_Frame;
    begin
       Initialize_Vbox (Vsearch, False, 0);
 
-      Gtk_New (Vsearch.Table, 4, 2, False);
-      Set_Row_Spacings (Vsearch.Table, 1);
+      Gtk_New (Vsearch.Table, 3, 2, False);
       Pack_Start (Vsearch, Vsearch.Table, False, False, 0);
 
       Gtk_New (Vsearch.Replace_Label, -("Replace:"));
@@ -94,12 +95,19 @@ package body Vsearch_Pkg is
       Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 0);
       Pack_Start (Vsearch, Vsearch.Buttons_Hbox, False, False, 0);
 
-      Gtk_New (Vsearch.Options_Frame, -"Options");
-      Set_Shadow_Type (Vsearch.Options_Frame, Shadow_Etched_In);
-      Pack_Start (Vsearch, Vsearch.Options_Frame, False, False, 0);
+      Gtk_New_Vbox (Vsearch.Options_Frame, Homogeneous => False);
+      Pack_Start
+        (Vsearch, Vsearch.Options_Frame, Expand => True, Fill => True);
+
+      Gtk_New_Vbox (Vsearch.Context_Specific, Homogeneous => False);
+      Pack_Start (Vsearch.Options_Frame, Vsearch.Context_Specific, False);
+
+      Gtk_New (Frame, -"Options");
+      Set_Shadow_Type (Frame, Shadow_Etched_In);
+      Pack_Start (Vsearch.Options_Frame, Frame, False, False, 0);
 
       Gtk_New (Vsearch.Options_Vbox, 3, 2, False);
-      Add (Vsearch.Options_Frame, Vsearch.Options_Vbox);
+      Add (Frame, Vsearch.Options_Vbox);
 
       Gtk_New (Vsearch.Search_All_Check, -"All Occurrences");
       Set_Active (Vsearch.Search_All_Check, False);
