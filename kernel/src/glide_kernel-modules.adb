@@ -131,11 +131,13 @@ package body Glide_Kernel.Modules is
 
    procedure Set_File_Information
      (Context : access File_Selection_Context;
-      Project_View : Prj.Project_Id;
+      Project_View : Prj.Project_Id := Prj.No_Project;
       Directory : String := "";
       File_Name : String := "") is
    begin
       Context.Project_View := Project_View;
+      Free (Context.Directory);
+      Free (Context.File_Name);
 
       if Directory /= "" then
          Context.Directory := new String' (Directory);
@@ -251,14 +253,15 @@ package body Glide_Kernel.Modules is
          Object       => User.Object,
          Event        => Event,
          Menu         => Menu);
-      Set_Context_Information
-        (Context,
-         Kernel  => User.Kernel,
-         Creator => User.ID);
 
       User.Kernel.Last_Context_For_Contextual := Context;
 
       if Context /= null then
+         Set_Context_Information
+           (Context,
+            Kernel  => User.Kernel,
+            Creator => User.ID);
+
          while not Module_List.Is_Empty (Current) loop
             if Module_List.Head (Current) /= User.ID
               and then Module_List.Head (Current).Contextual_Menu /= null
