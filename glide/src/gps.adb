@@ -463,7 +463,7 @@ begin
    Maximize (GPS);
 
    loop
-      case Getopt ("-version -help p:") is
+      case Getopt ("-version -help P:") is
          -- long option names --
          when '-' =>
             case Full_Switch (Full_Switch'First + 1) is
@@ -494,7 +494,7 @@ begin
                   null;
             end case;
 
-         when 'p' =>
+         when 'P' =>
             Project_Name := new String'
               (Normalize_Pathname (Parameter));
             Trace (Me, "Found project: " & Parameter);
