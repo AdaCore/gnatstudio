@@ -7,28 +7,57 @@ separate (Src_Info.CPP)
 
 procedure Fu_To_Mi_Handler (Ref : TO_Table) is
    P            : Pair_Ptr;
-   Init         : Boolean := True;
+   Fn           : MI_Table;
    Decl_Info    : E_Declaration_Info_List;
    Overloaded   : Boolean := False;
-   Method       : MI_Table;
+   Init         : Boolean := True;
    Ptr          : E_Declaration_Info_List;
    Kind         : E_Kind;
+
+   function Find_Method (Fn : MI_Table) return E_Declaration_Info_List;
+   --  searches for forward declaration. if no fwd decl found, searches for
+   --  implementation. If nothing found throws Declaration_Not_Found
+
+   function Find_Method (Fn : MI_Table) return E_Declaration_Info_List is
+      Decl_Info    : E_Declaration_Info_List;
+      MD_Tab       : MD_Table;
+   begin
+      MD_Tab := Find
+        (SN_Table (MD),
+         Fn.Buffer (Fn.Name.First .. Fn.Name.Last));
+      Decl_Info := Find_Declaration
+        (File           => Global_LI_File,
+         Symbol_Name    => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Class_Name     => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
+         Location       => MD_Tab.Start_Position);
+      Free (MD_Tab);
+      return Decl_Info;
+   exception
+      when DB_Error | Not_Found | Declaration_Not_Found =>
+         Decl_Info := Find_Declaration
+           (File        => Global_LI_File,
+            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            Class_Name  => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
+            Location    => Fn.Start_Position);
+         return Decl_Info;
+   end Find_Method;
+
 begin
+
    Info ("Fu_To_Mi_Handler: """
-         & Ref.Buffer (Ref.Referred_Class.First .. Ref.Referred_Class.Last)
-         & "."
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                Ref.Referred_Symbol_Name.Last)
          & """");
 
-   --  Lookup all overloaded methods in the same class
    Set_Cursor
      (SN_Table (MI),
       By_Key,
-      Ref.Buffer (Ref.Referred_Class.First .. Ref.Referred_Class.Last)
-      & Field_Sep &
-      Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                  Ref.Referred_Symbol_Name.Last) & Field_Sep,
+      Ref.Buffer (Ref.Referred_Class.First ..
+                  Ref.Referred_Class.Last)
+         & Field_Sep
+         & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                       Ref.Referred_Symbol_Name.Last)
+         & Field_Sep,
       False);
 
    loop
@@ -36,72 +65,73 @@ begin
       exit when P = null;
       Overloaded := not Init;
       if Init then
-         Method := Parse_Pair (P.all);
-         Init   := False;
+         Fn   := Parse_Pair (P.all);
+         Init := False;
       end if;
       Free (P);
-      exit when Overloaded; -- once we get to know it, quit...
+      exit when Overloaded;
    end loop;
 
    if not Overloaded then
       --  If method
       --    defined in the current file => add reference
       --    defined in another file => add dep decl and reference it
-      if Method.Buffer (Method.File_Name.First .. Method.File_Name.Last)
-         = Get_LI_Filename (Global_LI_File) then
+      --  TODO templates
+      if Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last)
+            = "void" then
+         Kind := Non_Generic_Function_Or_Operator;
+      else
+         Kind := Non_Generic_Procedure;
+      end if;
+      if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
+            = Get_LI_Filename (Global_LI_File) then
          begin
-            --  this is a function defined in the current file
-            Info ("************** >" & Method.Buffer
-               (Method.Name.First .. Method.Name.Last) & "< "
-               & Method.Buffer
-                  (Method.Class.First .. Method.Class.Last));
-            Decl_Info := Find_Declaration
-              (File        => Global_LI_File,
-               Symbol_Name => Method.Buffer
-                     (Method.Name.First .. Method.Name.Last),
-               Class_Name  => "", -- Method.Buffer
---                     (Method.Class.First .. Method.Class.Last),
-               Location    => Method.Start_Position);
+            --  this is a method defined in the current file
+            --  it may be either forward declared or implemented
+            --  right away
+            Decl_Info := Find_Method (Fn);
          exception
             when Declaration_Not_Found =>
-               pragma Assert (False, "How did we get here?");
-               null;
+               --  method is in the current file, but used before
+               --  declaration. Create forward declaration
+               Insert_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Global_LI_File,
+                  List               => Global_LI_File_List,
+                  Symbol_Name        =>
+                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Source_Filename    =>
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Ref.Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
          end;
-         Info ("************** 5");
       else
          begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
-              (File              => Global_LI_File,
-               Symbol_Name       => Method.Buffer
-                 (Method.Name.First .. Method.Name.Last),
-               Class_Name        => Method.Buffer
-                 (Method.Class.First .. Method.Class.Last),
-               Filename          => Method.Buffer
-                 (Method.File_Name.First .. Method.File_Name.Last),
-               Location          => Method.Start_Position);
+              (File                 => Global_LI_File,
+               Symbol_Name          => Fn.Buffer
+                 (Fn.Name.First .. Fn.Name.Last),
+               Filename             => Fn.Buffer
+                 (Fn.File_Name.First .. Fn.File_Name.Last),
+               Location             => Fn.Start_Position);
          exception
-            when Declaration_Not_Found =>
-               if Method.Buffer (Method.Return_Type.First ..
-                                 Method.Return_Type.Last) = "void" then
-                  Kind := Non_Generic_Function_Or_Operator;
-               else
-                  Kind := Non_Generic_Procedure;
-               end if;
+            when Declaration_Not_Found => -- insert dep decl
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Global_LI_File,
                   List               => Global_LI_File_List,
                   Symbol_Name        =>
-                     Method.Buffer (Method.Name.First .. Method.Name.Last),
+                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
                   Source_Filename    =>
                      Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Method.Start_Position,
+                  Location           => Fn.Start_Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
                   Referred_Filename  =>
-                     Method.Buffer (Method.File_Name.First ..
-                                    Method.File_Name.Last),
+                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
                   Declaration_Info   => Decl_Info);
          end;
       end if;
@@ -110,14 +140,10 @@ begin
       Ptr := Global_LI_File.LI.Body_Info.Declarations;
       while Ptr /= null loop
          Decl_Info := Ptr;
-         --  ??? what should we do with class names here?
-         --  can confuse global functions and class methods
-         --  without matching class name
          exit when Ptr.Value.Declaration.Kind = Overloaded_Entity
             and then Ptr.Value.Declaration.Name.all =
-               Method.Buffer (Method.Name.First .. Method.Name.Last);
+               Fn.Buffer (Fn.Name.First .. Fn.Name.Last);
          Ptr := Ptr.Next;
-         Info ("************** 4");
       end loop;
       if Ptr = null then -- no, we have not. Do it now
          Decl_Info := new E_Declaration_Info_Node'
@@ -132,8 +158,7 @@ begin
          Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end if;
    end if;
-
-   Free (Method);
+   Free (Fn);
 
    Insert_Reference
      (Decl_Info,
@@ -142,11 +167,13 @@ begin
       Ref.Position,
       Reference);
 exception
-   when Not_Found  | DB_Error =>
-      Fail ("Method " &
-            Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                    Ref.Referred_Symbol_Name.Last) &
-            " not found");
+   when Not_Found  | DB_Error => -- ignore
+      Fail ("Method "
+         & Ref.Buffer (Ref.Referred_Class.First ..
+                       Ref.Referred_Symbol_Name.Last)
+         & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                       Ref.Referred_Symbol_Name.Last)
+         & " not found");
    return;
 end Fu_To_Mi_Handler;
 

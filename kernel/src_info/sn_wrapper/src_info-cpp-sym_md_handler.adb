@@ -13,6 +13,7 @@ is
    MD_Tab       : MD_Table;
    MD_Tab_Tmp   : MD_Table;
    IsTemplate   : Boolean := False;
+   use DB_Structures.Segment_Vector;
 
 begin
    Info ("Sym_MD_Hanlder: """
@@ -61,7 +62,6 @@ begin
 
    pragma Assert (First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
-
    declare
       Class_Def    : CL_Table;
    begin -- check if this class is template
@@ -75,7 +75,6 @@ begin
          null;
    end;
 
-   --  TODO class may be template and its methods as well
    if MD_Tab.Buffer (MD_Tab.Return_Type.First ..
                      MD_Tab.Return_Type.Last) = "void" then
       if IsTemplate then
@@ -92,26 +91,31 @@ begin
    end if;
    Free (MD_Tab);
 
-   Info ("Symbol pos : " & Integer'Image (Sym.Start_Position.Line));
-   Info ("First pos : " & Integer'Image (First_MD_Pos.Line));
-
    --  create declaration (if it has not been already created)
-   Insert_Declaration
-     (Handler           => LI_Handler (Global_CPP_Handler),
-      File              => Global_LI_File,
-      List              => Global_LI_File_List,
-      Symbol_Name       =>
+   if First_MD_Pos = Sym.Start_Position then
+      Insert_Declaration
+        (Handler           => LI_Handler (Global_CPP_Handler),
+         File              => Global_LI_File,
+         List              => Global_LI_File_List,
+         Symbol_Name       =>
+            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename   =>
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location          => First_MD_Pos,
+         Kind              => Target_Kind,
+         Scope             => Global_Scope,
+         Declaration_Info  => Decl_Info);
+   else
+      Decl_Info := Find_Declaration
+        (Global_LI_File,
          Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-      Source_Filename   =>
-         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-      Location          => First_MD_Pos,
-      Kind              => Target_Kind,
-      Scope             => Global_Scope,
-      Declaration_Info  => Decl_Info);
+         Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+         Target_Kind,
+         First_MD_Pos);
+   end if;
 
    --  for all subsequent declarations, add reference to the first decl
    if Sym.Start_Position /= First_MD_Pos then
-      Info ("Adding reference to MD");
       Insert_Reference
         (Decl_Info,
          Global_LI_File,
