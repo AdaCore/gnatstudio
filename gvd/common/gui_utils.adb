@@ -1149,7 +1149,7 @@ package body GUI_Utils is
       Completion      : Completion_Handler;
       Prompt_End_Mark : Gtk_Text_Mark;
       Uneditable_Tag  : Gtk_Text_Tag;
-      User_Data       : GObject)
+      User_Data       : System.Address)
    is
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (View);
       Prompt_Iter, Last_Iter : Gtk_Text_Iter;

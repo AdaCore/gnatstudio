@@ -53,6 +53,7 @@ with Gtk.Tree_View;
 with Gtk.Widget;
 with Pango.Font;
 with String_List_Utils;
+with System;
 
 package GUI_Utils is
 
@@ -144,7 +145,7 @@ package GUI_Utils is
 
    type Completion_Handler is access function
      (Input     : String;
-      User_Data : Glib.Object.GObject)
+      User_Data : System.Address)
      return String_List_Utils.String_List.List;
    --  This function should return a list of adequate elements that all
    --  begin with Input, or a list containing only Input.
@@ -158,7 +159,7 @@ package GUI_Utils is
       Completion      : Completion_Handler;
       Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       Uneditable_Tag  : Gtk.Text_Tag.Gtk_Text_Tag;
-      User_Data       : Glib.Object.GObject);
+      User_Data       : System.Address);
    --  Handles completion in a console: given the text typed since
    --  Prompt_End_Mark, Completion will return the list of possible completion
    --  commands. If there is only one possible completion, it is inserted
