@@ -116,7 +116,7 @@ package body GVD.Files is
             Err_To_Out  => True);
 
          begin
-            Expect (Descriptor, Result, -".+", Timeout => -1);
+            Expect (Descriptor, Result, ".+", Timeout => -1);
 
             if Result /= Expect_Timeout then
                --  File was not found
