@@ -3808,10 +3808,10 @@
       </widget>
 
       <widget>
-	<class>GtkFrame</class>
-	<name>editor_frame</name>
-	<label_xalign>0</label_xalign>
-	<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	<class>GtkVBox</class>
+	<name>editor_vbox</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
 	<child>
 	  <shrink>True</shrink>
 	  <resize>True</resize>
@@ -3819,9 +3819,63 @@
 
 	<widget>
 	  <class>GtkHBox</class>
+	  <name>label_hbox</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkHSeparator</class>
+	    <name>explorer_separator</name>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkLabel</class>
+	    <name>editor_label</name>
+	    <label>(no file)</label>
+	    <justify>GTK_JUSTIFY_CENTER</justify>
+	    <wrap>False</wrap>
+	    <xalign>0.5</xalign>
+	    <yalign>0.5</yalign>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>False</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkHSeparator</class>
+	    <name>editor_separator</name>
+	    <child>
+	      <padding>0</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkHBox</class>
 	  <name>editor_text</name>
 	  <homogeneous>False</homogeneous>
 	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
 
 	  <widget>
 	    <class>Placeholder</class>
