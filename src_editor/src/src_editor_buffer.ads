@@ -797,6 +797,10 @@ private
 
       Highlight_In : Highlight_Location_Array;
       --  Where the highlighting should take place
+      --  ??? Should be part of the highlight category, since otherwise we do
+      --  not know for sure what category this applies to if the line is
+      --  associated with multiple categories. Might have conflict with the use
+      --  of Mark_In_Speedbar in the category, though
    end record;
 
    New_Line_Data : constant Line_Data_Record :=

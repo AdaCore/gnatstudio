@@ -4194,8 +4194,16 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
-      Editor.Line_Data (Line).Highlight_In := Highlight_In;
+      --  Do not change Highlight_In unless we are setting the highlighting
+      --  category, otherwise removing any category will unhighlight the whole
+      --  line.
+      if Set then
+         Editor.Line_Data (Line).Highlight_In := Highlight_In;
+      end if;
+
       Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
+
+      --  Find out which category has priority for highlighting
 
       for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
          if Editor.Line_Data (Line).Enabled_Highlights (J) then
