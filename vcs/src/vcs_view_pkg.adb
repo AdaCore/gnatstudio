@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -352,17 +352,16 @@ package body VCS_View_Pkg is
    is
       pragma Unreferenced (Event);
       The_View : constant VCS_View_Access := VCS_View_Access (View);
-      Page     : VCS_Page_Access;
+
+      Child    : MDI_Child;
    begin
-      for J in 1 .. The_View.Number_Of_Pages loop
-         Page := VCS_Page_Access
-           (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (The_View.Kernel), VCS_View_Record'Tag);
 
-         Free (Page.Stored_Status);
-         Free (Page.Cached_Status);
-      end loop;
+      Set_Child_Visible (Child, False);
+      Hide (Child);
 
-      return False;
+      return True;
 
    exception
       when E : others =>
@@ -382,6 +381,8 @@ package body VCS_View_Pkg is
          Page := VCS_Page_Access
            (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
 
+         Free (Page.Stored_Status);
+         Free (Page.Cached_Status);
          Destroy_Tooltip (Page.Tooltip);
       end loop;
 
