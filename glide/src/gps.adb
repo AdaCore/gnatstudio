@@ -24,6 +24,7 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -577,6 +578,8 @@ begin
    Free (Home);
    Free (Dir);
    Free (Prefix);
+
+   Handlers_Destroy (GPS.Kernel);
 
    Free_Modules (GPS.Kernel);
    Glide_Page.Destroy (Page);
