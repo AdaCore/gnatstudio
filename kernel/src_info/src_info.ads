@@ -709,9 +709,7 @@ private
    type Source_File is record
       LI              : LI_File_Ptr;
       Part            : Projects.Unit_Part;
-      Source_Filename : String_Access;
-      --  Allocated only when Part is set to Unit_Separate. Set to null
-      --  otherwise.
+      Source_Filename : VFS.Virtual_File;
    end record;
    --  A source file is represented by two or three elements:
    --    - its LI_File
@@ -725,7 +723,7 @@ private
    No_Source_File : constant Source_File :=
      (LI              => null,
       Part            => Projects.Unit_Spec,
-      Source_Filename => null);
+      Source_Filename => VFS.No_File);
    --  To check that a Source_File is not null, a quick and good enough
    --  check is to verify that Source_File.LI is not null.
 
@@ -944,8 +942,7 @@ private
       --  ??? Should be only for languages where it makes sense, for instance
       --  in derived type. Can be left to null otherwise.
 
-      Source_Filename   : String_Access;
-      Cached_File       : VFS.Virtual_File;
+      Source_Filename   : VFS.Virtual_File;
       File_Timestamp    : Ada.Calendar.Time;
       Original_Filename : String_Access;
       Original_Line     : Positive;
@@ -1223,17 +1220,8 @@ private
    procedure Destroy (LIFP : in out LI_File_Ptr);
    --  Deallocate recursively the LI_File_Ptr. Has no effect if LIFP is null.
 
-   procedure Destroy (SF : in out Source_File);
-   --  Deallocate the memory used by the given Source_File.
-
-   procedure Destroy (FL : in out File_Location);
-   --  Deallocate the memory used by the given File_Location.
-
    procedure Destroy (FL : in out File_Location_List);
    --  Deallocate the memory used by the given File_Location_List.
-
-   procedure Destroy (ER : in out E_Reference);
-   --  Destroy the memory used by the given E_Reference.
 
    procedure Destroy (ERL : in out E_Reference_List);
    --  Deallocate recursively the given E_Reference_List.
@@ -1266,9 +1254,5 @@ private
    procedure Destroy (LIFNP : in out LI_File_Node_Ptr);
    --  Deallocated the given LI_File_Node_Ptr (and all objects allocated
    --  by this structure). All nodes following LIFNP are also destroyed
-
-   function Copy (SF : Source_File) return Source_File;
-   --  Return a deep-copy of the given Source_File. The copy should be
-   --  deallocated after use.
 
 end Src_Info;

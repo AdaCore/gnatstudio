@@ -92,7 +92,7 @@ package body Src_Info.LI_Utils is
          Column => Location.Column,
          File   => (LI              => File,
                     Part            => Unit_Body,
-                    Source_Filename => null));
+                    Source_Filename => File.LI.Body_Info.Source_Filename));
       Declaration_Info.Value.Declaration.End_Of_Scope.Kind := Kind;
    end Set_End_Of_Scope;
 
@@ -139,9 +139,10 @@ package body Src_Info.LI_Utils is
       end if;
 
       R_Ptr.Value :=
-         (Location => (File   => (LI              => File,
-                                  Part            => Unit_Body,
-                                  Source_Filename => null),
+        (Location => (File   =>
+                        (LI              => File,
+                         Part            => Unit_Body,
+                         Source_Filename => File.LI.Body_Info.Source_Filename),
                        Line   => Location.Line,
                        Column => Location.Column),
           Kind => Kind);
@@ -336,8 +337,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String'(Base_Name (Full_Filename)),
-         Cached_File       => VFS.No_File,
+         Source_Filename   => Full_Filename,
          File_Timestamp    => Time,
          Original_Filename => null,
          Original_Line     => 1,

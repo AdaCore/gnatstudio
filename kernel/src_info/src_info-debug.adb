@@ -71,7 +71,7 @@ package body Src_Info.Debug is
    --  Print the line/column position separated by the character associated
    --  to the given Reference_Kind.
 
-   procedure Dump_D_Line (Filename : String);
+   procedure Dump_D_Line (Filename : Virtual_File);
    --  Print a 'D' line with the filename and the timestamp.
 
    procedure Dump_D_Line (SF : Source_File);
@@ -135,16 +135,16 @@ package body Src_Info.Debug is
    -- Dump_D_Line --
    -----------------
 
-   procedure Dump_D_Line (Filename : String) is
+   procedure Dump_D_Line (Filename : Virtual_File) is
    begin
-      Put ("D " & Filename);
+      Put ("D " & Base_Name (Filename));
       New_Line;
    end Dump_D_Line;
 
    procedure Dump_D_Line (SF : Source_File) is
       FI : constant File_Info_Ptr := Get_File_Info (SF);
    begin
-      Put ("D " & FI.Source_Filename.all);
+      Put ("D " & Base_Name (FI.Source_Filename));
 
       --  If the unit we're depending on is a subunit, print its name
       case SF.Part is
@@ -211,8 +211,7 @@ package body Src_Info.Debug is
 
    procedure Dump_E_Reference_List (ERL : E_Reference_List)
    is
-      Current_File : Source_File :=
-        (LI => null, Part => Unit_Spec, Source_Filename => null);
+      Current_File : Source_File := No_Source_File;
       --  We print the filename associated to the location only
       --  for the first reference associated to that file. All following
       --  reference locations for this file are printed without this
@@ -316,7 +315,7 @@ package body Src_Info.Debug is
          return;
       end if;
 
-      Put ("X " & FI.Source_Filename.all);
+      Put ("X " & Base_Name (FI.Source_Filename));
       if not ALI_Format then
          Put (' ' & FI.Unit_Name.all);
          if FI.Original_Filename /= null then
@@ -390,12 +389,12 @@ package body Src_Info.Debug is
             if LIF.Spec_Info.Unit_Name /= null then
                Put (LIF.Spec_Info.Unit_Name.all);
             end if;
-            Put ("%s " & LIF.Spec_Info.Source_Filename.all);
+            Put ("%s " & Base_Name (LIF.Spec_Info.Source_Filename));
          when Unit_Body =>
             if LIF.Body_Info.Unit_Name /= null then
                Put (LIF.Body_Info.Unit_Name.all);
             end if;
-            Put ("%b " & LIF.Body_Info.Source_Filename.all);
+            Put ("%b " & Base_Name (LIF.Body_Info.Source_Filename));
          when Unit_Separate =>
             --  This is not allowed.
             Put_Line ("<programing error, invalid Unit_Part!>");
@@ -418,8 +417,9 @@ package body Src_Info.Debug is
                Put (Get_File_Info
                       (Current_Dep_File_Info.Value.File).Unit_Name.all);
             else
-               Put ("<unknown unit name, filename=" & Get_File_Info
-                    (Current_Dep_File_Info.Value.File).Source_Filename.all
+               Put ("<unknown unit name, filename="
+                    & Base_Name (Get_File_Info
+                    (Current_Dep_File_Info.Value.File).Source_Filename)
                     & ">");
             end if;
             New_Line;
@@ -438,12 +438,12 @@ package body Src_Info.Debug is
    begin
       --  Generate the line for the spec if applicable
       if LIF.Spec_Info /= null then
-         Dump_D_Line (LIF.Spec_Info.Source_Filename.all);
+         Dump_D_Line (LIF.Spec_Info.Source_Filename);
       end if;
 
       --  Generate the line for the body if applicable
       if LIF.Body_Info /= null then
-         Dump_D_Line (LIF.Body_Info.Source_Filename.all);
+         Dump_D_Line (LIF.Body_Info.Source_Filename);
       end if;
 
       --  Generate all the other lines...
@@ -494,7 +494,7 @@ package body Src_Info.Debug is
 
       Current := LIF.Separate_Info;
       while Current /= null loop
-         Put_Line ("D " & Current.Value.Source_Filename.all
+         Put_Line ("D " & Base_Name (Current.Value.Source_Filename)
                    & " " & Current.Value.Unit_Name.all);
          Current := Current.Next;
       end loop;

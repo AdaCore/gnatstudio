@@ -733,7 +733,6 @@ package body Src_Info.Queries is
       List        : File_Info_Ptr_List;
       Part        : Unit_Part;
       B, S        : Boolean;
-      Base        : constant String := Base_Name (Source_Filename);
    begin
       if Lib_Info = null then
          Dependencies := null;
@@ -757,9 +756,7 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => Create
-                       (FI.Source_Filename.all, Lib_Info.LI.Project,
-                        Use_Object_Path => False),
+                    (File_Name => FI.Source_Filename,
                      LI_Name   => Lib_Info.LI.LI_Filename),
                   Dep  => (Depends_From_Spec => False,
                            Depends_From_Body => True)),
@@ -768,13 +765,11 @@ package body Src_Info.Queries is
 
          List := Lib_Info.LI.Separate_Info;
          while List /= null loop
-            if List.Value.Source_Filename.all /= Base then
+            if List.Value.Source_Filename /= Source_Filename then
                Dependencies := new Dependency_Node'
                  (Value =>
                     (File =>
-                       (File_Name => Create
-                          (List.Value.Source_Filename.all,
-                           Lib_Info.LI.Project, Use_Object_Path => False),
+                       (File_Name => List.Value.Source_Filename,
                         LI_Name   => Lib_Info.LI.LI_Filename),
                      Dep  => (Depends_From_Spec => False,
                               Depends_From_Body => True)),
@@ -790,9 +785,7 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => Create
-                       (FI.Source_Filename.all,
-                        Lib_Info.LI.Project, Use_Object_Path => False),
+                    (File_Name => FI.Source_Filename,
                      LI_Name   => Lib_Info.LI.LI_Filename),
                   Dep  => (Depends_From_Spec => False,
                            Depends_From_Body => True)),
@@ -808,7 +801,7 @@ package body Src_Info.Queries is
            or else (Part = Unit_Body and then B)
          then
             FI := Get_File_Info (Current_Dep.Value.File);
-            if FI = null or else FI.Source_Filename = null then
+            if FI = null then
                Destroy (Dependencies);
                Dependencies := null;
                Status := Internal_Error;
@@ -820,10 +813,7 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => Create
-                       (FI.Source_Filename.all,
-                        Current_Dep.Value.File.LI.LI.Project,
-                        Use_Object_Path => False),
+                    (File_Name => FI.Source_Filename,
                      LI_Name   => Current_Dep.Value.File.LI.LI.LI_Filename),
                   Dep  => Current_Dep.Value.Dep_Info),
                Next  => Dependencies);
@@ -1355,7 +1345,7 @@ package body Src_Info.Queries is
          P               : Unit_Part;
          File_List       : File_Info_Ptr_List;
          Num             : Positive := 1;
-         Source_Filename : GNAT.OS_Lib.String_Access;
+         Source_Filename : Virtual_File;
 
       begin
          if Decl.Typ = Declaration then
@@ -1374,8 +1364,7 @@ package body Src_Info.Queries is
             end if;
 
             P := Decl.Ref.Location.File.Part;
-            Source_Filename := GNAT.OS_Lib.String_Access
-              (Decl.Ref.Location.File.Source_Filename);
+            Source_Filename := Decl.Ref.Location.File.Source_Filename;
          end if;
 
          case P is
@@ -1391,8 +1380,7 @@ package body Src_Info.Queries is
                File_List := Lib_Info.LI.Separate_Info;
 
                while File_List /= null loop
-                  exit when File_List.Value.Source_Filename.all =
-                    Source_Filename.all;
+                  exit when File_List.Value.Source_Filename = Source_Filename;
 
                   Num := Num + 1;
                   File_List := File_List.Next;
@@ -2637,14 +2625,14 @@ package body Src_Info.Queries is
                   if LI.LI.Spec_Info /= null then
                      Set
                        (Iterator.Examined,
-                        LI.LI.Spec_Info.Source_Filename.all,
+                        Base_Name (LI.LI.Spec_Info.Source_Filename),
                         True);
                   end if;
 
                   if LI.LI.Body_Info /= null then
                      Set
                        (Iterator.Examined,
-                        LI.LI.Body_Info.Source_Filename.all,
+                        Base_Name (LI.LI.Body_Info.Source_Filename),
                         True);
                   end if;
 
@@ -2653,7 +2641,7 @@ package body Src_Info.Queries is
                      if Sep_List.Value /= null then
                         Set
                           (Iterator.Examined,
-                           Sep_List.Value.Source_Filename.all,
+                           Base_Name (Sep_List.Value.Source_Filename),
                            True);
                      end if;
                      Sep_List := Sep_List.Next;
@@ -2681,8 +2669,8 @@ package body Src_Info.Queries is
          end if;
 
          if Iterator.Current_Separate /= null
-           and then Iterator.Current_Separate.Value.Source_Filename.all =
-             Base_Name (Iterator.Source_Filename)
+           and then Iterator.Current_Separate.Value.Source_Filename =
+             Iterator.Source_Filename
          then
             Iterator.Current_Separate := Iterator.Current_Separate.Next;
          end if;
@@ -2708,8 +2696,8 @@ package body Src_Info.Queries is
 
             if Iterator.Include_Self
               and then Iterator.LI.LI.Spec_Info /= null
-              and then Iterator.LI.LI.Spec_Info.Source_Filename.all =
-                Base_Name (Iterator.Source_Filename)
+              and then Iterator.LI.LI.Spec_Info.Source_Filename =
+                Iterator.Source_Filename
             then
                Trace (Me, "Check_LI: spec matches");
                Iterator.Current_Part := Unit_Spec;
@@ -2720,11 +2708,12 @@ package body Src_Info.Queries is
 
             if Iterator.LI.LI.Body_Info /= null
               and then (Iterator.Include_Self
-                        or else Iterator.LI.LI.Body_Info.Source_Filename.all /=
-                          Base_Name (Iterator.Source_Filename))
+                        or else Iterator.LI.LI.Body_Info.Source_Filename /=
+                          Iterator.Source_Filename)
             then
                Trace (Me, "Check_LI: body matches "
-                      & Iterator.LI.LI.Body_Info.Source_Filename.all);
+                      & Full_Name
+                        (Iterator.LI.LI.Body_Info.Source_Filename).all);
                return null;
             end if;
 
@@ -2736,7 +2725,8 @@ package body Src_Info.Queries is
                Iterator.LI := null;
             else
                Trace (Me, "Check_LI: found separate: "
-                      & Iterator.Current_Separate.Value.Source_Filename.all);
+                      & Full_Name
+                        (Iterator.Current_Separate.Value.Source_Filename).all);
             end if;
 
             return null;
@@ -2748,8 +2738,8 @@ package body Src_Info.Queries is
                or else Dep.Value.Dep_Info.Depends_From_Spec
                or else Dep.Value.Dep_Info.Depends_From_Body)
               and then Dep.Value.File.LI = Iterator.Decl_LI
-              and then Get_File_Info (Dep.Value.File).Source_Filename.all =
-                Base_Name (Iterator.Source_Filename);
+              and then Get_File_Info (Dep.Value.File).Source_Filename =
+                Iterator.Source_Filename;
             Dep := Dep.Next;
          end loop;
 
@@ -2775,7 +2765,8 @@ package body Src_Info.Queries is
             Next_Separate;
             if Iterator.Current_Separate /= null then
                Trace (Me, "Next: returning next separate "
-                      & Iterator.Current_Separate.Value.Source_Filename.all);
+                      & Full_Name
+                        (Iterator.Current_Separate.Value.Source_Filename).all);
                return;
             end if;
 
@@ -2960,21 +2951,15 @@ package body Src_Info.Queries is
       if Iterator.Current_Separate /= null then
          return
            (File => Internal_File'
-              (File_Name => Create
-                 (Iterator.Current_Separate.Value.Source_Filename.all,
-                  Iterator.LI.LI.Project, Use_Object_Path => False),
+              (File_Name => Iterator.Current_Separate.Value.Source_Filename,
                LI_Name   => Iterator.LI.LI.LI_Filename),
             Dep => (False, True));
       end if;
 
       if Iterator.Current_Part = Unit_Spec then
-         S := Create
-           (Iterator.LI.LI.Spec_Info.Source_Filename.all,
-            Iterator.LI.LI.Project, Use_Object_Path => False);
+         S := Iterator.LI.LI.Spec_Info.Source_Filename;
       else
-         S := Create
-           (Iterator.LI.LI.Body_Info.Source_Filename.all,
-            Iterator.LI.LI.Project, Use_Object_Path => False);
+         S := Iterator.LI.LI.Body_Info.Source_Filename;
       end if;
 
       if Iterator.LI = Iterator.Decl_LI then
@@ -3056,16 +3041,12 @@ package body Src_Info.Queries is
       case Part is
          when Unit_Body | Unit_Separate =>
             if Lib_Info.LI.Spec_Info /= null then
-               return Create
-                 (Lib_Info.LI.Spec_Info.Source_Filename.all,
-                  Lib_Info.LI.Project, Use_Object_Path => False);
+               return Lib_Info.LI.Spec_Info.Source_Filename;
             end if;
 
          when Unit_Spec =>
             if Lib_Info.LI.Body_Info /= null then
-               return Create
-                 (Lib_Info.LI.Body_Info.Source_Filename.all,
-                  Lib_Info.LI.Project, Use_Object_Path => False);
+               return Lib_Info.LI.Body_Info.Source_Filename;
             end if;
       end case;
       return VFS.No_File;
@@ -3174,14 +3155,10 @@ package body Src_Info.Queries is
       LI   := Locate_From_Source (Handler, Get_Declaration_File_Of (Entity));
       Part := Get_Unit_Part (LI, Get_Declaration_File_Of (Entity));
 
-      if Part /= Unit_Separate then
-         return Source_File'(LI => LI, Part => Part, Source_Filename => null);
-      else
-         return Source_File'
-           (LI => LI, Part => Part,
-            Source_Filename => new String'
-              (Base_Name (Get_Declaration_File_Of (Entity))));
-      end if;
+      return Source_File'
+        (LI              => LI,
+         Part            => Part,
+         Source_Filename => Get_Declaration_File_Of (Entity));
    end Get_Source_File;
 
    -----------------
@@ -3221,24 +3198,23 @@ package body Src_Info.Queries is
      (Lib_Info : LI_File_Ptr; File_Name : VFS.Virtual_File)
       return E_Declaration_Info_List
    is
-      Base : constant String := Base_Name (File_Name);
       Sep : File_Info_Ptr_List;
    begin
       if Lib_Info.LI.Body_Info /= null
-        and then Lib_Info.LI.Body_Info.Source_Filename.all = Base
+        and then Lib_Info.LI.Body_Info.Source_Filename = File_Name
       then
          return Lib_Info.LI.Body_Info.Declarations;
       end if;
 
       if Lib_Info.LI.Spec_Info /= null
-        and then Lib_Info.LI.Spec_Info.Source_Filename.all = Base
+        and then Lib_Info.LI.Spec_Info.Source_Filename = File_Name
       then
          return Lib_Info.LI.Spec_Info.Declarations;
       end if;
 
       Sep := Lib_Info.LI.Separate_Info;
       while Sep /= null loop
-         if Sep.Value.Source_Filename.all = Base then
+         if Sep.Value.Source_Filename = File_Name then
             return Sep.Value.Declarations;
          end if;
          Sep := Sep.Next;

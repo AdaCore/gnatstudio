@@ -54,7 +54,7 @@ package body Src_Info is
    --  Hash function for strings.
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; File_Name : String) return File_Info_Ptr;
+     (LIF : LI_File_Ptr; File_Name : Virtual_File) return File_Info_Ptr;
    --  Return a pointer to the file info whose File_Name matches
    --  Return null if such unit could not be found.
 
@@ -84,12 +84,12 @@ package body Src_Info is
    ----------------------------
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; File_Name : String) return File_Info_Ptr
+     (LIF : LI_File_Ptr; File_Name : Virtual_File) return File_Info_Ptr
    is
       Current_Node : File_Info_Ptr_List := LIF.LI.Separate_Info;
    begin
       while Current_Node /= null loop
-         if Current_Node.Value.Source_Filename.all = File_Name then
+         if Current_Node.Value.Source_Filename = File_Name then
             return Current_Node.Value;
          end if;
          Current_Node := Current_Node.Next;
@@ -139,7 +139,6 @@ package body Src_Info is
      (Handler         : access LI_Handler_Record'Class;
       Source_Filename : VFS.Virtual_File) return LI_File_Ptr
    is
-      Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table          : LI_File_HTable.HTable := Handler.Table.all;
@@ -163,8 +162,8 @@ package body Src_Info is
          --  Check if the filename matches the body filename
 
          if Current_LI.Value.LI.Body_Info /= null
-           and then Current_LI.Value.LI.Body_Info.Source_Filename.all =
-              Short_Filename
+           and then Current_LI.Value.LI.Body_Info.Source_Filename =
+              Source_Filename
          then
             return Current_LI.Value;
          end if;
@@ -172,8 +171,8 @@ package body Src_Info is
          --  See if the filename matches the spec filename
 
          if Current_LI.Value.LI.Spec_Info /= null
-           and then Current_LI.Value.LI.Spec_Info.Source_Filename.all =
-              Short_Filename
+           and then Current_LI.Value.LI.Spec_Info.Source_Filename =
+              Source_Filename
          then
             return Current_LI.Value;
          end if;
@@ -184,7 +183,7 @@ package body Src_Info is
 
          Separate_Loop :
          while Current_Sep /= null loop
-            if Current_Sep.Value.Source_Filename.all = Short_Filename then
+            if Current_Sep.Value.Source_Filename = Source_Filename then
                return Current_LI.Value;
             end if;
 
@@ -207,16 +206,9 @@ package body Src_Info is
 
    function "=" (Left, Right : Source_File) return Boolean is
    begin
-      if Left.LI = Right.LI and then Left.Part = Right.Part then
-         if Left.Source_Filename = null then
-            return Right.Source_Filename = null;
-         else
-            return Right.Source_Filename /= null
-              and then Left.Source_Filename.all = Right.Source_Filename.all;
-         end if;
-      else
-         return False;
-      end if;
+      return Left.LI = Right.LI
+        and then Left.Part = Right.Part
+        and then Left.Source_Filename = Right.Source_Filename;
    end "=";
 
    function "=" (Left, Right : File_Location) return Boolean is
@@ -363,7 +355,7 @@ package body Src_Info is
          when Unit_Body =>
             return SF.LI.LI.Body_Info;
          when Unit_Separate =>
-            return Get_Separate_File_Info (SF.LI, SF.Source_Filename.all);
+            return Get_Separate_File_Info (SF.LI, SF.Source_Filename);
       end case;
    end Get_File_Info;
 
@@ -391,31 +383,15 @@ package body Src_Info is
       end if;
    end Destroy;
 
-   procedure Destroy (SF : in out Source_File) is
-   begin
-      Free (SF.Source_Filename);
-   end Destroy;
-
-   procedure Destroy (FL : in out File_Location) is
-   begin
-      Destroy (FL.File);
-   end Destroy;
-
    procedure Destroy (FL : in out File_Location_List) is
       Current_Node : File_Location_List := FL;
       Next_Node    : File_Location_List;
    begin
       while Current_Node /= null loop
          Next_Node := Current_Node.Next;
-         Destroy (Current_Node.Value);
          Free (Current_Node);
          Current_Node := Next_Node;
       end loop;
-   end Destroy;
-
-   procedure Destroy (ER : in out E_Reference) is
-   begin
-      Destroy (ER.Location);
    end Destroy;
 
    procedure Destroy (ERL : in out E_Reference_List) is
@@ -424,7 +400,6 @@ package body Src_Info is
    begin
       while Current_Node /= null loop
          Next_Node := Current_Node.Next;
-         Destroy (Current_Node.Value);
          Free (Current_Node);
          Current_Node := Next_Node;
       end loop;
@@ -433,9 +408,7 @@ package body Src_Info is
    procedure Destroy (ED : in out E_Declaration) is
    begin
       Free (ED.Name);
-      Destroy (ED.Location);
       Destroy (ED.Parent_Location);
-      Destroy (ED.End_Of_Scope);
       Destroy (ED.Primitive_Subprograms);
    end Destroy;
 
@@ -461,7 +434,6 @@ package body Src_Info is
    begin
       Destroy (FI.Declarations);
       Free (FI.Unit_Name);
-      Free (FI.Source_Filename);
       Free (FI.Original_Filename);
       Free (FI.Scope_Tree);
    end Destroy;
@@ -488,7 +460,6 @@ package body Src_Info is
 
    procedure Destroy (DFI : in out Dependency_File_Info) is
    begin
-      Destroy (DFI.File);
       Destroy (DFI.Declarations);
    end Destroy;
 
@@ -515,20 +486,6 @@ package body Src_Info is
          Current_Node := Next_Node;
       end loop;
    end Destroy;
-
-   ----------
-   -- Copy --
-   ----------
-
-   function Copy (SF : Source_File) return Source_File is
-      Result : Source_File := SF;
-   begin
-      if SF.Source_Filename /= null then
-         Result.Source_Filename := new String'(SF.Source_Filename.all);
-      end if;
-
-      return Result;
-   end Copy;
 
    ---------------------------
    -- Get_Depends_From_Spec --
@@ -582,20 +539,12 @@ package body Src_Info is
    -------------------------
 
    function Get_Source_Filename (File : Source_File) return VFS.Virtual_File is
-      F : File_Info_Ptr;
    begin
       if File = No_Source_File then
          return VFS.No_File;
       end if;
 
-      F := Get_File_Info (File);
-      if F.Cached_File = VFS.No_File then
-         F.Cached_File := Create
-           (F.Source_Filename.all,
-            File.LI.LI.Project, Use_Object_Path => False);
-      end if;
-
-      return F.Cached_File;
+      return Get_File_Info (File).Source_Filename;
    end Get_Source_Filename;
 
    -------------------
@@ -603,17 +552,15 @@ package body Src_Info is
    -------------------
 
    function Get_Unit_Part
-     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return Unit_Part
-   is
-      Base : constant String := Base_Name (File);
+     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return Unit_Part is
    begin
       if Lib_Info.LI.Spec_Info /= null
-        and then Lib_Info.LI.Spec_Info.Source_Filename.all = Base
+        and then Lib_Info.LI.Spec_Info.Source_Filename = File
       then
          return Unit_Spec;
 
       elsif Lib_Info.LI.Body_Info /= null
-        and then Lib_Info.LI.Body_Info.Source_Filename.all = Base
+        and then Lib_Info.LI.Body_Info.Source_Filename = File
       then
          return Unit_Body;
       end if;
@@ -824,7 +771,6 @@ package body Src_Info is
    is
       Info : File_Info_Ptr;
       List : File_Info_Ptr_List;
-      Base : constant String := Base_Name (File);
    begin
       if Lib_Info = null then
          return "";
@@ -833,7 +779,7 @@ package body Src_Info is
       Info := Lib_Info.LI.Spec_Info;
 
       if Info /= null
-        and then Info.Source_Filename.all = Base
+        and then Info.Source_Filename = File
       then
          if Info.Unit_Name = null then
             return "";
@@ -845,7 +791,7 @@ package body Src_Info is
       Info := Lib_Info.LI.Body_Info;
 
       if Info /= null
-        and then Info.Source_Filename.all = Base
+        and then Info.Source_Filename = File
       then
          if Info.Unit_Name = null then
             return "";
@@ -860,7 +806,7 @@ package body Src_Info is
          Info := List.Value;
 
          if Info /= null
-           and then Info.Source_Filename.all = Base
+           and then Info.Source_Filename = File
          then
             if Info.Unit_Name = null then
                return "";
@@ -1043,13 +989,9 @@ package body Src_Info is
 
       function Is_Up_To_Date (File : File_Info_Ptr) return Boolean is
       begin
-         --  ??? Need to use full filename here, but this is costly. It would
-         --  be better stored in the LI structure itself
          return File = null
-           or else File_Time_Stamp (Create (File.Source_Filename.all,
-                                            LI.LI.Project,
-                                            Use_Object_Path => False))
-            <= File.File_Timestamp;
+           or else File_Time_Stamp (File.Source_Filename) <=
+             File.File_Timestamp;
       end Is_Up_To_Date;
 
       File : File_Info_Ptr_List;
