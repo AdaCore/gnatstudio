@@ -1191,9 +1191,21 @@ package body Src_Editor_Module is
                   end;
                end if;
 
-               Set_Cursor_Location
-                 (Source_Box (Get_Widget (Child)).Editor, Line, Column);
+               Set_Cursor_Position
+                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                  Line, Column);
             end if;
+         end;
+
+      elsif Command = "cursor_center" then
+         declare
+            File   : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+         begin
+            Scroll_To_Cursor_Location
+              (Get_View (Source_Box (Get_Widget (Child)).Editor),
+               Center => True);
          end;
 
       elsif Command = "get_buffer" then
@@ -3940,6 +3952,18 @@ package body Src_Editor_Module is
              & " column, if not specified, is 1."),
          Minimum_Args  => 2,
          Maximum_Args  => 3,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "cursor_center",
+         Params        => "(file)",
+         Description   =>
+           -("Scroll the view to center cursor."),
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
