@@ -28,6 +28,23 @@ with Glib.Unicode;            use Glib, Glib.Unicode;
 package body String_Utils is
 
    -----------------
+   -- Blank_Slice --
+   -----------------
+
+   function Blank_Slice
+     (Count     : Natural;
+      Use_Tabs  : Boolean := False;
+      Tab_Width : Natural := 8) return String is
+   begin
+      if Use_Tabs then
+         return (1 .. Count / Tab_Width => ASCII.HT) &
+           (1 .. Count mod Tab_Width => ' ');
+      else
+         return (1 .. Count => ' ');
+      end if;
+   end Blank_Slice;
+
+   -----------------
    -- Skip_Blanks --
    -----------------
 
@@ -63,6 +80,64 @@ package body String_Utils is
          Index := Index + 1;
       end loop;
    end Skip_To_Blank;
+
+   --------------
+   -- Is_Blank --
+   --------------
+
+   function Is_Blank (C : Character) return Boolean is
+   begin
+      return C = ' ' or else C = ASCII.LF or else C = ASCII.HT;
+   end Is_Blank;
+
+   ----------------
+   -- Line_Start --
+   ----------------
+
+   function Line_Start (Buffer : String; P : Natural) return Natural is
+   begin
+      for J in reverse Buffer'First .. P loop
+         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
+            if J < Buffer'Last then
+               return J + 1;
+            else
+               return Buffer'Last;
+            end if;
+         end if;
+      end loop;
+
+      return Buffer'First;
+   end Line_Start;
+
+   --------------
+   -- Line_End --
+   --------------
+
+   function Line_End (Buffer : String; P : Natural) return Natural is
+   begin
+      for J in P .. Buffer'Last loop
+         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
+            return J - 1;
+         end if;
+      end loop;
+
+      return Buffer'Last;
+   end Line_End;
+
+   ---------------
+   -- Next_Line --
+   ---------------
+
+   function Next_Line (Buffer : String; P : Natural) return Natural is
+   begin
+      for J in P .. Buffer'Last - 1 loop
+         if Buffer (J) = ASCII.LF then
+            return J + 1;
+         end if;
+      end loop;
+
+      return Buffer'Last;
+   end Next_Line;
 
    ---------------------
    -- Skip_Hexa_Digit --

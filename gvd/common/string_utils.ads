@@ -72,6 +72,26 @@ package String_Utils is
    --  Currently, a word is defined as any string made of alphanumeric
    --  character or underscore.
 
+   function Blank_Slice
+     (Count     : Natural;
+      Use_Tabs  : Boolean := False;
+      Tab_Width : Natural := 8) return String;
+   --  Return a string representing count blanks.
+   --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
+   --  otherwise use only spaces.
+
+   function Is_Blank (C : Character) return Boolean;
+   --  Return True if C is a blank character: LF, HT or ' '
+
+   function Line_Start (Buffer : String; P : Natural) return Natural;
+   --  Return the start of the line pointed by P.
+
+   function Line_End (Buffer : String; P : Natural) return Natural;
+   --  Return the end of the line pointed by P.
+
+   function Next_Line (Buffer : String; P : Natural) return Natural;
+   --  Return the start of the next line.
+
    procedure Parse_Num
      (Type_Str : String;
       Index    : in out Natural;
@@ -280,6 +300,7 @@ package String_Utils is
    --  will be put into quotes.
 
 private
+   pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
