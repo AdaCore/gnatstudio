@@ -201,6 +201,7 @@ package body Glide_Kernel.Scripts is
    Action_Cst     : aliased constant String := "action";
    Prefix_Cst     : aliased constant String := "prefix";
    Sensitive_Cst  : aliased constant String := "sensitive";
+   Force_Cst      : aliased constant String := "force";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -210,7 +211,8 @@ package body Glide_Kernel.Scripts is
    File_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Open_Cmd_Parameters     : constant Cst_Argument_List :=
-     (1 => Filename_Cst'Access);
+     (1 => Filename_Cst'Access,
+      2 => Force_Cst'Access);
    Location_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
@@ -229,7 +231,6 @@ package body Glide_Kernel.Scripts is
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
      (1 => Sensitive_Cst'Access);
 
-   Force_Cst        : aliased constant String := "force";
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
    Console_Constructor_Args : constant Cst_Argument_List :=
@@ -1068,7 +1069,8 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
-         Load_Project (Kernel, Nth_Arg (Data, 1));
+         Load_Project (Kernel, Normalize_Pathname (Nth_Arg (Data, 1)),
+                       No_Save => Nth_Arg (Data, 2, False));
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
@@ -1666,7 +1668,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel, "load",
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
