@@ -365,10 +365,13 @@ package body Project_Explorers is
    --  Recompute the directories for the project.
 
    procedure Update_Directory_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Ctree_Node;
+      Data     : User_Data);
    --  Recompute the files for the directory. This procedure tries to keep the
    --  existing files if they are in the project view, so as to keep the
    --  expanded status
+   --  Data must be the user data associated with Node
 
    ----------------------------
    -- Retrieving information --
@@ -2459,79 +2462,64 @@ package body Project_Explorers is
    ---------------------------
 
    procedure Update_Directory_Node
-     (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Ctree_Node;
+      Data     : User_Data)
    is
-      Count : Natural := 0;
-      Src   : String_List_Id;
       Index : Natural;
       N, N2 : Gtk_Ctree_Node;
+      Dir : constant String := Name_As_Directory (Get_String (Data.Directory));
+      Sources : String_Id_Array := Get_Source_Files
+        (Get_Project_From_Node (Explorer, Node),
+         Recursive => False);
+
    begin
       --  The goal here is to keep the files and subdirectories if their
       --  current state (expanded or not), while doing the update.
 
-      --  Count the number of subdirectories
+      --  Remove from the tree all the files that are no longer in the
+      --  project
 
-      Src := Projects.Table (Get_Project_View (Explorer.Kernel)).Sources;
-      while Src /= Nil_String loop
-         Count := Count + 1;
-         Src := String_Elements.Table (Src).Next;
+      N := Row_Get_Children (Node_Get_Row (Node));
+      while N /= null loop
+         N2 := Row_Get_Sibling (Node_Get_Row (N));
+
+         declare
+            User : constant User_Data :=
+              Node_Get_Row_Data (Explorer.Tree, N);
+         begin
+            if User.Node_Type = File_Node then
+               Index := Sources'First;
+               while Index <= Sources'Last loop
+                  if Sources (Index) /= No_String
+                    and then String_Equal (Sources (Index), User.File)
+                  then
+                     Sources (Index) := No_String;
+                     exit;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+
+               if Index > Sources'Last then
+                  Remove_Node (Explorer.Tree, N);
+               end if;
+            end if;
+         end;
+         N := N2;
       end loop;
 
-      declare
-         Sources : array (1 .. Count) of String_Id;
-      begin
-         --  Store the source files
-         Index := Sources'First;
-         Src := Projects.Table (Get_Project_View (Explorer.Kernel)).Sources;
-         while Src /= Nil_String loop
-            Sources (Index) := String_Elements.Table (Src).Value;
-            String_To_Name_Buffer (Sources (Index));
-            Index := Index + 1;
-            Src := String_Elements.Table (Src).Next;
-         end loop;
+      --  Then add all the new directories
 
-         --  Remove from the tree all the directories that are no longer in the
-         --  project
-
-         N := Row_Get_Children (Node_Get_Row (Node));
-         while N /= null loop
-            N2 := Row_Get_Sibling (Node_Get_Row (N));
-
-            declare
-               User : constant User_Data :=
-                 Node_Get_Row_Data (Explorer.Tree, N);
-            begin
-               if User.Node_Type = File_Node then
-                  Index := Sources'First;
-                  while Index <= Sources'Last loop
-                     if Sources (Index) /= No_String
-                       and then String_Equal (Sources (Index), User.File)
-                     then
-                        Sources (Index) := No_String;
-                        exit;
-                     end if;
-                     Index := Index + 1;
-                  end loop;
-
-                  if Index > Sources'Last then
-                     Remove_Node (Explorer.Tree, N);
-                  end if;
-               end if;
-            end;
-            N := N2;
-         end loop;
-
-         --  Then add all the new directories
-
-         for J in Sources'Range loop
-            if Sources (J) /= No_String then
-               N := Add_File_Node
-                 (Explorer         => Explorer,
-                  File             => Sources (J),
-                  Parent_Node      => Node);
-            end if;
-         end loop;
-      end;
+      for J in Sources'Range loop
+         if Sources (J) /= No_String
+           and then Is_Regular_File (Dir & Get_String (Sources (J)))
+         then
+            N := Add_File_Node
+              (Explorer         => Explorer,
+               File             => Sources (J),
+               Parent_Node      => Node);
+         end if;
+      end loop;
    end Update_Directory_Node;
 
    -----------------
@@ -2569,7 +2557,8 @@ package body Project_Explorers is
          else
             case Data.Node_Type is
                when Project_Node   => Update_Project_Node (Explorer, Node);
-               when Directory_Node => Update_Directory_Node (Explorer, Node);
+               when Directory_Node =>
+                  Update_Directory_Node (Explorer, Node, Data);
                when others         => null;
             end case;
          end if;
