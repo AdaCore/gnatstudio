@@ -620,10 +620,15 @@ begin
    Gtk.Accel_Map.Save
      (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
-   Handlers_Destroy (GPS.Kernel);
-
    Free_Modules (GPS.Kernel);
    Glide_Page.Destroy (Page);
+
+   --  Call Handlers_Destroy after Free_Modules and Glide_Page.Destroy,
+   --  since some handlers are already disconnected by these functions, and
+   --  only Handlers_Destroy know what handlers are still left and need to be
+   --  disconnected.
+
+   Handlers_Destroy (GPS.Kernel);
 
    Destroy (GPS);
    Destroy (GPS.Kernel, Dir.all);
