@@ -40,7 +40,7 @@ with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with Basic_Types;           use Basic_Types;
 with GVD.Types;             use GVD.Types;
-with GVD.Strings;           use GVD.Strings;
+with String_Utils;          use String_Utils;
 
 package body Process_Tab_Pkg.Callbacks is
 

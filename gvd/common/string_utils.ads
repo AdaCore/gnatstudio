@@ -21,7 +21,7 @@
 --  This package provides a set of subprograms for manipulating and parsing
 --  strings.
 
-package GVD.Strings is
+package String_Utils is
 
    procedure Skip_Blanks
      (Type_Str : String;
@@ -145,4 +145,4 @@ private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
-end GVD.Strings;
+end String_Utils;

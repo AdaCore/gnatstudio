@@ -20,7 +20,7 @@
 
 with Gtk.Main; use Gtk.Main;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
-with GVD.Strings; use GVD.Strings;
+with String_Utils; use String_Utils;
 
 package body Open_Program_Pkg.Callbacks is
 

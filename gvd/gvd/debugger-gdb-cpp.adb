@@ -23,7 +23,7 @@
 with Language.Debugger; use Language.Debugger;
 with Language.Cpp;      use Language.Cpp;
 
-with GVD.Strings;    use GVD.Strings;
+with String_Utils;   use String_Utils;
 with Items;          use Items;
 with Items.Arrays;   use Items.Arrays;
 with Items.Records;  use Items.Records;

@@ -43,7 +43,7 @@ with Debugger.Gdb.Cpp;  use Debugger.Gdb.Cpp;
 with Process_Proxies;   use Process_Proxies;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Process;       use GVD.Process;
-with GVD.Strings;       use GVD.Strings;
+with String_Utils;      use String_Utils;
 with GVD.Dialogs;       use GVD.Dialogs;
 with GVD.Types;         use GVD.Types;
 with GVD.Trace;         use GVD.Trace;

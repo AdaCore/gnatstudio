@@ -71,7 +71,7 @@ with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Pixmaps;                use GVD.Pixmaps;
-with GVD.Strings;                use GVD.Strings;
+with String_Utils;               use String_Utils;
 with GVD.Types;                  use GVD.Types;
 with Basic_Types;                use Basic_Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;

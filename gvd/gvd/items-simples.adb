@@ -29,7 +29,7 @@ with Gdk.Types;       use Gdk.Types;
 with Language;        use Language;
 
 with Basic_Types;     use Basic_Types;
-with GVD.Strings;     use GVD.Strings;
+with String_Utils;    use String_Utils;
 with GVD.Preferences; use GVD.Preferences;
 
 package body Items.Simples is

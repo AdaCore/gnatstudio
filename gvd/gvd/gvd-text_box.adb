@@ -38,9 +38,8 @@ with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
 with Basic_Types;         use Basic_Types;
-with GVD.Types;           use GVD.Types;
 with GVD.Preferences;     use GVD.Preferences;
-with GVD.Strings;         use GVD.Strings;
+with String_Utils;        use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body GVD.Text_Box is

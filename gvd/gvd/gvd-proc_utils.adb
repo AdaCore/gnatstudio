@@ -24,7 +24,7 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GVD.Preferences; use GVD.Preferences;
-with GVD.Strings; use GVD.Strings;
+with String_Utils; use String_Utils;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is

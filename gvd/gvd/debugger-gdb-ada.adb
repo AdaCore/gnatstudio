@@ -22,7 +22,7 @@ with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language.Debugger; use Language.Debugger;
 with Language.Ada;  use Language.Ada;
-with GVD.Strings;   use GVD.Strings;
+with String_Utils;  use String_Utils;
 with Items;         use Items;
 with Items.Simples; use Items.Simples;
 with Items.Arrays;  use Items.Arrays;

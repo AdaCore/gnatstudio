@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Strings;   use GVD.Strings;
+with String_Utils;  use String_Utils;
 with Language.Debugger; use Language.Debugger;
 with Language.C;    use Language.C;
 

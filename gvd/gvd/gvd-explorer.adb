@@ -48,7 +48,7 @@ with GVD.Pixmaps;           use GVD.Pixmaps;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Strings;           use GVD.Strings;
+with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Files;             use GVD.Files;

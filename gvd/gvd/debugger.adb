@@ -44,7 +44,7 @@ with Language.Debugger; use Language.Debugger;
 with GVD;               use GVD;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Process;       use GVD.Process;
-with GVD.Strings;       use GVD.Strings;
+with String_Utils;      use String_Utils;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;

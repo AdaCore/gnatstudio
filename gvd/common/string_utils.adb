@@ -21,7 +21,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
 
-package body GVD.Strings is
+package body String_Utils is
 
    -----------------
    -- Skip_Blanks --
@@ -579,4 +579,4 @@ package body GVD.Strings is
       end if;
    end Do_Tab_Expansion;
 
-end GVD.Strings;
+end String_Utils;

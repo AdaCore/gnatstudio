@@ -47,7 +47,7 @@ with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Process;         use GVD.Process;
 with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
-with GVD.Strings;         use GVD.Strings;
+with String_Utils;        use String_Utils;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Files;           use GVD.Files;
 with GVD.Preferences;     use GVD.Preferences;

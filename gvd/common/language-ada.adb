@@ -20,7 +20,7 @@
 
 with GNAT.Regpat;  use GNAT.Regpat;
 with GVD.Pixmaps;  use GVD.Pixmaps;
-with GVD.Strings;  use GVD.Strings;
+with String_Utils; use String_Utils;
 
 package body Language.Ada is
 

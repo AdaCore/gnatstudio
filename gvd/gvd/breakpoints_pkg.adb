@@ -32,7 +32,7 @@ with GVD.Pixmaps;      use GVD.Pixmaps;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtk.Style;        use Gtk.Style;
 with GVD.Code_Editors; use GVD.Code_Editors;
-with GVD.Strings;      use GVD.Strings;
+with String_Utils;     use String_Utils;
 with Gdk.Color;        use Gdk.Color;
 with Gtk.List;         use Gtk.List;
 with GVD.Utils;        use GVD.Utils;

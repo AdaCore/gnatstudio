@@ -22,7 +22,7 @@ with Basic_Types;           use Basic_Types;
 with GVD.Preferences;       use GVD.Preferences;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GVD.Strings;           use GVD.Strings;
+with String_Utils;          use String_Utils;
 with Gtkada.Intl;           use Gtkada.Intl;
 pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
