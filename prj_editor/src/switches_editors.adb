@@ -326,6 +326,14 @@ package body Switches_Editors is
    --  Get the parameter for Switch, assuming it was first seen at position
    --  Index_In_List in List.
 
+   function Switch_Matches
+     (Switch        : String;
+      Separator     : String;
+      Candidate     : GNAT.OS_Lib.String_Access) return Boolean;
+   --  Whether Candidate matches Switch & Separator (properly take into
+   --  account the case where Separator is a space, and the argument appears
+   --  in a separate item in the argument_list
+
    -----------------------
    -- Get_Switch_Widget --
    -----------------------
@@ -419,15 +427,47 @@ package body Switches_Editors is
      (Switch : Switch_Field_Widget; List : in out Argument_List) is
    begin
       for L in List'Range loop
-         if List (L) /= null and then List (L).all = Switch.Switch then
-            Free (List (L));
+         if Switch_Matches (Switch.Switch, Switch.Separator, List (L)) then
+            if Switch.Separator'Length /= 0
+              and then Switch.Separator (Switch.Separator'First) = ' '
+            then
+               Free (List (L));
 
-            if L < List'Last then
-               Free (List (L + 1));
+               if L < List'Last then
+                  Free (List (L + 1));
+               end if;
+            else
+               Free (List (L));
             end if;
          end if;
       end loop;
    end Filter_Switch;
+
+   --------------------
+   -- Switch_Matches --
+   --------------------
+
+   function Switch_Matches
+     (Switch        : String;
+      Separator     : String;
+      Candidate     : GNAT.OS_Lib.String_Access) return Boolean is
+   begin
+      if Candidate = null then
+         return False;
+
+      elsif Separator'Length > 0
+        and then Separator (Separator'First) = ' '
+      then
+         return Candidate.all = Switch;
+
+      else
+         return Candidate'Length >= Switch'Length + Separator'Length
+           and then Candidate
+           (Candidate'First ..
+              Candidate'First + Switch'Length + Separator'Length - 1) =
+             Switch & Separator;
+      end if;
+   end Switch_Matches;
 
    -------------------
    -- Get_Parameter --
@@ -440,7 +480,7 @@ package body Switches_Editors is
       Index_In_List   : Natural;
       Skip_Next_Index : access Boolean) return String is
    begin
-      if Separator'Length > 1
+      if Separator'Length >= 1
         and then Separator (Separator'First) = ' '
       then
          if Index_In_List < List'Last
@@ -471,9 +511,7 @@ package body Switches_Editors is
       Skip_Next_Index : aliased Boolean;
    begin
       for L in List'Range loop
-         if List (L) /= null
-           and then List (L).all = Switch.Switch
-         then
+         if Switch_Matches (Switch.Switch, Switch.Separator, List (L)) then
             Set_Text (Switch.Field,
                       Get_Parameter
                         (Switch          => Switch.Switch,
