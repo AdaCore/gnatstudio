@@ -242,8 +242,6 @@ begin
      (Memory_View.View, "move_cursor", On_View_Move_Cursor'Access);
    Return_Callback.Connect
      (Memory_View.View, "button_release_event", On_View_Button_Release_Event'Access);
-   Return_Callback.Connect
-     (Memory_View.View, "button_press_event", On_View_Button_Press_Event'Access);
    Add (Memory_View.Viewport, Memory_View.View);
 
    Gtk_New_Hseparator (Memory_View.Hseparator2);
