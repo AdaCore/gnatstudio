@@ -25,10 +25,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Krunch;
 with Namet;                     use Namet;
-with Prj;                       use Prj;
-with Prj_API;                   use Prj_API;
-with Prj.Com;
-with Prj.Env;                   use Prj.Env;
+with Projects.Registry;         use Projects, Projects.Registry;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
@@ -92,11 +89,11 @@ package body Src_Info.ALI is
       'V'    => (Function_Or_Operator,   False, True),
       'w'    => (Protected_Kind,         False, False),
       'W'    => (Protected_Kind,         False, True),
-      'x'    => Unresolved_Entity_Kind,
+      'x'    => (Procedure_Kind,         False, True), --  Abstract
       'X'    => (Exception_Entity,       False, False),
-      'y'    => Unresolved_Entity_Kind,
+      'y'    => (Function_Or_Operator,   False, True), --  Abstract
       'Y'    => (Entry_Or_Entry_Family,  False, True),
-      'z'    => Unresolved_Entity_Kind,
+      'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
       'Z'    => Unresolved_Entity_Kind,
       '+'    => (Private_Type,           False, True),
       others => Unresolved_Entity_Kind);
@@ -156,8 +153,8 @@ package body Src_Info.ALI is
    --  Translate the given character into the associated Reference_Kind value.
    --  Raise ALI_Internal_Error if C does not represent any Reference_Kind.
 
-   function Get_ALI_Filename (Sig_Filename : File_Name_Type) return String;
-   --  Converts the given source filename Sig_Filename into the corresponding
+   function Get_ALI_Filename (File_Name : String) return String;
+   --  Converts the given source filename File_Name into the corresponding
    --  ALI filename.
 
    function Strip_Unit_Part (Unit_Name : String) return String;
@@ -175,7 +172,7 @@ package body Src_Info.ALI is
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
-      Project          : Prj.Project_Id;
+      Project          : Project_Type;
       Source_Path      : String;
       File             : out Source_File);
    --  Search the unit in LI_File_List which source file is equal to
@@ -189,8 +186,8 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Project          : Prj.Project_Id;
+      Source_Filename  : String;
+      Project          : Project_Type;
       Source_Path      : String;
       File             : out Source_File);
    --  Perform the job of Get_Source_File in the case where Subunit_Name is not
@@ -199,8 +196,8 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Sig_Filename     : File_Name_Type;
+      Source_Filename  : String;
+      Sig_Filename     : String;
       Part             : Unit_Part;
       File             : out Source_File);
    --  Perform the job of Get_Unit_Source_File knowing that the Source Filename
@@ -209,8 +206,8 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Sig_Filename     : File_Name_Type;
+      Source_Filename  : String;
+      Sig_Filename     : String;
       Subunit_Name     : Name_Id;
       File             : out Source_File);
    --  Perform the job of Get_Subunit_Source_File knowing the name of the
@@ -238,7 +235,7 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List);
@@ -258,7 +255,7 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List;
@@ -274,7 +271,7 @@ package body Src_Info.ALI is
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List);
@@ -282,7 +279,7 @@ package body Src_Info.ALI is
 
    procedure Process_With
      (New_LI_File : LI_File_Ptr;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       UId         : Unit_Id;
       WId         : With_Id);
    --  Save the information associated to the given With_Record.
@@ -290,7 +287,7 @@ package body Src_Info.ALI is
    procedure Process_Withs
      (New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
-      Project     : Prj.Project_Id);
+      Project     : Project_Type);
    --  Save the information associated to all the units withed from this Unit.
 
    procedure Chain_Declaration_For_Separate
@@ -335,7 +332,7 @@ package body Src_Info.ALI is
      (Handler           : ALI_Handler;
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
-      Project           : Prj.Project_Id;
+      Project           : Project_Type;
       Full_ALI_Filename : String;
       Source_Path       : String;
       List              : in out LI_File_List);
@@ -345,7 +342,7 @@ package body Src_Info.ALI is
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       List                   : in out LI_File_List;
       Unit                   : out LI_File_Ptr;
@@ -359,13 +356,13 @@ package body Src_Info.ALI is
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String);
    --  Internal version of Create_Or_Complete_LI
 
    function Locate_ALI
      (Short_ALI_Filename : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Object_Path : String) return String;
    --  Locate an ALI file on the object path. If not found, it will possibly
    --  search for the parent unit's ALI file (for proper handling of
@@ -423,36 +420,27 @@ package body Src_Info.ALI is
    -- Get_ALI_Filename --
    ----------------------
 
-   function Get_ALI_Filename
-     (Sig_Filename : File_Name_Type) return String
-   is
+   function Get_ALI_Filename (File_Name : String) return String is
       Last_Dot : Natural;
       ALI_Ext  : constant String := ".ali";
 
    begin
-      --  Retrieve the Sig_Filename string and store in the Namet Name Buffer
-
-      Get_Name_String (Sig_Filename);
-
       --  Search the last dot in the filename
 
-      Last_Dot := Namet.Name_Len;
+      Last_Dot := File_Name'Last;
 
-      while Last_Dot >= Namet.Name_Buffer'First  loop
-         exit when Namet.Name_Buffer (Last_Dot) = '.';
+      while Last_Dot >= File_Name'First  loop
+         exit when File_Name (Last_Dot) = '.';
          Last_Dot := Last_Dot - 1;
       end loop;
 
-      if Last_Dot < Namet.Name_Buffer'First then
+      if Last_Dot < File_Name'First then
          --  No dot found in Sig_Filename, just append the ALI extension
 
-         Last_Dot := Namet.Name_Len + 1;
+         Last_Dot := File_Name'Last + 1;
       end if;
 
-      --  Add the extension and return the result
-
-      Namet.Name_Buffer (Last_Dot .. Last_Dot + ALI_Ext'Length - 1) := ALI_Ext;
-      return Namet.Name_Buffer (1 .. Last_Dot + ALI_Ext'Length - 1);
+      return File_Name (File_Name'First .. Last_Dot - 1) & ALI_Ext;
    end Get_ALI_Filename;
 
    ---------------------
@@ -519,11 +507,12 @@ package body Src_Info.ALI is
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
-      Project          : Prj.Project_Id;
+      Project          : Project_Type;
       Source_Path      : String;
       File             : out Source_File)
    is
-      Prj : Project_Id;
+      Source : constant String := Get_String (Source_Filename);
+      Prj : Project_Type;
    begin
       --  Search algorithm:
       --  =================
@@ -571,8 +560,9 @@ package body Src_Info.ALI is
       --  parsing, so this case is much simpler.
 
       if Subunit_Name = No_Name then
+         --  ??? Do we really need to find another project
          Prj := Get_Project_From_File
-           (Project, Get_String (Source_Filename));
+           (Project_Registry'Class (Get_Registry (Project)), Source);
 
          if Prj = No_Project then
             --  ??? We have a file that doesn't belong the an project.
@@ -580,10 +570,10 @@ package body Src_Info.ALI is
          end if;
 
          Get_Unit_Source_File
-           (Handler, List, Source_Filename, Prj, Source_Path, File);
+           (Handler, List, Source, Prj, Source_Path, File);
       else
          Get_Subunit_Source_File
-           (Handler, List, Source_Filename, New_ALI.Sfile,
+           (Handler, List, Source, Get_String (New_ALI.Sfile),
             Subunit_Name, File);
       end if;
    end Get_Source_File;
@@ -595,200 +585,47 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Project          : Prj.Project_Id;
+      Source_Filename  : String;
+      Project          : Project_Type;
       Source_Path      : String;
       File             : out Source_File)
    is
-      Prj_Data  : Project_Data renames Prj.Projects.Table (Project);
-      Naming    : Naming_Data renames Prj_Data.Naming;
-
-      Body_Id   : Array_Element_Id;
-      Spec_Id   : Array_Element_Id;
-      Prj_Unit  : Prj.Com.Unit_Id;
-      Filename  : File_Name_Type;
-      Dir       : String_Access;
-      Part      : Unit_Part;
-
+      pragma Unreferenced (Source_Path);
    begin
-      --  Note that the search algorigthm in this procedure is documented
-      --  inside Get_Source_File. Any change to this algorithm should be
-      --  documented there.
-
-      --  First, check the body filename exception list.
-
-      Body_Id := Search_Filename (Naming.Bodies, Source_Filename);
-
-      if Body_Id /= No_Array_Element then
-         Get_Unit_Source_File
-           (Handler, List, Source_Filename,
-            Get_Filename (Body_Id), Unit_Body, File);
-         return;
-      end if;
-
-      --  Not found. Check the spec filename exception list
-
-      Spec_Id := Search_Filename (Naming.Specifications, Source_Filename);
-
-      --  If found then search if we can find the associated body. We should
-      --  always use the ALI file from the body if available, since it contains
-      --  much more information.
-
-      if Spec_Id /= No_Array_Element then
-         --  Search the body exception list for any filename with the same
-         --  unit name id
-
-         Body_Id := Search_Unit_Name (Naming.Bodies, Get_Unit_Name (Spec_Id));
-
-         if Body_Id /= No_Array_Element then
-            Get_Unit_Source_File
-              (Handler, List, Source_Filename,
-               Get_Filename (Body_Id), Unit_Body, File);
-            return;
-         end if;
-
-         --  Not found. Search the project units list
-
-         Prj_Unit := Prj.Com.Units_Htable.Get (Get_Unit_Name (Spec_Id));
-         Filename := Get_Body_Filename (Prj_Unit);
-
-         if Filename /= No_Name then
-            if Source_Filename = Filename then
-               Part := Unit_Body;
-            else
-               Part := Unit_Spec;
-            end if;
-
-            Get_Unit_Source_File
-              (Handler, List, Source_Filename, Filename, Part, File);
-            return;
-         end if;
-
-         --  Search in the Source path
-
-         Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
-         Dir := Locate_Regular_File (Get_String (Filename), Source_Path);
-
-         if Dir /= null then
-            Free (Dir);
-
-            if Source_Filename = Filename then
-               Part := Unit_Body;
-            else
-               Part := Unit_Spec;
-            end if;
-
-            Get_Unit_Source_File
-              (Handler, List, Source_Filename, Filename, Part, File);
-            return;
-         end if;
-
-         --  Not found anywhere, so this is a spec only file
-         Get_Unit_Source_File
-           (Handler, List, Source_Filename,
-            Get_Filename (Spec_Id), Unit_Spec, File);
-         return;
-      end if;  --  filename found in spec exception list
-
-      --  Else if both Spec_Id and Body_Id were null
-
-      case Get_Unit_Part_From_Filename
-        (Get_String (Source_Filename), Project)
-      is
-
-         --  Is this a body, according to the naming scheme?
-
+      case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body =>
             Get_Unit_Source_File
               (Handler, List, Source_Filename,
                Source_Filename, Unit_Body, File);
 
-         --  Is this a spec, according to the naming scheme?
-         --  (it should be, or that would be a bug)
-
          when Unit_Spec =>
-            declare
-               Unit_Name : constant Name_Id :=
-                 Get_Unit_Name (Source_Filename, Project);
-            begin
-               if Unit_Name = No_Name then
-                  --  This is a bug...
-                  Trace (Me, "Get_Unit_Source_File: no unit name");
-                  raise ALI_Internal_Error;
-               end if;
-
-               --  Search in the body exception list
-               Body_Id := Search_Unit_Name (Naming.Bodies, Unit_Name);
-
-               if Body_Id /= No_Array_Element then
-                  Get_Unit_Source_File
-                    (Handler, List, Source_Filename, Get_Filename (Body_Id),
-                     Unit_Body, File);
-                  return;
-               end if;
-
-               --  Search the project units list
-               Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
-               Filename := Get_Body_Filename (Prj_Unit);
-
-               if Get_Body_Filename (Prj_Unit) /= No_Name then
-                  if Filename = Source_Filename then
-                     Part := Unit_Body;
-                  else
-                     Part := Unit_Spec;
-                  end if;
-
-                  Get_Unit_Source_File
-                    (Handler, List, Source_Filename, Filename, Part, File);
-                  return;
-               end if;
-
-               --  Search the source path
-               Filename := Get_Body_Filename (Unit_Name, Naming);
-               Dir :=
-                 Locate_Regular_File (Get_String (Filename), Source_Path);
-
-               if Dir /= null then
-                  if Filename = Source_Filename then
-                     Part := Unit_Body;
-                  else
-                     Part := Unit_Spec;
-                  end if;
-
-                  Free (Dir);
-                  Get_Unit_Source_File
-                    (Handler, List, Source_Filename, Filename, Part, File);
-                  return;
-               end if;
-
-               --  The body was not found anywhere, so this is a spec only file
-               Get_Unit_Source_File
-                 (Handler, List, Source_Filename,
-                  Source_Filename, Unit_Spec, File);
-               return;
-            end;
-
-            --  If we reach this point, then there is a bug somewhere
+            Get_Unit_Source_File
+              (Handler, List, Source_Filename,
+               Other_File_Name (Project, Source_Filename),
+               Unit_Spec, File);
 
          when Unit_Separate =>
             Trace (Me, "Get_Unit_Source_File: reached the end unexpectedly "
-                   & Get_String (Source_Filename)
-                   & " in project "
-                   & Get_String (Projects.Table (Project).Name));
+                   & Source_Filename
+                   & " in project " & Project_Name (Project));
             raise ALI_Internal_Error;
       end case;
    end Get_Unit_Source_File;
 
+   --------------------------
+   -- Get_Unit_Source_File --
+   --------------------------
+
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Sig_Filename     : File_Name_Type;
+      Source_Filename  : String;
+      Sig_Filename     : String;
       Part             : Unit_Part;
       File             : out Source_File)
    is
-      Sname        : constant String := Get_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
+      --   ??? Could we use Sname instead
 
    begin
       File :=
@@ -814,12 +651,12 @@ package body Src_Info.ALI is
       case Part is
          when Unit_Spec =>
             if File.LI.LI.Spec_Info = null then
-               Create_File_Info (File.LI.LI.Spec_Info, Sname);
+               Create_File_Info (File.LI.LI.Spec_Info, Source_Filename);
             end if;
 
          when Unit_Body =>
             if File.LI.LI.Body_Info = null then
-               Create_File_Info (File.LI.LI.Body_Info, Sname);
+               Create_File_Info (File.LI.LI.Body_Info, Source_Filename);
             end if;
 
          when Unit_Separate =>
@@ -836,20 +673,20 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       List             : in out LI_File_List;
-      Source_Filename  : File_Name_Type;
-      Sig_Filename     : File_Name_Type;
+      Source_Filename  : String;
+      Sig_Filename     : String;
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      Sname        : constant String := Get_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
+      --   ??? Could we use Sname
       Sep          : File_Info_Ptr_List;
 
    begin
       File :=
          (LI              => Get (List.Table, ALI_Filename),
           Part            => Unit_Separate,
-          Source_Filename => new String'(Sname));
+          Source_Filename => new String'(Source_Filename));
 
       --  If there is no LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -871,7 +708,7 @@ package body Src_Info.ALI is
       Sep := File.LI.LI.Separate_Info;
 
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = Sname;
+         exit when Sep.Value.Source_Filename.all = Source_Filename;
          Sep := Sep.Next;
       end loop;
 
@@ -879,7 +716,7 @@ package body Src_Info.ALI is
          File.LI.LI.Separate_Info := new File_Info_Ptr_Node'
            (Value => null, Next => File.LI.LI.Separate_Info);
          Create_File_Info
-           (File.LI.LI.Separate_Info.Value, Sname,
+           (File.LI.LI.Separate_Info.Value, Source_Filename,
             Unit_Name => Get_String (Subunit_Name));
       end if;
 
@@ -1013,7 +850,7 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List)
@@ -1091,7 +928,7 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List;
@@ -1105,13 +942,16 @@ package body Src_Info.ALI is
       Get_Source_File
         (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
          Project, Source_Path, Sfile);
+      Assert
+        (Me, Get_Source_Filename (Sfile) = Get_String (Dep.Sfile),
+         "Process_Sdep_As_External, invalid source file " &
+         Get_Source_Filename (Sfile) & ' '
+         & Get_String (Dep.Sfile));
       New_Dep :=
         (File              => Copy (Sfile),
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
-      pragma Assert
-        (Get_Source_Filename (Sfile) = Get_String (Dep.Sfile));
 
       if not Is_Separate then
          New_LI_File.LI.Dependencies_Info :=
@@ -1132,7 +972,7 @@ package body Src_Info.ALI is
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
       List        : in out LI_File_List) is
@@ -1150,12 +990,17 @@ package body Src_Info.ALI is
 
    procedure Process_With
      (New_LI_File : LI_File_Ptr;
-      Project     : Prj.Project_Id;
+      Project     : Project_Type;
       UId         : Unit_Id;
       WId         : With_Id)
    is
       U                : Unit_Record renames Units.Table (UId);
       W                : With_Record renames Withs.Table (WId);
+
+      --  ??? We cannot use W.Sfile unfortunately, since it is the file to
+      --  recompile, not the file we actually depend on. However, it would be
+      --  much faster (no need to parse the naming scheme), and would handle
+      --  krunch names correctly.
 
       Withed_File_Name : constant String :=
         Get_Source_Filename (W.Uname, Project);
@@ -1234,9 +1079,11 @@ package body Src_Info.ALI is
       --  We should never reach this point unless we have a bug in the code.
       --  raise the ALI_Internal_Error exception to signal the error.
 
-      Trace (Me, "Process_With: unexpected end " & Withed_File_Name
-             & " " & Krunch_Name & " in project "
-             & Get_String (Projects.Table (Project).Name));
+      Trace (Me, "Process_With: file " & Withed_File_Name
+             & " " & Krunch_Name
+             & " from project "
+             & Project_Name (Project)
+             & " not found in " & Get_LI_Filename (New_LI_File));
       raise ALI_Internal_Error;
    end Process_With;
 
@@ -1247,7 +1094,7 @@ package body Src_Info.ALI is
    procedure Process_Withs
      (New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
-      Project     : Prj.Project_Id) is
+      Project     : Project_Type) is
    begin
       for Unit in New_ALI.First_Unit .. New_ALI.Last_Unit loop
          --  Make sure that there is at least one with'ed unit
@@ -1361,20 +1208,31 @@ package body Src_Info.ALI is
       end if;
 
       if Xref_Ent.Tref_File_Num /= No_Sdep_Id then
-         Decl.Parent_Location := new File_Location_Node'
-           (Value => (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
-                      Line   => Positive (Xref_Ent.Tref_Line),
-                      Column => Positive (Xref_Ent.Tref_Col)),
-            Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
-            Predefined_Entity_Name => No_Name,
-            Next  => Decl.Parent_Location);
+         begin
+            Decl.Parent_Location := new File_Location_Node'
+              (Value => (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
+                         Line   => Positive (Xref_Ent.Tref_Line),
+                         Column => Positive (Xref_Ent.Tref_Col)),
+               Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
+               Predefined_Entity_Name => No_Name,
+               Next  => Decl.Parent_Location);
 
-         if Decl.Kind.Kind = Function_Or_Operator
-           or else Decl.Kind.Kind = Procedure_Kind
-           or else Decl.Kind.Kind = Entry_Or_Entry_Family
-         then
-            Decl.Parent_Location.Kind := Returned_Type;
-         end if;
+            if Decl.Kind.Kind = Function_Or_Operator
+              or else Decl.Kind.Kind = Procedure_Kind
+              or else Decl.Kind.Kind = Entry_Or_Entry_Family
+            then
+               Decl.Parent_Location.Kind := Returned_Type;
+            end if;
+
+         exception
+            when Constraint_Error =>
+               Assert (Me, False,
+                       "Invalid Tref file_num in "
+                       & Get_File (Decl.Location)
+                       & Get_Line (Decl.Location)'Img
+                       & Get_Column (Decl.Location)'Img);
+         end;
+
 
          --  This field no longer exists, but we might want it some day.
          --  Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
@@ -1574,7 +1432,7 @@ package body Src_Info.ALI is
      (Handler           : ALI_Handler;
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
-      Project           : Prj.Project_Id;
+      Project           : Project_Type;
       Full_ALI_Filename : String;
       Source_Path       : String;
       List              : in out LI_File_List)
@@ -1640,10 +1498,12 @@ package body Src_Info.ALI is
       end if;
 
    exception
-      when others =>
+      when E : others =>
          --  Catch all exceptions temporarily to free all memory allocated
          --  before letting the exception propagate itself up.
          --  We also set a minimal entry in the table
+         Trace (Me, "Create_New_ALI: Unexpected exception: "
+                & Exception_Information (E));
 
          if LI_File_Is_New then
             Destroy (New_LI_File.LI.Spec_Info);
@@ -1672,32 +1532,35 @@ package body Src_Info.ALI is
 
    function Locate_ALI
      (Short_ALI_Filename : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Object_Path : String) return String
    is
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
       Extension : constant String := File_Extension (Short_ALI_Filename);
       Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
-      Dot_Replacement : constant String :=
-        Get_String (Projects.Table (Project).Naming.Dot_Replacement);
+      Dot_Replacement : constant String := Get_Attribute_Value
+        (Project, Dot_Replacement_Attribute, Naming_Package, Default => "-");
+
    begin
       --  Compute the search path. If the objects path of the project is
       --  not null, then prepend it to the total search path.
       while Last >= Short_ALI_Filename'First loop
-         if Prj.Env.Ada_Objects_Path (Project) /= null then
-            Dir := Locate_Regular_File
-              (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-               & Extension,
-               Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
-                 Predefined_Object_Path & Path_Separator & Current_Dir_Name);
-
-         else
-            Dir := Locate_Regular_File
-              (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-               & Extension,
-               Predefined_Object_Path & Path_Separator & Current_Dir_Name);
-         end if;
+         declare
+            Path : constant String := Object_Path (Project, False);
+         begin
+            if Path /= "" then
+               Dir := Locate_Regular_File
+                 (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                  & Extension, Path & Path_Separator &
+                  Predefined_Object_Path & Path_Separator & Current_Dir_Name);
+            else
+               Dir := Locate_Regular_File
+                 (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                  & Extension,
+                  Predefined_Object_Path & Path_Separator & Current_Dir_Name);
+            end if;
+         end;
 
          exit when Dir /= null;
 
@@ -1738,7 +1601,7 @@ package body Src_Info.ALI is
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       List                   : in out LI_File_List;
       Unit                   : out LI_File_Ptr;
@@ -1786,187 +1649,21 @@ package body Src_Info.ALI is
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
       Source_Filename        : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String) return String
    is
-      pragma Unreferenced (Handler);
-      Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
-      Naming         : Naming_Data renames Prj_Data.Naming;
-
-      Source_Name_Id : File_Name_Type;
-      Body_Id        : Array_Element_Id;
-      Spec_Id        : Array_Element_Id;
-      Prj_Unit       : Prj.Com.Unit_Id;
-      Dir            : String_Access;
-      Filename       : Name_Id;
-      Part           : Unit_Part;
-
+      pragma Unreferenced (Handler, Predefined_Source_Path);
    begin
-      --  Store the source filename in the Namet buffer and get its Name ID
+      case Get_Unit_Part_From_Filename (Project, Source_Filename) is
+         when Unit_Body | Unit_Separate =>
+            return Get_ALI_Filename (Source_Filename);
 
-      Namet.Name_Buffer (1 .. Source_Filename'Length) := Source_Filename;
-      Namet.Name_Len := Source_Filename'Length;
-      Source_Name_Id := Namet.Name_Find;
-
-      --  First, check the body filename exception list
-
-      Body_Id := Search_Filename (Naming.Bodies, Source_Name_Id);
-
-      if Body_Id /= No_Array_Element then
-         declare
-            Ali : constant String := Get_ALI_Filename (Source_Name_Id);
-         begin
-            return Ali;
-         end;
-      end if;
-
-      --  Not found, check in the spec filename exception list
-
-      Spec_Id := Search_Filename (Naming.Specifications, Source_Name_Id);
-
-      --  If found, then we have the Unit_Name, check if we can find a
-      --  body for this unit.
-
-      if Spec_Id /= No_Array_Element then
-         --  Search the body exception list first
-
-         Body_Id := Search_Unit_Name (Naming.Bodies, Get_Unit_Name (Spec_Id));
-
-         if Body_Id /= No_Array_Element then
-            declare
-               Ali : constant String :=
-                 Get_ALI_Filename (Get_Filename (Body_Id));
-            begin
-               return Ali;
-            end;
-         end if;
-
-         --  Not found, so search in the project units lists
-
-         Prj_Unit := Prj.Com.Units_Htable.Get (Get_Unit_Name (Spec_Id));
-
-         if Get_Body_Filename (Prj_Unit) /= No_Name then
-            declare
-               Ali : constant String :=
-                 Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
-            begin
-               return Ali;
-            end;
-         end if;
-
-         --  Still not found, search in the source path
-
-         Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
-         Dir := Locate_Regular_File
-           (Get_String (Filename), Predefined_Source_Path);
-
-         if Dir /= null then
-            declare
-               Ali : constant String := Get_ALI_Filename (Filename);
-            begin
-               Free (Dir);
-               return Ali;
-            end;
-         end if;
-
-         --  Not found anywhere, so this is a spec only file
-
-         declare
-            Ali : constant String :=
-              Get_ALI_Filename (Get_Filename (Spec_Id));
-         begin
-            return Ali;
-         end;
-
-      end if; -- Spec_Id /= No_Array_Element
-
-      --  Is this a body, according to the naming scheme?
-
-      Part := Get_Unit_Part_From_Filename
-        (Get_String (Source_Name_Id), Project);
-
-      if Part = Unit_Body then
-         declare
-            Ali : constant String := Get_ALI_Filename (Source_Name_Id);
-         begin
-            return Ali;
-         end;
-      end if;
-
-      --  At this point, we know that we have a spec, so check the extension
-      --  to make sure that it matches the naming scheme. Otherwise, return
-      --  the empty string.
-
-      if Part /= Unit_Spec then
-         Trace (Me, "No ALI-7 file for " & Source_Filename);
-         return "";
-      end if;
-
-      --  So at this point, we know that that we have a spec with the correct
-      --  extension. Let's see if we can find a body for this spec...
-
-      declare
-         Unit_Name : constant Name_Id :=
-           Get_Unit_Name (Source_Name_Id, Project);
-
-      begin
-         if Unit_Name = No_Name then
-            --  ??? This is a bug, return the empty string for now, but we
-            --  need a better error reporting mechanism later.
-            Trace (Me, "No ALI-8 file for " & Source_Filename);
-            return "";
-         end if;
-
-         --  Search the body exception list
-
-         Body_Id := Search_Filename (Naming.Bodies, Unit_Name);
-
-         if Body_Id /= No_Array_Element then
-            declare
-               Ali : constant String :=
-                 Get_ALI_Filename (Get_Filename (Body_Id));
-            begin
-               return Ali;
-            end;
-         end if;
-
-         --  Not found, so check in the project units list
-
-         Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
-
-         if Get_Body_Filename (Prj_Unit) /= No_Name then
-            declare
-               Ali : constant String :=
-                 Get_ALI_Filename (Get_Body_Filename (Prj_Unit));
-            begin
-               return Ali;
-            end;
-         end if;
-
-         --  Search the body filename in the source path
-
-         Filename := Get_Body_Filename (Unit_Name, Naming);
-         Dir :=
-           Locate_Regular_File
-             (Get_String (Filename), Predefined_Source_Path);
-
-         if Dir /= null then
-            declare
-               Ali : constant String := Get_ALI_Filename (Filename);
-            begin
-               Free (Dir);
-               return Ali;
-            end;
-         end if;
-
-         --  The body was not found anywhere, so this is a spec only file
-         declare
-            Ali : constant String := Get_ALI_Filename (Source_Name_Id);
-         begin
-            Free (Dir);
-            return Ali;
-         end;
-      end;
+         when Unit_Spec =>
+            --  Use the ALI for the body, if there is a body, otherwise the one
+            --  for the spec will do.
+            return Get_ALI_Filename
+              (Other_File_Name (Project, Source_Filename));
+      end case;
    end LI_Filename_From_Source;
 
    ---------------------------
@@ -1978,7 +1675,7 @@ package body Src_Info.ALI is
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
@@ -2063,7 +1760,7 @@ package body Src_Info.ALI is
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String)
    is
       Success : Boolean := True;
@@ -2114,7 +1811,7 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record;
       List                   : in out LI_File_List;
       In_Directory           : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
@@ -2156,8 +1853,8 @@ package body Src_Info.ALI is
 
    function Generate_LI_For_Source
      (Handler       : access ALI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      File_Project  : Prj.Project_Id;
+      Root_Project  : Project_Type;
+      File_Project  : Project_Type;
       Full_Filename : String) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler, Root_Project, File_Project, Full_Filename);
@@ -2172,8 +1869,8 @@ package body Src_Info.ALI is
 
    function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
-      Root_Project : Prj.Project_Id;
-      Project      : Prj.Project_Id;
+      Root_Project : Project_Type;
+      Project      : Project_Type;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced

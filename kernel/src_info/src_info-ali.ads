@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Prj;
+with Projects;
 
 package Src_Info.ALI is
 
@@ -30,7 +30,7 @@ package Src_Info.ALI is
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
 
@@ -42,14 +42,14 @@ package Src_Info.ALI is
      (Handler                : access ALI_Handler_Record;
       List                   : in out LI_File_List;
       In_Directory           : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
 
    function LI_Filename_From_Source
      (Handler                : access ALI_Handler_Record;
       Source_Filename        : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String)
       return String;
    --  Converts the given Source Filename into the corresponding ALI filename
@@ -82,14 +82,14 @@ package Src_Info.ALI is
 
    function Generate_LI_For_Source
      (Handler       : access ALI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      File_Project  : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      File_Project  : Projects.Project_Type;
       Full_Filename : String) return LI_Handler_Iterator'Class;
 
    function Generate_LI_For_Project
      (Handler       : access ALI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      Project       : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      Project       : Projects.Project_Type;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class;
 
