@@ -30,30 +30,43 @@ package body Test_Lib is
       Current_Solution : Extract_List.List_Node;
       Num_Sol          : Integer;
    begin
-      Put_Line ("Message: ");
-      Put_Line (Get_Message (Message));
+
       Current_Solution := First (Solutions);
-      Put_Line ("Old text: ");
-      Put_Line_Original
-        (Data (Current_Solution),
-         Current_Text);
+      if Visible then
+         Put_Line ("Message: ");
+         Put_Line (Get_Message (Message));
+         Put_Line ("Old text: ");
+         Put_Line_Original
+           (Data (Current_Solution),
+            Current_Text);
+      end if;
+
       Num_Sol := 0;
 
       while Current_Solution /= Extract_List.Null_Node loop
          Num_Sol := Num_Sol + 1;
-         Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
-         Put_Line (Data (Current_Solution));
+         if Visible then
+            Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
+            Put_Line (Data (Current_Solution));
+         end if;
          Current_Solution := Next (Current_Solution);
       end loop;
 
-      Put_Line ("What correction do you want ? (0 means none)");
+      if Visible then
+         Put_Line ("What correction do you want ? (0 means none)");
+      end if;
       Num_Sol := Get_Number (0, Num_Sol);
 
-      if Num_Sol /= 0 then
-         Validate (Corrector, Id, Num_Sol, True);
+      Validate (Corrector, Id, Num_Sol, True);
+
+      if Is_Open (Capture_File) then
+         Put (Capture_File, Num_Sol);
+         New_Line (Capture_File);
       end if;
 
-      New_Line;
+      if Visible then
+         New_Line;
+      end if;
    end Corrections_Proposed;
 
    ----------------
@@ -68,7 +81,8 @@ package body Test_Lib is
             Get (Number);
             Skip_Line;
             exit when Number >= Min and then Number <= Max;
-            Put_Line ("Number out of bounds, try again.");
+            Put_Line (Number'Img & " out of bounds (" & Min'Img & "," &
+                        Max'Img & "), try again.");
          exception
             when Data_Error =>
                Skip_Line;
