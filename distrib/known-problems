@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D707-010 In the Locations View, line numbers are hard to read
+  Problem:     On the currently selected line in the locations view, the line
+               and column number are written in black on a dark blue background
+               and are therefore hard to read.
+  Workaround:  Select another line or give the focus to another component.
+
 - D525-001 GPS and Python on Windows
   Problem:    On Windows, GPS Python support does not work properly if GPS
               is installed on a directory whose name start with a letter 'n',
