@@ -150,8 +150,21 @@ package body Vdiff_Utils is
       Set_Rgb (Color, 0, 40000, 65000);
       Set_Base (Change_Style, State_Normal, Color);
 
-      Open (Infile1, In_File, File1);
-      Open (Infile2, In_File, File2);
+      begin
+         Open (Infile1, In_File, File1);
+      exception
+         when Name_Error =>
+            return;
+      end;
+
+      begin
+         Open (Infile2, In_File, File2);
+      exception
+         when Name_Error =>
+            Close (Infile1);
+            return;
+      end;
+
       Freeze (List1);
       Freeze (List2);
 
