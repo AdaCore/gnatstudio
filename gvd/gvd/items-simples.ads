@@ -108,6 +108,12 @@ package Items.Simples is
    function Refresh_Command (Item : Debugger_Output_Type) return String;
    --  Return the command to send to the debugger to refresh the value.
 
+   procedure Set_Value (Item : in out Debugger_Output_Type; Value : String);
+   --  Set a new value for Item.
+   --  Since there is no pre-processing done on Value, we filter out ^Ms for
+   --  Value as well.
+
+
 private
    type Simple_Type is new Generic_Type with record
       Value : Odd.Types.String_Access := null;
@@ -172,6 +178,11 @@ private
    type Debugger_Output_Type is new Simple_Type with record
       Refresh_Cmd : Odd.Types.String_Access;
    end record;
+   --  Since Value can be a multiple-line string, and we want to consider each
+   --  line separately as far as highlighting is concerned, we in fact insert
+   --  a special character at the beginning of each line to indicate whether the
+   --  line should be highlighted or not.
+
    procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0);
    function Clone (Value : Debugger_Output_Type) return Generic_Type_Access;
    procedure Free (Item : access Debugger_Output_Type;
@@ -183,5 +194,6 @@ private
    procedure Paint (Item    : in out Debugger_Output_Type;
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
+   procedure Reset_Recursive (Item : access Debugger_Output_Type);
 
 end Items.Simples;

@@ -28,8 +28,15 @@ with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 
 with Odd.Types;    use Odd.Types;
+with Odd.Strings;  use Odd.Strings;
 
 package body Items.Simples is
+
+   Line_Highlighted     : constant Character := '@';
+   Line_Not_Highlighted : constant Character := ' ';
+   --  Special characters inserted at the beginning of each line for the
+   --  value of Debugger_Output_Type, that indicate whether the following line
+   --  should be displayed in red or not.
 
    ---------------------
    -- New_Simple_Type --
@@ -533,7 +540,8 @@ package body Items.Simples is
                Num_Lines := Num_Lines + 1;
                Width := Gint'Max
                  (Width,
-                  Text_Width (Context.Font, Item.Value (Line_Start .. J - 1)));
+                  Text_Width (Context.Font,
+                              Item.Value (Line_Start + 1 .. J - 1)));
                Line_Start := J + 1;
             end if;
          end loop;
@@ -541,7 +549,7 @@ package body Items.Simples is
          Item.Width := Gint'Max
            (Width,
             Text_Width (Context.Font,
-                        Item.Value (Line_Start .. Item.Value'Last)));
+                        Item.Value (Line_Start + 1 .. Item.Value'Last)));
          Item.Height :=
            (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
            * Num_Lines;
@@ -559,7 +567,7 @@ package body Items.Simples is
                     Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
-      Text_GC : Gdk_GC := Context.GC;
+      Text_GC : Gdk_GC;
       Line    : Gint := Y;
       Line_Start : Positive;
    begin
@@ -583,25 +591,34 @@ package body Items.Simples is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      if Item.Has_Changed then
-         Text_GC := Context.Modified_GC;
-      end if;
-
       Line_Start := Item.Value'First;
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
+            if Item.Value (Line_Start) = Line_Highlighted then
+               Text_GC := Context.Modified_GC;
+            else
+               Text_GC := Context.GC;
+            end if;
+
             Draw_Text
               (Context.Pixmap,
                Font => Context.Font,
                GC   => Text_GC,
                X    => X,
                Y    => Line + Get_Ascent (Context.Font),
-               Text => Item.Value (Line_Start .. J - 1));
+               Text => Item.Value (Line_Start + 1 .. J - 1));
+
             Line :=
               Line + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
             Line_Start := J + 1;
          end if;
       end loop;
+
+      if Item.Value (Line_Start) = Line_Highlighted then
+         Text_GC := Context.Modified_GC;
+      else
+         Text_GC := Context.GC;
+      end if;
 
       Draw_Text
         (Context.Pixmap,
@@ -609,11 +626,113 @@ package body Items.Simples is
          GC   => Text_GC,
          X    => X,
          Y    => Line + Get_Ascent (Context.Font),
-         Text => Item.Value (Line_Start .. Item.Value'Last));
+         Text => Item.Value (Line_Start + 1 .. Item.Value'Last));
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
       end if;
    end Paint;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
+      S : String := Strip_Control_M (Value);
+      V : String_Access := Item.Value;
+
+      Index_New : Positive := S'First;
+      Line_Start_New : Positive;
+      Index_Old : Positive;
+      Line_Start_Old : Positive;
+      Index_Item : Positive := 1;
+
+      Num_Lines : Natural := 1;
+   begin
+
+      --  Count the number of lines
+      for J in S'Range loop
+         if S (J) = ASCII.LF then
+            Num_Lines := Num_Lines + 1;
+         end if;
+      end loop;
+
+      --  Allocate memory for the value
+      Item.Value := new String (1 .. S'Length + Num_Lines);
+
+      --  Compare the lines
+
+      --  Find the current line in the old value
+      if V /= null then
+         Index_Old := V'First;
+      end if;
+
+      while Index_New <= S'Last loop
+
+         if V /= null then
+            Line_Start_Old := Index_Old;
+            Skip_To_Char (V.all, Index_Old, ASCII.LF);
+         end if;
+
+         --  Find the current line in the new value
+         Line_Start_New := Index_New;
+         Skip_To_Char (S, Index_New, ASCII.LF);
+
+         --  Compare the lines
+
+         if V /= null then
+            Put_Line ("Comparing : ");
+            Put_Line (S (Line_Start_New .. Index_New - 1) & "--");
+            Put_Line (V (Line_Start_Old + 1 .. Index_Old - 1) & "--");
+            New_Line;
+         end if;
+
+         if V = null or else
+           S (Line_Start_New .. Index_New - 1) /=
+           V (Line_Start_Old + 1 .. Index_Old - 1)
+         then
+            Item.Value (Index_Item) := Line_Highlighted;
+         else
+            Item.Value (Index_Item) := Line_Not_Highlighted;
+         end if;
+
+         Item.Value
+           (Index_Item + 1 .. Index_Item + Index_New - Line_Start_New) :=
+           S (Line_Start_New .. Index_New - 1);
+
+         --  Skip one more for a possible ASCII.LF
+         Index_Item := Index_Item + Index_New - Line_Start_New + 2;
+
+         if Index_New < S'Last then
+            Item.Value (Index_Item - 1) := ASCII.LF;
+         end if;
+
+         Index_New := Index_New + 1;
+         Index_Old := Index_Old + 1;
+      end loop;
+
+      if V /= null then
+         Free (V);
+      end if;
+
+      Item.Valid := True;
+   end Set_Value;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Debugger_Output_Type) is
+   begin
+      Item.Has_Changed := False;
+      if Item.Value /= null then
+         Item.Value (Item.Value'First) := Line_Not_Highlighted;
+         for J in Item.Value'First .. Item.Value'Last - 1 loop
+            if Item.Value (J) = ASCII.LF then
+               Item.Value (J + 1) := Line_Not_Highlighted;
+            end if;
+         end loop;
+      end if;
+   end Reset_Recursive;
 
 end Items.Simples;
