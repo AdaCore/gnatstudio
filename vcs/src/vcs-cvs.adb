@@ -902,7 +902,7 @@ package body VCS.CVS is
       String_List.Free (L);
       Close (File);
       Insert (Kernel,
-              -"CVS: Got comparison for file " & Current_File & ".",
+              -"CVS: Got comparison for file " & Current_File,
               Highlight_Sloc => False,
               Mode => Verbose);
 
@@ -998,7 +998,7 @@ package body VCS.CVS is
          Insert
            (Kernel,
             -"CVS: No annotations available for file "
-            & Current_File & ".",
+            & Current_File,
             Highlight_Sloc => False,
             Mode => Verbose);
          return False;
