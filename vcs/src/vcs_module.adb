@@ -64,7 +64,7 @@ package body VCS_Module is
       Kernel  : Kernel_Handle)
    is
    begin
-      Put_Line ("context changed");
+      null;
    end On_Context_Changed;
 
    -----------------------
