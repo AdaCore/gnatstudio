@@ -61,6 +61,22 @@ package body Find_Utils is
    --  Raise Search_Error if:
    --  * Look_For can't compile
 
+   function Add_Dir_Sep (Dir : String) return String;
+   --  Add Directory_Separator when needed.
+
+   -----------------
+   -- Add_Dir_Sep --
+   -----------------
+
+   function Add_Dir_Sep (Dir : String) return String is
+   begin
+      if Dir = "" or else Dir (Dir'Last) = Directory_Separator then
+         return Dir;
+      else
+         return Dir & Directory_Separator;
+      end if;
+   end Add_Dir_Sep;
+
    -----------------
    -- Common_Init --
    -----------------
@@ -204,14 +220,17 @@ package body Find_Utils is
 
       function Explore_Directory (Directory : String) return Boolean is
          Continue  : Boolean := True;
-         Dir_Name  : constant Dir_Name_Str (1 .. Directory'Length + 1) :=
-                       Directory & Directory_Separator;
+         Dir_Name  : constant Dir_Name_Str := Add_Dir_Sep (Directory);
          Dir       : Dir_Type;
          File_Name : String (1 .. Max_Path_Len);
          Last      : Natural;
 
       begin
-         Open (Dir, Dir_Name);
+         if Dir_Name = "" then
+            Open (Dir, ".");
+         else
+            Open (Dir, Dir_Name);
+         end if;
 
          loop
             Read (Dir, File_Name, Last);
@@ -219,8 +238,7 @@ package body Find_Utils is
             exit when Last = 0;
 
             declare
-               Full_Name : constant String (1 .. Dir_Name'Length + Last) :=
-                             Dir_Name & File_Name (1 .. Last);
+               Full_Name : constant String := Dir_Name & File_Name (1 .. Last);
             begin
                --  Unlike Open_Read, Is_Directory adds ASCII.NUL automatically
 
@@ -646,12 +664,7 @@ package body Find_Utils is
       Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
       Search.Files_Pattern := Files_Pattern;
       Search.Recurse := Recurse;
-
-      if Directory = "" then
-         Search.Directory := new String' (Get_Current_Dir);
-      else
-         Search.Directory := new String' (Directory);
-      end if;
+      Search.Directory := new String' (Directory);
    end Init_Search;
 
 end Find_Utils;

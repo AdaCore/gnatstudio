@@ -117,7 +117,8 @@ package Find_Utils is
    --  Files_Pattern  Pattern selecting files to be scanned (eg globbing *.ad?)
    --  Directory      Where files are selected, "" means current dir; absolute
    --                 or relative to current dir
-   --                 NOTE: current dir is computed when Init_Search is called
+   --                 NOTE: used current dir is the current one when calling
+   --                       Do_Search.
    --  Recurse        Whether files may also be selected in sub-directories
    --  ...            See first Init_Search procedure
    --
