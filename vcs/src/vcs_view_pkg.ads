@@ -27,6 +27,8 @@ with Gtk.Tree_Store; use Gtk.Tree_Store;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
+with Glide_Kernel;    use Glide_Kernel;
+
 with VCS; use VCS;
 
 package VCS_View_Pkg is
@@ -66,9 +68,13 @@ package VCS_View_Pkg is
       Remove_Button              : Gtk_Widget;
 
       Message_Text               : Gtk_Text;
+
+      Kernel                     : Kernel_Handle;
+      --  Reference to the Glide kernel that launched the explorer, if any.
    end record;
 
-   procedure Gtk_New (VCS_View : out VCS_View_Access);
+   procedure Gtk_New (VCS_View : out VCS_View_Access;
+                      Kernel   : Kernel_Handle := null);
    procedure Initialize (VCS_View : access VCS_View_Record'Class);
 
    procedure Show_Files (Explorer  : VCS_View_Access;

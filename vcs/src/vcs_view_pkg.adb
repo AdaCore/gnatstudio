@@ -42,6 +42,7 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -322,11 +323,6 @@ package body VCS_View_Pkg is
 
    procedure Edited_Callback
      (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
-   --  ???
-
-   procedure Selection_Changed
-     (Object      : access Gtk_Tree_Selection_Record'Class;
       Params      : Glib.Values.GValues);
    --  ???
 
@@ -735,7 +731,15 @@ package body VCS_View_Pkg is
                Log_Editor_Ok_Clicked'Access,
                Parameter_Object);
 
-            Show_All (Log_Editor);
+            if Explorer.Kernel = null then
+               Show_All (Log_Editor);
+            else
+               declare
+                  Child : MDI_Child;
+               begin
+                  Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
+               end;
+            end if;
          end if;
       end Create_And_Launch_Log_Editor;
 
@@ -856,7 +860,15 @@ package body VCS_View_Pkg is
          Parameter_Object,
          After => True);
 
-      Show_All (Log_Editor);
+      if Explorer.Kernel = null then
+         Show_All (Log_Editor);
+      else
+         declare
+            Child : MDI_Child;
+         begin
+            Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
+         end;
+      end if;
    end On_Edit_Multiple_Log_Button_Clicked;
 
    --------------------------------
@@ -1485,66 +1497,18 @@ package body VCS_View_Pkg is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (VCS_View : out VCS_View_Access) is
+   procedure Gtk_New (VCS_View : out VCS_View_Access;
+                      Kernel   : Kernel_Handle := null)
+   is
    begin
       Init_Graphics;
 
       VCS_View := new VCS_View_Record;
       VCS_View_Pkg.Initialize (VCS_View);
+      VCS_View.Kernel := Kernel;
 
       Show_Files (VCS_View, "");
    end Gtk_New;
-
-   -----------------------
-   -- Selection_Changed --
-   -----------------------
-
-   procedure Selection_Changed
-     (Object      : access Gtk_Tree_Selection_Record'Class;
-      Params      : Glib.Values.GValues)
-   is
-      Explorer : constant VCS_View_Access :=
-        VCS_View_Access (Get_Toplevel (Get_Tree_View (Object)));
-      Success  : Boolean;
-      Iter     : Gtk_Tree_Iter;
-
-      package Toggle_Selected is
-         new Gtk.Tree_Selection.Selection_Foreach (VCS_View_Access);
-
-      procedure Toggle
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access);
-      --  ???
-
-      procedure Toggle
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : VCS_View_Access) is
-      begin
-         Set (Explorer.Model, Iter, Selected_Column, True);
-      end Toggle;
-
-   begin
-      if not Explorer.Model_Sync then
-         --  Set all items to not selected.
-         Get_Iter_Root (Explorer.Model, Iter, Success);
-
-         while Success loop
-            Set (Explorer.Model, Iter, Selected_Column, False);
-            Iter_Next (Explorer.Model, Iter, Success);
-         end loop;
-
-         Toggle_Selected.Selected_Foreach
-           (Object,
-            Toggle'Unrestricted_Access,
-            Explorer);
-      else
-         Explorer.Model_Sync := False;
-      end if;
-   end Selection_Changed;
 
    ----------------
    -- Initialize --
@@ -1581,11 +1545,6 @@ package body VCS_View_Pkg is
       Gtk_New (VCS_View.Tree, VCS_View.Model);
 
       Selection := Get_Selection (VCS_View.Tree);
-
-      --       Selection_Callback.Connect
-      --         (Selection,
-      --          "changed",
-      --          Selection_Changed'Access);
 
       Set_Mode (Selection, Selection_Multiple);
 

@@ -19,8 +19,10 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;             use Glib.Object;
+with Glib.Values;             use Glib.Values;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
+
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Intl;              use Glide_Intl;
@@ -46,6 +48,25 @@ package body VCS_Module is
       Kernel : Kernel_Handle);
    --  ???
 
+   procedure On_Context_Changed
+     (Widget  : access GObject_Record'Class;
+      Params  : GValues;
+      Kernel  : Kernel_Handle);
+   --  ???
+
+   ------------------------
+   -- On_Context_Changed --
+   ------------------------
+
+   procedure On_Context_Changed
+     (Widget  : access GObject_Record'Class;
+      Params  : GValues;
+      Kernel  : Kernel_Handle)
+   is
+   begin
+      null;
+   end On_Context_Changed;
+
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -62,12 +83,18 @@ package body VCS_Module is
       Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
 
       if Child = null then
-         Gtk_New (Explorer);
+         Gtk_New (Explorer, Kernel);
          Set_Size_Request (Get_Child (Explorer), 400, 400);
          Child := Put (MDI, Explorer);
          Set_Title (Child, "VCS Explorer");
          Show_Files (Explorer, "");
 
+         Kernel_Callback.Object_Connect
+           (Kernel,
+            "context_changed",
+            On_Context_Changed'Access,
+            Explorer,
+            Kernel_Handle (Kernel));
       else
          Set_Focus_Child (Child);
       end if;
@@ -86,12 +113,13 @@ package body VCS_Module is
    begin
       Register_Menu
         (Kernel, VCS, Ref_Item => -"Goto", Add_Before => False);
-      Gtk_New (Menu_Item, -"Open VCS Interface");
+      Gtk_New (Menu_Item, -"VCS Explorer");
       Register_Menu (Kernel, VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
          Kernel_Handle (Kernel));
+
    end Initialize_Module;
 
 begin
