@@ -213,7 +213,7 @@ package body Debugger.Gdb is
       --  Ensure that gdb is terminated before closing the pipes and trying to
       --  kill it abruptly.
 
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 100);
+      Wait (Get_Process (Debugger), Result, ".*", Timeout => 2);
       Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
    end Close;
