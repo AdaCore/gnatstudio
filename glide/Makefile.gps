@@ -50,10 +50,10 @@ CFLAGS = -g -O2
 ADA_SOURCES = gps.adb
 EXEC = gps
 
-PROJECT_FILE = glide
+PROJECT_FILE = gps
 
 ifneq ($(strip $(GLIDE_C_SRCS)),)
-   LIBS := $(GLIDE_OBJ_DIR)/libglide$(AR_EXT) $(LIBS)
+   LIBS := $(GLIDE_OBJ_DIR)/libgps$(AR_EXT) $(LIBS)
 endif
 
 ifeq ($(GLIDE_ROOT),True)
