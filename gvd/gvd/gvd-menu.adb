@@ -1108,8 +1108,8 @@ package body GVD.Menu is
         ("GVD " & Version & " (" & Source_Date & ")" &
          (-" built for ") & GVD.Target & ASCII.LF &
          (-"The GNU Visual Debugger") & ASCII.LF & ASCII.LF &
-         (-"by Emmanuel Briot & Arnaud Charlet") & ASCII.LF & ASCII.LF &
-           "(c) 2000, 2001 ACT-Europe",
+         (-"by Emmanuel Briot, Arnaud Charlet & Nicolas Setton") &
+           ASCII.LF & ASCII.LF & "(c) 2000, 2001 ACT-Europe",
          Help_Msg =>
            (-"This is the About information box.") & ASCII.LF & ASCII.LF &
            (-"Click on the OK button to close this window."),
