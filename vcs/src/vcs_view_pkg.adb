@@ -481,7 +481,7 @@ package body VCS_View_Pkg is
       Success : Boolean;
 
    begin
-      Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+      Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
          if Gtk.Tree_Model.Get_String
@@ -490,7 +490,7 @@ package body VCS_View_Pkg is
             return Iter;
          end if;
 
-         Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+         Iter_Next (Explorer.Model, Iter, Success);
       end loop;
 
       return Null_Iter;
@@ -509,7 +509,7 @@ package body VCS_View_Pkg is
       Toggled : Boolean;
 
    begin
-      Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+      Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
          Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
@@ -518,7 +518,7 @@ package body VCS_View_Pkg is
             Action (Explorer, Iter);
          end if;
 
-         Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+         Iter_Next (Explorer.Model, Iter, Success);
       end loop;
    end Foreach_Selected_File;
 
@@ -539,7 +539,7 @@ package body VCS_View_Pkg is
          return Result;
       end if;
 
-      Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+      Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
          Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
@@ -551,7 +551,7 @@ package body VCS_View_Pkg is
                & Get_String (Explorer.Model, Iter, Name_Column));
          end if;
 
-         Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+         Iter_Next (Explorer.Model, Iter, Success);
       end loop;
 
       return Result;
@@ -644,7 +644,7 @@ package body VCS_View_Pkg is
       Init (Value, GType_String);
 
       while not Is_Empty (Temp_Path) loop
-         Tree_Model_Get_Iter_From_String
+         Get_Iter_From_String
            (Parameter.Explorer.Model,
             Iter,
             Head (Temp_Path),
@@ -673,7 +673,7 @@ package body VCS_View_Pkg is
       Init (Value, GType_String);
 
       while not Is_Empty (Parameter.Paths) loop
-         Tree_Model_Get_Iter_From_String
+         Get_Iter_From_String
            (Parameter.Explorer.Model,
             Iter,
             Head (Parameter.Paths),
@@ -733,7 +733,7 @@ package body VCS_View_Pkg is
             Parameter_Object.Log_Editor := Log_Editor;
             Append (Parameter_Object.Paths,
                     Tree_Path_To_String
-                      (Tree_Model_Get_Path (Explorer.Model, Iter)));
+                      (Get_Path (Explorer.Model, Iter)));
 
             Set_Title (Log_Editor,
                        -"Log editor for "
@@ -838,7 +838,7 @@ package body VCS_View_Pkg is
       begin
          Append
            (Parameter_Object.Paths,
-            Tree_Path_To_String (Tree_Model_Get_Path (Explorer.Model, Iter)));
+            Tree_Path_To_String (Get_Path (Explorer.Model, Iter)));
 
          Add_File_Name
            (Log_Editor, Get_String (Explorer.Model, Iter, Name_Column));
@@ -1339,7 +1339,7 @@ package body VCS_View_Pkg is
       Explorer.Model_Sync := True;
       Unselect_All (Selection);
 
-      Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+      Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
          Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
@@ -1348,7 +1348,7 @@ package body VCS_View_Pkg is
             Select_Iter (Selection, Iter);
          end if;
 
-         Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+         Iter_Next (Explorer.Model, Iter, Success);
       end loop;
    end Select_All_Toggled;
 
@@ -1373,7 +1373,7 @@ package body VCS_View_Pkg is
 
    begin
       Gtk_New (Path, Path_String);
-      Tree_Model_Get_Iter (Explorer.Model, Iter, Path, Success);
+      Get_Iter (Explorer.Model, Iter, Path, Success);
       Success := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
       Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
 
@@ -1404,7 +1404,7 @@ package body VCS_View_Pkg is
 
    begin
       Gtk_New (Path, Path_String);
-      Tree_Model_Get_Iter (Explorer.Model, Iter, Path, Success);
+      Get_Iter (Explorer.Model, Iter, Path, Success);
       Success := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
       Init (Value, GType_Boolean);
       Set_Boolean (Value, not Success);
@@ -1428,11 +1428,11 @@ package body VCS_View_Pkg is
    begin
       Init (Bool_Value, GType_Boolean);
       Set_Boolean (Bool_Value, not Explorer.All_Selected);
-      Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+      Get_Iter_Root (Explorer.Model, Iter, Success);
 
       while Success loop
          Set_Value (Explorer.Model, Iter, Selected_Column, Bool_Value);
-         Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+         Iter_Next (Explorer.Model, Iter, Success);
       end loop;
 
       Explorer.All_Selected := not Explorer.All_Selected;
@@ -1574,11 +1574,11 @@ package body VCS_View_Pkg is
          Set_Boolean (Value, False);
 
          --  Set all items to not selected.
-         Tree_Model_Get_Iter_Root (Explorer.Model, Iter, Success);
+         Get_Iter_Root (Explorer.Model, Iter, Success);
 
          while Success loop
             Set_Value (Explorer.Model, Iter, Selected_Column, Value);
-            Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
+            Iter_Next (Explorer.Model, Iter, Success);
          end loop;
 
          Set_Boolean (Value, True);
@@ -1690,10 +1690,7 @@ package body VCS_View_Pkg is
       Pack_Start (Hbox1, Toolbar2, False, False, 3);
 
       Gtk_New (Toolbar1, Orientation_Vertical, Toolbar_Both);
-      --  Set_Space_Size (Toolbar1, 5);
-      --  Set_Space_Style (Toolbar1, Toolbar_Space_Empty);
       Set_Tooltips (Toolbar1, True);
-      --  Set_Button_Relief (Toolbar1, Relief_Normal);
       VCS_View.Get_Status_Button := Append_Element
         (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
