@@ -312,9 +312,9 @@ package body Python_Module is
    type Handler_Data (Length : Natural) is record
       Script  : Python_Scripting;
       Handler : Module_Command_Function;
-      Command : String (1 .. Length);
       Minimum_Args, Maximum_Args : Natural;
       Is_Method : Boolean := False;
+      Command : String (1 .. Length);
    end record;
    type Handler_Data_Access is access Handler_Data;
    --  Information stores with each python function to call the right Ada
