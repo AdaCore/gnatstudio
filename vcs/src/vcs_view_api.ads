@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,91 +34,127 @@ package VCS_View_API is
       Kernel  : Kernel_Handle);
    --  Open the selected files.
 
-   procedure Get_Status
+   -------------------------------
+   -- Contextual menu callbacks --
+   -------------------------------
+
+   procedure On_Menu_Get_Status
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Query status for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Update
+   procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Update the selected files.
+      Context : Selection_Context_Access);
 
-   procedure View_Head_Diff
+   procedure On_Menu_Add
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Launch a visual comparison for the selected files and their
-   --  head revisions.
+      Context : Selection_Context_Access);
 
-   procedure View_Work_Diff
+   procedure On_Menu_Remove
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Launch a visual comparison for the selected files and their
-   --  work revisions.
+      Context : Selection_Context_Access);
 
-   procedure View_Work_Head_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Launch a visual comparison for the selected files between their
-   --  working and head revisions.
-
-   procedure View_Specific_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Launch a visual comparison for the selected file for a specified
-   --  revision.
-
-   procedure View_Log
+   procedure On_Menu_Revert
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  View the changelog for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure View_Annotate
+   procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  View annotations for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Remove_Annotations
+   procedure On_Menu_Remove_Annotate
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Remove annotations for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Edit_ChangeLog
+   procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Launch a ChangeLog editor for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Edit_Log
+   procedure On_Menu_Diff_Local
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Launch a log editor for the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Commit
+   procedure On_Menu_Diff_Working_Head
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Commit the selected files.
+      Context : Selection_Context_Access);
 
-   procedure Add
+   procedure On_Menu_Diff_Specific
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Add the selected files to the project repository.
+      Context : Selection_Context_Access);
 
-   procedure Remove
+   procedure On_Menu_View_Log
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Remove the selected files from the project repository.
+      Context : Selection_Context_Access);
 
-   procedure Revert
+   procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Revert the selected files.
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Edit_ChangeLog
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Remove_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Dir_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Dir_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_List_Project_Files
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_List_Project_Files_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Project_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Project_Recursive
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
 
    procedure VCS_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Kernel          : Kernel_Handle;
+      Context         : Selection_Context_Access;
+      Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Show_Everything : Boolean);
    --  Complete Menu with the commands related to the VCS module,
    --  according to the information in Context.
+   --  If Show_Everything is True, add insensitive menus for items that do not
+   --  correspond to the context.
 
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
@@ -145,26 +181,6 @@ package VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Update all files in the project
-
-   procedure Query_Status_For_Directory
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  List all files in the current directory
-
-   procedure Update_Directory
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Update all files in the current directory
-
-   procedure Query_Status_For_Directory_Recursive
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  List all files in the current directory and its subdirectories
-
-   procedure Update_Directory_Recursive
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Update all files in the current directory and its subdirectories
 
    function Context_Factory
      (Kernel : access Kernel_Handle_Record'Class;
