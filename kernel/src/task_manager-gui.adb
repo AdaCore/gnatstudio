@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                      Copyright (C) 2003-2005                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -110,7 +110,7 @@ package body Task_Manager.GUI is
       Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean;
    --  Callback for a "button_press_event" on a progress bar.
 
-   procedure Interrupt_Build
+   procedure Interrupt_Task
      (Object    : access GObject_Record'Class;
       User_Data : Manager_Index_Record);
    --  Callback to interrupt a task
@@ -223,18 +223,18 @@ package body Task_Manager.GUI is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Resume_Command;
 
-   ---------------------
-   -- Interrupt_Build --
-   ---------------------
+   --------------------
+   -- Interrupt_Task --
+   --------------------
 
-   procedure Interrupt_Build
+   procedure Interrupt_Task
      (Object    : access GObject_Record'Class;
       User_Data : Manager_Index_Record)
    is
       pragma Unreferenced (Object);
    begin
       Interrupt_Command (User_Data.Manager, User_Data.Index);
-   end Interrupt_Build;
+   end Interrupt_Task;
 
    --------------------------
    -- On_Interrupt_Command --
@@ -575,7 +575,7 @@ package body Task_Manager.GUI is
 
                Task_Manager_Handler.Connect
                  (Button, "clicked",
-                  Interrupt_Build'Access,
+                  Interrupt_Task'Access,
                   User_Data => (Manager, J));
 
                Manager_Contextual_Menus.Register_Contextual_Menu
