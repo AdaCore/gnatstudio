@@ -2246,7 +2246,7 @@ package body Src_Editor_Box is
    begin
       if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
          if Always_Reload
-           or else Check_Timestamp (Editor.Source_Buffer, Update => True)
+           or else not Check_Timestamp (Editor.Source_Buffer, Update => True)
          then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
