@@ -25,13 +25,7 @@ with GPS.Kernel; use GPS.Kernel;
 
 package Custom_Module is
 
-   type Custom_Module_ID_Record is new Module_ID_Record with record
-      Kernel        : Kernel_Handle;
-   end record;
-   type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
-
-   Custom_Module_ID   : Custom_Module_ID_Access;
-
+   Custom_Module_ID : Module_ID;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
