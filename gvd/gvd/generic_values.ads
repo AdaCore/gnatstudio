@@ -304,7 +304,8 @@ private
 
 
    type Simple_Type is new Generic_Type with record
-      Value : String_Access := null; --  The value, as displayed by the debugger
+      Value : String_Access := null;
+      --  The value, as displayed by the debugger
    end record;
    procedure Print (Value : Simple_Type);
    procedure Clear_Value (Value : in out Simple_Type);
