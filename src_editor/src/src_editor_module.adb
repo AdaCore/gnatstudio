@@ -49,7 +49,6 @@ with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -1934,21 +1933,19 @@ package body Src_Editor_Module is
       Gtk_New (Label, -"Enter file name (use <tab> for completion):");
       Pack_Start (Get_Vbox (Open_File_Dialog), Label, Expand => False);
 
-      Gtk_New (Open_File_Entry);
-      Set_Activates_Default
-        (Get_Entry (Get_Combo (Open_File_Entry)), True);
+      --  Do not use a combo box, so that users can easily navigate to the list
+      --  of completions through the keyboard (C423-005)
+      Gtk_New (Open_File_Entry, Use_Combo => False);
+      Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
-      Get_History (Get_History (Kernel).all,
-                   Open_From_Path_History,
-                   Get_Combo (Open_File_Entry));
 
       Button := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button
         (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
       Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
 
-      Grab_Focus (Get_Entry (Get_Combo (Open_File_Entry)));
+      Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
       declare
@@ -1972,7 +1969,7 @@ package body Src_Editor_Module is
 
          declare
             Text : constant String :=
-              Get_Text (Get_Entry (Get_Combo (Open_File_Entry)));
+              Get_Text (Get_Entry (Open_File_Entry));
             Full : constant String :=
               Get_Full_Path_From_File
                 (Get_Registry (Kernel), Text,
