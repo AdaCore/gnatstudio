@@ -1179,7 +1179,6 @@ package body Glide_Menu is
          Gtk_New (Tools & (-"Pretty Print"), "", null),
          Gtk_New (Tools & (-"Generate Body"), "", On_Generate_Body'Access),
          Gtk_New (Tools & (-"Call Graph"), "", null),
-         Gtk_New (Tools & (-"Metrics"), "", null),
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
