@@ -1962,7 +1962,9 @@ package body Src_Editor_Buffer.Line_Information is
               (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
          end if;
 
-         if End_Col <= 0 then
+         if End_Col <= 0
+           or else not Is_Valid_Position (Buffer, The_Line, Gint (End_Col - 1))
+         then
             Copy (Start_Iter, End_Iter);
             Forward_To_Line_End (End_Iter, Result);
          else
