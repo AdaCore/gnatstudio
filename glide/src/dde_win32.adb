@@ -23,6 +23,7 @@
 with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Glide_Kernel.Modules;
+with System;
 
 package body DDE is
 
@@ -48,7 +49,6 @@ package body DDE is
    subtype UINT    is Interfaces.C.unsigned;          --  windef.h
    subtype DWORD   is Interfaces.C.unsigned_long;     --  windef.h
    type    LPDWORD is access all DWORD;               --  windef.h
-   type    LPSTR  is access all Character;
 
    type HCONV      is new DWORD;                      --  ddeml.h:23
    type HSZ        is new DWORD;                      --  ddeml.h:24
@@ -70,7 +70,7 @@ package body DDE is
       pfnCallbk : PFNCALLBACK;
       afCmd     : DWORD;
       ulRes     : DWORD) return UINT;
-   pragma Import (Stdcall, DdeInitializeA,  "DdeInitializeA");
+   pragma Import (Stdcall, DdeInitializeA, "DdeInitializeA");
    --  ddeml.h:211
 
    function DdeUninitialize (idInst : DWORD) return INT;
@@ -81,13 +81,13 @@ package body DDE is
      (idInst     : DWORD;
       hsz1, hsz2 : HSZ;
       afCmd      : UINT) return HDDEDATA;
-   pragma Import (Stdcall, DdeNameService,  "DdeNameService");
+   pragma Import (Stdcall, DdeNameService, "DdeNameService");
    --  ddeml.h:289
 
    function DdeAccessData
      (hData       : HDDEDATA;
-      pcbDataSize : LPDWORD) return LPSTR;
-   pragma Import (Stdcall, DdeAccessData,   "DdeAccessData");
+      pcbDataSize : LPDWORD) return System.Address;
+   pragma Import (Stdcall, DdeAccessData, "DdeAccessData");
    --  ddeml.h:312
 
    function DdeUnaccessData (hData : HDDEDATA) return INT;
@@ -96,7 +96,7 @@ package body DDE is
 
    function DdeCreateStringHandleA
      (idInst    : DWORD;
-      psz       : LPSTR;
+      psz       : System.Address;
       iCodePage : INT) return HSZ;
    pragma Import (Stdcall, DdeCreateStringHandleA, "DdeCreateStringHandleA");
    --  ddeml.h:346
@@ -131,7 +131,7 @@ package body DDE is
       dwData1    : DWORD;
       dwData2    : DWORD) return HDDEDATA
    is
-      Data_Raw : LPSTR;
+      Data_Raw : System.Address;
       Data_Len : aliased DWORD;
       Res      : INT;
       pragma Unreferenced (wFmt, hCnv, hsz1, hsz2, dwData1, dwData2, Res);
@@ -150,7 +150,7 @@ package body DDE is
             declare
                Data : String (1 .. Integer (Data_Len) - 1);
                --  Ignore trailing 0
-               for Data'Address use Data_Raw.all'Address;
+               for Data'Address use Data_Raw;
 
                Pos : constant Natural := Index (Data, ":");
                Operation : constant DDE_Operation :=
@@ -202,8 +202,7 @@ package body DDE is
            or CBF_FAIL_SELFCONNECTIONS or CBF_FAIL_POKES,
          0);
 
-      hszAppName := DdeCreateStringHandleA
-        (idInst, szAppName (1)'Unchecked_Access, 0);
+      hszAppName := DdeCreateStringHandleA (idInst, szAppName (1)'Address, 0);
 
       Res2 := DdeNameService
         (idInst,   --  instance identifier
