@@ -123,7 +123,9 @@ package body Docgen is
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
             Partial_Entity : Boolean) return Boolean;
-         --  ??? What does this function do
+         --  Looks the value of type Language_Entity returned by
+         --  Parse_Entities and calls the good subprograms to format
+         --  the current entity
 
          --------------
          -- Callback --
@@ -245,14 +247,13 @@ package body Docgen is
       Text             : String;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
-      Line_In_Body     : Natural;
+      Line_In_Body     : in out Natural;
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean;
       Info             : Doc_Info)
    is
-
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
       use Type_Entity_List;
@@ -263,29 +264,33 @@ package body Docgen is
       Ref_List_Info    : List_Reference_In_File.List_Node;
       Ref_List_Info_Prec   : List_Reference_In_File.List_Node;
       Result           : Boolean;
+      Entity_Abstract  : Boolean;
 
       Entity_Node      : Type_Entity_List.List_Node;
       Entity_Node_Succ : Type_Entity_List.List_Node;
       Exist            : Boolean;
       --  Used to delete from Entity_List identifiers contained in inner
       --  packages
+
       procedure Get_Declaration
-        (Text   : String;
-         E_I    : in out Src_Info.Queries.Entity_Information;
-         Line   : Natural;
-         Column : Natural;
-         E_L_I  : in List_Reference_In_File.List_Node;
-         Result : in out Boolean);
+        (Text             : String;
+         E_I              : in out Src_Info.Queries.Entity_Information;
+         Line             : Natural;
+         Column           : Natural;
+         E_L_I            : in List_Reference_In_File.List_Node;
+         Result           : in out Boolean;
+         Entity_Abstract  : in out Boolean);
       --  Looks if the reference E_L_I is the same as (Text+Line+Column)
       --  If yes, the declaration of E_L_I is returned and Result is True
 
       procedure Get_Declaration
-        (Text   : String;
-         E_I    : in out Src_Info.Queries.Entity_Information;
-         Line   : Natural;
-         Column : Natural;
-         E_L_I  : in List_Reference_In_File.List_Node;
-         Result : in out Boolean) is
+        (Text             : String;
+         E_I              : in out Src_Info.Queries.Entity_Information;
+         Line             : Natural;
+         Column           : Natural;
+         E_L_I            : in List_Reference_In_File.List_Node;
+         Result           : in out Boolean;
+         Entity_Abstract  : in out Boolean) is
          pragma Unreferenced (Column);
       begin
          if List_Reference_In_File.Data (E_L_I).Line = Line
@@ -297,6 +302,9 @@ package body Docgen is
          then
             Result := True;
             E_I := List_Reference_In_File.Data (E_L_I).Entity.all;
+            if Get_Kind (E_I).Is_Abstract then
+               Entity_Abstract := True;
+            end if;
          end if;
       end Get_Declaration;
 
@@ -338,6 +346,11 @@ package body Docgen is
                   end if;
                   if Exist then
                      --  Identifier removed. It won't be duplicated.
+                     --  Before, Line_In_Body for those inner identifiers must
+                     --  be indicated (currently the value is
+                     --  No_Body_Line_Needed because we deal with a package)
+                     Line_In_Body := Get_Line
+                       (Data (Entity_Node).Line_In_Body);
                      Type_Entity_List.Remove_Nodes
                        (Entity_List,
                         Entity_Node_Succ,
@@ -350,6 +363,7 @@ package body Docgen is
             end if;
 
             Result := False;
+            Entity_Abstract := False;
             Ref_List_Info
               := List_Reference_In_File.First (List_Ref_In_File);
             Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
@@ -365,14 +379,15 @@ package body Docgen is
                   Start_Line + Entity_Line - 1,
                   Start_Column + Loc_Start - Start_Index,
                   Ref_List_Info,
-                  Result);
+                  Result,
+                  Entity_Abstract);
                if Result = True then
                   List_Reference_In_File.Remove_Nodes
                     (List_Ref_In_File, Ref_List_Info_Prec,
                      Ref_List_Info);
                end if;
 
-               exit when Result = True;
+               exit when Result;
                Ref_List_Info_Prec := Ref_List_Info;
                Ref_List_Info
                  := List_Reference_In_File.Next (Ref_List_Info);
@@ -385,7 +400,8 @@ package body Docgen is
                   Start_Index, Start_Line, Start_Column, End_Index,
                   Kernel, File, LI_Unit, Text, File_Name, Entity_Line,
                   Line_In_Body, Source_File_List, Link_All, Is_Body,
-                  Process_Body, Loc_End, Loc_Start, Entity_Info);
+                  Process_Body, Loc_End, Loc_Start, Entity_Info,
+                  Entity_Abstract);
             end if;
 
          end if;
