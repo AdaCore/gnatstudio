@@ -25,6 +25,36 @@ with Ada_Analyzer; use Ada_Analyzer;
 
 package body Codefix.Ada_Tools is
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Use) is
+      procedure Free_Pool is new
+        Ada.Unchecked_Deallocation (Use_Type, Ptr_Use);
+   begin
+      Free (This.Position);
+      Free (This.Name);
+      Free_Pool (This);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_With) is
+      procedure Free_Pool is new
+        Ada.Unchecked_Deallocation (With_Type, Ptr_With);
+   begin
+      Free (This.Name_Str);
+
+      for J in This.Name'Range loop
+         Free (This.Name (J));
+      end loop;
+
+      Free_Pool (This);
+   end Free;
+
    ---------------------
    -- Get_Use_Clauses --
    ---------------------
