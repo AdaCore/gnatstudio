@@ -424,6 +424,112 @@ package body Project_Explorers is
    --  If Include_Project is False, then Project itself will not be included in
    --  the returned array
 
+   -------------
+   -- Filters --
+   -------------
+
+   type Project_Node_Filter_Record is new Action_Filter_Record
+      with null record;
+   type Directory_Node_Filter_Record is new Action_Filter_Record
+      with null record;
+   type File_Node_Filter_Record is new Action_Filter_Record
+      with null record;
+   type Entity_Node_Filter_Record is new Action_Filter_Record
+      with null record;
+   function Filter_Matches_Primitive
+     (Context : access Project_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   function Filter_Matches_Primitive
+     (Context : access Directory_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   function Filter_Matches_Primitive
+     (Context : access File_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   function Filter_Matches_Primitive
+     (Context : access Entity_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Project_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Context, Kernel);
+      C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Ctxt);
+   begin
+      return Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_Project_Information (C)
+        and then not Has_Directory_Information (C);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Directory_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Kernel, Context);
+      C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Ctxt);
+   begin
+      return Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_Directory_Information (C)
+        and then not Has_File_Information (C);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access File_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Kernel, Context);
+      C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Ctxt);
+   begin
+      return Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Has_File_Information (C)
+        and then Ctxt.all not in Entity_Selection_Context'Class;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Context : access Entity_Node_Filter_Record;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Kernel, Context);
+   begin
+      return Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Ctxt.all in Entity_Selection_Context'Class;
+   end Filter_Matches_Primitive;
+
    ----------------------
    -- Set_Column_Types --
    ----------------------
@@ -2686,6 +2792,15 @@ package body Project_Explorers is
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
+      Project_Node_Filter : constant Action_Filter :=
+        new Project_Node_Filter_Record;
+      Directory_Node_Filter : constant Action_Filter :=
+        new Directory_Node_Filter_Record;
+      File_Node_Filter : constant Action_Filter :=
+        new File_Node_Filter_Record;
+      Entity_Node_Filter : constant Action_Filter :=
+        new Entity_Node_Filter_Record;
+
    begin
       Register_Module
         (Module                  => Explorer_Module_ID,
@@ -2749,6 +2864,24 @@ package body Project_Explorers is
         (Extra.Include_Entities, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access),
          Kernel_Handle (Kernel));
+
+      Register_Filter
+        (Kernel,
+         Filter => Project_Node_Filter,
+         Name   => "Explorer_Project_Node");
+      Register_Filter
+        (Kernel,
+         Filter => Directory_Node_Filter,
+         Name   => "Explorer_Directory_Node");
+      Register_Filter
+        (Kernel,
+         Filter => File_Node_Filter,
+         Name   => "Explorer_File_Node");
+      Register_Filter
+        (Kernel,
+         Filter => Entity_Node_Filter,
+         Name   => "Explorer_Entity_Node");
+
 
       declare
          Name : constant String := -"Project explorer";
