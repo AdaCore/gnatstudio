@@ -1056,7 +1056,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         GVD.Canvas.For_Each_Item
+         For_Each_Item
            (Tab.Data_Canvas, Internal_Update_Item'Unrestricted_Access);
          Refresh_Canvas (Tab.Data_Canvas);
       end if;
