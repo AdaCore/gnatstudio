@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 
@@ -218,15 +238,13 @@ package body Vdiff2_Module.Utils.Text is
    begin
       Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines);
       Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines);
-
       First_Dest := Get_Line_Number (Kernel, Dest_Range.Mark.all);
-
-      Trace (Me, "VALEUR DE FIRST DEST : "& Integer'Image (First_Dest));
 
       for J in 1 .. Offset_Dest loop
          Delete_Line (Kernel, Dest_File, (First_Dest));
       end loop;
-
+      Delete_Mark (Kernel, Dest_Range.Mark.all);
+      Delete_Mark (Kernel, Source_Range.Mark.all);
    end Delete_Block;
 
    -------------
