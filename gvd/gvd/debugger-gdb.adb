@@ -1123,7 +1123,10 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Wait_For_Prompt : Boolean := True) is
    begin
-      Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
+      Text_Output_Handler
+        (Convert (Debugger.Window, Debugger),
+         Send_Full (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt),
+         Is_Command => True);
    end Display_Prompt;
 
    ----------------------
