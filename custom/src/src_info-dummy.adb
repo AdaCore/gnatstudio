@@ -41,9 +41,11 @@ package body Src_Info.Dummy is
       File            : in out LI_File_Ptr;
       Source_Filename : VFS.Virtual_File;
       List            : LI_File_List;
-      Project         : Projects.Project_Type)
+      Project         : Projects.Project_Type;
+      Check_Timestamp : Boolean := True)
    is
-      pragma Unreferenced (Handler, File, Source_Filename, List, Project);
+      pragma Unreferenced
+        (Handler, File, Source_Filename, List, Project, Check_Timestamp);
    begin
       null;
    end Create_Or_Complete_LI;

@@ -1728,7 +1728,8 @@ package body Src_Info.CPP is
       File                   : in out LI_File_Ptr;
       Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
-      Project                : Project_Type)
+      Project                : Project_Type;
+      Check_Timestamp        : Boolean := True)
    is
       DB_Dir : constant String := Get_DB_Dir (Project);
    begin
@@ -1756,8 +1757,9 @@ package body Src_Info.CPP is
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
          if not Is_Incomplete (File)
-           and then File_Time_Stamp (File.LI.LI_Filename) <=
-             File.LI.LI_Timestamp
+           and then (not Check_Timestamp
+                     or else File_Time_Stamp (File.LI.LI_Filename) <=
+                       File.LI.LI_Timestamp)
          then
             return;
          end if;

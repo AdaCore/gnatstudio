@@ -1842,8 +1842,10 @@ package body Src_Info.ALI is
       File                   : in out LI_File_Ptr;
       Source_Filename        : Virtual_File;
       List                   : LI_File_List;
-      Project                : Project_Type)
+      Project                : Project_Type;
+      Check_Timestamp        : Boolean := True)
    is
+
       F : File_Info_Ptr_List;
    begin
       --  If the file has already been parsed, we just check that it is still
@@ -1851,12 +1853,14 @@ package body Src_Info.ALI is
       File := Locate_From_Source (List, Source_Filename);
 
       if File /= No_LI_File then
-         Create_Or_Complete_LI
-           (Handler                => Handler,
-            File                   => File,
-            Full_Ali_File          => File.LI.LI_Filename,
-            List                   => List,
-            Project                => Project);
+         if Check_Timestamp or else Is_Incomplete (File) then
+            Create_Or_Complete_LI
+              (Handler                => Handler,
+               File                   => File,
+               Full_Ali_File          => File.LI.LI_Filename,
+               List                   => List,
+               Project                => Project);
+         end if;
 
       else
          declare
@@ -1870,6 +1874,7 @@ package body Src_Info.ALI is
             if Full_Name (LI_Name).all = "" then
                Trace (Me, "No LI found for "
                       & Full_Name (Source_Filename).all);
+               File := No_LI_File;
 
             else
                --  Else we might already have an incomplete version of the LI
@@ -1912,6 +1917,8 @@ package body Src_Info.ALI is
                   Trace
                     (Me, "Parsed LI file didn't contain the info for "
                      & Base & " " & Full_Name (LI_Name).all);
+                  File := No_LI_File;
+               else
                   File := No_LI_File;
                end if;
             end if;

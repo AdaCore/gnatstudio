@@ -59,7 +59,8 @@ package Src_Info.CPP is
       File                   : in out LI_File_Ptr;
       Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
-      Project                : Projects.Project_Type);
+      Project                : Projects.Project_Type;
+      Check_Timestamp        : Boolean := True);
    --  See comment in src_info.ads
 
    function Case_Insensitive_Identifiers

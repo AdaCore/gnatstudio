@@ -175,7 +175,8 @@ package Src_Info is
       File            : in out LI_File_Ptr;
       Source_Filename : VFS.Virtual_File;
       List            : LI_File_List;
-      Project         : Projects.Project_Type) is abstract;
+      Project         : Projects.Project_Type;
+      Check_Timestamp : Boolean := True) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
    --  yet.
    --  On calling this subprogram, File is always null, and must be looked for
@@ -184,6 +185,8 @@ package Src_Info is
    --  up-to-date, it must be parsed again.
    --  Source_Filename should contain the full path to the source file.
    --  This subprogram garantees that the returned File has been fully parsed.
+   --  If Check_Timestamp is False, and there is already an existing version
+   --  of this LI in memory, that version is returned as is and not updated.
 
    function LI_Filename_From_Source
      (Handler         : access LI_Handler_Record;
