@@ -33,36 +33,19 @@ package body Language.Ada is
 
    function Make_Entry_Subprogram
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
+      Matched  : Match_Array) return String;
    --  Function used to create an entry in the explorer, for subprograms.
-   --  See the description of Explorer_Categories for more information.
-
-   function Make_Entry_Package
-     (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
-   --  Function used to create an entry in the explorer, for packages.
-   --  See the description of Explorer_Categories for more information.
-
-   function Make_Entry_Type
-     (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
-   --  Function used to create an entry in the explorer, for types.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Task
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
+      Matched  : Match_Array) return String;
    --  Function used to create an entry in the explorer, for tasks.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Protected
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
+      Matched  : Match_Array) return String;
    --  Function used to create an entry in the explorer, for protected objects
    --  and types.
    --  See the description of Explorer_Categories for more information.
@@ -77,7 +60,7 @@ package body Language.Ada is
      Compile
        ("^[ \t]*(procedure|function)\s+" &
         "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)" & Comment_RE & ")\s*" &
-        "(return\s+(\w|\.)+\s*)?(is\s|;)", Multiple_Lines or Case_Insensitive);
+        "(return\s+(\w|\.)+\s*)?is\s", Multiple_Lines or Case_Insensitive);
 
    Package_RE    : aliased Pattern_Matcher :=
      Compile
@@ -102,37 +85,31 @@ package body Language.Ada is
    --  distinguishes between the two cases.
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
-     ((Name           => new String' ("Subprograms"),
+     ((Category       => Cat_Procedure,
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
        Icon           => subprogram_xpm'Access,
        Make_Entry     => Make_Entry_Subprogram'Access),
 
-      (Name           => new String' ("Specs"),
-       Regexp         => Subprogram_RE'Access,
-       Position_Index => 2,
-       Icon           => subprogram_xpm'Access,
-       Make_Entry     => null),
-
-      (Name           => new String' ("Packages"),
+      (Category       => Cat_Package,
        Regexp         => Package_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
-       Make_Entry     => Make_Entry_Package'Access),
+       Make_Entry     => null),
 
-      (Name           => new String' ("Types"),
+      (Category       => Cat_Type,
        Regexp         => Type_Def_RE'Access,
        Position_Index => 2,
        Icon           => var_xpm'Access,
-       Make_Entry     => Make_Entry_Type'Access),
+       Make_Entry     => null),
 
-      (Name           => new String' ("Tasks"),
+      (Category       => Cat_Task,
        Regexp         => Task_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Task'Access),
 
-      (Name           => new String' ("Protected"),
+      (Category       => Cat_Protected,
        Regexp         => Protected_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
@@ -238,8 +215,10 @@ package body Language.Ada is
             Result (Result_Index) := Str (J);
             Result_Index := Result_Index + 1;
          end if;
+
          J := J + 1;
       end loop;
+
       return Result (Result'First .. Result_Index - 1);
    end Remove_Ada_Comments;
 
@@ -249,13 +228,8 @@ package body Language.Ada is
 
    function Make_Entry_Subprogram
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String is
+      Matched  : Match_Array) return String is
    begin
-      if Str (Matched (6).First) = ';' then
-         Category.all := 2;  --  specs
-      end if;
-
       if Matched (3) = No_Match then
          if Matched (4) = No_Match then
             return Str (Matched (2).First .. Matched (2).Last);
@@ -281,44 +255,14 @@ package body Language.Ada is
       end if;
    end Make_Entry_Subprogram;
 
-   ------------------------
-   -- Make_Entry_Package --
-   ------------------------
-
-   function Make_Entry_Package
-     (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String
-   is
-      pragma Unreferenced (Category);
-   begin
-      return Str (Matched (3).First .. Matched (3).Last);
-   end Make_Entry_Package;
-
-   ---------------------
-   -- Make_Entry_Type --
-   ---------------------
-
-   function Make_Entry_Type
-     (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String
-   is
-      pragma Unreferenced (Category);
-   begin
-      return Str (Matched (2).First .. Matched (2).Last);
-   end Make_Entry_Type;
-
    --------------------------
    -- Make_Entry_Protected --
    --------------------------
 
    function Make_Entry_Protected
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String
+      Matched  : Match_Array) return String
    is
-      pragma Unreferenced (Category);
       First, Last : Natural;
    begin
       First := Matched (2).First;
@@ -337,11 +281,9 @@ package body Language.Ada is
    ---------------------
 
    function Make_Entry_Task
-     (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String
+     (Str     : String;
+      Matched : Match_Array) return String
    is
-      pragma Unreferenced (Category);
       First, Last : Natural;
    begin
       First := Matched (2).First;
@@ -360,7 +302,7 @@ package body Language.Ada is
    --------------------
 
    function Is_System_File
-     (Lang : access Ada_Language;
+     (Lang      : access Ada_Language;
       File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
