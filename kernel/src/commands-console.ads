@@ -47,7 +47,7 @@ package Commands.Console is
    function Undo (Command : access Console_Command) return Boolean
      renames Execute;
 
-   procedure Destroy (Command : access Console_Command);
+   procedure Free (Command : in out Console_Command);
    --  Free memory associated to Command.
 
 private

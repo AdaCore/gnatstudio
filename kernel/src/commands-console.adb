@@ -82,13 +82,13 @@ package body Commands.Console is
       return True;
    end Execute;
 
-   -------------
-   -- Destroy --
-   -------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Destroy (Command : access Console_Command) is
+   procedure Free (Command : in out Console_Command) is
    begin
       Free (Command.Text);
-   end Destroy;
+   end Free;
 
 end Commands.Console;
