@@ -18,18 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;     use Glide_Kernel;
-with Prj.Tree;         use Prj.Tree;
-with Gtkada.Canvas;    use Gtkada.Canvas;
-with Glib.Graphs;      use Glib.Graphs;
-with Project_Browsers; use Project_Browsers;
-with Browsers.Canvas;  use Browsers.Canvas;
-with Types;            use Types;
-with Namet;            use Namet;
-with Gdk.Drawable;     use Gdk.Drawable;
-with Gdk.Event;        use Gdk.Event;
-with Gdk.Font;         use Gdk.Font;
-with Glib;             use Glib;
+with Browsers.Canvas;      use Browsers.Canvas;
+with Gdk.Drawable;         use Gdk.Drawable;
+with Gdk.Event;            use Gdk.Event;
+with Gdk.Font;             use Gdk.Font;
+with Glib.Graphs;          use Glib.Graphs;
+with Glib;                 use Glib;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel;         use Glide_Kernel;
+with Gtkada.Canvas;        use Gtkada.Canvas;
+with Namet;                use Namet;
+with Prj_API;              use Prj_API;
+with Prj.Tree;             use Prj.Tree;
+with Project_Browsers;     use Project_Browsers;
+with Types;                use Types;
 
 package body Browsers.Projects is
 
@@ -70,7 +72,7 @@ package body Browsers.Projects is
          Get_Text_GC (Browser),
          Margin,
          Get_Ascent (Get_Text_Font (Browser)) + Margin,
-         Get_Name_String (Project_Name (Browser_Project_Vertex_Access (Item)))
+         Get_Name_String (Browser_Project_Vertex_Access (Item).Name)
          & Prj.Project_File_Extension);
    end Update_Display;
 
@@ -86,10 +88,10 @@ package body Browsers.Projects is
       Font : Gdk_Font := Get_Text_Font (In_Browser);
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Project_Vertex_Access;
+         return Canvas_Item;
       --  Return a new project vertex for the project
 
-      function Edge_Factory (V1, V2 : access Project_Vertex'Class)
+      function Edge_Factory (V1, V2 : access Canvas_Item_Record'Class)
          return Canvas_Link;
       --  Return a new edge
 
@@ -97,7 +99,7 @@ package body Browsers.Projects is
       -- Edge_Factory --
       ------------------
 
-      function Edge_Factory (V1, V2 : access Project_Vertex'Class)
+      function Edge_Factory (V1, V2 : access Canvas_Item_Record'Class)
          return Canvas_Link
       is
          L : Glide_Browser_Link := new Glide_Browser_Link_Record;
@@ -110,7 +112,7 @@ package body Browsers.Projects is
       --------------------
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Project_Vertex_Access
+         return Canvas_Item
       is
          V : Browser_Project_Vertex_Access :=
            new Browser_Project_Vertex;
@@ -119,14 +121,13 @@ package body Browsers.Projects is
          Height := Get_Ascent (Font) + Get_Descent (Font) + 2 * Margin;
          Width := String_Width (Font, Get_Name_String (Project_Name)
                                 & Prj.Project_File_Extension) + 2 * Margin;
-
-         Set_Project_Name (V, Project_Name);
+         V.Name := Project_Name;
          V.Browser := Glide_Browser (In_Browser);
 
          Set_Screen_Size_And_Pixmap
            (V, Get_Window (In_Browser), Width, Height);
          Update_Display (In_Browser, V);
-         return Project_Vertex_Access (V);
+         return Canvas_Item (V);
       end Vertex_Factory;
 
       G : Graph;
@@ -142,5 +143,23 @@ package body Browsers.Projects is
               Vertical_Layout => True);
       Refresh_Canvas (Get_Canvas (In_Browser));
    end Examine_Project_Hierarchy;
+
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   function Contextual_Factory
+     (Item  : access Browser_Project_Vertex;
+      Browser : access Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      Context : Selection_Context_Access := new File_Selection_Context;
+   begin
+      Set_File_Information
+        (File_Selection_Context_Access (Context),
+         Project_View => Get_Project_View_From_Name (Item.Name));
+      return Context;
+   end Contextual_Factory;
 
 end Browsers.Projects;
