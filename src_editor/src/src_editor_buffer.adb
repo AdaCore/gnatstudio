@@ -3691,12 +3691,10 @@ package body Src_Editor_Buffer is
    is
       Iter, Pos : Gtk_Text_Iter;
       Result    : Boolean;
-      Ending    : Boolean;
       Success   : Boolean := True;
       Count     : Gint := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Ending := Ends_Line (Iter);
 
       if not New_Line then
          Copy (Iter, Pos);
@@ -3714,11 +3712,11 @@ package body Src_Editor_Buffer is
 
       Result := Do_Indentation (Buffer, Lang, Iter, New_Line);
 
-      --  Special case if we were at the end of the line, otherwise the cursor
-      --  is left on the first non-blank character of the line after the newly
-      --  inserted one.
+   --  Special case if we are adding a new line, otherwise the cursor
+   --  is left on the first non-blank character of the line after the newly
+   --  inserted one.
 
-      if not Ending then
+      if not New_Line then
          --  If the cursor was set in the middle of a line, restore its
          --  position within the line. Otherwise, restore it at the first
          --  non-blank character.
