@@ -1685,13 +1685,13 @@ package body Glide_Kernel.Scripts is
          Return_Value => "string",
          Description  =>
            -("Fetch the value of the attribute in the project." & ASCII.LF
-             & "If the package is not specified, the attributes at the"
+             & "If the package is not specified, the attribute at the"
              & " toplevel of the project is queried." & ASCII.LF
              & "The index only needs to be specified if it applies to that"
              & " attribute." & ASCII.LF
              & "If the attribute value is stored as a list, the result string"
              & " is a concatenation of all the elements of the list."
-             & " This function always return the value of the attribute in"
+             & " This function always returns the value of the attribute in"
              & " the currently selected scenario."),
          Minimum_Args => 2,
          Maximum_Args => 4,
@@ -1705,13 +1705,13 @@ package body Glide_Kernel.Scripts is
          Return_Value => "list",
          Description  =>
            -("Fetch the value of the attribute in the project." & ASCII.LF
-             & "If the package is not specified, the attributes at the"
+             & "If the package is not specified, the attribute at the"
              & " toplevel of the project is queried." & ASCII.LF
              & "The index only needs to be specified if it applies to that"
              & " attribute." & ASCII.LF
              & "If the attribute value is stored as a simple string, a list"
              & " with a single element is returned."
-             & " This function always return the value of the attribute in"
+             & " This function always returns the value of the attribute in"
              & " the currently selected scenario."),
          Minimum_Args => 1,
          Maximum_Args => 3,
