@@ -62,7 +62,7 @@ package body GVD.Preferences is
       Page_Prefix : String := "";
       XML_Prefix  : String := "")
    is
-      General        : constant String := Page_Prefix & (-"General");
+      General        : constant String := Page_Prefix;
       Source         : constant String := Page_Prefix & (-"Source");
       Assembly       : constant String := Page_Prefix & (-"Assembly");
       Data           : constant String := Page_Prefix & (-"Data");
@@ -82,7 +82,7 @@ package body GVD.Preferences is
                Nick      => -"Default font",
                Blurb     => -"Default font",
                Default   => GVD.Default_Font));
-         Register_Property (Prefs, Param_Spec (Default_Font), General);
+         Register_Property (Prefs, Param_Spec (Default_Font), -"General");
 
          Fixed_Font := Param_Spec_Font
            (Gnew_Font
@@ -91,7 +91,7 @@ package body GVD.Preferences is
                Blurb     =>
                  -"Fixed font used to display e.g. debugger commands",
                Default   => "Courier 10"));
-         Register_Property (Prefs, Param_Spec (Fixed_Font), General);
+         Register_Property (Prefs, Param_Spec (Fixed_Font), -"General");
 
       else
          External_Flags := External_Flags or Param_Writable;
@@ -493,7 +493,7 @@ package body GVD.Preferences is
            (Prefs, Param_Spec (Selected_Item_Color), Data);
       else
          Register_Property
-           (Prefs, Param_Spec (Selected_Item_Color),  -"Browsers:General");
+           (Prefs, Param_Spec (Selected_Item_Color),  -"Browsers");
       end if;
    end Register_Default_Preferences;
 
