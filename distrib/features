@@ -1,5 +1,7 @@
 New features in GPS 1.1.0
 
+- Better handling of CR/LF line terminators
+
 - Project explorer has new contextual menus: "show files from project only"
   and "show absolute paths"
 
