@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package handles source file locations and displays them
+--  in a graphical tree, per category.
+
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
