@@ -171,7 +171,8 @@ package body Naming_Editors is
    procedure Create_Project_Entry
      (Editor  : access Naming_Editor_Record;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id)
+      Project : Prj.Tree.Project_Node_Id;
+      Ignore_Scenario : Boolean := False)
    is
       Changed : Boolean := False;
    begin
@@ -183,10 +184,11 @@ package body Naming_Editors is
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Ada_Naming, Kernel, Project);
+              (Editor.Pages (P).Ada_Naming, Kernel, Project, Ignore_Scenario);
          else
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Foreign_Naming, Kernel, Project);
+              (Editor.Pages (P).Foreign_Naming, Kernel, Project,
+               Ignore_Scenario);
          end if;
       end loop;
 

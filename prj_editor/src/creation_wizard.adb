@@ -505,7 +505,8 @@ package body Creation_Wizard is
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Linker), Linker);
 
       --  Append the naming scheme
-      Create_Project_Entry (Wiz.Naming, Wiz.Kernel, Project);
+      Create_Project_Entry
+        (Wiz.Naming, Wiz.Kernel, Project, Ignore_Scenario => True);
 
       Save_Project (Wiz.Kernel, Project, Recursive => False);
 

@@ -187,53 +187,60 @@ package body Ada_Naming_Editors is
    function Create_Project_Entry
      (Editor  : access Ada_Naming_Editor_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id) return Boolean
+      Project : Prj.Tree.Project_Node_Id;
+      Ignore_Scenario : Boolean) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Naming   : constant String := Get_Name_String (Name_Naming);
-      Scenar   : constant Project_Node_Array := Scenario_Variables (Kernel);
+      Scenar   : Project_Node_Array_Access;
    begin
+      if Ignore_Scenario then
+         Scenar := new Project_Node_Array (1 .. 0);
+      else
+         Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
+      end if;
+
       --  Eliminate all the Ada-related attributes.
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
          Attribute_Index    => Ada_String);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
          Attribute_Index    => Ada_String);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
          Attribute_Index    => Ada_String);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Casing),
          Attribute_Index    => Ada_String);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
          Attribute_Index    => Ada_String);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Specification),
          Attribute_Index    => Any_Attribute);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Implementation),
          Attribute_Index    => Any_Attribute);
 
@@ -244,34 +251,34 @@ package body Ada_Naming_Editors is
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar,
+            Scenario_Variables => Scenar.all,
             Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
             Value              => Get_Text (Get_Entry (Editor.Spec_Extension)),
             Attribute_Index    => Ada_String);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar,
+            Scenario_Variables => Scenar.all,
             Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
             Value              => Get_Text (Get_Entry (Editor.Body_Extension)),
             Attribute_Index    => Ada_String);
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar,
+            Scenario_Variables => Scenar.all,
             Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
             Value         => Get_Text (Get_Entry (Editor.Separate_Extension)));
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar,
+            Scenario_Variables => Scenar.all,
             Attribute_Name     => Get_Name_String (Name_Casing),
             Value              => Image
               (Casing_Type'Val (Get_Index_In_List (Editor.Casing))));
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Naming,
-            Scenario_Variables => Scenar,
+            Scenario_Variables => Scenar.all,
             Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
             Value              => Get_Text (Editor.Dot_Replacement));
       end if;
@@ -288,7 +295,7 @@ package body Ada_Naming_Editors is
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar,
+                  Scenario_Variables => Scenar.all,
                   Attribute_Name     => Get_Name_String (Name_Specification),
                   Value              => Spec,
                   Attribute_Index    => U);
@@ -297,13 +304,15 @@ package body Ada_Naming_Editors is
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar,
+                  Scenario_Variables => Scenar.all,
                   Attribute_Name     => Get_Name_String (Name_Implementation),
                   Value              => Bod,
                   Attribute_Index    => U);
             end if;
          end;
       end loop;
+
+      Free (Scenar);
 
       --  Should return True only of the naming scheme actually changed.
       return True;

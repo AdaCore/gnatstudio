@@ -50,7 +50,8 @@ package Ada_Naming_Editors is
    function Create_Project_Entry
      (Editor  : access Ada_Naming_Editor_Record;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id) return Boolean;
+      Project : Prj.Tree.Project_Node_Id;
+      Ignore_Scenario : Boolean) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
 

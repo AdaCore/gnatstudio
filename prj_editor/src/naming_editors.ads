@@ -55,12 +55,16 @@ package Naming_Editors is
    --  Return True if the project was modified.
 
    procedure Create_Project_Entry
-     (Editor  : access Naming_Editor_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id);
+     (Editor          : access Naming_Editor_Record;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project         : Prj.Tree.Project_Node_Id;
+      Ignore_Scenario : Boolean := False);
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
    --  Return True if the project was changed.
+   --  If Ignore_Scenario is True, then the entries will be created in the
+   --  common section of the normalized project rather than in the case
+   --  constructions for the scenario.
 
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;

@@ -82,27 +82,34 @@ package body Foreign_Naming_Editors is
    function Create_Project_Entry
      (Editor  : access Foreign_Naming_Editor_Record;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id) return Boolean
+      Project : Prj.Tree.Project_Node_Id;
+      Ignore_Scenario : Boolean) return Boolean
    is
       Naming   : constant String := Get_Name_String (Name_Naming);
-      Scenar   : constant Project_Node_Array := Scenario_Variables (Kernel);
       Lang     : constant String := Get_Name_String (Editor.Language);
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Bodies   : Argument_List (1 .. Integer (Num_Rows));
       Changed  : Boolean := False;
+      Scenar   : Project_Node_Array_Access;
 
    begin
+      if Ignore_Scenario then
+         Scenar := new Project_Node_Array (1 .. 0);
+      else
+         Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
+      end if;
+
       Update_Attribute_Value_In_Scenario
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
          Value          => Get_Text (Get_Entry (Editor.Header_File_Extension)),
          Attribute_Index    => Lang);
       Update_Attribute_Value_In_Scenario
         (Project            => Project,
          Pkg_Name           => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
          Value       => Get_Text (Get_Entry (Editor.Implementation_Extension)),
          Attribute_Index    => Lang);
@@ -115,13 +122,16 @@ package body Foreign_Naming_Editors is
       Update_Attribute_Value_In_Scenario
         (Project           => Project,
          Pkg_Name          => Naming,
-         Scenario_Variables => Scenar,
+         Scenario_Variables => Scenar.all,
          Attribute_Name    => Get_Name_String (Name_Implementation_Exceptions),
          Values            => Bodies,
          Attribute_Index   => Lang);
 
       --  ??? Should return True only if the naming scheme actually changed.
       Changed := True;
+
+      Free (Scenar);
+
       return Changed;
    end Create_Project_Entry;
 
