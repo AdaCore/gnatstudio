@@ -2061,10 +2061,12 @@ mixedcase
   <title>Creating a variable</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_CENTER</position>
-  <modal>True</modal>
+  <modal>False</modal>
+  <default_width>500</default_width>
+  <default_height>480</default_height>
   <allow_shrink>True</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>True</auto_shrink>
+  <auto_shrink>False</auto_shrink>
 
   <widget>
     <class>GtkVBox</class>
@@ -2074,7 +2076,7 @@ mixedcase
 
     <widget>
       <class>GtkFrame</class>
-      <name>frame36</name>
+      <name>name_frame</name>
       <border_width>10</border_width>
       <label>Name</label>
       <label_xalign>0</label_xalign>
@@ -2137,40 +2139,172 @@ mixedcase
 
 	<widget>
 	  <class>GtkAlignment</class>
-	  <name>alignment3</name>
+	  <name>alignment7</name>
 	  <xalign>1</xalign>
 	  <yalign>0.5</yalign>
-	  <xscale>0.91</xscale>
+	  <xscale>0.9</xscale>
 	  <yscale>1</yscale>
 	  <child>
-	    <padding>4</padding>
-	    <expand>True</expand>
-	    <fill>True</fill>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
 	  </child>
 
 	  <widget>
-	    <class>GtkCombo</class>
-	    <name>list_env_variables</name>
-	    <sensitive>False</sensitive>
-	    <value_in_list>False</value_in_list>
-	    <ok_if_empty>True</ok_if_empty>
-	    <case_sensitive>False</case_sensitive>
-	    <use_arrows>True</use_arrows>
-	    <use_arrows_always>False</use_arrows_always>
-	    <items>HOME
-MACHINE
-FOO
-</items>
+	    <class>GtkTable</class>
+	    <name>environment_table</name>
+	    <rows>3</rows>
+	    <columns>2</columns>
+	    <homogeneous>False</homogeneous>
+	    <row_spacing>0</row_spacing>
+	    <column_spacing>9</column_spacing>
 
 	    <widget>
-	      <class>GtkEntry</class>
-	      <child_name>GtkCombo:entry</child_name>
-	      <name>combo-entry7</name>
+	      <class>GtkLabel</class>
+	      <name>label56</name>
+	      <label>Default value:</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>7.45058e-09</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>True</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCombo</class>
+	      <name>default_env_variable</name>
+	      <value_in_list>False</value_in_list>
+	      <ok_if_empty>True</ok_if_empty>
+	      <case_sensitive>False</case_sensitive>
+	      <use_arrows>True</use_arrows>
+	      <use_arrows_always>False</use_arrows_always>
+	      <items></items>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<child_name>GtkCombo:entry</child_name>
+		<name>combo-entry8</name>
+		<can_focus>True</can_focus>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>0</text_max_length>
+		<text></text>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCombo</class>
+	      <name>list_env_variables</name>
+	      <sensitive>False</sensitive>
+	      <value_in_list>False</value_in_list>
+	      <ok_if_empty>True</ok_if_empty>
+	      <case_sensitive>False</case_sensitive>
+	      <use_arrows>True</use_arrows>
+	      <use_arrows_always>False</use_arrows_always>
+	      <items></items>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<child_name>GtkCombo:entry</child_name>
+		<name>combo-entry7</name>
+		<can_focus>True</can_focus>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>0</text_max_length>
+		<text></text>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label55</name>
+	      <label>Name:</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>7.45058e-09</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>True</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkCheckButton</class>
+	      <name>env_must_be_defined</name>
 	      <can_focus>True</can_focus>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>0</text_max_length>
-	      <text>HOME</text>
+	      <label>Environment variable must be defined</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>True</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
 	    </widget>
 	  </widget>
 	</widget>
@@ -2181,13 +2315,13 @@ FOO
       <class>GtkFrame</class>
       <name>frame34</name>
       <border_width>10</border_width>
-      <label>Type</label>
+      <label>Type and current value</label>
       <label_xalign>0</label_xalign>
       <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
       <child>
 	<padding>0</padding>
-	<expand>False</expand>
-	<fill>False</fill>
+	<expand>True</expand>
+	<fill>True</fill>
       </child>
 
       <widget>
@@ -2206,7 +2340,7 @@ FOO
 	    <object>New_Variable_Editor</object>
 	    <last_modification_time>Sat, 19 May 2001 01:44:04 GMT</last_modification_time>
 	  </signal>
-	  <label>Fixed list of possible values</label>
+	  <label>Enumeration of possible values</label>
 	  <active>False</active>
 	  <draw_indicator>True</draw_indicator>
 	  <group>type_variable_group</group>
@@ -2218,48 +2352,12 @@ FOO
 	</widget>
 
 	<widget>
-	  <class>GtkRadioButton</class>
-	  <name>untyped_variable</name>
-	  <can_focus>True</can_focus>
-	  <label>Any value authorized</label>
-	  <active>False</active>
-	  <draw_indicator>True</draw_indicator>
-	  <group>type_variable_group</group>
-	  <child>
-	    <padding>0</padding>
-	    <expand>False</expand>
-	    <fill>False</fill>
-	  </child>
-	</widget>
-      </widget>
-    </widget>
-
-    <widget>
-      <class>GtkFrame</class>
-      <name>value_frame</name>
-      <border_width>10</border_width>
-      <label>List of values / Current value</label>
-      <label_xalign>0</label_xalign>
-      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkVBox</class>
-	<name>vbox40</name>
-	<homogeneous>False</homogeneous>
-	<spacing>0</spacing>
-
-	<widget>
-	  <class>GtkScrolledWindow</class>
-	  <name>scrolledwindow4</name>
-	  <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-	  <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-	  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+	  <class>GtkAlignment</class>
+	  <name>alignment4</name>
+	  <xalign>1</xalign>
+	  <yalign>0.5</yalign>
+	  <xscale>0.9</xscale>
+	  <yscale>1</yscale>
 	  <child>
 	    <padding>0</padding>
 	    <expand>True</expand>
@@ -2267,21 +2365,103 @@ FOO
 	  </child>
 
 	  <widget>
-	    <class>GtkText</class>
-	    <name>list_values</name>
-	    <can_focus>True</can_focus>
-	    <editable>False</editable>
-	    <text></text>
+	    <class>GtkScrolledWindow</class>
+	    <name>enumeration_scrolled</name>
+	    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+	    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+	    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+	    <widget>
+	      <class>GtkText</class>
+	      <name>enumeration_value</name>
+	      <can_focus>True</can_focus>
+	      <editable>True</editable>
+	      <text></text>
+	    </widget>
 	  </widget>
 	</widget>
 
 	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>untyped_list_variable</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_typed_variable_toggled</handler>
+	    <object>New_Variable_Editor</object>
+	    <last_modification_time>Tue, 22 May 2001 15:01:57 GMT</last_modification_time>
+	  </signal>
+	  <label>Any list value authorized</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <group>type_variable_group</group>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
 	  <class>GtkAlignment</class>
-	  <name>alignment2</name>
+	  <name>alignment5</name>
 	  <xalign>1</xalign>
-	  <yalign>7.45058e-09</yalign>
-	  <xscale>0</xscale>
-	  <yscale>0</yscale>
+	  <yalign>0.5</yalign>
+	  <xscale>0.9</xscale>
+	  <yscale>1</yscale>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkScrolledWindow</class>
+	    <name>list_scrolled</name>
+	    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+	    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+	    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+	    <widget>
+	      <class>GtkText</class>
+	      <name>list_value</name>
+	      <can_focus>True</can_focus>
+	      <editable>True</editable>
+	      <text></text>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>untyped_single_variable</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_typed_variable_toggled</handler>
+	    <object>New_Variable_Editor</object>
+	    <last_modification_time>Tue, 22 May 2001 15:02:11 GMT</last_modification_time>
+	  </signal>
+	  <label>Any string value authorized</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <group>type_variable_group</group>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkAlignment</class>
+	  <name>alignment6</name>
+	  <xalign>1</xalign>
+	  <yalign>0.5</yalign>
+	  <xscale>0.9</xscale>
+	  <yscale>1</yscale>
 	  <child>
 	    <padding>0</padding>
 	    <expand>False</expand>
@@ -2289,16 +2469,11 @@ FOO
 	  </child>
 
 	  <widget>
-	    <class>GtkButton</class>
-	    <name>concatenate_button</name>
+	    <class>GtkText</class>
+	    <name>single_value</name>
 	    <can_focus>True</can_focus>
-	    <signal>
-	      <name>clicked</name>
-	      <handler>on_concatenate_clicked</handler>
-	      <object>New_Variable_Editor</object>
-	      <last_modification_time>Sat, 19 May 2001 01:44:17 GMT</last_modification_time>
-	    </signal>
-	    <label>Concatenate...</label>
+	    <editable>True</editable>
+	    <text></text>
 	  </widget>
 	</widget>
       </widget>
@@ -2309,8 +2484,8 @@ FOO
       <name>hseparator4</name>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
     </widget>
 
