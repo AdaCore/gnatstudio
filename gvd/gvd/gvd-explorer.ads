@@ -78,7 +78,7 @@ package GVD.Explorer is
    --  Called when the executable associated with the explorer has changed.
 
    procedure Preferences_Changed
-     (Explorer : access Explorer_Record'Class);
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the preferences have changed, and the explorer should be
    --  redisplayed with the new setup.
 

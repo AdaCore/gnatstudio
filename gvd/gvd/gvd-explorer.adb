@@ -1196,11 +1196,14 @@ package body GVD.Explorer is
    -------------------------
 
    procedure Preferences_Changed
-     (Explorer : access Explorer_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Color : Gdk_Color;
+      Color    : Gdk_Color;
+      Explorer : constant Explorer_Access := Explorer_Access (Widget);
+
    begin
       --  Change the highlighting color
+
       Create_Current_File_Style (Explorer);
       Color := Get_Pref (File_Name_Bg_Color);
       Set_Base (Explorer.Current_File_Style, State_Normal, Color);
@@ -1210,6 +1213,7 @@ package body GVD.Explorer is
       --  If the explorer is currently empty, this might be because it was
       --  just displayed for the first time. In that case, force a reading
       --  of the list of files.
+
       if Row_List.Length (Get_Row_List (Explorer)) = 1 then
          GVD.Explorer.On_Executable_Changed (Explorer);
       end if;
@@ -1218,6 +1222,7 @@ package body GVD.Explorer is
       --  clear up the cache in the following case: This preference was off
       --  before, and is now set to on. All other cases do not need a cleaning
       --  of the cache.
+
       if not Explorer.CR_Stripped
         and then Get_Pref (Should_Strip_CR)
       then
