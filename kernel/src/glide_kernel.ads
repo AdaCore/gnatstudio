@@ -45,7 +45,7 @@ with Prj_API;
 with Src_Info;
 with Src_Info.Queries;
 with System;
-with Unchecked_Conversion;
+with Ada.Unchecked_Conversion;
 with Default_Preferences;
 
 package Glide_Kernel is
@@ -296,8 +296,8 @@ package Glide_Kernel is
    --  module. Note that this is a tagged type, so that it can easily be
    --  extended for modules external to Glide
 
-   function To_Selection_Context_Access is new Unchecked_Conversion
-     (System.Address, Selection_Context_Access);
+   function To_Selection_Context_Access is new
+     Ada.Unchecked_Conversion (System.Address, Selection_Context_Access);
 
    procedure Set_Context_Information
      (Context : access Selection_Context;
