@@ -2131,6 +2131,7 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
       Box    : Source_Editor_Box;
       Entity : Entity_Information;
+
    begin
       if Id.Show_Subprogram_Names then
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));

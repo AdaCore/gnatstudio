@@ -42,7 +42,7 @@ package body Src_Editor_Buffer.Blocks is
       function Copy
         (Str : Basic_Types.String_Access) return GNAT.Strings.String_Access;
       pragma Inline (Copy);
-      --  Returns a copy of Str
+      --  Return a copy of Str
 
       Constructs        : Construct_List;
       Current           : Construct_Access;
