@@ -113,7 +113,7 @@ private
      (String_List_And_Handler, String_List_And_Handler_Access);
 
    package String_List_Idle is
-      new Gtk.Main.Idle (String_List_And_Handler_Access);
+      new Gtk.Main.Timeout (String_List_And_Handler_Access);
 
    type Command_Record is record
       Command : String_List.List;
