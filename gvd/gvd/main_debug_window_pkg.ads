@@ -30,16 +30,13 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Arrow; use Gtk.Arrow;
-with Gtk.Status_Bar; use Gtk.Status_Bar;
+with Odd.Status_Bar; use Odd.Status_Bar;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Types;
-
 package Main_Debug_Window_Pkg is
 
    type Cache_List_Record is private;
@@ -223,10 +220,7 @@ package Main_Debug_Window_Pkg is
       Button51 : Gtk_Widget;
       Frame7 : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
-      Hbox1 : Gtk_Hbox;
-      Button1 : Gtk_Button;
-      Arrow1 : Gtk_Arrow;
-      Statusbar1 : Gtk_Statusbar;
+      Statusbar1 : Odd_Status_Bar;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;
 

@@ -2083,48 +2083,13 @@
     </widget>
 
     <widget>
-      <class>GtkHBox</class>
-      <name>hbox1</name>
-      <homogeneous>False</homogeneous>
-      <spacing>0</spacing>
+      <class>GtkStatusbar</class>
+      <name>statusbar1</name>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
 	<fill>False</fill>
       </child>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>button1</name>
-	<tooltip>Show recent messages</tooltip>
-	<can_focus>True</can_focus>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-
-	<widget>
-	  <class>GtkArrow</class>
-	  <name>arrow1</name>
-	  <arrow_type>GTK_ARROW_UP</arrow_type>
-	  <shadow_type>GTK_SHADOW_OUT</shadow_type>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkStatusbar</class>
-	<name>statusbar1</name>
-	<child>
-	  <padding>0</padding>
-	  <expand>True</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
     </widget>
   </widget>
 </widget>

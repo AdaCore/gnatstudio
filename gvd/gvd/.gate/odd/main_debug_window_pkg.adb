@@ -1178,19 +1178,8 @@ begin
    Set_Tab_Vborder (Main_Debug_Window.Process_Notebook, 2);
    Set_Tab_Pos (Main_Debug_Window.Process_Notebook, Pos_Top);
 
-   Gtk_New_Hbox (Main_Debug_Window.Hbox1, False, 0);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Hbox1, False, False, 0);
-
-   Gtk_New (Main_Debug_Window.Button1);
-   Pack_Start (Main_Debug_Window.Hbox1, Main_Debug_Window.Button1, False, False, 0);
-
-   Gtk_New (Main_Debug_Window.Arrow1, Arrow_Up, Shadow_Out);
-   Add (Main_Debug_Window.Button1, Main_Debug_Window.Arrow1);
-   Set_Alignment (Main_Debug_Window.Arrow1, 0.5, 0.5);
-   Set_Padding (Main_Debug_Window.Arrow1, 0, 0);
-
    Gtk_New (Main_Debug_Window.Statusbar1);
-   Pack_Start (Main_Debug_Window.Hbox1, Main_Debug_Window.Statusbar1, True, True, 0);
+   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
 
 end Initialize;
 
