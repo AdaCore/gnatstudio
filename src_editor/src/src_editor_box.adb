@@ -706,7 +706,13 @@ package body Src_Editor_Box is
          declare
             --  ??? Missing full name of enclosing scope
             Str : constant String :=
-              "Entity: " & Entity_Name & ASCII.LF
+              "Entity: "
+              & Get_Full_Name
+              (Entity,
+               Locate_From_Source_And_Complete
+               (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
+               ".")
+              & ASCII.LF
               & "Declaration: " & Get_Declaration_File_Of (Entity) & ':'
               & Image (Get_Declaration_Line_Of (Entity)) & ASCII.LF
               & "Type: " & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
