@@ -24,6 +24,7 @@ with Gtk.Menu;
 with Gtk.Style;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with GVD.Types;
 
 --  This package implements a file explorer and browser.
 --  It shows all the files that belong to the current application, and makes
@@ -48,14 +49,15 @@ package GVD.Explorer is
       Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Create a new explorer
 
-   type Explorer_Handler is access
-     procedure
-       (Widget   : access Explorer_Record'Class;
-        Position : Position_Type);
-   --  Handler called when an item is selected in the tree.
-   --  Index is the position in the buffer where the selected entity
-   --  starts.
-   --  Widget is the Window parameter given to Explore below.
+   procedure Add_File_Node
+     (Tree      : access Explorer_Record'Class;
+      File_Name : String);
+   --  Insert a node for a new file.
+
+   procedure Add_List_Of_Files
+     (Tree : access Explorer_Record'Class;
+      List : GVD.Types.String_Array);
+   --  Add several files in the explorer.
 
    procedure Set_Current_File
      (Tree : access Explorer_Record;
