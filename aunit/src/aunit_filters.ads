@@ -39,33 +39,29 @@ package Aunit_Filters is
    --  The parsing is done by looking for the first occurence of " is " in
    --  non-commented lines, and
 
-   type Filter_Show_Ada is new File_Filter_Record (new String'("Ada Files"))
-     with record
-        Spec_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-        Body_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-        Spec_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
-        Body_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
-     end record;
+   type Filter_Show_Ada is new File_Filter_Record with record
+      Spec_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Body_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Spec_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+      Body_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+   end record;
+
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
    --  This filter shows all files, leaving only Ada files selectable.
    --  ??? Should eventually be replaced by a filter that only shows the files
    --  ??? belonging to a project. This is easier to implement and more general
 
-   type Filter_Show_Tests is
-     new File_Filter_Record (new String'("Suite and Test files"))
-     with record
-        Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-        Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
-     end record;
+   type Filter_Show_Tests is new File_Filter_Record with record
+      Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+   end record;
    type Filter_Show_Tests_Access is access all Filter_Show_Tests'Class;
    --  This filter shows only files containing tests.
 
-   type Filter_Show_Suites is
-     new File_Filter_Record (new String'("Suite files"))
-     with record
-        Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-        Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
-     end record;
+   type Filter_Show_Suites is new File_Filter_Record with record
+      Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+   end record;
    type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
    --  This filter shows only files containing tests or test suites.
 
