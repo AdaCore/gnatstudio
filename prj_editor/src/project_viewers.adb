@@ -1137,7 +1137,7 @@ package body Project_Viewers is
          if Has_Project_Information (File_Context)
            and then not Has_File_Information (File_Context)
          then
-            Gtk_New (Item, Label => -"Edit source Directories for "
+            Gtk_New (Item, Label => -"Edit Source Directories for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1146,7 +1146,7 @@ package body Project_Viewers is
                (Edit_Source_Dirs_From_Contextual'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => -"Change Object Directory for "
+            Gtk_New (Item, Label => -"Edit Object Directory for "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
