@@ -431,14 +431,14 @@ package body Src_Info.LI_Utils is
       loop
          exit when D_Ptr = null;
          if eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name)
-           and then (
-             (Location /= Invalid_Point
+--           and then (
+--             (Location /= Invalid_Point
                 and then (D_Ptr.Value.Declaration.Location.Line
                                                     = Location.Line)
                 and then (D_Ptr.Value.Declaration.Location.Column
-                                                    = Location.Column))
-             or else Location = Invalid_Point
-           )
+                                                    = Location.Column) -- )
+--             or else (Location = Invalid_Point)
+--           )
          then
             return D_Ptr;
          end if;
