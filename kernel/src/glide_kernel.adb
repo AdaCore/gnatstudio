@@ -623,8 +623,8 @@ package body Glide_Kernel is
       end if;
 
       --  ??? Should we fall back on the explorer if no factory was defined for
-      --  ??? the current child. However, it might have some unexpected effect
-      --  ??? for the user.
+      --  the current child. However, it might have some unexpected effect
+      --  for the user.
 
       while Module /= Module_List.Null_Node loop
          if Module_List.Data (Module).Info.Child_Tag = Get_Widget (C)'Tag then
@@ -877,7 +877,7 @@ package body Glide_Kernel is
       then
          Window.Timeout_Id := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, (Handle, null, null));
+            Process_Anim'Access, (Handle, null, null, null));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
