@@ -119,6 +119,12 @@ package Src_Editor_Buffer is
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
+   procedure Set_Screen_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint);
+   --  Same as Set_Cursor_Position, after expanding all tabs.
+
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : out Gint;
