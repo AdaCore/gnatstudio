@@ -88,123 +88,38 @@ package body Make_Suite_Window_Pkg.Callbacks is
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
       S            : String := Get_Selection (Suite_Window.Explorer);
-
-      File         : File_Type;
-      Index        : Integer;
-      Index_End    : Integer;
-      Line         : String (1 .. 256);
-      Line_Last    : Integer;
-      Current_Name : String_Access;
       Row_Num      : Gint;
-      Found        : Boolean := False;
+      Suite_Name   : String_Access;
+      Package_Name : String_Access;
    begin
+      Hide (Suite_Window.Explorer);
       if S = "" then
          return;
       end if;
 
-      Ada.Text_IO.Open (File, In_File, S);
+      Get_Suite_Name (S, Package_Name, Suite_Name);
 
-      while not Found loop
-         Get_Line (File, Line, Line_Last);
-         Index_End := 1;
-         Skip_To_String (Line, Index_End, " is");
-         if Index_End < Line_Last - 1 then
-            Index := 1;
-            while Line (Index) = ' ' loop
-               Index := Index + 1;
-            end loop;
-            Skip_To_String (Line, Index, " ");
-            Index_End := Index + 1;
-            while Line (Index_End) = ' ' loop
-               Index_End := Index_End + 1;
-            end loop;
-            Skip_To_String (Line, Index_End, " ");
-            Current_Name :=
-              new String' (Line (Index + 1 .. Index_End - 1));
-            Found := True;
-         end if;
-      end loop;
-
-      Reset (File);
-      Found := False;
-
-      if S (S'Last - 3 .. S'Last) = ".ads" then
-         loop
-            Get_Line (File, Line, Line_Last);
-            Index := 1;
-            Skip_To_String (To_Lower (Line), Index, "type");
-            if Index < Line_Last - 4 then
-               Index_End := Index;
-               Skip_To_String
-                 (To_Lower (Line), Index_End, "test_case");
-               if Index_End < Line_Last - 9 then
-                  Index := 1;
-                  Skip_To_String (To_Lower (Line), Index, "type ");
-                  Index_End := Index + 5;
-                  Skip_To_String
-                    (To_Lower (Line), Index_End, " is ");
-                  Row_Num :=
-                    Append
-                    (Suite_Window.Test_List,
-                     Null_Array
-                     + S
-                     + ("(test) "
-                        & Line (Index + 5 .. Index_End - 1)));
-                  Set (Suite_Window.Test_List,
-                       Row_Num,
-                       Current_Name.all);
-                  Found := True;
-               end if;
-            end if;
-         end loop;
-      else
-         loop
-            Get_Line (File, Line, Line_Last);
-            Index := 1;
-            Skip_To_String (To_Lower (Line), Index, "function");
-            if Index < Line_Last - 8 then
-               Index_End := Index;
-               Skip_To_String
-                 (To_Lower (Line), Index_End, "access_test_suite");
-               if Index_End < Line_Last - 15 then
-                  Index := 1;
-                  Skip_To_String
-                    (To_Lower (Line), Index, "function ");
-                  Index_End := Index + 9;
-                  Skip_To_String
-                    (To_Lower (Line), Index_End, " return ");
-                  Row_Num :=
-                    Append
-                    (Suite_Window.Test_List,
-                     Null_Array
-                     + S
-                     + ("(suite) "
-                        & Line (Index + 9 .. Index_End - 1)));
-                  Set (Suite_Window.Test_List,
-                       Row_Num,
-                       Current_Name.all);
-                  Found := True;
-               end if;
-            end if;
-         end loop;
-      end if;
-
-      Free (Current_Name);
-      Hide (Suite_Window.Explorer);
-      Close (File);
-
-   exception
-      when End_Error =>
-         Close (File);
-         if not Found then
+      if Suite_Name /= null
+        and then Package_Name /= null
+      then
+         if S (S'Last - 3 .. S'Last) = ".ads" then
             Row_Num := Append
               (Suite_Window.Test_List,
-               Null_Array + S + "(no test found)");
+               Null_Array
+               + S + ("(test) " & Suite_Name.all));
             Set (Suite_Window.Test_List,
                  Row_Num,
-                 "");
+                 Package_Name.all);
+         elsif S (S'Last - 3 .. S'Last) = ".adb" then
+            Row_Num := Append
+              (Suite_Window.Test_List,
+               Null_Array
+               + S + ("(suite) " & Suite_Name.all));
+            Set (Suite_Window.Test_List,
+                 Row_Num,
+                 Package_Name.all);
          end if;
-         Hide (Suite_Window.Explorer);
+      end if;
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -234,14 +149,15 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
+      Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
    begin
       if Suite_Window.Explorer = null then
          Gtk_New (Suite_Window.Explorer, "");
          Create_From_Xpm_D
-           (Filter_B.Spec_Pixmap,
+           (Filter_C.Suite_Pixmap,
             Window => null,
             Colormap => Get_System,
-            Mask => Filter_B.Spec_Bitmap,
+            Mask => Filter_C.Suite_Bitmap,
             Transparent => Null_Color,
             Data => box_xpm);
 
@@ -253,6 +169,15 @@ package body Make_Suite_Window_Pkg.Callbacks is
             Transparent => Null_Color,
             Data => package_xpm);
 
+         Create_From_Xpm_D
+           (Filter_B.Spec_Pixmap,
+            Window => null,
+            Colormap => Get_System,
+            Mask => Filter_B.Spec_Bitmap,
+            Transparent => Null_Color,
+            Data => box_xpm);
+
+         Register_Filter (Suite_Window.Explorer, Filter_C);
          Register_Filter (Suite_Window.Explorer, Filter_B);
          Register_Filter (Suite_Window.Explorer, Filter_A);
 
@@ -284,14 +209,17 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       use Gtk.Enums.Gint_List;
 
-      List : Gtk.Enums.Gint_List.Glist :=
-        Get_Selection (Suite_Window.Test_List);
-
+      List : Gtk_Clist := Suite_Window.Test_List;
+      I    : Gint;
    begin
-      while List /= Null_List loop
-         Remove (Suite_Window.Test_List, Get_Data (List));
-         List := Next (List);
+      Freeze (List);
+      loop
+         exit when Length (Get_Selection (List)) = 0;
+         I := Get_Data (First (Get_Selection (List)));
+         Remove (List, I);
       end loop;
+
+      Thaw (List);
    end On_Remove_Clicked;
 
    -------------------
