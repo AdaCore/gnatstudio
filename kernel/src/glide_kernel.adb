@@ -175,6 +175,15 @@ package body Glide_Kernel is
 
       Create_Default_Project (Handle);
       Reset_Source_Info_List (Handle);
+
+      Set_Source_Path
+        (Handle, ".:" &
+         "/usr/gnat-wavefront/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adainclude");
+      Set_Object_Path
+        (Handle, ".:" &
+         "/usr/gnat-wavefront/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
+      --  ??? This is a temporary hack for the demo. We should really compute
+      --  ??? these values from the output of gnatls -v...
    end Gtk_New;
 
    ---------------------
