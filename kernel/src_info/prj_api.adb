@@ -1491,7 +1491,7 @@ package body Prj_API is
       Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
 
       if Dep_Name /= No_Project_Name_And_Node then
-         if Get_String (Path_Name_Of (Dep_Name.Node)) /=
+         if Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))) /=
            Format_Pathname (Imported_Project_Location)
          then
             if Report_Errors /= null then
