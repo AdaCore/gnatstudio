@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -154,7 +154,7 @@ package body Python.Ada is
       function PyStaticMethod_New (Method : PyObject) return PyObject;
       pragma Import (C, PyStaticMethod_New, "PyStaticMethod_New");
 
-      Def    : MethodDef_Access := new PyMethodDef'(Func);
+      Def    : constant MethodDef_Access := new PyMethodDef'(Func);
       C_Func : PyObject;
       Result : Integer;
       pragma Unreferenced (Result);
@@ -175,7 +175,7 @@ package body Python.Ada is
       function PyClassMethod_New (Method : PyObject) return PyObject;
       pragma Import (C, PyClassMethod_New, "PyClassMethod_New");
 
-      Def    : MethodDef_Access := new PyMethodDef'(Func);
+      Def    : constant MethodDef_Access := new PyMethodDef'(Func);
       C_Func : PyObject;
       Result : Integer;
       pragma Unreferenced (Result);
