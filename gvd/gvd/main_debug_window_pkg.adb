@@ -762,33 +762,6 @@ begin
    Lock (Gtk.Accel_Group.Get_Default);
 end Initialize;
 
-   -------------------
-   -- Find_In_Cache --
-   -------------------
-
-   function Find_In_Cache
-     (Window    : access Main_Debug_Window_Record'Class;
-      File_Name : String) return File_Cache_Access
-   is
-      Tmp : Cache_List := Window.File_Caches;
-   begin
-      while Tmp /= null loop
-         if Tmp.File_Name /= null
-           and then Tmp.File_Name.all = File_Name
-         then
-            return Tmp.Cache;
-         end if;
-
-         Tmp := Tmp.Next;
-      end loop;
-
-      Window.File_Caches := new Cache_List_Record'
-        (File_Name => new String' (File_Name),
-         Cache     => new File_Cache,
-         Next      => Window.File_Caches);
-      return Window.File_Caches.Cache;
-   end Find_In_Cache;
-
    -----------------------------
    -- Update_External_Dialogs --
    -----------------------------

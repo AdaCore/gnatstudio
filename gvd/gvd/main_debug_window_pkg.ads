@@ -56,10 +56,6 @@ package Main_Debug_Window_Pkg is
    package String_History is new Odd.Histories (History_Data);
    use String_History;
 
-   type Cache_List_Record is private;
-   type Cache_List is access Cache_List_Record;
-   --  Implement caches for the files that can be loaded in the application.
-
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
       -----------------------
       -- Additional fields --
@@ -78,8 +74,9 @@ package Main_Debug_Window_Pkg is
       Debug_Mode          : Boolean := False;
       Log_Level           : Odd.Types.Command_Type := Odd.Types.Internal;
 
-      File_Caches         : Cache_List;
+      File_Caches         : Odd.Types.File_Cache_List;
       --  List of data cached for each of the file of the application
+      --  This field is handled in GVD.Files
 
       Command_History : String_History.History_List;
       --  The history of commands for the current session.
@@ -200,13 +197,6 @@ package Main_Debug_Window_Pkg is
    procedure Initialize
      (Main_Debug_Window : access Main_Debug_Window_Record'Class);
 
-   function Find_In_Cache
-     (Window    : access Main_Debug_Window_Record'Class;
-      File_Name : String) return Odd.Types.File_Cache_Access;
-   --  Return the cached data for a given file.
-   --  If no data was previously cached for that file, then a new File_Cache
-   --  is returned.
-
    procedure Update_External_Dialogs
      (Window : access Main_Debug_Window_Record'Class;
       Debugger : Gtk.Widget.Gtk_Widget := null);
@@ -223,11 +213,4 @@ package Main_Debug_Window_Pkg is
    --  command which was sent to the debugger with number Num.
    --  No_Such_Item is raised if no matching command is found.
 
-private
-
-   type Cache_List_Record is record
-      File_Name : Odd.Types.String_Access;
-      Cache     : Odd.Types.File_Cache_Access;
-      Next      : Cache_List;
-   end record;
 end Main_Debug_Window_Pkg;
