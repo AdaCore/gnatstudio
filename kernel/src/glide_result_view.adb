@@ -115,6 +115,7 @@ package body Glide_Result_View is
    Highlight_Category_Column : constant := 14;
    Number_Of_Items_Column : constant := 15;
    Total_Column           : constant := 16;
+   Category_Line_Column   : constant := 17;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -658,6 +659,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Highlight_Column, Highlighting);
       Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
       Set (Model, Iter, Number_Of_Items_Column, 0);
+      Set (Model, Iter, Category_Line_Column, Highlight_Category & Line'Img);
 
       if Line = 0 then
          Set (Model, Iter, Weight_Column, 400);
@@ -1037,7 +1039,8 @@ package body Glide_Result_View is
          Highlight_Column          => GType_Boolean,
          Highlight_Category_Column => GType_String,
          Number_Of_Items_Column    => GType_Int,
-         Total_Column              => GType_String);
+         Total_Column              => GType_String,
+         Category_Line_Column      => GType_String);
    end Columns_Types;
 
    ----------------
@@ -1206,9 +1209,7 @@ package body Glide_Result_View is
       Explorer.Sort_By_Category := not Explorer.Sort_By_Category;
 
       if Explorer.Sort_By_Category then
-         Set_Sort_Column_Id
-           (Explorer.Sorting_Column,
-            Highlight_Category_Column);
+         Set_Sort_Column_Id (Explorer.Sorting_Column, Category_Line_Column);
       else
          Set_Sort_Column_Id (Explorer.Sorting_Column, Line_Column);
       end if;
@@ -1983,7 +1984,7 @@ package body Glide_Result_View is
       Thaw_Sort (View.Tree.Model, Sort_Col);
 
       if View.Sort_By_Category then
-         Set_Sort_Column_Id (View.Sorting_Column, Highlight_Category_Column);
+         Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
       else
          Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
       end if;
