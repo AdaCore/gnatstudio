@@ -27,19 +27,20 @@ with Glide_Page;
 with Glide_Menu;
 with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Gtkada.Intl;          use Gtkada.Intl;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Gtkada.Intl;               use Gtkada.Intl;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with GVD.Types;
-with OS_Utils;             use OS_Utils;
-with Ada.Command_Line;     use Ada.Command_Line;
-with Prj;                  use Prj;
-with Src_Info;             use Src_Info;
+with OS_Utils;                  use OS_Utils;
+with Ada.Command_Line;          use Ada.Command_Line;
+with Prj;                       use Prj;
+with Src_Info;                  use Src_Info;
 
 --  Modules registered by Glide.
 with Aunit_Module;
@@ -56,6 +57,7 @@ with VCS.CVS;
 with Glide_Kernel.Help;
 with Vdiff_Module;
 with Builder_Module;
+with Glide_Consoles;
 
 --  The LI parsers
 with Src_Info.ALI;
@@ -150,27 +152,6 @@ procedure Glide2 is
    end Init_Settings;
 
 begin
-   --  Register all modules
-
-   Aunit_Module.Register_Module;
-   VCS_Module.Register_Module;
-   VCS.CVS.Register_Module;
-   Metrics_Module.Register_Module;
-   Browsers.Dependency_Items.Register_Module;
-   Browsers.Projects.Register_Module;
-   Browsers.Call_Graph.Register_Module;
-   Project_Viewers.Register_Module;
-   Project_Explorers.Register_Module;
-   Src_Editor_Module.Register_Module;
-   Glide_Kernel.Help.Register_Module;
-   GVD_Module.Register_Module;
-   Builder_Module.Register_Module;
-   Vdiff_Module.Register_Module;
-
-   --  Register all LI parsers
-
-   Src_Info.Register_LI_Handler (new Src_Info.ALI.ALI_Handler_Record, "ada");
-
    --  Initialize GtkAda
 
    Gtk.Main.Set_Locale;
@@ -190,9 +171,27 @@ begin
       end if;
    end;
 
-   Free (Home);
-   Free (Dir);
-   Free (Prefix);
+   --  Register all modules
+
+   Metrics_Module.Register_Module (Glide.Kernel);
+   Browsers.Call_Graph.Register_Module (Glide.Kernel);
+   Browsers.Dependency_Items.Register_Module (Glide.Kernel);
+   Browsers.Projects.Register_Module (Glide.Kernel);
+   Project_Viewers.Register_Module (Glide.Kernel);
+   Project_Explorers.Register_Module (Glide.Kernel);
+   Src_Editor_Module.Register_Module (Glide.Kernel);
+   Glide_Kernel.Help.Register_Module (Glide.Kernel);
+   GVD_Module.Register_Module (Glide.Kernel);
+   Builder_Module.Register_Module (Glide.Kernel);
+   Vdiff_Module.Register_Module (Glide.Kernel);
+   VCS_Module.Register_Module (Glide.Kernel);
+   VCS.CVS.Register_Module (Glide.Kernel);
+   Aunit_Module.Register_Module (Glide.Kernel);
+   Glide_Consoles.Register_Module (Glide.Kernel);
+
+   --  Register all LI parsers
+
+   Src_Info.Register_LI_Handler (new Src_Info.ALI.ALI_Handler_Record, "ada");
 
    --  ??? Should have a cleaner way of initializing Log_File
 
@@ -301,4 +300,12 @@ begin
    end if;
 
    Gtk.Main.Main;
+
+   Save_Preferences
+     (Glide.Kernel,
+      String_Utils.Name_As_Directory (Dir.all) & "preferences");
+
+   Free (Home);
+   Free (Dir);
+   Free (Prefix);
 end Glide2;
