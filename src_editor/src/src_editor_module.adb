@@ -889,21 +889,29 @@ package body Src_Editor_Module is
             Text   : constant String  := Nth_Arg (Data, 4);
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
-            Child  : constant MDI_Child :=
-              Find_Editor (Kernel, Create (File, Kernel));
-            Editor : constant Source_Editor_Box :=
-              Source_Box (Get_Widget (Child)).Editor;
+            Child  : MDI_Child;
+            Editor : Source_Editor_Box;
          begin
-            if Get_Writable (Editor) then
-               Replace_Slice
-                 (Get_Buffer (Editor),
-                  Text,
-                  Editable_Line_Type (Line), Natural (Column),
-                  Before, After);
+            Child := Find_Editor (Kernel, Create (File, Kernel));
+
+            if Child /= null then
+               Editor := Source_Box (Get_Widget (Child)).Editor;
+
+               if Get_Writable (Editor) then
+                  Replace_Slice
+                    (Get_Buffer (Editor),
+                     Text,
+                     Editable_Line_Type (Line), Natural (Column),
+                     Before, After);
+               else
+                  Set_Error_Msg
+                    (Data,
+                     -("Attempting to edit a non-writable file: ") & File);
+               end if;
             else
-               Set_Error_Msg
-                 (Data, -("Attempting to edit a non-writable file: ") & File);
+               Set_Error_Msg (Data, -"file not open");
             end if;
+
          end;
 
       elsif Command = "get_line"
