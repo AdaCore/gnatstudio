@@ -43,16 +43,13 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
 with String_Utils;             use String_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
-with Projects.Registry;        use Projects.Registry;
 with VFS;                      use VFS;
 
 with Traces;                   use Traces;
@@ -109,7 +106,7 @@ package body Glide_Result_View is
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
       New_Category  : out Boolean;
@@ -123,7 +120,7 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Base_Name     : String;
-      Absolute_Name : String;
+      Absolute_Name : VFS.Virtual_File;
       Message       : String;
       Mark          : String;
       Line          : String;
@@ -132,11 +129,13 @@ package body Glide_Result_View is
       Highlighting  : Boolean;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
+   --  Base_Name can be left to the empty string, it will then be computed
+   --  automatically from Absolute_Name.
 
    procedure Add_Location
      (View      : access Result_View_Record'Class;
       Category  : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Column    : Positive;
       Length    : Natural;
@@ -177,7 +176,7 @@ package body Glide_Result_View is
 
    function Create_Mark
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Natural := 1;
       Length   : Natural := 0) return String;
@@ -187,7 +186,7 @@ package body Glide_Result_View is
 
    procedure Highlight_Line
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename           : String;
+      Filename           : VFS.Virtual_File;
       Line               : Natural := 1;
       Highlight_Category : String;
       Highlight          : Boolean := True);
@@ -201,13 +200,13 @@ package body Glide_Result_View is
 
    function Create_Mark
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename : String;
+      Filename : VFS.Virtual_File;
       Line     : Natural := 1;
       Column   : Natural := 1;
       Length   : Natural := 0) return String
    is
       Args : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(Filename),
+        (1 => new String'(Full_Name (Filename)),
          2 => new String'(Image (Line)),
          3 => new String'(Image (Column)),
          4 => new String'(Image (Length)));
@@ -224,13 +223,13 @@ package body Glide_Result_View is
 
    procedure Highlight_Line
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename           : String;
+      Filename           : VFS.Virtual_File;
       Line               : Natural := 1;
       Highlight_Category : String;
       Highlight          : Boolean := True)
    is
       Args    : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-        (1 => new String'(Filename),
+        (1 => new String'(Full_Name (Filename)),
          2 => new String'(Highlight_Category),
          3 => new String'(Line'Img));
       Command : GNAT.OS_Lib.String_Access;
@@ -336,8 +335,9 @@ package body Glide_Result_View is
       while File_Iter /= Null_Iter loop
          Highlight_Line
            (View.Kernel,
-            Get_String
-              (View.Tree.Model, File_Iter, Absolute_Name_Column),
+            Create
+              (Full_Filename => Get_String
+                 (View.Tree.Model, File_Iter, Absolute_Name_Column)),
             0, Category.all, False);
 
          Next (View.Tree.Model, File_Iter);
@@ -369,7 +369,7 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Base_Name     : String;
-      Absolute_Name : String;
+      Absolute_Name : VFS.Virtual_File;
       Message       : String;
       Mark          : String;
       Line          : String;
@@ -383,10 +383,13 @@ package body Glide_Result_View is
 
       Model : constant Gtk_Tree_Store := View.Tree.Model;
    begin
-      Set (Model, Iter, Base_Name_Column,
-           Glib.Convert.Locale_To_UTF8 (Base_Name));
-      Set (Model, Iter, Absolute_Name_Column,
-           Glib.Convert.Locale_To_UTF8 (Absolute_Name));
+      if Base_Name = "" then
+         Set (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
+      else
+         Set (Model, Iter, Base_Name_Column, Base_Name);
+      end if;
+
+      Set (Model, Iter, Absolute_Name_Column, Full_Name (Absolute_Name));
       Set (Model, Iter, Message_Column,
            Glib.Convert.Locale_To_UTF8 (Message));
       Set (Model, Iter, Mark_Column, Mark);
@@ -511,7 +514,7 @@ package body Glide_Result_View is
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
       New_Category  : out Boolean;
@@ -519,7 +522,6 @@ package body Glide_Result_View is
    is
       Category_UTF8 : constant String :=
         Glib.Convert.Locale_To_UTF8 (Category);
-      File_UTF8     : constant String := Glib.Convert.Locale_To_UTF8 (File);
 
    begin
       Category_Iter := Get_Iter_First (View.Tree.Model);
@@ -538,23 +540,23 @@ package body Glide_Result_View is
       if Category_Iter = Null_Iter then
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
-            Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
-                       False, View.Category_Pixbuf);
+            Fill_Iter (View, Category_Iter, Category, VFS.No_File,
+                       "", "", "", "", "", False, View.Category_Pixbuf);
             New_Category := True;
          else
             return;
          end if;
       end if;
 
-      if File = "" then
+      if File = VFS.No_File then
          return;
       end if;
 
       File_Iter := Children (View.Tree.Model, Category_Iter);
 
       while File_Iter /= Null_Iter loop
-         if Get_String
-           (View.Tree.Model, File_Iter, Absolute_Name_Column) = File_UTF8
+         if Get_String (View.Tree.Model, File_Iter, Absolute_Name_Column) =
+           Full_Name (File)
          then
             return;
          end if;
@@ -567,7 +569,7 @@ package body Glide_Result_View is
       if Create then
          Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
-           (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
+           (View, File_Iter, "", File, "", "", "", "", "",
             False, View.File_Pixbuf);
       end if;
 
@@ -581,7 +583,7 @@ package body Glide_Result_View is
    procedure Add_Location
      (View      : access Result_View_Record'Class;
       Category  : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Column    : Positive;
       Length    : Natural;
@@ -632,8 +634,9 @@ package body Glide_Result_View is
            (View.Kernel, File, Line, Column, Length);
       begin
          Fill_Iter
-           (View, Iter, Image (Line) & ":" & Image (Column),
-            File, Message, Output,
+           (View, Iter,
+            Image (Line) & ":" & Image (Column), File,
+            Message, Output,
             Image (Line), Image (Column), Image (Length), Highlight);
       end;
 
@@ -934,7 +937,7 @@ package body Glide_Result_View is
    procedure Insert
      (View          : access Result_View_Record'Class;
       Identifier    : String;
-      Source_File   : String;
+      Source_File   : VFS.Virtual_File;
       Source_Line   : Positive;
       Source_Column : Positive;
       Message       : String;
@@ -943,25 +946,10 @@ package body Glide_Result_View is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
-      if GNAT.OS_Lib.Is_Absolute_Path (Source_File) then
+      if GNAT.OS_Lib.Is_Absolute_Path (Full_Name (Source_File)) then
          Add_Location
            (View, Identifier, Source_File,
             Source_Line, Source_Column, Length, Highlight, Message);
-
-      else
-         declare
-            F : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (View.Kernel),
-               Filename        => Source_File,
-               Use_Source_Path => True,
-               Use_Object_Path => False);
-         begin
-            if GNAT.OS_Lib.Is_Absolute_Path (F) then
-               Add_Location
-                 (View, Identifier, F,
-                  Source_Line, Source_Column, Length, Highlight, Message);
-            end if;
-         end;
       end if;
    end Insert;
 
@@ -977,7 +965,8 @@ package body Glide_Result_View is
       Dummy_Iter : Gtk_Tree_Iter;
       Dummy      : Boolean;
    begin
-      Get_Category_File (View, Identifier, "", Iter, Dummy_Iter, Dummy);
+      Get_Category_File
+        (View, Identifier, VFS.No_File, Iter, Dummy_Iter, Dummy);
       Remove_Category_Or_File_Iter (Result_View (View), Iter);
    end Remove_Category;
 
@@ -1088,7 +1077,7 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
       Message       : String;
@@ -1104,8 +1093,8 @@ package body Glide_Result_View is
 
       pragma Unreferenced (Identifier);
    begin
-      Get_Category_File (View, Category,
-                         File, Category_Iter, File_Iter, Created, False);
+      Get_Category_File
+        (View, Category, File, Category_Iter, File_Iter, Created, False);
 
       if Category_Iter /= Null_Iter
         and then File_Iter /= Null_Iter

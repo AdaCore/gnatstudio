@@ -25,6 +25,7 @@ with Gtk.Box;                  use Gtk.Box;
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with VFS;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
@@ -48,7 +49,7 @@ package Glide_Result_View is
    procedure Insert
      (View          : access Result_View_Record'Class;
       Identifier    : String;
-      Source_File   : String;
+      Source_File   : VFS.Virtual_File;
       Source_Line   : Positive;
       Source_Column : Positive;
       Message       : String;
@@ -78,7 +79,7 @@ package Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
       Message       : String;
