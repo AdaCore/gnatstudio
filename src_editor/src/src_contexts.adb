@@ -1254,7 +1254,7 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child);
+      Raise_Child (Child, False);
       Minimize_Child (Child, False);
       return Auxiliary_Search
         (Context, Editor,
@@ -1287,7 +1287,7 @@ package body Src_Contexts is
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child);
+      Raise_Child (Child, False);
       Minimize_Child (Child, False);
 
       --  Test whether the current context text contains the search string.
