@@ -291,6 +291,35 @@ package body Glide_Kernel is
       Next (Iterator, Kernel.Source_Info_List);
    end Next;
 
+   --------------------------------
+   -- Find_Ancestor_Dependencies --
+   --------------------------------
+
+   procedure Find_Ancestor_Dependencies
+     (Kernel          : access Kernel_Handle_Record;
+      Source_Filename : String;
+      Iterator        : out Dependency_Iterator;
+      Project         : Prj.Project_Id := Prj.No_Project) is
+   begin
+      Find_Ancestor_Dependencies
+        (Get_Project (Kernel), Source_Filename,
+         Kernel.Source_Info_List, Iterator, Project,
+         Include_Self => False,
+         Predefined_Source_Path => Get_Predefined_Source_Path (Kernel),
+         Predefined_Object_Path => Get_Predefined_Object_Path (Kernel));
+   end Find_Ancestor_Dependencies;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Kernel   : access Kernel_Handle_Record;
+      Iterator : in out Src_Info.Queries.Dependency_Iterator) is
+   begin
+      Next (Iterator, Kernel.Source_Info_List);
+   end Next;
+
    ----------------------------
    -- Reset_Source_Info_List --
    ----------------------------

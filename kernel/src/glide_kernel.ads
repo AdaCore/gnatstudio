@@ -113,8 +113,22 @@ package Glide_Kernel is
    --  the list of LI files.
 
    procedure Next
-     (Kernel : access Kernel_Handle_Record;
+     (Kernel   : access Kernel_Handle_Record;
       Iterator : in out Src_Info.Queries.Entity_Reference_Iterator);
+   --  See Src_Info.Queries.
+
+   procedure Find_Ancestor_Dependencies
+     (Kernel          : access Kernel_Handle_Record;
+      Source_Filename : String;
+      Iterator        : out Src_Info.Queries.Dependency_Iterator;
+      Project         : Prj.Project_Id := Prj.No_Project);
+   --  See Src_Info.Queries.
+   --  This function needs to be in this package, since it requires access to
+   --  the list of LI files.
+
+   procedure Next
+     (Kernel   : access Kernel_Handle_Record;
+      Iterator : in out Src_Info.Queries.Dependency_Iterator);
    --  See Src_Info.Queries.
 
    procedure Save_Desktop
