@@ -1,7 +1,7 @@
----------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -67,7 +67,8 @@ package body Commands.Console is
    -- Execute --
    -------------
 
-   function Execute (Command : access Console_Command) return Boolean is
+   function Execute
+     (Command : access Console_Command) return Command_Return_Type is
    begin
       if Command.Text /= null then
          Insert (Command.Kernel,
@@ -78,7 +79,7 @@ package body Commands.Console is
 
       Command_Finished (Command, True);
 
-      return True;
+      return Success;
    end Execute;
 
    ----------
@@ -89,5 +90,15 @@ package body Commands.Console is
    begin
       Free (Command.Text);
    end Free;
+
+   ----------
+   -- Undo --
+   ----------
+
+   function Undo (Command : access Console_Command) return Boolean is
+      pragma Unreferenced (Command);
+   begin
+      return True;
+   end Undo;
 
 end Commands.Console;
