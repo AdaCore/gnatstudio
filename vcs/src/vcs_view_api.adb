@@ -38,7 +38,7 @@ with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;        use Glide_Kernel.Project;
 with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
-with Glide_Result_View;           use Glide_Result_View;
+with GPS.Location_View;           use GPS.Location_View;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with String_List_Utils;           use String_List_Utils;
@@ -1410,6 +1410,7 @@ package body VCS_View_API is
       end loop;
 
       Free (Files);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1606,6 +1607,7 @@ package body VCS_View_API is
       Get_Status (Ref, Files);
 
       String_List.Free (Files);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1623,6 +1625,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
    begin
       On_Log_Action (Context, Remove);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -1733,7 +1736,6 @@ package body VCS_View_API is
 
       Update (Ref, Files);
       Get_Status (Ref, Files);
-
       String_List.Free (Files);
 
    exception
@@ -1768,6 +1770,7 @@ package body VCS_View_API is
       Open_Explorer (Kernel, Context);
       Get_Status (Get_Current_Ref (Context), Files);
       String_List.Free (Files);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -2216,7 +2219,6 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
    begin
       Get_Status_Project (Context, False);
    exception
@@ -2234,7 +2236,6 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-
    begin
       Get_Status_Project (Context, True);
    exception
@@ -2253,7 +2254,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2440,6 +2441,7 @@ package body VCS_View_API is
 
       Free (Revision);
       String_List.Free (Files);
+
    exception
       when E : others =>
          Trace (Exception_Handle,
