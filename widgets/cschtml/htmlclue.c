@@ -37,8 +37,10 @@ static void
 destroy (HTMLObject *o)
 {
 	HTMLObject *p;
+        HTMLObject *next;
 
-	for (p = HTML_CLUE (o)->head; p != NULL; p = p->next) {
+	for (p = HTML_CLUE (o)->head; p != NULL; p = next) {
+                next = p->next;
 		html_object_destroy (p);
 	}
 	HTML_CLUE (o)->head = NULL;
