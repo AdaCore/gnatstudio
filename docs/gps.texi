@@ -4753,7 +4753,7 @@ for the second command. When run, the second command will
 automatically display all matching references in the location window.
 
 @smallexample
-GPS> create_entity entity_name file_name.adb
+GPS> Entity entity_name file_name.adb
 <Entity_0x09055790>
 GPS> Entity.find_all_refs <Entity_0x09055790>
 @end smallexample
@@ -4802,7 +4802,7 @@ course you can run these commands again to get a new reference.
 @c all references to that entity in the location window
 @c 
 @c @smallexample
-@c >>> e=GPS.create_entity ("entity_name", "file_name.adb")
+@c >>> e=GPS.Entity ("entity_name", "file_name.adb")
 @c >>> e.find_all_refs()
 @c @end smallexample
 @c 
