@@ -72,10 +72,4 @@ package Vdiff_Utils is
    --  Callback for the value_changed signal on the second
    --  scrolled window of a Vdiff_Access.
 
-private
-
-   Num_Line_Sep : constant := 3;
-   --  Number of empty lines separating each chunk, in Fill_Diff_List
-   --  functions.
-
 end Vdiff_Utils;
