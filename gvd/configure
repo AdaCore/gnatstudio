@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.12 
+# From configure.in Revision: 1.13 
 #############################################################
 #
 #  Checking for Gnat
@@ -1577,7 +1577,7 @@ opsysfile="'\"system/${opsys}.h\"'"
 
 
 
-# On AIX machines, we must use -mminimal-toc or we won't be able to link
+# On AIX machines, we must use -bbigtoc or we won't be able to link
 TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 case "${host}" in

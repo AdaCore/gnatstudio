@@ -152,7 +152,7 @@ opsysfile="'\"system/${opsys}.h\"'"
 
 AC_SUBST(opsysfile)
 
-# On AIX machines, we must use -mminimal-toc or we won't be able to link
+# On AIX machines, we must use -bbigtoc or we won't be able to link
 TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 case "${host}" in
