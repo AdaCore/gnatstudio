@@ -765,16 +765,17 @@ package body Debugger.Gdb is
             null;
       end;
 
-      Close (Get_Descriptor (Get_Process (Debugger)).all);
+      begin
+         Close (Get_Descriptor (Get_Process (Debugger)).all);
+      exception
+         when Process_Died =>
+            null;
+      end;
+
       Free (Debugger.Process);
       Free (Debugger.Remote_Host);
       Free (Debugger.Remote_Target);
       Free (Debugger.Remote_Protocol);
-
-      exception
-         when Process_Died =>
-            Close (Get_Descriptor (Get_Process (Debugger)).all);
-            Free (Debugger.Process);
    end Close;
 
    -----------------------
@@ -788,6 +789,10 @@ package body Debugger.Gdb is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
+      Free (Debugger.Remote_Target);
+      Free (Debugger.Remote_Protocol);
+      Debugger.Remote_Target := new String' (Target);
+      Debugger.Remote_Protocol := new String' (Protocol);
    end Connect_To_Target;
 
    --------------
