@@ -30,39 +30,67 @@ with Gdk.Event;
 with Gdk.Window;
 with Gtkada.Canvas;
 
-with Src_Info.Queries;
+with Src_Info;
 with Glide_Kernel;
+with Browsers.Canvas;
 
 package Browsers.Dependency_Items is
 
-   type Dependency_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   ----------------
+   -- File items --
+   ----------------
+   --  These items represent source files from the application.
+
+   type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
      with private;
-   type Dependency_Item is access all Dependency_Item_Record'Class;
+   type File_Item is access all File_Item_Record'Class;
 
    procedure Gtk_New
-     (Item : out Dependency_Item;
+     (Item : out File_Item;
       Win  : Gdk.Window.Gdk_Window;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Dep  : Src_Info.Queries.Dependency);
+      Dep  : Src_Info.Source_File);
    --  Create a new dependency item that represents Dep.
 
    procedure Initialize
-     (Item : access Dependency_Item_Record'Class;
+     (Item : access File_Item_Record'Class;
       Win  : Gdk.Window.Gdk_Window;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Dep  : Src_Info.Queries.Dependency);
+      Dep  : Src_Info.Source_File);
    --  Internal initialization function
 
    procedure On_Button_Click
-     (Item  : access Dependency_Item;
+     (Item  : access File_Item;
       Event : Gdk.Event.Gdk_Event_Button);
    --  Called when the item is clicked on.
 
+   ----------------------
+   -- Dependency links --
+   ----------------------
+
+   type Dependency_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
+     with private;
+   type Dependency_Link is access all Dependency_Link_Record'Class;
+
+   procedure Gtk_New
+     (Link : out Dependency_Link;
+      Dep  : Src_Info.Dependency_Info);
+   --  Create a new link.
+
 private
-   type Dependency_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
-     with record
-        Dep    : Src_Info.Queries.Dependency;
-        Kernel : Glide_Kernel.Kernel_Handle;
-     end record;
+   type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   with record
+      Source : Src_Info.Source_File;
+      Kernel : Glide_Kernel.Kernel_Handle;
+
+      Browser : Browsers.Canvas.Glide_Browser := null;
+      --  Pointer to the parent browser. Note that this is initialized lazily
+      --  the first time we need to access this browser.
+   end record;
+
+   type Dependency_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
+   with record
+      Dep : Src_Info.Dependency_Info;
+   end record;
 
 end Browsers.Dependency_Items;

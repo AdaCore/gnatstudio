@@ -39,32 +39,35 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
 
 with Src_Info;                 use Src_Info;
-with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Browsers;    use Glide_Kernel.Browsers;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
+with Browsers.Canvas;          use Browsers.Canvas;
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Browsers.Dependency_Items is
 
    procedure Update_Display
-     (Item : access Dependency_Item_Record'Class; Win : Gdk_Window);
+     (Item : access File_Item_Record'Class; Win : Gdk_Window);
    --  Update the display of the item
+
+   procedure Ensure_Browser_Link (Item : access File_Item_Record'Class);
+   --  Make sure that the link to the parent browser has been initialized.
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Item : out Dependency_Item;
+     (Item : out File_Item;
       Win  : Gdk_Window;
       Kernel : access Kernel_Handle_Record'Class;
-      Dep  : Dependency)
+      Dep  : Source_File)
    is
    begin
-      Item := new Dependency_Item_Record;
+      Item := new File_Item_Record;
       Initialize (Item, Win, Kernel, Dep);
    end Gtk_New;
 
@@ -73,48 +76,71 @@ package body Browsers.Dependency_Items is
    ----------------
 
    procedure Initialize
-     (Item : access Dependency_Item_Record'Class;
+     (Item : access File_Item_Record'Class;
       Win  : Gdk_Window;
       Kernel : access Kernel_Handle_Record'Class;
-      Dep  : Dependency)
+      Dep  : Source_File)
    is
       use type Gdk_Window;
    begin
       pragma Assert (Win /= null);
-      Item.Dep := Dep;
+      Item.Source := Dep;
       Item.Kernel := Kernel_Handle (Kernel);
       Update_Display (Item, Win);
    end Initialize;
+
+   -------------------------
+   -- Ensure_Browser_Link --
+   -------------------------
+
+   procedure Ensure_Browser_Link
+     (Item : access File_Item_Record'Class)
+   is
+      Browser : MDI_Child;
+   begin
+      if Item.Browser /= null then
+         return;
+      end if;
+
+      --  Note: We do not need to check (for now) that browser we find is
+      --  indeed the one that contains the item, since there can be only one
+      --  browser that contains Dependency_Items.
+      Browser := Open_Browser (Item.Kernel, Dependency_Browser);
+      pragma Assert (Browser /= null);
+
+      Item.Browser := Glide_Browser (Get_Widget (Browser));
+   end Ensure_Browser_Link;
 
    --------------------
    -- Update_Display --
    --------------------
 
    procedure Update_Display
-     (Item : access Dependency_Item_Record'Class; Win : Gdk_Window)
+     (Item : access File_Item_Record'Class; Win : Gdk_Window)
    is
       Margin : constant := 2;
 
-      Str : constant String := Get_Filename (Item.Dep);
+      Str : constant String := Get_Source_Filename (Item.Source);
       Str2 : String_Access;
       Font : Gdk_Font := Get_Pref (Item.Kernel, Browsers_Link_Font);
       GC   : Gdk_GC;
       Width, Height : Gint;
 
-      Browser : MDI_Child := Open_Browser (Item.Kernel, Dependency_Browser);
       List : LI_File_List;
 
    begin
+      Ensure_Browser_Link (Item);
+
       Gdk_New (GC, Win);
       Set_Foreground (GC, White (Get_Default_Colormap));
 
       List := Get_Source_Info_List (Item.Kernel);
       Get_Unit_Name
-        (List,
+        (Item.Source,
+         List,
          Get_Project_View (Item.Kernel),
          Get_Source_Path (Item.Kernel),
          Get_Object_Path (Item.Kernel),
-         Item.Dep,
          Str2);
 
       Width  := String_Width (Font, Str);
@@ -140,10 +166,10 @@ package body Browsers.Dependency_Items is
          Height => Height);
 
       Draw_Shadow
-        (Style       => Get_Style (Get_Widget (Browser)),
+        (Style       => Get_Style (Item.Browser),
          Window      => Pixmap (Item),
          State_Type  => State_Normal,
-         Shadow_Type => Shadow_Etched_Out,
+         Shadow_Type => Shadow_Out,
          X           => 0,
          Y           => 0,
          Width       => Width,
@@ -185,10 +211,22 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure On_Button_Click
-     (Item  : access Dependency_Item;
+     (Item  : access File_Item;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
       null;
    end On_Button_Click;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Link : out Dependency_Link;
+      Dep  : Src_Info.Dependency_Info) is
+   begin
+      Link := new Dependency_Link_Record;
+      Link.Dep := Dep;
+   end Gtk_New;
 
 end Browsers.Dependency_Items;
