@@ -35,6 +35,7 @@ with Items;               use Items;
 with Odd.Process;         use Odd.Process;
 with Debugger;            use Debugger;
 with Odd.Dialogs;         use Odd.Dialogs;
+with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 with Ada.Text_IO;         use Ada.Text_IO;
 
@@ -75,6 +76,8 @@ package body Odd.Menus is
      (Gtk_Check_Menu_Item_Record, Odd_Canvas);
    package Item_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Item_Record);
+   package Item_Canvas_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Menu_Item_Record, Odd_Canvas);
 
    ----------------------
    -- local procedures --
@@ -89,6 +92,11 @@ package body Odd.Menus is
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Canvas : Odd_Canvas);
    --  Callback for the "detect aliases" contextual menu item.
+
+   procedure Display_Expression
+     (Item   : access Gtk_Menu_Item_Record'Class;
+      Canvas : Odd_Canvas);
+   --  Popup a dialog to display any expression in the canvas
 
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
@@ -147,6 +155,20 @@ package body Odd.Menus is
 
       Refresh_Canvas (Canvas);
    end Change_Detect_Aliases;
+
+   ------------------------
+   -- Display_Expression --
+   ------------------------
+
+   procedure Display_Expression
+     (Item   : access Gtk_Menu_Item_Record'Class;
+      Canvas : Odd_Canvas)
+   is
+      Process : Debugger_Process_Tab :=
+        Debugger_Process_Tab (Get_Process (Canvas));
+   begin
+      On_Display_Expression1_Activate (Process.Window);
+   end Display_Expression;
 
    ---------------------
    -- Update_Variable --
@@ -256,6 +278,7 @@ package body Odd.Menus is
      (Canvas : access Odd_Canvas_Record'Class) return Gtk.Menu.Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
+      Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
 
    begin
@@ -267,6 +290,17 @@ package body Odd.Menus is
          --  The menu has not been created yet.
 
          Gtk_New (Menu);
+
+         Gtk_New (Mitem, Label => -"Display Expression...");
+         Append (Menu, Mitem);
+         Item_Canvas_Handler.Connect
+           (Mitem, "activate",
+            Item_Canvas_Handler.To_Marshaller (Display_Expression'Access),
+            Odd_Canvas (Canvas));
+
+         Gtk_New (Mitem);
+         Append (Menu, Mitem);
+
          Gtk_New (Check, Label => -"Align On Grid");
          Set_Always_Show_Toggle (Check, True);
          Set_Active (Check, Get_Align_On_Grid (Canvas));
