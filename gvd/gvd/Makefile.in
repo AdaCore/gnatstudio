@@ -33,6 +33,13 @@ $(EXEC): force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
 	  -largs $(LINK_FLAGS)
 
+libgvd:
+	rm $(EXEC)
+	gcc -c $(ALL_CFLAGS) gvd-api.adb
+	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E -n \
+	  -largs --LINK=true
+	ar r libgvd.a *.o ../gnat/*.o ../pixmaps/*.o
+
 install: $(EXEC)
 	$(MKDIR) $(bindir)
 	$(STRIP) $(EXEC)
