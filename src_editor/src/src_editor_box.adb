@@ -833,12 +833,9 @@ package body Src_Editor_Box is
       --  0. It is more natural to start from one, so the Line and Column
       --  number displayed are incremented by 1 to start from 1.
 
-      declare
-         S : constant String :=
-           Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column));
-      begin
-         Set_Text (Box.Cursor_Loc_Label, S);
-      end;
+      Set_Text
+        (Box.Cursor_Loc_Label,
+         Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column)));
    end Show_Cursor_Position;
 
    -------------------------------------
@@ -977,7 +974,7 @@ package body Src_Editor_Box is
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
       --  ??? Should compute the size based on the font
-      Set_Size_Request (Frame, 60, -1);
+      Set_Size_Request (Frame, 100, -1);
       Pack_Start (Hbox, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
