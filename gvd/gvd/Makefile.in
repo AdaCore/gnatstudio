@@ -11,7 +11,7 @@ prefix          = @prefix@
 bindir          = $(prefix)/bin
 
 CFLAGS     = -g -O2 -funroll-loops
-C_OBJECTS  = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o
+C_OBJECTS  = ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o
 GTK_LIBS   = @GTK_LIBS@
 GTK_STATIC_LIBS = @GTK_STATIC_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
