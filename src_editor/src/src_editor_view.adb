@@ -1114,8 +1114,7 @@ package body Src_Editor_View is
 
          Color := Get_Pref (Source.Kernel, Current_Block_Color);
          Set_Foreground (Source.Current_Block_GC, Color);
-         Source.Highlight_Blocks :=
-           not Equal (Color, White (Get_Default_Colormap));
+         Source.Highlight_Blocks := Get_Pref (Kernel, Block_Highlighting);
       end if;
 
    exception
