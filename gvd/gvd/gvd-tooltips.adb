@@ -199,9 +199,8 @@ package body GVD.Tooltips is
          Height,
          Tooltip.Area);
 
-      if Width /= 0 and then Height /= 0 then
+      if Pixmap /= null and then Width /= 0 and then Height /= 0 then
          Get_Best (Visual);
-
          Gdk_New
            (Window_Attr,
             Height => Height,
@@ -209,14 +208,12 @@ package body GVD.Tooltips is
             Title => "",
             Window_Type => Window_Temp,
             Visual => Visual);
-
          Gdk.Window.Gdk_New
            (Tooltip.Display_Window,
             Tooltip.Parent_Window,
             Window_Attr,
             Wa_Cursor and Wa_Wmclass
             and Wa_Colormap and Wa_Visual);
-
          Set_Back_Pixmap (Tooltip.Display_Window, Pixmap, False);
          Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
          Move (Tooltip.Display_Window, X + 10, Y + 10);
