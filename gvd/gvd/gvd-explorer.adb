@@ -993,7 +993,7 @@ package body GVD.Explorer is
       if Explorer.Current_File_Node /= null then
          Data := Row_Data_Pkg.Node_Get_Row_Data
            (Explorer, Explorer.Current_File_Node);
-         Current := new String' (Data.Extension);
+         Current := new String'(Data.Extension);
          Explorer.Current_File_Node := null;
       end if;
 

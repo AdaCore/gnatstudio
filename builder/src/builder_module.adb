@@ -191,9 +191,9 @@ package body Builder_Module is
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
 
             Result := new Argument_List'
-              ((new String' ("-d"),
-                new String' ("-P" & Project),
-                new String' (File)) & Vars.all);
+              ((new String'("-d"),
+                new String'("-P" & Project),
+                new String'(File)) & Vars.all);
 
          when Make_Syntax =>
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
@@ -202,12 +202,12 @@ package body Builder_Module is
                Lang         : String := Get_Language_From_File
                  (Get_Language_Handler (Kernel), File);
                List         : constant Argument_List :=
-                 ((new String' ("-s"),
-                   new String' ("-C"),
-                   new String' (Dir_Name (Project)),
-                   new String' ("-f"),
-                   new String' ("Makefile." & Base_Name (Project, ".gpr")),
-                   new String' ("build")) & Vars.all);
+                 ((new String'("-s"),
+                   new String'("-C"),
+                   new String'(Dir_Name (Project)),
+                   new String'("-f"),
+                   new String'("Makefile." & Base_Name (Project, ".gpr")),
+                   new String'("build")) & Vars.all);
 
             begin
                Lower_Case (Lang);
@@ -225,19 +225,19 @@ package body Builder_Module is
                      if Ada_Compiler = "gnatmake" then
                         Result := new Argument_List'
                           (List &
-                           new String' ("ADA_SOURCES=" & Base_Name (File)) &
-                           new String' ("ADAFLAGS=-d"));
+                           new String'("ADA_SOURCES=" & Base_Name (File)) &
+                           new String'("ADAFLAGS=-d"));
                      else
                         Result := new Argument_List'
                           (List &
-                           new String' ("ADA_SOURCES=" & Base_Name (File)) &
-                           new String' ("ADAFLAGS=-d") &
-                           new String' ("GNATMAKE=" & Ada_Compiler));
+                           new String'("ADA_SOURCES=" & Base_Name (File)) &
+                           new String'("ADAFLAGS=-d") &
+                           new String'("GNATMAKE=" & Ada_Compiler));
                      end if;
                   end;
 
                else
-                  Result := new Argument_List' (List);
+                  Result := new Argument_List'(List);
                end if;
             end;
       end case;
@@ -336,7 +336,7 @@ package body Builder_Module is
 
             if Prj = No_Project or else Project_Name = "" then
                Args := new Argument_List'
-                 (1 => new String' (File_Information
+                 (1 => new String'(File_Information
                          (File_Selection_Context_Access (Context))));
             else
                Args := Compute_Arguments
@@ -357,7 +357,7 @@ package body Builder_Module is
          if Get_Project_File_Name (K) = "" then
             case Syntax is
                when GNAT_Syntax =>
-                  Args := new Argument_List' (1 => new String' (Data.File));
+                  Args := new Argument_List'(1 => new String'(Data.File));
 
                when Make_Syntax =>
                   Console.Insert
@@ -382,12 +382,12 @@ package body Builder_Module is
 
       case Syntax is
          when GNAT_Syntax =>
-            Cmd := new String' (Get_Attribute_Value
+            Cmd := new String'(Get_Attribute_Value
               (Project_View, Compiler_Command_Attribute,
                Ide_Package, Default => "gnatmake", Index => "Ada"));
 
          when Make_Syntax =>
-            Cmd := new String' ("make");
+            Cmd := new String'("make");
       end case;
 
       Console.Insert (K, Cmd.all, Highlight_Sloc => False, Add_LF => False);
@@ -767,7 +767,7 @@ package body Builder_Module is
       Push_State (Kernel, Processing);
       Id := Xref_Timeout.Add
         (Timeout_Xref, Timeout_Compute_Xref'Access,
-         new Compute_Xref_Data' (Kernel, new LI_Handler_Iterator_Access, 0),
+         new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
          Timeout_Xref_Destroy'Access);
 
    exception

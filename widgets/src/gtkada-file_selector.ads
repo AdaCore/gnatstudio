@@ -270,7 +270,7 @@ private
    --  the Filter_Show_All filter.
 
    type File_Selector_Window_Record is new Gtk_Window_Record with record
-      Current_Directory    : String_Access := new String' ("");
+      Current_Directory    : String_Access := new String'("");
       Current_Directory_Id : Dir_Type_Access := new Dir_Type;
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with

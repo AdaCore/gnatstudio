@@ -266,7 +266,7 @@ package body Gtkada.File_Selector is
    begin
       pragma Assert (File_Selector /= null);
 
-      Filter_A.Label := new String' (-"All files");
+      Filter_A.Label := new String'(-"All files");
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
@@ -310,7 +310,7 @@ package body Gtkada.File_Selector is
    begin
       pragma Assert (File_Selector /= null);
 
-      Filter_A.Label := new String' (-"All files");
+      Filter_A.Label := new String'(-"All files");
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
@@ -625,9 +625,9 @@ package body Gtkada.File_Selector is
          Free (Win.Current_Directory);
 
          if Dir = -"Drives" then
-            Win.Current_Directory := new String' ("");
+            Win.Current_Directory := new String'("");
          else
-            Win.Current_Directory := new String' (Normalize_Pathname (Dir));
+            Win.Current_Directory := new String'(Normalize_Pathname (Dir));
          end if;
 
          --  If we are currently moving through the history,
@@ -1320,7 +1320,7 @@ package body Gtkada.File_Selector is
          State_Normal,
          Gdk_Color'(Get_Foreground (Style, State_Insensitive)));
 
-      File_Selector_Window.Home_Directory := new String' (Root);
+      File_Selector_Window.Home_Directory := new String'(Root);
 
       Gtk_New
         (File_Selector_Window.Explorer_Tree,

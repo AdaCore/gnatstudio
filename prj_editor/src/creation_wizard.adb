@@ -355,17 +355,17 @@ package body Creation_Wizard is
       Current : Natural := Languages'First;
    begin
       if Get_Active (Wiz.C_Support) then
-         Languages (Current) := new String' (C_String);
+         Languages (Current) := new String'(C_String);
          Current := Current + 1;
       end if;
 
       if Get_Active (Wiz.Cpp_Support) then
-         Languages (Current) := new String' (Cpp_String);
+         Languages (Current) := new String'(Cpp_String);
          Current := Current + 1;
       end if;
 
       if Get_Active (Wiz.Ada_Support) then
-         Languages (Current) := new String' (Ada_String);
+         Languages (Current) := new String'(Ada_String);
          Current := Current + 1;
       end if;
 

@@ -163,11 +163,11 @@ procedure GPS is
 
       if Prefix.all = "" then
          Free (Prefix);
-         Prefix := new String' (Executable_Location);
+         Prefix := new String'(Executable_Location);
 
          if Prefix.all = "" then
             Free (Prefix);
-            Prefix := new String' (GVD.Prefix);
+            Prefix := new String'(GVD.Prefix);
          end if;
       end if;
 
@@ -179,7 +179,7 @@ procedure GPS is
            (String_Utils.Name_As_Directory (Home.all) & ".gps");
       else
          --  Default to /
-         Dir := new String' (Format_Pathname ("/.gps"));
+         Dir := new String'(Format_Pathname ("/.gps"));
       end if;
 
       begin
@@ -389,7 +389,7 @@ procedure GPS is
             exit when Last = 0;
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               Project_Name := new String' (Str (1 .. Last));
+               Project_Name := new String'(Str (1 .. Last));
                exit;
             end if;
          end loop;

@@ -577,7 +577,7 @@ package body Src_Info.CPP is
         (HI, Project, Recursive,
          Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
-      HI.List_Filename := new String' (Handler.DB_Dir.all & "gps_list");
+      HI.List_Filename := new String'(Handler.DB_Dir.all & "gps_list");
 
       --  If there is at least one source file, make sure the database
       --  directory exists.
@@ -886,7 +886,7 @@ package body Src_Info.CPP is
       if Dir = "" then
          Free (Handler.DB_Dir);
          Free (Handler.Xrefs);
-         Handler.DB_Dir := new String' ("");
+         Handler.DB_Dir := new String'("");
          Handler.Xrefs := Empty_Xref_Pool;
          return;
       end if;
@@ -900,7 +900,7 @@ package body Src_Info.CPP is
             Free (Handler.DB_Dir);
          end if;
 
-         Handler.DB_Dir := new String' (Dir);
+         Handler.DB_Dir := new String'(Dir);
 
          Load (Handler.Xrefs, Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
       end if;

@@ -31,18 +31,18 @@ package body Generic_List is
       L2 : List_Node;
    begin
       if L.First = null then
-         L.First := new List_Node' (Null_Node);
+         L.First := new List_Node'(Null_Node);
       end if;
 
       L2 := L.First.all;
 
       if L.Last = null then
-         L.Last := new List_Node' (Null_Node);
+         L.Last := new List_Node'(Null_Node);
       end if;
 
       L.First.all :=
         new List_Node_Record'
-        (Element => new Data_Type' (Item),
+        (Element => new Data_Type'(Item),
          Next    => L2);
 
       if L2 = null then
@@ -58,11 +58,11 @@ package body Generic_List is
       Current : List_Node;
    begin
       if L.First = null then
-         L.First := new List_Node' (Null_Node);
+         L.First := new List_Node'(Null_Node);
       end if;
 
       if L.Last = null then
-         L.Last := new List_Node' (Null_Node);
+         L.Last := new List_Node'(Null_Node);
       end if;
 
       Current :=  L.First.all;
@@ -81,7 +81,7 @@ package body Generic_List is
          end if;
 
          Current.Next := new List_Node_Record'
-           (Element => new Data_Type' (Item),
+           (Element => new Data_Type'(Item),
             Next    => Current.Next);
       end if;
    end Prepend;
@@ -95,22 +95,22 @@ package body Generic_List is
       Item : Data_Type) is
    begin
       if L.Last = null then
-         L.Last := new List_Node' (Null_Node);
+         L.Last := new List_Node'(Null_Node);
       end if;
 
       if L.First = null then
-         L.First := new List_Node' (Null_Node);
+         L.First := new List_Node'(Null_Node);
       end if;
 
       if L.Last.all = null then
          L.First.all := new List_Node_Record'
-           (Element => new Data_Type' (Item),
+           (Element => new Data_Type'(Item),
             Next    => null);
          L.Last.all := L.First.all;
 
       else
          L.Last.all.Next := new List_Node_Record'
-           (Element => new Data_Type' (Item),
+           (Element => new Data_Type'(Item),
             Next    => null);
          L.Last.all := L.Last.all.Next;
       end if;
@@ -122,11 +122,11 @@ package body Generic_List is
       Item : Data_Type) is
    begin
       if L.Last = null then
-         L.Last := new List_Node' (Null_Node);
+         L.Last := new List_Node'(Null_Node);
       end if;
 
       if L.First = null then
-         L.First := new List_Node' (Null_Node);
+         L.First := new List_Node'(Null_Node);
       end if;
 
       if Node = null then
@@ -135,7 +135,7 @@ package body Generic_List is
          Append (L, Item);
       else
          Node.Next := new List_Node_Record'
-           (Element => new Data_Type' (Item),
+           (Element => new Data_Type'(Item),
             Next    => Node.Next);
       end if;
    end Append;
@@ -186,11 +186,11 @@ package body Generic_List is
       F2 : List_Node_Access := L2.Last;
    begin
       if L1.Last = null then
-         L1.Last := new List_Node' (Null_Node);
+         L1.Last := new List_Node'(Null_Node);
       end if;
 
       if L1.First = null then
-         L1.First := new List_Node' (Null_Node);
+         L1.First := new List_Node'(Null_Node);
       end if;
 
       if Is_Empty (L1) then
@@ -459,7 +459,7 @@ package body Generic_List is
       else
          Free (Node.Element.all);
          Free_Element (Node.Element);
-         Node.Element := new Data_Type' (D);
+         Node.Element := new Data_Type'(D);
       end if;
    end Set_Data;
 

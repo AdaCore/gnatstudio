@@ -97,7 +97,7 @@ package body Custom_Module is
                      Free (Current_Title);
                   end if;
 
-                  Current_Title := new String' (Current_Child.Value.all);
+                  Current_Title := new String'(Current_Child.Value.all);
                end if;
 
                if Current_Child.Tag.all = "Action" then

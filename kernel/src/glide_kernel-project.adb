@@ -165,23 +165,23 @@ package body Glide_Kernel.Project is
             if Source_Path then
                Tmp := Handle.Predefined_Source_Path;
                Handle.Predefined_Source_Path :=
-                 new String' (Handle.Predefined_Source_Path.all & ":.");
+                 new String'(Handle.Predefined_Source_Path.all & ":.");
 
             else
                Tmp := Handle.Predefined_Object_Path;
                Handle.Predefined_Object_Path :=
-                 new String' (Handle.Predefined_Object_Path.all & ":.");
+                 new String'(Handle.Predefined_Object_Path.all & ":.");
             end if;
 
          elsif Source_Path then
             Tmp := Handle.Predefined_Source_Path;
             Handle.Predefined_Source_Path :=
-              new String' (Handle.Predefined_Source_Path.all & ":" & S);
+              new String'(Handle.Predefined_Source_Path.all & ":" & S);
 
          else
             Tmp := Handle.Predefined_Object_Path;
             Handle.Predefined_Object_Path :=
-              new String' (Handle.Predefined_Object_Path.all & ":" & S);
+              new String'(Handle.Predefined_Object_Path.all & ":" & S);
          end if;
 
          Free (Tmp);
@@ -206,17 +206,17 @@ package body Glide_Kernel.Project is
       end if;
 
       Free (Handle.Gnatls_Cache);
-      Handle.Gnatls_Cache := new String' (Gnatls);
+      Handle.Gnatls_Cache := new String'(Gnatls);
 
       Free (Handle.Predefined_Source_Path);
       Free (Handle.Predefined_Object_Path);
-      Handle.Predefined_Source_Path := new String' ("");
-      Handle.Predefined_Object_Path := new String' ("");
+      Handle.Predefined_Source_Path := new String'("");
+      Handle.Predefined_Object_Path := new String'("");
 
       Path := Locate_Exec_On_Path (Gnatls);
 
       if Path /= null then
-         Args (1) := new String' ("-v");
+         Args (1) := new String'("-v");
          Non_Blocking_Spawn
            (Fd, Path.all, Args, Buffer_Size => 0, Err_To_Out => True);
          Free (Path);

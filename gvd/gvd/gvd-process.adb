@@ -613,7 +613,7 @@ package body GVD.Process is
       Process.Filters :=
         new Regexp_Filter_List_Elem'
           (Filter => Filter,
-           Regexp => new Pattern_Matcher' (Regexp),
+           Regexp => new Pattern_Matcher'(Regexp),
            Next   => Process.Filters);
    end Add_Regexp_Filter;
 
@@ -1542,18 +1542,18 @@ package body GVD.Process is
       Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
       Process.Descriptor.Debugger := Kind;
-      Process.Descriptor.Remote_Host := new String' (Remote_Host);
+      Process.Descriptor.Remote_Host := new String'(Remote_Host);
 
       if Remote_Protocol = "" then
-         Process.Descriptor.Remote_Target := new String' ("");
-         Process.Descriptor.Protocol := new String' ("");
+         Process.Descriptor.Remote_Target := new String'("");
+         Process.Descriptor.Protocol := new String'("");
       else
-         Process.Descriptor.Remote_Target := new String' (Remote_Target);
-         Process.Descriptor.Protocol := new String' (Remote_Protocol);
+         Process.Descriptor.Remote_Target := new String'(Remote_Target);
+         Process.Descriptor.Protocol := new String'(Remote_Protocol);
       end if;
 
-      Process.Descriptor.Program := new String' (Executable);
-      Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
+      Process.Descriptor.Program := new String'(Executable);
+      Process.Descriptor.Debugger_Name := new String'(Debugger_Name);
 
       case Kind is
          when Gdb_Type =>
@@ -1841,7 +1841,7 @@ package body GVD.Process is
 
             else
                if Link_Name = null then
-                  Link_Name := new String' (Cmd (First .. Last));
+                  Link_Name := new String'(Cmd (First .. Last));
                end if;
 
                Gtk_New
@@ -2003,7 +2003,7 @@ package body GVD.Process is
          Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
-         Data.Command := new String' (Command);
+         Data.Command := new String'(Command);
          Append (Debugger.Window.Command_History, Data);
          Set_Busy (Debugger);
       end Pre_User_Command;
@@ -2279,7 +2279,7 @@ package body GVD.Process is
       Line    : Integer) is
    begin
       Free (Process.Current_File);
-      Process.Current_File := new String' (File);
+      Process.Current_File := new String'(File);
       Process.Current_Line := Line;
    end Set_Current_Source_Location;
 

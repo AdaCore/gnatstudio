@@ -147,11 +147,11 @@ package body GVD.Text_Box.Source_Editor.Glide is
         or else Editor.Current_File.all /= File_Name
       then
          Free (Editor.Current_File);
-         Editor.Current_File := new String' (File_Name);
+         Editor.Current_File := new String'(File_Name);
 
          if Set_Current then
             Free (Editor.Debugger_Current_File);
-            Editor.Debugger_Current_File := new String' (File_Name);
+            Editor.Debugger_Current_File := new String'(File_Name);
          end if;
 
          Open_File_Editor
@@ -219,9 +219,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
-            (Line => Line_Information_Record' (Text  => null,
-                                               Image => Current_Line_Pixbuf,
-                                               Associated_Command => null)));
+            (Line => Line_Information_Record'(Text  => null,
+                                              Image => Current_Line_Pixbuf,
+                                              Associated_Command => null)));
 
          Set_Current_Source_Location (Tab, Editor.Current_File.all, Line);
       end if;
@@ -238,7 +238,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
    begin
       Free (Editor.Current_File);
-      Editor.Current_File := new String' ("");
+      Editor.Current_File := new String'("");
       Console.Insert (Kernel, Message);
    end Show_Message;
 
@@ -279,7 +279,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
          Result : Breakpoint_Data;
       begin
          if D.File /= null then
-            Result.File := new String' (D.File.all);
+            Result.File := new String'(D.File.all);
             Result.Line := D.Line;
          end if;
 
@@ -372,7 +372,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                  (Kernel,
                   Br (J).File.all,
                   Breakpoints_Column_Id,
-                  new Line_Information_Array' (A));
+                  new Line_Information_Array'(A));
 
             end;
          end if;
@@ -421,7 +421,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                     (Kernel,
                      Editor.Current_Breakpoints (J).File.all,
                      Breakpoints_Column_Id,
-                     new Line_Information_Array' (A));
+                     new Line_Information_Array'(A));
                end;
 
                Free (Editor.Current_Breakpoints (J));

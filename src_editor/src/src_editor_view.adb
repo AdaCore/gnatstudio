@@ -1337,7 +1337,7 @@ package body Src_Editor_View is
             A (1 .. View.Line_Info (Column).Column_Info'Last) :=
               View.Line_Info (Column).Column_Info.all;
             View.Line_Info (Column).Column_Info :=
-              new Line_Info_Width_Array' (A);
+              new Line_Info_Width_Array'(A);
          end;
       end if;
 
@@ -1351,7 +1351,7 @@ package body Src_Editor_View is
          end if;
 
          View.Line_Info (Column).Column_Info (Line) :=
-           Line_Info_Width' (new Line_Information_Record' (Info), Width);
+           Line_Info_Width'(new Line_Information_Record'(Info), Width);
       end if;
    end Insert_At_Position;
 
@@ -1491,7 +1491,7 @@ package body Src_Editor_View is
          Widths (J) := -1;
          if Info (J).Text /= null then
             Buffer := Integer
-              (String_Width (View.Font, String' (Info (J).Text.all)));
+              (String_Width (View.Font, String'(Info (J).Text.all)));
 
             Widths (J) := Buffer;
 
@@ -1585,7 +1585,7 @@ package body Src_Editor_View is
          A (Column .. View.Line_Info.all'Last - 1) :=
            View.Line_Info (Column + 1 .. View.Line_Info.all'Last);
          Unchecked_Free (View.Line_Info);
-         View.Line_Info := new Line_Info_Display_Array' (A);
+         View.Line_Info := new Line_Info_Display_Array'(A);
       end;
 
       for J in Column .. View.Line_Info.all'Last loop
@@ -1666,14 +1666,14 @@ package body Src_Editor_View is
          A (View.Line_Info'First .. View.Line_Info'Last) := View.Line_Info.all;
 
          A (A'Last) := new Line_Info_Display_Record'
-           (Identifier  => new String' (Identifier),
+           (Identifier  => new String'(Identifier),
             Starting_X  => View.Total_Column_Width + 2,
             Width       => Width,
-            Column_Info => new Line_Info_Width_Array' (New_Column),
+            Column_Info => new Line_Info_Width_Array'(New_Column),
             Stick_To_Data => False,
             Every_Line    => False);
          Unchecked_Free (View.Line_Info);
-         View.Line_Info := new Line_Info_Display_Array' (A);
+         View.Line_Info := new Line_Info_Display_Array'(A);
 
          Column := View.Line_Info.all'Last;
 

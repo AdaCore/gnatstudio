@@ -180,7 +180,7 @@ private
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
 
-      Command_In_Process : Boolean_Access := new Boolean' (False);
+      Command_In_Process : Boolean_Access := new Boolean'(False);
       --  This is implemented as an access type so that Process_Proxy does
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.

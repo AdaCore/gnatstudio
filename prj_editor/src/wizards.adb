@@ -302,7 +302,7 @@ package body Wizards is
          Free (Wiz.Titles (Page_Num));
       end if;
 
-      Wiz.Titles (Page_Num) := new String' (Title);
+      Wiz.Titles (Page_Num) := new String'(Title);
    end Set_Toc;
 
    --------------
@@ -352,7 +352,7 @@ package body Wizards is
 
       Set_Toc (Wiz, Wiz.Toc'Last, Toc_Contents);
       Set_Page (Wiz, Wiz.Pages'Last, Page);
-      Wiz.Titles (Wiz.Titles'Last) := new String' (Title);
+      Wiz.Titles (Wiz.Titles'Last) := new String'(Title);
    end Add_Page;
 
    --------------

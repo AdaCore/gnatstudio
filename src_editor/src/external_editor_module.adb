@@ -409,7 +409,7 @@ package body External_Editor_Module is
          begin
             if S /= Args (A).all then
                Free (Args (A));
-               Args (A) := new String' (S);
+               Args (A) := new String'(S);
             end if;
          end;
       end loop;
@@ -508,7 +508,7 @@ package body External_Editor_Module is
 
       External_Editor_Module_Id.Processes
         (External_Editor_Module_Id.Processes'Last) :=
-        new Process_Descriptor' (Process);
+        new Process_Descriptor'(Process);
 
       if External_Editor_Module_Id.Timeout_Id = 0 then
          External_Editor_Module_Id.Timeout_Id := Process_Timeout.Add

@@ -645,7 +645,7 @@ package body Debugger is
 
                         Process := Convert (Debugger.Window, Debugger);
                         Process.Current_Command :=
-                          new String' (Cmd (First .. Last - 1));
+                          new String'(Cmd (First .. Last - 1));
 
                         pragma Assert (Process.Timeout_Id = 0);
 
@@ -867,7 +867,7 @@ package body Debugger is
 
    begin
       Command := new Command_Record'
-        (Cmd             => new String' (Cmd),
+        (Cmd             => new String'(Cmd),
          Empty_Buffer    => Empty_Buffer,
          Mode            => Mode,
          Next            => null);

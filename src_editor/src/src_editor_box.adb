@@ -423,7 +423,7 @@ package body Src_Editor_Box is
          if Status = Success then
             Line_Decl   := Get_Declaration_Line_Of (Entity);
             Column_Decl := Get_Declaration_Column_Of (Entity);
-            File_Decl   := new String' (Get_Declaration_File_Of (Entity));
+            File_Decl   := new String'(Get_Declaration_File_Of (Entity));
             Destroy (Entity);
          end if;
       end if;

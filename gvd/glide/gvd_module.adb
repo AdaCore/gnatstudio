@@ -656,9 +656,9 @@ package body GVD_Module is
 
       if Run (Dialog) = Gtk_Response_OK then
          Page.Descriptor.Remote_Target :=
-           new String' (Get_Text (Ent_Target));
+           new String'(Get_Text (Ent_Target));
          Page.Descriptor.Protocol :=
-           new String' (Get_Text (Ent_Protocol));
+           new String'(Get_Text (Ent_Protocol));
          Connect_To_Target
            (Page.Debugger,
             Page.Descriptor.Remote_Target.all,
@@ -927,7 +927,7 @@ package body GVD_Module is
            and then Can_Tooltip_On_Entity
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
-            Value := new String' (Value_Of (Debugger.Debugger, Variable_Name));
+            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
 
             if Value.all = "" then
                Free (Value);
@@ -943,14 +943,14 @@ package body GVD_Module is
          Context := Create_Tooltip_Drawing_Context
            (Debugger.Data_Canvas, Null_Pixmap);
          Chars_Per_Line :=
-           Max_Tooltip_Width / Char_Width (Context.Font, Character' ('m'));
+           Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
 
          Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
 
          if Value'Length > Chars_Per_Line then
             Width := Gint'Min
               (Max_Tooltip_Width,
-               Chars_Per_Line * Char_Width (Context.Font, Character' ('m'))
+               Chars_Per_Line * Char_Width (Context.Font, Character'('m'))
                + 4);
             Height := Gint'Min
               (Max_Tooltip_Height,
@@ -1097,7 +1097,7 @@ package body GVD_Module is
             Module := new String'
               (Executables_Directory (Data.Project) & Data.File);
          else
-            Module := new String' ("");
+            Module := new String'("");
          end if;
 
          declare
@@ -1520,7 +1520,7 @@ package body GVD_Module is
            (GVD_Module (GVD_Module_ID).Kernel,
             File_Line.File.all,
             Breakpoints_Column_Id,
-            new Line_Information_Array' (A));
+            new Line_Information_Array'(A));
       end;
 
       File_Line_List.Next
@@ -1596,7 +1596,7 @@ package body GVD_Module is
             for J in Line1 .. Line2 loop
                File_Line_List.Append
                  (GVD_Module (GVD_Module_ID).Unexplored_Lines,
-                  (new String' (File), J));
+                  (new String'(File), J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.

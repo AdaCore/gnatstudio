@@ -1134,7 +1134,7 @@ package body Src_Editor_Buffer is
 
       if Name_Changed then
          Free (Buffer.Filename);
-         Buffer.Filename := new String' (Filename);
+         Buffer.Filename := new String'(Filename);
       end if;
 
       Buffer.Timestamp := To_Timestamp
@@ -1827,7 +1827,7 @@ package body Src_Editor_Buffer is
    is
    begin
       Free (Buffer.Filename);
-      Buffer.Filename := new String' (Name);
+      Buffer.Filename := new String'(Name);
    end Set_Filename;
 
    ---------------------------

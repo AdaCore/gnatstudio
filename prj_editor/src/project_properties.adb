@@ -720,7 +720,7 @@ package body Project_Properties is
          Ent   := Gtk_GEntry (Editor.Compilers (J));
 
          if Get_Active (Check) then
-            New_Languages (Num_Languages) := new String' (Languages (J).all);
+            New_Languages (Num_Languages) := new String'(Languages (J).all);
             Num_Languages := Num_Languages + 1;
          end if;
       end loop;

@@ -564,7 +564,7 @@ package body Items.Arrays is
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
-        Left_Border - GVD_Text_Width (Context.Font, String' (" => "));
+        Left_Border - GVD_Text_Width (Context.Font, String'(" => "));
 
       use Gdk;
 

@@ -162,7 +162,7 @@ package body Glide_Kernel.Timeout is
       if Success then
          Id := Process_Timeout.Add
            (Timeout, Process_Cb'Access,
-            (Kernel, Fd, new String' (Name), Callback));
+            (Kernel, Fd, new String'(Name), Callback));
 
          if Callback = null then
             Pop_State (Kernel);

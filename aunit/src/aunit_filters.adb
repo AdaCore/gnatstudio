@@ -276,7 +276,7 @@ package body Aunit_Filters is
 
                   if Index_End < Line_Last - 1 then
                      Text :=
-                       new String' (Line (1 .. Index_End - 1));
+                       new String'(Line (1 .. Index_End - 1));
                      Found := True;
                   end if;
                end if;

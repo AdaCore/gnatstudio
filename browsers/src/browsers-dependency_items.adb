@@ -1161,7 +1161,7 @@ package body Browsers.Dependency_Items is
    begin
       if Widget.all in Dependency_Browser_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Dependency_Browser");
+         N.Tag := new String'("Dependency_Browser");
          return N;
       end if;
 

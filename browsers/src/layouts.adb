@@ -876,7 +876,7 @@ package body Layouts is
    procedure Insert_Dummy_Nodes
      (G : in out Graph; Layers : in out Natural_Array)
    is
-      Iter : Edge_Iterator := First (G, Src => Vertex_Access' (null));
+      Iter : Edge_Iterator := First (G, Src => Vertex_Access'(null));
       S, D : Vertex_Access;
       L1, L2 : Natural;
    begin

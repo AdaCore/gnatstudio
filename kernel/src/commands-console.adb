@@ -36,7 +36,7 @@ package body Commands.Console is
    begin
       Result := new Console_Command;
       Result.Kernel         := Item.Kernel;
-      Result.Text           := new String' (Item.Text.all);
+      Result.Text           := new String'(Item.Text.all);
       Result.Highlight_Sloc := Item.Highlight_Sloc;
       Result.Add_LF         := Item.Add_LF;
       Result.Mode           := Item.Mode;
@@ -57,7 +57,7 @@ package body Commands.Console is
    begin
       Item := new Console_Command;
       Item.Kernel := Kernel;
-      Item.Text := new String' (Text);
+      Item.Text := new String'(Text);
       Item.Highlight_Sloc := Highlight_Sloc;
       Item.Add_LF := Add_LF;
       Item.Insert_Mode := Mode;

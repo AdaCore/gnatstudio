@@ -67,7 +67,7 @@ package body Gtkada.File_Selector.Filters is
    function HTML_File_Filter return HTML_Filter is
       Filter : HTML_Filter := new HTML_Filter_Record;
    begin
-      Filter.Label := new String' (-"HTML files");
+      Filter.Label := new String'(-"HTML files");
       return Filter;
    end HTML_File_Filter;
 
@@ -78,7 +78,7 @@ package body Gtkada.File_Selector.Filters is
    function Prj_File_Filter return Project_File_Filter is
       Filter : Project_File_Filter := new Project_File_Filter_Record;
    begin
-      Filter.Label := new String' (-"GPS project files");
+      Filter.Label := new String'(-"GPS project files");
       return Filter;
    end Prj_File_Filter;
 

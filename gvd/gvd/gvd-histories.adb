@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -35,7 +35,7 @@ package body GVD.Histories is
       if History.First = null then
          History.First :=
            new Hlist'
-             (Data        => new Data_Type' (Data),
+             (Data        => new Data_Type'(Data),
               Previous    => null,
               Next        => null,
               Num_Repeats => 1);
@@ -49,7 +49,7 @@ package body GVD.Histories is
       else
          Element :=
            new Hlist'
-             (Data        => new Data_Type' (Data),
+             (Data        => new Data_Type'(Data),
               Previous    => History.Last,
               Next        => null,
               Num_Repeats => 1);
@@ -89,7 +89,7 @@ package body GVD.Histories is
         and then History.Position = Inside_History
       then
          Free_Data_Pointer (History.Current.Data);
-         History.Current.Data := new Data_Type' (Data);
+         History.Current.Data := new Data_Type'(Data);
       else
          raise No_Such_Item;
       end if;

@@ -151,7 +151,7 @@ package body GVD.Window_Settings is
    begin
       if Current_Window_Settings = null then
          Current_Window_Settings := new Node;
-         Current_Window_Settings.Tag := new String' ("GVD_Window_Settings");
+         Current_Window_Settings.Tag := new String'("GVD_Window_Settings");
       end if;
 
       Set (Main_Debug_Window_Width, Gint (Get_Allocation_Width (Top)), True);
@@ -355,13 +355,13 @@ package body GVD.Window_Settings is
    begin
       if N = null then
          N := new Node;
-         N.Tag := new String' (Var);
-         N.Value := new String' (Value);
+         N.Tag := new String'(Var);
+         N.Value := new String'(Value);
          Add_Child (Current_Window_Settings, N);
 
       elsif Override then
          Glib.Xml_Int.Free (N.Value);
-         N.Value := new String' (Value);
+         N.Value := new String'(Value);
       end if;
    end Set;
 

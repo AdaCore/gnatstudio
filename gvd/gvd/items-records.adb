@@ -608,7 +608,7 @@ package body Items.Records is
 
          if Largest_Name = null then
             Item.Gui_Fields_Width :=
-              GVD_Text_Width (Context.Font, String' (" => "));
+              GVD_Text_Width (Context.Font, String'(" => "));
          else
             Item.Gui_Fields_Width :=
               GVD_Text_Width (Context.Font, Largest_Name.all & " => ");

@@ -720,7 +720,7 @@ package body GVD.Text_Box is
          Index := Box.Buffer'First;
          Line := Line_From_Pixels
            (Box, Y - 1 + Gint (Get_Value (Get_Vadj (Box.Child))));
-         X2 := X / Char_Width (Box.Font, Character' ('m')) -
+         X2 := X / Char_Width (Box.Font, Character'('m')) -
            Invisible_Column_Width (Box) + 1;
 
          if X2 <= 0 then
@@ -765,11 +765,11 @@ package body GVD.Text_Box is
                  (Integer (-X) +
                   (Start_Index - Line_Index +
                    Integer (Invisible_Column_Width (Box))) *
-                  Integer (Char_Width (Box.Font, Character' ('m'))));
+                  Integer (Char_Width (Box.Font, Character'('m'))));
 
                Area.Width := GRectangle_Length
                  (Gint ((Index - Start_Index - 1)) *
-                  (Char_Width (Box.Font, Character' ('m'))));
+                  (Char_Width (Box.Font, Character'('m'))));
 
                Area.Y := -GRectangle_Coord
                  ((Y mod (Get_Ascent (Box.Font) + Get_Descent (Box.Font))));

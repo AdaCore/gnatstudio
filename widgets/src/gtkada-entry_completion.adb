@@ -139,7 +139,7 @@ package body Gtkada.Entry_Completion is
 
                if First_Index /= Integer'First then
                   S := First_Index;
-                  Completion := new String' (GEntry.Completions (S)
+                  Completion := new String'(GEntry.Completions (S)
                     (GEntry.Completions (S)'First + T'Length
                      .. GEntry.Completions (S)'Last));
 

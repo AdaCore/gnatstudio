@@ -333,7 +333,7 @@ package body Browsers.Projects is
    begin
       if Widget.all in Project_Browser_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Project_Browser");
+         N.Tag := new String'("Project_Browser");
          return N;
       end if;
 

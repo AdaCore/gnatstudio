@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -242,7 +242,7 @@ package body Make_Test_Window_Pkg.Callbacks is
             ASCII.LF &
             "end " & Name & ";");
          Close (File);
-         Window.Name := new String' (To_File_Name (Name));
+         Window.Name := new String'(To_File_Name (Name));
       end if;
 
       Hide (Window);

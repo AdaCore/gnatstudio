@@ -755,7 +755,7 @@ package body Src_Info.ALI is
       File :=
          (LI              => Get (List.Table, ALI_Filename),
           Part            => Unit_Separate,
-          Source_Filename => new String' (Sname));
+          Source_Filename => new String'(Sname));
 
       --  If there is no LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -1111,7 +1111,7 @@ package body Src_Info.ALI is
 
             if Finfo.Unit_Name = null then
                Finfo.Unit_Name :=
-                 new String' (Strip_Unit_Part (Get_String (W.Uname)));
+                 new String'(Strip_Unit_Part (Get_String (W.Uname)));
             end if;
 
             --  Update the Depends_From_Spec/Body flags

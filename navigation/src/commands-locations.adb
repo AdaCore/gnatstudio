@@ -84,7 +84,7 @@ package body Commands.Locations is
    begin
       Item := new Source_Location_Command_Type;
       Item.Kernel := Kernel;
-      Item.Filename := new String' (Filename);
+      Item.Filename := new String'(Filename);
       Item.Line := Line;
       Item.Column := Column;
       Item.Column_End := Column_End;

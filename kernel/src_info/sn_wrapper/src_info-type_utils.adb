@@ -117,7 +117,7 @@ package body Src_Info.Type_Utils is
          or Type_Name = "short"      or Type_Name = "signed short"
       then
          Desc.Kind := Signed_Integer_Type;
-         Desc.Builtin_Name := new String' (Type_Name);
+         Desc.Builtin_Name := new String'(Type_Name);
          Success := True;
       elsif Type_Name = "unsigned char"
          or Type_Name = "unsigned int"
@@ -126,7 +126,7 @@ package body Src_Info.Type_Utils is
          or Type_Name = "unsigned short"
       then
          Desc.Kind         := Modular_Integer_Type;
-         Desc.Builtin_Name := new String' (Type_Name);
+         Desc.Builtin_Name := new String'(Type_Name);
          Success           := True;
       else
          Success := False;
@@ -361,7 +361,7 @@ package body Src_Info.Type_Utils is
          and then Desc.Ancestor_Point = Invalid_Point
       then -- was not set yet
          Desc.Ancestor_Point    := Typedef.Start_Position;
-         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
+         Desc.Ancestor_Filename := new String'(Typedef.Buffer (
                        Typedef.File_Name.First .. Typedef.File_Name.Last));
       end if;
 
@@ -371,7 +371,7 @@ package body Src_Info.Type_Utils is
          Desc.Kind := Unresolved_Entity;
          if Desc.Parent_Point = Invalid_Point then
             Desc.Parent_Point    := Typedef.Start_Position;
-            Desc.Parent_Filename := new String' (Typedef.Buffer (
+            Desc.Parent_Filename := new String'(Typedef.Buffer (
                        Typedef.File_Name.First .. Typedef.File_Name.Last));
          end if;
          Success   := True;
@@ -471,12 +471,12 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Parent_Point    := Class_Def.Start_Position;
-      Desc.Parent_Filename := new String' (Class_Def.Buffer (
+      Desc.Parent_Filename := new String'(Class_Def.Buffer (
                     Class_Def.File_Name.First .. Class_Def.File_Name.Last));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Class_Def.Start_Position;
-         Desc.Ancestor_Filename := new String' (Class_Def.Buffer (
+         Desc.Ancestor_Filename := new String'(Class_Def.Buffer (
                        Class_Def.File_Name.First .. Class_Def.File_Name.Last));
       end if;
 
@@ -522,12 +522,12 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Parent_Point    := Union_Def.Start_Position;
-      Desc.Parent_Filename := new String' (Union_Def.Buffer (
+      Desc.Parent_Filename := new String'(Union_Def.Buffer (
                     Union_Def.File_Name.First .. Union_Def.File_Name.Last));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Union_Def.Start_Position;
-         Desc.Ancestor_Filename := new String' (Union_Def.Buffer (
+         Desc.Ancestor_Filename := new String'(Union_Def.Buffer (
                        Union_Def.File_Name.First .. Union_Def.File_Name.Last));
       end if;
 
@@ -638,12 +638,12 @@ package body Src_Info.Type_Utils is
          then
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
             Desc.Parent_Point    := Arg.Start_Position;
-            Desc.Parent_Filename := new String' (File_Name);
+            Desc.Parent_Filename := new String'(File_Name);
             Desc.Kind            := Private_Type;
 
             if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
                Desc.Ancestor_Point    := Arg.Start_Position;
-               Desc.Ancestor_Filename := new String' (File_Name);
+               Desc.Ancestor_Filename := new String'(File_Name);
             end if;
 
             Success := True;

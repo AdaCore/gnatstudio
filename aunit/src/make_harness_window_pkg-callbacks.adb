@@ -173,9 +173,9 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Filter_B := new Filter_Show_Ada;
          Filter_C := new Filter_Show_Suites;
 
-         Filter_A.Label := new String' (-"All files");
-         Filter_B.Label := new String' (-"Ada files");
-         Filter_C.Label := new String' (-"Suite files");
+         Filter_A.Label := new String'(-"All files");
+         Filter_B.Label := new String'(-"Ada files");
+         Filter_C.Label := new String'(-"Suite files");
 
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
@@ -241,7 +241,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Mixed_Case (File_Name);
 
          if Top.Suite_Name = null then
-            Top.Suite_Name := new String' ("");
+            Top.Suite_Name := new String'("");
          end if;
 
          if Is_Regular_File (To_File_Name (Procedure_Name) & ".adb") then
@@ -278,7 +278,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             & "   Run;" & ASCII.LF
             & "end " & Procedure_Name & ";");
          Close (File);
-         Top.Procedure_Name := new String' (To_Lower (Procedure_Name));
+         Top.Procedure_Name := new String'(To_Lower (Procedure_Name));
       end if;
 
       Hide (Top);

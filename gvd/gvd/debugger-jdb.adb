@@ -142,7 +142,7 @@ package body Debugger.Jdb is
       Free (Debugger.Main_Class);
 
       if Executable /= "" then
-         Debugger.Main_Class := new String' (Executable);
+         Debugger.Main_Class := new String'(Executable);
       end if;
 
       --  ??? Should avoid the duplication of this code with debugger-*
@@ -584,16 +584,16 @@ package body Debugger.Jdb is
            Natural'Value (S (Matched (1).First .. Matched (1).Last));
 
          Value (Len).Program_Counter :=
-           new String' (S (Matched (4).First .. Matched (4).Last));
+           new String'(S (Matched (4).First .. Matched (4).Last));
 
          Value (Len).Subprogram :=
-           new String' (S (Matched (2).First .. Matched (2).Last));
+           new String'(S (Matched (2).First .. Matched (2).Last));
 
          if Matched (3) = No_Match then
-            Value (Len).Source_Location := new String' ("");
+            Value (Len).Source_Location := new String'("");
          else
             Value (Len).Source_Location :=
-              new String' (S (Matched (3).First .. Matched (3).Last));
+              new String'(S (Matched (3).First .. Matched (3).Last));
          end if;
 
          First := Matched (0).Last;

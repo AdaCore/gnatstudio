@@ -209,7 +209,7 @@ package body VCS.ClearCase is
       Temp_Args : List_Node := First (Args);
    begin
       for J in The_Args'Range loop
-         The_Args (J) := new String' (Data (Temp_Args));
+         The_Args (J) := new String'(Data (Temp_Args));
          Temp_Args := Next (Temp_Args);
       end loop;
 

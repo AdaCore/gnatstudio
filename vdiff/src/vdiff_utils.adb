@@ -160,7 +160,7 @@ package body Vdiff_Utils is
    begin
       Initialize (Vdiff);
       Vdiff.Kernel := Kernel;
-      Vdiff.File := new String' (File);
+      Vdiff.File := new String'(File);
    end Initialize;
 
    ---------------------

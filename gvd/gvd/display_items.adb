@@ -283,7 +283,7 @@ package body Display_Items is
       --  and select it.
 
       if Variable_Name /= "" then
-         Id := new String' (Get_Uniq_Id (Debugger.Debugger, Variable_Name));
+         Id := new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
       end if;
 
       if Auto_Refresh then
@@ -1490,7 +1490,7 @@ package body Display_Items is
            Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
       begin
          if Id /= "" then
-            It.Id := new String' (Id);
+            It.Id := new String'(Id);
          end if;
       end;
 

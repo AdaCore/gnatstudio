@@ -704,13 +704,13 @@ package body Project_Explorers is
       Set (Explorer.File_Model, N, Node_Type_Column,
            Gint (Node_Types'Pos (Entity_Node)));
 
-      User := new User_Data' (Node_Type   => Entity_Node,
-                              Name_Length => Construct.Name'Length,
-                              Entity_Name => Construct.Name.all,
-                              Sloc_Start  => Construct.Sloc_Start,
-                              Sloc_Entity => Construct.Sloc_Entity,
-                              Sloc_End    => Construct.Sloc_End,
-                              Up_To_Date  => True);
+      User := new User_Data'(Node_Type   => Entity_Node,
+                             Name_Length => Construct.Name'Length,
+                             Entity_Name => Construct.Name.all,
+                             Sloc_Start  => Construct.Sloc_Start,
+                             Sloc_Entity => Construct.Sloc_Entity,
+                             Sloc_End    => Construct.Sloc_End,
+                             Up_To_Date  => True);
       Init (Val, GType_Pointer);
       Set_Address (Val, User.all'Address);
       Set_Value (Explorer.File_Model, N, User_Data_Column, Val);
@@ -1054,8 +1054,8 @@ package body Project_Explorers is
             return;
       end;
 
-      D.Norm_Dest := new String' (Normalize_Pathname (Append_To_Dir));
-      D.Norm_Dir  := new String' (Normalize_Pathname (Dir));
+      D.Norm_Dest := new String'(Normalize_Pathname (Append_To_Dir));
+      D.Norm_Dir  := new String'(Normalize_Pathname (Dir));
       D.Depth     := Depth;
       D.Base      := Base;
       D.Explorer  := Project_Explorer (Explorer);
@@ -1442,7 +1442,7 @@ package body Project_Explorers is
    begin
       if Widget.all in Project_Explorer_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Project_Explorer");
+         N.Tag := new String'("Project_Explorer");
          return N;
       end if;
 
@@ -1981,7 +1981,7 @@ package body Project_Explorers is
          Node_Text := new String'
            (Name_As_Directory (Normalize_Pathname (Directory)));
       else
-         Node_Text := new String' (Name_As_Directory (Directory));
+         Node_Text := new String'(Name_As_Directory (Directory));
       end if;
 
       if Show_Relative_Paths then
@@ -3529,7 +3529,7 @@ package body Project_Explorers is
 
       --  Add a project explorer to the default desktop.
       N := new Node;
-      N.Tag := new String' ("Project_Explorer");
+      N.Tag := new String'("Project_Explorer");
 
       Add_Default_Desktop_Item
         (Kernel, N,

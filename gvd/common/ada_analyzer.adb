@@ -797,7 +797,7 @@ package body Ada_Analyzer is
 
             if Value.Ident_Len > 0 then
                Constructs.Current.Name :=
-                 new String' (Value.Identifier (1 .. Value.Ident_Len));
+                 new String'(Value.Identifier (1 .. Value.Ident_Len));
                Constructs.Current.Sloc_Entity := Value.Sloc_Name;
             end if;
 
@@ -2091,7 +2091,7 @@ package body Ada_Analyzer is
             Index := Index + 1;
          end if;
 
-         Tmp.Line := new String' (Buffer (First .. Index));
+         Tmp.Line := new String'(Buffer (First .. Index));
          Tmp.Len  := Tmp.Line'Length;
 
          Index := Index + 1;

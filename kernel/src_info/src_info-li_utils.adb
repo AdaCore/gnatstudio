@@ -579,7 +579,7 @@ package body Src_Info.LI_Utils is
       if D_Ptr = null then
          return;
       end if;
-      D_Ptr.Value.Declaration.Name := new String' (Symbol_Name);
+      D_Ptr.Value.Declaration.Name := new String'(Symbol_Name);
       D_Ptr.Value.Declaration.Location :=
         (File   => (LI              => File,
                     Part            => Unit_Body,
@@ -719,7 +719,7 @@ package body Src_Info.LI_Utils is
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
                  Handler       => Handler,
-                 LI_Filename   => new String' (Base_Name (LI_Filename)),
+                 LI_Filename   => new String'(Base_Name (LI_Filename)),
                  Body_Info     => null,
                  Spec_Info     => null,
                  Separate_Info => null,
@@ -753,11 +753,11 @@ package body Src_Info.LI_Utils is
       if Directory_Name /= ""
         and then Directory_Name /= "./"
       then
-         Dir := new String' (Directory_Name);
+         Dir := new String'(Directory_Name);
       end if;
 
       if Unit_Name /= "" then
-         Unit := new String' (Unit_Name);
+         Unit := new String'(Unit_Name);
       end if;
 
       if Set_Time_Stamp then
@@ -766,7 +766,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String' (Base_Name (Full_Filename)),
+         Source_Filename   => new String'(Base_Name (Full_Filename)),
          Directory_Name    => Dir,
          File_Timestamp    => Time,
          Original_Filename => null,

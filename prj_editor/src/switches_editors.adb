@@ -296,7 +296,7 @@ package body Switches_Editors is
                   Tmp (Tmp'First .. Out_Index - 1) :=
                     Output (Output'First .. Out_Index - 1);
                   for A in Arr'Range loop
-                     Tmp (Out_Index) := new String' (Arr (A).all);
+                     Tmp (Out_Index) := new String'(Arr (A).all);
                      Out_Index := Out_Index + 1;
                   end loop;
 
@@ -405,7 +405,7 @@ package body Switches_Editors is
          end if;
 
          if Check then
-            Arr (Index) := new String' (Str);
+            Arr (Index) := new String'(Str);
             Index := Index + 1;
          end if;
       end Check_Toggle;
@@ -436,7 +436,7 @@ package body Switches_Editors is
               (List, Get_Data (Get_Selection (List)))) + 1;
 
             if Position /= 1 then
-               Arr (Index) := new String' (Switch & Switch_Details (Position));
+               Arr (Index) := new String'(Switch & Switch_Details (Position));
                Index := Index + 1;
             end if;
          end if;
@@ -497,7 +497,7 @@ package body Switches_Editors is
                end if;
 
                if Get_Active (Editor.Make_Multiprocessing) then
-                  Arr (Index) := new String' ("-j" &
+                  Arr (Index) := new String'("-j" &
                     Image (Integer (Get_Value_As_Int (Editor.Num_Processes))));
                   Index := Index + 1;
                end if;
@@ -603,7 +603,7 @@ package body Switches_Editors is
 
                --  3 is the default value of this switch
                if Value /= 3 then
-                  Arr (Index) := new String' ("-i" & Image (Value));
+                  Arr (Index) := new String'("-i" & Image (Value));
                   Index := Index + 1;
                end if;
 
@@ -611,7 +611,7 @@ package body Switches_Editors is
 
                --  79 is the default value of this switch
                if Value /= 79 then
-                  Arr (Index) := new String' ("-M" & Image (Value));
+                  Arr (Index) := new String'("-M" & Image (Value));
                   Index := Index + 1;
                end if;
 
@@ -635,9 +635,9 @@ package body Switches_Editors is
                Check_Toggle (Editor.Binder_Restrictions, "-r", Arr, Index);
 
                if Get_Active (Editor.Binder_Static_Gnat) then
-                  Arr (Index) := new String' ("-static");
+                  Arr (Index) := new String'("-static");
                else
-                  Arr (Index) := new String' ("-shared");
+                  Arr (Index) := new String'("-shared");
                end if;
 
                Index := Index + 1;
@@ -1593,7 +1593,7 @@ package body Switches_Editors is
       pragma Assert (Has_Project_Information (File));
 
       if not Force_Default and then Has_File_Information (File) then
-         File_Name := new String' (File_Information (File));
+         File_Name := new String'(File_Information (File));
          Edit_Switches_For_Files
            (Get_Kernel (Context),
             Get_Project_From_View (Project_Information (File)),

@@ -1689,14 +1689,14 @@ package body Prj_API is
 
          when Single =>
             String_To_Name_Buffer (Value.Value);
-            S (1) := new String' (Name_Buffer (1 .. Name_Len));
+            S (1) := new String'(Name_Buffer (1 .. Name_Len));
 
          when List =>
             V := Value.Values;
 
             for J in S'Range loop
                String_To_Name_Buffer (String_Elements.Table (V).Value);
-               S (J) := new String' (Name_Buffer (1 .. Name_Len));
+               S (J) := new String'(Name_Buffer (1 .. Name_Len));
                V := String_Elements.Table (V).Next;
             end loop;
       end case;
@@ -3313,7 +3313,7 @@ package body Prj_API is
    begin
       Project := Create_Project (Name, Path);
 
-      Values (1) := new String' (".");
+      Values (1) := new String'(".");
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
@@ -3327,8 +3327,8 @@ package body Prj_API is
          Attribute_Name     => "object_dir",
          Value              => ".");
 
-      Values (1) := new String' ("-g");
-      Values (2) := new String' ("-s");
+      Values (1) := new String'("-g");
+      Values (2) := new String'("-s");
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
@@ -4314,10 +4314,10 @@ package body Prj_API is
       Tmp : GNAT.OS_Lib.String_Access;
    begin
       if Languages'Length = 0 then
-         return (1 => new String' (Ada_String));
+         return (1 => new String'(Ada_String));
       else
          for L in Languages'Range loop
-            Tmp := new String' (To_Lower (Languages (L).all));
+            Tmp := new String'(To_Lower (Languages (L).all));
             Free (Languages (L));
             Languages (L) := Tmp;
          end loop;

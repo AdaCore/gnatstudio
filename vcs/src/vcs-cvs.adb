@@ -1034,7 +1034,7 @@ package body VCS.CVS is
          declare
             S : constant String := Data (L_Temp);
          begin
-            A (J).Text := new String' (S (S'First .. S'First + Index));
+            A (J).Text := new String'(S (S'First .. S'First + Index));
          end;
 
          L_Temp := Next (L_Temp);

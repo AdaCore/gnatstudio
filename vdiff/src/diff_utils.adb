@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -122,8 +122,8 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Diff_Cmd));
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
-      Args (1) := new String' (File1);
-      Args (2) := new String' (File2);
+      Args (1) := new String'(File1);
+      Args (2) := new String'(File2);
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
@@ -184,22 +184,22 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Patch_Cmd));
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
-      Args (1) := new String' ("-s");
-      Args (2) := new String' ("-o");
+      Args (1) := new String'("-s");
+      Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String' (Orig_File);
-         Args (4) := new String' ("-R");
-         Args (5) := new String' (New_File);
+         Args (3) := new String'(Orig_File);
+         Args (4) := new String'("-R");
+         Args (5) := new String'(New_File);
          Num_Args := 6;
 
       else
-         Args (3) := new String' (New_File);
-         Args (4) := new String' (Orig_File);
+         Args (3) := new String'(New_File);
+         Args (4) := new String'(Orig_File);
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String' (Diff_File);
+      Args (Num_Args) := new String'(Diff_File);
 
       Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
              & Args (1 .. Num_Args), Success);

@@ -303,7 +303,7 @@ package body Items.Simples is
    function New_Range_Type
      (Min, Max : Long_Integer) return Generic_Type_Access is
    begin
-      return new Range_Type' (Simple_Type with Min => Min, Max => Max);
+      return new Range_Type'(Simple_Type with Min => Min, Max => Max);
    end New_Range_Type;
 
    ------------------
@@ -312,7 +312,7 @@ package body Items.Simples is
 
    function New_Mod_Type (Modulo : Long_Integer) return Generic_Type_Access is
    begin
-      return new Mod_Type' (Simple_Type with Modulo => Modulo);
+      return new Mod_Type'(Simple_Type with Modulo => Modulo);
    end New_Mod_Type;
 
    ---------------------
@@ -463,7 +463,7 @@ package body Items.Simples is
       Item : Debugger_Output_Type_Access;
    begin
       Item := new Debugger_Output_Type;
-      Item.Refresh_Cmd := new String' (Cmd);
+      Item.Refresh_Cmd := new String'(Cmd);
       return Generic_Type_Access (Item);
    end New_Debugger_Type;
 

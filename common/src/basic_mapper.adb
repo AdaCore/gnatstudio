@@ -34,7 +34,7 @@ package body Basic_Mapper is
       Text   : String) return String
    is
       Element : String_Access;
-      Key     : String_Access := new String' (Text);
+      Key     : String_Access := new String'(Text);
    begin
       if Mapper = null then
          Free (Key);
@@ -45,7 +45,7 @@ package body Basic_Mapper is
 
       if Element = No_Element then
          Free (Key);
-         Key := new String' (Text);
+         Key := new String'(Text);
          Element := Get (Mapper.Table_2, Key);
       end if;
 
@@ -65,7 +65,7 @@ package body Basic_Mapper is
      (Mapper : in out File_Mapper_Access;
       Text   : String)
    is
-      Key_1 : String_Access := new String' (Text);
+      Key_1 : String_Access := new String'(Text);
    begin
       Remove (Mapper.Table_1, Key_1);
       Remove (Mapper.Table_2, Key_1);
@@ -82,8 +82,8 @@ package body Basic_Mapper is
       Text_1 : String;
       Text_2 : String)
    is
-      Key_1 : constant String_Access := new String' (Text_1);
-      Key_2 : constant String_Access := new String' (Text_2);
+      Key_1 : constant String_Access := new String'(Text_1);
+      Key_2 : constant String_Access := new String'(Text_2);
    begin
       if Mapper = null then
          Mapper := new File_Mapper;

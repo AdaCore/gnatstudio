@@ -143,7 +143,7 @@ package body GVD.Tooltips is
          Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask);
       Tooltip := new Tooltips_Record'
         (Timeout        => Default_Timeout,
-         Data           => new User_Type' (Data),
+         Data           => new User_Type'(Data),
          Display_Window => Null_Window,
          Parent_Window  => Get_Window (Widget),
          Handler_Id     => 0,
@@ -303,7 +303,7 @@ package body GVD.Tooltips is
    procedure Set_Data (Tooltip : in out Tooltips; Data : in User_Type) is
    begin
       Free_User_Type (Tooltip.Data);
-      Tooltip.Data := new User_Type' (Data);
+      Tooltip.Data := new User_Type'(Data);
    end Set_Data;
 
    --------------

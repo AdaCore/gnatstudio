@@ -260,7 +260,7 @@ package body Default_Preferences is
       while N /= null loop
          if N.Param = Param then
             Free (N.Page);
-            N.Page := new String' (Page);
+            N.Page := new String'(Page);
             return;
          end if;
          Prev := N;
@@ -269,12 +269,12 @@ package body Default_Preferences is
 
       if Prev /= null then
          Prev.Next := new Preference_Information'
-           (Page  => new String' (Page),
+           (Page  => new String'(Page),
             Param => Param,
             Next  => null);
       else
          Manager.Default := new Preference_Information'
-           (Page  => new String' (Page),
+           (Page  => new String'(Page),
             Param => Param,
             Next  => null);
       end if;
@@ -479,14 +479,14 @@ package body Default_Preferences is
    begin
       if N = null then
          N     := new XML_Font.Node;
-         N.Tag := new String' (Name);
+         N.Tag := new String'(Name);
          Add_Child (Top, N);
       else
          Destroy_Cache (Node.Specific_Data);
          XML_Font.Free (Node.Value);
       end if;
 
-      N.Value := new String' (Value);
+      N.Value := new String'(Value);
    end Set_Pref;
 
    --------------
@@ -551,7 +551,7 @@ package body Default_Preferences is
          Manager.Preferences := Parse (File_Name);
       else
          Manager.Preferences := new XML_Font.Node;
-         Manager.Preferences.Tag := new String' ("Preferences");
+         Manager.Preferences.Tag := new String'("Preferences");
       end if;
    end Load_Preferences;
 
@@ -568,7 +568,7 @@ package body Default_Preferences is
       --  Create the tree if necessary
       if Manager.Preferences = null then
          Manager.Preferences := new Node;
-         Manager.Preferences.Tag := new String' ("Preferences");
+         Manager.Preferences.Tag := new String'("Preferences");
       end if;
 
       --  Make sure that all the registered preferences also exist in the
@@ -578,7 +578,7 @@ package body Default_Preferences is
            = null
          then
             N2 := new Node;
-            N2.Tag := new String' (Pspec_Name (N.Param));
+            N2.Tag := new String'(Pspec_Name (N.Param));
 
             if Value_Type (N.Param) = GType_Int then
                N2.Value := new String'
@@ -596,7 +596,7 @@ package body Default_Preferences is
                  (Default (Param_Spec_String (N.Param)));
 
             else
-               N2.Value := new String' ("");
+               N2.Value := new String'("");
             end if;
 
             Add_Child (Manager.Preferences, N2);

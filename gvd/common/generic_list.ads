@@ -146,7 +146,7 @@ private
       Last  : List_Node_Access;
    end record;
 
-   Null_List : constant List := List' (null, null);
+   Null_List : constant List := List'(null, null);
 
    type Data_Access is access Data_Type;
 

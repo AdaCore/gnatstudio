@@ -1511,7 +1511,7 @@ package body Project_Viewers is
    begin
       for N in Names'Range loop
          User := Project_User_Data.Get (V.List, Get_Data (Selection));
-         Names (N) := new String' (Get_String (User.File_Name));
+         Names (N) := new String'(Get_String (User.File_Name));
          Selection := Next (Selection);
       end loop;
 
@@ -1796,7 +1796,7 @@ package body Project_Viewers is
          begin
             for J in Initial_Dirs_Id'Range loop
                Initial_Dirs (J) :=
-                 new String' (Get_String (Initial_Dirs_Id (J)));
+                 new String'(Get_String (Initial_Dirs_Id (J)));
             end loop;
 
             Gtk_New
@@ -1811,7 +1811,7 @@ package body Project_Viewers is
          declare
             Initial_Dirs : Argument_List (1 .. 1);
          begin
-            Initial_Dirs (1) := new String' (Dir_Name (Full_Project));
+            Initial_Dirs (1) := new String'(Dir_Name (Full_Project));
             Gtk_New
               (Src_Dir_Selection,
                Initial_Directory    => Get_Current_Dir,
@@ -1855,7 +1855,7 @@ package body Project_Viewers is
       if Relative then
          for J in Dirs'Range loop
             Tmp := Dirs (J);
-            Dirs (J) := new String' (Relative_Path_Name (Tmp.all, Prj_Dir));
+            Dirs (J) := new String'(Relative_Path_Name (Tmp.all, Prj_Dir));
             Free (Tmp);
          end loop;
       end if;
@@ -1881,10 +1881,10 @@ package body Project_Viewers is
                         Initial_Dirs (J) := new String'
                           (Str (Str'First + Prj_Dir'Length .. Str'Last));
                      else
-                        Initial_Dirs (J) := new String' (Str);
+                        Initial_Dirs (J) := new String'(Str);
                      end if;
                   else
-                     Initial_Dirs (J) := new String' (Str);
+                     Initial_Dirs (J) := new String'(Str);
                   end if;
                end;
             end loop;
@@ -2072,20 +2072,20 @@ package body Project_Viewers is
               "Invalid project when modifying main files");
 
       if Project_Uses_Relative_Paths (Kernel, Project) then
-         New_Dir := new String' (Relative_Path_Name
+         New_Dir := new String'(Relative_Path_Name
            (Get_Text (Obj_Dir.Obj_Dir), Project_Path (Project)));
       else
-         New_Dir := new String' (Name_As_Directory
+         New_Dir := new String'(Name_As_Directory
            (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir))));
       end if;
 
       if Get_Active (Obj_Dir.Same) then
-         Exec_Dir := new String' (New_Dir.all);
+         Exec_Dir := new String'(New_Dir.all);
       elsif Project_Uses_Relative_Paths (Kernel, Project) then
-         Exec_Dir := new String' (Relative_Path_Name
+         Exec_Dir := new String'(Relative_Path_Name
            (Get_Text (Obj_Dir.Exec_Dir), Project_Path (Project)));
       else
-         Exec_Dir := new String' (Name_As_Directory
+         Exec_Dir := new String'(Name_As_Directory
            (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir))));
       end if;
 

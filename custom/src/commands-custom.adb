@@ -55,7 +55,7 @@ package body Commands.Custom is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
-      Item.Command := new String' (Command);
+      Item.Command := new String'(Command);
       Item.Args := Args;
    end Create;
 
@@ -88,7 +88,7 @@ package body Commands.Custom is
 
          for J in Command.Args'Range loop
             if Command.Args (J).all (Command.Args (J)'First) /= '%' then
-               New_Args (Last) := new String' (Command.Args (J).all);
+               New_Args (Last) := new String'(Command.Args (J).all);
 
             elsif Command.Args (J).all = "%f" then
                if Context /= null
@@ -97,7 +97,7 @@ package body Commands.Custom is
                   File := File_Selection_Context_Access (Context);
 
                   if Has_File_Information (File) then
-                     New_Args (J) := new String' (File_Information (File));
+                     New_Args (J) := new String'(File_Information (File));
                   else
                      return False;
                   end if;
@@ -150,7 +150,7 @@ package body Commands.Custom is
                if Command.Args (J).all = "%p"
                  or else Command.Args (J).all = "%P"
                then
-                  New_Args (Last) := new String' (Project_Name (Project));
+                  New_Args (Last) := new String'(Project_Name (Project));
                else
                   Recurse := (Command.Args (J).all
                                 (Command.Args (J)'First + 2) = 'r');
@@ -184,7 +184,7 @@ package body Commands.Custom is
                           := New_Args (New_Args'First .. Last - 1);
 
                         for K in List'Range loop
-                           New_New_Args (Last) := new String' (List (K).all);
+                           New_New_Args (Last) := new String'(List (K).all);
                            Last := Last + 1;
                         end loop;
 
@@ -207,7 +207,7 @@ package body Commands.Custom is
                         end loop;
 
                         Free (List);
-                        New_Args (Last) := new String' (Name (File));
+                        New_Args (Last) := new String'(Name (File));
                         Close (File);
                      end;
                   end if;

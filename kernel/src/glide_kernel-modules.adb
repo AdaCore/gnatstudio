@@ -234,11 +234,11 @@ package body Glide_Kernel.Modules is
       Free (Context.File_Name);
 
       if Directory /= "" then
-         Context.Directory := new String' (Directory);
+         Context.Directory := new String'(Directory);
       end if;
 
       if File_Name /= "" then
-         Context.File_Name := new String' (File_Name);
+         Context.File_Name := new String'(File_Name);
       end if;
 
       Context.Creator_Provided_Project := Project_View /= No_Project;
@@ -354,7 +354,7 @@ package body Glide_Kernel.Modules is
    begin
       Free (Context.Entity_Name);
       if Entity_Name /= "" then
-         Context.Entity_Name := new String' (Entity_Name);
+         Context.Entity_Name := new String'(Entity_Name);
       end if;
 
       Context.Category := Category;
@@ -1065,7 +1065,7 @@ package body Glide_Kernel.Modules is
       A : Line_Information_Array (1 .. 0);
    begin
       General_Line_Information (Kernel, File, Identifier,
-                                new Line_Information_Array' (A));
+                                new Line_Information_Array'(A));
    end Remove_Line_Information_Column;
 
    --------------------------
@@ -1463,9 +1463,9 @@ package body Glide_Kernel.Modules is
       end if;
 
       Page.Flags := Flags;
-      Page.Label := new String' (Label);
-      Page.Toc   := new String' (Toc);
-      Page.Title := new String' (Title);
+      Page.Label := new String'(Label);
+      Page.Toc   := new String'(Toc);
+      Page.Title := new String'(Title);
 
       Tmp := Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages;
 
@@ -1548,8 +1548,8 @@ package body Glide_Kernel.Modules is
 
       Tmp := Real_Module_Data (Kernel.Modules_Data).Search_Regexps;
       Tmp (Tmp'Last) :=
-        (Name           => new String' (Name),
-         Regexp         => new String' (Regexp),
+        (Name           => new String'(Name),
+         Regexp         => new String'(Regexp),
          Case_Sensitive => Case_Sensitive,
          Is_Regexp      => Is_Regexp);
 

@@ -622,8 +622,8 @@ package body GVD.Memory_View is
          View.Starting_Address := Address;
          Free (View.Values);
          Free (View.Flags);
-         View.Values := new String' (Values);
-         View.Flags  := new String' (Values);
+         View.Values := new String'(Values);
+         View.Flags  := new String'(Values);
          View.Data   := Byte;
          Update_Display (View);
          Set_Text (View.Address_Entry,

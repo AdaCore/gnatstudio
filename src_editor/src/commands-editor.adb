@@ -156,7 +156,7 @@ package body Commands.Editor is
             New_Current_Text (1 .. Item.Current_Text_Size) :=
               Item.Current_Text (First .. First + Item.Current_Text_Size - 1);
             Free (Item.Current_Text);
-            Item.Current_Text := new String' (New_Current_Text);
+            Item.Current_Text := new String'(New_Current_Text);
             First := Item.Current_Text.all'First;
          end;
       end if;
@@ -414,7 +414,7 @@ package body Commands.Editor is
            Gint (Start_Column),
            Gint (End_Line),
            Gint (End_Column)));
-      Item.Text_After := new String' (Text);
+      Item.Text_After := new String'(Text);
 
       Get_Iter_At_Line_Offset
         (Buffer, Iter, Gint (Start_Line), Gint (Start_Column));

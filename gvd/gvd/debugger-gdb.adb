@@ -317,7 +317,7 @@ package body Debugger.Gdb is
 
          Num := Num + 1;
          Choices (Num).Choice :=
-           new String' (Natural'Image (Num - 1));
+           new String'(Natural'Image (Num - 1));
          Choices (Num).Description :=
            new String'(Str (First .. Last - 1));
 
@@ -352,11 +352,11 @@ package body Debugger.Gdb is
       Choices  : Question_Array (1 .. 2);
 
    begin
-      Choices (1).Choice := new String' ("n");
-      Choices (1).Description := new String' ("No");
+      Choices (1).Choice := new String'("n");
+      Choices (1).Description := new String'("No");
 
-      Choices (2).Choice := new String' ("y");
-      Choices (2).Description := new String' ("Yes");
+      Choices (2).Choice := new String'("y");
+      Choices (2).Description := new String'("Yes");
 
       Gtk_New
         (Dialog,
@@ -562,20 +562,20 @@ package body Debugger.Gdb is
       end loop;
 
       if Executable /= "" then
-         Debugger.Executable := new String' (Executable);
+         Debugger.Executable := new String'(Executable);
       end if;
 
       if Executable_Args /= "" then
-         Debugger.Executable_Args := new String' (Executable_Args);
+         Debugger.Executable_Args := new String'(Executable_Args);
       end if;
 
       if Remote_Host /= "" then
-         Debugger.Remote_Host := new String' (Remote_Host);
+         Debugger.Remote_Host := new String'(Remote_Host);
       end if;
 
       if Remote_Target /= "" then
-         Debugger.Remote_Target := new String' (Remote_Target);
-         Debugger.Remote_Protocol := new String' (Remote_Protocol);
+         Debugger.Remote_Target := new String'(Remote_Target);
+         Debugger.Remote_Protocol := new String'(Remote_Protocol);
       end if;
 
       --  Set up an output filter to detect changes of the current language
@@ -790,8 +790,8 @@ package body Debugger.Gdb is
       Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
       Free (Debugger.Remote_Target);
       Free (Debugger.Remote_Protocol);
-      Debugger.Remote_Target := new String' (Target);
-      Debugger.Remote_Protocol := new String' (Protocol);
+      Debugger.Remote_Target := new String'(Target);
+      Debugger.Remote_Protocol := new String'(Protocol);
    end Connect_To_Target;
 
    --------------
@@ -828,9 +828,9 @@ package body Debugger.Gdb is
 
    begin
       if Debugger.Remote_Target = null then
-         Cmd := new String' ("file " & Exec);
+         Cmd := new String'("file " & Exec);
       else
-         Cmd := new String' ("load " & Exec);
+         Cmd := new String'("load " & Exec);
       end if;
 
       if Debugger.Window /= null then
@@ -859,7 +859,7 @@ package body Debugger.Gdb is
       Set_Is_Started (Debugger, False);
 
       if Debugger.Executable = null then
-         Debugger.Executable := new String' (Executable);
+         Debugger.Executable := new String'(Executable);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -1391,20 +1391,20 @@ package body Debugger.Gdb is
            Natural'Value (S (Matched (1).First .. Matched (1).Last));
 
          if Matched (2) = No_Match then
-            Value (Len).Program_Counter := new String' ("");
+            Value (Len).Program_Counter := new String'("");
          else
             Value (Len).Program_Counter :=
-              new String' (S (Matched (3).First .. Matched (3).Last));
+              new String'(S (Matched (3).First .. Matched (3).Last));
          end if;
 
          Value (Len).Subprogram :=
-           new String' (S (Matched (4).First .. Matched (4).Last));
+           new String'(S (Matched (4).First .. Matched (4).Last));
 
          if Matched (5) = No_Match then
-            Value (Len).Source_Location := new String' ("");
+            Value (Len).Source_Location := new String'("");
          else
             Value (Len).Source_Location :=
-              new String' (S (Matched (6).First .. Matched (6).Last));
+              new String'(S (Matched (6).First .. Matched (6).Last));
          end if;
 
          First := Matched (0).Last + 2;
@@ -1462,9 +1462,9 @@ package body Debugger.Gdb is
 
    begin
       if Temporary then
-         Cmd := new String' ("tbreak ");
+         Cmd := new String'("tbreak ");
       else
-         Cmd := new String' ("break ");
+         Cmd := new String'("break ");
       end if;
 
       if Mode in Visible_Command then
@@ -1505,9 +1505,9 @@ package body Debugger.Gdb is
 
    begin
       if Temporary then
-         Cmd := new String' ("tbreak ");
+         Cmd := new String'("tbreak ");
       else
-         Cmd := new String' ("break ");
+         Cmd := new String'("break ");
       end if;
 
       if Mode in Visible_Command then
@@ -1587,9 +1587,9 @@ package body Debugger.Gdb is
 
    begin
       if Temporary then
-         Cmd := new String' ("tbreak *");
+         Cmd := new String'("tbreak *");
       else
-         Cmd := new String' ("break *");
+         Cmd := new String'("break *");
       end if;
 
       if Mode in Visible_Command then
@@ -2139,7 +2139,7 @@ package body Debugger.Gdb is
             if Index <= S'Last
               and then S (Start .. Index - 1) /= "<bad string table offset>"
             then
-               Result (Num) := new String' (S (Start .. Index - 1));
+               Result (Num) := new String'(S (Start .. Index - 1));
                Num := Num + 1;
                Index := Index + 1;
                Skip_Blanks (S, Index);
@@ -2713,7 +2713,7 @@ package body Debugger.Gdb is
 
                      if Index /= Tmp then
                         Br (Num).Commands :=
-                          new String' (S (Tmp .. Index - 2));
+                          new String'(S (Tmp .. Index - 2));
                      end if;
                   end if;
                end if;
@@ -2907,7 +2907,7 @@ package body Debugger.Gdb is
       --  Gdb always return a leading and tailing line, which we don't want
       --  to return.
 
-      Code := new String' (Disassembled (Start_Index .. End_Index));
+      Code := new String'(Disassembled (Start_Index .. End_Index));
 
       --  If there is nothing left, this means gdb couldn't disassemble that
       --  part.
@@ -3205,7 +3205,7 @@ package body Debugger.Gdb is
                Last_Index := Last_Index + 1;
             end if;
 
-            Result (Index) := new String' (S (First_Index .. Last_Index - 1));
+            Result (Index) := new String'(S (First_Index .. Last_Index - 1));
             Last_Index  := Last_Index + 1;
             First_Index := Last_Index;
          end loop;
@@ -3313,7 +3313,7 @@ package body Debugger.Gdb is
       end loop;
 
       Debugger.Stored_Language :=
-        new String' (S (First_Index + 1 .. End_Index - 1));
+        new String'(S (First_Index + 1 .. End_Index - 1));
 
       Send (Debugger, "set lang " & Language);
    end Switch_Language;

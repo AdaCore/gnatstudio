@@ -164,7 +164,7 @@ package body GVD.Proc_Utils is
         Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
       New_Args (Remote_Args'Length) := new String'(Host);
       New_Args (Remote_Args'Length + 1) :=
-        new String' (Get_Pref (GVD_Prefs, List_Processes));
+        new String'(Get_Pref (GVD_Prefs, List_Processes));
       Non_Blocking_Spawn
         (Handle.Descriptor.all,
          Remote_Args (Remote_Args'First).all, New_Args);

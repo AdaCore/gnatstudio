@@ -654,11 +654,11 @@ package body Directory_Tree is
 
       Tree.Idle := Dir_Idle.Add
         (Select_Directory_Idle'Access,
-         new Idle_Data' (Tree        => Dir_Tree (Tree),
-                         Dir         => new String' (D),
-                         Node        => Node_Nth (Tree, 0),
-                         Index       => D'First + Root_Dir'Length - 1,
-                         Busy_Cursor => Busy_Cursor_On));
+         new Idle_Data'(Tree        => Dir_Tree (Tree),
+                        Dir         => new String'(D),
+                        Node        => Node_Nth (Tree, 0),
+                        Index       => D'First + Root_Dir'Length - 1,
+                        Busy_Cursor => Busy_Cursor_On));
    end Show_Directory;
 
    ---------------------------
@@ -1332,7 +1332,7 @@ package body Directory_Tree is
       --  A single directory selector ?
 
       if Selector.List = null then
-         return (1 => new String' (Get_Selection (Selector.Directory)));
+         return (1 => new String'(Get_Selection (Selector.Directory)));
       else
          declare
             Length : constant Gint := Get_Rows (Selector.List);

@@ -150,9 +150,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Filter_B := new Filter_Show_Ada;
          Filter_C := new Filter_Show_Tests;
 
-         Filter_A.Label := new String' (-"All files");
-         Filter_B.Label := new String' (-"Ada files");
-         Filter_C.Label := new String' (-"Suite and test files");
+         Filter_A.Label := new String'(-"All files");
+         Filter_B.Label := new String'(-"Ada files");
+         Filter_C.Label := new String'(-"Suite and test files");
 
          Gtk_New (Suite_Window.Explorer, "/", "", "Select test suite");
          Create_From_Xpm_D
@@ -329,7 +329,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Put_Line
            (File, "   return Result;" & ASCII.LF & "end " & Name & ';');
          Close (File);
-         Win.Name := new String' (To_Lower (Name));
+         Win.Name := new String'(To_Lower (Name));
       end if;
 
       Hide (Win);

@@ -169,12 +169,12 @@ package body VCS_Module is
    begin
       if M.VCS_List = null then
          M.VCS_List := new Argument_List'
-           (1 => new String' (VCS_Identifier));
+           (1 => new String'(VCS_Identifier));
       else
          Old := M.VCS_List;
          M.VCS_List := new Argument_List (1 .. M.VCS_List'Length + 1);
          M.VCS_List (Old'Range) := Old.all;
-         M.VCS_List (M.VCS_List'Last) := new String' (VCS_Identifier);
+         M.VCS_List (M.VCS_List'Last) := new String'(VCS_Identifier);
          Basic_Types.Unchecked_Free (Old);
       end if;
    end Register_VCS;

@@ -325,7 +325,7 @@ package body Src_Editor_Module is
             Every_Line    => True);
 
          Infos := new Line_Information_Array (1 .. 1);
-         Infos (1).Text := new String' ("   1");
+         Infos (1).Text := new String'("   1");
 
          Add_Line_Information
            (Kernel,
@@ -423,7 +423,7 @@ package body Src_Editor_Module is
          Infos := new Line_Information_Array (Line1 .. Line2);
 
          for J in Infos'Range loop
-            Infos (J).Text := new String' (Image (J));
+            Infos (J).Text := new String'(Image (J));
          end loop;
 
          if Has_File_Information (Area_Context) then
@@ -457,10 +457,10 @@ package body Src_Editor_Module is
    begin
       if Widget.all in Source_Box_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Source_Editor");
+         N.Tag := new String'("Source_Editor");
 
          Child := new Node;
-         Child.Tag := new String' ("File");
+         Child.Tag := new String'("File");
          Child.Value := new String'
            (Get_Filename (Source_Box (Widget).Editor));
          Add_Child (N, Child);
@@ -1348,8 +1348,8 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Args (1) := new String' (File);
-         Args (2) := new String' (Dir_Name (File));
+         Args (1) := new String'(File);
+         Args (2) := new String'(Dir_Name (File));
          Launch_Process
            (Kernel, "gnatstub", Args, Generate_Body_Cb'Access, File, Success);
          Free (Args);
@@ -1439,15 +1439,15 @@ package body Src_Editor_Module is
 
          if Project = "" then
             Args := new Argument_List'
-              (new String' ("pretty"), new String' (File));
+              (new String'("pretty"), new String'(File));
 
          else
             Vars := Argument_String_To_List
               (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
             Args := new Argument_List'
-              ((1 => new String' ("pretty"),
-                2 => new String' ("-P" & Project),
-                3 => new String' (File)) & Vars.all);
+              ((1 => new String'("pretty"),
+                2 => new String'("-P" & Project),
+                3 => new String'(File)) & Vars.all);
             Unchecked_Free (Vars);
          end if;
 

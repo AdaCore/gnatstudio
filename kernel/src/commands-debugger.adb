@@ -41,7 +41,7 @@ package body Commands.Debugger is
       Item := new Set_Breakpoint_Command;
       Item.Kernel := Kernel;
       Item.BMode := Mode;
-      Item.File := new String' (File);
+      Item.File := new String'(File);
       Item.Line := Line;
       Item.Debugger := Debugger;
       Item.BP := Identifier;

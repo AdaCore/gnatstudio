@@ -76,12 +76,12 @@ package body SN.Browse is
       Args : Argument_List (1 .. 6);
    begin
       --  Execute browser
-      Args := (1 => new String' ("-n"),
-               2 => new String' (DB_Directory & DB_File_Name),
-               3 => new String' ("-p"),
-               4 => new String' (DBIMP_Path),
-               5 => new String' ("-y"),
-               6 => new String' (File_Name));
+      Args := (1 => new String'("-n"),
+               2 => new String'(DB_Directory & DB_File_Name),
+               3 => new String'("-p"),
+               4 => new String'(DBIMP_Path),
+               5 => new String'("-y"),
+               6 => new String'(File_Name));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
@@ -162,10 +162,10 @@ package body SN.Browse is
       end loop;
       Close (Dir);
 
-      Args := (1 => new String' (DB_Directory & DB_File_Name),
-               2 => new String' ("-f"),
-               3 => new String' (Temp_Name),
-               4 => new String' ("-l"));
+      Args := (1 => new String'(DB_Directory & DB_File_Name),
+               2 => new String'("-f"),
+               3 => new String'(Temp_Name),
+               4 => new String'("-l"));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, DBIMP_Path, Args, Err_To_Out => True);

@@ -225,7 +225,7 @@ package body GVD.Text_Box.Asm_Editor is
             End_Address     => Editor.Current_Range.Low.all);
 
          Free (Editor.Current_Range.Low);
-         Editor.Current_Range.Low := new String' (Pc);
+         Editor.Current_Range.Low := new String'(Pc);
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data := new String'
@@ -246,7 +246,7 @@ package body GVD.Text_Box.Asm_Editor is
             End_Address     => End_Pc & "+1");
 
          Free (Editor.Current_Range.High);
-         Editor.Current_Range.High := new String' (End_Pc);
+         Editor.Current_Range.High := new String'(End_Pc);
 
          --  Avoid duplicating the first assembly line since it was already
          --  displayed.
@@ -290,11 +290,11 @@ package body GVD.Text_Box.Asm_Editor is
             end if;
 
             if Start_End /= 0 then
-               Low_Range := new String' (Start (1 .. Start_End));
+               Low_Range := new String'(Start (1 .. Start_End));
             end if;
 
             if Last_End /= 0 then
-               High_Range := new String' (Last (1 .. Last_End));
+               High_Range := new String'(Last (1 .. Last_End));
             end if;
 
             --  If both are null, this means that gdb couldn't get the assembly
@@ -303,9 +303,9 @@ package body GVD.Text_Box.Asm_Editor is
 
             if Start_End = 0 and then Last_End = 0 then
                Editor.Cache := new Cache_Data'
-                 (Low  => new String' (Pc),
-                  High => new String' (Pc),
-                  Data => new String' (-"Couldn't get assembly code"),
+                 (Low  => new String'(Pc),
+                  High => new String'(Pc),
+                  Data => new String'(-"Couldn't get assembly code"),
                   Next => Editor.Cache);
             else
 
@@ -324,14 +324,14 @@ package body GVD.Text_Box.Asm_Editor is
                      Code            => S2,
                      Start_Address   => High_Range.all,
                      End_Address     => End_Pc & "+1");
-                  S3 := new String' (S.all & S2.all);
+                  S3 := new String'(S.all & S2.all);
                   Free (S);
                   Free (S2);
                   S := S3;
                   Free (High_Range);
 
                   if Last_End /= 0 then
-                     High_Range := new String' (Last (1 .. Last_End));
+                     High_Range := new String'(Last (1 .. Last_End));
                   end if;
                end if;
 

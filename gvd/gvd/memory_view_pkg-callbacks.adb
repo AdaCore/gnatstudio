@@ -254,7 +254,7 @@ package body Memory_View_Pkg.Callbacks is
       View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Free (View.Flags);
-      View.Flags := new String' (View.Values.all);
+      View.Flags := new String'(View.Values.all);
       Update_Display (View);
    end On_Reset_Clicked;
 

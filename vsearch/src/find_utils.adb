@@ -678,7 +678,7 @@ package body Find_Utils is
             Unchecked_Free (Tmp);
          end if;
 
-         Result (Result'Last) := new Match_Result' (Match);
+         Result (Result'Last) := new Match_Result'(Match);
          return True;
       end Callback;
 
@@ -777,7 +777,7 @@ package body Find_Utils is
       Options  : Search_Options) is
    begin
       Free (Search_Context (Context.all));
-      Context.Look_For       := new String' (Look_For);
+      Context.Look_For       := new String'(Look_For);
       Context.Options        := Options;
       Context.BM_Initialized := False;
    end Set_Context;
@@ -868,9 +868,9 @@ package body Find_Utils is
       Context.Recurse := Recurse;
 
       if Directory = "" then
-         Context.Directory := new String' (Get_Current_Dir);
+         Context.Directory := new String'(Get_Current_Dir);
       else
-         Context.Directory := new String' (Name_As_Directory (Directory));
+         Context.Directory := new String'(Name_As_Directory (Directory));
       end if;
    end Set_File_List;
 
@@ -1208,7 +1208,7 @@ package body Find_Utils is
 
       if Context.Dirs = Null_List then
          Prepend (Context.Dirs, new Dir_Data);
-         Head (Context.Dirs).Name := new String' (Context.Directory.all);
+         Head (Context.Dirs).Name := new String'(Context.Directory.all);
          Open (Head (Context.Dirs).Dir, Context.Directory.all);
       end if;
 
@@ -1249,7 +1249,7 @@ package body Find_Utils is
 
                   if Context.Next_Matches_In_File /= null then
                      Free (Context.Current_File);
-                     Context.Current_File := new String' (Full_Name);
+                     Context.Current_File := new String'(Full_Name);
                   end if;
                end if;
             end;

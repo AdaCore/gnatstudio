@@ -57,7 +57,7 @@ package body GVD.Files is
 
       Tmp := Window.File_Caches;
       Window.File_Caches := new File_Cache;
-      Window.File_Caches.File_Name := new String' (File_Name);
+      Window.File_Caches.File_Name := new String'(File_Name);
       Window.File_Caches.Next := Tmp;
       return Window.File_Caches;
    end Find_In_Cache;
@@ -97,7 +97,7 @@ package body GVD.Files is
       --  Do we already know the file contents ?
 
       if Cache.File_Contents /= null then
-         Contents := new String' (Cache.File_Contents.all);
+         Contents := new String'(Cache.File_Contents.all);
          return;
       end if;
 
@@ -166,7 +166,7 @@ package body GVD.Files is
          Length := Natural (File_Length (F));
 
          if Length = 0 then
-            Contents := new String' ("");
+            Contents := new String'("");
          else
             --  Allocate the buffer
             --  and strip the ^Ms from the string
@@ -198,9 +198,9 @@ package body GVD.Files is
                end if;
 
                if Cache.CR_Stripped then
-                  Contents := new String' (Strip_CR (S));
+                  Contents := new String'(Strip_CR (S));
                else
-                  Contents := new String' (S);
+                  Contents := new String'(S);
                end if;
             end;
          end if;
@@ -208,7 +208,7 @@ package body GVD.Files is
          --  Only save the contents in the cache for remote files
 
          if Remote_Host /= null and then Remote_Host.all /= "" then
-            Cache.File_Contents := new String' (Contents.all);
+            Cache.File_Contents := new String'(Contents.all);
          end if;
 
          if Should_Delete then

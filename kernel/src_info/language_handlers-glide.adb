@@ -183,7 +183,7 @@ package body Language_Handlers.Glide is
       end if;
 
       Handler.Handlers (Handler.Handlers'Last) :=
-        (Name    => new String' (Name),
+        (Name    => new String'(Name),
          Handler => LI);
    end Register_LI_Handler;
 
@@ -269,7 +269,7 @@ package body Language_Handlers.Glide is
       end if;
 
       Handler.Languages (Handler.Languages'Last) :=
-        (Language_Name => new String' (Name),
+        (Language_Name => new String'(Name),
          Handler       => null,
          Lang          => Lang);
    end Register_Language;

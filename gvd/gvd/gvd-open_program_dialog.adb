@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -84,11 +84,11 @@ package body GVD.Open_Program_Dialog is
          Descriptor.Debugger := Perl_Type;
       end if;
 
-      Descriptor.Program := new String' (Get_Text (Open.Program_Entry));
-      Descriptor.Remote_Host := new String' (Get_Text (Open.Host_Entry));
-      Descriptor.Remote_Target := new String' (Get_Text (Open.Target_Entry));
-      Descriptor.Protocol := new String' (Get_Text (Open.Protocol_Entry));
-      Descriptor.Debugger_Name := new String' (Get_Text (Open.Debugger_Entry));
+      Descriptor.Program := new String'(Get_Text (Open.Program_Entry));
+      Descriptor.Remote_Host := new String'(Get_Text (Open.Host_Entry));
+      Descriptor.Remote_Target := new String'(Get_Text (Open.Target_Entry));
+      Descriptor.Protocol := new String'(Get_Text (Open.Protocol_Entry));
+      Descriptor.Debugger_Name := new String'(Get_Text (Open.Debugger_Entry));
 
       if Get_Active (Open.Replace_Check) then
          Descriptor.Launch := Current_Debugger;

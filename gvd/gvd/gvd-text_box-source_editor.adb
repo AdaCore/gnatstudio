@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -33,7 +33,7 @@ package body GVD.Text_Box.Source_Editor is
       Free (Editor.Lang);
 
       if Lang /= null then
-         Editor.Lang := new Language_Root'Class' (Lang.all);
+         Editor.Lang := new Language_Root'Class'(Lang.all);
       end if;
    end Set_Current_Language;
 

@@ -161,7 +161,7 @@ package body Glide_Kernel is
 
       Glide_Kernel.Modules.Initialize (Handle);
       Handle.Main_Window  := Main_Window;
-      Handle.Home_Dir     := new String' (Home_Dir);
+      Handle.Home_Dir     := new String'(Home_Dir);
 
       --  Create the language handler. It is also set for the gvd main window,
       --  so that the embedded gvd uses the same mechanism as the rest of glide

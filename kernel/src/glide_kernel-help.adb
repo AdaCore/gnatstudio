@@ -209,7 +209,7 @@ package body Glide_Kernel.Help is
       if Buffer /= null then
          Trace (Me, "loading file: " & File);
          Free (Html.Current_Help_File);
-         Html.Current_Help_File := new String' (File);
+         Html.Current_Help_File := new String'(File);
          Stream := HTML_Begin (Html.Csc);
          HTML_Write (Html.Csc, Stream, Buffer.all);
          HTML_End (Html.Csc, Stream, Stream_OK);
@@ -598,13 +598,13 @@ package body Glide_Kernel.Help is
    begin
       if Widget.all in Help_Browser_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Help_Browser");
+         N.Tag := new String'("Help_Browser");
 
          Child := new Node;
-         Child.Tag := new String' ("File");
+         Child.Tag := new String'("File");
 
          if Help_Browser (Widget).Current_Help_File = null then
-            Child.Value := new String' ("");
+            Child.Value := new String'("");
          else
             Child.Value := new String'
               (Help_Browser (Widget).Current_Help_File.all);

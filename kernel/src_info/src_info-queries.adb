@@ -571,8 +571,8 @@ package body Src_Info.Queries is
          Dependencies := new Dependency_Node'
            (Value =>
               (File =>
-                 (File_Name => new String' (FI.Source_Filename.all),
-                  LI_Name   => new String' (Lib_Info.LI.LI_Filename.all)),
+                 (File_Name => new String'(FI.Source_Filename.all),
+                  LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
                Dep  => (Depends_From_Spec => False,
                         Depends_From_Body => True)),
             Next  => Dependencies);
@@ -599,7 +599,7 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => new String' (FI.Source_Filename.all),
+                    (File_Name => new String'(FI.Source_Filename.all),
                      LI_Name   => new String'
                        (Current_Dep.Value.File.LI.LI.LI_Filename.all)),
                   Dep  => Current_Dep.Value.Dep_Info),
@@ -1182,7 +1182,7 @@ package body Src_Info.Queries is
       end loop;
 
       T := (Lib_Info    => Lib_Info,
-            LI_Filename => new String' (Lib_Info.LI.LI_Filename.all),
+            LI_Filename => new String'(Lib_Info.LI.LI_Filename.all),
             Time_Stamp  => 0,
             Body_Tree   => null,
             Spec_Tree   => null,
@@ -1936,13 +1936,13 @@ package body Src_Info.Queries is
               Iterator.Decl_LI /= null,
               "LI file not found for " & Source_Filename);
 
-      Iterator.Source_Filename := new String' (Source_Filename);
+      Iterator.Source_Filename := new String'(Source_Filename);
       Iterator.Include_Self := Include_Self;
 
       if Single_Source_File then
-         Iterator.Importing := new Project_Id_Array' (1 => Decl_Project);
+         Iterator.Importing := new Project_Id_Array'(1 => Decl_Project);
          Iterator.Source_Files := new String_Array'
-           (1 => new String' (Source_Filename));
+           (1 => new String'(Source_Filename));
       else
          Iterator.Importing := new Project_Id_Array'
            (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
@@ -1981,28 +1981,28 @@ package body Src_Info.Queries is
       if Iterator.Current_Decl.Value.Dep_Info.Depends_From_Spec
         and then Iterator.LI.LI.Spec_Info /= null
       then
-         S := new String' (Iterator.LI.LI.Spec_Info.Source_Filename.all);
+         S := new String'(Iterator.LI.LI.Spec_Info.Source_Filename.all);
 
       elsif Iterator.Current_Decl.Value.Dep_Info.Depends_From_Body
         and then Iterator.LI.LI.Body_Info /= null
       then
-         S := new String' (Iterator.LI.LI.Body_Info.Source_Filename.all);
+         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
 
       elsif Iterator.LI.LI.Spec_Info /= null then
-         S := new String' (Iterator.LI.LI.Spec_Info.Source_Filename.all);
+         S := new String'(Iterator.LI.LI.Spec_Info.Source_Filename.all);
 
       elsif Iterator.LI.LI.Body_Info /= null then
-         S := new String' (Iterator.LI.LI.Body_Info.Source_Filename.all);
+         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
 
       else
-         S := new String' ("");
+         S := new String'("");
       end if;
 
       if Iterator.LI = Iterator.Decl_LI then
          return
            (File => Internal_File'
               (File_Name => S,
-               LI_Name   => new String' (Iterator.Decl_LI.LI.LI_Filename.all)),
+               LI_Name   => new String'(Iterator.Decl_LI.LI.LI_Filename.all)),
             Dep => (False, False));
       end if;
 
@@ -2169,9 +2169,9 @@ package body Src_Info.Queries is
    function Get_Declaration_Location
      (List : LI_File_List; Entity : Entity_Information) return File_Location is
    begin
-      return File_Location' (File   => Get_Source_File (List, Entity),
-                             Line   => Get_Declaration_Line_Of (Entity),
-                             Column => Get_Declaration_Column_Of (Entity));
+      return File_Location'(File   => Get_Source_File (List, Entity),
+                            Line   => Get_Declaration_Line_Of (Entity),
+                            Column => Get_Declaration_Column_Of (Entity));
    end Get_Declaration_Location;
 
    ---------------------
@@ -2188,11 +2188,11 @@ package body Src_Info.Queries is
       Part := Get_Unit_Part (LI, Get_Declaration_File_Of (Entity));
 
       if Part /= Unit_Separate then
-         return Source_File' (LI => LI, Part => Part, Source_Filename => null);
+         return Source_File'(LI => LI, Part => Part, Source_Filename => null);
       else
          return Source_File'
            (LI => LI, Part => Part,
-            Source_Filename => new String' (Get_Declaration_File_Of (Entity)));
+            Source_Filename => new String'(Get_Declaration_File_Of (Entity)));
       end if;
    end Get_Source_File;
 
@@ -2246,9 +2246,9 @@ package body Src_Info.Queries is
                Sep_Source  => null);
 
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
-         Iter.Entity_Name := new String' (To_Lower (Entity_Name));
+         Iter.Entity_Name := new String'(To_Lower (Entity_Name));
       else
-         Iter.Entity_Name := new String' (Entity_Name);
+         Iter.Entity_Name := new String'(Entity_Name);
       end if;
 
       Next (Iter);
@@ -2358,10 +2358,10 @@ package body Src_Info.Queries is
       Name   : String) return Entity_Information is
    begin
       return Entity_Information'
-        (Name        => new String' (Name),
+        (Name        => new String'(Name),
          Decl_Line   => Line,
          Decl_Column => Column,
-         Decl_File   => new String' (File));
+         Decl_File   => new String'(File));
    end Create;
 
 end Src_Info.Queries;

@@ -221,7 +221,7 @@ package body Vsearch_Ext is
       Prepend
         (Search_Modules,
          Search_Module_Data'
-           (Label             => new String' (Label),
+           (Label             => new String'(Label),
             Mask              => Mask,
             Factory           => Factory,
             Extra_Information => Extra_Information));

@@ -69,8 +69,8 @@ package body Commands.External is
    begin
       Item := new External_Command;
       Item.Kernel  := Kernel;
-      Item.Command := new String' (Command);
-      Item.Dir     := new String' (Dir);
+      Item.Command := new String'(Command);
+      Item.Dir     := new String'(Dir);
       Item.Args    := Copy_String_List (Args);
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
@@ -150,7 +150,7 @@ package body Commands.External is
       end if;
 
       for J in Args'Range loop
-         Args (J) := new String' (Data (Temp_Args));
+         Args (J) := new String'(Data (Temp_Args));
          Temp_Args := Next (Temp_Args);
       end loop;
 

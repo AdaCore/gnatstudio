@@ -1230,15 +1230,15 @@ package body VCS_View_Pkg is
             Get_Creator (Context));
 
          if Has_File_Information (File) then
-            File_Info := new String' (File_Information (File));
+            File_Info := new String'(File_Information (File));
          else
-            File_Info := new String' ("");
+            File_Info := new String'("");
          end if;
 
          if Has_Directory_Information (File) then
-            Directory_Info := new String' (Directory_Information (File));
+            Directory_Info := new String'(Directory_Information (File));
          else
-            Directory_Info := new String' ("");
+            Directory_Info := new String'("");
          end if;
 
          Set_File_Information

@@ -1444,7 +1444,7 @@ package body Browsers.Call_Graph is
    begin
       if Widget.all in Call_Graph_Browser_Record'Class then
          N := new Node;
-         N.Tag := new String' ("Call_Graph");
+         N.Tag := new String'("Call_Graph");
          return N;
       end if;
 
