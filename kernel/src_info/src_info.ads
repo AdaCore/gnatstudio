@@ -663,6 +663,7 @@ private
    function "=" (Left, Right : File_Location) return Boolean;
    --  A redefined equality function that compares uses the redefined equality
    --  for the source file field.
+   pragma Inline ("=");
 
    type E_Reference is record
       Location : File_Location;
