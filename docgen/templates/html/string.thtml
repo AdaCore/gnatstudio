@@ -3,4 +3,4 @@
 @@--
 @@-- TEXT : The string to output
 @@--
-<font color="red">@_TEXT_@</font>
+<font color="red">@_WEB_ESCAPE:TEXT_@</font>
