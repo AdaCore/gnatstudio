@@ -800,6 +800,9 @@ package body Src_Editor_Buffer.Line_Information is
                if Editable_Line /= 0 then
                   if Editor.Editable_Lines
                     (Editable_Line).Side_Info_Data
+                    (Col).Info /= null
+                  and then Editor.Editable_Lines
+                    (Editable_Line).Side_Info_Data
                     (Col).Info.Associated_Command /= null
                   then
                      Launch_Synchronous
