@@ -293,10 +293,10 @@ As for the undo/redo capability in the source editor, the
 @noindent
 It is now time to run the application: select the menu
 @code{Build->Run->sdc}, which will open a dialog window.
-Type @code{input.txt} in the text entry: this is the name of a text
+Type @code{../input.txt} in the text entry: this is the name of a text
 file that will be passed as argument to the @i{sdc} program.
 
-Now click on @code{OK}: a new window titled @code{Run: sdc input.txt}
+Now click on @code{OK}: a new window titled @code{Run: sdc ../input.txt}
 is created at the bottom of the main window where the sdc application
 runs and displays an unexpected internal error: this is a good opportunity
 to use the integrated debugger.
@@ -328,7 +328,7 @@ stack, various pieces of information can be displayed or
 removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
-Now select the menu @code{Debug->Run...}. Notice that @code{input.txt} has
+Now select the menu @code{Debug->Run...}. Notice that @code{../input.txt} has
 been filled automatically for you since the two menus @code{Build->Run...} and
 @code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
 stop on an exception (@code{Contraint_Error} in the file @file{stack.adb}, at
