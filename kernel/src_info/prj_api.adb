@@ -704,6 +704,7 @@ package body Prj_API is
      (Project          : Project_Id;
       In_Pkg           : String;
       File             : Name_Id;
+      Language         : Types.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean)
    is
@@ -727,7 +728,7 @@ package body Prj_API is
          In_Packages => Projects.Table (Project).Decl.Packages);
 
       --  Do we have some file-specific switches ?
-      if Pkg /= No_Package then
+      if Pkg /= No_Package and then File /= No_Name then
          The_Array := Value_Of
              (Name      => Switches,
               In_Arrays => Packages.Table (Pkg).Decl.Arrays);
@@ -747,15 +748,31 @@ package body Prj_API is
       if Pkg /= No_Package
         and then Packages.Table (Pkg).Decl.Attributes /= No_Variable
       then
-         Var_Value := Prj.Util.Value_Of
-           (Variable_Name => Switches,
-            In_Variables  => Packages.Table (Pkg).Decl.Attributes);
+         Name_Len := 16;
+         Name_Buffer (1 .. Name_Len) := "default_switches";
+         Switches := Name_Find;
+
+         --  Indexed by the language ?
+
+         The_Array := Value_Of
+             (Name      => Switches,
+              In_Arrays => Packages.Table (Pkg).Decl.Arrays);
+         Var_Value := Value_Of
+             (Index    => Language,
+              In_Array => The_Array);
 
          if Var_Value /= Nil_Variable_Value then
             Value := Var_Value;
             Is_Default_Value := True;
             return;
          end if;
+
+         --  Not indexed. It seems this case is no longer allowed in the
+         --  projects, so this is commented out for now.
+
+         --  Var_Value := Prj.Util.Value_Of
+         --    (Variable_Name => Switches,
+         --     In_Variables  => Packages.Table (Pkg).Decl.Attributes);
       end if;
 
       Is_Default_Value := True;

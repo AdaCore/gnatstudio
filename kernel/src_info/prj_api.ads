@@ -201,6 +201,7 @@ package Prj_API is
      (Project          : Project_Id;
       In_Pkg           : String;
       File             : Types.Name_Id;
+      Language         : Types.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean);
    --  Return the switches to use for a file in a given package (gnatmake,
@@ -210,7 +211,8 @@ package Prj_API is
    --  specified, and Value is in fact the list of default switches defined
    --  at the package level.
    --  File can be No_Name if you want to find the default switches to use for
-   --  all files in the project.
+   --  all files in the project. In that case, this procedure returns the
+   --  switches to use for Language
 
    function Length (Value : Variable_Value) return Integer;
    --  Return the number of elements in Value (1 if Value is of kind Single)
