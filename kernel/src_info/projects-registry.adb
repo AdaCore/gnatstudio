@@ -42,6 +42,7 @@ with Opt;                       use Opt;
 with Output;                    use Output;
 with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
+with Prj.Com;                   use Prj.Com;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
 with Prj.Util;                  use Prj.Util;
@@ -439,7 +440,7 @@ package body Projects.Registry is
 
    exception
       when E : others =>
-         Trace (Me, "Load: unexpected exception: "
+         Trace (Exception_Handle, "Load: unexpected exception: "
                 & Exception_Information (E));
          Output.Set_Special_Output (null);
          raise;
@@ -675,17 +676,35 @@ package body Projects.Registry is
             Get_Name_String (String_Elements.Table (Sources).Value);
 
             declare
+               Current_Source : constant Name_Id :=
+                                  String_Elements.Table (Sources).Value;
                --  ??? Should avoid function returning unconstrained array
                UTF8 : constant String := Locale_To_UTF8
                  (Name_Buffer (1 .. Name_Len));
+               Directory : Name_Id := No_Name;
+               Unit      : Unit_Project;
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
                String_Elements.Table (Sources).Value := Name_Find;
 
+               Unit := Prj.Com.Files_Htable.Get (Current_Source);
+
+               if Unit /= Prj.Com.No_Unit_Project then
+                  for S in Prj.Com.Spec_Or_Body'Range loop
+                     if Units.Table (Unit.Unit).File_Names (S).Name =
+                       Current_Source
+                     then
+                        Directory :=
+                          Units.Table (Unit.Unit).File_Names (S).Path;
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+
                Set (Registry.Data.Sources,
                     K => UTF8,
-                    E => (P, Name_Ada, No_Name));
+                    E => (P, Name_Ada, Directory));
                Sources := String_Elements.Table (Sources).Next;
             end;
          end loop;
