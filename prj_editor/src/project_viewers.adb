@@ -175,6 +175,8 @@ package body Project_Viewers is
      := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
    Rename_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Path_Cst'Access);
+   Add_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
+     (1 => Path_Cst'Access);
 
    Base_File_Name_Column     : constant := 0;
    Absolute_File_Name_Column : constant := 1;
@@ -1849,6 +1851,19 @@ package body Project_Viewers is
    is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Project    : constant Project_Type := Get_Data (Data, 1);
+
+      procedure Set_Error (Str : String);
+      --  Set an error
+
+      ---------------
+      -- Set_Error --
+      ---------------
+
+      procedure Set_Error (Str : String) is
+      begin
+         Set_Error_Msg (Data, Str);
+      end Set_Error;
+
    begin
       if Command = "add_main_unit" then
          declare
@@ -1874,14 +1889,6 @@ package body Project_Viewers is
             Name : constant String := Nth_Arg (Data, 2);
             Path : constant String :=
               Nth_Arg (Data, 3, Project_Path (Project));
-
-            procedure Set_Error (Str : String);
-            --  Set an error
-
-            procedure Set_Error (Str : String) is
-            begin
-               Set_Error_Msg (Data, Str);
-            end Set_Error;
          begin
             Rename_And_Move
               (Root_Project  => Get_Project (Kernel),
@@ -1898,6 +1905,25 @@ package body Project_Viewers is
             Project2  : constant Project_Type := Get_Data (Data, 2);
          begin
             Remove_Imported_Project (Project, Project2);
+         end;
+
+      elsif Command = "add_dependency" then
+         Name_Parameters (Data, Add_Dep_Cmd_Parameters);
+         declare
+            Project2 : constant String  := Normalize_Pathname
+              (Name => Nth_Arg (Data, 2));
+            Relative : constant Boolean :=
+              Get_Paths_Type (Project) = Projects.Relative
+              or else (Get_Paths_Type (Project) = From_Pref
+                       and then Get_Pref (Kernel, Generate_Relative_Paths));
+            Error    : Import_Project_Error;
+            pragma Unreferenced (Error);
+         begin
+            Error := Add_Imported_Project
+              (Project                   => Project,
+               Imported_Project_Location => Project2,
+               Report_Errors             => Set_Error'Unrestricted_Access,
+               Use_Relative_Path         => Relative);
          end;
 
       elsif Command = "sources" then
@@ -3151,6 +3177,12 @@ package body Project_Viewers is
         (Kernel, "remove_dependency",
          Minimum_Args => Remove_Dep_Cmd_Parameters'Length,
          Maximum_Args => Remove_Dep_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "add_dependency",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
