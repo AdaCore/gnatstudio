@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
+--                     Copyright (C) 2003-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -592,8 +592,7 @@ package body Docgen_Module is
       if not Is_Directory
         (Get_Doc_Directory (Backend, Kernel))
       then
-         Make_Dir
-           (Get_Doc_Directory (Backend, Kernel));
+         Make_Dir (Get_Doc_Directory (Backend, Kernel));
       end if;
 
       Process_Files
@@ -636,10 +635,10 @@ package body Docgen_Module is
       Docgen_Module (Docgen_Module_ID).HTML_Backend := new Backend_HTML;
 
       Register_Module
-        (Module                  => Docgen_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => "Docgen",
-         Priority                => Default_Priority);
+        (Module      => Docgen_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => "Docgen",
+         Priority    => Default_Priority);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu
