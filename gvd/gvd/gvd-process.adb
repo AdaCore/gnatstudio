@@ -228,6 +228,10 @@ package body Odd.Process is
       end loop;
 
       raise Debugger_Not_Found;
+
+   exception
+      when Constraint_Error =>
+         raise Debugger_Not_Found;
    end Convert;
 
    -------------
