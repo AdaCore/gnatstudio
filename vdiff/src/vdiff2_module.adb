@@ -191,7 +191,7 @@ package body Vdiff2_Module is
         (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button
-        (Kernel, -"Prev",
+        (Kernel, -"Previous",
          Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
          Image, -"Go to prev mark");
 
