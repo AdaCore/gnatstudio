@@ -845,7 +845,7 @@ package body GVD.Text_Box is
             Delete_Text
               (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
             Set_Point (Box.Child, Guint (Box.Highlight_Index));
-            Insert (Box, Fore  => Fore, Back  => Back, Chars => S);
+            Insert (Box, Fore => Fore, Back => Back, Chars => S);
             Thaw (Box.Child);
          end;
       end if;
