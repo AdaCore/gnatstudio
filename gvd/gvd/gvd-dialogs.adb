@@ -572,8 +572,8 @@ package body GVD.Dialogs is
          end if;
 
          for J in Questions'Range loop
-            Temp (0) := Strings.New_String (Questions (J).Choice.all);
-            Temp (1) := Strings.New_String (Questions (J).Description.all);
+            Temp (0) := C.Strings.New_String (Questions (J).Choice.all);
+            Temp (1) := C.Strings.New_String (Questions (J).Description.all);
             Row := Append (Question_Dialog.List, Temp);
             Free (Temp);
          end loop;
