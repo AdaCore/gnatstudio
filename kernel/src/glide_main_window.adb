@@ -1,3 +1,5 @@
+with Glide_Kernel; use Glide_Kernel;
+
 package body Glide_Main_Window is
 
    procedure Gtk_New
@@ -15,6 +17,7 @@ package body Glide_Main_Window is
       Menu_Items  : Gtk_Item_Factory_Entry_Array) is
    begin
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
+      Gtk_New (Main_Window.Kernel);
    end Initialize;
 
 end Glide_Main_Window;
