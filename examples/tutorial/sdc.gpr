@@ -32,6 +32,10 @@ project Sdc is
       end case;
    end Builder;
 
+   package Binder is
+      for Default_Switches ("ada") use ("-static");
+   end Binder;
+
    package Ide is
       for Vcs_Kind use "CVS";
    end Ide;
