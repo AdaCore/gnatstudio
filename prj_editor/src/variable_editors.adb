@@ -78,11 +78,6 @@ package body Variable_Editors is
      (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
    --  Add all the possible values for type Typ into the List.
 
-   procedure External_As_String (Ext : Project_Node_Id);
-   --  Set in Name_Buffer the name of the external variable referenced by Ext.
-   --  Note that this doesn't support complex expressions for the variable
-   --  name.
-
    procedure Resize_Text_Area
      (Text : access Value_Editor_Record'Class;
       Var : Project_Node_Id;
@@ -224,6 +219,7 @@ package body Variable_Editors is
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Update");
       else
          Set_Label (Editor.Name_Frame, "Name");
+         Set_Active (Editor.Env_Must_Be_Defined, True);
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Add");
       end if;
    end Gtk_New;
@@ -338,17 +334,6 @@ package body Variable_Editors is
       end loop;
    end Display_Expr;
 
-   ------------------------
-   -- External_As_String --
-   ------------------------
-
-   procedure External_As_String (Ext : Project_Node_Id) is
-      N : Project_Node_Id;
-   begin
-      N := Current_Term (First_Term (External_Reference_Of (Ext)));
-      String_To_Name_Buffer (String_Value_Of (N));
-   end External_As_String;
-
    -------------------------
    -- Add_Possible_Values --
    -------------------------
@@ -404,6 +389,7 @@ package body Variable_Editors is
       Button   : Gtk_Button;
       Data     : Var_Handler_Data;
       Row_Data : Row_Data_Array_Access;
+      Expr     : Project_Node_Id;
 
    begin
       if Row > Editor.Num_Rows then
@@ -510,10 +496,15 @@ package body Variable_Editors is
       end if;
 
       --  The environment variable
-      if Expression_Of (Var) /= Empty_Node
-        and then Kind_Of (Expression_Of (Var)) = N_External_Value
-      then
-         External_As_String (Expression_Of (Var));
+      --  ??? Should have a higher-level function in Prj_API to manipulate
+      --  ??? external variables.
+      Expr := Expression_Of (Var);
+      Expr := First_Term (Expr);
+      Expr := Current_Term (Expr);
+
+      if Kind_Of (Expr) = N_External_Value then
+         String_To_Name_Buffer
+           (String_Value_Of (External_Reference_Of (Expr)));
          Set_Text (Editor.Data (Row).Env_Label,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
       end if;
@@ -573,6 +564,25 @@ package body Variable_Editors is
          Value := Editor.Single_Value;
       end if;
 
+      --  The name of the variable mustn't be empty
+
+      if Get_Text (Editor.Variable_Name) = "" then
+         Put_Line ("!!!Must provide valid name for the variable");
+         return;
+      end if;
+
+      --  For environment variables, the name mustn't be empty. We already
+      --  know the default value is legal, since the user cannot enter
+      --  anything illegal anyway.
+
+      if Get_Active (Editor.Get_Environment)
+        and then Get_Chars (Get_Entry (Editor.List_Env_Variables)) = ""
+      then
+         Put_Line ("!!!Variable name mustn't be empty");
+         return;
+      end if;
+
+
       if V = Valid then
          V := Check_Validity (Value);
       end if;
@@ -609,27 +619,38 @@ package body Variable_Editors is
                      Name_Buffer (Name_Buffer'First .. Name_Len) := N;
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
-
-                  if Get_Active (Editor.Typed_Variable) then
-                     --  Should delete previous type
-                     Get_Name_String (Name_Of (Editor.Var));
-                     Name_Buffer (Name_Len + 1 .. Name_Len + 5) := "_Type";
-                     Name_Len := Name_Len + 5;
-                     Set_Name_Of (Expr, Name_Find);
-                     Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
-                     Set_String_Type_Of (Editor.Var, Expr);
-                  else
-                     Set_Expression_Kind_Of
-                       (Editor.Var, Expression_Kind_Of (Expr));
-                  end if;
                end;
             end if;
 
-            --  Should handle environment variables as well.
-            if not Get_Active (Editor.Typed_Variable) then
-               Set_Expression_Of (Editor.Var, Expr);
-               --  ??? Else should reset the current value if needed
+            if Get_Active (Editor.Typed_Variable) then
+               --  Should delete previous type
+               Get_Name_String (Name_Of (Editor.Var));
+               Name_Buffer (Name_Len + 1 .. Name_Len + 5) := "_Type";
+               Name_Len := Name_Len + 5;
+               Set_Name_Of (Expr, Name_Find);
+               Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
+               Set_String_Type_Of (Editor.Var, Expr);
+            else
+               Set_Expression_Kind_Of (Editor.Var, Expression_Kind_Of (Expr));
             end if;
+
+            --  If this is an environment variable, set this correctly.
+            if Get_Active (Editor.Get_Environment) then
+               if not Get_Active (Editor.Env_Must_Be_Defined) then
+                  Set_Value_As_External
+                    (Editor.Var,
+                     Get_Chars (Get_Entry (Editor.List_Env_Variables)),
+                     Get_Chars (Get_Entry (Editor.Default_Env_Variable)));
+               else
+                  Set_Value_As_External
+                    (Editor.Var,
+                     Get_Chars (Get_Entry (Editor.List_Env_Variables)), "");
+               end if;
+
+            else
+               Set_Expression_Of (Editor.Var, Expr);
+            end if;
+
             Refresh (Editor.Var_Editor, Editor.Var);
             Destroy (Editor);
 
