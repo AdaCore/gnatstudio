@@ -5,7 +5,7 @@ Known Problems fixed in GPS 1.2.0
   Workaround: Use the contextual menu "References->Find All References to".
 
 - C324-007 Error executing custom actions with constant arguments
-  Problem:    If a command specified in the custom file (to add a new menu to GPS)
+  Problem:    If a command specified in the custom file (to add a new menu)
               contains an argument that doesn't start with '%', that command is
               improperly executed.
   Workaround: Create a small wrapper script that doesn't need this constant
