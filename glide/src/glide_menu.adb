@@ -20,6 +20,7 @@
 
 with Glib;                  use Glib;
 with Gdk.Color;             use Gdk.Color;
+with Gtk.Box;               use Gtk.Box;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Main;              use Gtk.Main;
 with Gtk.Widget;            use Gtk.Widget;
@@ -27,6 +28,7 @@ with Gtk.Status_Bar;        use Gtk.Status_Bar;
 with Gtk.Text;              use Gtk.Text;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Gtkada.MDI;            use Gtkada.MDI;
 
 with Creation_Wizard;       use Creation_Wizard;
 with Glide_Intl;            use Glide_Intl;
@@ -41,6 +43,8 @@ with Hyper_Grep;            use Hyper_Grep;
 with Vdiff_Pkg;             use Vdiff_Pkg;
 with Vdiff_Utils;           use Vdiff_Utils;
 with Diff_Utils;            use Diff_Utils;
+
+with Src_Editor_Box;        use Src_Editor_Box;
 
 with GVD.Dialogs;           use GVD.Dialogs;
 
@@ -214,9 +218,28 @@ package body Glide_Menu is
    procedure On_Open_File
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top      : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Filename : constant String :=
+        File_Selection_Dialog (Title => "Open file", Must_Exist => True);
+      Success : Boolean;
+      Editor  : Source_Editor_Box;
+      Box     : Gtk_Box;
+      Child   : MDI_Child;
+
    begin
-      null;
+      if Filename = "" then
+         return;
+      end if;
+
+      Gtk_New_Hbox (Box);
+      Gtk_New (Editor);
+      Attach (Editor, Box);
+      Child := Put
+        (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
+      Set_Title (Child, Filename);
+      Load_File (Editor, Filename, Success => Success);
    end On_Open_File;
 
    --------------------
@@ -243,9 +266,20 @@ package body Glide_Menu is
    procedure On_New_File
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Editor : Source_Editor_Box;
+      Box    : Gtk_Box;
+      Child  : MDI_Child;
+
    begin
-      null;
+      Gtk_New_Hbox (Box);
+      Gtk_New (Editor);
+      Attach (Editor, Box);
+      Child := Put
+        (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
+      Set_Title (Child, "No Name");
    end On_New_File;
 
    -------------
@@ -545,6 +579,7 @@ package body Glide_Menu is
       Gtk_New (Make_Test_Window);
       Show_All (Make_Test_Window);
       Gtk.Main.Main;
+      Destroy (Make_Test_Window);
    end On_New_Test_Case;
 
    procedure On_New_Test_Suite
@@ -557,6 +592,7 @@ package body Glide_Menu is
       Gtk_New (Make_Suite_Window);
       Show_All (Make_Suite_Window);
       Gtk.Main.Main;
+      Destroy (Make_Suite_Window);
    end On_New_Test_Suite;
 
    procedure On_New_Test_Harness
@@ -569,6 +605,7 @@ package body Glide_Menu is
       Gtk_New (Make_Harness_Window);
       Show_All (Make_Harness_Window);
       Gtk.Main.Main;
+      Destroy (Make_Harness_Window);
    end On_New_Test_Harness;
 
    --------------------------
