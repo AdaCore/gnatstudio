@@ -1,0 +1,5 @@
+This repository groups all the tools and components provided by
+Glide 2.
+
+Since Glide groups many tools, some of them have their own repository
+such as GtkAda and GVD.
