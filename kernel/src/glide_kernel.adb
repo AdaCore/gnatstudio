@@ -856,15 +856,18 @@ package body Glide_Kernel is
    ---------------------
 
    procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record;
-      Context : access Selection_Context'Class)
+     (Handle  : access Kernel_Handle_Record)
    is
-      C : Selection_Context_Access := Selection_Context_Access (Context);
+      C : constant Selection_Context_Access := Get_Current_Context (Handle);
+      pragma Unreferenced (C);
    begin
-      Ref (C);
-      Run_Hook (Handle, Context_Changed_Hook,
-                Context_Hooks_Args'(Hooks_Data with Context => C));
-      Unref (C);
+      Trace (Me, "Context_Changed");
+      Ref (Handle.Current_Context);
+      Run_Hook
+        (Handle, Context_Changed_Hook,
+         Context_Hooks_Args'
+           (Hooks_Data with Context => Handle.Current_Context));
+      Unref (Handle.Current_Context);
    end Context_Changed;
 
    ------------------------
@@ -893,30 +896,34 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record) return Selection_Context_Access
    is
       Module : Module_ID;
+      Handle : constant Kernel_Handle := Kernel_Handle (Kernel);
    begin
-      if Kernel.Current_Context /= null then
-         Unref (Kernel.Current_Context);
-         Kernel.Current_Context := null;
+      --  ??? Shouldn't have to recompute everytime, but this is needed when
+      --  in the editor (comment-line for instance relies on accurate info in
+      --  the context to get the current line)
+      if Handle.Current_Context /= null then
+         Unref (Handle.Current_Context);
+         Handle.Current_Context := null;
       end if;
 
-      Module := Get_Current_Module (Kernel);
+      Module := Get_Current_Module (Handle);
 
       if Module /= null
         and then Module.Info.Default_Factory /= null
       then
-         Kernel.Current_Context := Module.Info.Default_Factory
-           (Kernel, Get_Widget (Get_Focus_Child (Get_MDI (Kernel))));
+         Handle.Current_Context := Module.Info.Default_Factory
+           (Handle, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
 
-         if Kernel.Current_Context /= null then
-            Set_Context_Information (Kernel.Current_Context, Kernel, Module);
+         if Handle.Current_Context /= null then
+            Set_Context_Information (Handle.Current_Context, Handle, Module);
          end if;
       end if;
 
-      if Kernel.Current_Context = null then
-         Kernel.Current_Context := new Selection_Context;
+      if Handle.Current_Context = null then
+         Handle.Current_Context := new Selection_Context;
          Set_Context_Information
-           (Kernel.Current_Context,
-            Kernel  => Kernel,
+           (Handle.Current_Context,
+            Kernel  => Handle,
             Creator => null);
       end if;
 
@@ -2160,6 +2167,19 @@ package body Glide_Kernel is
          Or1  => Action_Filter (Filter1), Or2 => Action_Filter (Filter2));
    end "or";
 
+   -----------
+   -- "not" --
+   -----------
+
+   function "not"
+     (Filter : access Action_Filter_Record'Class)
+      return Base_Action_Filter is
+   begin
+      return new Base_Action_Filter_Record'
+        (Kind => Filter_Not, Error_Msg => null, Name => null,
+         Not1  => Action_Filter (Filter));
+   end "not";
+
    -----------------------
    -- Set_Error_Message --
    -----------------------
@@ -2277,6 +2297,9 @@ package body Glide_Kernel is
          when Filter_Or =>
             return Filter_Matches (Filter.Or1, Context, Kernel)
               or else Filter_Matches (Filter.Or2, Context, Kernel);
+
+         when Filter_Not =>
+            return not Filter_Matches (Filter.Not1, Context, Kernel);
       end case;
    end Filter_Matches_Primitive;
 

@@ -468,6 +468,9 @@ package Glide_Kernel is
    function "or"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
       return Base_Action_Filter;
+   function "not"
+     (Filter : access Action_Filter_Record'Class)
+      return Base_Action_Filter;
    --  Execute logical operations between filters
 
    procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
@@ -694,8 +697,7 @@ package Glide_Kernel is
    -----------
 
    procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record;
-      Context : access Selection_Context'Class);
+     (Handle  : access Kernel_Handle_Record);
    --  Runs the "context_changed" hook
 
    procedure Source_Lines_Revealed
@@ -756,7 +758,7 @@ package Glide_Kernel is
 
 private
 
-   type Filter_Type is (Filter_And, Filter_Or, Standard_Filter);
+   type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
 
    type Action_Filter_Record is abstract tagged record
       Error_Msg : GNAT.OS_Lib.String_Access;
@@ -778,6 +780,9 @@ private
 
          when Filter_Or =>
             Or1, Or2 : Action_Filter;
+
+         when Filter_Not =>
+            Not1 : Action_Filter;
       end case;
    end record;
 
@@ -932,6 +937,11 @@ private
 
       Icon_Factory : Gtk.Icon_Factory.Gtk_Icon_Factory;
       --  The icon factory specific to GPS.
+
+      Contextual : System.Address := System.Null_Address;
+      --  The contextual menus registered by the user. This is only used in
+      --  Glide_Kernel.Modules, and cast to the appropriate type in that
+      --  package.
    end record;
 
 end Glide_Kernel;
