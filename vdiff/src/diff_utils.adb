@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,17 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect; use GNAT.Expect;
+with GNAT.Expect;              use GNAT.Expect;
+
 pragma Warnings (Off);
-with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+
+with GNAT.Regpat;              use GNAT.Regpat;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with String_Utils;             use String_Utils;
+with Traces;                   use Traces;
 
 package body Diff_Utils is
+
+   Me : constant Debug_Handle := Create ("diff_utils");
 
    procedure Compute_Occurrence
      (Ret        : in out Diff_Occurrence_Link;
@@ -110,23 +116,27 @@ package body Diff_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File1, File2 : String) return Diff_Occurrence_Link
    is
-      Descriptor : TTY_Process_Descriptor;
-      Pattern    : constant Pattern_Matcher :=
+      Descriptor   : TTY_Process_Descriptor;
+      Pattern      : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n",
           Multiple_Lines);
-      Matches    : Match_Array (0 .. 5);
-      Args       : Argument_List (1 .. 2);
-      Result     : Expect_Match;
-      Ret        : Diff_Occurrence_Link;
-      Occurrence : Diff_Occurrence_Link;
-      Cmd        : String_Access;
-      Cmd_Args   : Argument_List_Access;
+      Matches      : Match_Array (0 .. 5);
+      Args         : Argument_List (1 .. 2);
+      Result       : Expect_Match;
+      Ret          : Diff_Occurrence_Link;
+      Occurrence   : Diff_Occurrence_Link;
+      Diff_Command : constant String := Get_Pref (Kernel, Diff_Cmd);
+      Cmd          : String_Access;
+      Cmd_Args     : Argument_List_Access;
 
    begin
-      Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Diff_Cmd));
+      Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
       Args (1) := new String'(File1);
       Args (2) := new String'(File2);
+
+      Trace (Me, "spawn: " & Diff_Command & " " & File1 & " " & File2);
+
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
@@ -200,6 +210,9 @@ package body Diff_Utils is
       end if;
 
       Args (Num_Args) := new String'(Diff_File);
+
+      Trace (Me, "spawn: " &
+             Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
       Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
              & Args (1 .. Num_Args), Success);
