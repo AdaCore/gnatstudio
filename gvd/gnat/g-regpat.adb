@@ -3358,9 +3358,15 @@ package body GNAT.Regpat is
 
                --  Node operand
 
-               when BRANCH | STAR | PLUS =>
+               when BRANCH =>
                   New_Line;
                   Dump_Until (Index + 3, Next, Local_Indent + 3);
+                  Index := Next;
+
+               when STAR | PLUS =>
+                  New_Line;
+                  --  Only one instruction
+                  Dump_Until (Index + 3, Index + 4, Local_Indent + 3);
                   Index := Next;
 
                when CURLY | CURLYX =>
