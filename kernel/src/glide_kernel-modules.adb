@@ -817,7 +817,6 @@ package body Glide_Kernel.Modules is
          Gtk_New_With_Mnemonic (Menu_Item, Parent_Path (First .. Last - 1));
          Set_Submenu (Menu_Item, Menu);
 
-         Trace (Me, "MANU: creating menu: " & Parent_Path (First .. Last - 1));
          Set_Accel_Group
            (Menu, Get_Default_Accelerators (Kernel));
 
