@@ -177,7 +177,7 @@ begin
    Set_Use_Arrows (Vsearch.Context_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Context_Combo, False);
    String_List.Append (Context_Combo_Items, -"Current File");
-   String_List.Append (Context_Combo_Items, -"Explorer");
+   String_List.Append (Context_Combo_Items, -"Project Explorer");
    String_List.Append (Context_Combo_Items, -"Project Files");
    String_List.Append (Context_Combo_Items, -"Files...");
    Combo.Set_Popdown_Strings (Vsearch.Context_Combo, Context_Combo_Items);

@@ -384,7 +384,7 @@
 	  <use_arrows>True</use_arrows>
 	  <use_arrows_always>False</use_arrows_always>
 	  <items>Current File
-Explorer
+Project Explorer
 Project Files
 Files...
 </items>
