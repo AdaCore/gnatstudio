@@ -419,7 +419,7 @@ package body GVD.Memory_View is
          elsif Data = -"ASCII" then
             View.Display := Text;
          else
-            raise Program_Error;
+            View.Display := Hex;
          end if;
       end;
 
