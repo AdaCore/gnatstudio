@@ -2057,7 +2057,9 @@ package body Src_Editor_Buffer is
          for J in Buffer.Editable_Lines'Range loop
             Buffer_Line := Get_Buffer_Line (Buffer, J);
 
-            if Buffer_Line /= 0 then
+            if Buffer_Line /= 0
+              and then Buffer_Line in Buffer.Line_Data'Range
+            then
                Buffer.Line_Data (Buffer_Line).File_Line := File_Line_Type (J);
             end if;
          end loop;
