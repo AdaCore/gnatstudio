@@ -34,6 +34,11 @@ package Glide_Kernel.Console is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the console module into the list
 
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the shell commands for this module. This must be a separate
+   --  subprogram, since the console is loaded before all other modules,
+   --  including the scripting languages
+
    procedure Initialize_Console
      (Kernel : access Kernel_Handle_Record'Class);
    --  Initializes the Kernel's console. Note that the main window must have
@@ -50,16 +55,27 @@ package Glide_Kernel.Console is
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Parse_File_Locations
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Text             : String;
-      Category         : String;
-      Highlight        : Boolean := False;
-      Style_Category   : String := "";
-      Warning_Category : String := "");
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : String;
+      Highlight               : Boolean := False;
+      Style_Category          : String := "";
+      Warning_Category        : String := "";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
    --  locations using Category as highlighting identifier.
+   --  File_Location_Regexp indicates how file locations should be recognized.
+   --  The default blank value will matches locations reported by gcc or GNAT,
+   --  ie "file:line:column message". The various index parameters indicate the
+   --  relevant parenthesis pair in the regexp.
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
    --  If the message window is present in the MDI, raise it.
