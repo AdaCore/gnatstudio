@@ -80,7 +80,7 @@ package body File_Utils is
             Normalized_Dir : constant String := Name_As_Directory
               (Current (Dirs, Iter));
          begin
-            if Normalize_Dir /= "" then
+            if Normalized_Dir /= "" then
                Open (Dir, Normalized_Dir);
 
                loop
