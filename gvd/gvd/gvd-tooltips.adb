@@ -178,7 +178,7 @@ package body GVD.Tooltips is
       end if;
 
       --  To avoid overlapping windows when the user moves the mouse while
-      --  a tooltip is being prepared and is about to be displayed.
+      --  a tooltip is being prepared and is about to be displayed. 
 
       if Tooltip.Display_Window /= Null_Window then
          Destroy (Tooltip.Display_Window);
