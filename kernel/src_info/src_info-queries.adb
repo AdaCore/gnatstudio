@@ -106,14 +106,12 @@ package body Src_Info.Queries is
 
    procedure Find_Entity_References
      (Node     : Scope_List;
-      Decl     : E_Declaration_Info;
+      Entity   : Entity_Information;
       Callback : Node_Callback);
    --  Find the references to Decl in Node
 
    function Is_Same_Entity
      (Decl : E_Declaration; Entity : Entity_Information) return Boolean;
-   function Is_Same_Entity (Decl1, Decl2 : E_Declaration)
-      return Boolean;
    --  True if Entity1 and Entity2 represent the same entity. You can not use a
    --  direct equality test
 
@@ -564,10 +562,12 @@ package body Src_Info.Queries is
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
       K : E_Kind := Node.Decl.Kind;
    begin
-      return K = Generic_Function_Or_Operator
-        or else K = Generic_Procedure
-        or else K = Non_Generic_Function_Or_Operator
-        or else K = Non_Generic_Procedure;
+      return (K = Generic_Function_Or_Operator
+              or else K = Generic_Procedure
+              or else K = Non_Generic_Function_Or_Operator
+              or else K = Non_Generic_Procedure)
+        and then (Node.Typ = Declaration
+                  or else not Is_End_Reference (Node.Ref.Kind));
    end Is_Subprogram;
 
    ----------
@@ -598,10 +598,12 @@ package body Src_Info.Queries is
       Free (Tree.LI_Filename);
       Free (Tree.Body_Tree);
       Free (Tree.Spec_Tree);
-      for P in Tree.Separate_Trees'Range loop
-         Free (Tree.Separate_Trees (P));
-      end loop;
-      Free (Tree.Separate_Trees);
+      if Tree.Separate_Trees /= null then
+         for P in Tree.Separate_Trees'Range loop
+            Free (Tree.Separate_Trees (P));
+         end loop;
+         Free (Tree.Separate_Trees);
+      end if;
    end Free;
 
    -----------------
@@ -968,7 +970,8 @@ package body Src_Info.Queries is
 
    begin
       Assert
-        (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file hasn't been parsed");
+        (Me, Lib_Info /= null and then Lib_Info.LI.Parsed,
+         "Create_Tree: LI file hasn't been parsed");
 
       File_List := Lib_Info.LI.Separate_Info;
       while File_List /= null loop
@@ -1072,7 +1075,7 @@ package body Src_Info.Queries is
 
    procedure Find_Entity_References
      (Node     : Scope_List;
-      Decl     : E_Declaration_Info;
+      Entity : Entity_Information;
       Callback : Node_Callback)
    is
       L : Scope_List := Node;
@@ -1080,10 +1083,10 @@ package body Src_Info.Queries is
       while L /= null loop
          case L.Typ is
             when Declaration =>
-               Find_Entity_References (L.Contents, Decl, Callback);
+               Find_Entity_References (L.Contents, Entity, Callback);
 
             when Reference =>
-               if Is_Same_Entity (L.Decl.all, Decl.Declaration) then
+               if Is_Same_Entity (L.Decl.all, Entity) then
                   Callback (Scope_Tree_Node (L));
                end if;
          end case;
@@ -1097,13 +1100,13 @@ package body Src_Info.Queries is
 
    procedure Find_Entity_References
      (Tree : Scope_Tree;
-      Decl : E_Declaration_Info;
+      Entity : Entity_Information;
       Callback : Node_Callback) is
    begin
-      Find_Entity_References (Tree.Body_Tree, Decl, Callback);
-      Find_Entity_References (Tree.Spec_Tree, Decl, Callback);
+      Find_Entity_References (Tree.Body_Tree, Entity, Callback);
+      Find_Entity_References (Tree.Spec_Tree, Entity, Callback);
       for P in Tree.Separate_Trees'Range loop
-         Find_Entity_References (Tree.Separate_Trees (P), Decl, Callback);
+         Find_Entity_References (Tree.Separate_Trees (P), Entity, Callback);
       end loop;
    end Find_Entity_References;
 
@@ -1182,6 +1185,19 @@ package body Src_Info.Queries is
            (Get_Source_Filename (Decl.Declaration.Location.File)));
    end Get_Entity;
 
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy (Entity : Entity_Information) return Entity_Information is
+   begin
+      return Entity_Information'
+        (Name        => new String' (Entity.Name.all),
+         Decl_Line   => Entity.Decl_Line,
+         Decl_Column => Entity.Decl_Column,
+         Decl_File   => new String' (Entity.Decl_File.all));
+   end Copy;
+
    -------------
    -- Destroy --
    -------------
@@ -1237,20 +1253,6 @@ package body Src_Info.Queries is
            Entity.Decl_File.all;
    end Is_Same_Entity;
 
-   --------------------
-   -- Is_Same_Entity --
-   --------------------
-
-   function Is_Same_Entity (Decl1, Decl2 : E_Declaration)
-      return Boolean is
-   begin
-      return Decl1.Location.Line         = Decl2.Location.Line
-        and then Decl1.Location.Column   = Decl2.Location.Column
-        and then Decl1.Name.all          = Decl2.Name.all
-        and then Get_Source_Filename (Decl1.Location.File) =
-          Get_Source_Filename (Decl2.Location.File);
-   end Is_Same_Entity;
-
    ----------
    -- Hash --
    ----------
@@ -1275,6 +1277,7 @@ package body Src_Info.Queries is
 
    procedure Destroy (Iterator : in out Entity_Reference_Iterator) is
    begin
+      Destroy (Iterator.Entity);
       Free (Iterator.Importing);
       Free (Iterator.Source_Files);
       Reset (Iterator.Examined);
@@ -1348,7 +1351,7 @@ package body Src_Info.Queries is
       begin
          while D /= null loop
             if Is_Same_Entity
-              (D.Value.Declaration, Iterator.Decl.Declaration)
+              (D.Value.Declaration, Iterator.Entity)
             then
                return D.Value.References;
             end if;
@@ -1429,12 +1432,11 @@ package body Src_Info.Queries is
       function Check_LI (LI : LI_File_Ptr) return E_Reference_List is
          Ref       : E_Reference_List;
          Decl_List : Dependency_File_Info_List;
-         Decl_LI   : LI_File_Ptr := Iterator.Decl.Declaration.Location.File.LI;
       begin
          --  If this is the LI file for Decl, we need to parse the
          --  body and spec infos. Otherwise, only the dependencies
          Iterator.LI := LI;
-         if LI = Decl_LI then
+         if LI = Iterator.Decl_LI then
             Iterator.Part := Unit_Spec;
 
             if LI.LI.Spec_Info /= null then
@@ -1446,13 +1448,12 @@ package body Src_Info.Queries is
 
             return Check_Decl_File;
 
-
          --  Otherwise, check all the dependencies to see if we
          --  have the entity.
          else
             Decl_List := LI.LI.Dependencies_Info;
             while Decl_List /= null loop
-               if Decl_List.Value.File.LI = Decl_LI then
+               if Decl_List.Value.File.LI = Iterator.Decl_LI then
                   return Check_Declarations (Decl_List.Value.Declarations);
                end if;
 
@@ -1518,7 +1519,7 @@ package body Src_Info.Queries is
       if Iterator.References = null then
          --  Were we processing the LI file for the source file that contains
          --  the initial declaration ?
-         if Iterator.LI = Iterator.Decl.Declaration.Location.File.LI then
+         if Iterator.LI = Iterator.Decl_LI then
             Iterator.References := Check_Decl_File;
             if Iterator.References /= null then
                return;
@@ -1571,7 +1572,7 @@ package body Src_Info.Queries is
 
    procedure Find_All_References
      (Root_Project : Prj.Tree.Project_Node_Id;
-      Decl         : E_Declaration_Info;
+      Entity       : Entity_Information;
       List         : in out LI_File_List;
       Iterator     : out Entity_Reference_Iterator;
       Project      : Prj.Project_Id := Prj.No_Project;
@@ -1582,10 +1583,16 @@ package body Src_Info.Queries is
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
            (Get_Project_View_From_Project (Root_Project),
-            Get_File (Get_Location (Decl)));
+            Get_Declaration_File_Of (Entity));
       end if;
 
-      Iterator.Decl := Decl;
+      Iterator.Decl_LI := Locate_From_Source
+        (List, Get_Declaration_File_Of (Entity));
+      Assert (Me,
+              Iterator.Decl_LI /= null,
+              "LI file not found for entity " & Get_Name (Entity));
+
+      Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
       Iterator.Importing := new Project_Id_Array'
         (Find_All_Projects_Importing (Root_Project, Decl_Project));

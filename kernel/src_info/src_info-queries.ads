@@ -38,6 +38,39 @@ with Basic_Types;
 
 package Src_Info.Queries is
 
+   -------------------------
+   --  Entity information --
+   -------------------------
+   --  This type groups information about entities that allow an exact
+   --  identification of that entity, including handling of overriding
+   --  subprograms,... This information has a life-cycle independent from the
+   --  tree itself, and thus can be kept independently in a browser.
+
+   type Entity_Information is private;
+
+   procedure Destroy (Entity : in out Entity_Information);
+   --  Free the memory associated with the entity;
+
+   function Get_Name (Entity : Entity_Information) return String;
+   --  Return the name of the entity associated with Node.
+
+   function Get_Declaration_Line_Of
+     (Entity : Entity_Information) return Positive;
+   function Get_Declaration_Column_Of
+     (Entity : Entity_Information) return Natural;
+   function Get_Declaration_File_Of
+     (Entity : Entity_Information) return String;
+   --  Return the location of the declaration for Entity. Note that this
+   --  location remains valid only until the source file are changed. It is not
+   --  magically updated when the source file is changed.
+
+   function Copy (Entity : Entity_Information) return Entity_Information;
+   --  Return a copy of Entity. The result must be explicitely destroyed.
+
+   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
+   --  Return the information for the entity defined in Node.
+   --  You must cal Destroy on the returned Entity.
+
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------
@@ -77,7 +110,7 @@ package Src_Info.Queries is
 
    procedure Find_All_References
      (Root_Project : Prj.Tree.Project_Node_Id;
-      Decl         : E_Declaration_Info;
+      Entity       : Entity_Information;
       List         : in out LI_File_List;
       Iterator     : out Entity_Reference_Iterator;
       Project      : Prj.Project_Id := Prj.No_Project;
@@ -161,32 +194,6 @@ package Src_Info.Queries is
    --
    --  The list returned by this procedure should be deallocated after use.
 
-   -------------------------
-   --  Entity information --
-   -------------------------
-   --  This type groups information about entities that allow an exact
-   --  identification of that entity, including handling of overriding
-   --  subprograms,... This information has a life-cycle independent from the
-   --  tree itself, and thus can be kept independently in a browser.
-
-   type Entity_Information is private;
-
-   procedure Destroy (Entity : in out Entity_Information);
-   --  Free the memory associated with the entity;
-
-   function Get_Name (Entity : Entity_Information) return String;
-   --  Return the name of the entity associated with Node.
-
-   function Get_Declaration_Line_Of
-     (Entity : Entity_Information) return Positive;
-   function Get_Declaration_Column_Of
-     (Entity : Entity_Information) return Natural;
-   function Get_Declaration_File_Of
-     (Entity : Entity_Information) return String;
-   --  Return the location of the declaration for Entity. Note that this
-   --  location remains valid only until the source file are changed. It is not
-   --  magically updated when the source file is changed.
-
    ----------------
    -- Scope tree --
    ----------------
@@ -227,7 +234,7 @@ package Src_Info.Queries is
 
    procedure Find_Entity_References
      (Tree : Scope_Tree;
-      Decl : E_Declaration_Info;
+      Entity : Entity_Information;
       Callback : Node_Callback);
    --  Search all the references to the entity Decl in the tree
 
@@ -236,15 +243,12 @@ package Src_Info.Queries is
    --  parent.
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
-   --  Return True if Node is associated with a subprogram
+   --  Return True if Node is associated with a subprogram (either its
+   --  declaration or a call to it).
 
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
-
-   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
-   --  Return the information for the entity defined in Node.
-   --  You must cal Destroy on the returned Entity.
 
    --------------------------
    -- Scope tree iterators --
@@ -349,7 +353,8 @@ private
       Equal      => Equal);
 
    type Entity_Reference_Iterator is record
-      Decl : E_Declaration_Info;
+      Entity : Entity_Information;
+      Decl_LI : LI_File_Ptr;
       --  The entity we are looking for
 
       Importing : Prj_API.Project_Id_Array_Access;
