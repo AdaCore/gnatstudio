@@ -56,4 +56,12 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  This command deletes some text.
 
+   type Indentation_Command is new Interactive_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
+   function Execute
+     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
+      return Standard.Commands.Command_Return_Type;
+   --  This command reindents the current line
+
 end Src_Editor_View.Commands;
