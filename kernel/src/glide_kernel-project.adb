@@ -29,7 +29,6 @@ with Prj.PP;      use Prj.PP;
 with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Output;      use Output;
 
 with Prj_API;            use Prj_API;
@@ -51,43 +50,19 @@ package body Glide_Kernel.Project is
      (Kernel                     : access Kernel_Handle_Record'Class;
       Short_File_Name            : String;
       Use_Predefined_Source_Path : Boolean := False)
-      return String
-   is
-      Path : String_Access;
+      return String is
    begin
-      --  First, try on the project source path
-      Path := Locate_Regular_File
-        (Short_File_Name,
-         Ada_Include_Path (Kernel.Project_View).all);
-
-      if Path /= null then
-         declare
-            Full_Path : constant String := Path.all;
-         begin
-            Free (Path);
-            return Full_Path;
-         end;
-      end if;
-
-      --  Fallback, try on the Source_Path (only if Use_Source_Path is set)
       if Use_Predefined_Source_Path
         and then Get_Predefined_Source_Path (Kernel) /= ""
       then
-         Path :=
-           Locate_Regular_File
-             (Short_File_Name, Get_Predefined_Source_Path (Kernel));
-         if Path /= null then
-            declare
-               Full_Path : constant String := Path.all;
-            begin
-               Free (Path);
-               return Full_Path;
-            end;
-         end if;
+         return Find_File
+           (Short_File_Name,
+            Ada_Include_Path (Kernel.Project_View).all,
+            Get_Predefined_Source_Path (Kernel));
+      else
+         return Find_File
+           (Short_File_Name, Ada_Include_Path (Kernel.Project_View).all, "");
       end if;
-
-      --  Source file not found anywhere, return the empty string
-      return "";
    end Find_Source_File;
 
    ----------------------
@@ -103,11 +78,13 @@ package body Glide_Kernel.Project is
       if Use_Predefined_Object_Path
         and then Get_Predefined_Object_Path (Kernel) /= ""
       then
-         return Find_Object_File
-           (Kernel.Project_View, Short_File_Name,
+         return Find_File
+           (Short_File_Name,
+            Ada_Objects_Path (Kernel.Project_View).all,
             Get_Predefined_Object_Path (Kernel));
       else
-         return Find_Object_File (Kernel.Project_View, Short_File_Name, "");
+         return Find_File
+           (Short_File_Name, Ada_Objects_Path (Kernel.Project_View).all, "");
       end if;
    end Find_Object_File;
 
