@@ -83,7 +83,7 @@ package body Display_Items is
    --  Shortcut used to represent the dereferenced item when generating a new
    --  item.
 
-   Attach_Links_To_Components : constant Boolean := True;
+   Attach_Links_To_Components : constant Boolean := False;
    --  If True, then the links are attached to the middle of the actual
    --  component that was dereferenced, not to the middle of the item.
 
