@@ -81,8 +81,7 @@ package Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
       Project                : Prj.Project_Id;
-      Predefined_Source_Path : String)
-      return String;
+      Predefined_Source_Path : String) return String;
    --  See comment in src_info.ads.
    --  For C/C++, this function returns the name of the xref filename to
    --  generate.
@@ -92,15 +91,13 @@ package Src_Info.CPP is
       Root_Project  : Prj.Project_Id;
       File_Project  : Prj.Project_Id;
       Full_Filename : String) return LI_Handler_Iterator'Class;
-   --  Not implemented for C and C++: use Generate_LI_For_Project to update
-   --  database for all files in the project.
+   --  Generate the LI information for a specific file
 
    function Generate_LI_For_Project
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
-      Recursive     : Boolean := False)
-      return LI_Handler_Iterator'Class;
+      Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
    --  See comment in src_info.ads
 
    procedure Continue
@@ -126,11 +123,11 @@ package Src_Info.CPP is
    Empty_SN_Prj_HTable : constant SN_Prj_HTable;
 
    type SN_Prj_Data is record
-      Pool   : Xref_Pool    := Empty_Xref_Pool;
+      Pool : Xref_Pool := Empty_Xref_Pool;
    end record;
 
    No_SN_Prj_Data : constant SN_Prj_Data :=
-     (Pool   => Empty_Xref_Pool);
+     (Pool => Empty_Xref_Pool);
       --  Xref pool associated with project
 
    procedure Init (Prj_HTable : out SN_Prj_HTable);
@@ -156,31 +153,31 @@ package Src_Info.CPP is
    --  the old one is released from memory and replaced by the new one.
 
    function Xref_Filename_For
-     (Filename       : String;
-      DB_Dir         : String;
-      Prj_HTable     : SN_Prj_HTable) return GNAT.OS_Lib.String_Access;
+     (Filename   : String;
+      DB_Dir     : String;
+      Prj_HTable : SN_Prj_HTable) return GNAT.OS_Lib.String_Access;
    --  Returns unique xref file name associated with specified source file
    --  name.
 
    procedure Xref_Filename_For
-     (Filename       : String;
-      DB_Dir         : String;
-      Prj_HTable     : SN_Prj_HTable;
-      Xref_Filename  : out GNAT.OS_Lib.String_Access;
-      Pool           : out Xref_Pool);
+     (Filename      : String;
+      DB_Dir        : String;
+      Prj_HTable    : SN_Prj_HTable;
+      Xref_Filename : out GNAT.OS_Lib.String_Access;
+      Pool          : out Xref_Pool);
    --  Returns unique xref file name associated with specified source file
    --  name. Also returns xref pool, where this name resides.
 
    function Get_Prj_HTable
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-     return SN_Prj_HTable;
+      return SN_Prj_HTable;
    pragma Inline (Get_Prj_HTable);
    --  Returns Prj_HTable field from CPP_LI_Handler. This function is used
    --  outside Src_Info.CPP package to get this field.
 
    function Get_Root_Project
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-     return Prj.Project_Id;
+      return Prj.Project_Id;
    pragma Inline (Get_Root_Project);
    --  Returns root project for given Handler. This functions is used
    --  outside Src_Info.CPP package to get Root_Project field.
@@ -194,22 +191,22 @@ private
       Done);         -- updating done
 
    type CPP_LI_Handler_Record is new LI_Handler_Record with record
-      DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+      DB_Dirs       : GNAT.OS_Lib.String_List_Access;
       --  list of DB dirs, they are used as keys in Prj_HTable
-      Prj_HTable     : SN_Prj_HTable := Empty_SN_Prj_HTable;
-      SN_Table       : Src_Info.Type_Utils.SN_Table_Array;
-      DBIMP_Path     : GNAT.OS_Lib.String_Access := null;
+      Prj_HTable    : SN_Prj_HTable := Empty_SN_Prj_HTable;
+      SN_Table      : Src_Info.Type_Utils.SN_Table_Array;
+      DBIMP_Path    : GNAT.OS_Lib.String_Access := null;
       --  full path to dbimp (found in PATH) or null, if DBIMP is not in PATH
-      CBrowser_Path  : GNAT.OS_Lib.String_Access := null;
+      CBrowser_Path : GNAT.OS_Lib.String_Access := null;
       --  full path to CBrowser (found in PATH) or null, if CBrowser is not in
       --  PATH
-      Root_Project   : Prj.Project_Id;
+      Root_Project  : Prj.Project_Id;
       --  root projects for lookups of includes (see Sym_IU_Handler)
    end record;
    --  The fields above are always initialized after calling Reset.
 
    type Imp_Prj_Iterator_Access is
-      access all Prj_API.Imported_Project_Iterator;
+     access all Prj_API.Imported_Project_Iterator;
 
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
       State           : Iterator_State_Type := Done;
@@ -218,6 +215,7 @@ private
       Handler         : CPP_LI_Handler;
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       List_Filename   : GNAT.OS_Lib.String_Access;
+      Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Imp_Prj_Iterator_Access;
    end record;
