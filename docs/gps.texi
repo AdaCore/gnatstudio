@@ -268,10 +268,10 @@ Delete to end of line
 Delete current line
 
 @item Alt-Space
-Delete all whitespc around cursor, reinsert single space
+Delete all whitespaces around cursor, reinsert single space
 
 @item Alt-\
-Delete all whitespc around cursor
+Delete all whitespaces around cursor
 
 @item Ctrl-x or Ctrl-w
 Cut to clipboard
