@@ -19,22 +19,14 @@
 -----------------------------------------------------------------------
 
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
-with Basic_Types;     use Basic_Types;
 
 package Debugger_Pixmaps is
 
    Line_Has_Code_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
    Line_Has_Breakpoint_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
+   Current_Line_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
 
    procedure Init_Graphics;
    --  Initialize the pixbufs.
-
-private
-
-   Line_Has_Code_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Line_Has_Code_Xpm, "dot_xpm");
-
-   Line_Has_Breakpoint_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Line_Has_Breakpoint_Xpm, "stop_xpm");
 
 end Debugger_Pixmaps;
