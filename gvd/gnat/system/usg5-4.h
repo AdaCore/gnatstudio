@@ -160,12 +160,12 @@ Boston, MA 02111-1307, USA.  */
 							\
     sighold (SIGCLD);					\
     if (grantpt (fd) == -1)				\
-      { emacs_close (fd); return -1; }			\
+      { gvd_close (fd); return -1; }			\
     sigrelse (SIGCLD);					\
     if (unlockpt (fd) == -1)				\
-      { emacs_close (fd); return -1; }			\
+      { gvd_close (fd); return -1; }			\
     if (!(ptyname = ptsname (fd)))			\
-      { emacs_close (fd); return -1; }			\
+      { gvd_close (fd); return -1; }			\
     strncpy (pty_name, ptyname, sizeof (pty_name));	\
     pty_name[sizeof (pty_name) - 1] = 0;		\
   }
