@@ -1273,7 +1273,8 @@ package body Src_Editor_Module is
                Child := Get (Iter);
                exit when Child = null
                  or else Get_Title (Child) = File
-                 or else (File = "" and then Get_Title (Child) = "No Name");
+                 or else (File = "" and then Get_Title (Child) = -"No Name");
+               --  ??? It is dangerous to rely on 'No Name' for a new file
                Next (Iter);
             end loop;
 
