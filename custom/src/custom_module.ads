@@ -166,7 +166,6 @@ package Custom_Module is
    type Custom_Module_ID_Record is new Module_ID_Record with record
       Kernel        : Kernel_Handle;
       Contextual    : Contextual_Menu_Access;
-      Process_Class : Glide_Kernel.Scripts.Class_Type;
    end record;
    type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
 

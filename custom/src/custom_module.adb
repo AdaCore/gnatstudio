@@ -882,7 +882,9 @@ package body Custom_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Menu_Class : constant Class_Type := New_Instance (Kernel, "Menu");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -895,36 +897,15 @@ package body Custom_Module is
 
       Custom_Module_ID.Kernel := Kernel_Handle (Kernel);
 
-      Custom_Module_ID.Process_Class := New_Class (Kernel, "Process");
+      Expect_Interface.Register_Commands (Kernel);
+      Custom_Combos.Register_Commands (Kernel);
 
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 4,
-         Class         => Custom_Module_ID.Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "send",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Custom_Module_ID.Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "interrupt",
-         Class         => Custom_Module_ID.Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "kill",
-         Class         => Custom_Module_ID.Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "expect",
-         Minimum_Args => 2,
          Maximum_Args => 2,
-         Class         => Custom_Module_ID.Process_Class,
-         Handler       => Custom_Spawn_Handler'Access);
-
-      Custom_Combos.Register_Commands (Kernel);
+         Class        => Menu_Class,
+         Handler      => Menu_Handler'Access);
    end Register_Module;
 
    ----------

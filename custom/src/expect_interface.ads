@@ -20,12 +20,11 @@
 
 --  This package implements the GPS interface to Expect.
 
-with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
+with Glide_Kernel;        use Glide_Kernel;
 
 package Expect_Interface is
 
-   procedure Custom_Spawn_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
-   --  Interactive command handler for the expect interface.
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the shell commands for this module
 
 end Expect_Interface;

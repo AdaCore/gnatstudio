@@ -27,6 +27,7 @@ with Ada.Unchecked_Conversion;
 with Glide_Intl;                use Glide_Intl;
 with Custom_Module;             use Custom_Module;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 
 package body Expect_Interface is
@@ -66,6 +67,10 @@ package body Expect_Interface is
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access;
    --  Get or store some data in an instance of GPS.Process
 
+   procedure Custom_Spawn_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Interactive command handler for the expect interface.
+
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Custom_Action_Access);
    function Convert is new Ada.Unchecked_Conversion
@@ -80,8 +85,10 @@ package body Expect_Interface is
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Action_Access
    is
+      Process_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Process");
       Value : constant System.Address := Nth_Arg_Data
-        (Data, N, Custom_Module_ID.Process_Class);
+        (Data, N, Process_Class);
    begin
       return Convert (Value);
    end Get_Data;
@@ -315,13 +322,13 @@ package body Expect_Interface is
    is
       Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
       D : Custom_Action_Access;
+      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
 
          declare
-            Inst : constant Class_Instance :=
-              Nth_Arg (Data, 1, Custom_Module_ID.Process_Class);
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Process_Class);
             Command_Line  : constant String := Nth_Arg (Data, 2);
             Regexp        : constant String := Nth_Arg (Data, 3, "");
             Success       : Boolean;
@@ -412,5 +419,40 @@ package body Expect_Interface is
          end;
       end if;
    end Custom_Spawn_Handler;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
+   begin
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args => 1,
+         Maximum_Args => 4,
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "send",
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "interrupt",
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "kill",
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "expect",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+   end Register_Commands;
 
 end Expect_Interface;
