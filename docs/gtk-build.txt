@@ -116,9 +116,9 @@ cd ..
 #######
 tar xzvf gtk+-2.0.0.tar.gz
 cd gtk+-2.0.0
-./configure --disable-modules \
-  --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix
-# --enable-debug=minimum
+./configure --disable-modules --without-libtiff \
+  --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
+  --enable-debug=minimum
 
 # in gdk-pixbuf/Makefile, remove libpixbufloader-static-tiff.la in
 # noinst_LTLIBRARIES.
