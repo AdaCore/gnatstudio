@@ -173,8 +173,8 @@ package Language is
 
    function Get_Language_From_File (File_Name : String) return Language_Access;
    --  Return the language to use for a specific file name.
-   --  Note that the language returned is an instance of Language_Debugger_Ada,
-   --  Language_Debugger_C, or other similar-level objects, and does not know
+   --  Note that the language returned is an instance of Language_Ada,
+   --  Language_C, or other similar-level objects, and does not know
    --  anything about the debugger.
    --  null is returned if no pattern matched the file name.
    --
@@ -185,13 +185,17 @@ package Language is
    --  Add a new regexp pattern.
    --  Any file whose name matches Pattern will be associated with Language.
    --  No copy of Language is made.
-   --
+   --  Pattern follows regular expressions as defined in GNAT.Regpat and do not
+   --  have to match the entire file, e.g "\.ads$" to match a file ending with
+   --  ".ads".
    --  Thanks to this function, this package doesn't have to know anything
    --  about specific languages.
 
    procedure Add_File_Extensions (Lang : Language_Access; Extensions : String);
    --  Add all the extensions contained in Str (separated by semicolons)
    --  for the language Lang.
+   --  Extensions do not contain any regexp and are of the form:
+   --  .ads;.adb
 
    procedure Reset_File_Extensions;
    --  Remove all registered file extensions.
