@@ -32,6 +32,7 @@ with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel;             use Glide_Kernel;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -1422,6 +1423,9 @@ package body Aliases_Module is
       Gtk_New (Editor.Expansion, Expansion_Buffer);
       Add (Scrolled, Editor.Expansion);
       Set_Wrap_Mode (Editor.Expansion, Wrap_None);
+
+      Realize (Editor.Expansion);
+      Modify_Font (Editor.Expansion, Get_Pref (Kernel, Source_Editor_Font));
 
       Register_Contextual_Menu
         (Widget       => Editor.Expansion,
