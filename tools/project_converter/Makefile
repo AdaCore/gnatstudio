@@ -1,3 +1,3 @@
 all: force
-	gnatmake -Pconvert
+	gnatmake -Pconvert -largs ../../common/obj/libcommon.a
 force:
