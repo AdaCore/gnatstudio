@@ -538,20 +538,31 @@ package body Glide_Menu is
       Result    : Expect_Match;
       Args      : Argument_List_Access;
       Matcher   : constant Pattern_Matcher := Compile
-        (ASCII.SUB & "completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
+        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
       Dead      : Boolean;
-      Cmd       : constant String :=
-        "gnatmake -P" & Get_Project_File_Name (Top.Kernel) & " ";
       Title     : constant String := Get_Focus_Title (Top.Kernel);
+      Project   : constant String := Get_Project_File_Name (Top.Kernel);
+      Cmd       : constant String := "gnatmake -P" & Project & " " & Title;
 
    begin
       if not Focus_Is_Editor (Top.Kernel) then
          return;
       end if;
 
-      Args := Argument_String_To_List (Cmd & Title);
-      Console.Insert (Top.Kernel, Cmd & Title & ASCII.LF, False);
+      if Project = "default"
+        and then not Is_Regular_File (Project)
+      then
+         --  This is the default internal project
+
+         Args := Argument_String_To_List ("gnatmake " & Title);
+         Console.Insert (Top.Kernel, "gnatmake " & Title & ASCII.LF, False);
+
+      else
+         Args := Argument_String_To_List (Cmd);
+         Console.Insert (Top.Kernel, Cmd & ASCII.LF, False);
+      end if;
+
       Non_Blocking_Spawn
         (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
