@@ -207,6 +207,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Ma_Handler  (Ref : TO_Table);
    procedure Fu_To_Mi_Handler  (Ref : TO_Table);
    procedure Fu_To_Cl_Handler  (Ref : TO_Table);
+   procedure Fu_To_Un_Handler  (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
@@ -221,6 +222,7 @@ package body Src_Info.CPP is
       MA     => Fu_To_Ma_Handler'Access,
       MI     => Fu_To_Mi_Handler'Access,
       CL     => Fu_To_Cl_Handler'Access,
+      UN     => Fu_To_Un_Handler'Access,
       others => null);
 
    function Ext (S : String) return String;
@@ -1278,6 +1280,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Ma_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Mi_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Cl_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Un_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 
