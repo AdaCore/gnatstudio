@@ -91,13 +91,15 @@ package VCS.CVS is
      (Rep  : access CVS_Record;
       File : String);
 
-   procedure Register_Module;
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the VCS.CVS module
 
 private
-   type String_List_Handler is access
-     procedure (Kernel : Kernel_Handle;
-                Head   : String_List.List;
-                List   : String_List.List);
+   type String_List_Handler is access procedure
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List);
 
    type String_List_And_Handler is record
       Rep     : CVS_Access;

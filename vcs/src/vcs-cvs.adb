@@ -21,8 +21,9 @@
 with Gtk.Main;                  use Gtk.Main;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -40,14 +41,11 @@ package body VCS.CVS is
 
    --  ??? Should we make commands customizable ?
 
-   CVS_Command : constant String := "cvs";
-   --  <preferences>
-
-   Tmp_Dir : constant String := "/tmp/";
-   --  <preferences>
-
    CVS_Reference : VCS_Access;
+   --  ??? Cannot be a global variable, since it has fields that depend on
+   --  the context.
 
+   VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
    VCS_CVS_Module_ID : Module_ID;
 
    -----------------------
@@ -134,31 +132,31 @@ package body VCS.CVS is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      L_Temp  : String_List.List := List;
-      H_Temp  : String_List.List := Head;
+      use String_List;
+
+      L_Temp  : List_Node := First (List);
+      H_Temp  : List_Node := First (Head);
+
    begin
-      if not String_List.Is_Empty (List) then
+      if L_Temp /= Null_Node then
+         Insert
+           (Kernel, -"CVS output:", Highlight_Sloc => False, Mode => Info);
 
-         Insert (Kernel,
-                 -"CVS output :",
-                 Highlight_Sloc => False,
-                 Mode => Info);
-
-         while not String_List.Is_Empty (H_Temp) loop
+         while H_Temp /= Null_Node loop
             Insert (Kernel,
-                    String_List.Head (H_Temp),
+                    Data (H_Temp),
                     Highlight_Sloc => False,
                     Mode => Verbose);
-            H_Temp := String_List.Next (H_Temp);
+            H_Temp := Next (H_Temp);
          end loop;
 
-         while not String_List.Is_Empty (L_Temp) loop
+         while L_Temp /= Null_Node loop
             Insert (Kernel,
-                    String_List.Head (L_Temp),
+                    Data (L_Temp),
                     Highlight_Sloc => False,
                     Mode => Info,
                     Add_LF => False);
-            L_Temp := String_List.Next (L_Temp);
+            L_Temp := Next (L_Temp);
          end loop;
       end if;
 
@@ -175,31 +173,32 @@ package body VCS.CVS is
       Arguments         : String_List.List)
    is
       use String_List;
+
       C               : External_Command_Access;
       Command         : List;
-      Command_Head    : List;
       Args            : List;
       Dir             : List;
+
    begin
       Append (Dir, Dir_Name (Head (Filenames)));
 
       declare
-         Args_Temp : List := Arguments;
+         Args_Temp : List_Node := First (Arguments);
       begin
-         while not Is_Empty (Args_Temp) loop
-            Append (Args, Head (Args_Temp));
+         while Args_Temp /= Null_Node loop
+            Append (Args, Data (Args_Temp));
             Args_Temp := Next (Args_Temp);
          end loop;
       end;
 
-      Append (Command, CVS_Command);
+      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
 
       if Head (Filenames) /= Dir_Name (Head (Filenames)) then
          declare
-            Files_Temp : List := Filenames;
+            Files_Temp : List_Node := First (Filenames);
          begin
-            while not Is_Empty (Files_Temp) loop
-               Append (Args, Base_Name (Head (Files_Temp)));
+            while Files_Temp /= Null_Node loop
+               Append (Args, Base_Name (Data (Files_Temp)));
                Files_Temp := Next (Files_Temp);
             end loop;
          end;
@@ -216,7 +215,6 @@ package body VCS.CVS is
       Enqueue (Rep.Queue, C);
 
       Free (Command);
-      Free (Command_Head);
       Free (Args);
       Free (Dir);
    end Real_Simple_Action;
@@ -232,29 +230,30 @@ package body VCS.CVS is
    is
       use String_List;
 
-      Current_Filename : List := Filenames;
+      Current_Filename : List_Node := First (Filenames);
    begin
-      if Is_Empty (Current_Filename) then
+      if Current_Filename = Null_Node then
          --  ??? Set an error here.
          return;
       end if;
 
-      while not Is_Empty (Current_Filename) loop
-
+      while Current_Filename /= Null_Node loop
          --  Extract a list of files that belong to the same directory.
+
          declare
-            Current_Directory : String := Dir_Name (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Data (Current_Filename));
             Current_List      : List;
          begin
-            while not Is_Empty (Current_Filename)
-              and then Dir_Name (Head (Current_Filename)) = Current_Directory
+            while Current_Filename /= Null_Node
+              and then Dir_Name (Data (Current_Filename)) = Current_Directory
             loop
-               Append (Current_List, Head (Current_Filename));
+               Append (Current_List, Data (Current_Filename));
                Current_Filename := Next (Current_Filename);
             end loop;
 
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
+
             Real_Simple_Action (Rep, Current_List, Arguments);
             Free (Current_List);
          end;
@@ -271,19 +270,21 @@ package body VCS.CVS is
       List   : String_List.List) return Boolean
    is
       Result         : File_Status_List.List := File_Status_List.Null_List;
-      Output         : String_List.List := List;
       Blank_Status   : File_Status_Record;
       Current_Status : File_Status_Record := Blank_Status;
 
+      use String_List;
+
+      Output         : List_Node := First (List);
       New_Dir        : String := String_List.Head (Head);
 
-      use String_List;
    begin
-      while not Is_Empty (Output) loop
+      while Output /= Null_Node loop
          declare
-            Line       : String := String_List.Head (Output);
+            Line       : String := Data (Output);
             Index      : Natural;
             Next_Index : Natural;
+
          begin
             if Line'Length > 4
               and then Line (Line'First .. Line'First + 3) = "===="
@@ -336,6 +337,7 @@ package body VCS.CVS is
                                 S (S'First + New_Dir'Length + 8 .. S'Last));
                      end if;
                   end;
+
                elsif Line'Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Merge"
                then
@@ -425,29 +427,31 @@ package body VCS.CVS is
       Filenames   : String_List.List)
    is
       use String_List;
-      Files           : List := Filenames;
+
+      Files           : List_Node := First (Filenames);
       C               : External_Command_Access;
       Command         : List;
       Command_Head    : List;
       Args            : List;
       Dir             : List;
+
    begin
-      Append (Dir, Dir_Name (Head (Filenames)));
-      Append (Command, CVS_Command);
-      Append (Command_Head, Dir_Name (Head (Filenames)));
+      Append (Dir, Dir_Name (Data (Files)));
+      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
+      Append (Command_Head, Dir_Name (Data (Files)));
 
       --  Generate arguments list.
       --  If the first argument is a directory, do a simple query for
       --  all files in that directory.
 
-      if Head (Filenames) = Dir_Name (Head (Filenames)) then
+      if Data (Files) = Dir_Name (Data (Files)) then
          Append (Args, "status");
          Append (Args, "-l");
       else
          Append (Args, "status");
 
-         while not Is_Empty (Files) loop
-            Append (Args, Base_Name (Head (Files)));
+         while Files /= Null_Node loop
+            Append (Args, Base_Name (Data (Files)));
             Files := Next (Files);
          end loop;
       end if;
@@ -505,6 +509,7 @@ package body VCS.CVS is
         and then not End_Of_File (File)
       loop
          Get_Line (File, Buffer, Last);
+
          if Buffer (1) = '/' then
             Index := 2;
             Skip_To_Char (Buffer (1 .. Last), Index, '/');
@@ -538,23 +543,24 @@ package body VCS.CVS is
       else
          declare
             The_Result     : File_Status_List.List;
-            Filenames_Temp : String_List.List := Filenames;
-            Status_Temp    : File_Status_List.List;
+            Filenames_Temp : String_List.List_Node := First (Filenames);
+            Status_Temp    : File_Status_List.List_Node;
             Found          : Boolean;
+
          begin
-            while not String_List.Is_Empty (Filenames_Temp) loop
-               Status_Temp := Result;
+            while Filenames_Temp /= String_List.Null_Node loop
+               Status_Temp := File_Status_List.First (Result);
                Found       := False;
 
-               while not Is_Empty (Status_Temp)
+               while Status_Temp /= File_Status_List.Null_Node
                  and then not Found
                loop
-                  if String_List.Head (Head (Status_Temp).File_Name)
-                    = String_List.Head (Filenames_Temp)
+                  if Head (Data (Status_Temp).File_Name)
+                    = Data (Filenames_Temp)
                   then
                      Found := True;
                      Append (The_Result,
-                             Copy_File_Status (Head (Status_Temp)));
+                             Copy_File_Status (Data (Status_Temp)));
                   end if;
 
                   Status_Temp := Next (Status_Temp);
@@ -564,13 +570,12 @@ package body VCS.CVS is
                   declare
                      New_Status : File_Status_Record;
                   begin
-                     String_List.Append (New_Status.File_Name,
-                                         String_List.Head (Filenames_Temp));
+                     Append (New_Status.File_Name, Data (Filenames_Temp));
                      Append (The_Result, New_Status);
                   end;
                end if;
 
-               Filenames_Temp := String_List.Next (Filenames_Temp);
+               Filenames_Temp := Next (Filenames_Temp);
             end loop;
 
             Free (Result);
@@ -602,36 +607,33 @@ package body VCS.CVS is
      (Rep         : access CVS_Record;
       Filenames   : String_List.List)
    is
-      Current_Filename : String_List.List := Filenames;
-
       use String_List;
+
+      Current_Filename : List_Node := First (Filenames);
    begin
-      if Is_Empty (Current_Filename) then
+      if Current_Filename = Null_Node then
          return;
       end if;
 
-      while not Is_Empty (Current_Filename) loop
+      while Current_Filename /= Null_Node loop
          --  Extract a list of files that belong to the same directory.
 
          declare
-            Current_Directory : String := Dir_Name (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Data (Current_Filename));
             Current_List      : String_List.List;
 
          begin
-            while not Is_Empty (Current_Filename)
-              and then Dir_Name (Head (Current_Filename)) = Current_Directory
+            while Current_Filename /= Null_Node
+              and then Dir_Name (Data (Current_Filename)) = Current_Directory
             loop
-               Append (Current_List, Head (Current_Filename));
+               Append (Current_List, Data (Current_Filename));
                Current_Filename := Next (Current_Filename);
             end loop;
 
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
 
-            Real_Get_Status
-              (Rep,
-               Current_List);
-
+            Real_Get_Status (Rep, Current_List);
             Free (Current_List);
          end;
       end loop;
@@ -645,28 +647,28 @@ package body VCS.CVS is
      (Rep         : access CVS_Record;
       Filenames   : String_List.List) return File_Status_List.List
    is
-      Result           : File_Status_List.List;
-      Current_Filename : String_List.List := Filenames;
-
       use String_List;
 
+      Result           : File_Status_List.List;
+      Current_Filename : List_Node := First (Filenames);
+
    begin
-      if Is_Empty (Current_Filename) then
+      if Current_Filename = Null_Node then
          return Result;
       end if;
 
-      while not Is_Empty (Current_Filename) loop
-
+      while Current_Filename /= Null_Node loop
          --  Extract a list of files that belong to the same directory.
+
          declare
-            Current_Directory : String := Dir_Name (Head (Current_Filename));
+            Current_Directory : String := Dir_Name (Data (Current_Filename));
             Current_List      : String_List.List;
 
          begin
-            while not Is_Empty (Current_Filename)
-              and then Dir_Name (Head (Current_Filename)) = Current_Directory
+            while Current_Filename /= Null_Node
+              and then Dir_Name (Data (Current_Filename)) = Current_Directory
             loop
-               Append (Current_List, Head (Current_Filename));
+               Append (Current_List, Data (Current_Filename));
                Current_Filename := Next (Current_Filename);
             end loop;
 
@@ -709,21 +711,20 @@ package body VCS.CVS is
       Filenames : String_List.List;
       Logs      : String_List.List)
    is
-      Arguments      : String_List.List;
-      Filenames_Temp : String_List.List := Filenames;
-      Logs_Temp      : String_List.List := Logs;
-      Single_File    : String_List.List;
-
       use String_List;
 
+      Arguments      : String_List.List;
+      Filenames_Temp : List_Node := First (Filenames);
+      Logs_Temp      : List_Node := First (Logs);
+      Single_File    : String_List.List;
+
    begin
-      while not Is_Empty (Filenames_Temp) loop
+      while Filenames_Temp /= Null_Node loop
          Append (Arguments, "-Q");
          Append (Arguments, "commit");
          Append (Arguments, "-m");
-         Append (Arguments, Head (Logs_Temp));
-
-         Append (Single_File, Head (Filenames_Temp));
+         Append (Arguments, Data (Logs_Temp));
+         Append (Single_File, Data (Filenames_Temp));
 
          Simple_Action (Rep, Single_File, Arguments);
 
@@ -733,7 +734,7 @@ package body VCS.CVS is
 
    exception
       when List_Empty =>
-         Handle_Error (Rep, "Log list incomplete !");
+         Handle_Error (Rep, -"Log list incomplete !");
    end Commit;
 
    ------------
@@ -844,32 +845,36 @@ package body VCS.CVS is
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
+   --  ???
 
    function Diff_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      L_Temp  : String_List.List := List;
+      use String_List;
 
+      L       : String_List.List := List;
+      L_Temp  : List_Node := First (List);
       Success : Boolean;
 
       Current_File : constant String := String_List.Head (Head);
       Base         : constant String := Base_Name (Current_File);
-      Patch_File   : constant String := Tmp_Dir & Base & "_difs";
+      Patch_File   : constant String :=
+        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
+        Base & "_difs";
       File         : File_Type;
+
    begin
       Create (File, Name => Patch_File);
 
-      while not String_List.Is_Empty (L_Temp) loop
-         Put (File, String_List.Head (L_Temp));
-         L_Temp := String_List.Next (L_Temp);
+      while L_Temp /= Null_Node loop
+         Put (File, Data (L_Temp));
+         L_Temp := Next (L_Temp);
       end loop;
 
-      String_List.Free (L_Temp);
-
+      String_List.Free (L);
       Close (File);
-
       Insert (Kernel,
               -"CVS: Got differences for file " & Current_File & ".",
               Highlight_Sloc => False,
@@ -900,7 +905,7 @@ package body VCS.CVS is
       Dir             : List;
    begin
       Append (Dir, Dir_Name (File));
-      Append (Command, CVS_Command);
+      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "diff");
 
       if Version_1 = ""
@@ -953,22 +958,27 @@ package body VCS.CVS is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      L_Temp  : String_List.List := List;
+      use String_List;
 
+      L       : String_List.List := List;
+      L_Temp  : List_Node := First (List);
       Success : Boolean;
 
       Current_File : constant String := String_List.Head (Head);
-      Text_File    : constant String := Tmp_Dir & Base_Name (Current_File);
+      Text_File    : constant String :=
+        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
+        Base_Name (Current_File);
       File         : File_Type;
+
    begin
       Create (File, Name => Text_File);
 
-      while not String_List.Is_Empty (L_Temp) loop
-         Put_Line (File, String_List.Head (L_Temp));
-         L_Temp := String_List.Next (L_Temp);
+      while L_Temp /= Null_Node loop
+         Put_Line (File, Data (L_Temp));
+         L_Temp := Next (L_Temp);
       end loop;
 
-      String_List.Free (L_Temp);
+      String_List.Free (L);
       Close (File);
       Open_File_Editor (Kernel, Text_File);
       GNAT.OS_Lib.Delete_File (Text_File, Success);
@@ -985,14 +995,16 @@ package body VCS.CVS is
       File : String)
    is
       use String_List;
-      C               : External_Command_Access;
-      Command         : List;
-      Command_Head    : List;
-      Args            : List;
-      Dir             : List;
+
+      C            : External_Command_Access;
+      Command      : List;
+      Command_Head : List;
+      Args         : List;
+      Dir          : List;
+
    begin
       Append (Dir, Dir_Name (File));
-      Append (Command, CVS_Command);
+      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "log");
       Append (Args, Base_Name (File));
       Append (Command_Head, Base_Name (File) & "_changelog");
@@ -1022,25 +1034,28 @@ package body VCS.CVS is
       File : String)
    is
       use String_List;
-      C               : External_Command_Access;
-      Command         : List;
-      Command_Head    : List;
-      Args            : List;
-      Dir             : List;
+
+      C            : External_Command_Access;
+      Command      : List;
+      Command_Head : List;
+      Args         : List;
+      Dir          : List;
+
    begin
       Append (Dir, Dir_Name (File));
-      Append (Command, CVS_Command);
+      Append (Command, Get_Pref (Rep.Kernel, CVS_Command));
       Append (Args, "annotate");
       Append (Args, Base_Name (File));
       Append (Command_Head, Base_Name (File) & "_annotations");
 
-      Create (C,
-              Rep.Kernel,
-              Command,
-              Dir,
-              Args,
-              Command_Head,
-              Text_Output_Handler'Access);
+      Create
+        (C,
+         Rep.Kernel,
+         Command,
+         Dir,
+         Args,
+         Command_Head,
+         Text_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
@@ -1082,8 +1097,7 @@ package body VCS.CVS is
    -----------------------
 
    procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       CVS_Reference := new CVS_Record;
       CVS_Reference.Kernel := Kernel_Handle (Kernel);
@@ -1094,11 +1108,13 @@ package body VCS.CVS is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_VCS_Identifier (Identify_VCS'Access);
       VCS_CVS_Module_ID := Register_Module
-        (Module_Name             => VCS_CVS_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => VCS_CVS_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => null);
@@ -1108,8 +1124,7 @@ package body VCS.CVS is
    -- Destroy --
    -------------
 
-   procedure Destroy (D : in String_List_And_Handler_Access)
-   is
+   procedure Destroy (D : in String_List_And_Handler_Access) is
       D_Copy : String_List_And_Handler_Access := D;
    begin
       String_List.Free (D_Copy.List);
