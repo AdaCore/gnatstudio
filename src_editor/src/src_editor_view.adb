@@ -40,28 +40,22 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with String_Utils;                use String_Utils;
 
 with Basic_Types;                 use Basic_Types;
 with Commands;                    use Commands;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 
 with Unchecked_Deallocation;
+
 package body Src_Editor_View is
 
    use type Pango.Font.Pango_Font_Description;
-   use Line_Info_List;
-
-   Minimal_Number_Of_Digits_In_LNA : constant := 3;
-   --  Minimal number of digits for a line number that the Line Numbers Area
-   --  (LNA) should be able to diplay.
-
-   LNA_Border_Width : constant := 4;
-   --  The number of pixels between the the LNA borders and the line number.
-
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Source_Buffer_Record,
       User_Type => Source_View);
+
+   procedure Free (X : in out Line_Info_Width);
+   --  Free memory associated to X.
 
    --------------------------
    -- Forward declarations --
@@ -120,28 +114,6 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "delete_range" signal.
 
-   function LNA_Width_In_Digits
-     (View : access Source_View_Record'Class) return Natural;
-   --  Return the number of digits the LNA should be able to display in order
-   --  to accomodate any line number for the given view. This value is computed
-   --  by returning the number of digits of the last line number. If this
-   --  number is smaller than the Minimal_Number_Of_Digits_In_LNA constant,
-   --  then this constant is returned instead. This is to ensure that the LNA
-   --  width does not change too often when editing small files.
-
-   function LNA_Width_In_Pixels
-     (View : access Source_View_Record'Class) return Gint;
-   --  Return the needed width in pixels of the LNA to fit any line number for
-   --  the given view. Just as in LNA_Width_In_Digits, the width returned will
-   --  always be able to accomodate at least Minimal_Number_Of_Digits_In_LNA,
-   --  to ensure that the LNA width does not change too often when editing
-   --  small files.
-
-   procedure Reset_Left_Border_Window_Size
-     (View : access Source_View_Record'Class);
-   --  Recalculate the size of the small window on the left used to display
-   --  entities such as line numbers, breakpoint icons, etc.
-
    procedure Redraw_Columns (View : access Source_View_Record'Class);
    --  Redraw the left and right areas around View.
 
@@ -155,7 +127,7 @@ package body Src_Editor_View is
      (View   : access Source_View_Record'Class;
       Start  : Integer;
       Number : Integer);
-   --  Add blank lines to the column info.
+   --  Add Number blank lines to the column info, after Start.
 
    procedure Remove_Lines
      (View       : access Source_View_Record'Class;
@@ -164,16 +136,19 @@ package body Src_Editor_View is
    --  Remove lines from the column info.
 
    procedure Insert_At_Position
-     (L     : in out Line_Info_List.List;
-      Info  : Line_Information_Record;
-      Width : Integer);
+     (View   : access Source_View_Record;
+      Info   : Line_Information_Record;
+      Column : Integer;
+      Line   : Integer;
+      Width  : Integer);
    --  Insert Info at the correct line position in L.
 
    procedure Get_Column_For_Identifier
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer);
+     (View          : access Source_View_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Column        : out Integer;
+      Stick_To_Data : Boolean := True);
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
@@ -187,7 +162,6 @@ package body Src_Editor_View is
       --  Now that the window is realized, we can set the font and
       --  the size of the left border window size.
       Set_Font (View, View.Pango_Font);
-      Reset_Left_Border_Window_Size (View);
    end Realize_Cb;
 
    --------------------------
@@ -296,11 +270,13 @@ package body Src_Editor_View is
             elsif Top_Line < Previous_Top_Line then
                Source_Lines_Revealed (Buffer, Top_Line, Previous_Top_Line);
                View.Min_Top_Line := Top_Line;
+
             elsif Bottom_Line > Previous_Bottom_Line then
                Source_Lines_Revealed
                  (Buffer, Previous_Bottom_Line, Bottom_Line);
                View.Max_Bottom_Line := Bottom_Line;
             end if;
+
 
             Redraw_Columns (View);
             --  return True;
@@ -365,56 +341,9 @@ package body Src_Editor_View is
       --  Now that the Source_View is mapped, we can create the Graphic
       --  Context used for writting line numbers.
       Gdk_New
-        (Source_View (View).Line_Numbers_GC,
+        (Source_View (View).Side_Column_GC,
          Get_Window (Source_View (View), Text_Window_Left));
    end Map_Cb;
-
-   -------------------------
-   -- LNA_Width_In_Digits --
-   -------------------------
-
-   function LNA_Width_In_Digits
-     (View : access Source_View_Record'Class) return Natural
-   is
-      Line_Count           : constant Natural :=
-        Natural (Get_Line_Count (Get_Buffer (View)));
-      Max_Number_Of_Digits : constant Natural :=
-        Natural'Max
-          (Number_Of_Digits (Line_Count), Minimal_Number_Of_Digits_In_LNA);
-
-   begin
-      return Max_Number_Of_Digits;
-   end LNA_Width_In_Digits;
-
-   -------------------------
-   -- LNA_Width_In_Pixels --
-   -------------------------
-
-   function LNA_Width_In_Pixels
-     (View : access Source_View_Record'Class) return Gint
-   is
-      Max_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
-      Templ : constant String (1 .. Max_Number_Of_Digits) := (others => '0');
-   begin
-      return 2 * LNA_Border_Width + Gdk.Font.String_Width (View.Font, Templ);
-   end LNA_Width_In_Pixels;
-
-   -----------------------------------
-   -- Reset_Left_Border_Window_Size --
-   -----------------------------------
-
-   procedure Reset_Left_Border_Window_Size
-     (View : access Source_View_Record'Class)
-   is
-      Max_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
-      Border_Size : Gint := 0;
-   begin
-      if View.Show_Line_Numbers then
-         Border_Size := LNA_Width_In_Pixels (View);
-         View.LNA_Width_In_Digits := Max_Number_Of_Digits;
-      end if;
-      Set_Border_Window_Size (View, Enums.Text_Window_Left, Border_Size);
-   end Reset_Left_Border_Window_Size;
 
    -------------
    -- Gtk_New --
@@ -423,11 +352,10 @@ package body Src_Editor_View is
    procedure Gtk_New
      (View              : out Source_View;
       Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description;
-      Show_Line_Numbers : Boolean := False) is
+      Font              : Pango.Font.Pango_Font_Description) is
    begin
       View := new Source_View_Record;
-      Initialize (View, Buffer, Font, Show_Line_Numbers);
+      Initialize (View, Buffer, Font);
    end Gtk_New;
 
    ----------------
@@ -437,8 +365,7 @@ package body Src_Editor_View is
    procedure Initialize
      (View              : access Source_View_Record;
       Buffer            : Src_Editor_Buffer.Source_Buffer;
-      Font              : Pango.Font.Pango_Font_Description;
-      Show_Line_Numbers : Boolean)
+      Font              : Pango.Font.Pango_Font_Description)
    is
       Insert_Iter : Gtk_Text_Iter;
    begin
@@ -448,13 +375,13 @@ package body Src_Editor_View is
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
+      Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
+
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
 
       View.Pango_Font := Font;
 
       View.Font := Gdk.Font.From_Description (View.Pango_Font);
-      View.Show_Line_Numbers := Show_Line_Numbers;
-      View.LNA_Width_In_Digits := Minimal_Number_Of_Digits_In_LNA;
 
       Widget_Callback.Connect
         (View, "realize",
@@ -524,31 +451,6 @@ package body Src_Editor_View is
 
       --  ??? Should recompute the width of the column on the side.
    end Set_Font;
-
-   ---------------------------
-   -- Set_Show_Line_Numbers --
-   ---------------------------
-
-   procedure Set_Show_Line_Numbers
-     (View         : access Source_View_Record;
-      Show_Numbers : Boolean := True)
-   is
-   begin
-      if Show_Numbers /= View.Show_Line_Numbers then
-         View.Show_Line_Numbers := Show_Numbers;
-         Reset_Left_Border_Window_Size (View);
-      end if;
-   end Set_Show_Line_Numbers;
-
-   ---------------------------
-   -- Get_Show_Line_Numbers --
-   ---------------------------
-
-   function Get_Show_Line_Numbers
-     (View : access Source_View_Record) return Boolean is
-   begin
-      return View.Show_Line_Numbers;
-   end Get_Show_Line_Numbers;
 
    -------------------------------
    -- Scroll_To_Cursor_Location --
@@ -670,7 +572,6 @@ package body Src_Editor_View is
             Column_Index               : Integer := -1;
             Button_X, Button_Y         : Gint;
             X, Y                       : Gint;
-            Node                       : List_Node;
             Dummy_Boolean              : Boolean;
 
          begin
@@ -679,6 +580,8 @@ package body Src_Editor_View is
             Button_X := Gint (Get_X (Event));
             Button_Y := Gint (Get_Y (Event));
 
+
+            --  Find the line number.
             Window_To_Buffer_Coords
               (View, Text_Window_Left,
                Window_X => Button_X, Window_Y => Button_Y,
@@ -687,6 +590,7 @@ package body Src_Editor_View is
             Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
             Line := Natural (Get_Line (Iter)) + 1;
 
+            --  Find the column number.
             for J in View.Line_Info.all'Range loop
                if View.Line_Info (J).Starting_X <= Natural (Button_X)
                  and then Natural (Button_X)
@@ -697,21 +601,29 @@ package body Src_Editor_View is
                end if;
             end loop;
 
+            --  If a command exists at the specified position, execute it.
             if Column_Index > 0 then
-               Node := First (View.Line_Info (Column_Index).Column_Info);
-
-               while Node /= Null_Node
-                 and then Data (Node).Info.Line < Line
-               loop
-                  Node := Next (Node);
-               end loop;
-
-               if Node /= Null_Node
-                 and then Data (Node).Info.Line = Line
-                 and then Data (Node).Info.Associated_Command /= null
-               then
-                  Dummy_Boolean
-                    := Execute (Data (Node).Info.Associated_Command);
+               if View.Line_Info (Column_Index).Stick_To_Data then
+                  if View.Real_Lines (Line) /= 0
+                    and then View.Line_Info (Column_Index).Column_Info
+                    (View.Real_Lines (Line)).Info /= null
+                    and then View.Line_Info (Column_Index).Column_Info
+                    (View.Real_Lines (Line)).Info.Associated_Command /= null
+                  then
+                     Dummy_Boolean := Execute
+                       (View.Line_Info (Column_Index).Column_Info
+                        (View.Real_Lines (Line)).Info.Associated_Command);
+                  end if;
+               else
+                  if View.Line_Info (Column_Index).Column_Info (Line).Info
+                    /= null
+                    and then View.Line_Info (Column_Index).Column_Info
+                    (Line).Info.Associated_Command /= null
+                  then
+                     Dummy_Boolean := Execute
+                       (View.Line_Info (Column_Index).Column_Info
+                        (Line).Info.Associated_Command);
+                  end if;
                end if;
             end if;
          end;
@@ -750,28 +662,37 @@ package body Src_Editor_View is
    ------------------------
 
    procedure Insert_At_Position
-     (L     : in out Line_Info_List.List;
-      Info  : Line_Information_Record;
-      Width : Integer)
-   is
-      Node : List_Node;
+     (View   : access Source_View_Record;
+      Info   : Line_Information_Record;
+      Column : Integer;
+      Line   : Integer;
+      Width  : Integer) is
    begin
-      if Is_Empty (L) then
-         Append (L, (new Line_Information_Record' (Info), Width));
-      else
-         Node := First (L);
+      --  If needed, increase the size of the target array.
+      if not View.Line_Info (Column).Stick_To_Data
+        and then View.Real_Lines'Last
+        > View.Line_Info (Column).Column_Info'Last
+      then
+         declare
+            A : Line_Info_Width_Array (1 .. View.Real_Lines'Last * 2);
+         begin
+            A (1 .. View.Line_Info (Column).Column_Info'Last)
+              := View.Line_Info (Column).Column_Info.all;
+            View.Line_Info (Column).Column_Info :=
+              new Line_Info_Width_Array' (A);
+         end;
+      end if;
 
-         while Next (Node) /= Null_Node
-           and then Data (Next (Node)).Info.Line <= Info.Line
-         loop
-            Node := Next (Node);
-         end loop;
-
-         if Data (Node).Info.Line = Info.Line then
-            Set_Data (Node, (new Line_Information_Record' (Info), Width));
-         else
-            Append (L, Node, (new Line_Information_Record' (Info), Width));
+      --  Insert the data in the array.
+      if not (View.Line_Info (Column).Stick_To_Data
+              and then Line > View.Original_Lines_Number)
+      then
+         if View.Line_Info (Column).Column_Info (Line).Info /= null then
+            Free (View.Line_Info (Column).Column_Info (Line));
          end if;
+
+         View.Line_Info (Column).Column_Info (Line)
+           := Line_Info_Width' (new Line_Information_Record' (Info), Width);
       end if;
    end Insert_At_Position;
 
@@ -795,19 +716,8 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       Dummy_Boolean              : Boolean;
 
-      Nodes : array (View.Line_Info'Range) of List_Node;
-
+      Data                       : Line_Info_Width;
    begin
-      for J in Nodes'Range loop
-         Nodes (J) := First (View.Line_Info (J).Column_Info);
-
-         while Nodes (J) /= Null_Node
-           and then Data (Nodes (J)).Info.Line < View.Top_Line
-         loop
-            Nodes (J) := Next (Nodes (J));
-         end loop;
-      end loop;
-
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
       Window_To_Buffer_Coords
@@ -843,39 +753,42 @@ package body Src_Editor_View is
          Y_In_Window :=
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
-         for J in Nodes'Range loop
-            while Nodes (J) /= Null_Node
-              and then Data (Nodes (J)).Info.Line < Current_Line
-            loop
-               Nodes (J) := Next (Nodes (J));
-            end loop;
+         for J in View.Line_Info.all'Range loop
+            if View.Line_Info (J).Stick_To_Data then
+               if View.Real_Lines (Current_Line) /= 0 then
+                  Data := View.Line_Info (J).Column_Info
+                    (View.Real_Lines (Current_Line));
+               else
+                  Data := (null, 0);
+               end if;
+            else
+               Data := View.Line_Info (J).Column_Info (Current_Line);
+            end if;
 
-            if Nodes (J) /= Null_Node
-              and then Data (Nodes (J)).Info.Line = Current_Line
-            then
-               if Data (Nodes (J)).Info.Text /= null then
+            if Data.Info /= null then
+               if Data.Info.Text /= null then
                   Draw_Text
                     (Drawable => Left_Window,
                      Font => View.Font,
-                     Gc => View.Line_Numbers_GC,
+                     Gc => View.Side_Column_GC,
                      X =>  Gint (View.Line_Info (J).Starting_X
                                  + View.Line_Info (J).Width
-                                 - Data (Nodes (J)).Width
+                                 - Data.Width
                                  - 2),
                      Y => Y_In_Window,
-                     Text => Data (Nodes (J)).Info.Text.all);
+                     Text => Data.Info.Text.all);
                end if;
 
-               if Data (Nodes (J)).Info.Image /= Null_Pixbuf then
+               if Data.Info.Image /= Null_Pixbuf then
                   Render_To_Drawable
-                    (Pixbuf   => Data (Nodes (J)).Info.Image,
+                    (Pixbuf   => Data.Info.Image,
                      Drawable => Left_Window,
-                     Gc       => View.Line_Numbers_GC,
+                     Gc       => View.Side_Column_GC,
                      Src_X    => 0,
                      Src_Y    => 0,
                      Dest_X   => Gint (View.Line_Info (J).Starting_X
                                        + View.Line_Info (J).Width
-                                       - Data (Nodes (J)).Width
+                                       - Data.Width
                                        - 2),
                      Dest_Y   => Y_Pix_In_Window,
                      Width    => -1,
@@ -908,6 +821,7 @@ package body Src_Editor_View is
       Widths : array (Info.all'Range) of Integer;
 
    begin
+      --  Compute the maximum width of the items to add.
       for J in Info.all'Range loop
          Widths (J) := 0;
          if Info (J).Text /= null then
@@ -931,18 +845,21 @@ package body Src_Editor_View is
          end if;
       end loop;
 
-      --  Refresh the stored data.
+      --  Get the column that corresponds to Identifier,
+      --  create it if necessary.
       Get_Column_For_Identifier
         (View,
          Identifier,
          Width,
-         Column);
+         Column,
+         Stick_To_Data);
 
       View.Line_Info (Column).Stick_To_Data := Stick_To_Data;
 
+      --  Update the stored data.
       for J in Info.all'Range loop
          Insert_At_Position
-           (View.Line_Info (Column).Column_Info, Info (J), Widths (J));
+           (View, Info (J), Column, Info (J).Line, Widths (J));
       end loop;
 
       --  If some of the data was in the display range, draw it.
@@ -955,15 +872,19 @@ package body Src_Editor_View is
    -------------------------------
 
    procedure Get_Column_For_Identifier
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer) is
+     (View          : access Source_View_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Column        : out Integer;
+      Stick_To_Data : Boolean := True) is
    begin
+
+      --  Browse through existing columns and try to match Identifier.
       for J in View.Line_Info.all'Range loop
          if View.Line_Info (J).Identifier.all = Identifier then
             Column := J;
 
+            --  Set the new width of the column.
             if View.Line_Info (J).Width < Width then
                for K in (J + 1) .. View.Line_Info.all'Last loop
                   View.Line_Info (K).Starting_X :=
@@ -988,14 +909,16 @@ package body Src_Editor_View is
       declare
          A : Line_Info_Display_Array
            (View.Line_Info.all'First .. View.Line_Info.all'Last + 1);
+         New_Column : Line_Info_Width_Array
+           (1 .. View.Original_Lines_Number);
       begin
          A (View.Line_Info'First .. View.Line_Info'Last) := View.Line_Info.all;
-         A (A'Last) :=
+         A (A'Last) := new Line_Info_Display_Record'
            (Identifier  => new String' (Identifier),
             Starting_X  => View.Total_Column_Width + 2,
             Width       => Width,
-            Column_Info => Null_List,
-            Stick_To_Data => True);
+            Column_Info => new Line_Info_Width_Array' (New_Column),
+            Stick_To_Data => Stick_To_Data);
          View.Line_Info := new Line_Info_Display_Array' (A);
          Column := View.Line_Info.all'Last;
 
@@ -1013,30 +936,50 @@ package body Src_Editor_View is
    procedure Add_Lines
      (View   : access Source_View_Record'Class;
       Start  : Integer;
-      Number : Integer)
-   is
-      Node : List_Node;
-      Info : Line_Information_Access;
+      Number : Integer) is
    begin
       if Number <= 0 then
          return;
       end if;
 
-      for J in View.Line_Info.all'Range loop
-         if View.Line_Info (J).Stick_To_Data then
-            Node := First (View.Line_Info (J).Column_Info);
+      if View.Real_Lines = null then
+         View.Original_Lines_Number := Number;
 
-            while Node /= Null_Node
-              and then Data (Node).Info.Line <= Start
-            loop
-               Node := Next (Node);
-            end loop;
+         View.Real_Lines := new Natural_Array (1 .. Number * 2);
 
-            while Node /= Null_Node loop
-               Info := Data (Node).Info;
-               Info.Line := Info.Line + Number;
-               Node := Next (Node);
-            end loop;
+         for J in 1 .. Number loop
+            View.Real_Lines (J) := J;
+         end loop;
+
+         for J in Number + 1 .. Number * 2 loop
+            View.Real_Lines (J) := 0;
+         end loop;
+      end if;
+
+      if View.Max_Bottom_Line + Number > View.Real_Lines'Last then
+         declare
+            A : Natural_Array := View.Real_Lines.all;
+         begin
+            View.Real_Lines := new Natural_Array
+              (View.Min_Top_Line ..
+               (View.Max_Bottom_Line + Number) * 2);
+            View.Real_Lines (A'Range) := A;
+            View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
+              := (others => 0);
+         end;
+      end if;
+
+      for J in reverse Start + 1 .. View.Real_Lines.all'Last loop
+         if J <= View.Real_Lines.all'First - 1 + Number then
+            View.Real_Lines (J) := 0;
+         else
+            View.Real_Lines (J) := View.Real_Lines (J - Number);
+         end if;
+      end loop;
+
+      for J in Start + 1 .. Start + Number loop
+         if Start + Number <= View.Real_Lines'Last then
+            View.Real_Lines (J) := 0;
          end if;
       end loop;
    end Add_Lines;
@@ -1048,62 +991,22 @@ package body Src_Editor_View is
    procedure Remove_Lines
      (View       : access Source_View_Record'Class;
       Start_Line : Integer;
-      End_Line   : Integer)
-   is
-      Node       : List_Node;
-      First_Node : List_Node := Null_Node;
-      Info       : Line_Information_Access;
+      End_Line   : Integer) is
    begin
       if End_Line <= Start_Line then
          return;
       end if;
 
-      for J in View.Line_Info.all'Range loop
-         if View.Line_Info (J).Stick_To_Data then
-            First_Node := Null_Node;
-            Node := First (View.Line_Info (J).Column_Info);
+      for J in Start_Line + 1
+        .. View.Real_Lines.all'Last + Start_Line - End_Line
+      loop
+         View.Real_Lines (J) := View.Real_Lines (J + End_Line - Start_Line);
+      end loop;
 
-            while Node /= Null_Node
-              and then Data (Node).Info.Line < Start_Line
-              and then Data (Node).Info.Line <= End_Line
-            loop
-               Node := Next (Node);
-            end loop;
-
-            if Node /= Null_Node
-              and then Data (Node).Info.Line <= End_Line
-            then
-               First_Node := Node;
-
-               --  Find the end node.
-               while Node /= Null_Node
-                 and then Next (Node) /= Null_Node
-                 and then Data (Next (Node)).Info.Line <= End_Line
-               loop
-                  Node := Next (Node);
-               end loop;
-
-               if First_Node = Node then
-                  First_Node := Prev (View.Line_Info (J).Column_Info,
-                                      First_Node);
-               end if;
-
-               Remove_Nodes (View.Line_Info (J).Column_Info,
-                             First_Node,
-                             Node);
-
-            end if;
-
-            if First_Node /= Null_Node then
-               Node := Next (First_Node);
-            end if;
-
-            while Node /= Null_Node loop
-               Info := Data (Node).Info;
-               Info.Line := Info.Line + Start_Line - End_Line;
-               Node := Next (Node);
-            end loop;
-         end if;
+      for J in View.Real_Lines.all'Last + Start_Line - End_Line + 1
+        .. View.Real_Lines.all'Last
+      loop
+         View.Real_Lines (J) := 0;
       end loop;
    end Remove_Lines;
 
