@@ -31,7 +31,7 @@ with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package body Glide_Kernel.Hooks is
 
-   Me : constant Debug_Handle := Create ("Hooks");
+   Me : constant Debug_Handle := Create ("Hooks", Default => Off);
 
    Name_Cst     : aliased constant String := "name";
    Descr_Cst    : aliased constant String := "description";
