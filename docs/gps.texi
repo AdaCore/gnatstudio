@@ -8746,6 +8746,21 @@ is mostly useful when used for command-line scripts (see @code{--eval}
 and @code{--load}), or for custom files, @xref{Customizing the Menu
 and Tool Bar}.
 
+Arguments to commands can, but need not, be quoted. If they don't contain
+any space, double-quote ('"') or newline characters, you do not need to quote
+them. Otherwise, you should surround them with double-quotes, and protect
+any double-quote part of the argument by preceding it with a backslash.
+
+There is another way to quote a command: use three double-quotes characters in
+a row. Any character loses its special meaning until the next three
+double-quotes characters set. This is useful if you do not know in advance
+the contents of the string you are quoting.
+
+@smallexample
+locations_parse """%1 """ category_name
+@end smallexample
+
+
 @ifclear python
 In future versions of GPS, it will be possible to use more advanced scripting
 languages such as @code{Python}.
