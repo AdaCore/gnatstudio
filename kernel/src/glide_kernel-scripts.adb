@@ -761,7 +761,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
-         Info := (File => Create (Full_Filename => Nth_Arg (Data, 2)));
+         Info := (File => Create (Nth_Arg (Data, 2), Kernel));
          Set_Data (Instance, Info);
          Free (Info);
 
