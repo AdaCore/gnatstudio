@@ -29,44 +29,6 @@ with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is
 
-   package Builtin is
-
-      type Builtin_Handle is private;
-
-      function Is_Implemented return Boolean;
-      --  Return True when this package is implemented.
-      --  False is this package contains only stub, and the generic external
-      --  process support should be used.
-
-      procedure Open_Processes (Handle : out Builtin_Handle);
-      --  Initialize a connexion to the current machine in order to retrieve
-      --  process information.
-
-      procedure Next_Process
-        (Handle  : Builtin_Handle;
-         Info    : out Process_Info;
-         Success : out Boolean);
-      --  Return information concerning the next process.
-      --  Success is set to True if there is a remaining process.
-
-      procedure Close_Processes (Handle : in out Builtin_Handle);
-      --  Close the connexion established in handle.
-
-   private
-      type Builtin_Record;
-      type Builtin_Handle is access all Builtin_Record;
-   end Builtin;
-
-   package body Builtin is separate;
-
-   use Builtin;
-
-   type Process_Record is record
-      Builtin    : Builtin_Handle;
-      Descriptor : Process_Descriptor_Access;
-      Remote     : Boolean;
-   end record;
-
    procedure Free is new Ada.Unchecked_Deallocation
      (Process_Record, Process_Handle);
 
@@ -82,12 +44,8 @@ package body GVD.Proc_Utils is
 
    procedure Close_Processes (Handle : in out Process_Handle) is
    begin
-      if not Is_Implemented or else Handle.Remote then
-         Close (Handle.Descriptor.all);
-         Free (Handle.Descriptor);
-      end if;
-
-      Close_Processes (Handle.Builtin);
+      Close (Handle.Descriptor.all);
+      Free (Handle.Descriptor);
       Free (Handle);
    end Close_Processes;
 
@@ -102,11 +60,6 @@ package body GVD.Proc_Utils is
    is
       Match : Expect_Match := 0;
    begin
-      if Is_Implemented and then not Handle.Remote then
-         Next_Process (Handle.Builtin, Info, Success);
-         return;
-      end if;
-
       Success := False;
       Expect (Handle.Descriptor.all, Match, "\n");
 
@@ -154,11 +107,6 @@ package body GVD.Proc_Utils is
    begin
       Handle := new Process_Record;
       Handle.Remote := False;
-
-      if Is_Implemented then
-         Open_Processes (Handle.Builtin);
-         return;
-      end if;
 
       if Use_Ptys then
          Handle.Descriptor := new TTY_Process_Descriptor;
