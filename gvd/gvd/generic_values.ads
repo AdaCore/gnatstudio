@@ -77,7 +77,7 @@ package Generic_Values is
    --  Only the type-related fields are cloned, the value fields are reset to
    --  Null.
 
-   procedure Paint (Item    : Generic_Type;
+   procedure Paint (Item    : in out Generic_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -108,6 +108,12 @@ package Generic_Values is
 
    function Get_Height (Item : Generic_Type) return Glib.Gint;
    --  Return the height that Item needs to display itself on the screen.
+
+   function Get_X (Item : Generic_Type) return Glib.Gint;
+   --  Return the coordinates in the pixmap where the item was displayed.
+
+   function Get_Y (Item : Generic_Type) return Glib.Gint;
+   --  Return the coordinates in the pixmap where the item was displayed.
 
    procedure Set_Visibility (Item    : in out Generic_Type;
                              Visible : Boolean);
@@ -439,6 +445,11 @@ private
       Width, Height : Glib.Gint := 0;
       --  These two fields are allocated by calls to Size_Request
 
+      X, Y : Glib.Gint := Glib.Gint'Last;
+      --  The coordinates in the top-level entity window where a component
+      --  was displayed. This is used when we need to redraw a single component
+      --  for instance when it was selected.
+
       Visible : Boolean := True;
       --  Whether the item's contents is shown or hidden. Note that some
       --  types (Simple_Type'Class) can not be hidden.
@@ -455,7 +466,7 @@ private
    procedure Free (Item : access Simple_Type;
                    Only_Value : Boolean := False);
    function Clone (Value : Simple_Type) return Generic_Type_Access;
-   procedure Paint (Item    : Simple_Type;
+   procedure Paint (Item    : in out Simple_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -495,7 +506,7 @@ private
    procedure Print (Value : Access_Type; Indent : Natural := 0);
    function Clone (Value : Access_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
-   procedure Paint (Item    : Access_Type;
+   procedure Paint (Item    : in out Access_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -546,7 +557,7 @@ private
    procedure Free (Item : access Array_Type;
                    Only_Value : Boolean := False);
    function Clone (Value : Array_Type) return Generic_Type_Access;
-   procedure Paint (Item    : Array_Type;
+   procedure Paint (Item    : in out Array_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -564,8 +575,6 @@ private
    function Get_Component (Item : access Array_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
-   procedure Set_Selected (Item     : access Array_Type;
-                           Selected : Boolean := True);
 
    ------------
    -- Repeat --
@@ -584,7 +593,7 @@ private
                    Only_Value : Boolean := False);
    function Clone (Value : Repeat_Type) return Generic_Type_Access;
 
-   procedure Paint (Item    : Repeat_Type;
+   procedure Paint (Item    : in out Repeat_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -603,8 +612,6 @@ private
    function Get_Component (Item : access Repeat_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
-   procedure Set_Selected (Item     : access Repeat_Type;
-                           Selected : Boolean := True);
 
    -----------------
    -- Record Type --
@@ -645,7 +652,7 @@ private
    procedure Free (Item : access Record_Type;
                    Only_Value : Boolean := False);
    function Clone (Value : Record_Type) return Generic_Type_Access;
-   procedure Paint (Item    : Record_Type;
+   procedure Paint (Item    : in out Record_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -663,8 +670,6 @@ private
    function Get_Component (Item : access Record_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
-   procedure Set_Selected (Item     : access Record_Type;
-                           Selected : Boolean := True);
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
@@ -684,7 +689,7 @@ private
    procedure Free (Item : access Class_Type;
                    Only_Value : Boolean := False);
    function Clone (Value : Class_Type) return Generic_Type_Access;
-   procedure Paint (Item    : Class_Type;
+   procedure Paint (Item    : in out Class_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -702,6 +707,4 @@ private
    function Get_Component (Item : access Class_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
-   procedure Set_Selected (Item     : access Class_Type;
-                           Selected : Boolean := True);
 end Generic_Values;

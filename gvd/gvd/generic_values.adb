@@ -129,6 +129,24 @@ package body Generic_Values is
       return Item.Height;
    end Get_Height;
 
+   -----------
+   -- Get_X --
+   -----------
+
+   function Get_X (Item : Generic_Type) return Glib.Gint is
+   begin
+      return Item.X;
+   end Get_X;
+
+   -----------
+   -- Get_Y --
+   -----------
+
+   function Get_Y (Item : Generic_Type) return Glib.Gint is
+   begin
+      return Item.Y;
+   end Get_Y;
+
    --------------------
    -- Set_Visibility --
    --------------------
@@ -193,7 +211,9 @@ package body Generic_Values is
                              Min      => Min,
                              Max      => Max,
                              Width    => 0,
-                             Height   => 0);
+                             Height   => 0,
+                             X        => -1,
+                             Y        => -1);
    end New_Range_Type;
 
    ------------------
@@ -207,7 +227,9 @@ package body Generic_Values is
                            Visible  => True,
                            Selected => True,
                            Width    => 0,
-                           Height   => 0);
+                           Height   => 0,
+                           X        => -1,
+                           Y        => -1);
    end New_Mod_Type;
 
    ---------------------
@@ -336,7 +358,9 @@ package body Generic_Values is
                           Visible    => True,
                           Selected   => True,
                           Width      => 0,
-                          Height     => 0));
+                          Height     => 0,
+                          X          => -1,
+                          Y          => -1));
       end if;
    end Set_Value;
 
@@ -1091,7 +1115,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Simple_Type;
+   procedure Paint (Item    : in out Simple_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1099,15 +1123,18 @@ package body Generic_Values is
                     X, Y    : Gint := 0)
    is
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
-                        Filled => True,
-                        X      => X,
-                        Y      => Y,
-                        Width  => Item.Width,
-                        Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+         Draw_Rectangle (Pixmap,
+                         GC,
+                         Filled => True,
+                         X      => X,
+                         Y      => Y,
+                         Width  => Item.Width,
+                         Height => Item.Height);
+         Set_Function (GC, Copy_Invert);
       end if;
 
       Draw_Text (Pixmap,
@@ -1126,7 +1153,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Access_Type;
+   procedure Paint (Item    : in out Access_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1134,6 +1161,9 @@ package body Generic_Values is
                     X, Y    : Glib.Gint := 0)
    is
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       if Item.Selected then
         Draw_Rectangle (Pixmap,
                         GC,
@@ -1161,7 +1191,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Array_Type;
+   procedure Paint (Item    : in out Array_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1172,6 +1202,9 @@ package body Generic_Values is
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width
         +Left_Border - Text_Width (Font, String'(" => "));
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       if not Item.Visible then
          Set_Clip_Mask (GC, Hidden_Mask);
          Set_Clip_Origin (GC, X + Left_Border, Current_Y);
@@ -1237,7 +1270,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Record_Type;
+   procedure Paint (Item    : in out Record_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1249,6 +1282,9 @@ package body Generic_Values is
         X + Left_Border + Border_Spacing + Item.Gui_Fields_Width -
         Text_Width (Font, String'(" => "));
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       --  A null record ?
 
       if Item.Fields'Length = 0 then
@@ -1333,7 +1369,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Repeat_Type;
+   procedure Paint (Item    : in out Repeat_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1342,6 +1378,9 @@ package body Generic_Values is
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       if Item.Selected then
         Draw_Rectangle (Pixmap,
                         GC,
@@ -1381,7 +1420,7 @@ package body Generic_Values is
    -- Paint --
    -----------
 
-   procedure Paint (Item    : Class_Type;
+   procedure Paint (Item    : in out Class_Type;
                     GC      : Gdk.GC.Gdk_GC;
                     Xref_Gc : Gdk.GC.Gdk_GC;
                     Font    : Gdk.Font.Gdk_Font;
@@ -1390,6 +1429,9 @@ package body Generic_Values is
    is
       Current_Y : Gint := Y;
    begin
+      Item.X := X;
+      Item.Y := Y;
+
       if not Item.Visible then
          Set_Clip_Mask (GC, Hidden_Mask);
          Set_Clip_Origin (GC, X, Current_Y);
@@ -2049,69 +2091,6 @@ package body Generic_Values is
    is
    begin
       Item.Selected := Selected;
-   end Set_Selected;
-
-   ------------------
-   -- Set_Selected --
-   ------------------
-
-   procedure Set_Selected (Item     : access Array_Type;
-                           Selected : Boolean := True)
-   is
-   begin
-      Item.Selected := Selected;
-      if not Selected and then Item.Values /= null then
-         for V in Item.Values'Range loop
-            Set_Selected (Item.Values (V).Value, Selected);
-         end loop;
-      end if;
-   end Set_Selected;
-
-   ------------------
-   -- Set_Selected --
-   ------------------
-
-   procedure Set_Selected (Item     : access Repeat_Type;
-                           Selected : Boolean := True)
-   is
-   begin
-      Item.Selected := Selected;
-      if not Selected then
-         Set_Selected (Item.Value, Selected);
-      end if;
-   end Set_Selected;
-
-   ------------------
-   -- Set_Selected --
-   ------------------
-
-   procedure Set_Selected (Item     : access Record_Type;
-                           Selected : Boolean := True)
-   is
-   begin
-      Item.Selected := Selected;
-      if not Selected then
-         for F in Item.Fields'Range loop
-            Set_Selected (Item.Fields (F).Value, Selected);
-         end loop;
-      end if;
-   end Set_Selected;
-
-   ------------------
-   -- Set_Selected --
-   ------------------
-
-   procedure Set_Selected (Item     : access Class_Type;
-                           Selected : Boolean := True)
-   is
-   begin
-      Item.Selected := Selected;
-      if not Selected then
-         for A in Item.Ancestors'Range loop
-            Set_Selected (Item.Ancestors (A), Selected);
-         end loop;
-         Set_Selected (Item.Child, Selected);
-      end if;
    end Set_Selected;
 
    ------------------
