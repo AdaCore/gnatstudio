@@ -57,8 +57,6 @@ with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Projects.Traces;           use Projects.Traces;
-
 package body Project_Properties is
    use Widget_List;
 
@@ -1296,8 +1294,6 @@ package body Project_Properties is
             Recompute_View (Kernel);
          end if;
       end if;
-
-      Trace_Pretty_Print (Me, Project);
 
       Destroy (Editor);
       Free (Languages);
