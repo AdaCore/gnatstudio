@@ -9,6 +9,15 @@
  **
  ********************************************************************/
 
+/* The following variable is imported by the Ada code to see whether we
+ *    can/should use ptys or pipes */
+
+#ifdef GVD_USE_PTYS
+int gvd_use_ptys = 1;
+#else
+int gvd_use_ptys = 0;
+#endif
+
 /*******************************
  **  These macros and constants are defined for maximum compatibility with
  **  Emacs, so that we can easily compare later on the changes done in Emacs
