@@ -51,7 +51,6 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-
 package body Glide_Kernel.Modules is
 
    Me : Debug_Handle := Create ("Glide_Kernel.Modules");
@@ -431,6 +430,42 @@ package body Glide_Kernel.Modules is
       Free (Context.Directory);
       Free (Context.File_Name);
       Glide_Kernel.Destroy (Selection_Context (Context));
+   end Destroy;
+
+   --------------------------
+   -- Set_Area_Information --
+   --------------------------
+
+   procedure Set_Area_Information
+     (Context    : access File_Area_Context;
+      Start_Line : Integer := 0;
+      End_Line   : Integer := 0) is
+   begin
+      Context.Start_Line := Start_Line;
+      Context.End_Line   := End_Line;
+   end Set_Area_Information;
+
+   --------------
+   -- Get_Area --
+   --------------
+
+   procedure Get_Area
+     (Context    : access File_Area_Context;
+      Start_Line : out Integer;
+      End_Line   : out Integer) is
+   begin
+      Start_Line := Context.Start_Line;
+      End_Line   := Context.End_Line;
+   end Get_Area;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out File_Area_Context) is
+      pragma Unreferenced (Context);
+   begin
+      return;
    end Destroy;
 
    ----------------------------
@@ -846,6 +881,56 @@ package body Glide_Kernel.Modules is
 
       return Result;
    end Mime_Action;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Information_Record) is
+   begin
+      Free (X.Text);
+
+      if X.Associated_Command /= null then
+         Destroy (X.Associated_Command);
+      end if;
+   end Free;
+
+   --------------------------
+   -- Add_Line_Information --
+   --------------------------
+
+   procedure Add_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Width          : Integer;
+      Info           : Line_Information_Data;
+      Stick_To_Data  : Boolean := True)
+   is
+      Value : GValue_Array (1 .. 5);
+      Norm_Filename : constant String := Normalize_Pathname (File);
+
+   begin
+      Init (Value (1),  Glib.GType_String);
+      Init (Value (2),  Glib.GType_String);
+      Init (Value (3),  Glib.GType_Int);
+      Init (Value (4),  Glib.GType_Pointer);
+      Init (Value (5),  Glib.GType_Boolean);
+      Set_String (Value (1), Norm_Filename);
+      Set_String (Value (2), Identifier);
+      Set_Int (Value (3), Gint (Width));
+      Set_Address (Value (4), To_Address (Info));
+      Set_Boolean (Value (5), Stick_To_Data);
+
+      if not Mime_Action (Kernel, Mime_File_Line_Info, Value) then
+         Trace (Me, "No file editor with line info display "
+                & "capability was registered");
+      end if;
+
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
+   end Add_Line_Information;
 
    ----------------------
    -- Open_File_Editor --
