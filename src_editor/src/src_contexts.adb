@@ -39,6 +39,7 @@ with Basic_Types;               use Basic_Types;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
@@ -126,9 +127,10 @@ package body Src_Contexts is
    --  null is returned if there is no match.
 
    procedure Highlight_Result
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String;
-      Match     : Match_Result);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File_Name   : String;
+      Match       : Match_Result;
+      Interactive : Boolean);
    --  Print the result of the search in the glide console
 
    function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
@@ -147,6 +149,14 @@ package body Src_Contexts is
       Kernel : access Kernel_Handle_Record'Class);
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
+
+   procedure Auxiliary_Search
+     (Context         : access Current_File_Context;
+      Editor          : Source_Editor_Box;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
+      Success         : out Boolean);
+   --  Auxiliary function, factorizes code between Search and Replace.
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -461,31 +471,39 @@ package body Src_Contexts is
    ----------------------
 
    procedure Highlight_Result
-     (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String;
-      Match     : Match_Result)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File_Name   : String;
+      Match       : Match_Result;
+      Interactive : Boolean)
    is
-      Lin, Col : Positive;
+      function To_Positive (N : Natural) return Positive;
+      --  If N > 0 then return N else return 1.
+
+      function To_Positive (N : Natural) return Positive is
+      begin
+         if N = 0 then
+            return 1;
+         else
+            return Positive (N);
+         end if;
+      end To_Positive;
+
    begin
-      if Match.Line = 0 then
-         Lin := 1;
+      if Interactive then
+         Open_File_Editor
+           (Kernel,
+            File_Name,
+            To_Positive (Match.Line), To_Positive (Match.Column),
+            To_Positive (Match.End_Column));
       else
-         Lin := Positive (Match.Line);
+         Insert_Result
+           (Kernel,
+            -"Search Results",
+            File_Name,
+            Match.Text,
+            To_Positive (Match.Line), To_Positive (Match.Column),
+            Match.End_Column - Match.Column);
       end if;
-
-      if Match.Column = 0 then
-         Col := 1;
-      else
-         Col := Positive (Match.Column);
-      end if;
-
-      Insert_Result
-        (Kernel,
-         -"Search Results",
-         File_Name,
-         Match.Text,
-         Lin, Col,
-         Match.End_Column - Match.Column);
    end Highlight_Result;
 
    ---------------
@@ -797,31 +815,26 @@ package body Src_Contexts is
          return null;
    end Files_Factory;
 
-   ------------
-   -- Search --
-   ------------
+   ----------------------
+   -- Auxiliary_Search --
+   ----------------------
 
-   function Search
+   procedure Auxiliary_Search
      (Context         : access Current_File_Context;
+      Editor          : Source_Editor_Box;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Success         : out Boolean)
    is
-      Editor : Source_Editor_Box;
       Lang   : Language_Access;
       Match  : Match_Result_Access;
       Line, Column : Natural;
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
 
    begin
+      Success := False;
+
       Assert (Me, not Context.All_Occurrences,
               "All occurences not supported for current_file_context");
-      if Child = null then
-         return False;
-      end if;
-
-      Editor := Get_Source_Box_From_MDI (Child);
-      Raise_Child (Child);
-      Minimize_Child (Child, False);
 
       --  If there are still some matches in the current file that we haven't
       --  returned, do it now (only the case when searching for all
@@ -844,20 +857,21 @@ package body Src_Contexts is
             Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
          end if;
 
-         Match :=
-           Context.Next_Matches_In_File (Context.Last_Match_Returned);
+         Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
 
          if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
+            Context.Begin_Line := Match.Line;
+            Context.Begin_Column := Match.Column;
+            Context.End_Line := Match.Line;
+            Context.End_Column := Match.End_Column;
+            Success := True;
 
-            Set_Cursor_Location (Editor, Match.Line, Match.Column);
-            Select_Region
-              (Editor, Match.Line, Match.Column,
-               Match.Line, Match.End_Column);
-            return True;
+            --  ??? Match is not freed here ?
+            return;
 
          else
             Free (Context.Next_Matches_In_File);
-            return False;
+            return;
          end if;
       end if;
 
@@ -881,22 +895,147 @@ package body Src_Contexts is
          Backward       => Search_Backward);
 
       if Match = null then
-         return False;
+         return;
       end if;
 
-      Set_Cursor_Location (Editor, Match.Line, Match.Column);
-      Select_Region
-        (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+      Context.Begin_Line := Match.Line;
+      Context.Begin_Column := Match.Column;
+      Context.End_Line := Match.Line;
+      Context.End_Column := Match.End_Column;
+      Success := True;
 
       Unchecked_Free (Match);
 
-      return True;
+      return;
+   end Auxiliary_Search;
+
+   ------------
+   -- Search --
+   ------------
+
+   function Search
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
+
+   is
+      pragma Unreferenced (Interactive);
+
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Editor  : Source_Editor_Box;
+
+      Success      : Boolean;
+
+   begin
+      if Child = null then
+         return False;
+      end if;
+
+      Editor := Get_Source_Box_From_MDI (Child);
+      Raise_Child (Child);
+      Minimize_Child (Child, False);
+
+      Auxiliary_Search (Context, Editor, Kernel, Search_Backward, Success);
+
+      if Success then
+         Set_Cursor_Location
+           (Editor, Context.Begin_Line, Context.Begin_Column);
+         Select_Region
+           (Editor,
+            Context.Begin_Line,
+            Context.Begin_Column,
+            Context.End_Line,
+            Context.End_Column);
+      end if;
+
+      return Success;
 
    exception
       when E : others =>
          Trace (Me, "unexpected exception: " & Exception_Information (E));
          return False;
    end Search;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
+   is
+      pragma Unreferenced (Interactive);
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Editor  : Source_Editor_Box;
+
+      Success      : Boolean;
+      Begin_Line   : Natural;
+      Begin_Column : Natural;
+      End_Line     : Natural;
+      End_Column   : Natural;
+
+   begin
+      if Child = null then
+         return False;
+      end if;
+
+      Editor := Get_Source_Box_From_MDI (Child);
+      Raise_Child (Child);
+      Minimize_Child (Child, False);
+
+      --  Test whether there is currently a valid selection candidate
+      --  for replacement.
+
+      Get_Selection_Bounds (Editor, Begin_Line, Begin_Column,
+                            End_Line, End_Column, Success);
+
+      if Success
+        and then Begin_Line = Context.Begin_Line
+        and then Begin_Column = Context.Begin_Column
+        and then End_Line = Context.End_Line
+        and then End_Column = Context.End_Column
+      then
+         Replace_Slice
+           (Editor,
+            Begin_Line,
+            Begin_Column,
+            End_Line,
+            End_Column,
+            Replace_String);
+      end if;
+
+      --  Search for next replaceable entity.
+
+      Auxiliary_Search (Context, Editor, Kernel, Search_Backward, Success);
+
+      if Success then
+         Set_Cursor_Location
+           (Editor, Context.Begin_Line, Context.Begin_Column);
+         Select_Region
+           (Editor,
+            Context.Begin_Line,
+            Context.Begin_Column,
+            Context.End_Line,
+            Context.End_Column);
+      else
+         --  The search could not be made, invalidate the context
+         --  in case it was the last search in the file.
+
+         Context.End_Line := Context.Begin_Line;
+         Context.End_Column := Context.Begin_Column;
+      end if;
+
+      return Success;
+
+   exception
+      when E : others =>
+         Trace (Me, "unexpected exception: " & Exception_Information (E));
+         return False;
+   end Replace;
 
    ------------
    -- Search --
@@ -905,7 +1044,8 @@ package body Src_Contexts is
    function Search
      (Context         : access Files_Project_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
    begin
@@ -916,11 +1056,13 @@ package body Src_Contexts is
          Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
          if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
            and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
-             /= null
+         /= null
          then
             Highlight_Result
               (Kernel, Context.Files (Context.Current_File - 1).all,
-               Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
+               Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
+               Interactive);
+
             return True;
          else
             Free (Context.Next_Matches_In_File);
@@ -952,9 +1094,95 @@ package body Src_Contexts is
       Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
       Highlight_Result
         (Kernel, Context.Files (Context.Current_File - 1).all,
-         Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
+         Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
+         Interactive);
       return True;
    end Search;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Context         : access Files_Project_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean is
+   begin
+      if Context.Files = null
+        or else Context.Current_File not in Context.Files'Range
+        or else Context.Files (Context.Current_File) = null
+      then
+         return False;
+      end if;
+
+      if not Interactive
+        and then not Is_Open (Kernel, Context.Files (Context.Current_File).all)
+      then
+         return False;
+
+         --  ??? We do not replace strings in non-open buffers yet.
+      else
+         --  If the current location is valid, replace it.
+         declare
+            Start_Line   : Positive;
+            Start_Column : Positive;
+            End_Line     : Positive;
+            End_Column   : Positive;
+            Success      : Boolean;
+            Editor       : Source_Editor_Box;
+            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+         begin
+            if Child /= null then
+               Editor := Get_Source_Box_From_MDI (Child);
+
+               if Get_Filename (Editor)
+                 = Context.Files (Context.Current_File - 1).all
+               then
+                  Get_Selection_Bounds
+                    (Editor,
+                     Start_Line, Start_Column, End_Line, End_Column,
+                     Success);
+
+                  if Success
+                    and then Context.Next_Matches_In_File /= null
+                    and then Context.Last_Match_Returned
+                  in Context.Next_Matches_In_File'Range
+                    and then Context.Next_Matches_In_File
+                      (Context.Last_Match_Returned) /= null
+                  then
+                     declare
+                        Match : constant Match_Result
+                          := Context.Next_Matches_In_File
+                            (Context.Last_Match_Returned).all;
+                     begin
+                        if Match.Line = Start_Line
+                          and then Match.Column = Start_Column
+                          and then Match.Line = End_Line
+                          and then Match.End_Column = End_Column
+                        then
+                           Replace_Slice
+                             (Editor,
+                              Start_Line, Start_Column, End_Line, End_Column,
+                              Replace_String);
+
+                           return
+                             Search
+                               (Context,
+                                Kernel,
+                                Search_Backward,
+                                Interactive);
+                        end if;
+                     end;
+                  end if;
+               end if;
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Replace;
 
    ------------
    -- Search --
@@ -963,7 +1191,8 @@ package body Src_Contexts is
    function Search
      (Context         : access Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
 
@@ -983,7 +1212,8 @@ package body Src_Contexts is
          then
             Highlight_Result
               (Kernel, Context.Current_File.all,
-               Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
+               Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
+               Interactive);
             return True;
          else
             Free (Context.Next_Matches_In_File);
@@ -1048,13 +1278,92 @@ package body Src_Contexts is
       Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
       Highlight_Result
         (Kernel, Context.Current_File.all,
-         Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
+         Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
+         Interactive);
       return True;
 
    exception
       when Directory_Error =>
          return False;
    end Search;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Context         : access Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean is
+   begin
+      if Context.Current_File = null then
+         return False;
+      end if;
+
+      if not Is_Open (Kernel, Context.Current_File.all) then
+         return False;
+
+         --  ??? We do not replace string in non-open buffers yet.
+      else
+         --  If the current location is valid, replace it.
+         declare
+            Start_Line   : Positive;
+            Start_Column : Positive;
+            End_Line     : Positive;
+            End_Column   : Positive;
+            Success      : Boolean;
+            Editor       : Source_Editor_Box;
+            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+         begin
+            if Child /= null then
+               Editor := Get_Source_Box_From_MDI (Child);
+
+               if Get_Filename (Editor) = Context.Current_File.all then
+                  Get_Selection_Bounds
+                    (Editor,
+                     Start_Line, Start_Column, End_Line, End_Column,
+                     Success);
+
+                  if Success
+                    and then Context.Next_Matches_In_File /= null
+                    and then Context.Last_Match_Returned
+                  in Context.Next_Matches_In_File'Range
+                    and then Context.Next_Matches_In_File
+                      (Context.Last_Match_Returned) /= null
+                  then
+                     declare
+                        Match : constant Match_Result
+                          := Context.Next_Matches_In_File
+                            (Context.Last_Match_Returned).all;
+                     begin
+                        if Match.Line = Start_Line
+                          and then Match.Column = Start_Column
+                          and then Match.Line = End_Line
+                          and then Match.End_Column = End_Column
+                        then
+                           Replace_Slice
+                             (Editor,
+                              Start_Line, Start_Column, End_Line, End_Column,
+                              Replace_String);
+
+                           return
+                             Search
+                               (Context,
+                                Kernel,
+                                Search_Backward,
+                                Interactive);
+                        end if;
+                     end;
+                  end if;
+               end if;
+            end if;
+         end;
+      end if;
+
+      return False;
+   end Replace;
 
    ----------
    -- Free --
