@@ -93,6 +93,10 @@ package Src_Editor_Box is
      (Box : access Source_Editor_Box_Record) return Glide_Kernel.Kernel_Handle;
    --  Accessor to the Kernel field.
 
+   function Get_View (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_View.Source_View;
+   --  Return the source view associated with the box
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------

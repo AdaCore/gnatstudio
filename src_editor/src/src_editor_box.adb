@@ -2763,4 +2763,14 @@ package body Src_Editor_Box is
       Redo (Editor.Source_Buffer);
    end Redo;
 
+   --------------
+   -- Get_View --
+   --------------
+
+   function Get_View (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_View.Source_View is
+   begin
+      return Editor.Source_View;
+   end Get_View;
+
 end Src_Editor_Box;
