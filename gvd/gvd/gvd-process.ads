@@ -141,6 +141,9 @@ package Odd.Process is
       Breakpoints : Odd.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
 
+      Has_Temporary_Breakpoint : Boolean := True;
+      --  Whether there exists a temporary breakpoint in Breakpoints.
+
       Descriptor : Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added for handling sessions.)
@@ -270,8 +273,13 @@ package Odd.Process is
    --------------------------
 
    procedure Update_Breakpoints
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Force  : Boolean);
    --  Update the list of breakpoints every time the process is stopped.
+   --  This also updates all the visual windows where the breakpoints are
+   --  displayed.
+   --  Not that the list of breakpoints is not reparsed if Force is False and
+   --  there is no temporary breakpoint in the current list.
 
    function Toggle_Breakpoint_State
      (Process        : access Debugger_Process_Tab_Record;

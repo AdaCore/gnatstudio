@@ -338,7 +338,20 @@ package body Odd.Process is
       --  Display the file
 
       Push_Internal_Command_Status (Get_Process (Data.Process.Debugger), True);
-      Update_Breakpoints (Data.Process);
+
+      --  Update the list of breakpoints in the editor.
+      --  If there is no breakpoint defined, we force an update (in fact,
+      --  "start" will always define such a breakpoint, and this is used to
+      --  initialize the list).
+      if Data.Process.Breakpoints /= null
+        and then Data.Process.Breakpoints'Length > 0
+      then
+         Update_Breakpoints
+           (Data.Process.Editor_Text, Data.Process.Breakpoints.all);
+      else
+         Update_Breakpoints (Data.Process, Force => True);
+      end if;
+
       Load_File (Data.Process.Editor_Text, Data.File_Name.all);
       Pop_Internal_Command_Status (Get_Process (Data.Process.Debugger));
 
@@ -1026,23 +1039,42 @@ package body Odd.Process is
    ------------------------
 
    procedure Update_Breakpoints
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Force  : Boolean)
    is
       Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
    begin
-      Free (Process.Breakpoints);
-      Process.Breakpoints := new Breakpoint_Array'
-        (List_Breakpoints (Process.Debugger));
+      --  We only need to update the list of breakpoints when we have a
+      --  temporary breakpoint (since its status might be changed upon
+      --  reaching the line).
 
-      --  Update the breakpoints in the editor
-      Update_Breakpoints (Process.Editor_Text, Process.Breakpoints.all);
+      if Force or else Process.Has_Temporary_Breakpoint then
 
-      --  Update the breakpoints dialog if necessary
-      if Process.Window.Breakpoints_Editor /= null
-        and then Mapped_Is_Set (Process.Window.Breakpoints_Editor)
-      then
-         Update_Breakpoint_List
+         Free (Process.Breakpoints);
+         Process.Breakpoints := new Breakpoint_Array'
+           (List_Breakpoints (Process.Debugger));
+
+         --  Check whether there is any temporary breakpoint
+         Process.Has_Temporary_Breakpoint := False;
+         for J in Process.Breakpoints'Range loop
+            if Process.Breakpoints (J).Disposition /= Keep
+              and then Process.Breakpoints (J).Enabled
+            then
+               Process.Has_Temporary_Breakpoint := True;
+               exit;
+            end if;
+         end loop;
+
+         --  Update the breakpoints in the editor
+         Update_Breakpoints (Process.Editor_Text, Process.Breakpoints.all);
+
+         --  Update the breakpoints dialog if necessary
+         if Process.Window.Breakpoints_Editor /= null
+           and then Mapped_Is_Set (Process.Window.Breakpoints_Editor)
+         then
+            Update_Breakpoint_List
            (Breakpoints_Access (Process.Window.Breakpoints_Editor));
+         end if;
       end if;
    end Update_Breakpoints;
 

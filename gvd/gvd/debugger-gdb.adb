@@ -762,8 +762,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command : String) return Boolean is
    begin
-      return Is_Execution_Command (Debugger, Command)
-        or else Looking_At (Command, Command'First, "break")
+      return Looking_At (Command, Command'First, "break")
         or else Looking_At (Command, Command'First, "tbreak")
         or else Looking_At (Command, Command'First, "rbreak")
         or else Looking_At (Command, Command'First, "b ")
