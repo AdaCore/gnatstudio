@@ -33,6 +33,9 @@ package Src_Info.CPP is
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with private;
    --  An iterator to generate the LI database for a set of source files.
 
+   procedure Destroy (Handler : in out CPP_LI_Handler_Record);
+   --  See comment in src_info.ads
+
    function Set_Executables
      (Handler : access CPP_LI_Handler_Record) return String;
    --  Compute the location of the external source navigator executables on the

@@ -761,6 +761,18 @@ package body Src_Info.CPP is
       return "";
    end Set_Executables;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out CPP_LI_Handler_Record) is
+   begin
+      Free (Handler.Xrefs);
+      Free (Handler.DB_Dir);
+      Free (Handler.DBIMP_Path);
+      Free (Handler.CBrowser_Path);
+   end Destroy;
+
    -----------
    -- Reset --
    -----------
