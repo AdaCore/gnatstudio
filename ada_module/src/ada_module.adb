@@ -120,6 +120,15 @@ package body Ada_Module is
    Cst_Gnat_Wu  : aliased constant String := "-gnatwu";
    Cst_Gnat_Wv  : aliased constant String := "-gnatwv";
    Cst_Gnat_Wz  : aliased constant String := "-gnatwz";
+   Cst_Gnat_Vc  : aliased constant String := "-gnatVc";
+   Cst_Gnat_Vd  : aliased constant String := "-gnatVd";
+   Cst_Gnat_Vf  : aliased constant String := "-gnatVf";
+   Cst_Gnat_Vi  : aliased constant String := "-gnatVi";
+   Cst_Gnat_Vm  : aliased constant String := "-gnatVm";
+   Cst_Gnat_Vo  : aliased constant String := "-gnatVo";
+   Cst_Gnat_Vr  : aliased constant String := "-gnatVr";
+   Cst_Gnat_Vs  : aliased constant String := "-gnatVs";
+   Cst_Gnat_Vt  : aliased constant String := "-gnatVt";
 
    procedure On_Preferences_Changed
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
@@ -435,39 +444,39 @@ package body Ada_Module is
       --  Validity checking
       Gtk_New_Vbox (Warn_Box, False, 0);
       Create_Check
-        (Page, Warn_Box, -"Checking for copies", "-gnatVc",
+        (Page, Warn_Box, -"Checking for copies", Cst_Gnat_Vc,
          -("The right hand side of assignments, and the initializing"
            & " values of object declarations are validity checked"));
       Create_Check
         (Page, Warn_Box,
-         -"Default Reference Manual checking", "-gnatVd");
+         -"Default Reference Manual checking", Cst_Gnat_Vd);
       Create_Check
         (Page, Warn_Box, -"Checking for floating-point", "-gnatVf");
       Create_Check
         (Page, Warn_Box,
-         -"Checking for ""in"" parameters", "-gnatVi",
+         -"Checking for ""in"" parameters", Cst_Gnat_Vi,
          -("Arguments for parameters of mode in are validity checked"
            & " in function and procedure calls at the point of"
            & " call"));
       Create_Check
         (Page, Warn_Box,
-         -"Checking for ""in out"" parameters", "-gnatVm",
+         -"Checking for ""in out"" parameters", Cst_Gnat_Vm,
          -("Arguments for parameters of mode in out are validity"
            & " checked in procedure calls at the point of call"));
       Create_Check
         (Page, Warn_Box,
-         -"Checking for operators and attributes", "-gnatVo",
+         -"Checking for operators and attributes", Cst_Gnat_Vo,
          -("Arguments for predefined operations and attributes are"
            & " validity checked"));
       Create_Check
-        (Page, Warn_Box, -"Checking for returns", "-gnatVr",
+        (Page, Warn_Box, -"Checking for returns", Cst_Gnat_Vr,
          -("The expression in return statements in functions is"
            & " validity checked"));
       Create_Check
-        (Page, Warn_Box, -"Checking for subscripts", "-gnatVs",
+        (Page, Warn_Box, -"Checking for subscripts", Cst_Gnat_Vs,
          -"All subscripts expressions are checked for validty");
       Create_Check
-        (Page, Warn_Box, -"Checking for tests", "-gnatVt",
+        (Page, Warn_Box, -"Checking for tests", Cst_Gnat_Vt,
          -("Expressions used as conditions in if, while or exit"
            & " statements are checked, as well as guard expressions"
            & " in entry calls"));
@@ -475,6 +484,17 @@ package body Ada_Module is
                   Create_Popup (-"Validity checking mode", Warn_Box),
                   False, False);
       Add_Coalesce_Switch (Page, "-gnatV");
+      Add_Custom_Expansion
+        (Page, "-gnatVa",
+         (Cst_Gnat_Vc'Access,
+          Cst_Gnat_Vd'Access,
+          Cst_Gnat_Vf'Access,
+          Cst_Gnat_Vi'Access,
+          Cst_Gnat_Vm'Access,
+          Cst_Gnat_Vo'Access,
+          Cst_Gnat_Vr'Access,
+          Cst_Gnat_Vs'Access,
+          Cst_Gnat_Vt'Access));
 
       --  Styles
       Gtk_New_Vbox (Style_Box, False, 0);
