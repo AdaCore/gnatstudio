@@ -45,9 +45,13 @@ vdiff/
 Building Glide 2
 =================
 
-You need to execute the following command in the directory that contains this
+After having configured and installed Gtkada,
+you need to execute the following commands in the directory that contains this
 README file:
     [glidiator] $ ./configure --prefix=<prefix_dir>
+    [glidiator] $ cd gvd
+    [glidiator/gvd] $ ./configure --prefix=<prefix_dir>
+    [glidiator/gvd] $ cd ..
 
 This is needed to automatically generate some of the required sources and
 Makefiles.
