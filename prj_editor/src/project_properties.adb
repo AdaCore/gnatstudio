@@ -20,7 +20,6 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
@@ -29,26 +28,22 @@ with Glide_Kernel;              use Glide_Kernel;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Button;                use Gtk.Button;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Object;                use Gtk.Object;
+with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Widget;                use Gtk.Widget;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
@@ -58,6 +53,8 @@ with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
+with Prj_Normalize;             use Prj_Normalize;
+with Scenario_Selectors;        use Scenario_Selectors;
 
 package body Project_Properties is
    use Widget_List;
@@ -69,18 +66,22 @@ package body Project_Properties is
      (Widget_Array, Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
-   record
-      Name        : Gtk.GEntry.Gtk_Entry;
-      Path        : Gtk.GEntry.Gtk_Entry;
-      Executables : Gtk_List_Store;
-      Tree_View   : Gtk_Tree_View;
-      Gnatls      : Gtk.GEntry.Gtk_Entry;
-      Compiler    : Gtk.GEntry.Gtk_Entry;
-      Debugger    : Gtk.GEntry.Gtk_Entry;
-      Convert     : Gtk.Check_Button.Gtk_Check_Button;
-      Compilers   : Widget_Array_Access;
-      Languages   : Widget_Array_Access;
-   end record;
+      record
+         Name        : Gtk.GEntry.Gtk_Entry;
+         Path        : Gtk.GEntry.Gtk_Entry;
+         Gnatls      : Gtk.GEntry.Gtk_Entry;
+         Compiler    : Gtk.GEntry.Gtk_Entry;
+         Debugger    : Gtk.GEntry.Gtk_Entry;
+         Compilers   : Widget_Array_Access;
+         Languages   : Widget_Array_Access;
+         Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+
+         Pages       : Widget_Array_Access;
+         --  The pages that have been registered.
+
+         Project_View : Prj.Project_Id;
+         Kernel       : Kernel_Handle;
+      end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
    procedure Gtk_New
@@ -107,16 +108,21 @@ package body Project_Properties is
    procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the editor is destroyed
 
-   procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class);
-   --  Add a main unit to the list of main units for the edited project
+   function Create_General_Page
+     (Editor       : access Properties_Editor_Record'Class;
+      Project_View : Prj.Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Create the "General" page for the project properties
 
-   procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class);
-   --  Remove the selected main units.
+   procedure Switch_Page
+     (Notebook : access GObject_Record'Class; Editor : GObject);
+   --  Called when a new page is selected in the notebook
 
-   procedure Add_Main_File
-     (Editor : access Properties_Editor_Record'Class;
-      File   : String);
-   --  Add a new file entry in the list of main units.
+   function Get_Languages (Editor : access Properties_Editor_Record'Class)
+      return Argument_List;
+   --  Return the list of supported languages selected graphically by the
+   --  user. The caller must free the returned array
 
    -------------
    -- Gtk_New --
@@ -140,6 +146,7 @@ package body Project_Properties is
    begin
       Unchecked_Free (E.Languages);
       Unchecked_Free (E.Compilers);
+      Unchecked_Free (E.Pages);
    end Destroyed;
 
    ---------------------------
@@ -153,75 +160,33 @@ package body Project_Properties is
       Set_Sensitive (Gtk_Widget (Ent), Get_Active (Gtk_Check_Button (Check)));
    end Command_Set_Sensitive;
 
-   -------------------
-   -- Add_Main_File --
-   -------------------
+   -------------------------
+   -- Create_General_Page --
+   -------------------------
 
-   procedure Add_Main_File
-     (Editor : access Properties_Editor_Record'Class;
-      File   : String)
-   is
-      Val : GValue;
-      Iter : Gtk_Tree_Iter;
-   begin
-      Init (Val, GType_String);
-      Set_String (Val, File);
-      Append (Editor.Executables, Iter);
-      Set_Value
-        (Editor.Executables,
-         Iter   => Iter,
-         Column => 0,
-         Value  => Val);
-      Unset (Val);
-   end Add_Main_File;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
+   function Create_General_Page
      (Editor       : access Properties_Editor_Record'Class;
       Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget
    is
-      Button       : Gtk_Widget;
       Button2      : Gtk_Button;
       Label        : Gtk_Label;
       Check        : Gtk_Check_Button;
       Table, Lang  : Gtk_Table;
-      Languages    : GNAT.OS_Lib.String_List := Known_Languages
+      Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
-      Project_Languages : Argument_List := Get_Languages (Project_View);
-      Ent          : Gtk_GEntry;
-      Box          : Gtk_Box;
-      Bbox         : Gtk_Vbutton_Box;
-      Column       : Gtk_Tree_View_Column;
-      Renderer     : Gtk_Cell_Renderer_Text;
-      Col          : Gint;
-      Scrolled     : Gtk_Scrolled_Window;
+      Project_Languages : Argument_List :=  Get_Languages (Project_View);
+      Ent     : Gtk_GEntry;
+      Project : constant Project_Node_Id := Get_Project_From_View
+        (Project_View);
       Combo        : Gtk_Combo;
       Items        : Gtk.Enums.String_List.Glist;
 
       use Gtk.Enums.String_List;
 
    begin
-      Gtk.Dialog.Initialize
-        (Dialog => Editor,
-         Title  => -"Properties for " & Project_Name (Project_View),
-         Parent => Get_Main_Window (Kernel),
-         Flags  => Modal or Destroy_With_Parent);
-      Set_Policy (Editor,
-                  Allow_Shrink => False,
-                  Allow_Grow   => True,
-                  Auto_Shrink  => False);
-
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (Destroyed'Access));
-
-      Gtk_New (Table, Rows => 7, Columns => 3, Homogeneous => False);
-      Pack_Start
-        (Get_Vbox (Editor), Table, Expand => True, Fill => True);
+      Gtk_New (Table, Rows => 6, Columns => 3, Homogeneous => False);
 
       Gtk_New (Label, -"Name:");
       Set_Alignment (Label, 0.0, 0.0);
@@ -240,73 +205,23 @@ package body Project_Properties is
       Gtk_New (Button2, -"Browse");
       Attach (Table, Button2, 2, 3, 1, 2, Xoptions => 0, Yoptions => 0);
 
+      Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
+
       Widget_Callback.Object_Connect
         (Button2, "clicked",
          Widget_Callback.To_Marshaller (Browse_Location'Access),
          Slot_Object => Editor);
 
-      Gtk_New (Editor.Convert, -"Convert paths to absolute");
-      Attach (Table, Editor.Convert, 1, 2, 2, 3, Yoptions => 0);
-
-      Set_Active (Editor.Convert, True);
-      Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
-
-      Gtk_New (Label, -"Main files:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill);
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Attach (Table, Box, 1, 3, 3, 4);
-
-      --  Create the module and the associated view
-      Gtk_New (Editor.Executables, (1 => GType_String));
-      Gtk_New (Editor.Tree_View, Model => Editor.Executables);
-      Set_Mode (Get_Selection (Editor.Tree_View), Selection_Multiple);
-      Set_Headers_Visible (Editor.Tree_View, False);
-      Gtk_New (Renderer);
-      Gtk_New (Column);
-      Pack_Start (Column, Renderer, Expand => True);
-      Add_Attribute (Column, Renderer, "text", 0);
-      Col := Append_Column (Editor.Tree_View, Column);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Set_Shadow_Type (Scrolled, Shadow_In);
-      Add (Scrolled, Editor.Tree_View);
-      Pack_Start (Box, Scrolled, Expand => True, Fill => True);
-      Gtk_New (Bbox);
-      Set_Layout (Bbox, Buttonbox_Start);
-      Pack_Start (Box, Bbox, Expand => False, Fill => False);
-
-      Gtk_New_From_Stock (Button2, Stock_Add);
-      Pack_Start (Bbox, Button2);
-      Widget_Callback.Object_Connect
-        (Button2, "clicked",
-         Widget_Callback.To_Marshaller (Add_Main_Unit'Access),
-         Slot_Object => Editor);
-
-      Gtk_New_From_Stock (Button2, Stock_Remove);
-      Pack_Start (Bbox, Button2);
-      Widget_Callback.Object_Connect
-        (Button2, "clicked",
-         Widget_Callback.To_Marshaller (Remove_Main_Unit'Access),
-         Slot_Object => Editor);
-
-      declare
-         Mains : Argument_List := Get_Attribute_Value
-           (Project_View,
-            Attribute_Name => Main_Attribute);
-      begin
-         for M in Mains'Range loop
-            Add_Main_File (Editor, Mains (M).all);
-         end loop;
-
-         Free (Mains);
-      end;
+      --  ??? Should be a toggle button, with "relative" or "absolute"
+      Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
+      Set_Active
+        (Editor.Use_Relative_Paths,
+         Project_Uses_Relative_Paths (Kernel, Project));
+      Attach (Table, Editor.Use_Relative_Paths, 1, 2, 2, 3, Yoptions => 0);
 
       Gtk_New (Label, -"Gnatls:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill, Yoptions => 0);
+      Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill, Yoptions => 0);
 
       Gtk_New (Combo);
 
@@ -328,17 +243,17 @@ package body Project_Properties is
       Append (Items, "jgnatls");
       Set_Popdown_Strings (Combo, Items);
       Free_String_List (Items);
-      Attach (Table, Combo, 1, 3, 4, 5, Yoptions => 0);
+      Attach (Table, Combo, 1, 3, 3, 4, Yoptions => 0);
       Editor.Gnatls := Get_Entry (Combo);
       Set_Text
         (Editor.Gnatls,
          Get_Attribute_Value
-           (Project_View, Gnatlist_Attribute,
-            Ide_Package, Default => "gnatls"));
+         (Project_View, Gnatlist_Attribute,
+          Ide_Package, Default => "gnatls"));
 
       Gtk_New (Label, -"Debugger:");
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill, Yoptions => 0);
+      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill, Yoptions => 0);
 
       Gtk_New (Combo);
       Append (Items, "gdb");
@@ -354,23 +269,20 @@ package body Project_Properties is
       Append (Items, "powerpc-xcoff-lynxos-gdb");
       Set_Popdown_Strings (Combo, Items);
       Free_String_List (Items);
-      Attach (Table, Combo, 1, 3, 5, 6, Yoptions => 0);
+      Attach (Table, Combo, 1, 3, 4, 5, Yoptions => 0);
       Editor.Debugger := Get_Entry (Combo);
       Set_Text
         (Editor.Debugger,
          Get_Attribute_Value
-           (Project_View, Debugger_Command_Attribute,
-            Ide_Package, Default => "gdb"));
-
-      Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
+         (Project_View, Debugger_Command_Attribute,
+          Ide_Package, Default => "gdb"));
 
       Gtk_New (Label, (-"Languages") & " & " & ASCII.LF & (-"Compilers:"));
       Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill, Yoptions => 0);
+      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill, Yoptions => 0);
       Gtk_New (Lang, Rows => Languages'Length, Columns => 2,
                Homogeneous => False);
-      Attach (Table, Lang, 1, 3, 6, 7, Yoptions => 0);
+      Attach (Table, Lang, 1, 3, 5, 6, Yoptions => 0);
 
       Editor.Compilers := new Widget_Array (Languages'Range);
       Editor.Languages := new Widget_Array (Languages'Range);
@@ -407,9 +319,9 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-                 (Project_View, Compiler_Command_Attribute,
-                  Ide_Package, Default => "gnatmake",
-                  Index => Languages (L).all));
+               (Project_View, Compiler_Command_Attribute,
+                Ide_Package, Default => "gnatmake",
+                Index => Languages (L).all));
 
          else
             Gtk_New (Ent);
@@ -420,9 +332,9 @@ package body Project_Properties is
             Set_Text
               (Ent,
                Get_Attribute_Value
-                 (Project_View, Compiler_Command_Attribute,
-                  Ide_Package, Default => "gcc",
-                  Index => Languages (L).all));
+               (Project_View, Compiler_Command_Attribute,
+                Ide_Package, Default => "gcc",
+                Index => Languages (L).all));
          end if;
 
          Editor.Languages (L) := Gtk_Widget (Check);
@@ -444,42 +356,135 @@ package body Project_Properties is
 
       Free (Languages);
       Free (Project_Languages);
+
+      return Gtk_Widget (Table);
+   end Create_General_Page;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Editor       : access Properties_Editor_Record'Class;
+      Project_View : Prj.Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class)
+   is
+      Label     : Gtk_Label;
+      Main_Note : Gtk_Notebook;
+      Button    : Gtk_Widget;
+      Page      : Project_Editor_Page;
+      Box       : Gtk_Box;
+      Paned     : Gtk_Paned;
+      Selector  : Scenario_Selector;
+      Prj_Selector : Project_Selector;
+
+   begin
+      Gtk.Dialog.Initialize
+        (Dialog => Editor,
+         Title  => -"Properties for "
+           & Project_Name (Project_View),
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
+      Set_Policy (Editor,
+                  Allow_Shrink => True,
+                  Allow_Grow   => True,
+                  Auto_Shrink  => True);
+      Set_Default_Size (Editor, -1, 470);
+      Realize (Editor);
+
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (Destroyed'Access));
+
+      Gtk_New_Hpaned (Paned);
+      Pack_Start (Get_Vbox (Editor), Paned, Expand => True, Fill => True);
+
+      Gtk_New (Main_Note);
+      Set_Tab_Pos (Main_Note, Pos_Left);
+      Pack1 (Paned, Main_Note, Resize => True);
+
+      Gtk_New (Label, -"General");
+      Append_Page
+        (Main_Note, Create_General_Page (Editor, Project_View, Kernel), Label);
+
+      Gtk.Handlers.Add_Watch
+        (Object_User_Callback.Connect
+         (Main_Note, "switch_page",
+          Object_User_Callback.To_Marshaller (Switch_Page'Access),
+          User_Data => GObject (Editor),
+          After => True),
+         Editor);
+
+      Editor.Project_View := Project_View;
+      Editor.Kernel := Kernel_Handle (Kernel);
+      Editor.Pages := new Widget_Array
+        (1 .. Project_Editor_Pages_Count (Kernel));
+
+      for E in Editor.Pages'Range loop
+         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+
+         --  Pages' widgets are created dynamically, when the user switches to
+         --  the page.
+         Gtk_New_Vbox (Box, Homogeneous => False);
+
+         Gtk_New (Label, Get_Label (Page));
+         Append_Page (Main_Note, Box, Label);
+      end loop;
+
+      Gtk_New_Vbox (Box, Homogeneous => False);
+      Pack2 (Paned, Box, Resize => True);
+
+      Gtk_New (Label, -"Apply changes to:");
+      Set_Alignment (Label, 0.0, 0.0);
+      Pack_Start (Box, Label, Expand => False, Fill => True);
+
+      Gtk_New (Prj_Selector, Kernel, Get_Project_From_View (Project_View));
+      Pack_Start (Box, Prj_Selector, Expand => True, Fill => True);
+
+      Gtk_New (Selector, Kernel);
+      Pack_Start (Box, Selector, Expand => True, Fill => True);
+
+      Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
    end Initialize;
 
-   -------------------
-   -- Add_Main_Unit --
-   -------------------
+   -----------------
+   -- Switch_Page --
+   -----------------
 
-   procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
-      File : constant String := Select_File
-        (Title => -"Select the main unit to add");
-      --  ??? Would be nice to allow the selection of multiple files from the
-      --  same dialog.
+   procedure Switch_Page
+     (Notebook : access GObject_Record'Class;
+      Editor   : GObject)
+   is
+      Note : Gtk_Notebook := Gtk_Notebook (Notebook);
+      Ed : Properties_Editor := Properties_Editor (Editor);
+      Page : Integer := Integer (Get_Current_Page (Note));
    begin
-      if File /= "" then
-         Add_Main_File (Properties_Editor (Editor), Base_Name (File));
-      end if;
-   end Add_Main_Unit;
+      if Page >= 1
+        and then not Gtk.Object.In_Destruction_Is_Set (Ed)
+      then
+         if Ed.Pages (Page) = null then
+            Ed.Pages (Page) := Widget_Factory
+              (Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
+               Ed.Project_View, Ed.Kernel);
+            Pack_Start
+              (Gtk_Box (Get_Nth_Page (Note, Gint (Page))), Ed.Pages (Page));
+            Show_All (Ed.Pages (Page));
 
-   ----------------------
-   -- Remove_Main_Unit --
-   ----------------------
-
-   procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Properties_Editor := Properties_Editor (Editor);
-      Iter, Tmp : Gtk_Tree_Iter;
-      Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.Tree_View);
-   begin
-      Iter := Get_Iter_First (Ed.Executables);
-      while Iter /= Null_Iter loop
-         Tmp := Iter;
-         Next (Ed.Executables, Iter);
-
-         if Iter_Is_Selected (Selection, Tmp) then
-            Remove (Ed.Executables, Tmp);
+         else
+            declare
+               Languages : Argument_List := Get_Languages (Ed);
+            begin
+               Refresh
+                 (Page        => Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
+                  Widget       => Ed.Pages (Page),
+                  Project_View => Ed.Project_View,
+                  Languages    => Get_Languages (Ed));
+               Free (Languages);
+            end;
          end if;
-      end loop;
-   end Remove_Main_Unit;
+      end if;
+   end Switch_Page;
 
    ---------------------
    -- Browse_Location --
@@ -495,6 +500,34 @@ package body Project_Properties is
          Set_Text (Ed.Path, Name);
       end if;
    end Browse_Location;
+
+   -------------------
+   -- Get_Languages --
+   -------------------
+
+   function Get_Languages (Editor : access Properties_Editor_Record'Class)
+      return Argument_List
+   is
+      New_Languages : Argument_List (Editor.Languages'Range);
+      Num_Languages : Natural := New_Languages'First;
+      Check         : Gtk_Check_Button;
+      Ent           : Gtk_Entry;
+      Languages     : Argument_List := Known_Languages
+        (Get_Language_Handler (Editor.Kernel));
+
+   begin
+      for J in Editor.Languages'Range loop
+         Check := Gtk_Check_Button (Editor.Languages (J));
+         Ent   := Gtk_GEntry (Editor.Compilers (J));
+
+         if Get_Active (Check) then
+            New_Languages (Num_Languages) := new String' (Languages (J).all);
+            Num_Languages := Num_Languages + 1;
+         end if;
+      end loop;
+      Free (Languages);
+      return New_Languages (New_Languages'First .. Num_Languages - 1);
+   end Get_Languages;
 
    ---------------------
    -- Edit_Properties --
@@ -518,10 +551,10 @@ package body Project_Properties is
 
       Editor  : Properties_Editor;
       Changed : Boolean := False;
-      Project : Project_Node_Id;
+      Project : constant Project_Node_Id :=
+        Get_Project_From_View (Project_View);
       Project_Languages : Argument_List := Get_Languages (Project_View);
-      Num_Languages : Natural;
-      Languages : GNAT.OS_Lib.String_List := Known_Languages
+      Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
       Ent : Gtk_GEntry;
       Check : Gtk_Check_Button;
@@ -534,19 +567,15 @@ package body Project_Properties is
 
       loop
          Response := Run (Editor);
-         exit when Response /= Gtk_Response_OK;
+         exit when Response /= Gtk_Response_OK
+           or else Is_Directory (Name_As_Directory (Get_Text (Editor.Path)));
 
-         if not Is_Directory (Name_As_Directory (Get_Text (Editor.Path))) then
-            Response2 := Message_Dialog
-              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
-                 & (-" is not a valid directory"),
-               Buttons => Button_OK,
-               Title   => -"Error",
-               Parent  => Get_Main_Window (Kernel));
-         else
-            exit;
-         end if;
-
+         Response2 := Message_Dialog
+           (Msg     => Name_As_Directory (Get_Text (Editor.Path))
+            & (-" is not a valid directory"),
+            Buttons => Button_OK,
+            Title   => -"Error",
+            Parent  => Get_Main_Window (Kernel));
       end loop;
 
       if Response = Gtk_Response_OK then
@@ -554,18 +583,37 @@ package body Project_Properties is
             New_Name : constant String := Get_Text (Editor.Name);
             New_Path : constant String :=
               Name_As_Directory (Get_Text (Editor.Path));
+            Relative : Boolean := Get_Active
+              (Editor.Use_Relative_Paths);
 
          begin
-            Project := Get_Project_From_View (Project_View);
+            --  We normalize the project automatically. If the project is not
+            --  modified after all, it doesn't matter since we are not going to
+            --  save the project.
+            if not Has_Been_Normalized (Project) then
+               Normalize (Project, Recurse => False);
+            end if;
+
+            --  If we are moving the project through the GUI, then we need to
+            --  convert the paths to absolute or the semantics changes.
+            if New_Name /= Project_Name (Project_View)
+              or else New_Path /= Dir_Name (Project_Path (Project_View))
+            then
+               Relative := False;
+            end if;
+
+            --  Convert the paths if necessary
+            if Relative /= Project_Uses_Relative_Paths (Kernel, Project) then
+               Set_Project_Uses_Relative_Paths (Kernel, Project, Relative);
+               Changed := Changed
+                 or Convert_Paths (Project                => Project,
+                                   Use_Relative_Paths     => Relative,
+                                   Update_With_Statements => True);
+            end if;
 
             if New_Name /= Project_Name (Project_View)
               or else New_Path /= Dir_Name (Project_Path (Project_View))
             then
-               if Get_Active (Editor.Convert) then
-                  --  The with statements will be automatically updated by the
-                  --  call to Rename_And_Move.
-                  Convert_Paths_To_Absolute (Project, False);
-               end if;
                Rename_And_Move
                  (Root_Project  => Get_Project (Kernel),
                   Project       => Project,
@@ -606,70 +654,32 @@ package body Project_Properties is
             end if;
 
             declare
-               Num_Children : constant Gint := N_Children (Editor.Executables);
-               New_Mains : Argument_List (1 .. Integer (Num_Children));
-               Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Executables);
-               N : Natural := New_Mains'First;
-               Old_Mains : Argument_List := Get_Attribute_Value
-                 (Project_View,
-                  Attribute_Name => Main_Attribute);
+               New_Languages : constant Argument_List :=
+                 Get_Languages (Editor);
             begin
-               --  First get the list of main files
-               while Iter /= Null_Iter loop
-                  New_Mains (N) := new String'
-                    (Get_String (Editor.Executables, Iter, 0));
-                  N := N + 1;
-                  Next (Editor.Executables, Iter);
-               end loop;
-
-               if not Is_Equal (Old_Mains, New_Mains) then
-                  Changed := True;
-                  Update_Attribute_Value_In_Scenario
-                    (Project  => Project,
-                     Pkg_Name => "",
-                     Scenario_Variables => Scenario_Variables (Kernel),
-                     Attribute_Name => Main_Attribute,
-                     Values => New_Mains);
-               end if;
-
-               Free (Old_Mains);
-               Free (New_Mains);
-            end;
-
-            declare
-               New_Languages : Argument_List (Editor.Languages'Range);
-            begin
-               Num_Languages := New_Languages'First;
                for J in Editor.Languages'Range loop
                   Check := Gtk_Check_Button (Editor.Languages (J));
                   Ent   := Gtk_GEntry (Editor.Compilers (J));
 
-                  if Get_Active (Check) then
-                     New_Languages (Num_Languages) := GNAT.OS_Lib.String_Access
-                       (Languages (J));
-                     Num_Languages := Num_Languages + 1;
-
-                     if Get_Attribute_Value
-                       (Project_View, Compiler_Command_Attribute,
-                        Ide_Package, Default => "",
-                        Index => Languages (J).all) /= Get_Text (Ent)
-                     then
-                        Update_Attribute_Value_In_Scenario
-                          (Project  => Project,
-                           Pkg_Name => Ide_Package,
-                           Scenario_Variables => Scenario_Variables (Kernel),
-                           Attribute_Name => Compiler_Command_Attribute,
-                           Value => Get_Text (Ent),
-                           Attribute_Index => Languages (J).all);
-                        Changed := True;
-                     end if;
+                  if Get_Active (Check)
+                    and then Get_Attribute_Value
+                    (Project_View, Compiler_Command_Attribute,
+                     Ide_Package, Default => "",
+                     Index => Languages (J).all) /= Get_Text (Ent)
+                  then
+                     Update_Attribute_Value_In_Scenario
+                       (Project  => Project,
+                        Pkg_Name => Ide_Package,
+                        Scenario_Variables => Scenario_Variables (Kernel),
+                        Attribute_Name => Compiler_Command_Attribute,
+                        Value => Get_Text (Ent),
+                        Attribute_Index => Languages (J).all);
+                     Changed := True;
                   end if;
                end loop;
 
                if not Is_Equal
-                 (New_Languages (New_Languages'First .. Num_Languages - 1),
-                  Project_Languages,
-                  Case_Sensitive => False)
+                 (New_Languages, Project_Languages, Case_Sensitive => False)
                then
                   Changed := True;
                   Update_Attribute_Value_In_Scenario
@@ -677,11 +687,18 @@ package body Project_Properties is
                      Pkg_Name          => "",
                      Scenario_Variables => Scenario_Variables (Kernel),
                      Attribute_Name     => Languages_Attribute,
-                     Values             => New_Languages
-                       (New_Languages'First .. Num_Languages - 1));
+                     Values             => New_Languages);
                end if;
             end;
          end;
+
+         for P in Editor.Pages'Range loop
+            if Editor.Pages (P) /= null then
+               Changed := Changed or Project_Editor
+                 (Get_Nth_Project_Editor_Page (Kernel, P),
+                  Project, Project_View, Kernel, Editor.Pages (P));
+            end if;
+         end loop;
 
          if Changed then
             Set_Project_Modified (Kernel, Project, True);
