@@ -290,7 +290,7 @@ package body Codefix.Ada_Tools is
    -- Is_In_Escape_Part --
    -----------------------
 
-   --  ??? Add checks for simple cotes '
+   --  ??? Add checks for simple quotes: '
    function Is_In_Escape_Part
      (This     : Ada_Escape_Str;
       Text     : String;
