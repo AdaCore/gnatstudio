@@ -387,7 +387,7 @@ Close the execution window.
 @noindent
 Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @i{sdc} at line 8, select the contextual menu
-@code{References->Sdc calls...}: this will open a new window titled
+@code{References->Sdc calls}: this will open a new window titled
 @i{Call graph browser}.
 
 Click on the right arrow of @code{Process} (one of the first items on
