@@ -37,6 +37,7 @@ with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
 with Odd.Types;           use Odd.Types;
+with Odd.Preferences;     use Odd.Preferences;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Odd.Text_Boxes is
@@ -613,13 +614,30 @@ package body Odd.Text_Boxes is
             end loop;
 
             --  Go to the right column, but make sure we are still on
-            --  the current line
+            --  the current line.
+            --  Index is the index in the buffer, while J is the current
+            --  column number (after processing horizontal tabs).
+
             Index := Index - Box.Buffer'First;
-            for J in 1 .. Integer (X2) loop
-               Index := Index + 1;
-               exit when Box.Buffer'Last < Index
-                 or else Box.Buffer (Index) = ASCII.LF;
-            end loop;
+            declare
+               J : Integer := 1;
+            begin
+               while J <= Integer (X2) loop
+
+                  Index := Index + 1;
+                  exit when Box.Buffer'Last < Index
+                    or else Box.Buffer (Index) = ASCII.LF;
+
+                  if Box.Buffer (Index) = ASCII.HT
+                    and then J mod Tab_Size /= 0
+                  then
+                     --  Go to the next column that is a multiple of Tab_Size
+                     J := (1 + J / Tab_Size) * Tab_Size + 1;
+                  else
+                     J := J + 1;
+                  end if;
+               end loop;
+            end;
          end if;
 
          Start_Index := Index +
