@@ -32,6 +32,9 @@ package Commands is
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
 
+   procedure Execute (Command : access Root_Command);
+   --  Same as function Execute, but does not return any value.
+
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
    --  successful.
