@@ -662,7 +662,7 @@ package body Builder_Module is
          Console.Raise_Console (Kernel);
 
          Top.Interrupted := False;
-         Fd := new Process_Descriptor;
+         Fd := new TTY_Process_Descriptor;
          Non_Blocking_Spawn
            (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
             Err_To_Out  => True);
@@ -761,7 +761,7 @@ package body Builder_Module is
       end if;
 
       Top.Interrupted := False;
-      Fd := new Process_Descriptor;
+      Fd := new TTY_Process_Descriptor;
 
       Insert_And_Launch
         (Kernel,
@@ -915,7 +915,7 @@ package body Builder_Module is
          Args := Argument_String_To_List (Cmd);
 
          Top.Interrupted := False;
-         Fd := new Process_Descriptor;
+         Fd := new TTY_Process_Descriptor;
 
          Insert_And_Launch
            (Kernel,
