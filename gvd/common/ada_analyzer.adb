@@ -1500,6 +1500,7 @@ package body Ada_Analyzer is
             --    is abstract;
 
             if Top_Token.Token = Tok_Function
+              and then Reserved /= Tok_New
               and then
                 (Reserved = Tok_Abstract
                  or else Reserved = Tok_Separate
