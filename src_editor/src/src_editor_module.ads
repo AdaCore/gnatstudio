@@ -25,8 +25,9 @@ with Gtk.Button;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Handlers;  use Gtk.Handlers;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Text_Mark; use Gtk.Text_Mark;
-
+with Gtk.Text_Mark;   use Gtk.Text_Mark;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_View;   use Gtk.Text_View;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Src_Editor_Box;
@@ -72,6 +73,13 @@ package Src_Editor_Module is
    --  Return the first child that contains an editor that edits file.
    --  null is returned if there are no such editor
    --  File can either be a file name or a buffer identifier.
+
+   function Find_Other_Editor
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      View   : Gtk_Text_View;
+      Buffer : Gtk_Text_Buffer) return Src_Editor_Box.Source_Editor_Box;
+   --  Find an editor other than View that edits Buffer.
+   --  Return null if no such editor is found in the MDI.
 
    function Get_Source_Box_From_MDI
      (Child : Gtkada.MDI.MDI_Child) return Src_Editor_Box.Source_Editor_Box;
