@@ -486,7 +486,7 @@ package body Aliases_Module is
 
             Child := new Node;
             Child.Tag := new String'("text");
-            Child.Value := new String'(Value.Expansion.all);
+            Child.Value := new String'(Strip_CR (Value.Expansion.all));
             Add_Child (Key, Child);
 
             P := Value.Params;
