@@ -38,14 +38,15 @@ with Stringt;     use Stringt;
 with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with Project_Viewers;   use Project_Viewers;
-with Project_Explorers; use Project_Explorers;
-with Glide_Main_Window; use Glide_Main_Window;
-with Gtkada.MDI;        use Gtkada.MDI;
-with Glide_Page;        use Glide_Page;
-with GVD.Process;       use GVD.Process;
-with Prj_API;           use Prj_API;
-with Src_Info.Queries;  use Src_Info.Queries;
+with Project_Viewers;    use Project_Viewers;
+with Project_Explorers;  use Project_Explorers;
+with Glide_Main_Window;  use Glide_Main_Window;
+with Gtkada.MDI;         use Gtkada.MDI;
+with Glide_Page;         use Glide_Page;
+with GVD.Process;        use GVD.Process;
+with Prj_API;            use Prj_API;
+with Src_Info.Queries;   use Src_Info.Queries;
+with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 
 package body Glide_Kernel.Project is
 

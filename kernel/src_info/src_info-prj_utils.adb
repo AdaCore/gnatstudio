@@ -1,9 +1,38 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Casing;                  use Casing;
 with Namet;                   use Namet;
 with Prj.Com;                 use Prj.Com;
 with Stringt;                 use Stringt;
 with Types;                   use Types;
+with Prj.Env;                 use Prj.Env;
 
 package body Src_Info.Prj_Utils is
 
@@ -336,5 +365,46 @@ package body Src_Info.Prj_Utils is
         and then Fname (Fname'Last - Ext'Length + 1 .. Fname'Last) = Ext;
    end Extension_Matches;
 
+   ----------------------
+   -- Find_Object_File --
+   ----------------------
+
+   function Find_Object_File
+     (Project_View    : Prj.Project_Id;
+      Short_File_Name : String;
+      Object_Path     : String)
+      return String
+   is
+      Path : String_Access;
+   begin
+      --  First, try on the project object path
+      Path := Locate_Regular_File
+        (Short_File_Name, Ada_Objects_Path (Project_View).all);
+
+      if Path /= null then
+         declare
+            Full_Path : constant String := Path.all;
+         begin
+            Free (Path);
+            return Full_Path;
+         end;
+      end if;
+
+      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
+      if Object_Path /= "" then
+         Path := Locate_Regular_File (Short_File_Name, Object_Path);
+         if Path /= null then
+            declare
+               Full_Path : constant String := Path.all;
+            begin
+               Free (Path);
+               return Full_Path;
+            end;
+         end if;
+      end if;
+
+      --  Object file not found anywhere, return the empty string
+      return "";
+   end Find_Object_File;
 
 end Src_Info.Prj_Utils;

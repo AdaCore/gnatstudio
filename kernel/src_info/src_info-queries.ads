@@ -41,15 +41,6 @@ with Prj;
 
 package Src_Info.Queries is
 
-   function Find_Object_File
-     (Project_View    : Prj.Project_Id;
-      Short_File_Name : String;
-      Object_Path     : String)
-      return String;
-   --  Find a file in the object path. Object_Path is the list of directories
-   --  that do not exist in the project, like the runtime location.
-   --  The empty string is returned if the file was not found.
-
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------

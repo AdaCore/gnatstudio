@@ -28,7 +28,7 @@
 
 with Unchecked_Deallocation;
 with Src_Info.ALI;              use Src_Info.ALI;
-with Prj.Env;                   use Prj.Env;
+with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 
 package body Src_Info.Queries is
 
@@ -87,48 +87,6 @@ package body Src_Info.Queries is
 
    procedure Destroy (Dep : in out Dependency);
    --  Deallocates the memory associated with the given Dependency record.
-
-   ----------------------
-   -- Find_Object_File --
-   ----------------------
-
-   function Find_Object_File
-     (Project_View    : Prj.Project_Id;
-      Short_File_Name : String;
-      Object_Path     : String)
-      return String
-   is
-      Path : String_Access;
-   begin
-      --  First, try on the project object path
-      Path := Locate_Regular_File
-        (Short_File_Name, Ada_Objects_Path (Project_View).all);
-
-      if Path /= null then
-         declare
-            Full_Path : constant String := Path.all;
-         begin
-            Free (Path);
-            return Full_Path;
-         end;
-      end if;
-
-      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
-      if Object_Path /= "" then
-         Path := Locate_Regular_File (Short_File_Name, Object_Path);
-         if Path /= null then
-            declare
-               Full_Path : constant String := Path.all;
-            begin
-               Free (Path);
-               return Full_Path;
-            end;
-         end if;
-      end if;
-
-      --  Object file not found anywhere, return the empty string
-      return "";
-   end Find_Object_File;
 
    -------------------------
    -- Search_Is_Completed --

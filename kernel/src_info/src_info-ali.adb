@@ -5,7 +5,6 @@ with Namet;               use Namet;
 with Prj;                 use Prj;
 with Prj.Com;
 with Src_Info.ALI_Maps;   use Src_Info.ALI_Maps;
-with Src_Info.Queries;    use Src_Info.Queries;
 with Src_Info.Prj_Utils;  use Src_Info.Prj_Utils;
 with String_Utils;        use String_Utils;
 with Types;               use Types;
