@@ -154,7 +154,7 @@ package body Vsearch_Ext is
       end Reset_Search;
 
    begin
-      Push_State (Vsearch.Kernel, Computing);
+      Push_State (Vsearch.Kernel, Processing);
       Highlight := Parse (Highlight_File);
       Alloc (Get_Default_Colormap, Highlight);
 
@@ -262,7 +262,7 @@ package body Vsearch_Ext is
       --  Found   : Boolean;
 
    begin
-      Push_State (Vsearch.Kernel, Computing);
+      Push_State (Vsearch.Kernel, Processing);
       --  ??? Should be registered in the module
 
       --  case Vsearch.Context is
