@@ -7971,10 +7971,12 @@ It has its own set of attributes:
    These two attributes define the switch that possibly forces a specific
    setting on the slave switch. In our example, they would have the values
    "Make" and "-g".
+   The switch referenced by these attributes must be of type @code{<check>}.
 
    @item slave-page slave-switch
    These two attributes define the switch which is acted upon by the master
    switch. In our example, they would have the values "Ada" and "-g".
+   The switch referenced by these attributes must be of type @code{<check>}.
 
    @item master-status slave-status
    These two switches indicate which state of the master switch forces which
