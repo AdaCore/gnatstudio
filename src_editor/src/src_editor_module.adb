@@ -2067,12 +2067,13 @@ package body Src_Editor_Module is
    begin
       if Source /= null then
          declare
+            Old_Name : constant String := Get_Filename (Source);
             New_Name : constant String :=
               Select_File
                 (Title             => -"Save File As",
                  Parent            => Get_Main_Window (Kernel),
-                 Base_Directory    => Dir_Name (Get_Filename (Source)),
-                 Default_Name      => Base_Name (Get_Filename (Source)),
+                 Base_Directory    => Dir_Name (Old_Name),
+                 Default_Name      => Base_Name (Old_Name),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Save_File,
                  History           => Get_History (Kernel));
