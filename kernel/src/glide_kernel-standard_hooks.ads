@@ -49,6 +49,21 @@ package Glide_Kernel.Standard_Hooks is
    --  See inherited doc
 
 
+   String_Hook_Type        : constant String := "string_hooks";
+   type String_Hooks_Args (Length : Natural) is new Hooks_Data with record
+      Value   : String (1 .. Length);
+   end record;
+   function Get_Name (Data : String_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access String_Hooks_Args) return Boolean;
+   --  Hooks that take a single string as a parameter.
+   --  To create such hooks, use Glide_Kernel.Hooks.Register_Hook with a
+   --  Type_Name parameter of String_Hook_Type
+   --  See inherited doc
+
 
    type Context_Hooks_Args is new Hooks_Data with record
       Context : Glide_Kernel.Selection_Context_Access;

@@ -65,6 +65,8 @@ package body Glide_Kernel.Standard_Hooks is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Open_File_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure String_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Line_Information_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Location_Run_Hook_Handler
@@ -623,6 +625,25 @@ package body Glide_Kernel.Standard_Hooks is
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end File_Run_Hook_Handler;
 
+   -------------------------
+   -- String_Hook_Handler --
+   -------------------------
+
+   procedure String_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Get_Hook_Name (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Value  : constant String := Nth_Arg (Data, 2);
+      Args   : aliased String_Hooks_Args :=
+        (Kernel => Kernel,
+         Length => Value'Length,
+         Value  => Value);
+      pragma Unreferenced (Command);
+   begin
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
+   end String_Hook_Handler;
+
    ------------------------------
    -- Context_Run_Hook_Handler --
    ------------------------------
@@ -687,6 +708,36 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 2, C);
       Tmp := Execute (Command, D);
       Free (C);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : String_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return String_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access String_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 2);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Data.Value);
+      Tmp := Execute (Command, D);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -1028,6 +1079,12 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Open_File_Action_Hook,
          -("Hook called when a file needs to be opened or closed"),
          Type_Name => Open_File_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, String_Hook_Type,
+         -("Common type for all hooks that take a single string as an"
+           & " argument"),
+         Hook_With_Args, String_Hook_Handler'Access);
 
       Create_Hook_Type
         (Kernel, Before_Exit_Hook_Type,
