@@ -564,12 +564,23 @@ package body Project_Explorers_Files is
 
             if not Path_Found
               and then D.Norm_Dir.all'Length + Dir'Length
-              <= D.Norm_Dest.all'Length
-              and then D.Norm_Dest.all
-              (D.Norm_Dest.all'First
-               .. D.Norm_Dest.all'First
-                  + D.Norm_Dir.all'Length + Dir'Length - 1)
-              = D.Norm_Dir.all & Dir
+                <= D.Norm_Dest.all'Length
+                and then
+                  ((Filenames_Are_Case_Sensitive
+                   and then (D.Norm_Dest.all
+                               (D.Norm_Dest.all'First
+                                  .. D.Norm_Dest.all'First
+                                    + D.Norm_Dir.all'Length + Dir'Length - 1)
+                                   = D.Norm_Dir.all & Dir))
+                   or else
+                     (not Filenames_Are_Case_Sensitive
+                      and then Case_Insensitive_Equal
+                        (D.Norm_Dest.all
+                           (D.Norm_Dest.all'First
+                              .. D.Norm_Dest.all'First
+                                + D.Norm_Dir.all'Length
+                                  + Dir'Length - 1),
+                         D.Norm_Dir.all & Dir)))
             then
                Path_Found := True;
 
@@ -699,7 +710,7 @@ package body Project_Explorers_Files is
          D.Norm_Dir := new String'(Normalize_Pathname (Dir));
 
       else
-         D.Norm_Dir := new String'(Dir);
+         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
       end if;
 
       D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
@@ -1226,8 +1237,18 @@ package body Project_Explorers_Files is
 
             for J in 1 .. Len loop
                if Buffer (J) = ASCII.NUL then
-                  if Buffer (Last .. J - 1) =
-                    Cur_Dir (Cur_Dir'First .. Cur_Dir'First + Last - J + 1)
+                  if (Filenames_Are_Case_Sensitive
+                      and then
+                        Buffer (Last .. J - 1) =
+                        Cur_Dir (Cur_Dir'First
+                                   .. Cur_Dir'First + J - Last - 1))
+                    or else
+                      (not Filenames_Are_Case_Sensitive
+                       and then
+                         Case_Insensitive_Equal
+                           (Buffer (Last .. J - 1),
+                            Cur_Dir (Cur_Dir'First
+                                       .. Cur_Dir'First + J - Last - 1)))
                   then
                      File_Append_Directory
                        (Explorer, Buffer (Last .. J - 1),
@@ -1245,9 +1266,19 @@ package body Project_Explorers_Files is
             end loop;
 
             if not Dir_Inserted then
-               File_Append_Directory
-                 (Explorer, (1 => Directory_Separator),
-                  Null_Iter, 1, Cur_Dir, True);
+               declare
+                  J : Natural := Cur_Dir'First;
+               begin
+                  while J < Cur_Dir'Last
+                    and then Cur_Dir (J) /= Directory_Separator
+                  loop
+                     J := J + 1;
+                  end loop;
+
+                  File_Append_Directory
+                    (Explorer, Cur_Dir (Cur_Dir'First .. J),
+                     Null_Iter, 1, Cur_Dir, True);
+               end;
             end if;
          end if;
       end if;
@@ -1324,8 +1355,15 @@ package body Project_Explorers_Files is
             begin
                while Index < Greatest_Prefix_Length
                  and then Index < Length
-                 and then Challenger (First + Index)
-                 = Greatest_Prefix (Greatest_Prefix_First + Index)
+                 and then
+                   ((Filenames_Are_Case_Sensitive
+                     and then Challenger (First + Index)
+                       = Greatest_Prefix (Greatest_Prefix_First + Index))
+                    or else
+                      (not Filenames_Are_Case_Sensitive
+                       and then To_Lower (Challenger (First + Index))
+                         = To_Lower (Greatest_Prefix
+                                       (Greatest_Prefix_First + Index))))
                loop
                   Index := Index + 1;
                end loop;
