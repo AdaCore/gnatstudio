@@ -682,8 +682,9 @@ package body GVD.Process is
          begin
             Set_Current_Language
               (Process.Editor_Text, Get_Language_From_File
-                 (Process.Window.Lang_Handler, File_Name));
-
+                 (GPS.Kernel.Get_Language_Handler
+                    (GPS_Window (Process.Window).Kernel),
+                  File_Name));
             Load_File (Process.Editor_Text, File_Name);
          end;
       end if;
