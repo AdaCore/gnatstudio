@@ -31,20 +31,13 @@ with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
-with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
-with Unchecked_Deallocation;
 
 package body GVD.Preferences is
 
    package Gint_Xml is new Glib.XML (Gint);
    use Gint_Xml;
 
-   procedure XML_Add_Child (N : Node_Ptr; Child : Node_Ptr);
-   procedure XML_Free (N : in out Node_Ptr);
-   procedure XML_Write (N : Node_Ptr; File_Name : String);
-   function XML_Deep_Copy (N : Node_Ptr; Parent : Node_Ptr := null)
-      return Node_Ptr;
    --  These functions are there only so that GVD doesn't depend on the
    --  very latest version of GtkAda and can be released independently.
    --  These should be coordinated with GtkAda when a new release of the latter
@@ -90,167 +83,6 @@ package body GVD.Preferences is
    --  Set the preferences from the contents of Dialog.
    --  This modifies Current_PReferences, not Saved_Preferences.
 
-   -------------------
-   -- XML_Add_Child --
-   -------------------
-
-   procedure XML_Add_Child (N : Node_Ptr; Child : Node_Ptr) is
-   begin
-      Child.Next := N.Child;
-      Child.Parent := N;
-      N.Child := Child;
-   end XML_Add_Child;
-
-   -------------------
-   -- XML_Deep_Copy --
-   -------------------
-
-   function XML_Deep_Copy (N : Node_Ptr; Parent : Node_Ptr := null)
-      return Node_Ptr
-   is
-      Attr : String_Ptr;
-      Value : String_Ptr;
-   begin
-      if N = null then
-         return null;
-      else
-         if N.Attributes /= null then
-            Attr := new String' (N.Attributes.all);
-         end if;
-
-         if N.Value /= null then
-            Value := new String' (N.Value.all);
-         end if;
-
-         return new Node'
-           (Tag => new String' (N.Tag.all),
-            Attributes => Attr,
-            Value => Value,
-            Parent => Parent,
-            Child => XML_Deep_Copy (N.Child, Parent => N),
-            Next => XML_Deep_Copy (N.Next, Parent => Parent),
-            Specific_Data => N.Specific_Data);
-      end if;
-   end XML_Deep_Copy;
-
-   --------------
-   -- XML_Free --
-   --------------
-
-   procedure XML_Free (N : in out Node_Ptr) is
-      procedure Free_Node (N : in out Node_Ptr);
-      --  Free the memory for a node, but doesn't remove it from its parent
-
-      procedure Unchecked_Free is new Unchecked_Deallocation (Node, Node_Ptr);
-
-      ---------------
-      -- Free_Node --
-      ---------------
-
-      procedure Free_Node (N : in out Node_Ptr) is
-         Child : Node_Ptr := N.Child;
-         Previous : Node_Ptr;
-      begin
-         Gint_Xml.Free (N.Tag);
-         Gint_Xml.Free (N.Attributes);
-         Gint_Xml.Free (N.Value);
-
-         --  Free all the children
-         while Child /= null loop
-            Previous := Child.Next;
-            Free_Node (Child);
-            Child := Previous;
-         end loop;
-
-         Unchecked_Free (N);
-      end Free_Node;
-
-      Child : Node_Ptr;
-      Previous : Node_Ptr;
-   begin
-      if N = null then
-         return;
-      end if;
-
-      if N.Parent /= null then
-         Child := N.Parent.Child;
-      end if;
-      --  Remove the node from its parent
-      while Child /= null and then Child /= N loop
-         if Previous = null then
-            N.Parent.Child := Child.Next;
-         else
-            Previous.Next := Child.Next;
-         end if;
-         Previous := Child;
-         Child := Child.Next;
-      end loop;
-
-      --  Free the memory occupied by the node
-      Free_Node (N);
-   end XML_Free;
-
-   ---------------
-   -- XML_Write --
-   ---------------
-
-   procedure XML_Write (N : Node_Ptr; File_Name : String) is
-
-      File : File_Type;
-
-      procedure Write_Node (N : Node_Ptr; Indent : Natural);
-      --  Write a node and its children to the file
-
-      procedure Print_String (S : String);
-      --  Print S to File, after replacing the '<' and '>' characters.
-
-      ------------------
-      -- Print_String --
-      ------------------
-
-      procedure Print_String (S : String) is
-      begin
-         for J in S'Range loop
-            if S (J) = '<' then
-               Put (File, "&lt;");
-            elsif S (J) = '>' then
-               Put (File, "&gt;");
-            else
-               Put (File, S (J));
-            end if;
-         end loop;
-      end Print_String;
-
-      ----------------
-      -- Write_Node --
-      ----------------
-
-      procedure Write_Node (N : Node_Ptr; Indent : Natural) is
-         Child : Node_Ptr := N.Child;
-      begin
-         Put (File, (1 .. Indent => ' ') & '<' & N.Tag.all & '>');
-         if N.Value /= null then
-            Print_String (N.Value.all);
-         end if;
-         while Child /= null loop
-            New_Line (File);
-            Write_Node (Child, Indent + 3);
-            Child := Child.Next;
-         end loop;
-         if N.Child /= null then
-            New_Line (File);
-            Put (File, (1 .. Indent => ' '));
-         end if;
-         Put (File, "</" & N.Tag.all & '>');
-      end Write_Node;
-
-   begin
-      Create (File, Out_File, File_Name);
-      Put_Line (File, "<?xml version=""1.0""?>");
-      Write_Node (N, 0);
-      Close (File);
-   end XML_Write;
-
    ----------------------
    -- Load_Preferences --
    ----------------------
@@ -258,7 +90,7 @@ package body GVD.Preferences is
    procedure Load_Preferences (File_Name : String) is
    begin
       if Current_Preferences /= null then
-         XML_Free (Current_Preferences);
+         Free (Current_Preferences);
       end if;
       Current_Preferences := Parse (File_Name);
       Set_Default_Preferences;
@@ -270,7 +102,7 @@ package body GVD.Preferences is
 
    procedure Save_Preferences (File_Name : String) is
    begin
-      XML_Write (Current_Preferences, File_Name);
+      Print (Current_Preferences, File_Name => File_Name);
    end Save_Preferences;
 
    ------------------
@@ -385,7 +217,7 @@ package body GVD.Preferences is
          N := new Node;
          N.Tag := new String' (Var);
          N.Value := new String' (Value);
-         XML_Add_Child (Current_Preferences, N);
+         Add_Child (Current_Preferences, N);
       elsif Override then
          Gint_Xml.Free (N.Value);
          N.Value := new String' (Value);
@@ -714,7 +546,7 @@ package body GVD.Preferences is
 
       --  ??? Not very efficient, we should fix the Get function to accept
       --  an empty tree.
-      Current_Preferences := XML_Deep_Copy (Saved_Preferences);
+      Current_Preferences := Deep_Copy (Saved_Preferences);
    end Fill_Dialog;
 
    ---------------------
