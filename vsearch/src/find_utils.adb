@@ -31,7 +31,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Language; use Language;
 with OS_Utils; use OS_Utils;
 
-with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 package body Find_Utils is
@@ -72,26 +71,32 @@ package body Find_Utils is
          Flags := Case_Insensitive;
       end if;
 
-      if Regexp then
-         if Whole_Word then
-            Search.Pattern :=
-              new Pattern_Matcher' (Compile (WD & Look_For & WD, Flags));
-
-         else
-            Search.Pattern :=
-              new Pattern_Matcher' (Compile (Look_For, Flags));
-         end if;
+      if not Regexp and then not Whole_Word
+        and then Look_For'Length <= Boyer_Moore.Max_Pattern_Length
+      then
+         Search.Use_BM := True;
+         Compile (Search.BM_Pat, Look_For, Match_Case);
       else
-         if Whole_Word then
-            Search.Pattern := new Pattern_Matcher'
-              (Compile (WD & Quote (Look_For) & WD, Flags));
+         if Regexp then
+            if Whole_Word then
+               Search.RE_Pat :=
+                 new RE_Pattern' (Compile (WD & Look_For & WD, Flags));
 
-         elsif Match_Case then
-            Search.Optimize := True;
-
+            else
+               Search.RE_Pat :=
+                 new RE_Pattern' (Compile (Look_For, Flags));
+            end if;
          else
-            Search.Pattern := new Pattern_Matcher'
-              (Compile (Quote (Look_For), Flags));
+            if Whole_Word then
+               Search.RE_Pat := new RE_Pattern'
+                 (Compile (WD & Quote (Look_For) & WD, Flags));
+
+            else
+               --  Couldn't optimize with Boyer-Moore
+
+               Search.RE_Pat := new RE_Pattern'
+                 (Compile (Quote (Look_For), Flags));
+            end if;
          end if;
       end if;
 
@@ -173,12 +178,11 @@ package body Find_Utils is
       -------------------
 
       function Contain_Match (Text : String) return Boolean is
-         use Ada.Strings.Fixed;
       begin
-         if Search.Optimize then
-            return Index (Text, Search.Look_For.all) /= 0;
+         if Search.Use_BM then
+            return Boyer_Moore.Search (Search.BM_Pat, Text) /= -1;
          else
-            return Match (Search.Pattern.all, Text) /= Text'First - 1;
+            return Match (Search.RE_Pat.all, Text) /= Text'First - 1;
          end if;
       end Contain_Match;
 
@@ -541,14 +545,14 @@ package body Find_Utils is
       procedure Free_String is new
         Standard.Ada.Unchecked_Deallocation (String, String_Access);
 
-      procedure Free_Pattern_Matcher is new
-        Standard.Ada.Unchecked_Deallocation
-          (Pattern_Matcher, Pattern_Matcher_Access);
+      procedure Free_RE_Pattern is new
+        Standard.Ada.Unchecked_Deallocation (RE_Pattern, RE_Pattern_Access);
 
    begin
       Free_String (S.Look_For);
       Free_String (S.Directory);
-      Free_Pattern_Matcher (S.Pattern);
+      Free_RE_Pattern (S.RE_Pat);
+      Free (S.BM_Pat);
    end Free;
 
    -----------------
@@ -568,8 +572,7 @@ package body Find_Utils is
          raise Search_Error;
       end if;
 
-      Common_Init
-        (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
+      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
       Search.Files := Files;
    end Init_Search;
 
@@ -599,8 +602,7 @@ package body Find_Utils is
             raise Search_Error;
       end;
 
-      Common_Init
-        (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
+      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
       Search.Files_Pattern := Files_Pattern;
       Search.Recurse := Recurse;
 

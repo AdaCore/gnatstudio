@@ -55,6 +55,7 @@
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Boyer_Moore; use Boyer_Moore;
 
 package Find_Utils is
 
@@ -159,7 +160,10 @@ package Find_Utils is
 
 private
 
-   type Pattern_Matcher_Access is access Pattern_Matcher;
+   subtype RE_Pattern is Pattern_Matcher;
+   subtype BM_Pattern is Boyer_Moore.Pattern;
+
+   type RE_Pattern_Access is access RE_Pattern;
 
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
@@ -171,21 +175,22 @@ private
    --  Multi_Comments  (possibly) multi-line comments
 
    type Code_Search is record
-      Look_For        : String_Access := null;
-      Pattern         : Pattern_Matcher_Access := null;
+      Look_For      : String_Access := null;
+      RE_Pat        : RE_Pattern_Access := null;
+      BM_Pat        : BM_Pattern;
+      Use_BM        : Boolean := False;
 
-      Files           : Project_Files_Access := null;
-      Files_Pattern   : Regexp;
-      Directory       : String_Access := null;
-      Recurse         : Boolean := False;
+      Files         : Project_Files_Access := null;
+      Files_Pattern : Regexp;
+      Directory     : String_Access := null;
+      Recurse       : Boolean := False;
 
-      Match_Case      : Boolean := False;
-      Whole_Word      : Boolean := False;
-      Regexp          : Boolean := False;
+      Match_Case    : Boolean := False;
+      Whole_Word    : Boolean := False;
+      Regexp        : Boolean := False;
 
-      Scope           : Search_Scope;
-      Lexical_State   : Recognized_Lexical_States;
-      Optimize        : Boolean := False;
+      Scope         : Search_Scope;
+      Lexical_State : Recognized_Lexical_States;
    end record;
 
 end Find_Utils;
