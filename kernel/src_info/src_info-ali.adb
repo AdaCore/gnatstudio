@@ -171,10 +171,14 @@ package body Src_Info.ALI is
       Project     : Prj.Project_Id;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List);
+      List        : in out LI_File_List;
+      Is_Separate : Boolean := False);
    --  Save the information from the given dependency into the list of
    --  dependencies of the LI_File_Ptr. This procedure should be used
    --  only for cases where the dependency is an external dependency.
+   --  Is_Separate should be set to true if we are in fact processing a
+   --  separate unit, which shouldn't be included in the list of separates for
+   --  New_LI_File.
 
    procedure Process_Sdeps
      (Handler     : ALI_Handler;
@@ -931,7 +935,7 @@ package body Src_Info.ALI is
       if Dep.Subunit_Name /= No_Name then
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Source_Path, Sfiles, List);
+            Source_Path, Sfiles, List, Is_Separate => True);
 
       elsif New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
@@ -950,7 +954,7 @@ package body Src_Info.ALI is
       else
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Source_Path, Sfiles, List);
+            Source_Path, Sfiles, List, Is_Separate => False);
       end if;
    end Process_Sdep;
 
@@ -1002,7 +1006,8 @@ package body Src_Info.ALI is
       Project     : Prj.Project_Id;
       Source_Path : String;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List)
+      List        : in out LI_File_List;
+      Is_Separate : Boolean := False)
    is
       Dep     : Sdep_Record renames Sdep.Table (Id);
       New_Dep : Dependency_File_Info;
@@ -1013,16 +1018,20 @@ package body Src_Info.ALI is
         (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
          Project, Source_Path, Sfile);
       New_Dep :=
-        (File              => Sfile,
+        (File              => Copy (Sfile),
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
       pragma Assert
         (Get_Source_Filename (Sfile) = Get_String (Dep.Sfile));
 
-      New_LI_File.LI.Dependencies_Info :=
-        new Dependency_File_Info_Node'
-          (Value => New_Dep, Next => New_LI_File.LI.Dependencies_Info);
+      if not Is_Separate then
+         New_LI_File.LI.Dependencies_Info :=
+           new Dependency_File_Info_Node'
+           (Value => New_Dep, Next => New_LI_File.LI.Dependencies_Info);
+      end if;
+
+
       --  Save the Source_File associated to this Sdep for later use.
       Sfiles (Id) := Sfile;
    end Process_Sdep_As_External;
@@ -1504,6 +1513,8 @@ package body Src_Info.ALI is
 
       Process_Withs (New_LI_File, New_ALI, Project);
       Process_Xrefs (New_LI_File, New_ALI, Sfiles);
+
+      Destroy (Sfiles);
 
       if not LI_File_Is_New then
          Destroy (LI_File_Copy.LI);
