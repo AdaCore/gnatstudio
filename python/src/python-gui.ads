@@ -37,13 +37,6 @@ package Python.GUI is
    --  application, since there is only one shared python interpreter.  Raises
    --  Interpreter_Error if the interpreter couldn't be initialized
 
-   procedure Initialize_IO
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Module_Name : String;
-      Module      : PyObject);
-   --  Initialize the redirection of stdin, stdout and stderr.
-   --  Module_Name is the name of the module in which the new class is defined
-
    procedure Set_Default_Console
      (Interpreter    : access Python_Interpreter_Record'Class;
       Console        : Interactive_Consoles.Interactive_Console;

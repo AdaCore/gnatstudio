@@ -20,39 +20,26 @@
 
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Exceptions;    use Ada.Exceptions;
-with Glib.Object;       use Glib.Object;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Object;        use Gtk.Object;
 with Gtk.Widget;        use Gtk.Widget;
 with Gdk.Window;        use Gdk.Window;
-with Glib;              use Glib;
 with Interactive_Consoles; use Interactive_Consoles;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
 with Python.Ada;      use Python.Ada;
-with Interfaces.C.Strings; use Interfaces.C, Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 with Traces;          use Traces;
-with Glide_Intl;      use Glide_Intl;
 
 package body Python.GUI is
 
    Me : constant Debug_Handle := Create ("Python.GUI");
    Me_Out : constant Debug_Handle := Create ("Python.Out", Default => Off);
 
-   Console_Class_Name : constant String := "Console";
-   --  The name of the class that redirects the output of Python to one of
-   --  GPS's windows
-
    Timeout_Threshold : constant Duration := 0.2;   --  in seconds
    --  Timeout between two checks of the gtk+ event queue
-
-   Class_Data_Key          : constant String := "__gps_class_data__";
-   Class_Instance_Data_Key : constant String := "__gps_class_inst_data__";
-   --  The keys to extract the internal GPS data from a class or its instance
 
    function Convert is new Standard.Ada.Unchecked_Conversion
      (System.Address, Python_Interpreter);
@@ -77,22 +64,6 @@ package body Python.GUI is
       return System.Address;
    pragma Import (C, Signal, "signal");
 
-   function Write (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Write);
-   --  The second is the same as Write, except the output is never saved and
-   --  return to the code that executed a python command.
-
-   function Flush (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Flush);
-   function Read_Line (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Read_Line);
-   function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Is_A_TTY);
-   function Output_Constructor
-     (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Output_Constructor);
-   --  Override the python's methods of the File class.
-
    procedure Process_Gtk_Events
      (Interpreter : access Python_Interpreter_Record'Class;
       Force       : Boolean := False);
@@ -103,26 +74,6 @@ package body Python.GUI is
       Interpreter : Python_Interpreter);
    --  Called when the console of the interpreter is destroyed.
 
-   type Output_Class_Data is record
-      Console      : Interactive_Console;
-   end record;
-   type Output_Class_Data_Access is access Output_Class_Data;
-   --  Data stored in the Output class
-
-   procedure Create_Output_Class
-     (Interpreter    : access Python_Interpreter_Record'Class;
-      Module_Name    : String;
-      Main_Module    : PyObject);
-   --  Create the GPS.Console class
-
-   procedure Destroy_Output_Data (Data : System.Address);
-   pragma Convention (C, Destroy_Output_Data);
-   --  Destroy an Output_Class_Data_Access, as stored in instances of the
-   --  Output class
-
-   function Convert is new Standard.Ada.Unchecked_Conversion
-     (System.Address, Output_Class_Data_Access);
-
    procedure Insert_Text
      (Interpreter : access Python_Interpreter_Record'Class;
       Text        : String;
@@ -130,11 +81,6 @@ package body Python.GUI is
    --  Insert some text in the interpreter console, and scroll as necessary.
    --  The text is inserted into Console if not null, or in the default
    --  Python console otherwise.
-
-   procedure Console_Notify
-     (Output_Data          : System.Address;
-      Where_The_Object_Was : System.Address);
-   pragma Convention (C, Console_Notify);
 
    -------------
    -- Destroy --
@@ -201,225 +147,6 @@ package body Python.GUI is
          end if;
       end if;
    end Insert_Text;
-
-   -----------
-   -- Write --
-   -----------
-
-   function Write (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self);
-      S           : aliased chars_ptr;
-      N           : aliased Integer;
-      Stdout      : aliased PyObject;
-      Interpreter : Python_Interpreter;
-      Data        : PyObject;
-      Output_Data : Output_Class_Data_Access;
-
-   begin
-      if not PyArg_ParseTuple
-        (Args, "Os#", Stdout'Address, S'Address, N'Address)
-      then
-         return null;
-      end if;
-
-      Data := PyObject_GetAttrString (Stdout, Class_Data_Key);
-      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
-      Py_DECREF (Data);
-
-      Data := PyObject_GetAttrString (Stdout, Class_Instance_Data_Key);
-      Output_Data := Convert (PyCObject_AsVoidPtr (Data));
-      Py_DECREF (Data);
-
-      Insert_Text (Interpreter, Value (S, size_t (N)), Output_Data.Console);
-      Process_Gtk_Events (Interpreter);
-
-      Py_INCREF (Py_None);
-      return Py_None;
-   end Write;
-
-   --------------------
-   -- Console_Notify --
-   --------------------
-
-   procedure Console_Notify
-     (Output_Data          : System.Address;
-      Where_The_Object_Was : System.Address)
-   is
-      pragma Unreferenced (Where_The_Object_Was);
-      D : constant Output_Class_Data_Access := Convert (Output_Data);
-   begin
-      D.Console := null;
-   end Console_Notify;
-
-   --------------
-   -- Is_A_TTY --
-   --------------
-
-   function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self, Args);
-   begin
-      return PyInt_FromLong (0);
-   end Is_A_TTY;
-
-   -----------
-   -- Flush --
-   -----------
-
-   function Flush (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self, Args);
-   begin
-      Py_INCREF (Py_None);
-      return Py_None;
-   end Flush;
-
-   -------------------------
-   -- Destroy_Output_Data --
-   -------------------------
-
-   procedure Destroy_Output_Data (Data : System.Address) is
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Output_Class_Data, Output_Class_Data_Access);
-      D : Output_Class_Data_Access := Convert (Data);
-   begin
-      Weak_Unref (D.Console, Console_Notify'Access, Data);
-      Unchecked_Free (D);
-   end Destroy_Output_Data;
-
-   ------------------------
-   -- Output_Constructor --
-   ------------------------
-
-   function Output_Constructor
-     (Self : PyObject; Args : PyObject) return PyObject
-   is
-      pragma Unreferenced (Self);
-      Output_Data : Output_Class_Data_Access;
-      User_Data   : PyObject;
-      Instance    : aliased PyObject;
-   begin
-      if not PyArg_ParseTuple (Args, "O", Instance'Address) then
-         return null;
-      end if;
-
-      Output_Data := new Output_Class_Data'(Console => null);
-      User_Data := PyCObject_FromVoidPtr
-        (Output_Data.all'Address, Destroy_Output_Data'Access);
-      PyObject_SetAttrString (Instance, Class_Instance_Data_Key, User_Data);
-      Py_DECREF (User_Data);
-
-      Py_INCREF (Py_None);
-      return Py_None;
-   end Output_Constructor;
-
-   ---------------
-   -- Read_Line --
-   ---------------
-
-   function Read_Line (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self);
-      File          : aliased PyObject;
-      Size          : aliased Integer := 0;
-      Data          : PyObject;
-      Interpreter   : Python_Interpreter;
-      Console       : Interactive_Console;
-      Output_Data   : Output_Class_Data_Access;
-   begin
-      if not PyArg_ParseTuple (Args, "O|i", File'Address, Size'Address) then
-         return null;
-      end if;
-
-      Data := PyObject_GetAttrString (File, Class_Data_Key);
-      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
-      Py_DECREF (Data);
-
-      Data := PyObject_GetAttrString (File, Class_Instance_Data_Key);
-      Output_Data := Convert (PyCObject_AsVoidPtr (Data));
-      Py_DECREF (Data);
-
-      if Output_Data.Console /= null then
-         Console := Output_Data.Console;
-      else
-         Console := Interpreter.Console;
-      end if;
-
-      if Console = null
-        or else Interpreter.Hide_Output
-        or else Gtk.Object.Destroyed_Is_Set (Console)
-      then
-         --  Report EOF on stdin
-         return PyString_FromString ("");
-      end if;
-
-      return PyString_FromString (Read (Console, Whole_Line => True));
-   end Read_Line;
-
-   -------------------------
-   -- Create_Output_Class --
-   -------------------------
-
-   procedure Create_Output_Class
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Module_Name : String;
-      Main_Module : PyObject)
-   is
-      Meths   : constant PyObject := PyDict_New;
-      Output  : PyClassObject;
-      Ignored : Integer;
-      pragma Unreferenced (Ignored);
-   begin
-      PyDict_SetItemString
-        (Meths, "__doc__", PyString_FromString
-         (-("This class redirects its input and output to one of GPS's"
-            & " consoles. The current console can be overriden by"
-            & " calls to set_console()")));
-      PyDict_SetItemString
-        (Meths, "__module__", PyString_FromString (Module_Name));
-      PyDict_SetItemString
-        (Meths, Class_Data_Key,
-         PyCObject_FromVoidPtr (Interpreter.all'Address));
-
-      Output := PyClass_New
-        (Bases => null,  --  could be "file"
-         Dict  => Meths,
-         Name  => PyString_FromString (Console_Class_Name));
-      Ignored := PyModule_AddObject (Main_Module, Console_Class_Name, Output);
-
-      Add_Method (Output, Create_Method_Def ("write",    Write'Access));
-      Add_Method (Output, Create_Method_Def ("flush",    Flush'Access));
-      Add_Method (Output, Create_Method_Def ("read",     Read_Line'Access));
-      Add_Method (Output, Create_Method_Def ("readline", Read_Line'Access));
-      Add_Method (Output, Create_Method_Def ("isatty",   Is_A_TTY'Access));
-      Add_Method (Output, Create_Method_Def
-        ("__init__", Output_Constructor'Access));
-   end Create_Output_Class;
-
-   -------------------
-   -- Initialize_IO --
-   -------------------
-
-   procedure Initialize_IO
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Module_Name : String;
-      Module      : PyObject) is
-   begin
-      Create_Output_Class (Interpreter, Module_Name, Module);
-
-      --  Note: we also set __stdout__,..., so that the user can restore them
-      --  after temporarily modifying sys.stdout in their own programs
-      if not PyRun_SimpleString
-        ("sys.stdin="
-         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
-         & "sys.stdout="
-         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
-         & "sys.stderr="
-         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
-         & "sys.__stdout__=sys.stdout" & ASCII.LF
-         & "sys.__stdin__=sys.stdin" & ASCII.LF
-         & "sys.__stderr__=sys.stderr" & ASCII.LF)
-      then
-         raise Interpreter_Error;
-      end if;
-   end Initialize_IO;
 
    ----------------
    -- Initialize --
