@@ -1036,6 +1036,12 @@ private
 
       Auto_Syntax_Check : Boolean := False;
       --  Whether the syntax should be checked automatically.
+
+      Highlight_Delimiters : Boolean := False;
+      --  Cache corresponding preference.
+
+      Tab_Width : Gint := 8;
+      --  Width of a Tab character
    end record;
 
 end Src_Editor_Buffer;
