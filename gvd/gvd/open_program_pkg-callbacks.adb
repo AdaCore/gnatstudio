@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Main; use Gtk.Main;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
 package body Open_Program_Pkg.Callbacks is
@@ -43,13 +42,9 @@ package body Open_Program_Pkg.Callbacks is
    procedure On_Open_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      S : constant String := File_Selection_Dialog;
+      pragma Unreferenced (Object);
    begin
-      if S /= "" then
-         Set_Text
-           (Get_Entry
-             (Open_Program_Access (Get_Toplevel (Object)).Program_Combo), S);
-      end if;
+      null;
    end On_Open_Button_Clicked;
 
    ------------------------
