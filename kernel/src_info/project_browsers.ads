@@ -63,8 +63,7 @@ package Project_Browsers is
 
    function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
       return Name_Id_Array;
-   --  Return the projects sorted topologically (first the ones that don't
-   --  depend on any other project, then their parent, and so on until the
-   --  root_project).
+   --  Return the projects sorted topologically (first the root project, down
+   --  to the last project, which doesn't import any of the others).
 
 end Project_Browsers;
