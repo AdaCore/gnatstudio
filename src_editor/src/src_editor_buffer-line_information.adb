@@ -1418,6 +1418,7 @@ package body Src_Editor_Buffer.Line_Information is
         (Start_Line + 1, Buffer_Lines'Last - Number) .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0
+           and then Buffer.Modifying_Editable_Lines
            and then Editable_Lines
              (Buffer_Lines (J).Editable_Line).Where = In_Buffer
          then
