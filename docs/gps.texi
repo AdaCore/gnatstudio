@@ -6618,8 +6618,8 @@ actions like a build or a search. These progress bars can be used to monitor
 the progress of those actions.
 
 If you wish to save vertical screen space, you can hide this status bar. The
-progress bars will no longer be visible, however you can display the Task
-Manager, through the @code{Tools/Task Manager} menu, to get similar information.
+progress bars will no longer be visible. Instead, you can display the Task
+Manager through the @code{Tools->Task Manager} menu, to get similar information.
 This manager can then be put on the right or left side of the GPS window,
 for instance just below the Project View.
 
