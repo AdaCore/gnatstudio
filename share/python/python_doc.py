@@ -36,7 +36,7 @@ GPS.parse_xml("""
   <documentation_file>
        <shell lang="python">python_doc.browse_doc(GPS)</shell>
        <descr>GPS'extensions for Python</descr>
-       <menu>/Help/Python extensions</menu>
+       <menu before="About">/Help/Python extensions</menu>
        <category>Scripts</category>
     </documentation_file>""")
 
