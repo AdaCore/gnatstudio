@@ -52,8 +52,9 @@ with Process_Proxies;       use Process_Proxies;
 
 package body Odd.Source_Editors is
 
-   Line_Numbers_Width : constant Positive := 5;
-   --  Number of characters reserved on the left for line numbers.
+   Line_Numbers_Width : constant Positive := 6;
+   --  Number of characters reserved on the left for line numbers (including
+   --  the space character)
 
    Do_Color_Highlighting : constant Boolean := True;
    --  Indicate whether the editor should provide color highlighting.
@@ -285,7 +286,7 @@ package body Odd.Source_Editors is
    is
    begin
       if Editor.Show_Line_Nums then
-         return Gint (Line_Numbers_Width) + 1;
+         return Gint (Line_Numbers_Width);
       else
          return 0;
       end if;
@@ -436,10 +437,10 @@ package body Odd.Source_Editors is
       function Line_Number_String (Line : Positive) return String is
          S : String        := Positive'Image (Line);
          N : Line_Number   := (others => ' ');
-         Length : Positive := Positive'Min (S'Length - 1, N'Length);
+         Length : Positive := Positive'Min (S'Length, Line_Numbers_Width);
       begin
-         N (N'Last - Length + 1 .. N'Last) := S (2 .. Length + 1);
-         return N & " ";
+         N (N'Last - Length + 1  .. N'Last - 1) := S (2 .. Length);
+         return N;
       end Line_Number_String;
 
       Index       : Positive := 1;
