@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 --  <description>
---  Thi s package implements a new widget to interactively edit the switches
+--  This package implements a new widget to interactively edit the switches
 --  for the GNAT tools (currently supported are gnatmake, gcc, gnatbind and
 --  gnatlink).
 --  A GUI is provided for the more common switches, but the user can always
@@ -127,14 +127,14 @@ package Switches_Editors is
    --  switches editor.
 
    procedure Edit_Switches
-     (Item : access Glib.Object.GObject_Record'Class;
+     (Item    : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Callback suitable for a contextual menu item.  If the file name is the
    --  empty string, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
    procedure Edit_Default_Switches
-     (Item : access Glib.Object.GObject_Record'Class;
+     (Item    : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Same as Edit_Switches, but always edit the default switches for the
    --  project, even if there is a file information in Context.
@@ -147,10 +147,10 @@ package Switches_Editors is
 
 private
    type Switches_Edit_Record is new Switches_Editor_Record with record
-      Kernel : Glide_Kernel.Kernel_Handle;
-      Pages : Page_Filter := All_Pages;
+      Kernel          : Glide_Kernel.Kernel_Handle;
+      Pages           : Page_Filter := All_Pages;
 
-      Block_Refresh : Boolean := False;
+      Block_Refresh   : Boolean := False;
       --  If this is True, then clicking on the toggle buttons in the
       --  editor will not refresh the command lines. This is required so that
       --  people can edit the command lines manually.
