@@ -80,6 +80,7 @@ package body Codefix_Module is
    File_Cst          : aliased constant String := "file_location";
    Message_Cst       : aliased constant String := "message";
    Codefix_Cst       : aliased constant String := "codefix";
+   Choice_Cst        : aliased constant String := "choice";
    Parse_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Category_Cst'Access,
       2 => Output_Cst'Access,
@@ -94,6 +95,8 @@ package body Codefix_Module is
      (1 => Codefix_Cst'Access,
       2 => File_Cst'Access,
       3 => Message_Cst'Access);
+   Fix_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Choice_Cst'Access);
 
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
@@ -136,6 +139,11 @@ package body Codefix_Module is
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected.
 
+   procedure On_Fix
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Session : Codefix_Session;
+      Error   : Error_Id;
+      Command : Text_Command'Class);
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class);
    --  Fixes the error that is proposed on a Menu_Item of Codefix.
 
@@ -203,22 +211,27 @@ package body Codefix_Module is
      (Instance : access Class_Instance_Record'Class) return Codefix_Session;
    --  Set or retrieve the session from an instance of Codefix
 
+   type Codefix_Error_Data is record
+      Error   : Error_Id;
+      Session : Codefix_Session;
+   end record;
+   type Codefix_Error_Data_Access is access Codefix_Error_Data;
+
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
-      Error    : Error_Id);
+      Error    : Codefix_Error_Data);
    function Get_Data
-     (Instance : access Class_Instance_Record'Class) return Error_Id;
+     (Instance : access Class_Instance_Record'Class) return Codefix_Error_Data;
    --  Set or retrieve the error from an instance of CodefixError
 
-   type Error_Id_Access is access Error_Id;
    function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Error_Id_Access);
+     (System.Address, Codefix_Error_Data_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Error_Id, Error_Id_Access);
+     (Codefix_Error_Data, Codefix_Error_Data_Access);
 
    procedure On_Destroy_Error (Value : System.Address);
    pragma Convention (C, On_Destroy_Error);
-   --  Destroy an Error_Id_Access
+   --  Destroy a Codefix_Error_Data_Access
 
    -------------
    -- Destroy --
@@ -248,28 +261,39 @@ package body Codefix_Module is
    -- On_Fix --
    ------------
 
-   procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
-      Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
-      Error : constant Error_Message := Get_Error_Message (Mitem.Error);
+   procedure On_Fix
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Session : Codefix_Session;
+      Error   : Error_Id;
+      Command : Text_Command'Class)
+   is
+      Err : constant Error_Message := Get_Error_Message (Error);
    begin
       Validate_And_Commit
-        (Mitem.Session.Corrector.all,
-         Mitem.Session.Current_Text.all,
-         Mitem.Error,
-         Mitem.Fix_Command.all);
+        (Session.Corrector.all, Session.Current_Text.all, Error, Command);
 
       Remove_Location_Action
-        (Kernel        => Mitem.Kernel,
+        (Kernel        => Kernel,
          Identifier    => Location_Button_Name,
-         Category      => Mitem.Session.Category.all,
-         File          => Get_File (Error),
-         Line          => Get_Line (Error),
-         Column        => Get_Column (Error),
-         Message       => Get_Message (Error));
+         Category      => Session.Category.all,
+         File          => Get_File (Err),
+         Line          => Get_Line (Err),
+         Column        => Get_Column (Err),
+         Message       => Get_Message (Err));
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Fix;
+
+   ------------
+   -- On_Fix --
+   ------------
+
+   procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
+      Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
+   begin
+      On_Fix (Mitem.Kernel, Mitem.Session, Mitem.Error, Mitem.Fix_Command.all);
    end On_Fix;
 
    ----------------------
@@ -693,6 +717,20 @@ package body Codefix_Module is
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
 
+      Register_Command
+        (Kernel,
+         Command     => "fix",
+         Params      => Parameter_Names_To_Usage (Fix_Cmd_Parameters, 1),
+         Description =>
+         -("Fix the error, using one of the possible fixes. The index"
+           & " given in parameter is the index in the list returned by"
+           & " possible_fixes. By default, the first choice is taken. Choices"
+           & " start at index 0."),
+         Minimum_Args => Fix_Cmd_Parameters'Length - 1,
+         Maximum_Args => Fix_Cmd_Parameters'Length,
+         Class        => Codefix_Module_ID.Codefix_Error_Class,
+         Handler      => Error_Command_Handler'Access);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -729,7 +767,7 @@ package body Codefix_Module is
             if Error = Null_Error_Id then
                Set_Error_Msg (Data, -"No fixable error at that location");
             else
-               Set_Data (Instance, Error);
+               Set_Data (Instance, Codefix_Error_Data'(Error, Session));
             end if;
          end;
 
@@ -737,9 +775,9 @@ package body Codefix_Module is
          Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
 
          declare
-            Error : constant Error_Id := Get_Data (Instance);
+            Error : constant Codefix_Error_Data := Get_Data (Instance);
             Solution_Node : Command_List.List_Node :=
-              First (Get_Solutions (Error));
+              First (Get_Solutions (Error.Error));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -750,6 +788,26 @@ package body Codefix_Module is
             end loop;
          end;
 
+      elsif Command = "fix" then
+         Name_Parameters (Data, Fix_Cmd_Parameters);
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
+
+         declare
+            Error : constant Codefix_Error_Data := Get_Data (Instance);
+            Choice : Integer := Nth_Arg (Data, 2, 0);
+            Solution_Node : Command_List.List_Node :=
+              First (Get_Solutions (Error.Error));
+         begin
+            while Choice /= 0
+              and then Solution_Node /= Command_List.Null_Node
+            loop
+               Solution_Node := Next (Solution_Node);
+               Choice := Choice - 1;
+            end loop;
+
+            On_Fix (Get_Kernel (Data), Error.Session,
+                    Error.Error, Command_List.Data (Solution_Node));
+         end;
       end if;
    end Error_Command_Handler;
 
@@ -798,7 +856,7 @@ package body Codefix_Module is
             while Error /= Null_Error_Id loop
                Err := New_Instance
                  (Get_Script (Data), Codefix_Module_ID.Codefix_Error_Class);
-               Set_Data (Err, Error);
+               Set_Data (Err, Codefix_Error_Data'(Error, Session));
                Set_Return_Value (Data, Err);
                Error := Next (Error);
             end loop;
@@ -853,9 +911,9 @@ package body Codefix_Module is
 
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
-      Error    : Error_Id)
+      Error    : Codefix_Error_Data)
    is
-      Err : Error_Id_Access;
+      Err : Codefix_Error_Data_Access;
    begin
       if not Is_Subclass
         (Get_Script (Instance),
@@ -865,7 +923,7 @@ package body Codefix_Module is
          raise Invalid_Data;
       end if;
 
-      Err := new Error_Id'(Error);
+      Err := new Codefix_Error_Data'(Error);
       Set_Data
         (Instance,
          Value      => Err.all'Address,
@@ -877,7 +935,7 @@ package body Codefix_Module is
    ----------------------
 
    procedure On_Destroy_Error (Value : System.Address) is
-      Err : Error_Id_Access := Convert (Value);
+      Err : Codefix_Error_Data_Access := Convert (Value);
    begin
       Unchecked_Free (Err);
    end On_Destroy_Error;
@@ -887,7 +945,8 @@ package body Codefix_Module is
    --------------
 
    function Get_Data
-     (Instance : access Class_Instance_Record'Class) return Error_Id is
+     (Instance : access Class_Instance_Record'Class)
+      return Codefix_Error_Data is
    begin
       if not Is_Subclass
         (Get_Script (Instance),
