@@ -62,7 +62,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System;
 
 with Basic_Types;              use Basic_Types;
-with String_Utils;
+with File_Utils;               use File_Utils;
 with Prj;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
@@ -82,7 +82,6 @@ with Directory_Tree;           use Directory_Tree;
 with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
-with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
@@ -565,7 +564,7 @@ package body Project_Viewers is
    begin
       if Directory_Filter = ""
         or else Is_Regular_File
-          (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
+          (Name_As_Directory (Directory_Filter) & File_N)
       then
          Append (Viewer.Model, Iter, Null_Iter);
          Set (Viewer.Model, Iter, File_Name_Column, Locale_To_UTF8 (File_N));
