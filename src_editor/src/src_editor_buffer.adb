@@ -4411,12 +4411,12 @@ package body Src_Editor_Buffer is
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
 
-      if Force then
-         Indent_Style := Extended;
-      end if;
-
       if Indent_Style = None then
-         return False;
+         if Force then
+            Indent_Style := Extended;
+         else
+            return False;
+         end if;
       end if;
 
       Buffer.Do_Not_Move_Cursor := True;
