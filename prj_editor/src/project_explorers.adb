@@ -41,7 +41,9 @@ with Gdk.Pixbuf;               use Gdk.Pixbuf;
 
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Arguments;            use Gtk.Arguments;
+with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Ctree;                use Gtk.Ctree;
+with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
@@ -80,6 +82,8 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
+with Vsearch_Ext;              use Vsearch_Ext;
+with Find_Utils;               use Find_Utils;
 
 with Unchecked_Deallocation;
 with System;
@@ -186,6 +190,34 @@ package body Project_Explorers is
 
    package Project_Row_Data is new Gtk.Ctree.Row_Data (User_Data);
    use Project_Row_Data;
+
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Explorer_Search_Context is new Search_Context with record
+      Current : Gtk_Ctree_Node;
+      Include_Entities : Boolean;
+   end record;
+   type Explorer_Search_Context_Access is access all Explorer_Search_Context;
+
+   type Explorer_Search_Extra_Record is new Gtk_Frame_Record with record
+      Include_Entities : Gtk_Check_Button;
+   end record;
+   type Explorer_Search_Extra is access all Explorer_Search_Extra_Record'Class;
+
+   function Explorer_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Create a new search context for the explorer
+
+   function Search
+     (Context         : access Explorer_Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search the next occurrence in the explorer
 
    -----------------------
    -- Local subprograms --
@@ -306,6 +338,11 @@ package body Project_Explorers is
      (T    : Project_Explorer;
       Iter : Gtk_Tree_Iter);
    --  Free all the children of iter Iter in the file view.
+
+   procedure Compute_Children
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Ctree_Node);
+   --  COmpute the children of Node, if they haven't been computed yet.
 
    ---------------------
    -- Expanding nodes --
@@ -1965,7 +2002,6 @@ package body Project_Explorers is
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
       N       : Gtk_Ctree_Node;
-      Is_Leaf : constant Boolean := True;
       Text    : Tree_Chars_Ptr_Array;
 
    begin
@@ -1995,7 +2031,7 @@ package body Project_Explorers is
          Mask_Closed   => Explorer.Close_Masks (Entity_Node),
          Pixmap_Opened => Explorer.Open_Pixmaps (Entity_Node),
          Mask_Opened   => Explorer.Open_Masks (Entity_Node),
-         Is_Leaf       => Is_Leaf,
+         Is_Leaf       => True,
          Expanded      => False);
       Free (Text);
 
@@ -2192,43 +2228,41 @@ package body Project_Explorers is
       Pop_State (Explorer.Kernel);
    end Expand_File_Node;
 
-   --------------------
-   -- Expand_Tree_Cb --
-   --------------------
+   ----------------------
+   -- Compute_Children --
+   ----------------------
 
-   procedure Expand_Tree_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
+   procedure Compute_Children
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Ctree_Node)
    is
-      T        : constant Project_Explorer := Project_Explorer (Explorer);
-      Node     : constant Gtk_Ctree_Node :=
-        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Data     : User_Data := Node_Get_Row_Data (T.Tree, Node);
+      Data : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
    begin
       --  If the node is not already up-to-date
 
       if not Data.Up_To_Date then
-         Freeze (T.Tree);
+         Freeze (Explorer.Tree);
 
          --  Remove the dummy node, and report that the node is up-to-date
-         Remove_Node (T.Tree, Row_Get_Children (Node_Get_Row (Node)));
+         Remove_Node (Explorer.Tree, Row_Get_Children (Node_Get_Row (Node)));
          Data.Up_To_Date := True;
-         Node_Set_Row_Data (T.Tree, Node, Data);
+         Node_Set_Row_Data (Explorer.Tree, Node, Data);
 
          case Data.Node_Type is
             when Project_Node =>
-               Expand_Project_Node (T, Node, Data);
+               Expand_Project_Node (Explorer, Node, Data);
 
             when Extends_Project_Node =>
                null;
 
             when Directory_Node =>
-               Expand_Directory_Node (T, Node, Data);
+               Expand_Directory_Node (Explorer, Node, Data);
 
             when Obj_Directory_Node =>
                null;
 
             when File_Node =>
-               Expand_File_Node (T, Node);
+               Expand_File_Node (Explorer, Node);
 
             when Category_Node | Entity_Node =>
                --  Work was already done when the file node was open
@@ -2236,9 +2270,22 @@ package body Project_Explorers is
 
          end case;
 
-         Sort_Recursive (T.Tree, Node);
-         Thaw (T.Tree);
+         Sort_Recursive (Explorer.Tree, Node);
+         Thaw (Explorer.Tree);
       end if;
+   end Compute_Children;
+
+   --------------------
+   -- Expand_Tree_Cb --
+   --------------------
+
+   procedure Expand_Tree_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
+   is
+      Node     : constant Gtk_Ctree_Node :=
+        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+   begin
+      Compute_Children (Project_Explorer (Explorer), Node);
 
    exception
       when E : others =>
@@ -3196,6 +3243,125 @@ package body Project_Explorers is
       return Explorer_Context_Factory (Kernel, Child, Child, null, null);
    end Default_Factory;
 
+   -----------------------------
+   -- Explorer_Search_Factory --
+   -----------------------------
+
+   function Explorer_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurences    : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      pragma Unreferenced (Kernel, All_Occurences);
+      Context : Explorer_Search_Context_Access;
+      Extra : Explorer_Search_Extra :=
+        Explorer_Search_Extra (Extra_Information);
+   begin
+      Context := new Explorer_Search_Context;
+      Context.Include_Entities := Get_Active (Extra.Include_Entities);
+      return Search_Context_Access (Context);
+   end Explorer_Search_Factory;
+
+   ------------
+   -- Search --
+   ------------
+
+   function Search
+     (Context         : access Explorer_Search_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Search_Backward);
+      C : Explorer_Search_Context_Access :=
+        Explorer_Search_Context_Access (Context);
+      Explorer : Project_Explorer;
+
+      procedure Next;
+      --  Move to the next node in the tree
+
+      ----------
+      -- Next --
+      ----------
+
+      procedure Next is
+         Tmp : Gtk_Ctree_Node;
+      begin
+         if not Row_Get_Is_Leaf (Node_Get_Row (C.Current)) then
+            if C.Include_Entities
+              or else Node_Get_Row_Data
+                (Explorer.Tree, C.Current).Node_Type /= File_Node
+            then
+               Compute_Children (Explorer, C.Current);
+               Tmp := Row_Get_Children (Node_Get_Row (C.Current));
+
+               if Tmp /= null then
+                  C.Current := Tmp;
+                  return;
+               end if;
+            end if;
+         end if;
+
+         loop
+            Tmp := Row_Get_Sibling (Node_Get_Row (C.Current));
+            exit when Tmp /= null;
+
+            C.Current := Row_Get_Parent (Node_Get_Row (C.Current));
+            if C.Current = null then
+               return;
+            end if;
+         end loop;
+
+         C.Current := Tmp;
+      end Next;
+
+      Child : MDI_Child;
+      Tmp : Gtk_Ctree_Node;
+   begin
+      --  ??? Problem: this algorithm will analyze the same files multiple
+      --  times if they appear multiple times in the explorer. This might not
+      --  be necessary if every time we expand a file we duplicate the entity
+      --  information for all the occurences of this file.
+
+      --  Make sure the explorer is visible, and get a handle on it
+      On_Open_Explorer (Get_MDI (Kernel), Kernel_Handle (Kernel));
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+      Explorer := Project_Explorer (Get_Widget (Child));
+
+      --  Find the next matching node
+      if C.Current = null then
+         C.Current := Node_Nth (Explorer.Tree, 0);
+      else
+         Next;
+      end if;
+
+      while C.Current /= null loop
+         if Match (C, Node_Get_Text (Explorer.Tree, C.Current, 0)) /= -1 then
+            Gtk_Select (Explorer.Tree, C.Current);
+
+            if not Is_Viewable (Explorer.Tree, C.Current) then
+               Tmp := Row_Get_Parent (Node_Get_Row (C.Current));
+               while Tmp /= null loop
+                  Gtk.Ctree.Expand (Explorer.Tree, Tmp);
+                  Tmp := Row_Get_Parent (Node_Get_Row (Tmp));
+               end loop;
+            end if;
+
+            if Node_Is_Visible (Explorer.Tree, C.Current) /=
+              Visibility_Full
+            then
+               Node_Moveto (Explorer.Tree, C.Current, 0, 0.5, 0.0);
+            end if;
+
+            return True;
+         end if;
+         Next;
+      end loop;
+
+      return False;
+   end Search;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -3205,6 +3371,8 @@ package body Project_Explorers is
    is
       Project : constant String := '/' & (-"Project");
       N       : Node_Ptr;
+      Extra   : Explorer_Search_Extra;
+      Box     : Gtk_Box;
    begin
       Register_Module
         (Module                  => Explorer_Module_ID,
@@ -3232,6 +3400,29 @@ package body Project_Explorers is
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
       Vsearch_Ext.Register_Default_Search (Kernel);
+
+      Extra := new Explorer_Search_Extra_Record;
+      Gtk.Frame.Initialize (Extra);
+
+      Gtk_New_Vbox (Box, Homogeneous => False);
+      Add (Extra, Box);
+
+      Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
+      Pack_Start (Box, Extra.Include_Entities);
+      Set_Active (Extra.Include_Entities, False);
+      Kernel_Callback.Connect
+        (Extra.Include_Entities, "toggled",
+         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+         Kernel_Handle (Kernel));
+
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Project explorer",
+         Factory           => Explorer_Search_Factory'Access,
+         Extra_Information => Gtk_Widget (Extra),
+         Mask              => All_Options and not Supports_Replace
+           and not Search_Backward and not Scope_Mask
+           and not All_Occurences);
    end Register_Module;
 
    ----------------
