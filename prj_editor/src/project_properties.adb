@@ -740,12 +740,11 @@ package body Project_Properties is
 
             declare
                Default : GNAT.OS_Lib.String_List :=
-                 (1 => new String'
-                    (Get_Current_Value
-                       (Project      => Project,
-                        Attr         => Editor.Attribute,
-                        Index        => "",
-                        Default_Only => True)));
+                 Get_Current_Value
+                   (Kernel       => Editor.Kernel,
+                    Project      => Project,
+                    Attr         => Editor.Attribute,
+                    Default_Only => True);
             begin
                Update_Attribute_Value
                  (Attr               => Editor.Attribute,
@@ -2100,7 +2099,9 @@ package body Project_Properties is
          begin
             for V in Value'Range loop
                Append (Editor.Model, Iter, Null_Iter);
-               if Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**" then
+               if Value (V)'Length > 3 and then
+                   Value (V) (Value (V)'Last - 2 .. Value (V)'Last) = "/**"
+               then
                   Set (Editor.Model, Iter, 0,
                        Normalize_Pathname
                          (Value (V) (Value (V)'First .. Value (V)'Last - 3),
@@ -2510,13 +2511,18 @@ package body Project_Properties is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Directory =>
-            --  Workaround fatal crash in GNAT
-            declare
-               V : GNAT.OS_Lib.String_List (1 .. 1);
-            begin
-               V (1) := new String'(Attr.Non_Index_Type.Default.all);
-               return V;
-            end;
+
+            if Attr.Non_Index_Type.Default.all = "" then
+               return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+            else
+               --  Workaround fatal crash in GNAT
+               declare
+                  V : GNAT.OS_Lib.String_List (1 .. 1);
+               begin
+                  V (1) := new String'(Attr.Non_Index_Type.Default.all);
+                  return V;
+               end;
+            end if;
 
          when Attribute_As_Static_List
               | Attribute_As_Dynamic_List =>
