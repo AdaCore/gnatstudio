@@ -169,41 +169,18 @@ package body VCS.CVS is
       Non_Blocking_Spawn (Fd, Command, Arguments, Err_To_Out => True);
 
       begin
-         if The_Idle_Function = null then
-            while Match = 1 loop
-               Expect (Fd, Match, "\n");
-               declare
-                  S : String := Expect_Out (Fd);
-               begin
-                  if Output_To_Message then
-                     Set_Error (Rep, S (S'First .. S'Last - 1));
-                  else
-                     String_List.Prepend (Result, S (S'First .. S'Last - 1));
-                  end if;
-               end;
-            end loop;
-         else
-            while Match = 1 loop
-               Expect (Fd, Match, "\n",  Timeout);
-
-               case Match is
-                  when Expect_Timeout =>
-                     The_Idle_Function.all;
-                     Match := 1;
-                  when others =>
-                     declare
-                        S : String := Expect_Out (Fd);
-                     begin
-                        if Output_To_Message then
-                           Set_Error (Rep, S (S'First .. S'Last - 1));
-                        else
-                           String_List.Prepend
-                             (Result, S (S'First .. S'Last - 1));
-                        end if;
-                     end;
-               end case;
-            end loop;
-         end if;
+         while Match = 1 loop
+            Expect (Fd, Match, "\n");
+            declare
+               S : String := Expect_Out (Fd);
+            begin
+               if Output_To_Message then
+                  Set_Error (Rep, S (S'First .. S'Last - 1));
+               else
+                  String_List.Prepend (Result, S (S'First .. S'Last - 1));
+               end if;
+            end;
+         end loop;
 
       exception
          when Process_Died =>
