@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C428-025 Read-only editors can be modified by internal actions.
+  Problem:    When an editor is set as read-only, its contents can still be
+              modified by actions such as undo/redo or automatic code fixing.
+  Workaround: Do not use undo/redo or automatic code fixing on read-only
+              files.
+
 - C627-007 Exec directory settings lost when editing project properties
   Problem:    If you have specified a relative path for the executables
               directory and you edit the project properties, it can happen
