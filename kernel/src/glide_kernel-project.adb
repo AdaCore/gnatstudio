@@ -46,9 +46,9 @@ package body Glide_Kernel.Project is
    ----------------------
 
    function Find_Source_File
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Short_File_Name : String;
-      Use_Source_Path : Boolean := False)
+     (Kernel                     : access Kernel_Handle_Record'Class;
+      Short_File_Name            : String;
+      Use_Predefined_Source_Path : Boolean := False)
       return String
    is
       Path : String_Access;
@@ -68,7 +68,7 @@ package body Glide_Kernel.Project is
       end if;
 
       --  Fallback, try on the Source_Path (only if Use_Source_Path is set)
-      if Use_Source_Path
+      if Use_Predefined_Source_Path
         and then Get_Predefined_Source_Path (Kernel) /= ""
       then
          Path :=
@@ -93,12 +93,12 @@ package body Glide_Kernel.Project is
    ----------------------
 
    function Find_Object_File
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Short_File_Name : String;
-      Use_Object_Path : Boolean := False)
+     (Kernel                     : access Kernel_Handle_Record'Class;
+      Short_File_Name            : String;
+      Use_Predefined_Object_Path : Boolean := False)
       return String is
    begin
-      if Use_Object_Path
+      if Use_Predefined_Object_Path
         and then Get_Predefined_Object_Path (Kernel) /= ""
       then
          return Find_Object_File
