@@ -1,5 +1,7 @@
 New features in GVD 1.2.0
 
+- The "run" and "button" buttons now set automatically the name of the
+  module under VxWorks.
 - The File->Attach Process menu now lists the tasks on the target when
   using Tornado VxWorks.
 - The --target option now allows multiple ':' characters so that you
