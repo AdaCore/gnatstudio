@@ -54,10 +54,6 @@ package Odd.Histories is
    procedure Set_Current (History : History_List; Data : in Data_Type);
    --  Change the current item data.
 
-   procedure Remove_Current (History : in out History_List);
-   --  Removes current item. After this procedure is called, the pointer to
-   --  the current value points to the last entry before the deleted one.
-
    procedure Move_To_Previous (History : in out History_List);
    --  Move the pointer to the value preceding the current one.
    --  Calling this function multiple times will traverse the whole list.
