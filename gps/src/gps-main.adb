@@ -277,7 +277,7 @@ procedure GPS.Main is
 
    procedure Display_Splash_Screen is
       File   : constant String := Format_Pathname
-        (GPS_Main.Prefix_Directory.all & "/share/gps/gps-splash.png");
+                 (Prefix.all & "/share/gps/gps-splash.png");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
@@ -557,16 +557,14 @@ procedure GPS.Main is
       Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
       About_Contents := Read_File
-        (Format_Pathname (GPS_Main.Prefix_Directory.all &
-                          "/share/gps/about.txt"));
+        (Format_Pathname (Prefix.all & "/share/gps/about.txt"));
 
       if About_Contents = null then
          About_Contents := new String'("");
       end if;
 
       if Is_Regular_File
-        (Format_Pathname
-           (GPS_Main.Prefix_Directory.all & "/share/gps/gps-pro.txt"))
+        (Format_Pathname (Prefix.all & "/share/gps/gps-pro.txt"))
       then
          GPS_Main.Public_Version := False;
       end if;
@@ -1201,6 +1199,7 @@ procedure GPS.Main is
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
+      Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Metrics_Trace) then
          Metrics_Module.Register_Module (GPS_Main.Kernel);
@@ -1230,11 +1229,13 @@ procedure GPS.Main is
          Project_Properties.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Aunit_Trace) then
+         Aunit_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
       if Active (Aliases_Trace) then
          Aliases_Module.Register_Module (GPS_Main.Kernel);
       end if;
-
-      Src_Editor_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Project_Explorer_Trace) then
          Project_Explorers.Register_Module (GPS_Main.Kernel);
@@ -1269,10 +1270,6 @@ procedure GPS.Main is
       if Active (VCS_Trace) then
          VCS_Module.Register_Module (GPS_Main.Kernel);
          VCS.ClearCase.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Aunit_Trace) then
-         Aunit_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (VFS_Trace) then
