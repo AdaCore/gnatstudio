@@ -195,7 +195,7 @@ package body Gtkada.MDI is
 
    procedure Layout_Child
      (Child  : access MDI_Child_Record'Class;
-      Region : Gdk_Region := null);
+      Region : Gdk.Region.Gdk_Region := null);
    --  Compute the coordinates for Child.
    --  If Region is null, loop through the list of all children, and try
    --  to position the child in an area where it doesn't overlap any child.
@@ -337,12 +337,12 @@ package body Gtkada.MDI is
    ------------------
 
    procedure Layout_Child
-     (Child : access MDI_Child_Record'Class;
-      Region : Gdk_Region := null)
+     (Child  : access MDI_Child_Record'Class;
+      Region : Gdk.Region.Gdk_Region := null)
    is
       use Widget_List;
 
-      R         : Gdk_Region;
+      R         : Gdk.Region.Gdk_Region;
       List, Tmp : Widget_List.Glist;
       X, Y      : Gint;
       Overlap   : Gdk_Overlap_Type;
@@ -429,7 +429,7 @@ package body Gtkada.MDI is
       Tmp       : Widget_List.Glist := First (List);
       Child_Req : Gtk_Requisition;
       Child     : MDI_Child;
-      Region    : Gdk_Region := Null_Region;
+      Region    : Gdk.Region.Gdk_Region := Null_Region;
 
    begin
       Gdk_New (M.GC, Get_Window (MDI));
@@ -531,7 +531,8 @@ package body Gtkada.MDI is
    begin
       if C.State = Docked then
          Note := Gtk_Notebook (C.Initial);
-         C := Find_MDI_Child (C.MDI, Get_Child (Get_Cur_Page (Note)));
+         C := Find_MDI_Child
+           (C.MDI, Get_Nth_Page (Note, Get_Current_Page (Note)));
       end if;
 
       Minimize_Child (C, not (C.State = Iconified));
@@ -578,6 +579,7 @@ package body Gtkada.MDI is
       Event      : Gdk_Event;
       Old_Parent : Gtk_Widget;
       Result     : Boolean;
+      Note       : Gtk_Notebook;
 
    begin
       --  If a dock still exists, it has at least one child, and this is what
@@ -585,8 +587,9 @@ package body Gtkada.MDI is
       --  when its last item is removed.
 
       if C.State = Docked then
+         Note := Gtk_Notebook (C.Initial);
          C := Find_MDI_Child
-           (C.MDI, Get_Child (Get_Cur_Page (Gtk_Notebook (C.Initial))));
+           (C.MDI, Get_Nth_Page (Note, Get_Current_Page (Note)));
       end if;
 
       Allocate (Event, Delete, Get_Window (C.MDI));
@@ -698,11 +701,13 @@ package body Gtkada.MDI is
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle)
    is
-      Bt  : Gint := Border_Thickness;
+      Bt   : Gint := Border_Thickness;
       --  ??? Should be a field in Child
-      MDI : MDI_Window := Child.MDI;
-      F   : Gdk_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Height);
-      GC  : Gdk.Gdk_GC := MDI.GC;
+      MDI  : MDI_Window := Child.MDI;
+      F    : Gdk.Font.Gdk_Font :=
+        Get_Gdkfont (Title_Font_Name, Title_Font_Height);
+      GC   : Gdk.Gdk_GC := MDI.GC;
+      Note : Gtk_Notebook;
 
    begin
       if MDI_Child (Child) = MDI.Docks (None) then
@@ -712,13 +717,15 @@ package body Gtkada.MDI is
       --  Call this function so that for a dock item is highlighted if the
       --  current page is linked to the focus child.
 
+      Note := Gtk_Notebook (Child.Initial);
+
       if MDI.Focus_Child = MDI_Child (Child)
         or else
         (MDI.Focus_Child /= null
          and then Child.State = Docked
          and then MDI.Focus_Child.State = Embedded
-         and then Get_Child (Get_Cur_Page (Gtk_Notebook (Child.Initial))) =
-         Gtk_Widget (MDI.Focus_Child.Initial_Child))
+         and then Get_Nth_Page (Note, Get_Current_Page (Note)) =
+           Gtk_Widget (MDI.Focus_Child.Initial_Child))
       then
          GC := MDI.Focus_GC;
       end if;
@@ -1585,9 +1592,10 @@ package body Gtkada.MDI is
    --------------------
 
    procedure Activate_Child (Child : access MDI_Child_Record'Class) is
-      Old : MDI_Child := Child.MDI.Focus_Child;
-      C   : MDI_Child := MDI_Child (Child);
-      S   : Dock_Side;
+      Old  : MDI_Child := Child.MDI.Focus_Child;
+      C    : MDI_Child := MDI_Child (Child);
+      S    : Dock_Side;
+      Note : Gtk_Notebook;
 
    begin
       --  Be lazy. And avoid infinite loop when updating the MDI menu...
@@ -1597,8 +1605,9 @@ package body Gtkada.MDI is
       end if;
 
       if C.State = Docked then
+         Note := Gtk_Notebook (C.Initial);
          C := Find_MDI_Child
-           (C.MDI, Get_Child (Get_Cur_Page (Gtk_Notebook (C.Initial))));
+           (C.MDI, Get_Nth_Page (Note, Get_Current_Page (Note)));
       end if;
 
       Child.MDI.Focus_Child := C;
@@ -2093,7 +2102,8 @@ package body Gtkada.MDI is
    begin
       if Get_Current_Page (Note) /= -1 then
          Free (Child.Title);
-         C := Find_MDI_Child (Child.MDI, Get_Child (Get_Cur_Page (Note)));
+         C := Find_MDI_Child
+           (Child.MDI, Get_Nth_Page (Note, Get_Current_Page (Note)));
          Child.Title := new String' (C.Title.all);
          Activate_Child (C);
       end if;
@@ -2426,7 +2436,8 @@ package body Gtkada.MDI is
    begin
       if MDI.Focus_Child /= null and then MDI.Focus_Child.State = Docked then
          Note := Gtk_Notebook (MDI.Focus_Child.Initial);
-         return Find_MDI_Child (MDI, Get_Child (Get_Cur_Page (Note)));
+         return Find_MDI_Child
+           (MDI, Get_Nth_Page (Note, Get_Current_Page (Note)));
       end if;
 
       return MDI.Focus_Child;
