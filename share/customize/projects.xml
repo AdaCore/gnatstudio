@@ -6,7 +6,7 @@
 
 <custom>
    <project_attribute
-       name="Languages" 
+       name="languages" 
        editor_page="General"
        editor_section="Languages"
        label=""
@@ -207,20 +207,21 @@
         name="exec_dir"
         editor_page="Objects"
         description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
-        label="Exec directory">
-        <string type="directory" default="(Same as object directory)" />
+        label="Exec directory"
+        omit_if_default="true">
+        <string type="directory" default="(same as build directory)" />
     </project_attribute>
 
     <!--  Main units -->
 
     <project_attribute
         name="main"
-        package="Builder"
         editor_page="Main files"
         editor_section="Main files"
         list="true"
         description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications"
-        label="">
+        label=""
+        base_name_only="true" >
         <string type="file" />
    </project_attribute>
 
@@ -228,10 +229,11 @@
        name="executable"
        package="Builder"
        editor_page="Main files"
+       editor_section="Executable names"
        description="Name of the executable generated when compiling each of the main units"
-       label="Executable name">
-       <index attribute="main" package="Builder">
-          <string />
+       label="">
+       <index attribute="main">
+          <string default="(same as main unit, minus extension)"/>
        </index>
    </project_attribute>
 
