@@ -1182,8 +1182,22 @@ package body Glide_Kernel.Modules is
    ------------------
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
+      use Module_List;
+
+      Module_Node : List_Node;
    begin
-      Module_List.Free (Kernel.Modules_List);
+      --  Unregister all mime handlers before freeing the modules list,
+      --  to avoid the case when a module calls a mime action in its
+      --  Destroy procedure.
+
+      Module_Node := First (Kernel.Modules_List);
+
+      while Module_Node /= Null_Node loop
+         Data (Module_Node).Info.Mime_Handler := null;
+         Module_Node := Next (Module_Node);
+      end loop;
+
+      Free (Kernel.Modules_List);
    end Free_Modules;
 
 end Glide_Kernel.Modules;
