@@ -25,7 +25,7 @@ procedure Initialize (Vsearch : access Vsearch_Record'Class) is
 begin
    Gtk.Window.Initialize (Vsearch, Window_Toplevel);
    Set_Title (Vsearch, -"Search");
-   Set_Policy (Vsearch, False, False, True);
+   Set_Policy (Vsearch, False, True, True);
    Set_Position (Vsearch, Win_Pos_None);
    Set_Modal (Vsearch, False);
 
@@ -135,15 +135,15 @@ begin
 
    Gtk_New (Vsearch.Case_Check, -"Case Sensitive");
    Set_Active (Vsearch.Case_Check, False);
-   Pack_Start (Vsearch.Options_Vbox, Vsearch.Case_Check, True, True, 0);
+   Pack_Start (Vsearch.Options_Vbox, Vsearch.Case_Check, False, False, 0);
 
    Gtk_New (Vsearch.Whole_Word_Check, -"Whole Word Only");
    Set_Active (Vsearch.Whole_Word_Check, False);
-   Pack_Start (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, True, True, 0);
+   Pack_Start (Vsearch.Options_Vbox, Vsearch.Whole_Word_Check, False, False, 0);
 
    Gtk_New (Vsearch.Regexp_Check, -"Regular Expression");
    Set_Active (Vsearch.Regexp_Check, False);
-   Pack_Start (Vsearch.Options_Vbox, Vsearch.Regexp_Check, True, True, 0);
+   Pack_Start (Vsearch.Options_Vbox, Vsearch.Regexp_Check, False, False, 0);
 
 end Initialize;
 
