@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -97,12 +97,12 @@ package body GVD.Code_Editors is
 
    begin
       Initialize_Hbox (Editor);
-
       Editor.Process := Gtk_Widget (Process);
       Gtk_New (Editor.Asm, Process);
-      Gtk_New_Vpaned (Editor.Source_Asm_Pane);
+      Ref (Editor.Asm);
 
       if Top.Standalone then
+         Gtk_New_Vpaned (Editor.Source_Asm_Pane);
          Gtk_New (Editor.Explorer_Scroll);
          Set_Policy
            (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
@@ -114,16 +114,15 @@ package body GVD.Code_Editors is
 
          Gtk_New (Editor.Explorer, Editor);
          Add (Editor.Explorer_Scroll, Editor.Explorer);
-      end if;
 
-      --  Since we are sometimes unparenting these widgets, We need to
-      --  make sure they are not automatically destroyed by reference
-      --  counting.
-      --  ??? Should add a "destroy" callback to the editor to free the
-      --  memory.
-      Ref (Editor.Asm);
-      Ref (Editor.Source_Asm_Pane);
-      Show_All (Editor);
+         --  Since we are sometimes unparenting these widgets, We need to
+         --  make sure they are not automatically destroyed by reference
+         --  counting.
+         --  ??? Should add a "destroy" callback to the editor to free the
+         --  memory.
+         Ref (Editor.Source_Asm_Pane);
+         Show_All (Editor);
+      end if;
    end Initialize;
 
    --------------
@@ -236,10 +235,21 @@ package body GVD.Code_Editors is
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-     return GVD.Text_Box.Asm_Editor.Asm_Editor is
+      return GVD.Text_Box.Asm_Editor.Asm_Editor is
    begin
       return Editor.Asm;
    end Get_Asm;
+
+   -------------
+   -- Set_Asm --
+   -------------
+
+   procedure Set_Asm
+     (Editor : access Code_Editor_Record'Class;
+      Asm    : GVD.Text_Box.Asm_Editor.Asm_Editor) is
+   begin
+      Editor.Asm := Asm;
+   end Set_Asm;
 
    ---------------------
    -- Get_Asm_Address --
