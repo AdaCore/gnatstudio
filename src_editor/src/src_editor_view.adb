@@ -57,10 +57,9 @@ with Traces;                      use Traces;
 with Basic_Types;                 use Basic_Types;
 with Commands;                    use Commands;
 with Glide_Kernel;                use Glide_Kernel;
-with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
-with Unchecked_Deallocation;
+with Basic_Types;    use Basic_Types;
 
 package body Src_Editor_View is
 
@@ -72,9 +71,6 @@ package body Src_Editor_View is
      (Widget_Type => Source_Buffer_Record,
       User_Type   => Source_View,
       Setup       => Setup);
-
-   procedure Free (X : in out Line_Info_Width);
-   --  Free memory associated to X.
 
    package Source_View_Idle is new Gtk.Main.Idle (Source_View);
 
@@ -126,23 +122,17 @@ package body Src_Editor_View is
    --  is mapped, such as creating GCs associated to the left border window
    --  for instance.
 
-   procedure Insert_Text_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View);
-   --  Callback for the "insert_text" signal.
-
-   procedure Delete_Range_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View);
-   --  Callback for the "delete_range" signal.
-
    procedure Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
    --  Callback for the "changed" signal.
+
+   procedure Side_Columns_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "side_columns_changed" signal.
 
    procedure Redraw_Columns (View : access Source_View_Record'Class);
    --  Redraw the left and right areas around View.
@@ -153,52 +143,10 @@ package body Src_Editor_View is
    --  Change the font used in the given Source_View. Note that this service
    --  should not be used if the widget is not realized.
 
-   procedure Add_Lines
-     (View   : access Source_View_Record'Class;
-      Start  : Integer;
-      Number : Integer);
-   --  Add Number blank lines to the column info, after Start.
-
-   procedure Remove_Lines
-     (View       : access Source_View_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer);
-   --  Remove lines from the column info.
-
-   procedure Insert_At_Position
-     (View   : access Source_View_Record;
-      Info   : Line_Information_Record;
-      Column : Integer;
-      Line   : Integer;
-      Width  : Integer);
-   --  Insert Info at the correct line position in L.
-
-   procedure Get_Column_For_Identifier
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer);
-   --  Return the index of the column corresponding to the identifier.
-   --  Create such a column if necessary.
-
-   function Get_Side_Info
-     (View   : access Source_View_Record'Class;
-      Line   : Positive;
-      Column : Positive) return Line_Info_Width;
-   --  Return the side information corresponding to Line, Column in the
-   --  Side window.
-   --  Return (null, 0)  if the information was never set.
-   --  Return (null, -1) if the information was set to null.
-
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Callback for the "delete_event" signal.
-
-   procedure Remove_Line_Information_Column
-     (View   : access Source_View_Record'Class;
-      Column : Integer);
-   --  Remove the column from the side window information in View.
 
    procedure Save_Cursor_Position
      (View : access Source_View_Record'Class);
@@ -226,6 +174,48 @@ package body Src_Editor_View is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for "File_Saved_Signal".
+
+   function Get_Side_Info
+     (View   : access Source_View_Record'Class;
+      Line   : Positive;
+      Column : Positive) return Line_Info_Width;
+   --  Return the side information corresponding to Line, Column in the
+   --  Side window.
+   --  Return (null, 0)  if the information was never set.
+   --  Return (null, -1) if the information was set to null.
+
+   -------------------
+   -- Get_Side_Info --
+   -------------------
+
+   function Get_Side_Info
+     (View   : access Source_View_Record'Class;
+      Line   : Positive;
+      Column : Positive) return Line_Info_Width
+   is
+      Line_Info  : constant Line_Info_Display_Array_Access :=
+        Get_Line_Info (Source_Buffer (Get_Buffer (View)));
+      Real_Lines : constant Natural_Array_Access :=
+        Get_Real_Lines (Source_Buffer (Get_Buffer (View)));
+   begin
+      if Line_Info (Column).Stick_To_Data then
+         if Line > Real_Lines'Last
+           or else Real_Lines (Line) not in
+             Line_Info (Column).Column_Info'Range
+         then
+            return (null, -1);
+         else
+            return Line_Info (Column).Column_Info
+              (Real_Lines (Line));
+         end if;
+      else
+         if Line > Line_Info (Column).Column_Info'Last then
+            return (null, 0);
+         else
+            return Line_Info (Column).Column_Info (Line);
+         end if;
+      end if;
+   end Get_Side_Info;
 
    -----------
    -- Setup --
@@ -266,15 +256,10 @@ package body Src_Editor_View is
    ------------
 
    procedure Delete (View : access Source_View_Record) is
-      procedure Free is new Unchecked_Deallocation
-        (Natural_Array, Natural_Array_Access);
    begin
-      while View.Line_Info'Length > 0 loop
-         Remove_Line_Information_Column (View, View.Line_Info'Last);
-      end loop;
-
-      Idle_Remove (View.Connect_Expose_Id);
-      Free (View.Real_Lines);
+      if View.Connect_Expose_Id /= 0 then
+         Idle_Remove (View.Connect_Expose_Id);
+      end if;
    end Delete;
 
    ---------------
@@ -313,35 +298,19 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Realize_Cb;
 
-   --------------------------
-   -- Delete_Range_Handler --
-   --------------------------
+   ---------------------------------
+   -- Side_Columns_Change_Handler --
+   ---------------------------------
 
-   procedure Delete_Range_Handler
+   procedure Side_Columns_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      pragma Unreferenced (Buffer);
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-
-      Start_Line : Integer;
-      End_Line   : Integer;
+      pragma Unreferenced (Params, Buffer);
    begin
-      Get_Text_Iter (Nth (Params, 1), Start_Iter);
-      Get_Text_Iter (Nth (Params, 2), End_Iter);
-      Start_Line := Integer (Get_Line (Start_Iter));
-      End_Line   := Integer (Get_Line (End_Iter));
-
-      if Start_Line /= End_Line then
-         Remove_Lines (User, Start_Line + 1, End_Line + 1);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Delete_Range_Handler;
+      Redraw_Columns (User);
+   end Side_Columns_Change_Handler;
 
    --------------------
    -- Change_Handler --
@@ -361,61 +330,6 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Change_Handler;
 
-   -------------------------
-   -- Insert_Text_Handler --
-   -------------------------
-
-   procedure Insert_Text_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View)
-   is
-      pragma Unreferenced (Buffer);
-      Pos    : Gtk_Text_Iter;
-      Length : constant Gint := Get_Int (Nth (Params, 3));
-      Dummy  : Boolean;
-      Start  : Integer;
-      Iter   : Gtk_Text_Iter;
-   begin
-      Get_Text_Iter (Nth (Params, 1), Pos);
-      Copy (Pos, Iter);
-      Start := Integer (Get_Line (Pos));
-      Backward_Chars (Pos, Length, Dummy);
-      Add_Lines (User, Start, Start - Integer (Get_Line (Pos)));
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Insert_Text_Handler;
-
-   -------------------
-   -- Get_Side_Info --
-   -------------------
-
-   function Get_Side_Info
-     (View   : access Source_View_Record'Class;
-      Line   : Positive;
-      Column : Positive) return Line_Info_Width is
-   begin
-      if View.Line_Info (Column).Stick_To_Data then
-         if Line > View.Real_Lines'Last
-           or else View.Real_Lines (Line) not in
-             View.Line_Info (Column).Column_Info'Range
-         then
-            return (null, -1);
-         else
-            return View.Line_Info (Column).Column_Info
-              (View.Real_Lines (Line));
-         end if;
-      else
-         if Line > View.Line_Info (Column).Column_Info'Last then
-            return (null, 0);
-         else
-            return View.Line_Info (Column).Column_Info (Line);
-         end if;
-      end if;
-   end Get_Side_Info;
-
    ---------------------
    -- Expose_Event_Cb --
    ---------------------
@@ -428,6 +342,10 @@ package body Src_Editor_View is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
+
+      Line_Info  : constant Line_Info_Display_Array_Access :=
+        Get_Line_Info (Buffer);
+      Real_Lines : Natural_Array_Access := Get_Real_Lines (Buffer);
    begin
       --  If the event applies to the left border window, then redraw
       --  the side window information.
@@ -458,15 +376,17 @@ package body Src_Editor_View is
             Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
             Bottom_Line := Natural (Get_Line (Iter) + 1);
 
-            if View.Real_Lines'Last < Bottom_Line then
+            if Real_Lines'Last < Bottom_Line then
                declare
-                  A : constant Natural_Array := View.Real_Lines.all;
+                  A : constant Natural_Array := Real_Lines.all;
                begin
-                  Unchecked_Free (View.Real_Lines);
-                  View.Real_Lines := new Natural_Array (1 .. Bottom_Line * 2);
-                  View.Real_Lines (A'Range) := A;
-                  View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
+                  Unchecked_Free (Real_Lines);
+                  Real_Lines := new Natural_Array (1 .. Bottom_Line * 2);
+                  Real_Lines (A'Range) := A;
+                  Real_Lines (A'Last + 1 .. Real_Lines'Last)
                     := (others => 0);
+                  Set_Real_Lines
+                    (Source_Buffer (Get_Buffer (View)), Real_Lines);
                end;
             end if;
 
@@ -480,8 +400,8 @@ package body Src_Editor_View is
 
             Find_Top_Line :
             while Top_Line <= Bottom_Line loop
-               for J in View.Line_Info'Range loop
-                  if View.Line_Info (J).Every_Line then
+               for J in Line_Info'Range loop
+                  if Line_Info (J).Every_Line then
                      Info := Get_Side_Info (View, Top_Line, J);
 
                      if Info.Width = 0 then
@@ -495,8 +415,8 @@ package body Src_Editor_View is
 
             Find_Bottom_Line :
             while Bottom_Line >= Top_Line loop
-               for J in View.Line_Info'Range loop
-                  if View.Line_Info (J).Every_Line then
+               for J in Line_Info'Range loop
+                  if Line_Info (J).Every_Line then
                      Info := Get_Side_Info (View, Bottom_Line, J);
 
                      if Info.Width = 0 then
@@ -632,10 +552,6 @@ package body Src_Editor_View is
 
       pragma Assert (Buffer /= null);
 
-      View.Line_Info := new Line_Info_Display_Array (1 .. 0);
-      View.Real_Lines := new Natural_Array (1 .. 1);
-      View.Real_Lines (1) := 0;
-
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
@@ -670,18 +586,14 @@ package body Src_Editor_View is
          After => False);
 
       Source_Buffer_Callback.Connect
-        (Buffer, "insert_text",
-         Cb        => Insert_Text_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
-      Source_Buffer_Callback.Connect
-        (Buffer, "delete_range",
-         Cb        => Delete_Range_Handler'Access,
-         User_Data => Source_View (View),
-         After     => False);
-      Source_Buffer_Callback.Connect
         (Buffer, "cursor_position_changed",
          Cb        => Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "side_column_changed",
+         Cb        => Side_Columns_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
@@ -727,6 +639,7 @@ package body Src_Editor_View is
       Get_Geometry (Win, X, Y, W, H, D);
       Clear_Area_E (Win, X, Y, W, H);
 
+      View.Connect_Expose_Id := 0;
       return False;
    end Connect_Expose;
 
@@ -753,32 +666,36 @@ package body Src_Editor_View is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Kernel);
-      View : Source_View := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
       File : constant String := Get_String (Nth (Args, 1));
 
       Max : Natural := 1;
+
+      Real_Lines : Natural_Array_Access :=
+        Get_Real_Lines (Source_Buffer (Get_Buffer (View)));
    begin
       if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then
 
          --  The file corresponding to the view was saved:
          --  resynchronize the real lines with the original lines.
 
-         for J in View.Real_Lines'Range loop
-            if View.Real_Lines (J) /= 0 then
+         for J in Real_Lines'Range loop
+            if Real_Lines (J) /= 0 then
                Max := J;
             end if;
          end loop;
 
-         Unchecked_Free (View.Real_Lines);
-         View.Real_Lines := new Natural_Array (1 .. Max * 2);
+         Unchecked_Free (Real_Lines);
+         Real_Lines := new Natural_Array (1 .. Max * 2);
 
          for J in 1 .. Max loop
-            View.Real_Lines (J) := J;
+            Real_Lines (J) := J;
          end loop;
 
-         View.Real_Lines (Max + 1 .. Max * 2) := (others => 0);
-         View.Original_Lines_Number := Max;
-
+         Real_Lines (Max + 1 .. Max * 2) := (others => 0);
+--           View.Original_Lines_Number := Max;
+--  ????
+         Set_Real_Lines (Source_Buffer (Get_Buffer (View)), Real_Lines);
          Redraw_Columns (View);
       end if;
    exception
@@ -915,6 +832,8 @@ package body Src_Editor_View is
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
+      Line_Info  : constant Line_Info_Display_Array_Access :=
+        Get_Line_Info (Buffer);
    begin
       External_End_Action (Buffer);
 
@@ -949,10 +868,10 @@ package body Src_Editor_View is
             Line := Natural (Get_Line (Iter)) + 1;
 
             --  Find the column number.
-            for J in View.Line_Info'Range loop
-               if View.Line_Info (J).Starting_X <= Natural (Button_X)
+            for J in Line_Info'Range loop
+               if Line_Info (J).Starting_X <= Natural (Button_X)
                  and then Natural (Button_X)
-                 <= View.Line_Info (J).Starting_X + View.Line_Info (J).Width
+                 <= Line_Info (J).Starting_X + Line_Info (J).Width
                then
                   Column_Index := J;
                   exit;
@@ -1392,67 +1311,12 @@ package body Src_Editor_View is
          return False;
    end Key_Press_Event_Cb;
 
-   ------------------------
-   -- Insert_At_Position --
-   ------------------------
-
-   procedure Insert_At_Position
-     (View   : access Source_View_Record;
-      Info   : Line_Information_Record;
-      Column : Integer;
-      Line   : Integer;
-      Width  : Integer) is
-   begin
-      if Line not in View.Real_Lines'Range then
-         declare
-            A : constant Natural_Array := View.Real_Lines.all;
-         begin
-            Unchecked_Free (View.Real_Lines);
-            View.Real_Lines := new Natural_Array
-              (1 .. Line * 2);
-
-            View.Real_Lines (A'Range) := A;
-            View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last) :=
-              (others => 0);
-         end;
-      end if;
-
-      --  If needed, increase the size of the target array
-
-      if (not View.Line_Info (Column).Stick_To_Data)
-        and then Line > View.Line_Info (Column).Column_Info'Last
-      then
-         declare
-            A : Line_Info_Width_Array (1 .. Line * 2);
-         begin
-            A (1 .. View.Line_Info (Column).Column_Info'Last) :=
-              View.Line_Info (Column).Column_Info.all;
-            View.Line_Info (Column).Column_Info :=
-              new Line_Info_Width_Array'(A);
-         end;
-      end if;
-
-      --  Insert the data in the array
-
-      if not (View.Line_Info (Column).Stick_To_Data
-              and then Line > View.Original_Lines_Number)
-      then
-         if View.Line_Info (Column).Column_Info (Line).Info /= null then
-            Free (View.Line_Info (Column).Column_Info (Line));
-         end if;
-
-         View.Line_Info (Column).Column_Info (Line) :=
-           Line_Info_Width'(new Line_Information_Record'(Info), Width);
-      end if;
-   end Insert_At_Position;
-
    --------------------
    -- Redraw_Columns --
    --------------------
 
    procedure Redraw_Columns (View : access Source_View_Record'Class) is
-      Left_Window : constant Gdk.Window.Gdk_Window :=
-        Get_Window (View, Text_Window_Left);
+      Left_Window : Gdk.Window.Gdk_Window;
 
       Top_In_Buffer              : Gint;
       Bottom_In_Buffer           : Gint;
@@ -1468,11 +1332,25 @@ package body Src_Editor_View is
       Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
       Layout                     : Pango_Layout;
 
-   begin
-      if Left_Window = null then
-         return;
-      end if;
 
+      Line_Info  : constant Line_Info_Display_Array_Access :=
+        Get_Line_Info (Source_Buffer (Get_Buffer (View)));
+
+      Total_Width : Gint;
+   begin
+      --  ??? The following could be attached to a signal such as
+      --  "side_info_column_changed" for better efficiency.
+
+      Total_Width := 2;
+
+      for J in Line_Info'Range loop
+         Total_Width := Total_Width + Gint (Line_Info (J).Width) + 2;
+      end loop;
+
+      Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
+
+      --  Create the graphical elements.
+      Left_Window := Get_Window (View, Text_Window_Left);
       Layout := Create_Pango_Layout (View);
       Set_Font_Description (Layout, View.Pango_Font);
 
@@ -1510,7 +1388,7 @@ package body Src_Editor_View is
          --  And finally add the font height (ascent + descent) to get
          --  the Y coordinates of the line base
 
-         for J in View.Line_Info'Range loop
+         for J in Line_Info'Range loop
             Data := Get_Side_Info (View, Current_Line, J);
 
             if Data.Info /= null then
@@ -1519,10 +1397,9 @@ package body Src_Editor_View is
                   Draw_Layout
                     (Drawable => Buffer,
                      GC       => View.Side_Column_GC,
-                     X        =>  Gint (View.Line_Info (J).Starting_X
-                                 + View.Line_Info (J).Width
-                                 - Data.Width
-                                 - 2),
+                     X        =>  Gint (Line_Info (J).Starting_X
+                                 + Line_Info (J).Width
+                                 - Data.Width),
                      Y        => Y_Pix_In_Window,
                      Layout   => Layout);
                end if;
@@ -1534,10 +1411,9 @@ package body Src_Editor_View is
                      Gc       => View.Side_Column_GC,
                      Src_X    => 0,
                      Src_Y    => 0,
-                     Dest_X   => Gint (View.Line_Info (J).Starting_X
-                                       + View.Line_Info (J).Width
-                                       - Data.Width
-                                       - 2),
+                     Dest_X   => Gint (Line_Info (J).Starting_X
+                                       + Line_Info (J).Width
+                                       - Data.Width),
                      Dest_Y   => Y_Pix_In_Window,
                      Width    => -1,
                      Height   => -1);
@@ -1565,318 +1441,5 @@ package body Src_Editor_View is
 
       Gdk.Pixmap.Unref (Buffer);
    end Redraw_Columns;
-
-   --------------------------
-   -- Add_File_Information --
-   --------------------------
-
-   procedure Add_File_Information
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Info       : Glide_Kernel.Modules.Line_Information_Data)
-   is
-      Column : Integer;
-      Buffer : Gint;
-      Height : Gint;
-      Width  : Gint := -1;
-      Widths : array (Info'Range) of Gint;
-      Layout : Pango_Layout;
-
-   begin
-      Layout := Create_Pango_Layout (View);
-      Set_Font_Description (Layout, View.Pango_Font);
-
-      --  Compute the maximum width of the items to add.
-      --  ??? Might be expensive, Why don't we do it directly in
-      --  Redraw_Columns, which is called in the end anyway...
-      for J in Info'Range loop
-         Widths (J) := -1;
-         if Info (J).Text /= null then
-            Set_Text (Layout, String'(Info (J).Text.all));
-            Get_Pixel_Size (Layout, Buffer, Height);
-
-            if Buffer = 0 then
-               Buffer := 1;
-            end if;
-
-            Widths (J) := Buffer;
-
-            if Buffer > Width then
-               Width := Buffer;
-            end if;
-         end if;
-
-         if Info (J).Image /= Null_Pixbuf then
-            Buffer := Get_Width (Info (J).Image);
-
-            if Buffer > Width then
-               Widths (J) := Buffer;
-               Width := Buffer;
-            end if;
-         end if;
-      end loop;
-
-      --  Get the column that corresponds to Identifier,
-      --  create it if necessary.
-      Get_Column_For_Identifier
-        (View,
-         Identifier,
-         Integer (Width),
-         Column);
-
-      --  Update the stored data.
-      for J in Info'Range loop
-         Insert_At_Position
-           (View, Info (J), Column, J, Integer (Widths (J)));
-      end loop;
-
-      --  If some of the data was in the display range, draw it.
-
-      if not (Info'Last < View.Top_Line
-              or else Info'First > View.Bottom_Line)
-      then
-         Redraw_Columns (View);
-      end if;
-
-      Unref (Layout);
-   end Add_File_Information;
-
-   ------------------------------------
-   -- Create_Line_Information_Column --
-   ------------------------------------
-
-   procedure Create_Line_Information_Column
-     (View          : access Source_View_Record;
-      Identifier    : String;
-      Stick_To_Data : Boolean;
-      Every_Line    : Boolean)
-   is
-      Col : Integer;
-   begin
-      Get_Column_For_Identifier
-        (View, Identifier, -1, Col);
-      View.Line_Info (Col).Stick_To_Data := Stick_To_Data;
-      View.Line_Info (Col).Every_Line    := Every_Line;
-   end Create_Line_Information_Column;
-
-   ------------------------------------
-   -- Remove_Line_Information_Column --
-   ------------------------------------
-
-   procedure Remove_Line_Information_Column
-     (View   : access Source_View_Record'Class;
-      Column : Integer)
-   is
-      Width : Integer;
-
-      procedure Free is new Unchecked_Deallocation
-        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
-      procedure Free is new Unchecked_Deallocation
-        (Line_Info_Display_Record, Line_Info_Display_Access);
-   begin
-      Width := View.Line_Info (Column).Width;
-
-      for J in View.Line_Info (Column).Column_Info'Range loop
-         Free (View.Line_Info (Column).Column_Info (J));
-      end loop;
-
-      Free (View.Line_Info (Column).Identifier);
-      Free (View.Line_Info (Column).Column_Info);
-      Free (View.Line_Info (Column));
-
-      declare
-         A : Line_Info_Display_Array
-           (View.Line_Info.all'First .. View.Line_Info.all'Last - 1);
-      begin
-         A (View.Line_Info.all'First .. Column - 1) :=
-           View.Line_Info (View.Line_Info.all'First .. Column - 1);
-         A (Column .. View.Line_Info.all'Last - 1) :=
-           View.Line_Info (Column + 1 .. View.Line_Info.all'Last);
-         Unchecked_Free (View.Line_Info);
-         View.Line_Info := new Line_Info_Display_Array'(A);
-      end;
-
-      for J in Column .. View.Line_Info.all'Last loop
-         View.Line_Info (J).Starting_X :=
-           View.Line_Info (J).Starting_X - Width - 2;
-      end loop;
-
-      View.Total_Column_Width := View.Total_Column_Width - Width - 2;
-      Set_Border_Window_Size
-        (View, Enums.Text_Window_Left, Gint (View.Total_Column_Width));
-   end Remove_Line_Information_Column;
-
-   ------------------------------------
-   -- Remove_Line_Information_Column --
-   ------------------------------------
-
-   procedure Remove_Line_Information_Column
-     (View       : access Source_View_Record;
-      Identifier : String)
-   is
-      Col : Integer;
-   begin
-      Get_Column_For_Identifier (View, Identifier, -1, Col);
-      Remove_Line_Information_Column (View, Col);
-
-      Redraw_Columns (View);
-   end Remove_Line_Information_Column;
-
-   -------------------------------
-   -- Get_Column_For_Identifier --
-   -------------------------------
-
-   procedure Get_Column_For_Identifier
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Width      : Integer;
-      Column     : out Integer) is
-   begin
-      --  Browse through existing columns and try to match Identifier
-
-      for J in View.Line_Info'Range loop
-         if View.Line_Info (J).Identifier.all = Identifier then
-            Column := J;
-
-            --  Set the new width of the column
-
-            if View.Line_Info (J).Width < Width then
-               for K in (J + 1) .. View.Line_Info.all'Last loop
-                  View.Line_Info (K).Starting_X :=
-                    View.Line_Info (K).Starting_X + Width
-                    - View.Line_Info (J).Width;
-               end loop;
-
-               View.Total_Column_Width :=
-                 View.Total_Column_Width + Width
-                 - View.Line_Info (J).Width;
-
-               View.Line_Info (J).Width := Width;
-
-               Set_Border_Window_Size
-                 (View, Enums.Text_Window_Left,
-                  Gint (View.Total_Column_Width));
-            end if;
-
-            return;
-         end if;
-      end loop;
-
-      --  If we reach this point, that means no column was found that
-      --  corresponds to Identifier. Therefore we create one.
-
-      declare
-         A : Line_Info_Display_Array
-           (View.Line_Info.all'First .. View.Line_Info.all'Last + 1);
-         New_Column : Line_Info_Width_Array
-           (1 .. View.Original_Lines_Number);
-      begin
-         A (View.Line_Info'First .. View.Line_Info'Last) := View.Line_Info.all;
-
-         A (A'Last) := new Line_Info_Display_Record'
-           (Identifier  => new String'(Identifier),
-            Starting_X  => View.Total_Column_Width + 2,
-            Width       => Width,
-            Column_Info => new Line_Info_Width_Array'(New_Column),
-            Stick_To_Data => False,
-            Every_Line    => False);
-         Unchecked_Free (View.Line_Info);
-         View.Line_Info := new Line_Info_Display_Array'(A);
-
-         Column := View.Line_Info.all'Last;
-
-         View.Total_Column_Width := View.Total_Column_Width + Width + 2;
-
-         Set_Border_Window_Size
-           (View, Enums.Text_Window_Left,
-            Gint (View.Total_Column_Width));
-      end;
-   end Get_Column_For_Identifier;
-
-   ---------------
-   -- Add_Lines --
-   ---------------
-
-   procedure Add_Lines
-     (View   : access Source_View_Record'Class;
-      Start  : Integer;
-      Number : Integer) is
-   begin
-      if Number <= 0 then
-         return;
-      end if;
-
-      if not View.Original_Text_Inserted then
-         View.Original_Lines_Number := Number;
-
-         if View.Original_Lines_Number > View.Real_Lines'Last then
-            declare
-               A : constant Natural_Array := View.Real_Lines.all;
-            begin
-               View.Real_Lines := new Natural_Array
-                 (1 .. Number * 2);
-               View.Real_Lines (A'Range) := A;
-               View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
-                 := (others => 0);
-            end;
-         end if;
-
-         for J in 1 .. Number loop
-            View.Real_Lines (J) := J;
-         end loop;
-
-         View.Original_Text_Inserted := True;
-
-      else
-         --  Shift down the existing lines.
-
-         for J in reverse Start + 1 .. View.Real_Lines'Last loop
-            View.Real_Lines (J) := View.Real_Lines (J - Number);
-         end loop;
-
-         --  Reset the newly inserted lines.
-
-         View.Real_Lines
-           (Integer'Max (Start - Number + 1, View.Real_Lines'First) .. Start)
-           := (others => 0);
-      end if;
-   end Add_Lines;
-
-   ------------------
-   -- Remove_Lines --
-   ------------------
-
-   procedure Remove_Lines
-     (View       : access Source_View_Record'Class;
-      Start_Line : Integer;
-      End_Line   : Integer) is
-   begin
-      if End_Line <= Start_Line then
-         return;
-      end if;
-
-      View.Real_Lines
-        (Start_Line + 1 .. View.Real_Lines'Last + Start_Line - End_Line) :=
-        View.Real_Lines (End_Line + 1 .. View.Real_Lines'Last);
-
-      View.Real_Lines
-        (View.Real_Lines'Last + Start_Line - End_Line + 1
-           .. View.Real_Lines'Last) := (others => 0);
-   end Remove_Lines;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Line_Info_Width) is
-      procedure Free is new Unchecked_Deallocation
-        (Line_Information_Record, Line_Information_Access);
-   begin
-      if X.Info /= null then
-         Free (X.Info.all);
-      end if;
-
-      Free (X.Info);
-   end Free;
 
 end Src_Editor_View;

@@ -32,12 +32,8 @@ with Pango.Font;
 with Gtk.Text_View;
 with Gtk.Main;
 
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel;
 with Src_Editor_Buffer;
-
-with Basic_Types; use Basic_Types;
-
-with Ada.Unchecked_Deallocation;
 
 package Src_Editor_View is
 
@@ -97,84 +93,15 @@ package Src_Editor_View is
    --  a line), then Line and Column are set to the closest matching position,
    --  and Out_Of_Bounds is set to True.
 
-   procedure Create_Line_Information_Column
-     (View          : access Source_View_Record;
-      Identifier    : String;
-      Stick_To_Data : Boolean;
-      Every_Line    : Boolean);
-
-   procedure Remove_Line_Information_Column
-     (View       : access Source_View_Record;
-      Identifier : String);
-
-   procedure Add_File_Information
-     (View       : access Source_View_Record;
-      Identifier : String;
-      Info       : Glide_Kernel.Modules.Line_Information_Data);
-   --  Add the line information to the view.
-   --  User must not free Info.
-
    procedure Delete (View : access Source_View_Record);
    --  Free memory associated to View.
 
 private
 
-   type Line_Information_Access is access Line_Information_Record;
-
-   type Line_Info_Width is record
-      Info  : Line_Information_Access;
-      Width : Integer := 0;
-   end record;
-
-   type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
-   type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
-
-   type Position is (Left, Right);
-
-   type Line_Info_Display_Record is record
-      Identifier    : String_Access;
-      --  This identifies the column.
-
-      Starting_X    : Integer;
-      --  The pixel distance between the left border of the column and
-      --  the left border of the left window.
-
-      Width         : Integer;
-      --  The pixel width of the column.
-
-      Column_Info   : Line_Info_Width_Array_Access;
-      --  The information that should be displayed in the column.
-
-      Stick_To_Data : Boolean;
-      --  If Stick_To_Data is True, then the column contains information
-      --  that are relative to the file as it was opened in the first
-      --  place: when you insert or remove lines, the information should
-      --  stick to the lines they are associated with.
-      --  If Stick_To_Data is False, then the information "sticks" to
-      --  the line numbers.
-
-      Every_Line : Boolean;
-      --  If Every_Line is True, then there must be data at every line in
-      --  this column.
-   end record;
-   type Line_Info_Display_Access is access Line_Info_Display_Record;
-
-   type Line_Info_Display_Array is array (Natural range <>)
-     of Line_Info_Display_Access;
-
-   type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Info_Display_Array, Line_Info_Display_Array_Access);
-
-   type Natural_Array is array (Natural range <>) of Natural;
-   type Natural_Array_Access is access Natural_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Natural_Array, Natural_Array_Access);
-
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
-      Saved_Cursor_Line   : Gint;
-      Saved_Cursor_Column : Gint;
+      Saved_Cursor_Line   : Gint := 1;
+      Saved_Cursor_Column : Gint := 1;
 
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
@@ -182,22 +109,6 @@ private
 
       Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
-
-      Line_Info           : Line_Info_Display_Array_Access;
-      --  The information that should be displayed in the left window.
-
-      Total_Column_Width  : Natural := 3;
-      --  Width of the Left Window, in pixels.
-
-      Original_Lines_Number : Natural := 1;
-      --  The number of lines in the file on disk.
-
-      Real_Lines            : Natural_Array_Access;
-      --  This array associates original line numbers (ie lines that were
-      --  in the view the last time it was saved) with lines in the current
-      --  view.
-
-      Original_Text_Inserted : Boolean := False;
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
       --  Handler ID for the Connect_Expose idle callback.
