@@ -1468,8 +1468,7 @@ package body VCS_View_Pkg is
    ------------------------
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle)
-     return String_List.List
+     (Kernel : Kernel_Handle) return String_List.List
    is
       Result         : String_List.List;
       Focused_Child  : constant MDI_Child :=
@@ -1483,8 +1482,15 @@ package body VCS_View_Pkg is
       then
          Result := Get_Selected_Files
            (VCS_View_Access (Get_Widget (Explorer_Child)));
-      elsif Get_Current_File (Kernel) /= "" then
-         String_List.Append (Result, Get_Current_File (Kernel));
+      else
+         declare
+            File : constant String :=
+              Get_Current_File (Get_Current_Context (Kernel));
+         begin
+            if File /= "" then
+               String_List.Append (Result, File);
+            end if;
+         end;
       end if;
 
       return Result;
@@ -1495,12 +1501,9 @@ package body VCS_View_Pkg is
    ---------------------
 
    function Get_Current_Dir
-     (Kernel : access Kernel_Handle_Record'Class)
-     return String
+     (Context : Selection_Context_Access) return String
    is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-      File    : File_Selection_Context_Access := null;
+      File : File_Selection_Context_Access;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
@@ -1513,6 +1516,7 @@ package body VCS_View_Pkg is
          else
             Trace (Me, "No directory");
          end if;
+
       elsif Context = null then
          Trace (Me, "null context");
       else
@@ -1526,15 +1530,16 @@ package body VCS_View_Pkg is
    -- Get_Current_File --
    ----------------------
 
-   function Get_Current_File (Kernel : Kernel_Handle) return String is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-      File    : File_Selection_Context_Access;
+   function Get_Current_File
+     (Context : Selection_Context_Access) return String
+   is
+      File : File_Selection_Context_Access;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
       then
          File := File_Selection_Context_Access (Context);
+
          if Has_File_Information (File) then
             return Directory_Information (File) & File_Information (File);
          end if;
