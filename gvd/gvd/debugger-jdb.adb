@@ -798,7 +798,7 @@ package body Debugger.Jdb is
       PD       : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      pragma Unreferenced (Debugger, Pd, Mode);
+      pragma Unreferenced (Debugger, PD, Mode);
    begin
       null;
    end PD_Switch;
