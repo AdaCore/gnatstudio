@@ -31,6 +31,7 @@ with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
@@ -56,7 +57,8 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 
-with Traces; use Traces;
+with Basic_Types;               use Basic_Types;
+with Traces;                    use Traces;
 
 package body VCS_View_Pkg is
 
@@ -117,14 +119,14 @@ package body VCS_View_Pkg is
    procedure Refresh (Explorer : VCS_View_Access);
    --  Redraw the files in the VCS Explorer.
 
-   procedure Create_Model (VCS_View : access VCS_View_Record'Class);
+   procedure Create_Model (VCS_View : access VCS_Page_Record'Class);
    --  Creates the underlying tree model for VCS_View.
 
-   procedure Set_Column_Types (Explorer : access VCS_View_Record'Class);
+   procedure Set_Column_Types (Explorer : access VCS_Page_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view.
 
    procedure Fill_Info
-     (Explorer      : access VCS_View_Record'Class;
+     (Explorer      : access VCS_Page_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
       Success       : out Boolean);
@@ -133,11 +135,16 @@ package body VCS_View_Pkg is
    --  Success tells whether the information has been filled or not.
 
    function Get_Iter_From_Name
-     (Explorer : access VCS_View_Record'Class;
+     (Explorer : access VCS_Page_Record'Class;
       Name     : String) return Gtk_Tree_Iter;
    --  Return the Iter associated with the given name.
    --  Name is a base file name.
    --  Return Null_Iter if no such iter was found.
+
+   function Get_Page_For_Identifier
+     (Explorer   : access VCS_View_Record'Class;
+      Identifier : VCS_Access) return VCS_Page_Access;
+   --  Return the page relative to Identifier. Create it if necessary.
 
    ---------------
    -- Callbacks --
@@ -170,11 +177,20 @@ package body VCS_View_Pkg is
    -----------
 
    procedure Clear (Explorer : VCS_View_Access) is
+      Page   : VCS_Page_Access;
    begin
       if Explorer /= null then
-         Scroll_To_Point (Explorer.Tree, 0, 0);
-         Clear (Explorer.Model);
-         File_Status_List.Free (Explorer.Stored_Status);
+         for J in 1 .. Explorer.Number_Of_Pages loop
+            Page := VCS_Page_Access
+              (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
+
+            if Page.Shown then
+               Scroll_To_Point (Page.Tree, 0, 0);
+            end if;
+
+            Clear (Page.Model);
+            File_Status_List.Free (Page.Stored_Status);
+         end loop;
       end if;
    end Clear;
 
@@ -188,9 +204,15 @@ package body VCS_View_Pkg is
    is
       pragma Unreferenced (Event);
       The_View : VCS_View_Access := VCS_View_Access (View);
+      Page     : VCS_Page_Access;
    begin
-      File_Status_List.Free (The_View.Stored_Status);
-      File_Status_List.Free (The_View.Cached_Status);
+      for J in 1 .. The_View.Number_Of_Pages loop
+         Page := VCS_Page_Access
+           (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
+
+         File_Status_List.Free (Page.Stored_Status);
+         File_Status_List.Free (Page.Cached_Status);
+      end loop;
 
       return False;
    end On_Delete;
@@ -205,32 +227,38 @@ package body VCS_View_Pkg is
       L        : List_Node;
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
+      Page     : VCS_Page_Access;
 
    begin
-      Scroll_To_Point (Explorer.Tree, 0, 0);
-      Clear (Explorer.Model);
+      Page := VCS_Page_Access
+        (Get_Nth_Page (Explorer.Notebook,
+                       Get_Current_Page (Explorer.Notebook)));
 
-      L := First (Explorer.Stored_Status);
+      Scroll_To_Point (Page.Tree, 0, 0);
+
+      Clear (Page.Model);
+
+      L := First (Page.Stored_Status);
 
       while L /= Null_Node loop
          if not (Explorer.Hide_Up_To_Date
-                 and then (Data (L).Status = Up_To_Date
-                           or else Data (L).Status = Unknown))
+                   and then (Data (L).Status = Up_To_Date
+                               or else Data (L).Status = Unknown))
            and then not (Explorer.Hide_Not_Registered
-                         and then Data (L).Status = Not_Registered)
+                           and then Data (L).Status = Not_Registered)
          then
-            Append (Explorer.Model, Iter, Null_Iter);
-            Fill_Info (Explorer, Iter, Data (L), Success);
+            Append (Page.Model, Iter, Null_Iter);
+            Fill_Info (Page, Iter, Data (L), Success);
 
             if not Success then
-               Remove (Explorer.Model, Iter);
+               Remove (Page.Model, Iter);
             end if;
          end if;
 
          L := Next (L);
       end loop;
 
-      Columns_Autosize (Explorer.Tree);
+      Columns_Autosize (Page.Tree);
    end Refresh;
 
    -------------------------
@@ -240,6 +268,7 @@ package body VCS_View_Pkg is
    procedure Display_File_Status
      (Kernel         : Kernel_Handle;
       Status         : File_Status_List.List;
+      VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False)
    is
@@ -251,6 +280,7 @@ package body VCS_View_Pkg is
       Cache_Temp    : List_Node;
       Status_Temp   : List_Node := First (Status);
       Found         : Boolean := False;
+      Page          : VCS_Page_Access;
 
    begin
       if Child = null then
@@ -259,10 +289,12 @@ package body VCS_View_Pkg is
          Explorer := VCS_View_Access (Get_Widget (Child));
       end if;
 
+      Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
+
       Push_State (Kernel, Busy);
 
       while Status_Temp /= Null_Node loop
-         Cache_Temp := First (Explorer.Cached_Status);
+         Cache_Temp := First (Page.Cached_Status);
          Found      := False;
 
          while not Found
@@ -292,13 +324,13 @@ package body VCS_View_Pkg is
          --  add the information to the cache.
 
          if not Found then
-            Prepend (Explorer.Cached_Status,
+            Prepend (Page.Cached_Status,
                      Copy_File_Status (Data (Status_Temp)));
-            Cache_Temp := First (Explorer.Cached_Status);
+            Cache_Temp := First (Page.Cached_Status);
          end if;
 
          --  The info that we want to display is now in Data (Cache_Temp),
-         --  if it already exists in Explorer.Stored_Status, we simply modify
+         --  if it already exists in Page.Stored_Status, we simply modify
          --  the element, otherwise we add it to the list.
 
          declare
@@ -307,7 +339,7 @@ package body VCS_View_Pkg is
             New_File_Name      : constant String :=
               String_List.Head (New_Status.File_Name);
             Temp_Stored_Status : File_Status_List.List_Node :=
-              File_Status_List.First (Explorer.Stored_Status);
+              File_Status_List.First (Page.Stored_Status);
             Iter               : Gtk_Tree_Iter := Null_Iter;
             Success            : Boolean;
 
@@ -323,7 +355,7 @@ package body VCS_View_Pkg is
                   Found := True;
                   Set_Data (Temp_Stored_Status, New_Status);
                   Iter := Get_Iter_From_Name
-                    (Explorer, String_List.Head (New_Status.File_Name));
+                    (Page, String_List.Head (New_Status.File_Name));
                end if;
 
                Temp_Stored_Status := Next (Temp_Stored_Status);
@@ -332,7 +364,7 @@ package body VCS_View_Pkg is
             if not Found
               and then Force_Display
             then
-               Prepend (Explorer.Stored_Status, New_Status);
+               Prepend (Page.Stored_Status, New_Status);
             end if;
 
             if not (Explorer.Hide_Up_To_Date
@@ -344,15 +376,15 @@ package body VCS_View_Pkg is
                if Iter = Null_Iter
                  and then Force_Display
                then
-                  Append (Explorer.Model, Iter, Null_Iter);
+                  Append (Page.Model, Iter, Null_Iter);
                end if;
 
                if Iter /= Null_Iter then
-                  Fill_Info (Explorer, Iter, New_Status, Success);
+                  Fill_Info (Page, Iter, New_Status, Success);
                end if;
             else
                if Iter /= Null_Iter then
-                  Remove (Explorer.Model, Iter);
+                  Remove (Page.Model, Iter);
                end if;
             end if;
          end;
@@ -388,7 +420,7 @@ package body VCS_View_Pkg is
    ---------------
 
    procedure Fill_Info
-     (Explorer      : access VCS_View_Record'Class;
+     (Explorer      : access VCS_Page_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
       Success       : out Boolean) is
@@ -456,7 +488,7 @@ package body VCS_View_Pkg is
    ------------------------
 
    function Get_Iter_From_Name
-     (Explorer : access VCS_View_Record'Class;
+     (Explorer : access VCS_Page_Record'Class;
       Name     : String) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Explorer.Model);
@@ -480,6 +512,7 @@ package body VCS_View_Pkg is
      (Explorer : VCS_View_Access) return String_List.List
    is
       Result : String_List.List;
+      Page   : VCS_Page_Access;
 
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -494,10 +527,10 @@ package body VCS_View_Pkg is
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
          Data  : Explorer_Selection_Foreach.Data_Type_Access)
       is
-         pragma Unreferenced (Model, Path);
+         pragma Unreferenced (Model, Path, Data);
       begin
          String_List.Append
-           (Result, Get_String (Data.Model, Iter, Name_Column));
+           (Result, Get_String (Page.Model, Iter, Name_Column));
       end Add_Selected_Item;
 
    begin
@@ -505,8 +538,11 @@ package body VCS_View_Pkg is
          return Result;
       end if;
 
+      Page := VCS_Page_Access (Get_Nth_Page (Explorer.Notebook,
+                               Get_Current_Page (Explorer.Notebook)));
+
       Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Explorer.Tree),
+        (Get_Selection (Page.Tree),
          Add_Selected_Item'Unrestricted_Access,
          Explorer_Selection_Foreach.Data_Type_Access (Explorer));
       return Result;
@@ -529,7 +565,7 @@ package body VCS_View_Pkg is
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (Explorer : access VCS_View_Record'Class) is
+   procedure Set_Column_Types (Explorer : access VCS_Page_Record'Class) is
       Col         : Gtk_Tree_View_Column;
       Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
@@ -574,7 +610,7 @@ package body VCS_View_Pkg is
    --  Create_Model --
    -------------------
 
-   procedure Create_Model (VCS_View : access VCS_View_Record'Class) is
+   procedure Create_Model (VCS_View : access VCS_Page_Record'Class) is
    begin
       Gtk_New (VCS_View.Model, Columns_Types);
    end Create_Model;
@@ -637,11 +673,15 @@ package body VCS_View_Pkg is
       Files    : String_List.List;
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
+      Page     : VCS_Page_Access;
 
    begin
       if Get_Button (Event) = 1 then
          return False;
       end if;
+
+      Page := VCS_Page_Access (Get_Nth_Page (Explorer.Notebook,
+                               Get_Current_Page (Explorer.Notebook)));
 
       Gtk_New (Menu);
 
@@ -659,7 +699,7 @@ package body VCS_View_Pkg is
       begin
          Path := Gtk_New;
          Get_Path_At_Pos
-           (Explorer.Tree,
+           (Page.Tree,
             Gint (X),
             Gint (Y),
             Path,
@@ -669,16 +709,16 @@ package body VCS_View_Pkg is
             Row_Found);
 
          if Path /= null
-           and then not Path_Is_Selected (Get_Selection (Explorer.Tree), Path)
+           and then not Path_Is_Selected (Get_Selection (Page.Tree), Path)
          then
-            Unselect_All (Get_Selection (Explorer.Tree));
-            Select_Path (Get_Selection (Explorer.Tree), Path);
+            Unselect_All (Get_Selection (Page.Tree));
+            Select_Path (Get_Selection (Page.Tree), Path);
 
-            Iter := Get_Iter (Explorer.Model, Path);
+            Iter := Get_Iter (Page.Model, Path);
             Path_Free (Path);
 
             String_List.Append
-              (Files, Get_String (Explorer.Model, Iter, Name_Column));
+              (Files, Get_String (Page.Model, Iter, Name_Column));
          else
             Files := Get_Selected_Files (Explorer);
          end if;
@@ -738,9 +778,8 @@ package body VCS_View_Pkg is
       Kernel   : Kernel_Handle)
    is
       Vbox1           : Gtk_Vbox;
-      Hbox1           : Gtk_Hbox;
-      Scrolledwindow1 : Gtk_Scrolled_Window;
-      Selection       : Gtk_Tree_Selection;
+      VCS_List        : String_Array_Access;
+      Dummy_Page      : VCS_Page_Access;
 
    begin
       Init_Graphics;
@@ -751,29 +790,8 @@ package body VCS_View_Pkg is
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
 
-      Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (Vbox1, Hbox1, True, True, 3);
-
-      Gtk_New (Scrolledwindow1);
-      Set_Policy (Scrolledwindow1,
-                  Gtk.Enums.Policy_Automatic,
-                  Gtk.Enums.Policy_Automatic);
-      Pack_Start (Hbox1, Scrolledwindow1, True, True, 3);
-
-      Create_Model (VCS_View);
-
-      Gtk_New (VCS_View.Tree, VCS_View.Model);
-      Selection := Get_Selection (VCS_View.Tree);
-      Set_Mode (Selection, Gtk.Enums.Selection_Multiple);
-      Add (Scrolledwindow1, VCS_View.Tree);
-
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (VCS_View.Tree,
-         "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press'Access),
-         VCS_View,
-         After => False);
+      Gtk_New (VCS_View.Notebook);
+      Pack_Start (Vbox1, VCS_View.Notebook);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (VCS_View,
@@ -783,8 +801,79 @@ package body VCS_View_Pkg is
          VCS_View,
          After => False);
 
-      Set_Column_Types (VCS_View);
+      VCS_List := Get_VCS_List (Kernel);
+
+      for J in VCS_List'Range loop
+         Dummy_Page := Get_Page_For_Identifier
+           (VCS_View,
+            Get_VCS_From_Id (VCS_List (J).all));
+      end loop;
    end Initialize;
+
+   -----------------------------
+   -- Get_Page_For_Identifier --
+   -----------------------------
+
+   function Get_Page_For_Identifier
+     (Explorer   : access VCS_View_Record'Class;
+      Identifier : VCS_Access) return VCS_Page_Access
+   is
+      Page            : VCS_Page_Access;
+      Selection       : Gtk_Tree_Selection;
+      Scrolledwindow1 : Gtk_Scrolled_Window;
+      Label           : Gtk_Label;
+
+   begin
+      for J in 1 .. Explorer.Number_Of_Pages loop
+         Page := VCS_Page_Access
+           (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
+
+         if Page.Reference = Identifier then
+            return Page;
+         end if;
+      end loop;
+
+      --  If this point is reached, that means that no page containing
+      --  Identifier could be found, therefore we create it.
+
+      Explorer.Number_Of_Pages := Explorer.Number_Of_Pages + 1;
+
+      Page := new VCS_Page_Record;
+      Initialize_Hbox (Page);
+
+      Page.Reference := Identifier;
+
+      Create_Model (Page);
+
+      Gtk_New (Page.Tree, Page.Model);
+
+
+      Gtk_New (Scrolledwindow1);
+      Set_Policy (Scrolledwindow1,
+                  Gtk.Enums.Policy_Automatic,
+                  Gtk.Enums.Policy_Automatic);
+      Pack_Start (Page, Scrolledwindow1, True, True, 3);
+
+      Selection := Get_Selection (Page.Tree);
+      Set_Mode (Selection, Gtk.Enums.Selection_Multiple);
+      Add (Scrolledwindow1, Page.Tree);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Page.Tree,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Button_Press'Access),
+         Explorer,
+         After => False);
+
+      Set_Column_Types (Page);
+
+      Gtk_New (Label, Name (Identifier));
+
+      Append_Page (Explorer.Notebook, Page, Label);
+
+      return Page;
+   end Get_Page_For_Identifier;
 
    ------------------
    -- Get_Explorer --
@@ -801,6 +890,20 @@ package body VCS_View_Pkg is
          return VCS_View_Access (Get_Widget (Child));
       end if;
    end Get_Explorer;
+
+   ---------------------
+   -- Get_Current_Ref --
+   ---------------------
+
+   function Get_Current_Ref
+     (Explorer : access VCS_View_Record)
+     return VCS_Access
+   is
+      pragma Unreferenced (Explorer);
+   begin
+      return Get_VCS_From_Id ("cvs");
+      --  ??? this should be obtained from the current notebook.
+   end Get_Current_Ref;
 
    ------------------------
    -- Get_Selected_Files --

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 
@@ -31,25 +32,8 @@ with VCS;                      use VCS;
 
 package VCS_View_Pkg is
 
-   type VCS_View_Record;
+   type VCS_View_Record is new Gtk_Hbox_Record with private;
    type VCS_View_Access is access all VCS_View_Record'Class;
-
-   type VCS_View_Record is new Gtk_Hbox_Record with record
-      Tree   : Gtk_Tree_View;
-      Model  : Gtk_Tree_Store;
-
-      Kernel : Kernel_Handle;
-      --  Reference to the Glide kernel that launched the explorer, if any.
-
-      Hide_Up_To_Date : Boolean := False;
-      --  Whether up-to-date and unknown files should be hidden in the view.
-
-      Hide_Not_Registered : Boolean := False;
-      --  Whether files that are not registered should be hidden in the view.
-
-      Stored_Status   : File_Status_List.List;
-      Cached_Status   : File_Status_List.List;
-   end record;
 
    procedure Gtk_New
      (VCS_View : out VCS_View_Access;
@@ -67,6 +51,7 @@ package VCS_View_Pkg is
    procedure Display_File_Status
      (Kernel         : Kernel_Handle;
       Status         : File_Status_List.List;
+      VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
       Force_Display  : Boolean := False);
    --  Display Status in the explorer.
@@ -110,5 +95,41 @@ package VCS_View_Pkg is
 
    function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access;
    --  Return the vcs explorer, if created, null otherwise.
+
+   function Get_Current_Ref
+     (Explorer : access VCS_View_Record)
+     return VCS_Access;
+   --  Return the VCS reference currently being viewed in Explorer.
+
+private
+   type VCS_Page_Record is new Gtk_Hbox_Record with record
+      Reference : VCS_Access;
+
+      Tree   : Gtk_Tree_View;
+      Model  : Gtk_Tree_Store;
+
+      Stored_Status   : File_Status_List.List;
+      Cached_Status   : File_Status_List.List;
+
+      Shown : Boolean := False;
+   end record;
+   type VCS_Page_Access is access all VCS_Page_Record;
+
+   type VCS_View_Record is new Gtk_Hbox_Record with record
+      Kernel : Kernel_Handle;
+      --  Reference to the Glide kernel that launched the explorer, if any.
+
+      Notebook   : Gtk_Notebook;
+      --  The notebook containing the actual explorer pages.
+
+      Hide_Up_To_Date : Boolean := False;
+      --  Whether up-to-date and unknown files should be hidden in the view.
+
+      Hide_Not_Registered : Boolean := False;
+      --  Whether files that are not registered should be hidden in the view.
+
+      Number_Of_Pages : Integer := 0;
+      --  The number of pages in the notebook.
+   end record;
 
 end VCS_View_Pkg;
