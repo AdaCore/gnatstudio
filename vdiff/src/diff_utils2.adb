@@ -216,8 +216,8 @@ package body Diff_Utils2 is
    exception
       when Constraint_Error =>
          null;
-         --  parse error
-         --  unexpected exception
+         --  ??? parse error
+         --  ??? unexpected exception
    end Compute3_Occurrence;
 
    ----------
@@ -547,8 +547,7 @@ package body Diff_Utils2 is
                         end if;
                      end if;
                   end loop;
-                  --  ??? What does the following comment mean:
-                  --  ??? I think that not a conflict
+                  --  this case is not a conflict even if Location := 0
 
                when others =>
                   null;
@@ -676,7 +675,8 @@ package body Diff_Utils2 is
    procedure Free (Link : in out Diff_Head) is
       pragma Unreferenced (Link);
    begin
-      null; -- ???
+      null;
+      --  In the list of Diff_Head the memory is free manualy
    end Free;
 
    --------------
