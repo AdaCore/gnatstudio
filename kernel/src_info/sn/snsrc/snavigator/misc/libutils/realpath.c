@@ -85,6 +85,23 @@ realpath(path, resolved)
 	const char *path;
 	char *resolved;
 {
+#ifdef __MINGW32__
+  char *p;
+
+  if (path [strlen (path) - 1] == ':')
+    {
+      strcpy (resolved, path);
+    }
+  else
+    {
+      _fullpath (resolved, path, MAXPATHLEN);
+      for (p = resolved; *p; p++)
+        if (*p == '/')
+          *p = '\\';
+    }
+
+  return resolved;
+#else
 	struct stat sb;
 	int fd, n, rootd, serrno;
 	char *p, *q, wbuf[MAXPATHLEN];
@@ -181,5 +198,6 @@ err1:	serrno = errno;
 err2:	(void)close(fd);
 	errno = serrno;
 	return (NULL);
+#endif
 }
 
