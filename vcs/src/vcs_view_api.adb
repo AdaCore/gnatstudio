@@ -389,9 +389,14 @@ package body VCS_View_API is
 
    procedure Get_Status
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Get_Status (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Get_Status (Widget, Context);
+      end if;
    end Get_Status;
 
    ---------
@@ -400,9 +405,14 @@ package body VCS_View_API is
 
    procedure Add
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Add (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Add (Widget, Context);
+      end if;
    end Add;
 
    ------------
@@ -411,9 +421,14 @@ package body VCS_View_API is
 
    procedure Remove
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Remove (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Remove (Widget, Context);
+      end if;
    end Remove;
 
    ------------
@@ -437,10 +452,16 @@ package body VCS_View_API is
 
    procedure Commit
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
       --  ??? Is this the behaviour we want ?
-      On_Menu_Edit_Log (Widget, Get_Current_Context (Kernel));
+
+      if Context /= null then
+         On_Menu_Edit_Log (Widget, Context);
+      end if;
    end Commit;
 
    --------------------
@@ -449,9 +470,14 @@ package body VCS_View_API is
 
    procedure View_Head_Diff
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Diff (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Diff (Widget, Context);
+      end if;
    end View_Head_Diff;
 
    --------------------
@@ -460,9 +486,14 @@ package body VCS_View_API is
 
    procedure View_Work_Diff
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Diff_Local (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Diff_Local (Widget, Context);
+      end if;
    end View_Work_Diff;
 
    -------------------------
@@ -471,9 +502,14 @@ package body VCS_View_API is
 
    procedure View_Work_Head_Diff
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Diff_Working_Head (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Diff_Working_Head (Widget, Context);
+      end if;
    end View_Work_Head_Diff;
 
    --------------
@@ -484,8 +520,12 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_View_Log (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_View_Log (Widget, Context);
+      end if;
    end View_Log;
 
    -------------------
@@ -494,9 +534,14 @@ package body VCS_View_API is
 
    procedure View_Annotate
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Annotate (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Annotate (Widget, Context);
+      end if;
    end View_Annotate;
 
    ------------------------
@@ -505,9 +550,14 @@ package body VCS_View_API is
 
    procedure Remove_Annotations
      (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle) is
+      Kernel  : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Remove_Annotate (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Remove_Annotate (Widget, Context);
+      end if;
    end Remove_Annotations;
 
    --------------
@@ -516,9 +566,14 @@ package body VCS_View_API is
 
    procedure Edit_Log
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Context :=
+        Get_Current_Context (Kernel);
    begin
-      On_Menu_Edit_Log (Widget, Get_Current_Context (Kernel));
+      if Context /= null then
+         On_Menu_Edit_Log (Widget, Context);
+      end if;
    end Edit_Log;
 
    -------------------------
@@ -845,10 +900,10 @@ package body VCS_View_API is
      (Explorer : VCS_View_Access;
       Context  : Selection_Context_Access)
    is
-      File         : File_Selection_Context_Access;
-      Status       : File_Status_List.List;
-      Dirs         : String_List.List;
-      Ref          : VCS_Access;
+      File   : File_Selection_Context_Access;
+      Status : File_Status_List.List;
+      Dirs   : String_List.List;
+      Ref    : VCS_Access;
 
       use String_List;
    begin
@@ -857,10 +912,11 @@ package body VCS_View_API is
       end if;
 
       if Context = null then
-         Query_Project_Files (Explorer,
-                              Get_Kernel (Explorer),
-                              Get_Project_View (Get_Kernel (Explorer)),
-                              False, False);
+         Query_Project_Files
+           (Explorer,
+            Get_Kernel (Explorer),
+            Get_Project_View (Get_Kernel (Explorer)),
+            False, False);
          return;
       end if;
 
@@ -885,16 +941,18 @@ package body VCS_View_API is
          elsif Has_Project_Information (File)
            and then not Has_Directory_Information (File)
          then
-            Query_Project_Files (Explorer,
-                                 Get_Kernel (Context),
-                                 Project_Information (File),
-                                 False, False);
+            Query_Project_Files
+              (Explorer,
+               Get_Kernel (Context),
+               Project_Information (File),
+               False, False);
 
          else
-            Query_Project_Files (Explorer,
-                                 Get_Kernel (Context),
-                                 Get_Project_View (Get_Kernel (Context)),
-                                 False, False);
+            Query_Project_Files
+              (Explorer,
+               Get_Kernel (Context),
+               Get_Project_View (Get_Kernel (Context)),
+               False, False);
          end if;
       end if;
    end Change_Context;
@@ -908,9 +966,9 @@ package body VCS_View_API is
       Args   : Gtk_Args)
    is
       pragma Unreferenced (Object);
-      Context      : constant Selection_Context_Access :=
+      Context  : constant Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
-      Explorer     : constant VCS_View_Access :=
+      Explorer : constant VCS_View_Access :=
         Get_Explorer (Get_Kernel (Context), False);
 
    begin
@@ -938,6 +996,7 @@ package body VCS_View_API is
       if Explorer = null then
          --  Must get the current directory (that depends on what module
          --  currently has the focus) before we insert a new child in the MDI.
+
          String_List.Append (Dirs, Get_Current_Dir (Kernel));
 
          Gtk_New (Explorer, Kernel);
@@ -960,8 +1019,7 @@ package body VCS_View_API is
    ------------------------
 
    function Get_Selected_Files
-     (Context : Selection_Context_Access)
-     return String_List.List
+     (Context : Selection_Context_Access) return String_List.List
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Explorer : VCS_View_Access;
@@ -995,11 +1053,12 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      List     : String_List.List;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      List   : String_List.List;
+      Kernel : Kernel_Handle;
 
    begin
-      List := Get_Selected_Files (Context);
+      Kernel := Get_Kernel (Context);
+      List   := Get_Selected_Files (Context);
 
       while not String_List.Is_Empty (List) loop
          Open_File_Editor
@@ -1253,11 +1312,11 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       use String_List;
-      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      Files          : String_List.List;
-      Files_Temp     : String_List.List_Node;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context);
+      Files      : String_List.List;
+      Files_Temp : String_List.List_Node;
+      Explorer   : VCS_View_Access;
 
-      Explorer       : VCS_View_Access;
    begin
       Files := Get_Selected_Files (Context);
       Explorer := Get_Explorer (Kernel);
@@ -1354,7 +1413,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      List     : String_List.List;
+      List : String_List.List;
    begin
       List := Get_Selected_Files (Context);
 
@@ -1421,7 +1480,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1447,7 +1506,7 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1474,8 +1533,8 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Files    : String_List.List;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Files  : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1506,8 +1565,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files    : String_List.List;
-      Ref      : constant VCS_Access := Get_Current_Ref (Context);
+      Files : String_List.List;
+      Ref   : constant VCS_Access := Get_Current_Ref (Context);
 
    begin
       Files := Get_Selected_Files (Context);
