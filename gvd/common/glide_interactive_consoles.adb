@@ -35,7 +35,6 @@ with Gtk.Text_Mark;       use Gtk.Text_Mark;
 with Gtk.Text_Tag;        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
@@ -48,10 +47,6 @@ with Ada.Text_IO;          use Ada.Text_IO;
 
 package body Glide_Interactive_Consoles is
 
-   package Buffer_Console_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Gtk_Text_Buffer_Record,
-      User_Type   => Glide_Interactive_Console);
-
    package Console_Idle is new Gtk.Main.Idle (Glide_Interactive_Console);
 
    -----------------------
@@ -59,9 +54,8 @@ package body Glide_Interactive_Consoles is
    -----------------------
 
    procedure Mark_Set_Handler
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Params  : Glib.Values.GValues;
-      Console : Glide_Interactive_Console);
+     (Console : access Gtk_Widget_Record'Class;
+      Params  : Glib.Values.GValues);
    --  Prevent cursor movements before the prompt.
 
    function Button_Press_Handler
@@ -611,26 +605,25 @@ package body Glide_Interactive_Consoles is
    ----------------------
 
    procedure Mark_Set_Handler
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Params  : Glib.Values.GValues;
-      Console : Glide_Interactive_Console)
+     (Console : access Gtk_Widget_Record'Class;
+      Params  : Glib.Values.GValues)
    is
-      pragma Unreferenced (Buffer);
-
+      C : constant Glide_Interactive_Console :=
+        Glide_Interactive_Console (Console);
       Mark : constant Gtk_Text_Mark :=
         Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Mark_Name : constant String := Get_Name (Mark);
    begin
       --  Prevent recursion
 
-      if Console.Internal_Insert then
+      if C.Internal_Insert then
          return;
       end if;
 
-      Console.Internal_Insert := True;
+      C.Internal_Insert := True;
 
-      if Console.Insert_Mark = null
-        or else Get_Object (Mark) /= Get_Object (Console.Insert_Mark)
+      if C.Insert_Mark = null
+        or else Get_Object (Mark) /= Get_Object (C.Insert_Mark)
       then
          --  If the mark corresponds to a cursor position, set the stored
          --  Insert_Mark accordingly.
@@ -638,15 +631,15 @@ package body Glide_Interactive_Consoles is
          if Mark_Name = "insert"
            or else Mark_Name = "gtk_drag_target"
          then
-            Console.Insert_Mark := Mark;
+            C.Insert_Mark := Mark;
          end if;
       end if;
 
-      if not Console.Button_Press then
-         Replace_Cursor (Console);
+      if not C.Button_Press then
+         Replace_Cursor (C);
       end if;
 
-      Console.Internal_Insert := False;
+      C.Internal_Insert := False;
 
    exception
       when E : others =>
@@ -727,11 +720,10 @@ package body Glide_Interactive_Consoles is
 
       Modify_Font (Console.View, Font);
 
-      Buffer_Console_Callback.Connect
+      Widget_Callback.Object_Connect
         (Console.Buffer, "mark_set",
          Cb => Mark_Set_Handler'Access,
-         User_Data => Glide_Interactive_Console (Console),
-         After => True);
+         Slot_Object => Console);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_release_event",
