@@ -44,6 +44,7 @@ with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies;       use Process_Proxies;
 
+with GVD.Canvas;            use GVD.Canvas;
 with GVD.Code_Editors;      use GVD.Code_Editors;
 with GVD.Explorer;          use GVD.Explorer;
 with GVD.Menus;             use GVD.Menus;
@@ -1293,7 +1294,9 @@ package body GVD.Source_Editors is
 
             if Value_Found then
                Set_Valid (Entity);
-               Size_Request (Entity.all, Create_Drawing_Context (Pixmap));
+               Size_Request
+                 (Entity.all,
+                  Create_Drawing_Context (Debugger.Data_Canvas, Pixmap));
 
                Width := Gint'Min
                  (Max_Tooltip_Width, Get_Width (Entity.all) + 4);
@@ -1318,7 +1321,8 @@ package body GVD.Source_Editors is
                return;
             end if;
 
-            Context := Create_Drawing_Context (Null_Pixmap);
+            Context := Create_Drawing_Context
+              (Debugger.Data_Canvas, Null_Pixmap);
             Chars_Per_Line :=
               Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
 
@@ -1344,11 +1348,11 @@ package body GVD.Source_Editors is
       if Width /= 0 and then Height /= 0 then
          Gdk.Pixmap.Gdk_New
            (Pixmap, Get_Window (Debugger.Window), Width, Height);
-         Context := Create_Drawing_Context (Pixmap);
+         Context := Create_Drawing_Context (Debugger.Data_Canvas, Pixmap);
 
          Draw_Rectangle
            (Pixmap,
-            Context.Thaw_Bg_Gc,
+            Get_Box_Context (Debugger.Data_Canvas).Thaw_Bg_Gc,
             Filled => True,
             X      => 0,
             Y      => 0,
