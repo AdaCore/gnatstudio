@@ -38,17 +38,35 @@ package body Src_Info.Type_Utils is
    --  name.
 
    Private_Kind_Entity : constant E_Kind :=
-     (Private_Type, False, False, False);
+     (Private_Type,
+      Is_Generic  => False,
+      Is_Type     => False,
+      Is_Abstract => False);
    Enumeration_Kind_Entity : constant E_Kind :=
-     (Enumeration_Kind, True, False, False);
+     (Enumeration_Kind,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Array_Kind_Entity : constant E_Kind :=
-     (Array_Kind, True, False, False);
+     (Array_Kind,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Access_Kind_Entity : constant E_Kind :=
-     (Access_Kind, True, False, False);
+     (Access_Kind,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Modular_Integer_Entity : constant E_Kind :=
-     (Modular_Integer, True, False, False);
+     (Modular_Integer,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Signed_Integer_Entity : constant E_Kind :=
-     (Signed_Integer, True, False, False);
+     (Signed_Integer,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
 
    ----------
    -- Free --
