@@ -103,12 +103,19 @@ package body Python.Ada is
    -- Add_Function --
    ------------------
 
-   procedure Add_Function (Module : PyObject; Func : PyMethodDef) is
-      C_Func : constant PyObject :=
-        PyCFunction_New (new PyMethodDef'(Func), Module);
+   procedure Add_Function
+     (Module : PyObject; Func : PyMethodDef; Self : PyObject := null)
+   is
+      C_Func : PyObject;
       Result : Integer;
       pragma Unreferenced (Result);
    begin
+      if Self /= null then
+         C_Func := PyCFunction_New (new PyMethodDef'(Func), Self);
+      else
+         C_Func := PyCFunction_New (new PyMethodDef'(Func), Module);
+      end if;
+
       if C_Func /= null then
          Result := PyModule_AddObject (Module, Func.Name, C_Func);
       end if;
@@ -119,17 +126,17 @@ package body Python.Ada is
    ----------------
 
    procedure Add_Method
-     (Klass : PyClassObject;
+     (Class : PyClassObject;
       Func  : PyMethodDef;
       Self  : PyObject := null)
    is
       C_Func : constant PyObject :=
         PyCFunction_New (new PyMethodDef'(Func), Self);
-      C_Meth : constant PyObject := PyMethod_New (C_Func, Self, Klass);
+      C_Meth : constant PyObject := PyMethod_New (C_Func, null, Class);
       Ignored : Integer;
       pragma Unreferenced (Ignored);
    begin
-      Ignored := PyObject_SetAttrString (Klass, Func.Name, C_Meth);
+      Ignored := PyObject_SetAttrString (Class, Func.Name, C_Meth);
    end Add_Method;
 
    -----------------------
@@ -211,17 +218,61 @@ package body Python.Ada is
    -------------------------
 
    function Lookup_Class_Object
-     (Module : String; Name : String) return PyObject
+     (Module : String; Name : String) return PyObject is
+   begin
+      return Lookup_Class_Object (PyImport_AddModule (Module), Name);
+   end Lookup_Class_Object;
+
+   -------------------------
+   -- Lookup_Class_Object --
+   -------------------------
+
+   function Lookup_Class_Object
+     (Module : PyObject; Name : String) return PyObject
    is
-      M : constant PyObject := PyImport_AddModule (Module);
       Dict : PyObject;
    begin
-      if M = null then
+      if Module = null then
          return null;
       end if;
 
-      Dict   := PyModule_GetDict (M);
+      Dict   := PyModule_GetDict (Module);
       return PyDict_GetItemString (Dict, Name);
    end Lookup_Class_Object;
+
+   ---------------------
+   -- PyCObject_Check --
+   ---------------------
+
+   function PyCObject_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pycobject_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyCObject_Check;
+
+   ----------------------
+   -- PyInstance_Check --
+   ----------------------
+
+   function PyInstance_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pyinstance_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyInstance_Check;
+
+   ------------------------
+   -- PyClass_IsSubclass --
+   ------------------------
+
+   function PyClass_IsSubclass
+     (Class : PyObject; Base : PyObject) return Boolean
+   is
+      function Internal (Class, Base : PyObject) return Integer;
+      pragma Import (C, Internal, "PyClass_IsSubclass");
+   begin
+      return Internal (Class, Base) /= 0;
+   end PyClass_IsSubclass;
 
 end Python.Ada;

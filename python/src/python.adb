@@ -173,6 +173,28 @@ package body Python is
       return Internal (Obj) = 1;
    end PyString_Check;
 
+   -----------------
+   -- PyInt_Check --
+   -----------------
+
+   function PyInt_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pyint_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyInt_Check;
+
+   -------------------
+   -- PyTuple_Check --
+   -------------------
+
+   function PyTuple_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pytuple_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyTuple_Check;
+
    -----------------------
    -- PyString_AsString --
    -----------------------
@@ -341,6 +363,31 @@ package body Python is
       return Tuple;
    end Create_Tuple;
 
+   ------------------------
+   -- PyErr_NewException --
+   ------------------------
+
+   function PyErr_NewException
+     (Name : String; Base : PyObject := null; Dict : PyObject := null)
+      return PyObject
+   is
+      function Internal (Name : String; Base, Dict : PyObject) return PyObject;
+      pragma Import (C, Internal, "PyErr_NewException");
+   begin
+      return Internal (Name & ASCII.NUL, Base, Dict);
+   end PyErr_NewException;
+
+   ---------------------
+   -- PyErr_SetString --
+   ---------------------
+
+   procedure PyErr_SetString (Except : PyObject; Msg : String) is
+      procedure Internal (Except : PyObject; Msg : String);
+      pragma Import (C, Internal, "PyErr_SetString");
+   begin
+      Internal (Except, Msg & ASCII.NUL);
+   end PyErr_SetString;
+
    ----------------------------
    -- PyObject_GetAttrString --
    ----------------------------
@@ -354,5 +401,18 @@ package body Python is
       Free (S);
       return Result;
    end PyObject_GetAttrString;
+
+   ----------------------------
+   -- PyObject_SetAttrString --
+   ----------------------------
+
+   procedure PyObject_SetAttrString
+     (Obj : PyObject; Attr_Name : String; Value : PyObject)
+   is
+      procedure Internal (Obj : PyObject; Name : String; Val : PyObject);
+      pragma Import (C, Internal, "PyObject_SetAttrString");
+   begin
+      Internal (Obj, Attr_Name & ASCII.NUL, Value);
+   end PyObject_SetAttrString;
 
 end Python;

@@ -62,6 +62,71 @@ package Python is
    --  representation on success, NULL on failure.  This is the equivalent of
    --  the Python expression "str(obj)".
 
+   function PyObject_Repr (Obj : PyObject) return PyObject;
+   --  Similar to PyObject_Str.
+   --  ???
+
+   function PyObject_CallMethod
+     (Object : PyObject; Name : String) return PyObject;
+   function PyObject_CallMethod
+     (Object : PyObject; Name : String; Arg1 : PyObject) return PyObject;
+   function PyObject_CallMethod
+     (Object : PyObject; Name : String; Arg1 : Integer) return PyObject;
+   --  A few examples of functions to call a method.
+   --  In C, the profile of this method is:
+   --     PyObject* PyObject_CallMethod
+   --        (PyObject* object, char* name, char* format, ...);
+   --  For instance, to call it with an object and a integer as a parameter,
+   --  you would use:
+   --    result = PyObject_CallMethod (object, "method", "(Oi)", other_obj, 1);
+   --
+   --  format has the same form as in the calls to Py_BuildValue
+
+   function PyObject_SetAttrString
+     (Object : PyObject;
+      Name   : Interfaces.C.Strings.chars_ptr;
+      Attr   : PyObject) return Integer;
+   pragma Import (C, PyObject_SetAttrString, "PyObject_SetAttrString");
+   --  Set the value of the attribute named Name, for Object, to the value
+   --  Attr. Returns -1 on failure. This is the equivalent of the Python
+   --  statement "Object.Name = Attr".
+
+   procedure PyObject_SetAttrString
+     (Obj : PyObject; Attr_Name : String; Value : PyObject);
+   --  Same as above
+
+   function PyObject_GetAttrString
+     (Object : PyObject;
+      Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
+   pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
+   --  Lookup an attribute in the object's dictionnary.
+   --  No need to Py_DECREF the return type, this is a borrowed decision.
+
+   function PyObject_GetAttrString
+     (Object : PyObject; Name : String) return PyObject;
+   --  Same as above
+
+   function PyObject_Dir (Object : PyObject) return PyObject;
+   --  A list of strings for all entries in Object's dictionary.
+
+   --------------
+   -- Integers --
+   --------------
+   --  Not bound: PyInt_FromString and PyInt_FromUnicode
+
+   function PyInt_FromLong (Value : Interfaces.C.long) return PyObject;
+   --  Create a new integer object from its value
+
+   function PyInt_AsLong (Int : PyObject) return Interfaces.C.long;
+   --  Return the value of Int.
+   --  Return -1 and set PyErr_Occurred if Int is not an integer object.
+
+   function PyInt_GetMax return Interfaces.C.long;
+   --  Return the maximum value an integer can have
+
+   function PyInt_Check (Obj : PyObject) return Boolean;
+   --  Returns true if the Obj is an integer object.
+
    ------------
    -- Tuples --
    ------------
@@ -112,8 +177,25 @@ package Python is
      (Tuple : PyTuple; Index : Integer; Value : PyObject);
    --  Set an item in the tuple.
 
+   function PyTuple_Size (Tuple : PyTuple) return Integer;
+   --  Return the size of the tuple.
+
    function Create_Tuple (Objects : PyObject_Array) return PyObject;
    --  Return a new tuple made of Objects.
+
+   function PyTuple_Check (Obj : PyObject) return Boolean;
+   --  Whether Object is a tuple.
+
+   -----------
+   -- Lists --
+   -----------
+
+   function PyList_New (Size : Integer := 0) return PyObject;
+   --  Create a new empty list, with an initialize size.
+
+   function PyList_Append (List : PyObject; Obj : PyObject) return Integer;
+   --  Append Obj at the end of List, and return the index of the newly
+   --  inserted item
 
    -------------
    -- Strings --
@@ -160,6 +242,8 @@ package Python is
    --  function never fails.
    --  It is recommended that you use the other PyModule_* subprograms rather
    --  than manipulate this dictionnary directly.
+   --  The returned dictionary is a borrow reference, so you shouldn't
+   --  Py_DECREF it.
 
    function PyModule_AddObject
      (Module : PyObject;
@@ -234,48 +318,46 @@ package Python is
    --    where msg is the exception's message, and the second tuple is the
    --    location where the exception occurred.
    --  EType is the type of the exception, like "exceptions.SyntaxError".
+   --
+   --  This calls clears the current exception. If you want to call PyErr_Print
+   --  later on, you will need to call PyErr_Restore with the same parameters
+   --  to restore the current exception.
+
+   procedure PyErr_NormalizeException
+     (EType      : in out PyObject;
+      Occurrence : in out PyObject;
+      Traceback  : in out PyObject);
+   --  Normalize a raised exception. This generally needs to be called after
+   --  PyErr_Fetch.
+   --  This ensure that if EType is an class, Occurrence is an instance.
+
+   procedure PyErr_Restore
+     (EType      : PyObject;
+      Occurrence : PyObject;
+      Traceback  : PyObject);
+   --  Set the current exception
 
    procedure PyErr_Clear;
    --  Clear the current exception. This must be called at the end of your
    --  exception handlers, although it is called automatically by PyErr_Print
 
-   ------------
-   -- Object --
-   ------------
+   procedure PyErr_BadArgument;
+   --  Set the current exception as a "bad argument" exception. The function
+   --  should also return null to its caller.
 
-   function PyObject_CallMethod
-     (Object : PyObject; Name : String) return PyObject;
-   function PyObject_CallMethod
-     (Object : PyObject; Name : String; Arg1 : PyObject) return PyObject;
-   function PyObject_CallMethod
-     (Object : PyObject; Name : String; Arg1 : Integer) return PyObject;
-   --  A few examples of functions to call a method.
-   --  In C, the profile of this method is:
-   --     PyObject* PyObject_CallMethod
-   --        (PyObject* object, char* name, char* format, ...);
-   --  For instance, to call it with an object and a integer as a parameter,
-   --  you would use:
-   --    result = PyObject_CallMethod (object, "method", "(Oi)", other_obj, 1);
-   --
-   --  format has the same form as in the calls to Py_BuildValue
+   function PyErr_Occurred return PyObject;
+   --  Return the current exception, or null if no exception was raised.
 
-   function PyObject_SetAttrString
-     (Object : PyObject;
-      Name   : Interfaces.C.Strings.chars_ptr;
-      Attr   : PyObject) return Integer;
-   --  Set the value of the attribute named Name, for Object, to the value
-   --  Attr. Returns -1 on failure. This is the equivalent of the Python
-   --  statement "Object.Name = Attr".
+   function PyErr_NewException
+     (Name : String; Base : PyObject := null; Dict : PyObject := null)
+     return PyObject;
+   --  Create a new exception, which can then be raised by:
+   --   - calling PyErr_SetString (Except, "message");
+   --   - returning null from your subprogram
+   --  Name must be of the form "module.name"
 
-   function PyObject_GetAttrString
-     (Object : PyObject;
-      Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
-   pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
-   --  Lookup an attribute in the object's dictionnary
-
-   function PyObject_GetAttrString
-     (Object : PyObject; Name : String) return PyObject;
-   --  Same as above
+   procedure PyErr_SetString (Except : PyObject; Msg : String);
+   --  Raise Except, and associate it with a specific message.
 
    ---------
    -- Sys --
@@ -391,7 +473,6 @@ private
 
    pragma Convention (C, Why_Trace_Func);
    pragma Convention (C, Py_Trace_Func);
-   pragma Import (C, PyObject_SetAttrString, "PyObject_SetAttrString");
    pragma Import (C, PyDict_New, "PyDict_New");
    pragma Import (C, PyEval_SetProfile, "PyEval_SetProfile");
    pragma Import (C, PyEval_SetTrace, "PyEval_SetTrace");
@@ -399,6 +480,7 @@ private
    pragma Inline (PyRun_SimpleString);
    pragma Inline (PyArg_ParseTuple);
    pragma Inline (PyString_Check);
+   pragma Inline (PyInt_Check);
    pragma Import (C, Py_Initialize, "Py_Initialize");
    pragma Import (C, PyModule_GetDict, "PyModule_GetDict");
    pragma Import (C, Py_INCREF, "ada_py_incref");
@@ -415,4 +497,16 @@ private
    pragma Import (C, Py_None, "ada_py_none");
    pragma Import (C, PyErr_Clear, "PyErr_Clear");
    pragma Import (C, PyErr_Fetch, "PyErr_Fetch");
+   pragma Import (C, PyTuple_Size, "PyTuple_Size");
+   pragma Import (C, PyInt_FromLong, "PyInt_FromLong");
+   pragma Import (C, PyInt_AsLong, "PyInt_AsLong");
+   pragma Import (C, PyInt_GetMax, "PyInt_GetMax");
+   pragma Import (C, PyErr_Occurred, "PyErr_Occurred");
+   pragma Import (C, PyList_New, "PyList_New");
+   pragma Import (C, PyList_Append, "PyList_Append");
+   pragma Import (C, PyErr_BadArgument, "PyErr_BadArgument");
+   pragma Import (C, PyErr_NormalizeException, "PyErr_NormalizeException");
+   pragma Import (C, PyObject_Dir, "PyObject_Dir");
+   pragma Import (C, PyObject_Repr, "PyObject_Repr");
+   pragma Import (C, PyErr_Restore, "PyErr_Restore");
 end Python;

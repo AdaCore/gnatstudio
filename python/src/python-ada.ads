@@ -116,10 +116,12 @@ package Python.Ada is
    --
    --  The first parameter to the methods declared in Methods will be null.
 
-   procedure Add_Function (Module : PyObject; Func : PyMethodDef);
+   procedure Add_Function
+     (Module : PyObject; Func : PyMethodDef; Self : PyObject := null);
    --  Add a new function to Module.
    --  Do not free Func while this function is registered.
-   --  The first parameter to Func will be Module
+   --  The first parameter to Func will be Self (defaults to Module is Self is
+   --  null).
 
    ------------------
    -- Object types --
@@ -170,13 +172,17 @@ package Python.Ada is
 
    function Lookup_Class_Object
      (Module : String; Name : String) return PyObject;
+   function Lookup_Class_Object
+     (Module : PyObject; Name : String) return PyObject;
    --  Lookup a class object.
    --  Typical use is
    --     Klass := Lookup_Class_Object ("__builtin__", "file");
-   --  null is returned if the class is not found
+   --  null is returned if the class is not found.
+   --  The second version is slightly faster and should be used when you
+   --  already have a handle to the module
 
    procedure Add_Method
-     (Klass : PyClassObject; Func : PyMethodDef; Self : PyObject := null);
+     (Class : PyClassObject; Func : PyMethodDef; Self : PyObject := null);
    --  Add a new method to the class.
    --  The method is an instance method.
    --  When the method is called from the python interpreter, its Self argument
@@ -196,6 +202,19 @@ package Python.Ada is
    --  It can be called either on the class or an instance. If a class method
    --  is called for a derived class, the derived class object is passed as the
    --  implied first argument.
+
+   function PyInstance_New
+     (Class : PyObject; Args : PyObject; Keywords : PyObject := null)
+      return PyObject;
+   --  Create a new instance of Class, passing (Args, Keywords) as parameters
+   --  to the constructor.
+
+   function PyClass_IsSubclass
+     (Class : PyObject; Base : PyObject) return Boolean;
+   --  True if Class is a subclass of Base (or Base itself)
+
+   function PyInstance_Check (Obj : PyObject) return Boolean;
+   --  Whether Obj is an instance
 
    ------------------------------------
    -- Creating and declaring methods --
@@ -228,9 +247,14 @@ package Python.Ada is
    --  This type represents an opaque value that contains any kind of data,
    --  transparent for python.
 
+   function PyCObject_Check (Obj : PyObject) return Boolean;
+   --  Return True if Obj is a Py_CObject
+
    type PyCObject_Destructor is access procedure (Obj : System.Address);
+   pragma Convention (C, PyCObject_Destructor);
    type PyCObject_Destructor2 is access
      procedure (Obj : System.Address; Desc : System.Address);
+   pragma Convention (C, PyCObject_Destructor2);
 
    function PyCObject_FromVoidPtr
      (Obj : System.Address;
@@ -266,9 +290,11 @@ private
 
    pragma Import (C, GetTypeObject, "ada_gettypeobject");
    pragma Import (C, PyClass_New, "PyClass_New");
+   pragma Inline (PyCObject_Check);
    pragma Import (C, PyCObject_FromVoidPtr, "PyCObject_FromVoidPtr");
    pragma Import
      (C, PyCObject_FromVoidPtrAndDesc, "PyCObject_FromVoidPtrAndDesc");
    pragma Import (C, PyCObject_AsVoidPtr, "PyCObject_AsVoidPtr");
    pragma Import (C, PyCObject_GetDesc, "PyCObject_GetDesc");
+   pragma Import (C, PyInstance_New, "PyInstance_New");
 end Python.Ada;
