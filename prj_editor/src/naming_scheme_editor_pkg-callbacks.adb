@@ -33,15 +33,18 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       use Widget_List;
       E : Naming_Editor := Naming_Editor (Object);
       List  : Gtk_List := Get_List (E.Standard_Scheme);
-      Value : Gint := Child_Position
-        (List, Get_Data (Get_Selection (List)));
+      Value : Gint;
    begin
-      if Value /= Custom_Scheme then
-         Set_Predefined_Scheme (E, Natural (Value));
-         --  Restore the contents of the standard scheme buttons, that has been
-         --  changed through callbacks when the changed the contents of
-         --  the GUI.
-         Select_Item (Get_List (E.Standard_Scheme), Value);
+      if Get_Selection (List) /= Widget_List.Null_List then
+         Value := Child_Position
+           (List, Get_Data (Get_Selection (List)));
+         if Value /= Custom_Scheme then
+            Set_Predefined_Scheme (E, Natural (Value));
+            --  Restore the contents of the standard scheme buttons, that has
+            --  been changed through callbacks when the changed the contents of
+            --  the GUI.
+            Select_Item (Get_List (E.Standard_Scheme), Value);
+         end if;
       end if;
    end On_Standard_Scheme_Changed;
 
