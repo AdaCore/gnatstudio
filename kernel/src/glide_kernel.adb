@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -162,10 +162,11 @@ package body Glide_Kernel is
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 .. 2 | 4 | 10 .. 13 => (1 => GType_None),
-         3      | 5           => (1 => GType_Pointer),
-         6 .. 9               => (1 => GType_String));
+         3      | 5            => (1 => GType_Pointer),
+         6 .. 9                => (1 => GType_String));
       Handler : Glide_Language_Handler;
-      Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
+      Dir     : constant String := String_Utils.Name_As_Directory (Home_Dir);
+
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
