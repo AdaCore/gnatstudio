@@ -687,7 +687,7 @@ package body Docgen.Html_Output is
    end Doc_HTML_Footer;
 
    --------------------------------
-   --  Doc_HTML_Unit_Index_Header --
+   -- Doc_HTML_Unit_Index_Header --
    --------------------------------
 
    procedure Doc_HTML_Unit_Index_Header
@@ -891,7 +891,6 @@ package body Docgen.Html_Output is
         & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
 
    begin
-      --  Trace (Me, "Get_Html_File_Name: " & Temp);
       return Temp;
    end Get_Html_File_Name;
 
@@ -943,6 +942,7 @@ package body Docgen.Html_Output is
             File,
             Text (Get_Last_Index (B.all) .. Start_Index - 1),
             Entity_Line);
+
       else
          Put (File, Text (Get_Last_Index (B.all) .. Start_Index - 1));
       end if;
@@ -951,10 +951,12 @@ package body Docgen.Html_Output is
          Put (File, Prefix);
          Replace_HTML_Tags (Text (Start_Index .. End_Index), File);
          Put (File, Suffix);
+
       else
          Put (File,
               Prefix & Text (Start_Index .. End_Index) & Suffix);
       end if;
+
       Set_Last_Index (B.all, End_Index + 1);
       Set_Last_Line (B.all, End_Line);
    end Callback_Output;
@@ -973,6 +975,7 @@ package body Docgen.Html_Output is
       HTML_Name_Middle : constant String := """>";
       HTML_Name_End    : constant String := "</A>";
       Last_Written     : Natural := Input_Text'First - 1;
+
    begin
       for J in Input_Text'Range loop
          if Input_Text (J) = ASCII.LF then
