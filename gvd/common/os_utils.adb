@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Case_Util;       use GNAT.Case_Util;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Expect;          use GNAT.Expect;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body OS_Utils is
@@ -133,5 +133,37 @@ package body OS_Utils is
    begin
       OpenVMS_Host := True;
    end Set_OpenVMS_Host;
+
+   -----------
+   -- Spawn --
+   -----------
+
+   procedure Spawn 
+     (Program_Name : String;
+      Args         : Argument_List;
+      Idle         : Idle_Callback;
+      Success      : out Boolean)
+   is
+      Fd     : Process_Descriptor;
+      Result : Expect_Match;
+
+   begin
+      Non_Blocking_Spawn
+        (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+         Err_To_Out  => True);
+      Success := True;
+
+      loop
+         Idle.all;
+         Expect (Fd, Result, ".+", Timeout => 50);
+      end loop;
+
+   exception
+      when Invalid_Process =>
+         Success := False;
+
+      when Process_Died =>
+         Close (Fd);
+   end Spawn;
 
 end OS_Utils;

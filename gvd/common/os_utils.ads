@@ -21,6 +21,8 @@
 --  This package provides a set of subprograms that give high level access
 --  to OS functionnalities.
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package OS_Utils is
 
    function Executable_Location return String;
@@ -38,5 +40,15 @@ package OS_Utils is
 
    function Max_Path_Len return Natural;
    --  Return the maximum length of a pathname for the current host.
+
+   type Idle_Callback is access procedure;
+   --  Callback procedure called by Spawn while waiting the inferior.
+
+   procedure Spawn
+     (Program_Name : String;
+      Args         : Argument_List;
+      Idle         : Idle_Callback;
+      Success      : out Boolean);
+   --  Similar to GNAT.OS_Lib.Spawn, but call Idle periodically while waiting.
 
 end OS_Utils;
