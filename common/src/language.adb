@@ -786,7 +786,8 @@ package body Language is
       Buffer  : String;
       Index   : in out Natural)
    is
-      Tmp     : Integer;
+      Initial_Index : constant Natural := Index;
+      Tmp           : Integer;
 
       function Only_Blanks_Before
         (Buffer : String;
@@ -819,7 +820,7 @@ package body Language is
            and then Buffer
              (Tmp - Context.Comment_End_Length + 1 .. Tmp) =
              Context.Comment_End
-         then
+         then -- The end of a multi-line comment has been found
             while Index >= Buffer'First
               and then Buffer
                 (Index .. Index + Context.Comment_Start_Length - 1) /=
@@ -828,12 +829,16 @@ package body Language is
                Index := Index - 1;
             end loop;
 
-            return;
+            if Looking_At_Start_Of_Comment (Context, Buffer, Index) =
+              Comment_Multi_Line
+            then -- The beginning of a multi-line comment has been found
+               return;
+            end if;
          end if;
       end if;
 
       --  Check for single line comments
-      Tmp := Index;
+      Tmp := Initial_Index;
       loop
          while Tmp <= Buffer'Last
            and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
@@ -850,6 +855,9 @@ package body Language is
 
          Skip_Lines (Buffer, -1, Tmp);
       end loop;
+      if Looking_At_Start_Of_Comment (Context, Buffer, Index) = No_Comment then
+         Index := 0;
+      end if;
    end Skip_To_Current_Comment_Block_Start;
 
    ---------------------------------------
@@ -866,8 +874,7 @@ package body Language is
       Typ                : Comment_Type;
    begin
       Block_Iteration : loop
-         Typ :=
-           Looking_At_Start_Of_Comment (Context, Buffer, Index);
+         Typ := Looking_At_Start_Of_Comment (Context, Buffer, Index);
 
          case Typ is
          when No_Comment =>
@@ -875,6 +882,8 @@ package body Language is
             exit Block_Iteration;
 
          when Comment_Single_Line =>
+            Index := Line_End (Buffer, Index);
+
             declare
                Tmp : Integer := Index;
             begin
