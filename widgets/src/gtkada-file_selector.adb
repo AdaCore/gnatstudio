@@ -847,9 +847,7 @@ package body Gtkada.File_Selector is
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
          if Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree,
-                            Normalized,
-                            Get_Window (Win));
+            Show_Directory (Win.Explorer_Tree, Normalized, Get_Window (Win));
          end if;
 
          if Win.File_Tree = null then
@@ -1764,8 +1762,8 @@ package body Gtkada.File_Selector is
         (Get_Tree_Selection (File_Selector_Window.Explorer_Tree),
          "changed",
          On_Explorer_Tree_Select_Row'Access,
-         Slot_Object => File_Selector_Window);
-
+         Slot_Object => File_Selector_Window,
+         After => True);
 
       if Show_Files then
          Gtk_New_Hpaned (Hpaned1);
