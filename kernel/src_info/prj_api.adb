@@ -4570,8 +4570,8 @@ package body Prj_API is
    -- Is_Main_File --
    ------------------
 
-   function Is_Main_File (Project_View : Project_Id; File : String)
-      return Boolean
+   function Is_Main_File
+     (Project_View : Project_Id; File : String) return Boolean
    is
       Value : Argument_List := Get_Attribute_Value
         (Project_View => Project_View,

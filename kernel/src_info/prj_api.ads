@@ -662,8 +662,8 @@ package Prj_API is
    --  The empty string is returned if this attribute wasn't defined
    --  explicitely by the user or Project_View is No_Project.
 
-   function Is_Main_File (Project_View : Project_Id; File : String)
-      return Boolean;
+   function Is_Main_File
+     (Project_View : Project_Id; File : String) return Boolean;
    --  Return True if File is one of the main files of Project_View
 
    function Executables_Directory
