@@ -808,7 +808,11 @@ package body KeyManager_Module is
             else
                Command := Lookup_Action (Kernel, Binding.Action.all);
 
-               if Command.Command /= null then
+               if Command = null then
+                  Insert
+                    (Kernel, -"Action not defined: " & Binding.Action.all);
+
+               elsif Command.Command /= null then
                   --  We'll have to test last the commands that apply anywhere,
                   --  to give a chance to more specialized commands to get
                   --  called first.
