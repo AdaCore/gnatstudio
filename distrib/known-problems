@@ -5,14 +5,14 @@ Known Problems fixed in GPS 1.0.1
               that contains color selection widget will make GPS crash.
               This is related to the X server asking for 8 bits pixmaps, but
               only accepting 24 bits
-  Workaround: <none found>
+  Workaround: Edit the file ~/.gps/preferences manually instead of using the
+              preferences dialog.
 
 - B726-015 Crash when displaying tooltips on solaris systems
   Problem:    When a tooltip should be displayed in the source editor on
               Solaris systems, GPS crashes. This is another instance of
               B726-016
-  Workaround: Disable the tooltips by editing the preferences file manually
-              (since the dialog will also crash)
+  Workaround: Disable the tooltips by editing the preferences file manually.
 
 - B702-004 Exception raises when processing Ada separate units
   Problem:    When GPS displays tooltips or computes cross-references on a
