@@ -768,8 +768,6 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      --  ??? We might want to use other pixmaps for the log column.
-
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
            Full_Name (Line_Info.Status.File).all);
