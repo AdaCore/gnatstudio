@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- On Windows, opening file.ADB will not provide syntax highlighting
+  Problem:    On systems with case insensitive file systems, GPS still
+              expects the casing of base file names to be consistent in the
+              project file and on the disk
+  Workaround: use shift-F3 to open the file
+
 - DA27-002 Detection of external changes only when timestamp is more recent
   Problem:    If you modify a file with an other editor than GPS, or through
               a version control system, GPS will only detect changes to that
