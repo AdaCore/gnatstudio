@@ -308,7 +308,7 @@ package Glide_Kernel.Modules is
       Add_Before    : Boolean := True);
    --  Register a new contextual menu entry to tbe displayed.
    --  This menu will only be shown when the filter associated with the Action
-   --  matches. The name used in the menu will be Title (or Name if label isn't
+   --  matches. The name used in the menu will be Label (or Name if label isn't
    --  specified), interpreted with the usual parameter substitution:
    --     %f => current file basename
    --     %d => current directory

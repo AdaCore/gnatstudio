@@ -263,6 +263,8 @@ package body Glide_Kernel.Modules is
 
          elsif Param = "e"
            and then Context.all in Entity_Selection_Context'Class
+           and then Has_Entity_Name_Information
+             (Entity_Selection_Context_Access (Context))
          then
             Entity := Get_Entity (Entity_Selection_Context_Access (Context));
             if Entity /= null then
@@ -540,6 +542,16 @@ package body Glide_Kernel.Modules is
       --  Create the menu item to use when displaying C.
       --  Full_Name is the label of the menu
 
+      function Label_Name
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return String;
+      --  Return the name of the label for C, including parent path
+
+      function Has_Explicit_Parent
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return Boolean;
+      --  Return True if C is a submenu of an explicitly registered menu
+
       ---------------------
       -- Menu_Is_Visible --
       ---------------------
@@ -612,35 +624,51 @@ package body Glide_Kernel.Modules is
          Pix       : Gtk_Image;
          Menu      : Gtk_Menu;
       begin
-         if C.Label = null then
-            Full_Name := new String'(C.Name.all);
-         else
-            Full_Name := new String'(Get_Label (C.Label, Context));
-         end if;
+         Full_Name := new String'(Label_Name (C, Context));
 
          --  A separator ?
 
          if C.Action = null and then C.Command = null then
             if C.Is_Submenu then
+               Gtk_New (Menu);
+
                if C.Submenu /= null then
-                  Gtk_New (Menu);
                   C.Submenu
                     (Object  => User.Object,
                      Context => Context,
                      Menu    => Menu);
-
-                  if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
-                     Destroy (Menu);
-                     Item := null;
-                  else
-                     Gtk_New (Item, Base_Name (Full_Name.all));
-                     Set_Submenu (Item, Menu);
-                  end if;
-               else
-                  Gtk_New (Item, Base_Name (Full_Name.all));
                end if;
 
+               --  Add all contextual menus that are children of C
+               declare
+                  C2 : Contextual_Menu_Access;
+                  Full2 : GNAT.OS_Lib.String_Access;
+                  Item    : Gtk_Menu_Item;
+               begin
+                  C2 := Convert (User.Kernel.Contextual);
+                  while C2 /= null loop
+                     if C2.Filter_Matched then
+                        if Dir_Name ('/' & Label_Name (C2, Context)) =
+                          '/' & Full_Name.all & '/'
+                        then
+                           Create_Item (C2, Context, Item, Full2);
+                           Add_Menu (Parent => Menu, Item => Item);
+                           GNAT.OS_Lib.Free (Full2);
+                        end if;
+                     end if;
+                     C2 := C2.Next;
+                  end loop;
+               end;
+
+               if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+                  Destroy (Menu);
+                  Item := null;
+               else
+                  Gtk_New (Item, Base_Name (Full_Name.all));
+                  Set_Submenu (Item, Menu);
+               end if;
             else
+               --  A separator
                Gtk_New (Item, "");
             end if;
 
@@ -665,6 +693,45 @@ package body Glide_Kernel.Modules is
             Item := null;
          end if;
       end Create_Item;
+
+      ----------------
+      -- Label_Name --
+      ----------------
+
+      function Label_Name
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return String is
+      begin
+         if C.Label = null then
+            return C.Name.all;
+         else
+            return Get_Label (C.Label, Context);
+         end if;
+      end Label_Name;
+
+      -------------------------
+      -- Has_Explicit_Parent --
+      -------------------------
+
+      function Has_Explicit_Parent
+        (C       : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return Boolean
+      is
+         Label : constant String := Label_Name (C, Context);
+         Parent : constant String := Dir_Name ('/' & Label);
+         C2     : Contextual_Menu_Access;
+      begin
+         if Parent /= "/" then
+            C2 := Convert (User.Kernel.Contextual);
+            while C2 /= null loop
+               if '/' & Label_Name (C2, Context) & '/' = Parent then
+                  return True;
+               end if;
+               C2 := C2.Next;
+            end loop;
+         end if;
+         return False;
+      end Has_Explicit_Parent;
 
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
@@ -719,16 +786,18 @@ package body Glide_Kernel.Modules is
 
          C := Convert (User.Kernel.Contextual);
          while C /= null loop
-            if C.Filter_Matched then
+            if C.Filter_Matched
+              and then not Has_Explicit_Parent (C, Context)
+            then
                Create_Item (C, Context, Item, Full_Name);
 
                if Item /= null then
                   Parent_Item := Find_Or_Create_Menu_Tree
-                    (Menu_Bar      => null,
-                     Menu          => Menu,
-                     Path          => Dir_Name ('/' & Full_Name.all),
-                     Accelerators  => Get_Default_Accelerators (User.Kernel),
-                     Allow_Create  => True,
+                    (Menu_Bar     => null,
+                     Menu         => Menu,
+                     Path         => Dir_Name ('/' & Full_Name.all),
+                     Accelerators => Get_Default_Accelerators (User.Kernel),
+                     Allow_Create => True,
                      Use_Mnemonics => False);
                   if Parent_Item /= null then
                      Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
@@ -1306,6 +1375,7 @@ package body Glide_Kernel.Modules is
    is
       C, Previous : Contextual_Menu_Access;
    begin
+      Trace (Me, "Register_Contextual_Menu " & Menu.Name.all);
       C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
       if Menu.Name.all /= "" and then C /= null then
@@ -1317,6 +1387,7 @@ package body Glide_Kernel.Modules is
          C.all := Menu.all;
          Previous := Menu;
          Unchecked_Free (Previous);
+         Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
       else
          if Kernel.Contextual /= System.Null_Address then
             C := Convert (Kernel.Contextual);
