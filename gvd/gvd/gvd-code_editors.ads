@@ -151,6 +151,11 @@ package GVD.Code_Editors is
       return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Return the window containing the Explorer.
 
+   function Get_Explorer
+     (Editor : access Code_Editor_Record'Class)
+      return GVD.Explorer.Explorer_Access;
+   --  Return the explorer associated with Editor.
+
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
       return GVD.Text_Box.Asm_Editor.Asm_Editor;

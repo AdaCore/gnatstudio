@@ -208,6 +208,17 @@ package body GVD.Code_Editors is
       return Editor.Source;
    end Get_Source;
 
+   ------------------
+   -- Get_Explorer --
+   ------------------
+
+   function Get_Explorer
+     (Editor : access Code_Editor_Record'Class)
+      return GVD.Explorer.Explorer_Access is
+   begin
+      return Editor.Explorer;
+   end Get_Explorer;
+
    -------------------------
    -- Get_Explorer_Scroll --
    -------------------------
