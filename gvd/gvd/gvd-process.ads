@@ -211,6 +211,7 @@ package Odd.Process is
      return Debugger_Process_Tab;
    --  Return the current process tab in Main_Window.
    --  Main_Window should be a pointer to the top-level window in gvd.
+   --  This returns null if there is no current debugger.
 
    procedure Process_Stopped
      (Debugger : access Debugger_Process_Tab_Record'Class);

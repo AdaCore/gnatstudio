@@ -669,7 +669,7 @@ package body Odd.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "context_changed");
-      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
+      Process_Stopped (Debugger);
    end Context_Changed;
 
    ------------------------
@@ -707,6 +707,14 @@ package body Odd.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
+
+      --  Update the backtrace and thread windows as well, if the debugger
+      --  is the current one
+      if Debugger_Process_Tab (Debugger)
+        = Get_Current_Process (Debugger.Window)
+      then
+         Update_External_Dialogs (Debugger.Window);
+      end if;
    end Process_Stopped;
 
    -----------------------
@@ -1173,11 +1181,16 @@ package body Odd.Process is
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Debugger_Process_Tab is
+     return Debugger_Process_Tab
+   is
+      Page : Gtk_Notebook_Page := Get_Cur_Page
+        (Main_Debug_Window_Access (Main_Window).Process_Notebook);
    begin
-      return Process_User_Data.Get
-        (Get_Child (Get_Cur_Page
-         (Main_Debug_Window_Access (Main_Window).Process_Notebook)));
+      if Page = null then
+         return null;
+      else
+         return Process_User_Data.Get (Get_Child (Page));
+      end if;
    end Get_Current_Process;
 
    ---------------------
