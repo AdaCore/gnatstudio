@@ -23,14 +23,13 @@ with Open_Program_Pkg; use Open_Program_Pkg;
 
 package GVD.Open_Program_Dialog is
 
-   type Open_Program_Dialog_Record is new Open_Program_Record with record
+   type GVD_Open_Program_Record is new Open_Program_Record with record
       Valid : Boolean;
    end record;
-   type Open_Program_Dialog_Access is
-     access all Open_Program_Dialog_Record'Class;
+   type GVD_Open_Program is access all GVD_Open_Program_Record'Class;
 
    procedure Open_Program
-     (Open       : in out Open_Program_Dialog_Access;
+     (Open       : in out GVD_Open_Program;
       Descriptor : out Program_Descriptor);
    --  Open a program window and launch a main loop until the ok or cancel
    --  button has been pressed.

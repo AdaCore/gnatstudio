@@ -44,11 +44,11 @@ package body GVD.Open_Program_Dialog is
    ------------------
 
    procedure Open_Program
-     (Open       : in out Open_Program_Dialog_Access;
+     (Open       : in out GVD_Open_Program;
       Descriptor : out Program_Descriptor) is
    begin
       if Open = null then
-         Open := new Open_Program_Dialog_Record;
+         Open := new GVD_Open_Program_Record;
          Open_Program_Pkg.Initialize (Open);
       end if;
 
