@@ -3343,7 +3343,9 @@ package body Src_Info.CPP is
                         Env.File,
                         Sym.Buffer (Sym.File_Name.First ..
                                      Sym.File_Name.Last),
-                        Sym.Start_Position,
+                        (Sym.Start_Position.Line, 0),
+                        --  we don't know the precise position of the class
+                        --  name, so set the column to "anywhere"
                         Reference);
                   end if;
                end if;
@@ -3896,7 +3898,9 @@ package body Src_Info.CPP is
               (Class_Decl_Info,
                Env.File,
                Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-               Sym.Start_Position,
+               (Sym.Start_Position.Line, 0),
+               --  we don't know the precise position of the class
+               --  name, so set the column to "anywhere"
                Reference);
          end if;
          Free (Class_Def);
