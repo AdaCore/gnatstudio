@@ -5,8 +5,6 @@ New features in GPS 1.3.0
 
 - C611-003 Characters encoding can now be specified in custom files
 
-- BA08-011 Support for file drag'n'drop under Windows
-
 - Central MDI window can now be split horizontally or vertically
 
 - Support for built-in printing under Windows
@@ -19,9 +17,9 @@ New features in GPS 1.3.0
 
 - Enhanced indentation engine for C/C++
 
-- C522-014 Better handling of the current directory
-
 - C526-005 Better handling of the "Auto-Save" preference
+
+- C522-014 Better handling of the current directory
 
 - Support for multiple debuggers simultaneously
 
@@ -51,6 +49,8 @@ New features in GPS 1.3.0
 - Improved support for unicode characters in file names or source files
 
 - C125-006 The edited file name is now displayed in the main window title.
+
+- BA08-011 Support for file drag'n'drop under Windows
 
 - Enumeration literals recognized by codefix
   The automatic code correction is now able to recognize and suppress
