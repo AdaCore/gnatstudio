@@ -1570,6 +1570,7 @@ package body GUI_Utils is
       Toggle_Render   : Gtk_Cell_Renderer_Toggle;
       Pixbuf_Render   : Gtk_Cell_Renderer_Pixbuf;
       Previous_Was_Icon : Boolean := False;
+      Is_Icon         : Boolean;
       pragma Unreferenced (Col_Number);
    begin
       Gtk_New (Model, Column_Types);
@@ -1581,11 +1582,12 @@ package body GUI_Utils is
       for N in 0
         .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
       loop
+         Is_Icon := Column_Types (Column_Types'First + Guint (N)) =
+           Gdk.Pixbuf.Get_Type;
+
          --  Reuse existing column for icons
          if not Previous_Was_Icon
-           and then (Col = null
-                     or else Column_Types (Column_Types'First + Guint (N)) /=
-                       Gdk.Pixbuf.Get_Type)
+           and then (Col = null or else not Is_Icon)
          then
             Gtk_New           (Col);
             Set_Resizable     (Col, True);
@@ -1595,9 +1597,18 @@ package body GUI_Utils is
             if Column_Names (Column_Names'First + N) /= null then
                Set_Title (Col, Column_Names (Column_Names'First + N).all);
             end if;
+
+            if not Is_Icon and then Sortable_Columns then
+               Set_Sort_Column_Id (Col, Gint (N));
+               Set_Sort_Indicator (Col, True);
+               Set_Clickable (Col, True);
+               if Initial_Sort_On = N + Column_Names'First then
+                  Clicked (Col);
+               end if;
+            end if;
          end if;
 
-         Previous_Was_Icon := False;
+         Previous_Was_Icon := Is_Icon;
 
          if Column_Types (Column_Types'First + Guint (N)) = GType_Boolean then
             Gtk_New (Toggle_Render);
@@ -1618,10 +1629,7 @@ package body GUI_Utils is
             Pack_Start (Col, Text_Render, False);
             Add_Attribute (Col, Text_Render, "text", Gint (N));
 
-         elsif Column_Types (Column_Types'First + Guint (N)) =
-           Gdk.Pixbuf.Get_Type
-         then
-            Previous_Was_Icon := True;
+         elsif Is_Icon then
             if Pixbuf_Render = null then
                Gtk_New (Pixbuf_Render);
             end if;
@@ -1629,16 +1637,7 @@ package body GUI_Utils is
             Add_Attribute (Col, Pixbuf_Render, "pixbuf", Gint (N));
 
          else
-               raise Program_Error;
-         end if;
-
-         if Sortable_Columns then
-            Set_Sort_Column_Id (Col, Gint (N));
-            Set_Sort_Indicator (Col, True);
-            Set_Clickable (Col, True);
-            if Initial_Sort_On = N + Column_Names'First then
-               Clicked (Col);
-            end if;
+            raise Program_Error;
          end if;
       end loop;
       return View;
