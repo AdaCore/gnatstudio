@@ -166,8 +166,7 @@ package body Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
@@ -185,16 +184,14 @@ package body Aunit_Filters is
          if Suite_Name /= null then
             State  := Normal;
             Text   := Suite_Name;
-            Pixmap := Filter.Suite_Pixmap;
-            Mask   := Filter.Suite_Bitmap;
+            Pixbuf := Filter.Pixbuf;
             return;
          end if;
       end if;
 
       State  := Invisible;
       Text   := new String'("");
-      Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Mask   := Gdk.Bitmap.Null_Bitmap;
+      Pixbuf := Null_Pixbuf;
    end Use_File_Filter;
 
    ---------------------
@@ -207,8 +204,7 @@ package body Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
@@ -220,13 +216,11 @@ package body Aunit_Filters is
       if Suite_Name /= null then
          State  := Normal;
          Text   := Suite_Name;
-         Pixmap := Filter.Suite_Pixmap;
-         Mask   := Filter.Suite_Bitmap;
+         Pixbuf := Filter.Pixbuf;
       else
          State  := Invisible;
          Text   := new String'("");
-         Pixmap := Gdk.Pixmap.Null_Pixmap;
-         Mask   := Gdk.Bitmap.Null_Bitmap;
+         Pixbuf := Null_Pixbuf;
       end if;
    end Use_File_Filter;
 
@@ -240,8 +234,7 @@ package body Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
@@ -302,17 +295,14 @@ package body Aunit_Filters is
          Text := new String'("");
       end if;
 
-      Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Mask   := Gdk.Bitmap.Null_Bitmap;
+      Pixbuf := Null_Pixbuf;
 
       if File'Length >= 4 then
          if File (File'Last - 3 .. File'Last) = ".adb" then
-            Pixmap := Filter.Body_Pixmap;
-            Mask := Filter.Body_Bitmap;
+            Pixbuf := Filter.Body_Pixbuf;
 
          elsif File (File'Last - 3 .. File'Last) = ".ads" then
-            Pixmap := Filter.Spec_Pixmap;
-            Mask := Filter.Spec_Bitmap;
+            Pixbuf := Filter.Spec_Pixbuf;
          end if;
       end if;
    end Use_File_Filter;

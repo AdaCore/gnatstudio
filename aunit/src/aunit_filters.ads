@@ -19,9 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-
-with Gdk.Pixmap;
-with Gdk.Bitmap;
+with Gdk.Pixbuf;  use Gdk.Pixbuf;
 
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
@@ -40,10 +38,8 @@ package Aunit_Filters is
    --  non-commented lines, and
 
    type Filter_Show_Ada is new File_Filter_Record with record
-      Spec_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Body_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Spec_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
-      Body_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+      Spec_Pixbuf : Gdk_Pixbuf;
+      Body_Pixbuf : Gdk_Pixbuf;
    end record;
 
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
@@ -52,15 +48,13 @@ package Aunit_Filters is
    --  belonging to a project. This is easier to implement and more general
 
    type Filter_Show_Tests is new File_Filter_Record with record
-      Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf : Gdk_Pixbuf;
    end record;
    type Filter_Show_Tests_Access is access all Filter_Show_Tests'Class;
    --  This filter shows only files containing tests.
 
    type Filter_Show_Suites is new File_Filter_Record with record
-      Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf : Gdk_Pixbuf;
    end record;
    type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
    --  This filter shows only files containing tests or test suites.
@@ -71,8 +65,7 @@ package Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Ada.
    --  Text is set to the name of the main unit in the file.
@@ -83,8 +76,7 @@ package Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Suites.
    --  Text is set to the name of the suite found in the file.
@@ -95,8 +87,7 @@ package Aunit_Filters is
       Dir       : in String;
       File      : in String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Tests.
    --  Text is set to the name of the suite/test case found in the file.
