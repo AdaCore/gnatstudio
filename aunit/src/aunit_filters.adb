@@ -20,6 +20,7 @@
 
 with String_Utils;              use String_Utils;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Prj;                       use Prj;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;
@@ -283,7 +284,7 @@ package body Aunit_Filters is
                Close (File_T);
          end;
       elsif File'Length >= 4
-        and then File (File'Last - 3 .. File'Last) = ".gpr"
+        and then File (File'Last - 3 .. File'Last) = Project_File_Extension
       then
          State := Highlighted;
          Text := new String'("PROJECT");
