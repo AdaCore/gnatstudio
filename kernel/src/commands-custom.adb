@@ -170,6 +170,7 @@ package body Commands.Custom is
    type Parameters_Filter_Record is new Action_Filter_Record with record
       Need_File, Need_Directory : Boolean := False;
       Need_Project : Character := ' ';
+      Need_Entity : Boolean := False;
    end record;
    type Parameters_Filter is access all Parameters_Filter_Record'Class;
    --  Check that the current context contains enough information to satisfy
@@ -282,6 +283,12 @@ package body Commands.Custom is
                Filter := new Parameters_Filter_Record;
             end if;
             Filter.Need_Directory := True;
+
+         elsif Param = "e" then
+            if Filter = null then
+               Filter := new Parameters_Filter_Record;
+            end if;
+            Filter.Need_Entity := True;
 
          elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
             if Param /= "pps" and then Param /= "PPs" then
@@ -1093,6 +1100,12 @@ package body Commands.Custom is
             File := File_Selection_Context_Access (Command.Execution.Context);
             return String_Utils.Protect
               (Directory_Information (File), Protect_Quotes => Quoted);
+
+         elsif Param = "e" then
+            return String_Utils.Protect
+              (Entity_Name_Information
+                 (Entity_Selection_Context_Access
+                    (Command.Execution.Context)));
 
          elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
             Project := Project_From_Param (Param, Command.Execution.Context);
