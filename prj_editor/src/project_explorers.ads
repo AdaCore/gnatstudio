@@ -26,12 +26,9 @@
 
 with Glide_Kernel;
 with Scenario_Views;
-with Gtk.Ctree;
 with Gtk.Handlers;
-with Gdk.Pixmap;
-with Gdk.Bitmap;
 with Gtk.Box;
-
+with Gtkada.Tree_View;
 
 package Project_Explorers is
 
@@ -67,40 +64,14 @@ package Project_Explorers is
    --  </signals>
 
 private
-   type Node_Types is
-     (Project_Node,
-      Extends_Project_Node,
-      Directory_Node,
-      Obj_Directory_Node,
-      File_Node,
-      Category_Node,
-      Entity_Node,
-      Modified_Project_Node);
-   --  The kind of nodes one might find in the tree
-
-   subtype Real_Node_Types is Node_Types range Project_Node .. Entity_Node;
-
-   type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
-   type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
-
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
       Scenario      : Scenario_Views.Scenario_View;
-      Tree          : Gtk.Ctree.Gtk_Ctree;
+      Tree          : Gtkada.Tree_View.Tree_View;
 
       Kernel        : Glide_Kernel.Kernel_Handle;
-      Open_Pixmaps  : Pixmap_Array;
-      Close_Pixmaps : Pixmap_Array;
-
-      Open_Masks    : Mask_Array;
-      Close_Masks   : Mask_Array;
-
       Expand_Id     : Gtk.Handlers.Handler_Id;
       --  The signal for the expansion of nodes in the project view
 
-      Old_Selection : Gtk.Ctree.Gtk_Ctree_Node;
-      --  Memorizes the node that was selected at the beginning of a
-      --  refresh. It is used to restore the selection at the end of the
-      --  refresh. It needs to be stored in this record, so that if this node
-      --  is removed then we simply do not try to restore the selection
+      Expanding     : Boolean := False;
    end record;
 end Project_Explorers;
