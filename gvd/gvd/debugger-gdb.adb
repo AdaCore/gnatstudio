@@ -757,7 +757,7 @@ package body Debugger.Gdb is
       if Get_Descriptor (Get_Process (Debugger)) = null
         or else Get_Pid
           (Get_Descriptor
-               (Get_Process (Debugger)).all) = GNAT.Expect.Invalid_Pid
+            (Get_Process (Debugger)).all) = GNAT.Expect.Invalid_Pid
       then
          Free (Debugger.Process);
          Free (Debugger.Remote_Host);
