@@ -1,7 +1,2 @@
-include ../Makefile.common
-
-PROJECT_FILE = gbuilder.gpr
-ADA_SOURCES = gbuilder.adb radical.adb
-
-include $(ROOT)/builder/src/Makefile.glide
-
+all build compile link ada c c++ clean internal-clean :
+	$(MAKE) -s -f Makefile.gbuilder $@ ADA_SOURCES="gbuilder.adb radical.adb"
