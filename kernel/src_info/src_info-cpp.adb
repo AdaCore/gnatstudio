@@ -27,12 +27,14 @@ with SN,
      SN.Browse,
      Src_Info,
      Ada.Text_IO,
+     GNAT.Regpat,
      DB_API,
      Src_Info.LI_Utils;
 
 use  SN,
      SN.DB_Structures,
      SN.Find_Fns,
+     GNAT.Regpat,
      Src_Info,
      Ada.Text_IO,
      DB_API,
@@ -60,6 +62,8 @@ package body Src_Info.CPP is
 
    procedure Sym_GV_Handler (Sym : FIL_Table; File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array);
+   procedure Sym_FU_Handler (Sym : FIL_Table; File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array);
    ---------
    -- Ext --
    ---------
@@ -77,6 +81,7 @@ package body Src_Info.CPP is
    Table_Type_To_Ext : array (Table_Type) of String (1 .. 3) :=
       (FIL    => Ext ("fil"),
        F      => Ext ("f"),
+       FU     => Ext ("fu"),
        T      => Ext ("t"),
        CL     => Ext ("cl"),
        GV     => Ext ("gv"),
@@ -85,6 +90,7 @@ package body Src_Info.CPP is
 
    Symbol_Handlers : array (Symbol_Type) of Symbol_Handler :=
       (GV       => Sym_GV_Handler'Access,
+       FU       => Sym_FU_Handler'Access,
        others   => Sym_Default_Handler'Access);
 
    Global_CPP_Handler : constant CPP_LI_Handler := null;
@@ -244,6 +250,7 @@ package body Src_Info.CPP is
    procedure Builtin_Type_To_Kind (Type_Name : in String; Kind : out E_Kind;
       Success : out Boolean) is
    begin
+      -- TODO volatile modifier
       if Type_Name = "char"          or Type_Name = "signed char"
          or Type_Name = "int"        or Type_Name = "signed int"
          or Type_Name = "long"       or Type_Name = "signed long"
@@ -268,11 +275,15 @@ package body Src_Info.CPP is
    --  Attempts to convert type name into E_Kind. Searches up for
    --  the name in the class, typedef, etc. tables.
 
+   Function_Type_Pat : constant Pattern_Matcher
+                     := Compile ("\(([^\)]+)\)\s*\(\)\s*$");
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
    procedure Type_Name_To_Kind (SN_Table : in out SN_Table_Array;
       Type_Name : in String; Kind : out E_Kind; Success : out Boolean) is
+      Matches  : Match_Array (1 .. 1);
+
    begin
       --  first try builtin type
       Builtin_Type_To_Kind (Type_Name, Kind, Success);
@@ -283,18 +294,27 @@ package body Src_Info.CPP is
       if Type_Name (Type_Name'Last) = '*' then
          Success := True;
          Kind    := Access_Type;
+         return;
       end if;
 
       if Type_Name (Type_Name'Last) = ')' then
-         --  function pointer
-         Success := True;
-         Kind    := Access_Type;
+         --  function pointer?
+         Match (Function_Type_Pat, Type_Name, Matches);
+         if Matches (1) = No_Match then
+            Success := False;
+            return;
+         end if;
+         Type_Name_To_Kind (SN_Table,
+            Type_Name (Matches (1).First ..  Matches (1).Last),
+            Kind, Success);
+         return;
       end if;
 
       if Type_Name (Type_Name'Last) = ']' then
          --  array
          Success := True;
          Kind    := Array_Type;
+         return;
       end if;
 
       --  look in typedefs
@@ -344,10 +364,12 @@ package body Src_Info.CPP is
    procedure Sym_GV_Handler (Sym : FIL_Table;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
-      Kind    : E_Kind;
-      Var     : GV_Table;
-      Success : Boolean;
-      tmp_ptr : E_Declaration_Info_List;
+      Kind       : E_Kind;
+      Var        : GV_Table;
+      Success    : Boolean;
+      tmp_ptr    : E_Declaration_Info_List;
+      Attributes : SN_Attributes;
+      Scope      : E_Scope := Global_Scope;
    begin
       Put_Line ("Sym_GV_Handler (" &
                 Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) &
@@ -361,6 +383,10 @@ package body Src_Info.CPP is
          Free (Var);
          return; -- type not found, ignore errors
       end if;
+      Attributes := SN_Attributes (Var.Attributes);
+      if (Attributes and SN_STATIC) = SN_STATIC then
+         Scope := Statis_Local;
+      end if;
       Insert_Declaration (
          Handler => LI_Handler (Global_CPP_Handler),
          File => File,
@@ -370,7 +396,7 @@ package body Src_Info.CPP is
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location => Sym.Start_Position,
          Kind => Kind,
-         Scope => Global_Scope,
+         Scope => Scope,
          Declaration_Info => tmp_ptr
       );
       Free (Var);
@@ -379,5 +405,31 @@ package body Src_Info.CPP is
             Not_Found => -- no such variable
          null;           -- ignore error
    end Sym_GV_Handler;
+
+   --------------------
+   -- Sym_FU_Handler --
+   --------------------
+   procedure Sym_FU_Handler (Sym : FIL_Table;
+                           File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array) is
+      pragma Unreferenced (SN_Table);
+      tmp_ptr : E_Declaration_Info_List;
+   begin
+      Put_Line ("Sym_FU_Hanlder (" &
+         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+         & ")");
+      Insert_Declaration (
+         Handler => LI_Handler (Global_CPP_Handler),
+         File => File,
+         Symbol_Name =>
+            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename =>
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location => Sym.Start_Position,
+         Kind => Non_Generic_Procedure,
+         Scope => Global_Scope,
+         Declaration_Info => tmp_ptr
+      );
+   end Sym_FU_Handler;
 end Src_Info.CPP;
 
