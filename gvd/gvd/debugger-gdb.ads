@@ -37,15 +37,6 @@ package Debugger.Gdb is
 
    procedure Close (Debugger : in out Gdb_Debugger);
 
-   function Parse_Type
-     (Debugger  : Gdb_Debugger;
-      Entity    : String) return Generic_Values.Generic_Type_Access;
-
-   procedure Parse_Value
-     (Debugger  : Gdb_Debugger;
-      Entity    : String;
-      Value     : in out Generic_Values.Generic_Type_Access);
-
    procedure Wait_Prompt (Debugger : Gdb_Debugger);
 
    function Type_Of

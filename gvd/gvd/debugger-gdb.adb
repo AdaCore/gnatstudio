@@ -38,46 +38,8 @@ package body Debugger.Gdb is
    Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\) ");
    --  Regular expressions used to recognize the prompt.
 
-   ----------------
-   -- Parse_Type --
-   ----------------
-
-   function Parse_Type
-     (Debugger : Gdb_Debugger;
-      Entity   : String) return Generic_Values.Generic_Type_Access
-   is
-      Result : Generic_Type_Access;
-      Type_Str : String := Type_Of (Debugger, Entity);
-      Index  : Natural := Type_Str'First;
-
-   begin
-      if Type_Str'Length /= 0 then
-         Language.Parse_Type
-           (Debugger.The_Language.all, Type_Str, Entity, Index, Result);
-      end if;
-
-      return Result;
-   end Parse_Type;
-
-   -----------------
-   -- Parse_Value --
-   -----------------
-
-   procedure Parse_Value
-     (Debugger  : Gdb_Debugger;
-      Entity    : String;
-      Value     : in out Generic_Values.Generic_Type_Access)
-   is
-      Type_Str   : String := Value_Of (Debugger, Entity);
-      Index      : Natural := Type_Str'First;
-      Repeat_Num : Positive;
-
-   begin
-      --  Clear the value previously parsed.
-      Clear_Value (Value.all);
-      Language.Parse_Value
-        (Debugger.The_Language.all, Type_Str, Index, Value, Repeat_Num);
-   end Parse_Value;
+   Prompt_Length : constant := 6;
+   --  Length of the prompt ("(gdb) ");
 
    -------------
    -- Type_Of --
@@ -98,7 +60,7 @@ package body Debugger.Gdb is
          if S'Length > 14
            and then S (S'First .. S'First + 12) /= "No definition"
          then
-            return S (S'First + 7 .. S'Last - 6);
+            return S (S'First + 7 .. S'Last - Prompt_Length);
          else
             return "";
          end if;
@@ -134,7 +96,7 @@ package body Debugger.Gdb is
          end loop;
          Index := Index + 1;
 
-         return S (Index + 1 .. S'Last - 6);
+         return S (Index + 1 .. S'Last - Prompt_Length);
       end;
    end Value_Of;
 
@@ -310,7 +272,7 @@ package body Debugger.Gdb is
       declare
          S : String := Expect_Out (Get_Process (Debugger));
       begin
-         return S (S'First .. S'Last - 6);
+         return S (S'First .. S'Last - Prompt_Length);
       end;
    end Backtrace;
 
