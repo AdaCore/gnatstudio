@@ -217,8 +217,11 @@ msgstr "Current Line"
 msgid  "Cut"
 msgstr "Cut"
 
-msgid  "       [--dargs [debugger options]] "
-msgstr "       [--dargs [debugger options]] "
+msgid  "       [--dargs [debugger options]] [--pargs [program options]]"
+msgstr "       [--dargs [debugger options]] [--pargs [program options]]"
+
+msgid  " [--dargs [debugger options]] [--pargs [program options]]"
+msgstr " [--dargs [debugger options]] [--pargs [program options]]"
 
 msgid  "Data"
 msgstr "Data"
@@ -517,6 +520,9 @@ msgstr "List Processes"
 msgid  "Load List"
 msgstr "Load List"
 
+msgid  "Load program on machine TARG using protocol PRO."
+msgstr "Load program on machine TARG using protocol PRO."
+
 msgid  "Location"
 msgstr "Location"
 
@@ -588,9 +594,6 @@ msgstr "Open Source..."
 
 msgid  "Options:"
 msgstr "Options:"
-
-msgid  "Other arguments are passed to the underlying debugger."
-msgstr "Other arguments are passed to the underlying debugger."
 
 msgid  "Packages"
 msgstr "Packages"

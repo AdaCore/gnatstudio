@@ -103,6 +103,12 @@ msgstr "par Emmanuel Briot & Arnaud Charlet"
 msgid  "Byte"
 msgstr "Octet"
 
+msgid  "C"
+msgstr "C"
+
+msgid  "C++"
+msgstr "C++"
+
 msgid  "Call Stack"
 msgstr "Pile d'appel"
 
@@ -211,8 +217,11 @@ msgstr "Ligne courante"
 msgid  "Cut"
 msgstr "Couper"
 
-msgid  "       [--dargs [debugger options]] "
-msgstr "       [--dargs [options du debogueur]] "
+msgid  "       [--dargs [debugger options]] [--pargs [program options]]"
+msgstr "       [--dargs [options du débogueur]] [--pargs [options du programme]]"
+
+msgid  " [--dargs [debugger options]] [--pargs [program options]]"
+msgstr " [--dargs [options du débogueur]] [--pargs [options du programme]]"
 
 msgid  "Data"
 msgstr "Donnée"
@@ -511,6 +520,9 @@ msgstr "Lister les processus"
 msgid  "Load List"
 msgstr "Charger la liste"
 
+msgid  "Load program on machine TARG using protocol PRO."
+msgstr "Charger program sur la machine TARG en utilisant le protocole PRO."
+
 msgid  "Location"
 msgstr "Endroit"
 
@@ -582,9 +594,6 @@ msgstr "Ouvrir fichier source..."
 
 msgid  "Options:"
 msgstr "Options :"
-
-msgid  "Other arguments are passed to the underlying debugger."
-msgstr "Les autres arguments sont passés au déboggueur."
 
 msgid  "Packages"
 msgstr "Paquetages"
@@ -844,8 +853,8 @@ msgstr "Mise en évidence de la syntaxe"
 msgid  "Target: "
 msgstr "Cible : "
 
-msgid  "   --target TARG:PRO   "
-msgstr "   --target TARG:PRO   "
+msgid  "   --target=TARG:PRO   "
+msgstr "   --target=TARG:PRO   "
 
 msgid  "Tasks..."
 msgstr "Tâches..."
