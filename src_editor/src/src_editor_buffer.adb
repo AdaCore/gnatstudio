@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2248,6 +2248,8 @@ package body Src_Editor_Buffer is
                        Get_Language_Context (Lang);
       Line         : Editable_Line_Type;
       Column       : Positive;
+      Len          : Integer;
+
    begin
       --  ??? We do not support all languages here. It needs to be expanded to
       --  have a proper support in every context.
@@ -2257,7 +2259,8 @@ package body Src_Editor_Buffer is
          and then
            (Lang_Context.Comment_Start_Length = 0
             or else Lang_Context.Comment_Start_Length = 0
-            or else Lang_Context.New_Line_Comment_Start /= null),
+            or else Lang_Context.New_Line_Comment_Start /= null
+            or else Lang_Context.New_Line_Comment_Start_Regexp /= null),
          "Is_In_Comment not supported for multi-line comments");
 
       Get_Cursor_Position (Buffer, Iter, Line, Column);
@@ -2266,11 +2269,32 @@ package body Src_Editor_Buffer is
          S_Line : constant String :=
                     Get_Text (Buffer, Line, 1, Line, Column);
       begin
-         --  We really need to get the full line here as New_Line_Comment_Start
-         --  is a regular expression.
-         return GNAT.Regpat.Match
-           (Lang_Context.New_Line_Comment_Start.all, S_Line);
+         --  ??? The code below is inneficient.
+
+         if Lang_Context.New_Line_Comment_Start /= null then
+            Len := Lang_Context.New_Line_Comment_Start'Length;
+
+            for J in S_Line'First .. S_Line'Last - Len + 1 loop
+               if S_Line (J .. J + Len - 1) =
+                 Lang_Context.New_Line_Comment_Start.all
+               then
+                  return True;
+               end if;
+            end loop;
+
+         else
+            for J in S_Line'Range loop
+               if GNAT.Regpat.Match
+                 (Lang_Context.New_Line_Comment_Start_Regexp.all,
+                  S_Line (J .. S_Line'Last))
+               then
+                  return True;
+               end if;
+            end loop;
+         end if;
       end;
+
+      return False;
    end Is_In_Comment;
 
    ------------------
