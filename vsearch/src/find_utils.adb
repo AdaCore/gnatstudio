@@ -1015,22 +1015,17 @@ package body Find_Utils is
 
          Match :=
            Context.Next_Matches_In_File (Context.Last_Match_Returned);
-         Unhighlight_All (Editor);
 
          if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
-            Highlight_Region
-              (Editor,
-               Match.Line, Match.Column,
-               Match.Line, Match.End_Column);
             Set_Cursor_Location (Editor, Match.Line, Match.Column);
-
+            Select_Region
+              (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
             return True;
 
          else
             --  ??? Contents of buffer has changed. See comment below about
             --  the use of tags.
 
-            Unhighlight_All (Editor);
             Free (Context.Next_Matches_In_File);
             return False;
          end if;
@@ -1091,12 +1086,10 @@ package body Find_Utils is
          end if;
       end if;
 
-      Match :=
-        Context.Next_Matches_In_File (Context.Last_Match_Returned);
-      Unhighlight_All (Editor);
-      Highlight_Region
-        (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+      Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
       Set_Cursor_Location (Editor, Match.Line, Match.Column);
+      Select_Region
+        (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
       return True;
 
    exception
