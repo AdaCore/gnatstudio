@@ -12,7 +12,6 @@ with GNAT.OS_Lib;
 
 --  TODO:
 --  - handles multiple views of the MDI (through several top-level windows)
---  - have an icon-bar somewhere (or notebook) to list all the children
 --  - Provide automatic initial placement of widgets
 --  - Saving and restoring sessions (window location,...)
 --  - When in a scrolled window, shouldn't constrain the possible coordinates
@@ -20,6 +19,12 @@ with GNAT.OS_Lib;
 --    MDI window is resized.
 --  - When items are maximized, they should be put in a notebook.
 --  - Icons should be placed correctly when there are also docked items
+--  - Implementation: see if we could have a cleaner approach for docks, by
+--    having them implemented as special MDI_Child that act as proxies for
+--    their children.
+--  - How to specify the priorities in the docks ?
+--  - Dock an item at Top and Bottom => They can be made to overlap.
+--  - Items docked in the middle => Can't be resized
 --
 --  From GNOME MDI documentation:
 --  - GnomeMDI also provides means to create global menus and toolbar that
@@ -41,7 +46,7 @@ package Gtkada.MDI is
    --  You can easily convert from this to the initial widget using the
    --  functions Find_MDI_Child and Get_Widget.
 
-   type Dock_Side is (None, Left, Right, Top, Bottom);
+   type Dock_Side is (Left, Right, Top, Bottom, None);
    --  Side on which a child will be docked. If None, the child cannot be
    --  docked.
    --  Order is important, since items docked on the left or right will
@@ -100,6 +105,10 @@ package Gtkada.MDI is
    --  Change the minimized state of a child.
    --  If the child was floating, it is first put back in the MDI
 
+   procedure Maximize_Children (MDI : access MDI_Window_Record);
+   --  All windows, except docked and floating ones, are maximized and occupy
+   --  as much space as possible in MDI.
+
    function Get_Focus_Child
      (MDI : access MDI_Window_Record) return MDI_Child;
    --  Return the child that currently has the focus.
@@ -119,6 +128,9 @@ package Gtkada.MDI is
    --  menu bar. The recommended way to use this is to put this menu in the
    --  menu bar for a floating child. This will allow thie child to be
    --  unfloated, or even docked.
+   --  Note: This menu will not be automatically updated, for instance if
+   --  you change the fact that Child can or cannot be docked. You need to get
+   --  a new instance of the menu in that case.
 
    -----------------------------------------
    -- MDI_Child and encapsulated children --
@@ -222,7 +234,9 @@ private
    --  - Docked: This only apply to Gtk_Notebook items that are found on each
    --      side of the MDI. These items can contain any other number of
    --      embedded items, but can not be moved. They can be resized only
-   --      on one of their side (depending on their location)
+   --      on one of their side (depending on their location).
+   --      These can never have the focus. Instead, the embedded child has the
+   --      focus.
    --  - Embedded: the item is invisible. The widget it normally contains has
    --      been put into one of the dock items, and is completely managed by
    --      them. The item itself can not be mainpulated, nor even seen, by the
@@ -260,6 +274,9 @@ private
       --  The MDI to which the child belongs. We cannot get this information
       --  directly from Get_Parent since some children are actually embedded
       --  in docks (aka Gtk_Notebooks), and do not belong to the MDI anymore.
+
+      Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      --  The item in the dynamic menu that represents this child.
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;
