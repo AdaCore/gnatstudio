@@ -27,7 +27,6 @@ with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Label;           use Gtk.Label;
 with Gtk.List;            use Gtk.List;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
@@ -129,48 +128,9 @@ package body Switches_Editors is
    --  Only the pages described in Pages will be visible. All others pages are
    --  shown
 
-   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
-   --  Called when the editor is destroyed.
-
    function Get_Pages
      (Editor : access Switches_Edit_Record'Class) return Page_Filter;
    --  Return the list of pages that are visible in the switches editor.
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Switches_Edit := Switches_Edit (Editor);
-   begin
-      if (Ed.Pages and Gnatmake_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Make_Switches));
-      end if;
-
-      if (Ed.Pages and Ada_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Ada_Switches));
-      end if;
-
-      if (Ed.Pages and C_Page) = 0 then
-         Unref (Gtk_Widget (Ed.C_Switches));
-      end if;
-
-      if (Ed.Pages and Cpp_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Cpp_Switches));
-      end if;
-
-      if (Ed.Pages and Pretty_Printer_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Pp_Switches));
-      end if;
-
-      if (Ed.Pages and Binder_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Binder_Switches));
-      end if;
-
-      if (Ed.Pages and Linker_Page) = 0 then
-         Unref (Gtk_Widget (Ed.Linker_Switches));
-      end if;
-   end On_Destroy;
 
    -------------
    -- Gtk_New --
@@ -180,10 +140,6 @@ package body Switches_Editors is
    begin
       Editor := new Switches_Edit_Record;
       Switches_Editor_Pkg.Initialize (Editor);
-
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Gtk_New;
 
    -----------------------
@@ -194,10 +150,7 @@ package body Switches_Editors is
      (Editor : access Switches_Edit_Record'Class; Pages : Page_Filter)
    is
       procedure Hide_Or_Show
-        (Page   : Page_Filter;
-         Label  : Gtk_Label;
-         Widget : access Gtk_Widget_Record'Class;
-         Num    : Gint);
+        (Page   : Page_Filter; Widget : access Gtk_Widget_Record'Class);
       --  Hide or show a page
 
       ------------------
@@ -205,37 +158,23 @@ package body Switches_Editors is
       ------------------
 
       procedure Hide_Or_Show
-        (Page   : Page_Filter;
-         Label  : Gtk_Label;
-         Widget : access Gtk_Widget_Record'Class;
-         Num    : Gint) is
+        (Page   : Page_Filter; Widget : access Gtk_Widget_Record'Class) is
       begin
-         if (Editor.Pages and Page) /= (Pages and Page) then
-            if (Pages and Page) = 0 then
-               Ref (Widget);
-               Ref (Label);
-               Remove_Page (Editor.Notebook,
-                            Page_Num (Editor.Notebook, Widget));
-            else
-               Insert_Page (Editor.Notebook, Widget, Label, Num);
-               Show_All (Widget);
-               Unref (Widget);
-               Unref (Label);
-            end if;
+         if (Pages and Page) = 0 then
+            Hide (Widget);
+         else
+            Show (Widget);
          end if;
       end Hide_Or_Show;
 
    begin
-      Hide_Or_Show (Gnatmake_Page, Editor.Make_Label, Editor.Make_Switches, 0);
-      Hide_Or_Show (Ada_Page, Editor.Ada_Label, Editor.Ada_Switches, 1);
-      Hide_Or_Show (C_Page, Editor.C_Label, Editor.C_Switches, 2);
-      Hide_Or_Show (Cpp_Page, Editor.Cpp_Label, Editor.Cpp_Switches, 3);
-      Hide_Or_Show
-        (Pretty_Printer_Page, Editor.Pp_Label, Editor.Pp_Switches, 4);
-      Hide_Or_Show
-        (Binder_Page, Editor.Binder_Label, Editor.Binder_Switches, 5);
-      Hide_Or_Show
-        (Linker_Page, Editor.Linker_Label, Editor.Linker_Switches, 5);
+      Hide_Or_Show (Gnatmake_Page, Editor.Make_Switches);
+      Hide_Or_Show (Ada_Page, Editor.Ada_Switches);
+      Hide_Or_Show (C_Page, Editor.C_Switches);
+      Hide_Or_Show (Cpp_Page, Editor.Cpp_Switches);
+      Hide_Or_Show (Pretty_Printer_Page, Editor.Pp_Switches);
+      Hide_Or_Show (Binder_Page, Editor.Binder_Switches);
+      Hide_Or_Show (Linker_Page, Editor.Linker_Switches);
       Editor.Pages := Pages;
    end Set_Visible_Pages;
 
@@ -1677,11 +1616,18 @@ package body Switches_Editors is
       B         : Gtk_Button;
 
    begin
-      if Files'Length /= 0 then
+      if Files'Length > 1 then
+         Gtk_New (Dialog,
+                  Title  => -"Editing switches for multiple files",
+                  Parent => Get_Main_Window (Kernel),
+                  Flags  => Modal or Destroy_With_Parent);
+
+      elsif Files'Length = 1 then
          Gtk_New (Dialog,
                   Title  => -"Editing switches for specific file",
                   Parent => Get_Main_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
+
       else
          Gtk_New (Dialog,
                   Title  => (-"Editing default switches for project ")
