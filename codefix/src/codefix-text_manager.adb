@@ -2304,28 +2304,6 @@ package body Codefix.Text_Manager is
       return Current;
    end Previous;
 
-   -----------------
-   -- Set_Caption --
-   -----------------
-
-   procedure Set_Caption (This : in out Extract; Caption : String) is
-   begin
-      Assign (This.Caption, Caption);
-   end Set_Caption;
-
-   -----------------
-   -- Get_Caption --
-   -----------------
-
-   function Get_Caption (This : Extract) return String is
-   begin
-      if This.Caption /= null then
-         return This.Caption.all;
-      else
-         return "Uncaptionned correction";
-      end if;
-   end Get_Caption;
-
    --------------------
    -- Get_First_Line --
    --------------------
@@ -2558,6 +2536,293 @@ package body Codefix.Text_Manager is
       return Total;
    end Get_Nb_Files;
 
+   ----------------------------------------------------------------------------
+   --  type Text_Command
+   ----------------------------------------------------------------------------
+
+   ------------------
+   -- Text_Command --
+   ------------------
+
+   procedure Free_Data (This : in out Text_Command'Class) is
+   begin
+      Free (This);
+   end Free_Data;
+
+   procedure Set_Caption
+     (This : in out Text_Command'Class;
+      Caption : String) is
+   begin
+      Assign (This.Caption, Caption);
+   end Set_Caption;
+
+   function Get_Caption (This : Text_Command'Class) return String is
+   begin
+      return This.Caption.all;
+   end Get_Caption;
+
+
+   -----------------
+   -- Word_Cursor --
+   -----------------
+
+   procedure Free (This : in out Word_Cursor) is
+   begin
+      Free (This.String_Match);
+      Free (File_Cursor (This));
+   end Free;
+
+   function Clone (This : Word_Cursor) return Word_Cursor is
+   begin
+      return (Clone (File_Cursor (This)) with
+              Clone (This.String_Match), This.Mode);
+   end Clone;
+
+   procedure Make_Word_Mark
+     (Word         : Word_Cursor;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Mark         : out Word_Mark) is
+      pragma Unreferenced (Current_Text);
+   begin
+      Mark.Mode := Word.Mode;
+      Assign (Mark.String_Match, Word.String_Match);
+   end Make_Word_Mark;
+
+   procedure Make_Word_Cursor
+     (Word         : Word_Mark;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : out Word_Cursor) is
+      pragma Unreferenced (Current_Text);
+   begin
+      Cursor.Mode := Word.Mode;
+      Assign (Cursor.String_Match, Word.String_Match);
+   end Make_Word_Cursor;
+
+   procedure Free (This : in out Word_Mark) is
+   begin
+      Free (This.String_Match);
+   end Free;
+
+
+   ---------------------
+   -- Remove_Word_Cmd --
+   ---------------------
+
+   procedure Initialize
+     (This         : in out Remove_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class) is
+   begin
+      Make_Word_Mark (Word, Current_Text, This.Word);
+   end Initialize;
+
+   procedure Free (This : in out Remove_Word_Cmd) is
+   begin
+      Free (This.Word);
+   end Free;
+
+   procedure Execute
+     (This         : Remove_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      New_Str     : Dynamic_String;
+      Line_Cursor : File_Cursor;
+      Word        : Word_Cursor;
+   begin
+
+      Make_Word_Cursor (This.Word, Current_Text, Word);
+      Line_Cursor := File_Cursor (Word);
+
+      Line_Cursor.Col := 1;
+      Get_Line (Current_Text, Line_Cursor, New_Extract);
+
+      New_Str := new String'(Get_String (New_Extract));
+
+      case Word.Mode is
+         when Text_Ascii =>
+            Set_String
+              (New_Extract, New_Str (1 .. Word.Col - 1) &
+                 New_Str (Word.Col + Word.String_Match'Length
+                          .. New_Str'Last));
+
+         when Regular_Expression =>
+            Set_String
+              (New_Extract, New_Str (1 .. Word.Col - 1) &
+                 New_Str
+                   (Word.Col +
+                        Get_Word_Length
+                          (New_Extract, Word, Word.String_Match.all)
+                    .. New_Str'Last));
+      end case;
+
+      Free (Word);
+
+   end Execute;
+
+   ---------------------
+   -- Insert_Word_Cmd --
+   ---------------------
+
+   procedure Initialize
+     (This         : in out Insert_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      Add_Spaces   : Boolean := True;
+      Position     : Relative_Position := Specified) is
+   begin
+      This.Add_Spaces := Add_Spaces;
+      This.Position := Position;
+      Make_Word_Mark (Word, Current_Text, This.Word);
+   end Initialize;
+
+   procedure Free (This : in out Insert_Word_Cmd) is
+   begin
+      Free (This.Word);
+   end Free;
+
+   procedure Execute
+     (This         : Insert_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      New_Str      : Dynamic_String;
+      Line_Cursor  : File_Cursor;
+      Space_Cursor : File_Cursor;
+      Word         : Word_Cursor;
+   begin
+
+      Make_Word_Cursor (This.Word, Current_Text, Word);
+      Line_Cursor := File_Cursor (Word);
+      Space_Cursor := File_Cursor (Word);
+
+      Assign (New_Str, Word.String_Match);
+      Line_Cursor.Col := 1;
+
+      if This.Position = Specified then
+         Get_Line (Current_Text, Line_Cursor, New_Extract);
+         Space_Cursor.Col := Space_Cursor.Col - 1;
+
+         if This.Add_Spaces and then
+           Word.Col > 1 and then
+           Get (Current_Text, Space_Cursor, 1) /= " "
+         then
+            Assign (New_Str, " " & New_Str.all);
+         end if;
+
+         Space_Cursor.Col := Space_Cursor.Col + 1;
+
+         if This.Add_Spaces
+           and then Word.Col < Line_Length (Current_Text, Line_Cursor)
+           and then Get (Current_Text, Space_Cursor, 1) /= " "
+         then
+            Assign (New_Str, New_Str.all & " ");
+         end if;
+
+         Add_Word (New_Extract, Word, New_Str.all);
+      elsif This.Position = After then
+         Add_Line (New_Extract, Line_Cursor, New_Str.all);
+      elsif This.Position = Before then
+         Line_Cursor.Line := Line_Cursor.Line - 1;
+         Add_Line (New_Extract, Line_Cursor, New_Str.all);
+      end if;
+
+      Free (New_Str);
+      Free (Word);
+
+   end Execute;
+
+   -------------------
+   -- Move_Word_Cmd --
+   -------------------
+
+   procedure Initialize
+     (This         : in out Move_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      New_Position : File_Cursor'Class)
+   is
+      New_Word : Word_Cursor;
+   begin
+      New_Word := (Clone (New_Position) with Word.String_Match, Word.Mode);
+      Initialize (This.Step_Remove, Current_Text, Word);
+      Initialize (This.Step_Insert, Current_Text, New_Word);
+   end Initialize;
+
+   procedure Free (This : in out Move_Word_Cmd) is
+   begin
+      Free (This.Step_Remove);
+      Free (This.Step_Insert);
+   end Free;
+
+   procedure Execute
+     (This         : Move_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class) is
+   begin
+      Execute (This.Step_Remove, Current_Text, New_Extract);
+      Execute (This.Step_Insert, Current_Text, New_Extract);
+   end Execute;
+
+   ----------------------
+   -- Replace_Word_Cmd --
+   ----------------------
+
+   procedure Initialize
+     (This         : in out Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      New_Word     : String)
+   is
+      New_Word : Word_Cursor; -- ...
+   begin
+      New_Word := (Clone (Word) with Word.String_Match, Word.Mode);
+      Initialize (This.Step_Remove, Current_Text, Word);
+      Initialize (This.Step_Insert, Current_Text, New_Word);
+   end Initialize;
+
+   procedure Free (This : in out Replace_Word_Cmd) is
+   begin
+      Free (This.Step_Remove);
+      Free (This.Step_Insert);
+   end Free;
+
+   procedure Execute
+     (This         : Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class) is
+   begin
+      Execute (Step_Remove, Current_Text, New_Extract);
+      Execute (Step_Insert, Current_Text, New_Extract);
+   end Execute;
+
+   ---------------------
+   -- Invert_Word_Cmd --
+   ---------------------
+
+   procedure Initialize
+     (This         : in out Invert_Words_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word1, Word2 : Word_Cursor'Class) is
+   begin
+      Initialize (Step_Word1, Current_Text, Word1, Word2.String_Match.all);
+      Initialize (Step_Word2, Current_Text, Word2, Word1.String_Match.all);
+   end Initialize;
+
+   procedure Free (This : in out Invert_Words_Cmd) is
+   begin
+      Free (This.Step_Word1);
+      Free (This.Step_Word2);
+   end Free;
+
+   procedure Execute
+     (This         : Invert_Words_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class) is
+   begin
+      Execute (Step_Word1, Current_Text, New_Extract);
+      Execute (Step_Word2, Current_Text, New_Extract);
+   end Execute;
 
    ----------------------------------------------------------------------------
    --  Merge functions and utilities
