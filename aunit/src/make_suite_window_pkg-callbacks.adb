@@ -157,8 +157,12 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Filter_B.Label := new String'(-"Ada files");
          Filter_C.Label := new String'(-"Suite and test files");
 
-         Gtk_New (Suite_Window.Explorer, "/", "", "Select test suite",
-                  History => null);
+         Gtk_New
+           (Suite_Window.Explorer,
+            "/",
+            Name_As_Directory (Get_Text (Suite_Window.Directory_Entry)),
+            "Select test suite",
+            History => null);
 
          Filter_C.Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
          Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
@@ -210,6 +214,20 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Thaw (List);
    end On_Remove_Clicked;
 
+   ---------------------------------
+   -- On_Browse_Directory_Clicked --
+   ---------------------------------
+
+   procedure On_Browse_Directory_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      --  Open explorer window to select suite
+      Suite_Window : constant Make_Suite_Window_Access :=
+        Make_Suite_Window_Access (Get_Toplevel (Object));
+   begin
+      Browse_Location (Suite_Window.Directory_Entry);
+   end On_Browse_Directory_Clicked;
+
    -------------------
    -- On_Ok_Clicked --
    -------------------
@@ -217,16 +235,22 @@ package body Make_Suite_Window_Pkg.Callbacks is
    procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
       --  Generate suite source file.  Exit program if successful
 
-      Win  : constant Make_Suite_Window_Access :=
+      Window         : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
-      File : File_Type;
-      Name : String := Get_Text (Win.Name_Entry);
+      Directory_Name : constant String := Get_Text (Window.Directory_Entry);
+      File           : File_Type;
+      Name           : String := Get_Text (Window.Name_Entry);
+      Filename       : constant String := Name_As_Directory
+        (Directory_Name) & To_File_Name (Name);
 
       use Row_List;
-      List : Row_List.Glist := Get_Row_List (Win.Test_List);
+      List : Row_List.Glist := Get_Row_List (Window.Test_List);
 
    begin
-      if Name /= "" then
+      if Directory_Name /= ""
+        and then Is_Directory (Directory_Name)
+        and then Name /= ""
+      then
          if To_Lower (Name) = "test_suite" then
             if Message_Dialog
               ("The name of the suite cannot be ""Test_Suite""."
@@ -243,9 +267,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
          Mixed_Case (Name);
 
-         if Is_Regular_File (To_File_Name (Name) & ".adb") then
+         if Is_Regular_File (Filename & ".adb") then
             if Message_Dialog
-              ("File " & To_File_Name (Name) & ".adb" & " exists. Overwrite?",
+              ("File " & Filename & ".adb exists. Overwrite?",
                Warning,
                Button_Yes or Button_No,
                Button_No,
@@ -256,12 +280,13 @@ package body Make_Suite_Window_Pkg.Callbacks is
             end if;
          end if;
 
-         Ada.Text_IO.Create (File, Out_File, To_File_Name (Name) & ".adb");
+         Ada.Text_IO.Create (File, Out_File, Filename & ".adb");
          Put_Line (File, "with AUnit.Test_Suites; use AUnit.Test_Suites;");
 
          while List /= Null_List loop
             declare
-               Package_Name : String := Get (Win.Test_List, Get_Data (List));
+               Package_Name : String :=
+                                Get (Window.Test_List, Get_Data (List));
             begin
                if Package_Name /= "" then
                   Mixed_Case (Package_Name);
@@ -282,12 +307,13 @@ package body Make_Suite_Window_Pkg.Callbacks is
             & ASCII.LF
             & "begin");
 
-         List := Get_Row_List (Win.Test_List);
+         List := Get_Row_List (Window.Test_List);
 
          while List /= Null_List loop
             declare
-               S : String := Get_Text (Win.Test_List, Get_Data (List), 1);
-               Package_Name : String := Get (Win.Test_List, Get_Data (List));
+               S : String := Get_Text (Window.Test_List, Get_Data (List), 1);
+               Package_Name : String :=
+                                Get (Window.Test_List, Get_Data (List));
             begin
                if Package_Name /= "" then
                   Mixed_Case (S);
@@ -314,10 +340,10 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Put_Line
            (File, "   return Result;" & ASCII.LF & "end " & Name & ';');
          Close (File);
-         Win.Name := new String'(To_Lower (Name));
+         Window.Name := new String'(To_Lower (Filename));
       end if;
 
-      Hide (Win);
+      Hide (Window);
       Main_Quit;
    end On_Ok_Clicked;
 

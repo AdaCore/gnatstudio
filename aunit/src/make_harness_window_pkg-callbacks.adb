@@ -18,22 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main;                use Gtk.Main;
-with File_Utils;              use File_Utils;
-with Ada.Text_IO;             use Ada.Text_IO;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Case_Handling;           use Case_Handling;
+with Gtk.Main;        use Gtk.Main;
+with File_Utils;      use File_Utils;
+with Ada.Text_IO;     use Ada.Text_IO;
+with Case_Handling;   use Case_Handling;
 
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
-with Pixmaps_IDE;             use Pixmaps_IDE;
+with Pixmaps_IDE;     use Pixmaps_IDE;
 
-with Aunit_Filters;           use Aunit_Filters;
-with Gtkada.Handlers;         use Gtkada.Handlers;
+with Aunit_Filters;   use Aunit_Filters;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with Gdk.Pixbuf;              use Gdk.Pixbuf;
-with Glide_Intl;              use Glide_Intl;
-with VFS;                     use VFS;
+with Gdk.Pixbuf;      use Gdk.Pixbuf;
+with Glide_Intl;      use Glide_Intl;
+with VFS;             use VFS;
 
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window. Template
@@ -181,8 +180,12 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
          Filter_B.Body_Pixbuf := Gdk_New_From_Xpm_Data (package_xpm);
 
-         Gtk_New (Harness_Window.Explorer, "/", "", -"Select test harness",
-                  History => null); --  ??? No history
+         Gtk_New
+           (Harness_Window.Explorer,
+            "/",
+            Name_As_Directory (Get_Text (Harness_Window.Directory_Entry)),
+            -"Select test harness",
+            History => null); --  ??? No history
 
          Register_Filter (Harness_Window.Explorer, Filter_C);
          Register_Filter (Harness_Window.Explorer, Filter_B);
@@ -203,6 +206,20 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Show_All (Harness_Window.Explorer);
    end On_Browse_Clicked;
 
+   ---------------------------------
+   -- On_Browse_Directory_Clicked --
+   ---------------------------------
+
+   procedure On_Browse_Directory_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      --  Open explorer window to select suite
+      Harness_Window : constant Make_Harness_Window_Access :=
+        Make_Harness_Window_Access (Get_Toplevel (Object));
+   begin
+      Browse_Location (Harness_Window.Directory_Entry);
+   end On_Browse_Directory_Clicked;
+
    -------------------
    -- On_Ok_Clicked --
    -------------------
@@ -214,11 +231,18 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Top            : constant Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
       File           : File_Type;
+      Directory_Name : constant String := Get_Text (Top.Directory_Entry);
       Procedure_Name : String := Get_Text (Top.Procedure_Entry);
       File_Name      : String := Get_Text (Top.File_Name_Entry);
+      Filename       : constant String := Name_As_Directory
+        (Directory_Name) & To_File_Name (Procedure_Name);
 
    begin
-      if Procedure_Name /= "" and then File_Name /= "" then
+      if Directory_Name /= ""
+        and then Is_Directory (Directory_Name)
+        and then Procedure_Name /= ""
+        and then File_Name /= ""
+      then
          Mixed_Case (Procedure_Name);
          Mixed_Case (File_Name);
 
@@ -226,7 +250,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             Top.Suite_Name := new String'("");
          end if;
 
-         if Is_Regular_File (To_File_Name (Procedure_Name) & ".adb") then
+         if Is_Regular_File (Filename & ".adb") then
             if Message_Dialog
               ("File " & To_File_Name (Procedure_Name)
                & ".adb" & " exists. Overwrite?",
@@ -241,7 +265,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          end if;
 
          Ada.Text_IO.Create
-           (File, Out_File, To_File_Name (Procedure_Name) & ".adb");
+           (File, Out_File, Filename & ".adb");
          Put_Line
            (File,
             "with AUnit.Test_Runner;" & ASCII.LF
@@ -260,7 +284,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             & "   Run;" & ASCII.LF
             & "end " & Procedure_Name & ";");
          Close (File);
-         Top.Procedure_Name := new String'(To_Lower (Procedure_Name));
+         Top.Procedure_Name := new String'(Filename);
       end if;
 
       Hide (Top);
