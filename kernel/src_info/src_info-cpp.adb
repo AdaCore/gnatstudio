@@ -17,7 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with Ada.Text_IO;       use Ada.Text_IO;
 with GNAT.Regpat;       use GNAT.Regpat;
 
 with Prj;
@@ -34,8 +33,13 @@ with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
 
 with File_Buffer;
+with Traces; use Traces;
 
 package body Src_Info.CPP is
+
+   Info_Stream : Debug_Handle := Create ("CPP.Info");
+   Warn_Stream : Debug_Handle := Create ("CPP.Warn");
+   Fail_Stream : Debug_Handle := Create ("CPP.Fail");
 
    type Handler_Environment is record
       SN_Table          : SN_Table_Array;
@@ -226,10 +230,8 @@ package body Src_Info.CPP is
             begin
                Open (SN_Table (Table), File_Name);
             exception
-               when others =>
+               when others => null;
                --  could not open table, ignore this error
-                  Warn (Table_Type'Image (Table)
-                        & " table does not exist");
             end;
          end if;
       end loop;
@@ -261,6 +263,13 @@ package body Src_Info.CPP is
    is
       P        : Pair_Ptr;
    begin
+
+      if not Is_Open (Env.SN_Table (FIL)) then
+         --  .fil table does not exist, no data available
+         Warn (".fil table does not exist, no data available");
+         return;
+      end if;
+
       File_Buffer.Init (Source_Filename);
       Init (Env.Module_Typedefs);
       Set_Cursor (Env.SN_Table (FIL),
@@ -400,17 +409,17 @@ package body Src_Info.CPP is
 
    procedure Info (Msg : String) is
    begin
-      Put_Line ("[I] " & Msg);
+      Trace (Info_Stream, Msg);
    end Info;
 
    procedure Warn (Msg : String) is
    begin
-      Put_Line ("[W] " & Msg);
+      Trace (Warn_Stream, Msg);
    end Warn;
 
    procedure Fail (Msg : String) is
    begin
-      Put_Line ("[E] " & Msg);
+      Trace (Fail_Stream, Msg);
    end Fail;
 
    procedure Refer_Type
@@ -571,7 +580,7 @@ package body Src_Info.CPP is
          Free (MD_Tab_Tmp);
       end loop;
 
-      pragma Assert (First_MD_Pos /= Invalid_Point); -- DB inconsistency?
+      Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
       return Find_Declaration
         (File        => Env.File,
          Symbol_Name => Buffer (Name.First .. Name.Last),
@@ -670,7 +679,7 @@ package body Src_Info.CPP is
          Free (FD_Tab_Tmp);
       end loop;
 
-      pragma Assert (First_FD_Pos /= Invalid_Point); -- DB inconsistency?
+      Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
       return Find_Declaration
         (File        => Env.File,
          Symbol_Name => Buffer (Name.First .. Name.Last),
@@ -1218,7 +1227,8 @@ package body Src_Info.CPP is
       end if;
 
       if not Overloaded then
-         pragma Assert (Forward_Declared or not No_Body, "Hey, what's up?");
+         Assert (Fail_Stream, Forward_Declared or not No_Body,
+           "Hey, what's up?");
          if No_Body then
             Buffer   := FDecl.Buffer;
             Filename       := FDecl.File_Name;
@@ -2536,7 +2546,7 @@ package body Src_Info.CPP is
          Free (FD_Tab_Tmp);
       end loop;
 
-      pragma Assert (First_FD_Pos /= Invalid_Point, "DB inconsistency");
+      Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
       if FD_Tab.Buffer (FD_Tab.Return_Type.First ..
                         FD_Tab.Return_Type.Last) = "void" then
@@ -3136,7 +3146,7 @@ package body Src_Info.CPP is
          Free (MD_Tab_Tmp);
       end loop;
 
-      pragma Assert (First_MD_Pos /= Invalid_Point, "DB inconsistency");
+      Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
       declare
          Class_Def    : CL_Table;
@@ -3343,5 +3353,8 @@ package body Src_Info.CPP is
       Free (Desc);
       Free (Union_Def);
    end Sym_UN_Handler;
+
+begin
+   Parse_Config_File;
 end Src_Info.CPP;
 
