@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,6 +47,11 @@ package Task_Manager.GUI is
 
    procedure Refresh (Manager : Task_Manager_Access);
    --  Refresh the information in View from the Task_Manager.
+
+   procedure Interrupt_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Resume command referenced by Index.
 
 private
 

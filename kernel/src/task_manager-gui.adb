@@ -122,11 +122,6 @@ package body Task_Manager.GUI is
       Index   : Integer);
    --  Resume command referenced by Index.
 
-   procedure Interrupt_Command
-     (Manager : Task_Manager_Access;
-      Index   : Integer);
-   --  Resume command referenced by Index.
-
    function Menu_Create
      (View   : Manager_Index_Record;
       Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
