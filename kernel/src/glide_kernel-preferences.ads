@@ -191,6 +191,7 @@ package Glide_Kernel.Preferences is
    Diff_Context_Length : Param_Spec_Int;
    Diff_Cmd            : Param_Spec_String;
    Patch_Cmd           : Param_Spec_String;
+   Old_Vdiff           : Param_Spec_Boolean;
 
    -- Source Editor --
    Default_Style             : Param_Spec_Style;
