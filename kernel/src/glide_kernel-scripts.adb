@@ -985,6 +985,39 @@ package body Glide_Kernel.Scripts is
       Kernel.Scripts := new Scripting_Data_Record;
    end Initialize;
 
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Scripting_Language_Data, Scripting_Language_List);
+
+      List : Scripting_Language_List :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+      Tmp  : Scripting_Language_List;
+   begin
+      while List /= null loop
+         Tmp := List.Next;
+         Destroy (List.Script);
+         Unchecked_Free (List);
+
+         List := Tmp;
+      end loop;
+   end Finalize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Script : access Scripting_Language_Record) is
+      pragma Unreferenced (Script);
+   begin
+      null;
+   end Destroy;
+
    --------------------------------------
    -- Register_Default_Script_Commands --
    --------------------------------------

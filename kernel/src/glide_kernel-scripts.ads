@@ -307,6 +307,10 @@ package Glide_Kernel.Scripts is
    --  The number of parameters has been checked before this procedure is
    --  called.
 
+   procedure Destroy (Script : access Scripting_Language_Record);
+   --  Destroy the scripting language and the memory it occupies.
+   --  Does nothing by default
+
    procedure Register_Command
      (Script       : access Scripting_Language_Record;
       Command      : String;
@@ -379,6 +383,10 @@ package Glide_Kernel.Scripts is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialize this module
 
+   procedure Finalize
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Finalize this module, and free associated memory
+
    procedure Register_Default_Script_Commands
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Add the standard script commands.
@@ -447,7 +455,8 @@ package Glide_Kernel.Scripts is
    procedure Register_Scripting_Language
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Script  : access Scripting_Language_Record'Class);
-   --  Register a new scripting language in the kernel
+   --  Register a new scripting language in the kernel.
+   --  Scripting languages are freed when the kernel is destroyed
 
    function Lookup_Scripting_Language
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
