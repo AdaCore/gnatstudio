@@ -71,27 +71,11 @@ package body VFS_Module is
       Command : String)
    is
       Success  : Boolean;
-      Result   : GNAT.OS_Lib.String_Access;
 
       procedure List_Files (Pattern : String);
       --  List files following Pattern
       --  Pattern may contain directory information and
       --  regular expressions.
-
-      procedure Append_Result (S : String);
-      --  Appends S & ASCII.LF to Result.
-      --  Result must not be set to Null when calling this subprogram.
-
-      -------------------
-      -- Append_Result --
-      -------------------
-
-      procedure Append_Result (S : String) is
-         Tmp : GNAT.OS_Lib.String_Access := Result;
-      begin
-         Result := new String'(Result.all & S & ASCII.LF);
-         Free (Tmp);
-      end Append_Result;
 
       ----------------
       -- List_Files --
@@ -139,9 +123,10 @@ package body VFS_Module is
 
             if Match (Buffer (1 .. Last), File_Regexp) then
                if Is_Cur_Dir then
-                  Append_Result (Buffer (1 .. Last));
+                  Set_Return_Value (Data, Buffer (1 .. Last), Append => True);
                else
-                  Append_Result (Directory.all & Buffer (1 .. Last));
+                  Set_Return_Value
+                    (Data, Directory.all & Buffer (1 .. Last), Append => True);
                end if;
             end if;
          end loop;
@@ -198,7 +183,7 @@ package body VFS_Module is
          end;
 
       elsif Command = "dir" or else Command = "ls" then
-         Result := new String'("");
+         Set_Return_Value_As_List (Data);
 
          if Number_Of_Arguments (Data) = 0 then
             List_Files ("*");
@@ -208,16 +193,12 @@ package body VFS_Module is
                   List_Files (Nth_Arg (Data, A));
                exception
                   when Error_In_Regexp =>
-                     Free (Result);
                      Set_Error_Msg
                        (Data, -"error in regexp: " & Nth_Arg (Data, A));
                      return;
                end;
             end loop;
          end if;
-
-         Set_Return_Value (Data, Result.all);
-         Free (Result);
       end if;
    end VFS_Command_Handler;
 
