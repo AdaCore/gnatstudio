@@ -86,7 +86,7 @@ package body KeyManager_Module is
       Key      : Gdk_Key_Type;
       Modifier : Gdk_Modifier_Type;
    end record;
-   No_Binding : constant Key_Binding := (0, 0);
+   No_Binding : constant Key_Binding := (100000, 1000000);
 
    type Keymap_Record;
    type Keymap_Access is access Keymap_Record;
@@ -560,6 +560,12 @@ package body KeyManager_Module is
          return;
       end if;
 
+      if Default_Key = "" or else Default_Key = -Disabled_String then
+         Bind_Default_Key_Internal
+           (Handler.Table, Action, 0, 0, Changed);
+         return;
+      end if;
+
       First := Default_Key'First;
       while First <= Default_Key'Last loop
          Last := First + 1;
@@ -751,7 +757,7 @@ package body KeyManager_Module is
                  and then Binding.Action /= null
                then
                   Child := new Node;
-                  Child.Tag := new String'("Key");
+                  Child.Tag := new String'("key");
                   Set_Attribute (Child, "action", Binding.Action.all);
                   Child.Value := new String'
                     (Prefix
@@ -1100,15 +1106,16 @@ package body KeyManager_Module is
                declare
                   Str : constant String :=
                     Get_String (Editor.Model, Child, Key_Column);
+                  Changed : constant Boolean := Get_Boolean
+                    (Editor.Model, Child, Changed_Column);
                begin
-                  if Str /= -Disabled_String then
+                  if Str /= -Disabled_String or else Changed then
                      Bind_Default_Key_Internal
                        (Handler,
                         Action       =>
                           Get_String (Editor.Model, Child, Action_Column),
                         Default_Key  => Str,
-                        Changed => Get_Boolean
-                          (Editor.Model, Child, Changed_Column));
+                        Changed      => Changed);
                   end if;
                end;
                Next (Editor.Model, Child);
@@ -1246,6 +1253,7 @@ package body KeyManager_Module is
         and then Children (Model, Iter) = Null_Iter
       then
          Set (Ed.Model, Iter, Key_Column, -Disabled_String);
+         Set (Ed.Model, Iter, Changed_Column, True);
       end if;
 
    exception
