@@ -136,6 +136,7 @@ with Gtk.Selection;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Commands; use Commands;
+with Commands.Interactive;
 with Interfaces.C.Strings;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
 
@@ -291,6 +292,53 @@ package Glide_Kernel.Modules is
    --       Contextual_Menu_Handler provided in Register_Module)
    --     - it then displays the menu
    --     - it finally cleans up the memory when the menu is hidden
+
+   type Contextual_Menu_Label_Creator_Record is abstract tagged null record;
+   type Contextual_Menu_Label_Creator is
+     access all Contextual_Menu_Label_Creator_Record'Class;
+   function Get_Label
+     (Creator   : access Contextual_Menu_Label_Creator_Record;
+      Context   : access Selection_Context'Class) return String is abstract;
+   --  Create the name to use for a contextual menu.
+   --  If this function returns the empty string, the menu will be filtered out
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Action_Record_Access;
+      Label           : String := "");
+   --  Register a new contextual menu entry to tbe displayed.
+   --  This menu will only be shown when the filter associated with the Action
+   --  matches. The name used in the menu will be Title (or Name if label isn't
+   --  specified), interpreted with the usual %P, %F parameters substitution.
+   --  The label might contain a path to indicate submenus.
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Action_Record_Access;
+      Label           : access Contextual_Menu_Label_Creator_Record'Class);
+   --  Same as above, except the label of the menu is computed dynamically
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Commands.Interactive.Interactive_Command_Access;
+      Filter          : Glide_Kernel.Action_Filter := null;
+      Label           : access Contextual_Menu_Label_Creator_Record'Class);
+   --  Same as above, except the action to execute is defined internally
+   --  When the command is executed, the Context.Context field will be set to
+   --  the current selection context.
+
+   procedure Register_Contextual_Menu
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Name           : String;
+      Action         : Commands.Interactive.Interactive_Command_Access := null;
+      Filter         : Glide_Kernel.Action_Filter := null;
+      Label          : String := "");
+   --  Same as above, but the menu title is a string where %P, %F,... are
+   --  substituted.
+   --  A separator is inserted if Action is null
 
    --------------
    -- Tooltips --

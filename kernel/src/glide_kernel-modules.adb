@@ -39,6 +39,7 @@ with Gtk.Accel_Map;     use Gtk.Accel_Map;
 with Gtk.Button;        use Gtk.Button;
 with Gtk.Dnd;           use Gtk.Dnd;
 with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Image;         use Gtk.Image;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
@@ -50,15 +51,20 @@ with Gtkada.MDI;        use Gtkada.MDI;
 with Projects;          use Projects;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
+with Entities;          use Entities;
 with Glide_Intl;        use Glide_Intl;
+with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 with VFS;               use VFS;
 with File_Utils;        use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with System;            use System;
+with Commands.Interactive; use Commands.Interactive;
 
 package body Glide_Kernel.Modules is
 
@@ -78,8 +84,49 @@ package body Glide_Kernel.Modules is
       Menu    : Gtk_Menu;
    end record;
 
+   type Contextual_Menu_Record;
+   type Contextual_Menu_Access is access all Contextual_Menu_Record;
+   type Contextual_Menu_Record (Uses_Action : Boolean) is record
+      Name   : GNAT.OS_Lib.String_Access;
+      Label  : Contextual_Menu_Label_Creator;
+      Next   : Contextual_Menu_Access;
+
+      case Uses_Action is
+         when True  =>
+            Action : Action_Record_Access;
+         when False =>
+            Command : Commands.Interactive.Interactive_Command_Access;
+            Filter : Glide_Kernel.Action_Filter;
+      end case;
+   end record;
+   --  A contextual menu entry declared by a user or GPS itself internally
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Contextual_Menu_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (Contextual_Menu_Access, System.Address);
+
+   package Action_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Contextual_Menu_Access);
+
+
+   type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
+      with record
+         Label : GNAT.OS_Lib.String_Access;
+      end record;
+   type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
+   function Get_Label
+     (Creator   : access Contextual_Label_Parameters;
+      Context   : access Selection_Context'Class) return String;
+   --  Substitute %p, %f,... in the title to create a suitable contextual menu
+   --  title
+
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
+
+   procedure Contextual_Action
+     (Kernel : access GObject_Record'Class; Action : Contextual_Menu_Access);
+   --  Execute action, in the context of a contextual menu
 
    function Create_Contextual_Menu
      (User  : Contextual_Menu_User_Data;
@@ -113,6 +160,124 @@ package body Glide_Kernel.Modules is
    package Menu_Factory_Return_Callback is
    new Gtk.Handlers.User_Return_Callback
      (Glib.Object.GObject_Record, Boolean, Menu_Factory_User_Data);
+
+   procedure Add_Contextual_Menu
+     (Kernel : access Kernel_Handle_Record'Class;
+      Menu   : Contextual_Menu_Access);
+   --  Add a new contextual menu in the list
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label
+     (Creator   : access Contextual_Label_Parameters;
+      Context   : access Selection_Context'Class) return String
+   is
+      Invalid_Substitution : exception;
+
+      function Substitution (Param : String; Quoted : Boolean) return String;
+      --  Substitute %P, %f,... as appropriate
+
+      ------------------
+      -- Substitution --
+      ------------------
+
+      function Substitution (Param : String; Quoted : Boolean) return String is
+         pragma Unreferenced (Quoted);
+         Entity : Entity_Information;
+      begin
+         if Param = "f"
+           and then Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+             (File_Selection_Context_Access (Context))
+         then
+            return Base_Name
+              (File_Information (File_Selection_Context_Access (Context)));
+
+         elsif Param = "d"
+           and then Context.all in File_Selection_Context'Class
+           and then Has_Directory_Information
+             (File_Selection_Context_Access (Context))
+         then
+            return Directory_Information
+              (File_Selection_Context_Access (Context));
+
+         elsif Param = "p"
+           and then Context.all in File_Selection_Context'Class
+           and then Has_Project_Information
+             (File_Selection_Context_Access (Context))
+         then
+            return Project_Name
+              (Project_Information (File_Selection_Context_Access (Context)));
+
+         elsif Param = "l"
+           and then Context.all in File_Selection_Context'Class
+           and then Has_Line_Information
+             (File_Selection_Context_Access (Context))
+         then
+            return Integer'Image
+              (Line_Information (File_Selection_Context_Access (Context)));
+
+         elsif Param = "c"
+           and then Context.all in File_Selection_Context'Class
+           and then Has_Column_Information
+             (File_Selection_Context_Access (Context))
+         then
+            return Integer'Image
+              (Column_Information
+                 (File_Selection_Context_Access (Context)));
+
+         elsif Param = "a"
+           and then Context.all in Message_Context'Class
+           and then Has_Category_Information
+             (Message_Context_Access (Context))
+         then
+            return Category_Information
+              (Message_Context_Access (Context));
+
+         elsif Param = "e"
+           and then Context.all in Entity_Selection_Context'Class
+         then
+            Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+            if Entity = null then
+               raise Invalid_Substitution;
+            else
+               --  Get the name from the context, to have the proper casing
+               return Krunch (Entity_Name_Information
+                                (Entity_Selection_Context_Access (Context)));
+            end if;
+
+         elsif Param = "i"
+           and then Context.all in File_Selection_Context'Class
+         then
+            if Importing_Project_Information
+              (File_Selection_Context_Access (Context)) /=
+              Project_Information
+                (File_Selection_Context_Access (Context))
+            then
+               return Project_Name
+                 (Importing_Project_Information
+                    (File_Selection_Context_Access (Context)));
+            else
+               raise Invalid_Substitution;
+            end if;
+
+         else
+            raise Invalid_Substitution;
+         end if;
+      end Substitution;
+
+   begin
+      return Substitute
+        (Creator.Label.all,
+         Substitution_Char => '%',
+         Callback          => Substitution'Unrestricted_Access,
+         Recursive         => False);
+   exception
+      when Invalid_Substitution =>
+         return "";
+   end Get_Label;
 
    ---------------------
    -- Compute_Tooltip --
@@ -285,6 +450,33 @@ package body Glide_Kernel.Modules is
       return ID.Info.Name;
    end Module_Name;
 
+   -----------------------
+   -- Contextual_Action --
+   -----------------------
+
+   procedure Contextual_Action
+     (Kernel : access GObject_Record'Class; Action : Contextual_Menu_Access)
+   is
+      C       : Command_Access;
+      Context : Interactive_Command_Context;
+   begin
+      Context.Context := Get_Current_Context (Kernel_Handle (Kernel));
+      Ref (Context.Context);
+
+      if Action.Uses_Action then
+         C := Create_Proxy (Action.Action.Command, Context);
+      else
+         C := Create_Proxy (Action.Command, Context);
+      end if;
+
+      Launch_Background_Command
+        (Kernel          => Kernel_Handle (Kernel),
+         Command         => C,
+         Active          => True,
+         Show_Bar        => False,
+         Destroy_On_Exit => True);
+   end Contextual_Action;
+
    ----------------------------
    -- Create_Contextual_Menu --
    ----------------------------
@@ -297,6 +489,12 @@ package body Glide_Kernel.Modules is
         Module_List.First (User.Kernel.Modules_List);
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
+      C       : Contextual_Menu_Access;
+      Item    : Gtk_Menu_Item;
+      Parent_Item : Gtk_Menu_Item;
+      Matches : Boolean;
+      Parent_Menu : Gtk_Menu;
+      Full_Name : GNAT.OS_Lib.String_Access;
 
       use type Module_List.List_Node;
       use type Gtk.Widget.Widget_List.Glist;
@@ -323,6 +521,78 @@ package body Glide_Kernel.Modules is
            (Context,
             Kernel  => User.Kernel,
             Creator => User.ID);
+
+         C := Convert (User.Kernel.Contextual);
+         while C /= null loop
+            if C.Uses_Action then
+               Matches := Filter_Matches
+                 (C.Action.Filter, Context, User.Kernel);
+            else
+               Matches := Filter_Matches (C.Filter, Context, User.Kernel);
+            end if;
+
+            Trace (Me, "Testing contextual menu " & C.Name.all
+                   & " filter matches=" & Matches'Img);
+
+            if Matches then
+
+               if C.Label = null then
+                  Full_Name := new String'(C.Name.all);
+               else
+                  Full_Name := new String'(Get_Label (C.Label, Context));
+               end if;
+
+               --  A separator ?
+
+               if (C.Uses_Action and then C.Action = null)
+                 or else (not C.Uses_Action and then C.Command = null)
+               then
+                  Gtk_New (Item, "");
+               else
+                  --  Implicit filters for %p, ...
+                  if Full_Name.all /= "" then
+                     Gtk_New (Item, Base_Name (Full_Name.all));
+                     Action_Callback.Object_Connect
+                       (Item, "activate",
+                        Action_Callback.To_Marshaller
+                          (Contextual_Action'Access),
+                        User_Data   => C,
+                        Slot_Object => User.Kernel);
+                  else
+                     Item := null;
+                     Trace (Me, "Implicit filter doesn't match");
+                  end if;
+               end if;
+
+               --  Find the parent menu
+
+               if Item /= null then
+                  Parent_Item := Find_Or_Create_Menu_Tree
+                    (Menu_Bar      => null,
+                     Menu          => Menu,
+                     Path          => Dir_Name ('/' & Full_Name.all),
+                     Accelerators  => Get_Default_Accelerators (User.Kernel),
+                     Allow_Create  => True,
+                     Use_Mnemonics => False);
+                  if Parent_Item /= null then
+                     Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
+                     if Parent_Menu = null then
+                        Gtk_New (Parent_Menu);
+                        Set_Submenu (Parent_Item, Parent_Menu);
+                     end if;
+                  else
+                     Parent_Menu := Menu;
+                  end if;
+
+                  Add_Menu (Parent => Parent_Menu, Item => Item);
+               end if;
+
+               GNAT.OS_Lib.Free (Full_Name);
+            end if;
+
+            C := C.Next;
+         end loop;
+
 
          while Current /= Module_List.Null_Node loop
             if Module_List.Data (Current) /= User.ID
@@ -891,5 +1161,126 @@ package body Glide_Kernel.Modules is
            (Context, Success => False, Del => False, Time => Time);
       end if;
    end Drag_Data_Received;
+
+   -------------------------
+   -- Add_Contextual_Menu --
+   -------------------------
+
+   procedure Add_Contextual_Menu
+     (Kernel : access Kernel_Handle_Record'Class;
+      Menu   : Contextual_Menu_Access)
+   is
+      C : Contextual_Menu_Access;
+   begin
+      if Kernel.Contextual /= System.Null_Address then
+         C := Convert (Kernel.Contextual);
+         while C.Next /= null loop
+            C := C.Next;
+         end loop;
+
+         C.Next := Menu;
+      else
+         Kernel.Contextual := Convert (Menu);
+      end if;
+      Menu.Next := null;
+   end Add_Contextual_Menu;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Action_Record_Access;
+      Label           : String := "")
+   is
+      T : Contextual_Label_Param;
+   begin
+      if Label /= "" then
+         T := new Contextual_Label_Parameters;
+         T.Label := new String'(Label);
+      end if;
+
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Uses_Action => True,
+            Name        => new String'(Name),
+            Action      => Action,
+            Next        => null,
+            Label       => Contextual_Menu_Label_Creator (T)));
+   end Register_Contextual_Menu;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Action_Record_Access;
+      Label           : access Contextual_Menu_Label_Creator_Record'Class) is
+   begin
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Uses_Action => True,
+            Name        => new String'(Name),
+            Action      => Action,
+            Next        => null,
+            Label       => Contextual_Menu_Label_Creator (Label)));
+   end Register_Contextual_Menu;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Name            : String;
+      Action          : Commands.Interactive.Interactive_Command_Access;
+      Filter          : Glide_Kernel.Action_Filter := null;
+      Label           : access Contextual_Menu_Label_Creator_Record'Class) is
+   begin
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Uses_Action => False,
+            Name        => new String'(Name),
+            Command     => Action,
+            Filter      => Filter,
+            Next        => null,
+            Label       => Contextual_Menu_Label_Creator (Label)));
+   end Register_Contextual_Menu;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Name           : String;
+      Action         : Commands.Interactive.Interactive_Command_Access := null;
+      Filter         : Glide_Kernel.Action_Filter := null;
+      Label          : String := "")
+   is
+      T : Contextual_Label_Param;
+   begin
+      if Label /= "" then
+         T := new Contextual_Label_Parameters;
+         T.Label := new String'(Label);
+      end if;
+
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Uses_Action => False,
+            Name        => new String'(Name),
+            Command     => Action,
+            Filter      => Filter,
+            Next        => null,
+            Label       => Contextual_Menu_Label_Creator (T)));
+   end Register_Contextual_Menu;
 
 end Glide_Kernel.Modules;
