@@ -552,7 +552,7 @@ package body Project_Explorers is
         (Context      => File_Selection_Context_Access (Context),
          Project_View => Get_Project_From_Node (T, Node),
          Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_File_Name (Get_File_From_Node (T, Node)),
+         File_Name    => Base_Name (Get_File_From_Node (T, Node)),
          Importing_Project => Importing_Project);
 
       return Context;
@@ -576,7 +576,7 @@ package body Project_Explorers is
         (Context,
          Project_View => Get_Project_From_Node (T, Node),
          Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_File_Name (Get_File_From_Node (T, Node)));
+         File_Name    => Base_Name (Get_File_From_Node (T, Node)));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
    end Tree_Select_Row_Cb;
@@ -612,7 +612,7 @@ package body Project_Explorers is
         (Ctree         => Explorer.Tree,
          Parent        => Node,
          Sibling       => null,
-         Text          => Create_Line_Text ("dummy"),
+         Text          => Create_Line_Text (""),
          Spacing       => 5,
          Pixmap_Closed => Null_Pixmap,
          Mask_Closed   => Null_Bitmap,
@@ -620,6 +620,10 @@ package body Project_Explorers is
          Mask_Opened   => Null_Bitmap,
          Is_Leaf       => True,
          Expanded      => True);
+      Node_Set_Row_Data
+        (Explorer.Tree, N,
+         (Node_Type  => Obj_Directory_Node,
+          Up_To_Date => False));
    end Add_Dummy_Node;
 
    ----------------------
@@ -1462,8 +1466,8 @@ package body Project_Explorers is
                         end if;
                         Remove_Node (Explorer.Tree, N);
 
-                     elsif Row_Get_Expanded (Node_Get_Row (N)) then
-                        Update_Project_Node (Explorer, N);
+                     else
+                        Update_Node (Explorer, N);
                      end if;
                   end;
 
@@ -1476,6 +1480,8 @@ package body Project_Explorers is
       end loop;
 
       --  Then add all imported projects
+      --  Since they are not expanded initially, we do not need to update their
+      --  contents.
       for J in Imported'Range loop
          if Imported (J) /= No_Project then
             N := Add_Project_Node
@@ -1594,44 +1600,31 @@ package body Project_Explorers is
       --  then we don't need to do anything. This will be done when the
       --  node is actually expanded by the user
 
-      if not Data.Up_To_Date then
-         return;
+      if Data.Up_To_Date then
+         --  Likewise, if a node is not expanded, we simply remove all
+         --  underlying information
+
+         if not Row_Get_Expanded (Node_Get_Row (Node)) then
+            Data.Up_To_Date := False;
+            Node_Set_Row_Data (Explorer.Tree, Node, Data);
+
+            N := Row_Get_Children (Node_Get_Row (Node));
+            while N /= null loop
+               N2 := Row_Get_Sibling (Node_Get_Row (N));
+               Remove_Node (Explorer.Tree, N);
+               N := N2;
+            end loop;
+
+            Add_Dummy_Node (Explorer, Node);
+
+         else
+            case Data.Node_Type is
+               when Project_Node   => Update_Project_Node (Explorer, Node);
+               when Directory_Node => Update_Directory_Node (Explorer, Node);
+               when others         => null;
+            end case;
+         end if;
       end if;
-
-      --  Likewise, if a node is not expanded, we simply remove all underlying
-      --  information
-      --  ??? This means that when the user will open them, he won't find the
-      --  ??? status that was there before.
-
-      case Data.Node_Type is
-         when Project_Node | Modified_Project_Node
-           | Directory_Node | Obj_Directory_Node | File_Node
-           =>
-            if not Row_Get_Expanded (Node_Get_Row (Node)) then
-               Data.Up_To_Date := False;
-               Node_Set_Row_Data (Explorer.Tree, Node, Data);
-
-               N := Row_Get_Children (Node_Get_Row (Node));
-               while N /= null loop
-                  N2 := Row_Get_Sibling (Node_Get_Row (N));
-                  Remove_Node (Explorer.Tree, N);
-                  N := N2;
-               end loop;
-
-               Add_Dummy_Node (Explorer, Node);
-            end if;
-
-         when others =>
-            null;
-      end case;
-
-      case Data.Node_Type is
-         when Project_Node   => Update_Project_Node (Explorer, Node);
-         when Directory_Node => Update_Directory_Node (Explorer, Node);
-
-         when others =>
-            null;
-      end case;
    end Update_Node;
 
    -------------
