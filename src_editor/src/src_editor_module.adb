@@ -810,8 +810,9 @@ package body Src_Editor_Module is
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
 
-               if not Do_Indentation
-                 (Get_Buffer (Box.Editor), Current_Line_Only)
+               if not Get_Editable (Get_View (Box.Editor))
+                 or else not Do_Indentation
+                   (Get_Buffer (Box.Editor), Current_Line_Only)
                then
                   Set_Error_Msg (Data, -"Could not reindent selection");
                end if;
