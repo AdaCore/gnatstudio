@@ -247,37 +247,39 @@ package body Custom_Module is
          File_Node : Node_Ptr;
 
       begin
-         Open (Dir, Directory);
-         loop
-            Read (Dir, File, Last);
-            exit when Last = 0;
+         if Is_Directory (Directory) then
+            Open (Dir, Directory);
+            loop
+               Read (Dir, File, Last);
+               exit when Last = 0;
 
-            declare
-               F : constant String := Directory & File (1 .. Last);
-            begin
-               if Is_Regular_File (F) then
-                  Trace (Me, "Loading " & F);
-                  File_Node := Parse (F).Child;
-                  Node := File_Node;
-                  Custom_Parsed := True;
+               declare
+                  F : constant String := Directory & File (1 .. Last);
+               begin
+                  if Is_Regular_File (F) then
+                     Trace (Me, "Loading " & F);
+                     File_Node := Parse (F).Child;
+                     Node := File_Node;
+                     Custom_Parsed := True;
 
-                  while Node /= null loop
-                     Add_Child ("", Node);
-                     Node := Node.Next;
-                  end loop;
+                     while Node /= null loop
+                        Add_Child ("", Node);
+                        Node := Node.Next;
+                     end loop;
 
-                  Free (File_Node);
-               end if;
+                     Free (File_Node);
+                  end if;
 
-            exception
-               when Assert_Failure =>
-                  Console.Insert
-                    (Kernel, -"could not parse custom file " & F,
-                     Mode => Error);
-            end;
-         end loop;
+               exception
+                  when Assert_Failure =>
+                     Console.Insert
+                       (Kernel, -"could not parse custom file " & F,
+                        Mode => Error);
+               end;
+            end loop;
 
-         Close (Dir);
+            Close (Dir);
+         end if;
 
       exception
          when Directory_Error =>
