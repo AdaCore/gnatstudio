@@ -223,4 +223,9 @@ AC_SUBST(PYTHON_DIR)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
 
+echo ""
+echo "--------- Summary --------------"
+echo "       python: $PYTHON_BASE"
+echo ""
+
 AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr)
