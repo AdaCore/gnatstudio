@@ -1119,6 +1119,7 @@ package body Src_Editor_View is
            View.Line_Info (View.Line_Info.all'First .. Column - 1);
          A (Column .. View.Line_Info.all'Last - 1) :=
            View.Line_Info (Column + 1 .. View.Line_Info.all'Last);
+         Unchecked_Free (View.Line_Info);
          View.Line_Info := new Line_Info_Display_Array' (A);
       end;
 
@@ -1205,6 +1206,7 @@ package body Src_Editor_View is
             Column_Info => new Line_Info_Width_Array' (New_Column),
             Stick_To_Data => False,
             Every_Line    => False);
+         Unchecked_Free (View.Line_Info);
          View.Line_Info := new Line_Info_Display_Array' (A);
 
          Column := View.Line_Info.all'Last;
