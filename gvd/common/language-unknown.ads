@@ -52,8 +52,6 @@ package Language.Unknown is
       Name  : String;
       Field : String) return String;
 
-   function Can_Indent (Lang : access Unknown_Language) return Boolean;
-
 private
    type Unknown_Language is new Language_Root with null record;
 
