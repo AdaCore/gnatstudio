@@ -61,7 +61,9 @@ package Glide_Kernel.Project is
      (Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the name of the current project, as should be used on the command
    --  line for all the tools that support projects
-   --  The returned string includes the directory name for the project
+   --  The returned string includes the directory name for the project.
+   --  If the current project is the default project (ie no other project was
+   --  loaded by the user), then the empty string ("") is returned.
 
    function Find_Source_File
      (Kernel : access Kernel_Handle_Record'Class; Short_File_Name : String)
