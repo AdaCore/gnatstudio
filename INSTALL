@@ -12,61 +12,33 @@ GNAT must be installed before compiling any of the other
 packages, and the C compiler that comes with GNAT must be used to build
 Gtk+, since the Gtk+ packages are dependent on the particular compiler used.
 
-You then need to install the latest Gtk+ suite (currently 2.0.0) and
+You then need to install the latest Gtk+ suite (currently 2.0.2) and
 the corresponding GtkAda package (2.0).
-To build Gtk+, follow the steps described in docs/gtk-build.txt.
-To build GtkAda:
+To download and build Gtk+, follow the instructions given at www.gtk.org
 
-  ./configure --prefix=<prefix>
-  make
-  make install
+Once Gtk+ has been installed, extract the GPS sources:
 
-Since GPS groups many tools, some of them have their own repository
-such as GtkAda and GVD, so you need to set up the following directories/links:
+  $ gzip -dc gps-*-src.tgz | tar xvf -
+  $ cd gps*
 
-- Copy/Move the top-level directory of the GVD sources in the directory that
-  contains this README file.
+Choose a prefix to install GPS:
 
-- Put a link called "gnat_src" in the directory that contains this README file.
-  The link should point to the src/ada directory in the GNAT sources.
-  This tool requires at least GNAT 3.15a.
+  $ prefix=<prefix>
 
-- Put a link called "gtkada" in the directory that contains this README file.
-  The link should point to the top level GtkAda 2.0 source directory.
+Then build GtkAda:
 
-All the tools need access to an installed version of GtkAda 2.0 (GtkAda 1.2
-won't work with GPS). Make sure that the proper gtkada-config is found in
-your PATH.
+  $ cd gtkada
+  $ ./configure --prefix=$prefix
+  $ make -C src install
+  $ cd ..
 
-The directory containing this README (usually called gps) should look like:
+Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
+to the GtkAda installation
 
-aunit/
-browsers/
-builder
-common/
-gbuilder/
-glide/
-gnat/
-gnat_src -> /home/my_account/gnat/src/ada
-gtkada -> /home/my_account/gtk/GtkAda
-gvd/
-kernel/
-metrics/
-prj_editor/
-src_editor/
-syntax/
-vcs/
-vdiff/
-vsearch/
-widgets/
+After having configured and installed Gtk+/Gtkada, execute the following
+commands at the top level GPS source directory:
 
-Building GPS
-============
-
-After having configured and installed Gtk+/Gtkada,
-you need to execute the following commands in the directory that contains this
-README file:
-     $ ./configure --prefix=<prefix_dir>
-     $ make
-     $ make -C docs install
+  $ ./configure --prefix=$prefix
+  $ make
+  $ make install
 
