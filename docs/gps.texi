@@ -6950,7 +6950,6 @@ level or not based on the first @code{when} construct: if the first
 @code{when} is indented by an extra level, the whole case statement will
 be indented following the RM style.
 
-@ignore
 @item Casing policy
 The way the editor will handle the case settings below.
 @code{Disabled} no auto-casing will be done;
@@ -6959,7 +6958,6 @@ The way the editor will handle the case settings below.
 For the @code{End_Of_Line} and @code{On_The_Fly} policies it is always
 possible to force the casing of the current line by pressing the indentation
 key (@key{Ctrl-Tab} by default).
-@end ignore
 
 @item Reserved word casing
 How the editor should handle reserved words casing.
