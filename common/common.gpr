@@ -1,3 +1,4 @@
+with "../gvd/gvd_common";
 with "../gtkada/gtkada";
 with "../gnat";
 with "../shared";
