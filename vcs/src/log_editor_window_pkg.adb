@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -72,8 +72,7 @@ package body Log_Editor_Window_Pkg is
    --------------
 
    function Get_Text
-     (Log_Editor_Window : access Log_Editor_Window_Record'Class)
-     return String
+     (Log_Editor_Window : access Log_Editor_Window_Record'Class) return String
    is
    begin
       return Get_Chars (Log_Editor_Window.Log_Text);
