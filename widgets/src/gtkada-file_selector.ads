@@ -103,7 +103,16 @@ package Gtkada.File_Selector is
      access all File_Selector_Window_Record'Class;
    --  A file selector window.
 
-   function Get_Selection (Dialog : File_Selector_Window_Access) return String;
+   function Select_File (File_Selector : access File_Selector_Window_Record)
+      return String;
+   --  Display File_Selector on the screen, and wait until the user selects a
+   --  file. The absolute file name is returned, or the empty string if the
+   --  user cancelled the dialog.
+   --  As opposed to the first version of Select_File above, this one gives
+   --  the opportunity to register filters before displaying the dialog.
+
+   function Get_Selection (Dialog : access File_Selector_Window_Record)
+      return String;
    --  Return the selected file.
    --  Return an empty string if the entry does not exist.
 
@@ -130,7 +139,7 @@ package Gtkada.File_Selector is
 
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
-      Win       : File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : String;
       File      : String;
       State     : out File_State;
@@ -147,9 +156,11 @@ package Gtkada.File_Selector is
    --  Text represents additional info that can be displayed
 
    procedure Register_Filter
-     (Win    : File_Selector_Window_Access;
+     (Win    : access File_Selector_Window_Record;
       Filter : access File_Filter_Record'Class);
    --  Register a file filter in the file selector.
+   --  The first filter registered will be the default one in the file
+   --  selector.
 
    type Filter_Show_All is new File_Filter_Record (new String'("All files"))
      with null record;
@@ -158,13 +169,16 @@ package Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : String);
+      Directory            : String;
+      Dialog_Title         : String);
    --  Create a new file selector. Directory is the directory that should
    --  be opened when the file selector is first shown.
+   --  Directory must be an absolute path, and end with a directory separator.
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : String);
+      Directory            : String;
+      Dialog_Title         : String);
    --  Internal initialization function.
 
 private
@@ -183,9 +197,9 @@ private
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
-      Win       : in File_Selector_Window_Access;
-      Dir       : in String;
-      File      : in String;
+      Win       : access File_Selector_Window_Record'Class;
+      Dir       : String;
+      File      : String;
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;

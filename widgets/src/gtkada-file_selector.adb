@@ -61,19 +61,21 @@ package body Gtkada.File_Selector is
    -----------------------
 
    procedure Change_Directory
-     (Win : File_Selector_Window_Access;
+     (Win : access File_Selector_Window_Record'Class;
       Dir : String);
    --  Called every time that the contents of a new directory should be
    --  displayed in the File_Explorer. Dir is the absolute pathname to
    --  that directory, starting with a Directory_Separator.
 
    procedure Refresh_Files
-     (Win : File_Selector_Window_Access);
+     (Win : access File_Selector_Window_Record'Class);
 
-   function Read_File (Win : File_Selector_Window_Access) return Boolean;
+   function Read_File (Win : File_Selector_Window_Access)
+      return Boolean;
    --  Read one file from the current directory and insert it in Files.
 
-   function Display_File (Win : File_Selector_Window_Access) return Boolean;
+   function Display_File
+     (Win : File_Selector_Window_Access) return Boolean;
 
    --  This function gets one entry from Win.Remaining_Files, applies
    --  a filter to it, and displays the corresponding information in the
@@ -145,12 +147,9 @@ package body Gtkada.File_Selector is
    -------------------
 
    function Get_Selection
-     (Dialog : File_Selector_Window_Access)
-     return String
-   is
+     (Dialog : access File_Selector_Window_Record) return String is
    begin
-      if Dialog = null
-        or else Dialog.Selection_Entry = null
+      if Dialog.Selection_Entry = null
         or else Get_Text (Dialog.Selection_Entry) = ""
       then
          return ("");
@@ -189,29 +188,39 @@ package body Gtkada.File_Selector is
    -----------------
 
    function Select_File (Base_Directory : String := "") return String is
-      Filter_A  : Filter_Show_All_Access := new Filter_Show_All;
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector_Window, Base_Directory);
+      Gtk_New (File_Selector_Window, Base_Directory, "Select a file");
+      return Select_File (File_Selector_Window);
+   end Select_File;
 
-      Register_Filter (File_Selector_Window, Filter_A);
-      Set_Modal (File_Selector_Window, True);
+   -----------------
+   -- Select_File --
+   -----------------
 
-      Show_All (File_Selector_Window);
+   function Select_File (File_Selector : access File_Selector_Window_Record)
+      return String
+   is
+      Filter_A  : Filter_Show_All_Access := new Filter_Show_All;
+   begin
+      Register_Filter (File_Selector, Filter_A);
+      Set_Modal (File_Selector, True);
+
+      Show_All (File_Selector);
 
       Widget_Callback.Connect
-        (File_Selector_Window.Ok_Button, "clicked",
+        (File_Selector.Ok_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
       Widget_Callback.Connect
-        (File_Selector_Window.Cancel_Button, "clicked",
+        (File_Selector.Cancel_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
 
       Gtk.Main.Main;
 
       declare
-         File : constant String := Get_Selection (File_Selector_Window);
+         File : constant String := Get_Selection (File_Selector);
       begin
-         Destroy (File_Selector_Window);
+         Destroy (File_Selector);
          return File;
       end;
    end Select_File;
@@ -234,7 +243,9 @@ package body Gtkada.File_Selector is
    -- Display_File --
    ------------------
 
-   function Display_File (Win : File_Selector_Window_Access) return Boolean is
+   function Display_File (Win : File_Selector_Window_Access)
+      return Boolean
+   is
       Text         : String_Access;
       State        : File_State;
       Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
@@ -299,7 +310,9 @@ package body Gtkada.File_Selector is
    -- Read_File --
    ---------------
 
-   function Read_File (Win : File_Selector_Window_Access) return Boolean is
+   function Read_File (Win : File_Selector_Window_Access)
+      return Boolean
+   is
       Buffer : String (1 .. 1024);
       Last   : Natural;
       Id     : Idle_Handler_Id;
@@ -329,7 +342,7 @@ package body Gtkada.File_Selector is
 
          Sort (Win.Files, Compare'Unrestricted_Access);
          Win.Remaining_Files := Win.Files;
-         Id := Add (Display_File'Access, Win);
+         Id := Add (Display_File'Access, File_Selector_Window_Access (Win));
 
          return False;
       end if;
@@ -349,7 +362,7 @@ package body Gtkada.File_Selector is
    ---------------------
 
    procedure Register_Filter
-     (Win    : File_Selector_Window_Access;
+     (Win    : access File_Selector_Window_Record;
       Filter : access File_Filter_Record'Class) is
    begin
       Append (Win.Filters, File_Filter (Filter));
@@ -362,7 +375,7 @@ package body Gtkada.File_Selector is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
-      Win       : File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : String;
       File      : String;
       State     : out File_State;
@@ -380,7 +393,7 @@ package body Gtkada.File_Selector is
    -- Refresh_Files --
    -------------------
 
-   procedure Refresh_Files (Win : File_Selector_Window_Access) is
+   procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
       Dir    : String := Win.Current_Directory.all;
       Filter : File_Filter := null;
       Id     : Idle_Handler_Id;
@@ -430,7 +443,7 @@ package body Gtkada.File_Selector is
 
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
-         Id := Add (Read_File'Access, Win);
+         Id := Add (Read_File'Access, File_Selector_Window_Access (Win));
 
       exception
          when Directory_Error =>
@@ -446,7 +459,7 @@ package body Gtkada.File_Selector is
    ----------------------
 
    procedure Change_Directory
-     (Win : File_Selector_Window_Access;
+     (Win : access File_Selector_Window_Record'Class;
       Dir : String) is
    begin
       --  If the new directory is not the one currently shown in the File_List,
@@ -876,16 +889,17 @@ package body Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : String) is
+      Directory            : String;
+      Dialog_Title         : String) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
       if Is_Absolute_Path (Directory)
         and then Directory (Directory'Last) = Directory_Separator
       then
-         Initialize (File_Selector_Window, Directory);
+         Initialize (File_Selector_Window, Directory, Dialog_Title);
       else
-         Initialize (File_Selector_Window, Get_Current_Dir);
+         Initialize (File_Selector_Window, Get_Current_Dir, Dialog_Title);
       end if;
    end Gtk_New;
 
@@ -895,7 +909,8 @@ package body Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : String)
+      Directory            : String;
+      Dialog_Title         : String)
    is
       Toolbar1    : Gtk_Toolbar;
 
@@ -934,6 +949,7 @@ package body Gtkada.File_Selector is
       Set_Row_Height (File_Selector_Window.Explorer_Tree, 15);
 
       Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
+      Set_Title (File_Selector_Window, Dialog_Title);
       Set_Default_Size (File_Selector_Window, 600, 500);
 
       Set_Policy (File_Selector_Window, False, True, False);
