@@ -974,6 +974,10 @@ package body Src_Editor_Buffer.Line_Information is
       Width   : Integer;
       BL      : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
    begin
+      if Buffer_Line not in Buffer.Line_Data'Range then
+         return;
+      end if;
+
       --  Create the line information column.
       --  ??? This should not occur every time.
 
@@ -988,14 +992,16 @@ package body Src_Editor_Buffer.Line_Information is
                Width := Integer (Get_Width (Image));
             end if;
 
-            Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data (J));
-            Buffer.Line_Data (Buffer_Line).Side_Info_Data (J) :=
-              (Info => new Line_Information_Record'
-                 (Text               => null,
-                  Image              => Image,
-                  Associated_Command => Command),
-               Width => Width,
-               Set   => True);
+            if Buffer.Line_Data (Buffer_Line).Side_Info_Data /= null then
+               Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data (J));
+               Buffer.Line_Data (Buffer_Line).Side_Info_Data (J) :=
+                 (Info => new Line_Information_Record'
+                    (Text               => null,
+                     Image              => Image,
+                     Associated_Command => Command),
+                  Width => Width,
+                  Set   => True);
+            end if;
 
             Column := J;
             exit;
@@ -1081,7 +1087,6 @@ package body Src_Editor_Buffer.Line_Information is
          Unchecked_Free (Buffer_Lines);
          Buffer_Lines := new Line_Data_Array (1 .. N * 2);
 
-
          Buffer_Lines (H'Range) := H;
 
          for J in H'Last + 1 .. Buffer_Lines'Last loop
@@ -1104,7 +1109,6 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
 
          Buffer.Editable_Lines (K'Range) := K;
-
 
          for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
             Buffer.Editable_Lines (J) :=
@@ -1160,6 +1164,12 @@ package body Src_Editor_Buffer.Line_Information is
             Expand_Lines (Bottom_Line);
          end if;
 
+         if Editable_Lines'Last
+           < Buffer.Last_Editable_Line + Editable_Line_Type (Number)
+         then
+            Expand_Lines (Buffer_Line_Type (Buffer.Last_Editable_Line));
+         end if;
+
          --  Shift down the existing lines.
 
          for J in reverse Start + Number .. Buffer_Lines'Last loop
@@ -1180,6 +1190,78 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
             end if;
          end loop;
+
+         if not Lines_Are_Real (Buffer)
+           and then Buffer.Modifying_Editable_Lines
+         then
+            declare
+               EN : constant Editable_Line_Type := Editable_Line_Type (Number);
+               El : Editable_Line_Type := Editable_Lines'First;
+               Ref_Line_In_Buffer : Editable_Line_Type := 1;
+               --  The next editable line that is in a buffer.
+
+               procedure Find_Next_Line_In_Buffer;
+               --  Find the next visible editable line.
+
+               procedure Find_Next_Line_In_Buffer is
+               begin
+                  for J in Ref_Line_In_Buffer + 1 .. Editable_Lines'Last loop
+                     if Editable_Lines (J).Where = In_Buffer then
+                        Ref_Line_In_Buffer := J;
+                        return;
+                     end if;
+                  end loop;
+               end Find_Next_Line_In_Buffer;
+
+            begin
+               --  ??? This implementation implies that the first editable
+               --  line is always in the buffer. In this true ?
+
+               while El <= Editable_Lines'Last loop
+                  if Editable_Lines (El).Where = In_Mark then
+                     --  Find the whole range of lines to move down.
+
+                     for K in El .. Editable_Lines'Last loop
+                        if Editable_Lines (K).Where = In_Buffer then
+                           Ref_Line_In_Buffer := K;
+
+                           --  Lines from El to K - 1 should be moved down EN.
+
+                           declare
+                              Editable_Lines_To_Move : constant
+                                Editable_Line_Array :=
+                                  Editable_Lines (El .. K - 1);
+                           begin
+                              for NL in El .. El + EN - 1 loop
+                                 Editable_Lines (NL) :=
+                                   (Where          => In_Buffer,
+                                    Buffer_Line    =>
+                                      Editable_Lines
+                                        (Ref_Line_In_Buffer).Buffer_Line,
+                                    Side_Info_Data =>
+                                      Editable_Lines
+                                        (Ref_Line_In_Buffer).Side_Info_Data);
+
+                                 Find_Next_Line_In_Buffer;
+                              end loop;
+
+                              Editable_Lines (El + EN .. K - 1 + EN) :=
+                                Editable_Lines_To_Move;
+                           end;
+
+                           El := K + EN;
+                           exit;
+                        end if;
+                     end loop;
+
+                  else
+                     El := El + 1;
+                  end if;
+               end loop;
+            end;
+
+            Side_Column_Configuration_Changed (Buffer);
+         end if;
 
          --  Reset the newly inserted lines.
 
@@ -1244,9 +1326,82 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
+      if not Lines_Are_Real (Buffer)
+        and then Buffer.Modifying_Editable_Lines
+      then
+         declare
+            EN : constant Editable_Line_Type := Editable_Line_Type (Number);
+            El : Editable_Line_Type := Editable_Lines'Last;
+            Ref_Line_In_Buffer : Editable_Line_Type
+              := Editable_Lines'Last + 1;
+            --  The next editable line that is in a buffer.
+
+            procedure Find_Next_Line_In_Buffer;
+            --  Find the next visible editable line.
+
+            procedure Find_Next_Line_In_Buffer is
+            begin
+               for J in reverse
+                 Editable_Lines'First .. Ref_Line_In_Buffer - 1
+               loop
+                  if Editable_Lines (J).Where = In_Buffer then
+                     Ref_Line_In_Buffer := J;
+                     return;
+                  end if;
+               end loop;
+            end Find_Next_Line_In_Buffer;
+
+         begin
+            Find_Next_Line_In_Buffer;
+
+            while El >= Editable_Lines'First loop
+               if Editable_Lines (El).Where = In_Mark then
+                  --  Find the whole range of lines to move up
+
+                  for K in reverse Editable_Lines'First .. El loop
+                     if Editable_Lines (K).Where = In_Buffer then
+                        Ref_Line_In_Buffer := K;
+
+                        --  Lines from K + 1 to El should be moved up EN.
+
+                        declare
+                           Editable_Lines_To_Move : constant
+                             Editable_Line_Array :=
+                               Editable_Lines (K + 1 .. El);
+                        begin
+                           for NL in reverse El - EN + 1 .. El loop
+                              Editable_Lines (NL) :=
+                                (Where          => In_Buffer,
+                                 Buffer_Line    =>
+                                   Editable_Lines
+                                     (Ref_Line_In_Buffer).Buffer_Line,
+                                 Side_Info_Data =>
+                                   Editable_Lines
+                                     (Ref_Line_In_Buffer).Side_Info_Data);
+
+                              Find_Next_Line_In_Buffer;
+                           end loop;
+
+                           Editable_Lines (K - EN + 1 .. El - EN) :=
+                             Editable_Lines_To_Move;
+                        end;
+
+                        El := K - EN;
+                        exit;
+                     end if;
+                  end loop;
+               else
+                  El := El - 1;
+               end if;
+            end loop;
+         end;
+
+         Side_Column_Configuration_Changed (Buffer);
+      end if;
+
       --  Reset bottom lines
 
-      for J in Buffer_Lines'Last - Number + 1
+      for J in Buffer_Lines'Last - Number
         .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0
@@ -1472,16 +1627,24 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Unhide_Lines
      (Buffer     : access Source_Buffer_Record'Class;
-      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
-      First_Line : Editable_Line_Type;
-      Last_Line  : Editable_Line_Type)
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark)
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
       Iter           : Gtk_Text_Iter;
       Buffer_Line    : Buffer_Line_Type;
 
+      First_Line : Editable_Line_Type;
+      Last_Line  : Editable_Line_Type;
+
+      Number_Of_Lines_Unfolded : Natural := 0;
    begin
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      First_Line := Get_Editable_Line (Buffer, Buffer_Line - 1);
+      Last_Line  := Get_Editable_Line (Buffer, Buffer_Line);
+
       for Line in reverse First_Line .. Last_Line loop
          --  If the line is already in the buffer, skip.
 
@@ -1512,24 +1675,25 @@ package body Src_Editor_Buffer.Line_Information is
 
             --  Set the editable line information.
             Buffer.Line_Data (Buffer_Line).Editable_Line := Line;
+
+            Number_Of_Lines_Unfolded := Number_Of_Lines_Unfolded + 1;
          end if;
       end loop;
 
-      Buffer.Hidden_Lines := Buffer.Hidden_Lines -
-        Natural (Last_Line - First_Line) - 1;
+      Buffer.Hidden_Lines := Buffer.Hidden_Lines - Number_Of_Lines_Unfolded;
 
-      for Line in First_Line .. Last_Line loop
+      for Line in First_Line + 1 .. Last_Line - 1 loop
          if Editable_Lines (Line).Where = In_Buffer then
             Editable_Lines (Line).Buffer_Line :=
-              Editable_Lines (First_Line - 1).Buffer_Line
-              + Buffer_Line_Type (Line - First_Line) + 1;
+              Editable_Lines (First_Line).Buffer_Line
+              + Buffer_Line_Type (Line - First_Line);
          end if;
       end loop;
 
-      for J in Last_Line + 1 .. Editable_Lines'Last loop
+      for J in Last_Line .. Editable_Lines'Last loop
          if Editable_Lines (J).Where = In_Buffer then
             Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
-              + Buffer_Line_Type (Last_Line - First_Line) + 1;
+              + Buffer_Line_Type (Number_Of_Lines_Unfolded);
          end if;
       end loop;
 
@@ -1540,7 +1704,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  Remove the command that unhides the lines.
 
       Add_Block_Command
-        (Buffer, Get_Buffer_Line (Buffer, First_Line - 1), null,
+        (Buffer, Get_Buffer_Line (Buffer, First_Line), null,
          Null_Pixbuf);
    end Unhide_Lines;
 
@@ -1571,6 +1735,8 @@ package body Src_Editor_Buffer.Line_Information is
                   if Command /= null
                     and then Command.all in Hide_Editable_Lines_Type'Class
                   then
+                     Buffer.Blocks_Timeout_Registered := False;
+
                      if Execute (Command) = Success then
                         Fold_All (Buffer);
                      end if;
@@ -1611,6 +1777,8 @@ package body Src_Editor_Buffer.Line_Information is
                   if Command /= null
                     and then Command.all in Unhide_Editable_Lines_Type'Class
                   then
+                     Buffer.Blocks_Timeout_Registered := False;
+
                      if Execute (Command) = Success then
                         Unfold_All (Buffer);
                      end if;
@@ -1688,7 +1856,8 @@ package body Src_Editor_Buffer.Line_Information is
    -----------------------------------
 
    procedure Remove_Block_Folding_Commands
-     (Buffer : access Source_Buffer_Record'Class)
+     (Buffer                 : access Source_Buffer_Record'Class;
+      Remove_Unfold_Commands : Boolean := True)
    is
       BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
@@ -1710,14 +1879,17 @@ package body Src_Editor_Buffer.Line_Information is
                     Buffer_Lines (Line).Side_Info_Data
                     (Col).Info.Associated_Command;
 
-                  if Command /= null
-                    and then
-                      (Command.all in Hide_Editable_Lines_Type'Class
-                       or else Command.all in Unhide_Editable_Lines_Type'Class)
-                  then
-                     Add_Block_Command (Buffer, Line, null, null);
-                  else
-                     Other_Command_Found := True;
+                  if Command /= null then
+                     if (Command.all in Hide_Editable_Lines_Type'Class
+                       or else
+                           (Remove_Unfold_Commands
+                            and then Command.all in
+                              Unhide_Editable_Lines_Type'Class))
+                     then
+                        Add_Block_Command (Buffer, Line, null, null);
+                     else
+                        Other_Command_Found := True;
+                     end if;
                   end if;
                end if;
             end loop;
