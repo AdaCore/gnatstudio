@@ -28,6 +28,7 @@ with Ada.Unchecked_Deallocation;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with System;
 with System.Address_Image;
 
 package body Glide_Kernel.Hooks is
@@ -37,16 +38,14 @@ package body Glide_Kernel.Hooks is
    Name_Cst     : aliased constant String := "name";
    Descr_Cst    : aliased constant String := "description";
    Type_Cst     : aliased constant String := "type";
-   Arg_Cst      : aliased constant String := "arg";
    Function_Cst : aliased constant String := "function_name";
-   Run_Hook_Args : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access, 2 => Arg_Cst'Access);
+   Constructor_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
    Add_Hook_Args : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access, 2 => Function_Cst'Access);
+     (1 => Function_Cst'Access);
+   Name_Args     : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Register_Hook_Args : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Descr_Cst'Access, 3 => Type_Cst'Access);
-   Describe_Hook_Args : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
 
    Type_Prefix : constant String := "__type__";
    --  Prefix prepend to type names when stored in the hash table of hooks.
@@ -57,6 +56,7 @@ package body Glide_Kernel.Hooks is
    use Hooks_List;
 
    type Hook_Description is new Hook_Description_Base with record
+      Name            : String_Access;
       Funcs           : Hooks_List.List;
       Description     : GNAT.OS_Lib.String_Access;
       Command_Handler : Module_Command_Function;
@@ -248,6 +248,11 @@ package body Glide_Kernel.Hooks is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class) return Boolean;
    --  See inherited doc
+
+   function Get_Data
+     (Data : Callback_Data'Class; Nth : Natural)
+      return Hook_Description_Access;
+   --  Get the hook information contained in the nth-arg of Data
 
    -------------
    -- Destroy --
@@ -441,6 +446,7 @@ package body Glide_Kernel.Hooks is
          Descr := Get_Description;
          Info := new Hook_Description'
            (Funcs           => Null_List,
+            Name            => new String'(Name),
             Description     => Descr,
             Profile         => Profile,
             Command_Handler => Command_Handler);
@@ -458,6 +464,10 @@ package body Glide_Kernel.Hooks is
                  Hook_Description_Base_Access (Info));
          else
             Set (Kernel.Hooks, Name, Hook_Description_Base_Access (Info));
+         end if;
+
+         if Command_Handler = null then
+            Info.Command_Handler := Default_Command_Handler'Access;
          end if;
 
       elsif Info.Profile = Unknown then
@@ -545,7 +555,7 @@ package body Glide_Kernel.Hooks is
         (Get (Kernel.Hooks, Type_Prefix & Type_Name));
    begin
       if Info = null then
-         return null;
+         return Default_Command_Handler'Access;
       else
          return Info.Command_Handler;
       end if;
@@ -1069,7 +1079,9 @@ package body Glide_Kernel.Hooks is
    -----------------------------
 
    procedure Register_Standard_Hooks
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Hook_Class : constant Class_Type := Get_Hook_Class (Kernel);
    begin
       Create_Hook_Type
         (Kernel, "",
@@ -1146,28 +1158,37 @@ package body Glide_Kernel.Hooks is
 
       Register_Command
         (Kernel,
-         Command      => "run_hook",
-         Params       => Parameter_Names_To_Usage (Run_Hook_Args),
+         Command      => Constructor_Method,
+         Params       => Parameter_Names_To_Usage (Constructor_Parameters),
+         Description  => -"Create a new hook instance",
+         Class        => Hook_Class,
+         Minimum_Args => Constructor_Parameters'Length,
+         Maximum_Args => Constructor_Parameters'Length,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "run",
          Description  =>
-           -("Run any hook defined in GPS. This will call all the functions"
+           -("Run the hook. This will call all the functions"
              & " that attached to that hook."),
-         Minimum_Args => 1,
+         Class        => Hook_Class,
          Maximum_Args => Natural'Last,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "add_hook",
+         Command      => "add",
          Params       => Parameter_Names_To_Usage (Add_Hook_Args),
          Description  =>
            -("Connect a new function to a specific hook. Any time this hook"
              & " is run through run_hook, this function will be called with"
              & " the same parameters passed to run_hook"),
-         Minimum_Args => 2,
-         Maximum_Args => 2,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "register_hook",
+         Command      => "register",
          Params       => Parameter_Names_To_Usage (Register_Hook_Args, 1),
          Description  =>
          -("Defines a new hook. This hook can take any number of parameters,"
@@ -1181,46 +1202,50 @@ package body Glide_Kernel.Hooks is
            & " for this scripting language."),
          Minimum_Args => 2,
          Maximum_Args => 3,
+         Class        => Hook_Class,
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "list_hooks",
+         Command      => "list",
          Description  =>
          -("List all defined hooks. See also run_hook, register_hook and"
            & " add_hook."),
+         Class        => Hook_Class,
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "describe_hook",
-         Params       => Parameter_Names_To_Usage (Describe_Hook_Args),
+         Command      => "describe",
          Description  =>
          -("Describe a hook, when it is executed, and what are the expected"
            & " arguments"),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "describe_hook_functions",
-         Params       => Parameter_Names_To_Usage (Describe_Hook_Args),
+         Command      => "describe_functions",
          Description  =>
          -("List all the functions that are executed when the hook is"
            & " executed"),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command     => "list_hook_types",
+         Command     => "list_types",
          Description =>
          -("List all defined type hooks. See also register_hook."),
+         Class        => Hook_Class,
+         Static_Method => True,
          Handler     => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command     => "describe_hook_type",
-         Params       => Parameter_Names_To_Usage (Describe_Hook_Args),
+         Command     => "describe_type",
+         Params       => Parameter_Names_To_Usage (Name_Args),
          Description  =>
          -("Describe a hook type and what are the expected arguments"),
+         Class        => Hook_Class,
+         Static_Method => True,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
@@ -1341,6 +1366,33 @@ package body Glide_Kernel.Hooks is
       Run_Hook (Get_Kernel (Data), Name, Data);
    end General_Command_Handler;
 
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Data : Callback_Data'Class; Nth : Natural) return Hook_Description_Access
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Hook_Description_Access);
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, Nth, Get_Hook_Class (Get_Kernel (Data)));
+   begin
+      return Hook_Description_Access'(Convert (Value));
+   end Get_Data;
+
+   -------------------
+   -- Get_Hook_Name --
+   -------------------
+
+   function Get_Hook_Name
+     (Data : Callback_Data'Class; Nth : Natural) return String
+   is
+      Info : constant Hook_Description_Access := Get_Data (Data, Nth);
+   begin
+      return Info.Name.all;
+   end Get_Hook_Name;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------
@@ -1348,30 +1400,43 @@ package body Glide_Kernel.Hooks is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      Info : Hook_Description_Access;
    begin
-      if Command = "run_hook" then
-         Name_Parameters (Data, Run_Hook_Args);
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Constructor_Parameters);
          declare
-            Name   : constant String := Nth_Arg (Data, 1);
-            Info : constant Hook_Description_Access :=
-              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
+            Name     : constant String := Nth_Arg (Data, 2);
+            Instance : Class_Instance;
          begin
-            if Info /= null then
-               Info.Command_Handler (Data, Command => "__run_hook__" & Name);
+            Info :=
+              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
+            if Info = null then
+               Set_Error_Msg (Data, -"No such hook: " & Name);
             else
-               Trace (Me, "Hook " & Name & " undefined");
+               Instance :=
+                 Nth_Arg (Data, 1, Get_Hook_Class (Get_Kernel (Data)));
+               Set_Data (Instance, Info.all'Address);
+               Free (Instance);
             end if;
+         end;
+
+      elsif Command = "run" then
+         Info := Get_Data (Data, 1);
+         begin
+            Info.Command_Handler
+              (Data, Command => "__run_hook__" & Info.Name.all);
 
          exception
             when Glide_Kernel.Scripts.No_Such_Parameter =>
-               Trace (Me, "Invalid number of parameters for hook " & Name);
+               Trace (Me, "Invalid number of parameters for hook "
+                      & Info.Name.all);
                Set_Error_Msg
                  (Data,
-                  "Invalid number of parameters for hook " & Name
+                  "Invalid number of parameters for hook " & Info.Name.all
                   & " in call to run_hook");
          end;
 
-      elsif Command = "register_hook" then
+      elsif Command = "register" then
          Name_Parameters (Data, Register_Hook_Args);
          declare
             Name  : constant String := Nth_Arg (Data, 1);
@@ -1381,7 +1446,7 @@ package body Glide_Kernel.Hooks is
             Register_Hook (Get_Kernel (Data), Name, Descr, Typ);
          end;
 
-      elsif Command = "list_hooks" then
+      elsif Command = "list" then
          declare
             Iter : Iterator;
             Info : Hook_Description_Access;
@@ -1407,50 +1472,33 @@ package body Glide_Kernel.Hooks is
             end loop;
          end;
 
-      elsif Command = "describe_hook" then
-         Name_Parameters (Data, Describe_Hook_Args);
-         declare
-            Name : constant String := Nth_Arg (Data, 1);
-            Info : constant Hook_Description_Access :=
-              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
-         begin
-            if Info = null then
-               Set_Error_Msg (Data, "No such hook: " & Name);
-            else
-               if Info.Description /= null then
-                  Set_Return_Value (Data, Info.Description.all);
-               else
-                  Set_Return_Value (Data, "");
-               end if;
-            end if;
-         end;
+      elsif Command = "describe" then
+         Info := Get_Data (Data, 1);
+         if Info.Description /= null then
+            Set_Return_Value (Data, Info.Description.all);
+         else
+            Set_Return_Value (Data, "");
+         end if;
 
-      elsif Command = "describe_hook_functions" then
-         Name_Parameters (Data, Describe_Hook_Args);
+      elsif Command = "describe_functions" then
+         Info := Get_Data (Data, 1);
          declare
-            Name : constant String := Nth_Arg (Data, 1);
-            Info : constant Hook_Description_Access :=
-              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
             Iter : Hooks_List.List_Node;
          begin
-            if Info = null then
-               Set_Error_Msg (Data, "No such hook: " & Name);
-            else
-               Set_Return_Value_As_List (Data);
+            Set_Return_Value_As_List (Data);
 
-               --  Rest is the list of functions connected to that hook
-               Iter := Hooks_List.First (Info.Funcs);
+            --  Rest is the list of functions connected to that hook
+            Iter := Hooks_List.First (Info.Funcs);
 
-               while Iter /= Hooks_List.Null_Node loop
-                  Set_Return_Value
-                    (Data, Get_Name (Hooks_List.Data (Iter).all));
-                  Iter := Hooks_List.Next (Iter);
-               end loop;
-            end if;
+            while Iter /= Hooks_List.Null_Node loop
+               Set_Return_Value
+                 (Data, Get_Name (Hooks_List.Data (Iter).all));
+               Iter := Hooks_List.Next (Iter);
+            end loop;
          end;
 
-      elsif Command = "describe_hook_type" then
-         Name_Parameters (Data, Describe_Hook_Args);
+      elsif Command = "describe_type" then
+         Name_Parameters (Data, Name_Args);
          declare
             Name : constant String := Nth_Arg (Data, 1);
             Info : constant Hook_Description_Access :=
@@ -1468,7 +1516,7 @@ package body Glide_Kernel.Hooks is
             end if;
          end;
 
-      elsif Command = "list_hook_types" then
+      elsif Command = "list_types" then
          declare
             Iter : Iterator;
             Info : Hook_Description_Access;
@@ -1496,52 +1544,50 @@ package body Glide_Kernel.Hooks is
             end loop;
          end;
 
-      elsif Command = "add_hook" then
+      elsif Command = "add" then
+         Info := Get_Data (Data, 1);
          Name_Parameters (Data, Add_Hook_Args);
          declare
-            Name : constant String := Nth_Arg (Data, 1);
             Func : constant String := Nth_Arg (Data, 2);
-            Info : constant Hook_Description_Access :=
-              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
             Wrapper  : Shell_Wrapper;
             Wrapper2 : Shell_Wrapper_No_Args;
             Wrapper3 : Shell_Wrapper_Return;
             Wrapper4 : Shell_Wrapper_Shell;
          begin
             if Info = null then
-               Set_Error_Msg (Data, "Unknown hook: " & Name);
+               Set_Error_Msg (Data, "Unknown hook: " & Info.Name.all);
 
-            elsif Info.Command_Handler = Default_Command_Handler'Access then
+            elsif Info.Profile = Hook_Without_Args then
                Wrapper2        := new Shell_Wrapper_No_Args_Record;
                Wrapper2.Func   := new String'(Func);
-               Wrapper2.Hook   := new String'(Name);
+               Wrapper2.Hook   := new String'(Info.Name.all);
                Wrapper2.Script := Get_Script (Data);
-               Add_Hook (Get_Kernel (Data), Name, Wrapper2);
+               Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper2);
 
             elsif Info.Profile = Hook_With_Args then
                Wrapper        := new Shell_Wrapper_Record;
                Wrapper.Func   := new String'(Func);
-               Wrapper.Hook   := new String'(Name);
+               Wrapper.Hook   := new String'(Info.Name.all);
                Wrapper.Script := Get_Script (Data);
-               Add_Hook (Get_Kernel (Data), Name, Wrapper);
+               Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper);
 
             elsif Info.Profile = Hook_With_Args_And_Return then
                Wrapper3        := new Shell_Wrapper_Return_Record;
                Wrapper3.Func   := new String'(Func);
-               Wrapper3.Hook   := new String'(Name);
+               Wrapper3.Hook   := new String'(Info.Name.all);
                Wrapper3.Script := Get_Script (Data);
-               Add_Hook (Get_Kernel (Data), Name, Wrapper3);
+               Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper3);
 
             elsif Info.Profile = Hook_With_Shell_Args then
                Wrapper4        := new Shell_Wrapper_Shell_Record;
                Wrapper4.Func   := new String'(Func);
                Wrapper4.Script := Get_Script (Data);
-               Add_Hook (Get_Kernel (Data), Name, Wrapper4);
+               Add_Hook (Get_Kernel (Data), Info.Name.all, Wrapper4);
 
             else
                Set_Error_Msg
-                 (Data, "Cannot connect to unknown hook " & Name);
-               Trace (Me, "Cannot connect to hook " & Name
+                 (Data, "Cannot connect to unknown hook " & Info.Name.all);
+               Trace (Me, "Cannot connect to hook " & Info.Name.all
                       & " since profile=" & Info.Profile'Img);
             end if;
          end;
@@ -1551,11 +1597,8 @@ package body Glide_Kernel.Hooks is
          --  This includes Command="__run_hook__" and
          --  Command="__run_hook__<name>" for all hooks with no arguments
 
-         declare
-            Name : constant String := Nth_Arg (Data, 1);
-         begin
-            Run_Hook (Get_Kernel (Data), Name);
-         end;
+         Info := Get_Data (Data, 1);
+         Run_Hook (Get_Kernel (Data), Info.Name.all);
       end if;
    end Default_Command_Handler;
 
@@ -1581,6 +1624,7 @@ package body Glide_Kernel.Hooks is
 
    procedure Free (Hook : in out Hook_Description) is
    begin
+      Free (Hook.Name);
       Free (Hook.Funcs);
       Free (Hook.Description);
    end Free;
