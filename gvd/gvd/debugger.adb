@@ -547,7 +547,7 @@ package body Debugger is
       if Debugger.Window /= null then
          Set_Command_In_Process (Get_Process (Debugger));
          Process := Convert (Debugger.Window, Debugger);
-         Final_Post_Process (Process);
+         Final_Post_Process (Process, Mode);
 
          if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
