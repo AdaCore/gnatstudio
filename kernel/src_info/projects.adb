@@ -85,6 +85,9 @@ package body Projects is
       Directories : Directory_Htable.String_Hash_Table.HTable;
       --  Information for the various directories of the project
 
+      Non_Recursive_Include_Path : GNAT.OS_Lib.String_Access;
+      --  The include path for this project.
+
       Registry   : Project_Registry_Access;
       --  Needed so that we can return other projects like imported projects
 
@@ -373,6 +376,16 @@ package body Projects is
    function Include_Path
      (Project : Project_Type; Recursive : Boolean) return String is
    begin
+      --  ??? The project parser doesn't cache the non-recursive version
+      if not Recursive then
+         if Project.Data.Non_Recursive_Include_Path = null then
+            Project.Data.Non_Recursive_Include_Path := new String'
+              (Prj.Env.Ada_Include_Path (Get_View (Project), Recursive));
+         end if;
+
+         return Project.Data.Non_Recursive_Include_Path.all;
+      end if;
+
       return Prj.Env.Ada_Include_Path (Get_View (Project), Recursive);
    end Include_Path;
 
@@ -870,73 +883,26 @@ package body Projects is
    function Other_File_Name
      (Project : Project_Type; Source_Filename : String) return String
    is
-      View : constant Project_Id := Get_View (Project);
-      Naming : constant Naming_Data := Prj.Projects.Table (View).Naming;
-      Unit : Unit_Part;
+      Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
-      Arr  : Array_Element_Id;
-
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Source_Filename, View, Unit, Name, Lang);
-
-      --  Check Ada exceptions
+        (Source_Filename, Get_View (Project), Unit, Name, Lang);
 
       case Unit is
-         when Unit_Spec     => Arr := Naming.Bodies;
-         when Unit_Body     => Arr := Naming.Specs;
-         when Unit_Separate => return Source_Filename;
+         when Unit_Spec                 => Part := Unit_Body;
+         when Unit_Body | Unit_Separate => Part := Unit_Spec;
       end case;
 
-      while Arr /= No_Array_Element loop
-         if Array_Elements.Table (Arr).Index = Name then
-            Trace (Me, "Other_File_Name: " & Source_Filename
-                   & ' ' & Get_String (Name) & ' ' & Unit'Img
-                   & ' ' & Get_String (Lang)
-                   & " => "
-                   & Get_String (Array_Elements.Table (Arr).Value.Value));
-            return Get_String (Array_Elements.Table (Arr).Value.Value);
-         end if;
-
-         Arr := Array_Elements.Table (Arr).Next;
-      end loop;
-
-      --  No need to check for exceptions in foreign languages, since there is
-      --  no notion of unit name
-
-      --  Check standard naming schemes
-
-      case Unit is
-         when Unit_Spec =>
-            Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
-
-         when Unit_Body =>
-            Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
-
-         when Unit_Separate =>
-            null;
-      end case;
-
+      Get_Name_String (Name);
       declare
-         Full : constant String := Get_String (Name)
-           & Get_String (Value_Of (Index => Lang, In_Array => Arr));
-         S : GNAT.OS_Lib.String_Access;
+         File : constant String := Name_Buffer (1 .. Name_Len);
+         N : constant String := Get_Filename_From_Unit (Project, File, Part);
       begin
-         S := Locate_Regular_File
-           (Full, Include_Path (Project, Recursive => False));
-         if S = null then
-            --  Trace (Me, "Other_File_Name: " & Source_Filename
-            --         & ' ' & Get_String (Name) & ' ' & Unit'Img
-            --         & ' ' & Get_String (Lang)
-            --         & " => " & Source_Filename);
+         if N = "" then
             return Source_Filename;
          else
-            Free (S);
-            --  Trace (Me, "Other_File_Name: " & Source_Filename
-            --         & ' ' & Get_String (Name) & ' ' & Unit'Img
-            --         & ' ' & Get_String (Lang)
-            --         & " => " & Full);
-            return Full;
+            return N;
          end if;
       end;
    end Other_File_Name;
@@ -1722,6 +1688,8 @@ package body Projects is
       Project.Data.View       := Prj.No_Project;
       --  No need to reset Project.Data.Imported_Projects, since this doesn't
       --  change when the view changes
+
+      Free (Project.Data.Non_Recursive_Include_Path);
    end Reset;
 
    --------------
