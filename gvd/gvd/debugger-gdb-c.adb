@@ -70,16 +70,18 @@ package body Debugger.Gdb.C is
 
       --  First: Skip the type itself, to check whether we have in fact an
       --  array or access type.
+      --  Several cases to be considered here:
+      --     unsigned int foo;
+      --     int foo[5];    (as part of a struct field)
+      --     struct { ... } foo;
+      --  Thus we have to skip even several words
 
       if Looking_At (Type_Str, Index, "struct ")
         or else Looking_At (Type_Str, Index, "union ")
       then
          Skip_To_Char (Type_Str, Index, Record_End);
          Index := Index + 1;
-      else
-         Skip_Word (Type_Str, Index);
       end if;
-      Skip_Blanks (Type_Str, Index);
 
       --  Skip to the right-most access or array definition
       --  For instance, when looking at 'int* [4]' we should detect an array
@@ -96,7 +98,7 @@ package body Debugger.Gdb.C is
          elsif Type_Str (Index) = '[' then
             --  Leave Index at the beginning of a multi-dimensional array, as
             --  in 'int [2][3]'.
-            if Type_Str (Save) = '*' then
+            if Type_Str (Save) /= '[' then
                Save := Index;
             end if;
             Skip_To_Char (Type_Str, Index, ']');
@@ -117,14 +119,18 @@ package body Debugger.Gdb.C is
             end loop;
 
          else
-            exit;
+            Skip_Word (Type_Str, Index);
+            Skip_Blanks (Type_Str, Index);
          end if;
          Skip_Blanks (Type_Str, Index);
       end loop;
       Index := Save;
 
       --  An access type ?
-      if Index <= Type_Str'Last and then Type_Str (Index) = '*' then
+      --  or access to subprogram
+      if Index <= Type_Str'Last
+        and then (Type_Str (Index) = '*' or else Type_Str (Index) = '(')
+      then
          Index := Index + 1;
          Result := New_Access_Type;
          return;
@@ -265,7 +271,6 @@ package body Debugger.Gdb.C is
       Last      : Long_Integer;
       Item_Type : Generic_Type_Access;
    begin
-
       --  Find the number of dimensions
       Index := Start_Of_Dim;
       Tmp_Index := Index;
@@ -372,11 +377,21 @@ package body Debugger.Gdb.C is
             Skip_Word (Type_Str, End_Of_Name);
          else
 
+            End_Of_Name := Save;
+
+            --  Skip array definition as in
+            --  "  GdkColor fg[5];"
+
+            while Type_Str (Index) = ']' loop
+               Skip_To_Char (Type_Str, Index, '[', Step => -1);
+               Index := Index - 1;
+               End_Of_Name := Index + 1;
+            end loop;
+
             --  The size of the field can optionally be indicated between the
             --  name and the semicolon, as in "__time_t tv_sec : 32;".
             --  We simply ignore the size.
 
-            End_Of_Name := Save;
             Skip_Word (Type_Str, Index, Step => -1);
             if Type_Str (Index - 1) = ':' then
                Index := Index - 3;
@@ -388,8 +403,9 @@ package body Debugger.Gdb.C is
          --  Create the field now that we have all the information.
          Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. End_Of_Name - 1),
                          Variant_Parts => 0);
+
          Parse_Type
-           (Lang, Type_Str (Tmp .. End_Of_Name - 1),
+           (Lang, Type_Str (Tmp .. Save - 1), --  End_Of_Name - 1),
             Record_Field_Name
               (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
             Tmp,

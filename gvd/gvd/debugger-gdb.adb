@@ -1127,6 +1127,13 @@ package body Debugger.Gdb is
             Index := Index + 2;
          end if;
 
+         --  Access to subprograms are sometimes printed as:
+         --     {void ()} 0x402488e4 <gtk_window_destroy>
+         if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
+            Skip_To_Char (Type_Str, Index, '}');
+            Index := Index + 2;
+         end if;
+
          if Index <= Type_Str'Last and then Type_Str (Index) = '@' then
             Index := Index + 1;
          end if;
@@ -1135,6 +1142,17 @@ package body Debugger.Gdb is
             Int : constant Natural := Index;
          begin
             Skip_Hexa_Digit (Type_Str, Index);
+
+            --  If we have an extra indication like
+            --      <gtk_window_finalize>
+            --  in the value, keep it.
+            if Index < Type_Str'Last - 2
+              and then Type_Str (Index + 1) = '<'
+            then
+               Skip_To_Char (Type_Str, Index, '>');
+               Index := Index + 1;
+            end if;
+
             Set_Value (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
          end;
 
