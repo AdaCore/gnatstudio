@@ -313,7 +313,7 @@ package body Glide_Menu is
          return;
       end if;
 
-      Open_File (Glide_Window (Object).Kernel, Filename);
+      Open_Or_Create (Glide_Window (Object).Kernel, Filename);
    end On_Open_File;
 
    ---------------------
@@ -878,7 +878,7 @@ package body Glide_Menu is
             Gnatstub (Title, Success);
 
             if Success then
-               Open_File (Top.Kernel, Body_Name (Title));
+               Open_File (Top.Kernel, Body_Name (Title), Success);
             end if;
          end;
       end if;
@@ -905,8 +905,8 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Test_Window.Name.all;
          begin
-            Open_File (Top.Kernel, File & ".ads");
-            Open_File (Top.Kernel, File & ".adb");
+            Open_Or_Create (Top.Kernel, File & ".ads");
+            Open_Or_Create (Top.Kernel, File & ".adb");
          end;
       end if;
 
@@ -935,7 +935,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Suite_Window.Name.all;
          begin
-            Open_File (Top.Kernel, File & ".adb");
+            Open_Or_Create (Top.Kernel, File & ".adb");
          end;
       end if;
 
@@ -964,7 +964,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Harness_Window.Procedure_Name.all;
          begin
-            Open_File (Top.Kernel, File & ".adb");
+            Open_Or_Create (Top.Kernel, File & ".adb");
          end;
       end if;
 
