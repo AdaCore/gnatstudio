@@ -1189,9 +1189,9 @@ package body Projects.Registry is
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Types.Name_Id
    is
-      S    : constant Source_File_Data := Get
-        (Registry.Data.Sources, Base_Name (Source_Filename));
-      Lang : Name_Id;
+      Base_Name : constant String := VFS.Base_Name (Source_Filename);
+      S         : constant Source_File_Data :=
+        Get (Registry.Data.Sources, Base_Name);
 
    begin
       if S = No_Source_File_Data then
@@ -1201,11 +1201,18 @@ package body Projects.Registry is
          --  (language_handlers-glide)
 
          declare
-            Ext : constant String := File_Extension
-              (Base_Name (Source_Filename));
+            Ext : constant String := File_Extension (Base_Name);
          begin
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
+
+            elsif Ext = "" then
+               --  This is a file without extension like Makefile or
+               --  ChangeLog for example. Use the filename to get the proper
+               --  language for this file.
+
+               return Languages_Htable.String_Hash_Table.Get
+                 (Registry.Data.Extensions, To_Lower (Base_Name));
 
             else
                --  Try with the top-level project. This contains the default
@@ -1216,9 +1223,8 @@ package body Projects.Registry is
                --  If there is no root project, this will use the default
                --  naming scheme
 
-               Lang := Languages_Htable.String_Hash_Table.Get
+               return Languages_Htable.String_Hash_Table.Get
                  (Registry.Data.Extensions, File_Extension (Source_Filename));
-               return Lang;
             end if;
          end;
       else
