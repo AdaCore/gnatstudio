@@ -334,7 +334,8 @@ package body Src_Info.Type_Utils is
       HTTypedef : Typedef_Entry;
       Key       : String_Access;
       Seek_Key  : String_Access;
-
+      Enclosed_Class  : CL_Table := Invalid_CL_Table;
+      Enclosed_Symbol : Symbol_Type := Undef;
    begin
       Success := False;
 
@@ -378,13 +379,47 @@ package body Src_Info.Type_Utils is
          return;
       end if;
 
+      --  load enclosed class/union (if exists)
+      if Typedef.Class_Name /= Empty_Segment then
+         declare
+            Success : Boolean := False;
+            Desc    : CType_Description;
+         begin
+            Find_Class
+              (Type_Name => Typedef.Buffer
+                 (Typedef.Class_Name.First .. Typedef.Class_Name.Last),
+               SN_Table  => SN_Table,
+               Desc      => Desc,
+               Class_Def => Enclosed_Class,
+               Success   => Success);
+            if Success then
+               Enclosed_Symbol := CL;
+            else
+               Find_Union
+                 (Type_Name => Typedef.Buffer
+                    (Typedef.Class_Name.First .. Typedef.Class_Name.Last),
+                  SN_Table  => SN_Table,
+                  Desc      => Desc,
+                  Union_Def => Enclosed_Class,
+                  Success   => Success);
+               if Success then
+                  Enclosed_Symbol := UN;
+               end if;
+            end if;
+         end;
+      end if;
+
       Type_Name_To_Kind
-        (Typedef.Buffer (
+        (Type_Name       => Typedef.Buffer (
            Typedef.Original.First .. Typedef.Original.Last),
-         SN_Table,
-         Module_Typedefs,
-         Desc,
-         Success);
+         SN_Table        => SN_Table,
+         Module_Typedefs => Module_Typedefs,
+         Desc            => Desc,
+         Success         => Success,
+         Symbol          => Enclosed_Symbol,
+         CL_Tab          => Enclosed_Class);
+
+      Free (Enclosed_Class);
 
       if Success then
          --  parent type found (E_Kind is resolved)
