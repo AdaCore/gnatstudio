@@ -589,6 +589,7 @@ package body GVD.Memory_View is
          Free (View.Flags);
          View.Values := new String' (Values);
          View.Flags  := new String' (Values);
+         View.Data   := Byte;
       end;
       Update_Display (View);
 
@@ -647,6 +648,12 @@ package body GVD.Memory_View is
 
    procedure Apply_Changes (View : access GVD_Memory_View_Record'Class) is
    begin
+      if Get_Endian_Type (Get_Current_Process (View.Window).Debugger)
+        = Little_Endian
+      then
+         Swap_Blocks (View, View.Data);
+      end if;
+
       for J in 1 .. View.Number_Of_Bytes loop
          if View.Flags (J * 2 - 1 .. J * 2)
            /= View.Values (J * 2 - 1 .. J * 2)
@@ -661,12 +668,8 @@ package body GVD.Memory_View is
          end if;
       end loop;
 
-      Free (View.Values);
-      View.Values := new String' (View.Flags.all);
-
       Display_Memory (View, View.Starting_Address);
 
-      Update_Display (View);
       Refresh_Canvas
         (Interactive_Canvas (Get_Current_Process (View.Window).Data_Canvas));
    end Apply_Changes;
