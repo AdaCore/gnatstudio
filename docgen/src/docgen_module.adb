@@ -203,7 +203,7 @@ package body Docgen_Module is
 
    procedure Generate_File
      (Kernel : Kernel_Handle;
-      File : Virtual_File);
+      File   : Virtual_File_Access);
    --  In order to generate the documentation of one file
 
    ------------------------------------------
@@ -285,7 +285,7 @@ package body Docgen_Module is
       List   : in out Type_Source_File_List.List)
    is
       use Type_Source_File_List;
-      File : Virtual_File;
+      File : aliased Virtual_File;
       LI   : LI_File_Ptr;
    begin
       for J in 1 .. Tab'Length loop
@@ -297,9 +297,8 @@ package body Docgen_Module is
             LI := Locate_From_Source_And_Complete (Kernel, File, False);
             Append
               (List,
-               (File_Name        => File,
-                Package_Name     => new String'(Get_Unit_Name (LI, File)),
-                Other_File_Found => True));
+               (File_Name    => File,
+                Package_Name => new String'(Get_Unit_Name (LI, File))));
          end if;
       end loop;
    end Array2List;
@@ -455,12 +454,9 @@ package body Docgen_Module is
    ----------------------
 
    procedure On_Generate_File
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
-   is
-      File : Virtual_File;
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
    begin
-      File := Data.File;
-      Generate_File (Kernel_Handle (Kernel), File);
+      Generate_File (Kernel_Handle (Kernel), Data.File'Unchecked_Access);
    end On_Generate_File;
 
    ------------------------------
@@ -473,17 +469,18 @@ package body Docgen_Module is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
-      File    : Virtual_File;
+      File    : aliased Virtual_File;
 
    begin
       if Context.all in File_Selection_Context'Class
         and then Has_File_Information (File_Selection_Context_Access (Context))
       then
          File := File_Information (File_Selection_Context_Access (Context));
+
          if File = VFS.No_File then
             return;
          else
-            Generate_File (Kernel, File);
+            Generate_File (Kernel, File'Unchecked_Access);
          end if;
       end if;
    end Choose_Menu_Current_File;
@@ -553,7 +550,7 @@ package body Docgen_Module is
     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File  : constant Virtual_File :=
+      File  : aliased Virtual_File :=
         Select_File
           (Title             => -"Generate Documentation For",
            Parent            => Get_Main_Window (Kernel),
@@ -565,7 +562,7 @@ package body Docgen_Module is
       if File = VFS.No_File then
          return;
       else
-         Generate_File (Kernel, File);
+         Generate_File (Kernel, File'Unchecked_Access);
       end if;
    end Choose_Menu_File;
 
@@ -575,45 +572,43 @@ package body Docgen_Module is
 
    procedure Generate_File
      (Kernel : Kernel_Handle;
-      File   : Virtual_File)
+      File   : Virtual_File_Access)
    is
       use Type_Source_File_List;
       Source_File_List : Type_Source_File_List.List;
       LI               : LI_File_Ptr;
-      Body_File        : Virtual_File;
+      Body_File        : Virtual_File_Access;
       Is_Spec          : Boolean;
+      Process_Body     : constant Boolean :=
+        Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
 
    begin
       Is_Spec := Is_Spec_File (Kernel, File);
 
-      if not Is_Spec and
-      not Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
-      then
+      if not Is_Spec and then not Process_Body then
          return;
       end if;
 
-      LI := Locate_From_Source_And_Complete (Kernel, File, False);
+      LI := Locate_From_Source_And_Complete (Kernel, File.all, False);
+
       if LI = No_LI_File then
          return;
       end if;
 
       Append
         (Source_File_List,
-         (File_Name        => File,
-          Package_Name     => new String'(Get_Unit_Name (LI, File)),
-          Other_File_Found => True));
+         (File_Name        => File.all,
+          Package_Name     => new String'(Get_Unit_Name (LI, File.all))));
 
-      if Is_Spec
-        and then Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
-      then
-         Body_File := Get_Other_File_Of (LI, File);
+      if Is_Spec and then Process_Body then
+         Body_File := Get_Other_File_Of (LI, File.all);
 
-         if Body_File /= No_File then
+         if Body_File.all /= No_File then
             Append
               (Source_File_List,
-               (File_Name        => Body_File,
-                Package_Name     => new String'(Get_Unit_Name (LI, Body_File)),
-                Other_File_Found => True));
+               (File_Name    => Body_File.all,
+                Package_Name =>
+                  new String'(Get_Unit_Name (LI, Body_File.all))));
          end if;
       end if;
 
