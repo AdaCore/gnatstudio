@@ -24,7 +24,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with GNAT.IO; use GNAT.IO;
-with Ada.Unchecked_Conversion;
 
 package body Language is
 
@@ -269,8 +268,8 @@ package body Language is
       if Context.Comment_Start_Length /= 0
         and then Buffer'Length > Context.Comment_Start_Length
         and then Buffer
-        (Buffer'First .. Buffer'First + Context.Comment_Start_Length - 1)
-        = Context.Comment_Start
+          (Buffer'First .. Buffer'First + Context.Comment_Start_Length - 1)
+           = Context.Comment_Start
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + Context.Comment_Start_Length;
@@ -333,7 +332,7 @@ package body Language is
 
       --  A protected constant character
       --  ??? The following test still does not handle cases such as
-      --  ??? '\012' for instance, or multi-character character constants.
+      --  '\012' for instance, or multi-byte character constants.
 
       if Buffer'Length > 4
         and then Buffer (Buffer'First) = Context.Constant_Character
@@ -479,9 +478,32 @@ package body Language is
       Buffer_Length : Natural;
       Callback      : Entity_Callback)
    is
-      pragma Unreferenced (Lang, Buffer, Buffer_Length, Callback);
+      Slice     : Unchecked_String_Access := To_Unchecked_String (Buffer);
+      Index     : Natural := Slice'First;
+      Next_Char : Natural;
+      End_Char  : Natural;
+      Entity    : Language_Entity;
+
    begin
-      null;
+      loop
+         exit when Index >= Buffer_Length;
+
+         Looking_At (Lang, Slice (Index .. Buffer_Length), Entity, Next_Char);
+
+         if Next_Char = Buffer_Length then
+            End_Char := Buffer_Length;
+         else
+            End_Char := Next_Char - 1;
+         end if;
+
+         exit when Callback
+           (Entity,
+            (0, 0, Index),
+            (0, 0, End_Char),
+            Entity = Comment_Text and then Next_Char > Buffer_Length);
+
+         Index := Next_Char;
+      end loop;
    end Parse_Entities;
 
    ----------------------
@@ -497,12 +519,11 @@ package body Language is
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang, Indent_Params);
-      function To_Unchecked_String_Access is new Ada.Unchecked_Conversion
-        (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
 
-      S      : Unchecked_String_Access := To_Unchecked_String_Access (Buffer);
+      S      : Unchecked_String_Access := To_Unchecked_String (Buffer);
       Index  : Natural := Buffer_Length - 1;
       Blanks : Natural;
+
    begin
       while Index > 1 and then S (Index - 1) /= ASCII.LF loop
          Index := Index - 1;
