@@ -189,6 +189,25 @@ check_vdiff: force
 	   (echo "vdiff sources not found in ${VDIFF_SRC}, see README"; false)
 
 ##################
+## AUnit module ##
+##################
+
+ifneq (,$(findstring aunit,$(MODULES)))
+
+# Location of AUnit sources. See the README file at the top-level for
+# information on how to setup the required links
+AUNIT_SRC=../../aunit
+
+MODULE_INCLUDE+=-I${AUNIT_SRC}/make_harness -I${AUNIT_SRC}/make_suite \
+  -I${AUNIT_SRC}/make_make_test
+endif
+
+.PHONY: check_aunit
+check_vdiff: force
+	@[ -f ${AUNIT_SRC}/aunit_make_test.glade ] || \
+	   (echo "AUnit sources not found in ${AUNIT_SRC}, see README"; false)
+
+##################
 ## glide module ##
 ##################
 
