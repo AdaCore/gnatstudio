@@ -174,7 +174,6 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
@@ -190,7 +189,6 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Project          : Project_Type;
       File             : out Source_File);
@@ -199,7 +197,6 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Sig_Base_Name    : String;
       Project          : Project_Type;
@@ -210,7 +207,6 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Sig_Base_Name    : String;
       Project          : Project_Type;
@@ -252,8 +248,7 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List);
+      Sfiles      : in out Sdep_To_Sfile_Table);
    --  Save the information from the given dependency into the LI_File_Ptr.
 
    procedure Process_Sdep_As_Self
@@ -272,7 +267,6 @@ package body Src_Info.ALI is
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List;
       Is_Separate : Boolean := False);
    --  Save the information from the given dependency into the list of
    --  dependencies of the LI_File_Ptr. This procedure should be used
@@ -286,8 +280,7 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Project     : Project_Type;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List);
+      Sfiles      : in out Sdep_To_Sfile_Table);
    --  Call Process_Sdep for all Sdep entries in the given LI_File_Ptr.
 
    procedure Process_With
@@ -346,8 +339,7 @@ package body Src_Info.ALI is
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
-      Full_ALI_Filename : Virtual_File;
-      List              : LI_File_List);
+      Full_ALI_Filename : Virtual_File);
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
@@ -355,7 +347,6 @@ package body Src_Info.ALI is
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : Virtual_File;
       Project                : Project_Type;
-      List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean);
    --  Parse the given ALI file and update the Unit Info list. Also returns
@@ -366,7 +357,6 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : Virtual_File;
-      List                   : LI_File_List;
       Project                : Project_Type);
    --  Internal version of Create_Or_Complete_LI
 
@@ -592,7 +582,6 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Subunit_Name     : Name_Id := No_Name;
@@ -658,10 +647,10 @@ package body Src_Info.ALI is
             Prj := Project;
          end if;
 
-         Get_Unit_Source_File (Handler, List, Source, Prj, File);
+         Get_Unit_Source_File (Handler, Source, Prj, File);
       else
          Get_Subunit_Source_File
-           (Handler, List, Source,
+           (Handler, Source,
             Locale_To_UTF8 (Get_String (New_ALI.Sfile)),
             Project,
             Subunit_Name, File);
@@ -674,7 +663,6 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Project          : Project_Type;
       File             : out Source_File) is
@@ -682,12 +670,12 @@ package body Src_Info.ALI is
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body =>
             Get_Unit_Source_File
-              (Handler, List, Source_Filename,
+              (Handler, Source_Filename,
                Base_Name (Source_Filename), Project, Unit_Body, File);
 
          when Unit_Spec =>
             Get_Unit_Source_File
-              (Handler, List, Source_Filename,
+              (Handler, Source_Filename,
                Other_File_Base_Name (Project, Source_Filename),
                Project, Unit_Spec, File);
 
@@ -702,7 +690,6 @@ package body Src_Info.ALI is
 
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Sig_Base_Name    : String;
       Project          : Project_Type;
@@ -714,7 +701,7 @@ package body Src_Info.ALI is
 
    begin
       File :=
-        (LI              => Get (List.Table.all, ALI_Filename),
+        (LI              => Get (Handler.Table.all, ALI_Filename),
          Part            => Part,
          Source_Filename => null);
 
@@ -732,7 +719,6 @@ package body Src_Info.ALI is
 
             Create_LI_File
               (File        => File.LI,
-               List        => List,
                Project     => Project,
                LI_Filename => LI,
                Handler     => LI_Handler (Handler));
@@ -768,7 +754,6 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
-      List             : LI_File_List;
       Source_Filename  : Virtual_File;
       Sig_Base_Name    : String;
       Project          : Project_Type;
@@ -782,9 +767,9 @@ package body Src_Info.ALI is
 
    begin
       File :=
-         (LI             => Get (List.Table.all, Base_Name (ALI_Filename)),
-          Part           => Unit_Separate,
-         Source_Filename => new String'(Base));
+         (LI              => Get (Handler.Table.all, Base_Name (ALI_Filename)),
+          Part            => Unit_Separate,
+          Source_Filename => new String'(Base));
       --  ??? No real need to duplicate the string above, since we know with
       --  the current implementation of VFS that Base will never be freed. But
       --  this is more secure, and the implementation of ALI tables will
@@ -800,14 +785,12 @@ package body Src_Info.ALI is
             if LI /= "" then
                Create_LI_File
                  (File        => File.LI,
-                  List        => List,
                   Project     => Project,
                   LI_Filename => Create (Full_Filename => LI),
                   Handler     => LI_Handler (Handler));
             else
                Create_LI_File
                  (File        => File.LI,
-                  List        => List,
                   Project     => Project,
                   LI_Filename => Create_From_Base (ALI_Filename),
                   Handler     => LI_Handler (Handler));
@@ -974,15 +957,14 @@ package body Src_Info.ALI is
       New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List)
+      Sfiles      : in out Sdep_To_Sfile_Table)
    is
       Dep : Sdep_Record renames Sdep.Table (Id);
    begin
       if Dep.Subunit_Name /= No_Name then
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Sfiles, List, Is_Separate => True);
+            Sfiles, Is_Separate => True);
 
       elsif New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
@@ -1001,7 +983,7 @@ package body Src_Info.ALI is
       else
          Process_Sdep_As_External
            (Handler, New_LI_File, New_ALI, Id, Project,
-            Sfiles, List, Is_Separate => False);
+            Sfiles, Is_Separate => False);
       end if;
    end Process_Sdep;
 
@@ -1053,7 +1035,6 @@ package body Src_Info.ALI is
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List;
       Is_Separate : Boolean := False)
    is
       Dep     : Sdep_Record renames Sdep.Table (Id);
@@ -1062,7 +1043,7 @@ package body Src_Info.ALI is
 
    begin
       Get_Source_File
-        (Handler, List, New_ALI, Dep.Sfile, Dep.Subunit_Name,
+        (Handler, New_ALI, Dep.Sfile, Dep.Subunit_Name,
          Project, Sfile);
       Assert
         (Me, Get_File_Info (Sfile).Source_Filename.all =
@@ -1106,12 +1087,11 @@ package body Src_Info.ALI is
       New_LI_File : LI_File_Ptr;
       New_ALI     : ALIs_Record;
       Project     : Project_Type;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : LI_File_List) is
+      Sfiles      : in out Sdep_To_Sfile_Table) is
    begin
       for Dep_Id in New_ALI.First_Sdep .. New_ALI.Last_Sdep loop
          Process_Sdep
-           (Handler, New_LI_File, New_ALI, Dep_Id, Project, Sfiles, List);
+           (Handler, New_LI_File, New_ALI, Dep_Id, Project, Sfiles);
       end loop;
    end Process_Sdeps;
 
@@ -1611,8 +1591,7 @@ package body Src_Info.ALI is
       New_LI_File       : out LI_File_Ptr;
       New_ALI           : ALIs_Record;
       Project           : Project_Type;
-      Full_ALI_Filename : Virtual_File;
-      List              : LI_File_List)
+      Full_ALI_Filename : Virtual_File)
    is
       Sfiles         : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
@@ -1625,7 +1604,6 @@ package body Src_Info.ALI is
       if LI_File_Is_New then
          Create_LI_File
            (File        => New_LI_File,
-            List        => List,
             Project     => Project,
             LI_Filename => Full_ALI_Filename,
             Handler     => LI_Handler (Handler));
@@ -1664,8 +1642,7 @@ package body Src_Info.ALI is
       --  Build the rest of the structure
 
       Process_Units (New_LI_File, New_ALI);
-      Process_Sdeps
-        (Handler, New_LI_File, New_ALI, Project, Sfiles, List);
+      Process_Sdeps (Handler, New_LI_File, New_ALI, Project, Sfiles);
 
       Process_Withs (New_LI_File, New_ALI, Project);
       Process_Xrefs (New_LI_File, New_ALI, Sfiles);
@@ -1811,7 +1788,6 @@ package body Src_Info.ALI is
      (Handler                : ALI_Handler;
       Full_ALI_Filename      : Virtual_File;
       Project                : Project_Type;
-      List                   : LI_File_List;
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean)
    is
@@ -1829,8 +1805,7 @@ package body Src_Info.ALI is
       end if;
 
       Create_New_ALI
-        (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
-         Full_ALI_Filename, List);
+        (Handler, Unit, ALIs.Table (New_ALI_Id), Project, Full_ALI_Filename);
       Success := True;
 
    exception
@@ -1931,7 +1906,6 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : Virtual_File;
-      List                   : LI_File_List;
       Project                : Project_Type;
       Check_Timestamp        : Boolean := True)
    is
@@ -1940,7 +1914,7 @@ package body Src_Info.ALI is
    begin
       --  If the file has already been parsed, we just check that it is still
       --  up-to-date
-      File := Locate_From_Source (List, Source_Filename);
+      File := Locate_From_Source (Handler, Source_Filename);
 
       if File /= No_LI_File then
          if Check_Timestamp or else Is_Incomplete (File) then
@@ -1948,7 +1922,6 @@ package body Src_Info.ALI is
               (Handler                => Handler,
                File                   => File,
                Full_Ali_File          => File.LI.LI_Filename,
-               List                   => List,
                Project                => Project);
          end if;
 
@@ -1969,13 +1942,12 @@ package body Src_Info.ALI is
             else
                --  Else we might already have an incomplete version of the LI
                --  file.
-               File := Locate (List, LI_Name);
+               File := Locate (Handler, LI_Name);
 
                Create_Or_Complete_LI
                  (Handler                => Handler,
                   File                   => File,
                   Full_Ali_File          => LI_Name,
-                  List                   => List,
                   Project                => Project);
 
                --  Make sure that the LI file we just parsed does contain the
@@ -2024,7 +1996,6 @@ package body Src_Info.ALI is
      (Handler                : access ALI_Handler_Record'Class;
       File                   : in out LI_File_Ptr;
       Full_Ali_File          : Virtual_File;
-      List                   : LI_File_List;
       Project                : Project_Type)
    is
       Success : Boolean := True;
@@ -2038,8 +2009,7 @@ package body Src_Info.ALI is
                    & Full_Name (Full_Ali_File).all);
 
             Parse_ALI_File
-              (ALI_Handler (Handler), Full_Ali_File, Project,
-               List, File, Success);
+              (ALI_Handler (Handler), Full_Ali_File, Project, File, Success);
 
             if not Success then
                File := No_LI_File;
@@ -2072,7 +2042,6 @@ package body Src_Info.ALI is
 
    procedure Parse_All_LI_Information
      (Handler                : access ALI_Handler_Record;
-      List                   : LI_File_List;
       In_Directory           : String;
       Project                : Project_Type)
    is
@@ -2091,12 +2060,11 @@ package body Src_Info.ALI is
          if File_Extension (File (File'First .. Last)) = ".ali" then
             LI_File := Create
               (Full_Filename => In_Directory & File (File'First .. Last));
-            LI := Locate (List, LI_File);
+            LI := Locate (Handler, LI_File);
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => LI,
                Full_Ali_File          => LI_File,
-               List                   => List,
                Project                => Project);
          end if;
       end loop;

@@ -697,8 +697,7 @@ package body Browsers.Dependency_Items is
             end;
          end if;
 
-         Next (Get_Language_Handler (Kernel), Data.Iter.all,
-               Get_LI_File_List (Kernel));
+         Next (Get_Language_Handler (Kernel), Data.Iter.all);
          return True;
       end if;
 
@@ -750,7 +749,6 @@ package body Browsers.Dependency_Items is
         (Get_Project (Kernel),
          Get_Language_Handler (Kernel),
          File,
-         Get_LI_File_List (Kernel),
          Data.Iter.all,
          Include_Self => False);
 

@@ -47,6 +47,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Result_View;        use Glide_Result_View;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
@@ -598,7 +599,10 @@ package body Browsers.Call_Graph is
 
       --  If we have a renaming, add the entry for the renamed entity
       Renaming_Of
-        (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
+        (Get_LI_Handler_From_File
+           (Glide_Language_Handler (Get_Language_Handler (Kernel)),
+            Get_Declaration_File_Of (Entity)),
+         Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
          Execute (Callback, Rename, No_Reference, Is_Renaming => True);
          Destroy (Rename);
@@ -753,8 +757,7 @@ package body Browsers.Call_Graph is
                Free (Tree);
             end if;
 
-            Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
-                  Get_LI_File_List (Data.Kernel));
+            Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
             return True;
 
          exception
@@ -783,7 +786,11 @@ package body Browsers.Call_Graph is
       Is_Renaming   : Boolean;
    begin
       --  If we have a renaming, add the entry for the renamed entity
-      Renaming_Of (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
+      Renaming_Of
+        (Get_LI_Handler_From_File
+           (Glide_Language_Handler (Get_Language_Handler (Kernel)),
+            Get_Declaration_File_Of (Entity)),
+         Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
          Execute (Callback, Rename, No_Reference, Is_Renaming => False);
          Destroy (Rename);
@@ -803,7 +810,6 @@ package body Browsers.Call_Graph is
         (Get_Project (Kernel),
          Get_Language_Handler (Kernel),
          Entity,
-         Get_LI_File_List (Kernel),
          Data.Iter.all,
          LI_Once => True);
 
@@ -1120,8 +1126,7 @@ package body Browsers.Call_Graph is
                Get_Name (Data.Entity),
                Data.Category.all & Get_Name (Data.Entity));
          end if;
-         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
-               Get_LI_File_List (Data.Kernel));
+         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
 
          Set_Progress (Command,
                        (Running,
@@ -1170,7 +1175,7 @@ package body Browsers.Call_Graph is
             Find_All_References
               (Get_Project (Kernel),
                Get_Language_Handler (Kernel),
-               Info, Get_LI_File_List (Kernel), Data.Iter.all);
+               Info, Data.Iter.all);
             Xref_Commands.Create
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
             Set_Progress (Command_Access (C),
@@ -1286,7 +1291,7 @@ package body Browsers.Call_Graph is
          Find_All_References
            (Get_Project (Kernel),
             Get_Language_Handler (Kernel),
-            Info, Get_LI_File_List (Kernel), Iter,
+            Info, Iter,
             In_File => File_Information (Entity));
 
          while Get (Iter) /= No_Reference loop
@@ -1297,10 +1302,7 @@ package body Browsers.Call_Graph is
                Get_Name (Info),
                -"References for: " & Get_Name (Info));
 
-            Next
-              (Get_Language_Handler (Kernel),
-               Iter,
-               Get_LI_File_List (Kernel));
+            Next (Get_Language_Handler (Kernel), Iter);
          end loop;
 
          Destroy (Iter);

@@ -335,7 +335,6 @@ package body Docgen.Work_On_File is
       All_Scope_Tree : in out Tree_Htable.String_Hash_Table.HTable)
    is
       LI_Unit          : LI_File_Ptr;
-      LI_List          : Src_Info.LI_File_List;
       Tree             : Scope_Tree;
       Entity_Iter      : Local_Entities_Iterator;
       Ref_In_File      : E_Reference;
@@ -485,7 +484,6 @@ package body Docgen.Work_On_File is
          Local_Ref_List       : Type_Reference_List.List;
          Local_Calls_List     : Type_Reference_List.List;
          Entity_Tree_Node     : Scope_Tree_Node;
-         LI_List              : Src_Info.LI_File_List;
 
          procedure Tree_Called_Callback
            (Node        : Scope_Tree_Node;
@@ -559,12 +557,10 @@ package body Docgen.Work_On_File is
          if Entity_File = Source_Filename
            and then Options.References
          then
-            LI_List := Get_LI_File_List (Kernel);
             Find_All_References
                 (Get_Root_Project (Get_Registry (Kernel)),
                  Get_Language_Handler (Kernel),
                  Info,
-                 LI_List,
                  Reference_Iter,
                  No_Project,
                  True,
@@ -609,9 +605,7 @@ package body Docgen.Work_On_File is
                   Info,
                   Tree_Called_Callback'Unrestricted_Access);
 
-               Next (Get_Language_Handler (Kernel),
-                     Reference_Iter,
-                     LI_List);
+               Next (Get_Language_Handler (Kernel), Reference_Iter);
             end loop;
 
             --  Pass the local lists to the entity_node lists
@@ -675,12 +669,10 @@ package body Docgen.Work_On_File is
          C            : Entity_Information;
          Found_Global : Boolean := False;
       begin
-
          Find_All_References
            (Get_Root_Project (Get_Registry (Kernel)),
             Get_Language_Handler (Kernel),
             Info,
-            LI_List,
             Iter,
             No_Project,
             True,
@@ -704,9 +696,7 @@ package body Docgen.Work_On_File is
                Destroy (Child);
 
                exit when Found_Global;
-               Next (Get_Language_Handler (Kernel),
-                     Iter,
-                     LI_List);
+               Next (Get_Language_Handler (Kernel), Iter);
             end loop;
             Found := Found_Global;
          end if;
@@ -763,7 +753,6 @@ package body Docgen.Work_On_File is
 
       LI_Unit := Locate_From_Source_And_Complete
         (Kernel, Source_Filename, Check_Timestamp => False);
-      LI_List := Get_LI_File_List (Kernel);
       Level := 1;
 
       --  All references of the current file are put in a list.
@@ -1217,6 +1206,8 @@ package body Docgen.Work_On_File is
                                  Next (Parent);
                               end loop;
 
+                              Destroy (Parent);
+
                               --  Search for children
 
                               Child :=
@@ -1449,8 +1440,7 @@ package body Docgen.Work_On_File is
 
                                     Destroy (Global_Child);
                                     Next (Get_Language_Handler (Kernel),
-                                          Children_Iter,
-                                          LI_List);
+                                          Children_Iter);
                                  end loop;
 
                               end if;
@@ -1583,6 +1573,8 @@ package body Docgen.Work_On_File is
 
                                  Next (Parent);
                               end loop;
+
+                              Destroy (Parent);
 
                               --  Search of children
                               Child :=
@@ -1813,8 +1805,7 @@ package body Docgen.Work_On_File is
 
                                     Destroy (Global_Child);
                                     Next (Get_Language_Handler (Kernel),
-                                          Children_Iter,
-                                          LI_List);
+                                          Children_Iter);
                                  end loop;
 
                               end if;
