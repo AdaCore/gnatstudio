@@ -42,6 +42,8 @@ package Codefix.Graphics is
    package Vdiff_Lists is new Generic_List (Vdiff_Access);
    use Vdiff_Lists;
 
+   type Has_Been_Fixed is access procedure (Error : Error_Id);
+
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
       Current_Text      : Ptr_Text_Navigator;
       Corrector         : Ptr_Correction_Manager;
@@ -52,6 +54,8 @@ package Codefix.Graphics is
       Vdiff_List        : Vdiff_Lists.List;
       Automatic_Skip    : State_List;
       Automatic_Fix     : State_List;
+      Fixed_Cb          : Has_Been_Fixed;
+      Start             : Boolean;
    end record;
 
    type Graphic_Codefix_Access is access all Graphic_Codefix_Record;
@@ -60,13 +64,15 @@ package Codefix.Graphics is
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager);
+      Corrector       : Ptr_Correction_Manager;
+      Fixed_Cb        : Has_Been_Fixed := null);
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager);
+      Corrector       : Ptr_Correction_Manager;
+      Fixed_Cb        : Has_Been_Fixed := null);
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Free the memory associated to a Graphic_Codefix.
