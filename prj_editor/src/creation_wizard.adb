@@ -31,7 +31,6 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.File_Selector;  use Gtkada.File_Selector;
@@ -47,12 +46,12 @@ with Namet;    use Namet;
 
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
-with Directory_Tree;   use Directory_Tree;
-with Switches_Editors; use Switches_Editors;
 with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
 with String_Utils;     use String_Utils;
@@ -61,15 +60,7 @@ package body Creation_Wizard is
 
    function First_Page
      (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
-   function Second_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
-   function Third_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
-   function Fourth_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
-   function Fifth_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget;
-   --  Return the widget to use for any of the pages in the wizard
+   --  Return the widget to use for the "General" page in the wizard
 
    procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class);
    --  Checks whether the contents of the first page has been fully answered,
@@ -82,18 +73,15 @@ package body Creation_Wizard is
    --  Generate the project files from the contents of the wizard W.
    --  Return the directory/name of the project that was just created.
 
-   procedure Emit_Switches
-     (Wiz : access Prj_Wizard_Record'Class;
-      Project : Project_Node_Id;
-      Name : String;
-      Tool : Tool_Names);
-   --  Create a new variable in a package called Name to represent the default
-   --  switches to use for this tool
-
    procedure Switch_Page
      (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  Called when a new page is selected in the wizard. We dynamically create
    --  the page if needed.
+
+   function Get_Languages (Wiz : access Prj_Wizard_Record'Class)
+      return Argument_List;
+   --  Return the list of languages selected by the user. The returned array
+   --  must be freed by the caller.
 
    -------------
    -- Gtk_New --
@@ -117,20 +105,23 @@ package body Creation_Wizard is
    is
       Pix  : Gdk_Pixmap;
       Mask : Gdk_Bitmap;
+      Page : Project_Editor_Page;
+      Count : constant Natural := Project_Editor_Pages_Count (Kernel);
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
-        (Wiz, Kernel, -"Project setup", "#0e79bd", Num_Pages => 5);
+        (Wiz, Kernel, -"Project setup", "#0e79bd", Num_Pages => 1 + Count);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
       Add_Logo (Wiz, Pix, Mask);
 
-      Set_Toc (Wiz, 1, -"Naming the project");
-      Set_Toc (Wiz, 2, -"Selecting sources");
-      Set_Toc (Wiz, 3, -"Build directory");
-      Set_Toc (Wiz, 4, -"Switches");
-      Set_Toc (Wiz, 5, -"Naming scheme");
+      Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
+
+      for E in 1 .. Count loop
+         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+         Set_Toc (Wiz, 1 + E, Get_Toc (Page), Get_Title (Page));
+      end loop;
 
       Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
@@ -144,58 +135,37 @@ package body Creation_Wizard is
    is
       W        : constant Prj_Wizard := Prj_Wizard (Wiz);
       Page_Num : constant Guint := To_Guint (Args, 1);
-
    begin
-      case Page_Num is
-         when 1 =>
-            Set_Wizard_Title (W, -"Creating a new project");
-            W.Language_Changed := True;
+      if Page_Num = 1 then
+         W.Language_Changed := True;
 
-            if Get_Nth_Page (W, 1) = null then
-               Set_Page (W, 1, First_Page (W));
-            end if;
+         if Get_Nth_Page (W, 1) = null then
+            Set_Page (W, 1, First_Page (W));
+         end if;
 
-         when 2 =>
-            Set_Wizard_Title
-              (W, -"Please select the source directories for this project");
+      elsif Integer (Page_Num - 1) <=
+        Project_Editor_Pages_Count (W.Kernel)
+      then
+         if Get_Nth_Page (W, Integer (Page_Num)) = null then
+            Set_Page
+              (W, Integer (Page_Num),
+               Widget_Factory
+               (Get_Nth_Project_Editor_Page (W.Kernel, Integer (Page_Num - 1)),
+                No_Project, W.Kernel));
+         end if;
 
-            if Get_Nth_Page (W, 2) = null then
-               Set_Page (W, 2, Second_Page (W));
-            else
-               Show_Directory (Get_Tree (W.Src_Dir_Selection),
-                               Get_Text (W.Project_Location));
-            end if;
-
-         when 3 =>
-            Set_Wizard_Title
-              (W, -"Please select the build directory for this project");
-
-            if Get_Nth_Page (W, 3) = null then
-               Set_Page (W, 3, Third_Page (W));
-            else
-               Show_Directory (Get_Tree (W.Obj_Dir_Selection),
-                               Get_Text (W.Project_Location));
-            end if;
-
-         when 4 =>
-            Set_Wizard_Title
-              (W, -"Please select the switches to build the project");
-
-            if W.Language_Changed or else Get_Nth_Page (W, 4) = null then
-               Set_Page (W, 4, Fourth_Page (W));
-            end if;
-
-         when 5 =>
-            Set_Wizard_Title (W, -"Please select the naming scheme to use");
-
-            if W.Language_Changed or else Get_Nth_Page (W, 5) = null then
-               Set_Page (W, 5, Fifth_Page (W));
-               W.Language_Changed := False;
-            end if;
-
-         when others =>
-            null;
-      end case;
+         declare
+            Languages : Argument_List := Get_Languages (W);
+         begin
+            Refresh
+              (Page         => Get_Nth_Project_Editor_Page
+               (W.Kernel, Integer (Page_Num - 1)),
+               Widget       => Get_Nth_Page (W, Integer (Page_Num)),
+               Project_View => No_Project,
+               Languages    => Languages);
+            Free (Languages);
+         end;
+      end if;
    end Switch_Page;
 
    ------------------------
@@ -238,6 +208,7 @@ package body Creation_Wizard is
 
       Gtk_New (Wiz.Project_Name, 255);
       Attach (Table, Wiz.Project_Name, 0, 1, 1, 2);
+      Set_Activates_Default (Wiz.Project_Name, True);
 
       --  We can't move to the next page until the name of the project has been
       --  specified
@@ -256,6 +227,7 @@ package body Creation_Wizard is
       Gtk_New (Wiz.Project_Location, 255);
       Set_Text (Wiz.Project_Location, Get_Current_Dir);
       Attach (Table, Wiz.Project_Location, 0, 1, 3, 4);
+      Set_Activates_Default (Wiz.Project_Location, True);
 
       Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
@@ -281,98 +253,21 @@ package body Creation_Wizard is
       Gtk_New (Wiz.Cpp_Support, "C++");
       Pack_Start (Box, Wiz.Cpp_Support, Expand => False);
 
+      Gtk_New (Frame, -"General");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Page, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box);
+      Set_Border_Width (Box, 5);
+      Add (Frame, Box);
+
+      Gtk_New (Wiz.Relative_Paths, -"Use relative paths in the projects");
+      Set_Active (Wiz.Relative_Paths,
+                  Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
+      Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
+
       return Gtk_Widget (Page);
    end First_Page;
-
-   -----------------
-   -- Second_Page --
-   -----------------
-
-   function Second_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget
-   is
-      Prj_Location : aliased String := Get_Text (Wiz.Project_Location);
-   begin
-      Gtk_New (Wiz.Src_Dir_Selection,
-               Initial_Directory => Prj_Location,
-               Multiple_Directories => True,
-               Busy_Cursor_On => Get_Window (Wiz),
-               Initial_Selection => (1 => Prj_Location'Unchecked_Access));
-      return Gtk_Widget (Wiz.Src_Dir_Selection);
-   end Second_Page;
-
-   ----------------
-   -- Third_Page --
-   ----------------
-
-   function Third_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
-   begin
-      Gtk_New (Wiz.Obj_Dir_Selection,
-               Initial_Directory => Get_Text (Wiz.Project_Location),
-               Multiple_Directories => False,
-               Busy_Cursor_On => Get_Window (Wiz));
-      return Gtk_Widget (Wiz.Obj_Dir_Selection);
-   end Third_Page;
-
-   -----------------
-   -- Fourth_Page --
-   -----------------
-
-   function Fourth_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
-   begin
-      Gtk_New (Wiz.Switches);
-
-      if not Get_Active (Wiz.Ada_Support) then
-         Destroy_Pages
-           (Wiz.Switches, Ada_Page or Pretty_Printer_Page or Binder_Page);
-      end if;
-
-      if not Get_Active (Wiz.C_Support) then
-         Destroy_Pages (Wiz.Switches, C_Page);
-      end if;
-
-      if not Get_Active (Wiz.Cpp_Support) then
-         Destroy_Pages (Wiz.Switches, Cpp_Page);
-      end if;
-
-      return Get_Window (Wiz.Switches);
-   end Fourth_Page;
-
-   ----------------
-   -- Fifth_Page --
-   ----------------
-
-   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget
-   is
-      Languages : Argument_List (1 .. 3);
-      L : Natural := Languages'First - 1;
-      --  ??? Should get the list of supported languages from the kernel.
-   begin
-      if Get_Active (Wiz.C_Support) then
-         L := L + 1;
-         Languages (L) := new String' (C_String);
-      end if;
-
-      if Get_Active (Wiz.Ada_Support) then
-         L := L + 1;
-         Languages (L) := new String' (Ada_String);
-      end if;
-
-      if Get_Active (Wiz.Cpp_Support) then
-         L := L + 1;
-         Languages (L) := new String' (Cpp_String);
-      end if;
-
-      Gtk_New (Wiz.Naming, Languages (Languages'First .. L));
-      Show_Project_Settings
-        (Wiz.Naming, Get_Project_View (Wiz.Kernel), False);
-
-      Free (Languages);
-      return Gtk_Widget (Wiz.Naming);
-   end Fifth_Page;
 
    ---------------------------
    -- Advanced_Prj_Location --
@@ -390,126 +285,68 @@ package body Creation_Wizard is
    end Advanced_Prj_Location;
 
    -------------------
-   -- Emit_Switches --
+   -- Get_Languages --
    -------------------
 
-   procedure Emit_Switches
-     (Wiz : access Prj_Wizard_Record'Class;
-      Project : Project_Node_Id;
-      Name : String;
-      Tool : Tool_Names)
+   function Get_Languages (Wiz : access Prj_Wizard_Record'Class)
+      return Argument_List
    is
-      Pack, Var : Project_Node_Id;
-      Arr : Argument_List := Get_Switches (Wiz.Switches, Tool);
+      Languages : Argument_List (1 .. 3);
+      Current : Natural := Languages'First;
    begin
-      if Arr'Length /= 0 then
-         Pack := Get_Or_Create_Package (Project, Name);
-         Var := Create_Attribute
-           (Pack, Get_Name_String (Name_Default_Switches), Ada_String, List);
-         for J in Arr'Range loop
-            Append_To_List (Var, Arr (J).all);
-         end loop;
-         Free (Arr);
+      if Get_Active (Wiz.C_Support) then
+         Languages (Current) := new String' (C_String);
+         Current := Current + 1;
       end if;
-   end Emit_Switches;
+
+      if Get_Active (Wiz.Cpp_Support) then
+         Languages (Current) := new String' (Cpp_String);
+         Current := Current + 1;
+      end if;
+
+      if Get_Active (Wiz.Ada_Support) then
+         Languages (Current) := new String' (Ada_String);
+         Current := Current + 1;
+      end if;
+
+      return Languages (Languages'First .. Current - 1);
+   end Get_Languages;
 
    ------------------
    -- Generate_Prj --
    ------------------
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz          : constant Prj_Wizard := Prj_Wizard (W);
-      Project, Var : Project_Node_Id;
-      Dir          : constant String := Name_As_Directory
+      Wiz            : constant Prj_Wizard := Prj_Wizard (W);
+      Project        : Project_Node_Id;
+      Dir            : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
-      Name         : constant String := Base_Name
+      Name           : constant String := Base_Name
         (Get_Text (Wiz.Project_Name), Prj.Project_File_Extension);
+      Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
+      Changed        : Boolean := False;
+      Languages      : Argument_List := Get_Languages (Wiz);
 
    begin
       Project := Create_Project (Name => Name, Path => Dir);
 
-      --  Append the source directories
-      Var := Create_Attribute
-        (Project, Get_Name_String (Name_Source_Dirs), Kind => List);
+      Set_Project_Uses_Relative_Paths (Wiz.Kernel, Project, Relative_Paths);
 
-      declare
-         Dirs : Argument_List := Get_Multiple_Selection
-           (Wiz.Src_Dir_Selection);
-      begin
-         if Dirs'Length /= 0 then
-            for J in Dirs'Range loop
-               Append_To_List (Var, Dirs (J).all);
-            end loop;
+      Update_Attribute_Value_In_Scenario
+        (Project            => Project,
+         Scenario_Variables => (1 .. 0 => Empty_Node),
+         Attribute_Name     => Get_Name_String (Name_Languages),
+         Values             => Languages);
 
-            Free (Dirs);
-
-         else
-            Append_To_List (Var, ".");
-         end if;
-      end;
-
-      --  Append the build directory
-      Var := Create_Attribute
-        (Project, Get_Name_String (Name_Object_Dir), Kind => Single);
-
-      declare
-         Dir : constant String :=
-           Get_Single_Selection (Wiz.Obj_Dir_Selection);
-      begin
-         if Dir = "" then
-            Set_Value (Var, ".");
-         else
-            Set_Value (Var, Dir);
-         end if;
-      end;
-
-      --  the languages
-      Var := Create_Attribute
-        (Project, Get_Name_String (Name_Languages), Kind => List);
-      if Get_Active (Wiz.C_Support) then
-         Append_To_List (Var, C_String);
-      end if;
-      if Get_Active (Wiz.Cpp_Support) then
-         Append_To_List (Var, Cpp_String);
-      end if;
-      if Get_Active (Wiz.Ada_Support) then
-         Append_To_List (Var, Ada_String);
-      end if;
-
-
-      --  Append the switches
-      Emit_Switches (Wiz, Project, Get_Name_String (Name_Builder), Gnatmake);
-
-      if Get_Active (Wiz.C_Support) then
-         Emit_Switches
-           (Wiz, Project, Get_Name_String (Name_Compiler), C_Compiler);
-      end if;
-
-      if Get_Active (Wiz.Cpp_Support) then
-         Emit_Switches
-           (Wiz, Project, Get_Name_String (Name_Compiler), Cpp_Compiler);
-      end if;
-
-      if Get_Active (Wiz.Ada_Support) then
-         Emit_Switches
-           (Wiz, Project, Get_Name_String (Name_Compiler), Ada_Compiler);
-
-         --  ??? Activate when the project knows about the pretty printer
-
-         --  Emit_Switches
-         --    (Wiz, Project,
-         --     Get_Name_String (Name_Pretty_Printer), Pretty_Printer);
-         Emit_Switches (Wiz, Project, Get_Name_String (Name_Binder), Binder);
-      end if;
-
-      Emit_Switches (Wiz, Project, Get_Name_String (Name_Linker), Linker);
-
-      --  Append the naming scheme
-      Create_Project_Entry
-        (Wiz.Naming, Wiz.Kernel, Project, Ignore_Scenario => True);
+      for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
+         Changed := Changed or Project_Editor
+           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
+            Project, No_Project, Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P));
+      end loop;
 
       Save_Project (Wiz.Kernel, Project, Recursive => False);
 
+      Free (Languages);
       return Dir & Name & Project_File_Extension;
    end Generate_Prj;
 
@@ -521,6 +358,7 @@ package body Creation_Wizard is
    begin
       Show_All (Wiz);
       Set_Current_Page (Wiz, 1);
+      Grab_Focus (Wiz.Project_Name);
 
       if Run (Wiz) = Gtk_Response_Apply then
          return Generate_Prj (Wiz);
