@@ -435,7 +435,7 @@ package body Browsers.Module is
 
          if Has_File_Information (File_Context) then
             Gtk_New (Item, Label => File_Information (File_Context)
-                     & (-" depends on..."));
+                     & (-" depends on"));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
