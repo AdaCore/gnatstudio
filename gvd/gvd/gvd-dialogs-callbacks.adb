@@ -160,18 +160,18 @@ package body GVD.Dialogs.Callbacks is
 
       Dialog    : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
-
-      Debugger  : constant Debugger_Process_Tab :=
-        Convert (Dialog.Main_Window, Dialog.Debugger);
+      Debugger  : constant Debugger_Access := Dialog.Debugger;
+      Process   : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Debugger);
 
    begin
       --  Unregister the dialog, since Send will not take care of it when
       --  Wait_For_Prompt is false
 
-      Unregister_Dialog (Debugger);
-      Set_Busy (Debugger, False);
+      Unregister_Dialog (Process);
+      Set_Busy (Process, False);
 
-      Send (Dialog.Debugger,
+      Send (Debugger,
             "y",
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
@@ -192,18 +192,18 @@ package body GVD.Dialogs.Callbacks is
 
       Dialog    : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
-
-      Debugger  : constant Debugger_Process_Tab :=
-        Convert (Dialog.Main_Window, Dialog.Debugger);
+      Debugger  : constant Debugger_Access := Dialog.Debugger;
+      Process   : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Debugger);
 
    begin
       --  Unregister the dialog, since Send will not take care of it when
       --  Wait_For_Prompt is false
 
-      Unregister_Dialog (Debugger);
-      Set_Busy (Debugger, False);
+      Unregister_Dialog (Process);
+      Set_Busy (Process, False);
 
-      Send (Dialog.Debugger,
+      Send (Debugger,
             "n",
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
@@ -229,8 +229,9 @@ package body GVD.Dialogs.Callbacks is
       S         : Unbounded_String;
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
       Button    : Message_Dialog_Buttons;
-      Debugger  : constant Debugger_Process_Tab :=
-        Convert (Dialog.Main_Window, Dialog.Debugger);
+      Debugger  : constant Debugger_Access := Dialog.Debugger;
+      Process   : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Debugger);
 
    begin
       while Tmp /= Gint_List.Null_List loop
@@ -250,10 +251,10 @@ package body GVD.Dialogs.Callbacks is
       --  Unregister the dialog, since Send will not take care of it when
       --  Wait_For_Prompt is false
 
-      Unregister_Dialog (Debugger);
-      Set_Busy (Debugger, False);
+      Unregister_Dialog (Process);
+      Set_Busy (Process, False);
 
-      Send (Dialog.Debugger,
+      Send (Debugger,
             To_String (S),
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
