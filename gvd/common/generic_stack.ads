@@ -35,6 +35,9 @@ package Generic_Stack is
    --  modify the contents of the stack.
    --  Raise Stack_Empty if Stack is empty.
 
+   procedure Clear (Stack : in out Simple_Stack);
+   --  Clear the contents of stack.
+
 private
    pragma Inline (Push);
    pragma Inline (Pop);

@@ -1,5 +1,20 @@
 package body Generic_Stack is
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Stack : in out Simple_Stack) is
+      P : Simple_Stack;
+   begin
+      loop
+         exit when Stack = null;
+         P := Stack;
+         Stack := Stack.Next;
+         Free (P);
+      end loop;
+   end Clear;
+
    ----------
    -- Push --
    ----------
