@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- D806-007 Selecting text and pressing enter does not delete the selection
+  Problem:    When there is a selection in an editor that has auto-indentation
+              capabilities, the text is not deleted when pressing enter.
+  Workaround: Delete the text by pressing delete.
+
 - D721-004 Typing in floating read-only editors writes in other editors
   Problem:    When you type characters in a read-only floating editor, the
               actual editing might occur in a non-floating editor instead.
