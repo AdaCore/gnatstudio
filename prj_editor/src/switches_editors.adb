@@ -970,20 +970,22 @@ package body Switches_Editors is
          if Data.File_Name = No_String then
             Get_Name_String (Language);
             Update_Attribute_Value_In_Scenario
-              (Project         => Project,
-               Pkg_Name        => Pkg_Name,
-               Attribute_Name  => "default_switches",
-               Values          => Args,
-               Attribute_Index => String_From_Name_Buffer,
-               Prepend         => False);
+              (Project            => Project,
+               Pkg_Name           => Pkg_Name,
+               Scenario_Variables => Scenario_Variables (Data.Kernel),
+               Attribute_Name     => "default_switches",
+               Values             => Args,
+               Attribute_Index    => String_From_Name_Buffer,
+               Prepend            => False);
          else
             Update_Attribute_Value_In_Scenario
-              (Project         => Project,
-               Pkg_Name        => Pkg_Name,
-               Attribute_Name  => "switches",
-               Values          => Args,
-               Attribute_Index => Data.File_Name,
-               Prepend         => False);
+              (Project            => Project,
+               Pkg_Name           => Pkg_Name,
+               Scenario_Variables => Scenario_Variables (Data.Kernel),
+               Attribute_Name     => "switches",
+               Values             => Args,
+               Attribute_Index    => Data.File_Name,
+               Prepend            => False);
          end if;
          Free (Args);
       end Change_Switches;

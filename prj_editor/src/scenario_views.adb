@@ -240,7 +240,7 @@ package body Scenario_Views is
       else
          declare
             Scenar_Var : constant Project_Node_Array :=
-              Find_Scenario_Variables (Get_Project (V.Kernel));
+              Scenario_Variables (V.Kernel);
          begin
             Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 

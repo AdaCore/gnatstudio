@@ -367,12 +367,13 @@ package body Project_Trees is
    begin
       if Dirs'Length /= 0 then
          Update_Attribute_Value_In_Scenario
-           (Project         => Get_Project_From_View (Data.Project),
-            Pkg_Name        => "",
-            Attribute_Name  => "source_dirs",
-            Values          => Dirs,
-            Attribute_Index => No_String,
-            Prepend         => True);
+           (Project            => Get_Project_From_View (Data.Project),
+            Pkg_Name           => "",
+            Scenario_Variables => Scenario_Variables (Data.Kernel),
+            Attribute_Name     => "source_dirs",
+            Values             => Dirs,
+            Attribute_Index    => No_String,
+            Prepend            => True);
          Free (Dirs);
          Recompute_View (Data.Kernel);
       end if;
@@ -393,11 +394,12 @@ package body Project_Trees is
    begin
       if Dir /= "" then
          Update_Attribute_Value_In_Scenario
-           (Project         => Get_Project_From_View (Data.Project),
-            Pkg_Name        => "",
-            Attribute_Name  => "object_dir",
-            Value           => Dir,
-            Attribute_Index => No_String);
+           (Project            => Get_Project_From_View (Data.Project),
+            Pkg_Name           => "",
+            Scenario_Variables => Scenario_Variables (Data.Kernel),
+            Attribute_Name     => "object_dir",
+            Value              => Dir,
+            Attribute_Index    => No_String);
          Recompute_View (Data.Kernel);
       end if;
    end Change_Obj_Directory_From_Contextual;
