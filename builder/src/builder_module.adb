@@ -60,6 +60,7 @@ pragma Warnings (On);
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -180,20 +181,28 @@ package body Builder_Module is
       Project : String;
       File    : String) return Argument_List_Access
    is
-      Result : Argument_List_Access;
-      Vars   : Argument_List_Access :=
+      Result         : Argument_List_Access;
+      Vars           : Argument_List_Access :=
         Argument_String_To_List
           (Scenario_Variables_Cmd_Line (Kernel, Syntax));
+      Build_Progress : constant Boolean :=
+        Get_Pref (Kernel, Show_Build_Progress);
 
    begin
       case Syntax is
          when GNAT_Syntax =>
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
 
-            Result := new Argument_List'
-              ((new String'("-d"),
-                new String'("-P" & Project),
-                new String'(File)) & Vars.all);
+            if Build_Progress then
+               Result := new Argument_List'
+                 ((new String'("-d"),
+                   new String'("-P" & Project),
+                   new String'(File)) & Vars.all);
+            else
+               Result := new Argument_List'
+                 ((new String'("-P" & Project),
+                   new String'(File)) & Vars.all);
+            end if;
 
          when Make_Syntax =>
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
@@ -210,31 +219,23 @@ package body Builder_Module is
                    new String'("build")) & Vars.all);
 
             begin
-               Lower_Case (Lang);
+               To_Lower (Lang);
 
                if Lang = "ada" then
                   --  ??? Should set these values also if Ada is part of the
                   --  supported languages.
 
-                  declare
-                     Ada_Compiler : constant String := Get_Attribute_Value
-                       (Get_Project_View (Kernel), Compiler_Command_Attribute,
-                        Ide_Package, Default => "gnatmake", Index => "Ada");
+                  if Build_Progress then
+                     Result := new Argument_List'
+                       (List &
+                        new String'("ADA_SOURCES=" & Base_Name (File)) &
+                        new String'("ADAFLAGS=-d"));
 
-                  begin
-                     if Ada_Compiler = "gnatmake" then
-                        Result := new Argument_List'
-                          (List &
-                           new String'("ADA_SOURCES=" & Base_Name (File)) &
-                           new String'("ADAFLAGS=-d"));
-                     else
-                        Result := new Argument_List'
-                          (List &
-                           new String'("ADA_SOURCES=" & Base_Name (File)) &
-                           new String'("ADAFLAGS=-d") &
-                           new String'("GNATMAKE=" & Ada_Compiler));
-                     end if;
-                  end;
+                  else
+                     Result := new Argument_List'
+                       (List &
+                        new String'("ADA_SOURCES=" & Base_Name (File)));
+                  end if;
 
                else
                   Result := new Argument_List'(List);
@@ -310,7 +311,7 @@ package body Builder_Module is
       State_Pushed : Boolean := False;
 
    begin
-      Lower_Case (Langs (Langs'First).all);
+      To_Lower (Langs (Langs'First).all);
 
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
@@ -413,7 +414,7 @@ package body Builder_Module is
       Free (Cmd);
       Free (Args);
       Id := Process_Timeout.Add
-        (Timeout, Idle_Build'Access, (K, Fd, null, null));
+        (Timeout, Idle_Build'Access, (K, Fd, null, null, null));
 
    exception
       when Invalid_Process =>
@@ -474,7 +475,7 @@ package body Builder_Module is
             return;
          end if;
 
-         Lower_Case (Lang);
+         To_Lower (Lang);
 
          if Lang /= "ada" then
             Console.Insert
@@ -502,7 +503,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
       exception
          when Invalid_Process =>
@@ -561,7 +562,7 @@ package body Builder_Module is
               (Kernel, -"No file name, cannot compile", Mode => Error);
          end if;
 
-         Lower_Case (Lang);
+         To_Lower (Lang);
 
          if Lang /= "ada" then
             Console.Insert
@@ -606,7 +607,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
       exception
          when Invalid_Process =>
@@ -667,7 +668,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
       exception
          when Invalid_Process =>
@@ -941,7 +942,7 @@ package body Builder_Module is
 
                Exec := Locate_Exec_On_Path (Args (1).all);
                Launch_Process
-                 (K, Exec.all, Args (2 .. Args'Last), null, "", Success);
+                 (K, Exec.all, Args (2 .. Args'Last), null, null, "", Success);
                Free (Exec);
                Free (Args);
             end if;
@@ -968,13 +969,13 @@ package body Builder_Module is
                      Arguments);
                   Launch_Process
                     (K, Args (1).all, Args (2 .. Args'Last),
-                     null, "", Success);
+                     null, null, "", Success);
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch_Process
                     (K, Executables_Directory (Data.Project) & Data.File,
-                     Args.all, null, "", Success);
+                     Args.all, null, null, "", Success);
                end if;
 
                Free (Args);
