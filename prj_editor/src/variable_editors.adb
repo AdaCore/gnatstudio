@@ -66,13 +66,8 @@ with Value_Editors; use Value_Editors;
 
 package body Variable_Editors is
 
-   procedure Display_Expr
-     (Editable : access Gtk_Entry_Record'Class;
-      Expr : String_List_Iterator);
-   --  Display Expr in GEntry, with variable references replaced with
-   --  '$<name>'.
-   --  It also displays the other expressions in the list.
-   --  GEntry is not deleted first.
+   delete_var_xpm : aliased chars_ptr_array (0 .. 0);
+   pragma Import (C, delete_var_xpm, "delete_var_xpm");
 
    procedure Display_Expr
      (Editable : access Gtk_Text_Record'Class;
@@ -477,7 +472,6 @@ package body Variable_Editors is
       Button   : Gtk_Button;
       Data     : Var_Handler_Data;
       Row_Data : Row_Data_Array_Access;
-      Expr     : Project_Node_Id;
       Str      : String_Id;
 
    begin
@@ -504,11 +498,15 @@ package body Variable_Editors is
            (Button, "clicked",
             Var_Handler.To_Marshaller (Edit_Variable'Access), Data);
 
+         Set_Col_Spacing (Editor.List_Variables, 0, 0);
+
          Gtk_New (Button);
-         Add (Button, Create_Pixmap (trash_xpm, Editor));
+         Add (Button, Create_Pixmap (delete_var_xpm, Editor));
          Attach (Editor.List_Variables, Button, 1, 2,
                  Editor.Num_Rows - 1, Editor.Num_Rows,
                  Xoptions => 0, Yoptions => 0);
+
+         Set_Col_Spacing (Editor.List_Variables, 1, 10);
 
          --  Name of the variable
          Gtk_New (Editor.Data (Row).Name_Label, "");
@@ -568,6 +566,10 @@ package body Variable_Editors is
                Set_Text
                  (Get_Entry (Editor.Data (Row).Type_Combo),
                   Name_Buffer (Name_Buffer'First .. Name_Len));
+            else
+               Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
+               Display_Expr (Get_Entry (Editor.Data (Row).Type_Combo),
+                             Value_Of (Var));
             end if;
          end if;
 
@@ -731,6 +733,8 @@ package body Variable_Editors is
                      Name_Buffer (Name_Buffer'First .. Name_Len) := N;
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
+                  Set_Expression_Kind_Of
+                    (Editor.Var, Expression_Kind_Of (Expr));
                end;
             end if;
 
@@ -742,8 +746,6 @@ package body Variable_Editors is
                Set_Name_Of (Expr, Name_Find);
                Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
                Set_String_Type_Of (Editor.Var, Expr);
-            else
-               Set_Expression_Kind_Of (Editor.Var, Expression_Kind_Of (Expr));
             end if;
 
             --  If this is an environment variable, set this correctly.
@@ -764,6 +766,7 @@ package body Variable_Editors is
             end if;
 
             Refresh (Editor.Var_Editor, Editor.Var);
+            Changed (Editor.Var_Editor, Editor.Var);
             Destroy (Editor);
 
          when others =>
