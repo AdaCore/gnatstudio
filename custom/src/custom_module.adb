@@ -39,6 +39,10 @@ with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;                use Glide_Intl;
 with Projects;                  use Projects;
 
+with GUI_Utils;                 use GUI_Utils;
+with File_Utils;                use File_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
 with Language_Handlers;         use Language_Handlers;
@@ -132,20 +136,28 @@ package body Custom_Module is
    is
       pragma Unreferenced (Object);
       Contextual : Contextual_Menu_Access := Custom_Module_ID.Contextual;
-      Item       : Gtk_Menu_Item;
+      Item : Gtk_Menu_Item;
    begin
       while Contextual /= null loop
          if Filter_Matches
            (Contextual.Action.Filter, Selection_Context_Access (Context),
             Get_Kernel (Context))
          then
-            Gtk_New (Item, Contextual.Title.all);
-            Append (Menu, Item);
-            Action_Callback.Object_Connect
-              (Item, "activate",
-               Action_Callback.To_Marshaller (Contextual_Action'Access),
-               User_Data   => Contextual.Action,
-               Slot_Object => Get_Kernel (Context));
+            Item := Find_Or_Create_Menu_Tree
+              (Menu_Bar     => null,
+               Menu         => Gtk_Menu (Menu),
+               Path         => Contextual.Title.all,
+               Accelerators => Get_Default_Accelerators (Get_Kernel (Context)),
+               Allow_Create => True);
+
+            if Item /= null then
+               Action_Callback.Object_Connect
+                 (Item, "activate",
+                  Action_Callback.To_Marshaller (Contextual_Action'Access),
+                  User_Data   => Contextual.Action,
+                  Slot_Object => Get_Kernel (Context));
+               exit;
+            end if;
          end if;
 
          Contextual := Contextual.Next;
@@ -543,8 +555,8 @@ package body Custom_Module is
                if Before /= "" then
                   Register_Menu
                     (Kernel,
-                     Parent_Path,
-                     Text        => Title.all,
+                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
                      Action      => Command,
@@ -553,8 +565,8 @@ package body Custom_Module is
                elsif After /= "" then
                   Register_Menu
                     (Kernel,
-                     Parent_Path,
-                     Text        => Title.all,
+                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
                      Action      => Command,
@@ -564,8 +576,8 @@ package body Custom_Module is
                else
                   Register_Menu
                     (Kernel,
-                     Parent_Path,
-                     Text        => Title.all,
+                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
                      Action      => Command);
@@ -598,6 +610,9 @@ package body Custom_Module is
             --  ??? Lang is never freed
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Handler, Kernel, Current_Node);
+
+         elsif Current_Node.Tag.all = "menu" then
+            Parse_Menu_Node (Current_Node, "");
 
          elsif To_Lower (Current_Node.Tag.all) = "submenu" then
             Child := Current_Node.Child;
@@ -665,7 +680,6 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) = "tool" then
             Parse_Tool_Node (Current_Node);
-
          end if;
       end Add_Child;
 
