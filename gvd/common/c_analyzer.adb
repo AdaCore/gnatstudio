@@ -20,10 +20,12 @@
 
 with String_Utils; use String_Utils;
 with Glib.Unicode; use Glib.Unicode;
-with Indent_Stack; use Indent_Stack;
+with Indent_Stack;
 with Generic_Stack;
 
 package body C_Analyzer is
+
+   use Indent_Stack.Stack;
 
    -----------------
    -- Local types --
@@ -490,7 +492,7 @@ package body C_Analyzer is
       Last_Replace_Line : Natural := 0;
       Top_Token         : Token_Stack.Generic_Type_Access;
       Tokens            : Token_Stack.Simple_Stack;
-      Indents           : Indent_Stack.Simple_Stack;
+      Indents           : Indent_Stack.Stack.Simple_Stack;
 
       procedure Do_Indent
         (P            : Natural;
@@ -573,10 +575,10 @@ package body C_Analyzer is
             Index := Index + 1;
          end loop;
 
-         if Top (Indents).all = None then
+         if Top (Indents).Level = None then
             Indentation := Num_Spaces;
          else
-            Indentation := Top (Indents).all;
+            Indentation := Top (Indents).Level;
          end if;
 
          if Continuation then
@@ -873,6 +875,8 @@ package body C_Analyzer is
            and then Buffer (Index + 1 .. Index + 4) = "if 0"
            and then Is_Blank (Buffer (Index + 5))
          then
+            --  Handle #if 0 ... #endif block as a comment
+
             First      := Index;
             Start_Char := Char_In_Line;
             Start_Line := Line;
@@ -983,7 +987,6 @@ package body C_Analyzer is
                      end;
                   end if;
                end if;
-
             end if;
 
             --  Skip line
@@ -1108,7 +1111,7 @@ package body C_Analyzer is
       Push (Tokens, Default_Extended);
 
       --  Push a dummy indentation so that stack will never be empty.
-      Push (Indents, None);
+      Push (Indents, (None, 0));
 
       while Index <= Buffer'Last loop
          case Buffer (Index) is
@@ -1207,8 +1210,8 @@ package body C_Analyzer is
                Token := Tok_Left_Paren;
 
                --  ??? Could optimize by caching Line_Start
-               Push
-                 (Indents, Index - Line_Start (Buffer, Index) + Padding + 1);
+               Push (Indents,
+                     (Index - Line_Start (Buffer, Index) + Padding + 1, 0));
                Paren_Level := Paren_Level + 1;
 
             when ')' =>
