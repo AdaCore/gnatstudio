@@ -510,12 +510,6 @@ package body Custom_Module is
          Item   : Gtk_Menu_Item;
          Command : Action_Record;
       begin
-         if Action = "" then
-            Insert (Kernel, -"<menu> nodes must have an action attribute",
-                    Mode => Error);
-            raise Assert_Failure;
-         end if;
-
          Child := Node.Child;
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
@@ -529,6 +523,14 @@ package body Custom_Module is
 
             Child := Child.Next;
          end loop;
+
+         if Action = ""
+           and then Title.all /= ""
+         then
+            Insert (Kernel, -"<menu> nodes must have an action attribute",
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
 
          if Title.all = "" then
             Gtk_New (Item);
