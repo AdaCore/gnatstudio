@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,10 +52,6 @@ package Help_Module is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Find_Utils.Search_Context_Access;
    --  Search factory for "Help"
-
-   procedure Show_Tutorial
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Open the help window and display the tutorial
 
    ------------------
    -- URL contexts --
