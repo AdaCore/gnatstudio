@@ -501,7 +501,7 @@ package body Commands is
      (Command : Command_Access;
       Wait    : Duration := 0.0)
    is
-      Next_Actions : List;
+      Next_Actions : List_Node;
       Result       : Command_Return_Type;
    begin
       loop
@@ -515,15 +515,15 @@ package body Commands is
       end loop;
 
       if Result = Success then
-         Next_Actions := Get_Consequence_Actions (Command);
+         Next_Actions := First (Get_Consequence_Actions (Command));
 
       else
-         Next_Actions := Get_Alternate_Actions (Command);
+         Next_Actions := First (Get_Alternate_Actions (Command));
       end if;
 
-      while not Is_Empty (Next_Actions) loop
-         Launch_Synchronous (Head (Next_Actions), Wait);
-         Next (Next_Actions);
+      while Next_Actions /= Null_Node loop
+         Launch_Synchronous (Data (Next_Actions), Wait);
+         Next_Actions := Next (Next_Actions);
       end loop;
    end Launch_Synchronous;
 
