@@ -74,7 +74,7 @@ package Codefix.GPS_Io is
       Number : Natural) return String;
    --  Return a line that has been previously recorded into the
    --  Console_Interface.
-   --  if is the first line of file, Number = 0
+
    procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;

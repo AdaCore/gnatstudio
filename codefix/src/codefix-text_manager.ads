@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,6 +53,9 @@ package Codefix.Text_Manager is
 
    type Text_Cursor is tagged record
       Line, Col : Natural;
+      --  If Line = 0, indicates a special case to handle the first line
+      --  differently. ??? Not quite clear why it is needed to handle it
+      --  specially.
    end record;
 
    function "<" (Left, Right : Text_Cursor) return Boolean;

@@ -325,9 +325,6 @@ package body Codefix.Text_Manager is
 
       if Mark.Is_First_Line then
          Cursor.Line := 0;
-         --  ??? Not logical,
-         --  ??? It is not possible to have a line has zero.
-         --  ??? It's more dangerous when inserting in the begining of the file
       end if;
 
       return Cursor;
@@ -498,6 +495,7 @@ package body Codefix.Text_Manager is
            (Current_Text,
             Cursor.File_Name.all,
             Unit_Info);
+
          for J in Body_Info.Sloc_Start.Line .. Body_Info.Sloc_End.Line loop
             Line_Cursor.Line := J;
             Get_Line (Current_Text, Line_Cursor, This);
