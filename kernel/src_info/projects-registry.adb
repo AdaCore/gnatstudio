@@ -645,25 +645,30 @@ package body Projects.Registry is
 
       procedure Register_Directory (Directory : String) is
          Last : Integer := Directory'Last - 1;
+         Dir  : String := Directory;
       begin
-         Set (Registry.Data.Directories, K => Directory, E => Direct);
+         if not Filenames_Are_Case_Sensitive then
+            To_Lower (Dir);
+         end if;
+
+         Set (Registry.Data.Directories, K => Dir, E => Direct);
 
          loop
-            while Last >= Directory'First
-              and then not OS_Utils.Is_Directory_Separator (Directory (Last))
+            while Last >= Dir'First
+              and then not OS_Utils.Is_Directory_Separator (Dir (Last))
             loop
                Last := Last - 1;
             end loop;
 
             Last := Last - 1;
 
-            exit when Last <= Directory'First;
+            exit when Last <= Dir'First;
 
             if Get (Registry.Data.Directories,
-                    Directory (Directory'First .. Last)) /= Direct
+                    Dir (Dir'First .. Last)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => Directory (Directory'First .. Last), E => As_Parent);
+                    K => Dir (Dir'First .. Last), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;
@@ -1803,9 +1808,14 @@ package body Projects.Registry is
       Directory : String;
       Direct_Only : Boolean := True) return Boolean
    is
-      Belong : constant Directory_Dependency :=
-        Get (Registry.Data.Directories, Directory);
+      Belong : Directory_Dependency;
    begin
+      if Filenames_Are_Case_Sensitive then
+         Belong := Get (Registry.Data.Directories, Directory);
+      else
+         Belong := Get (Registry.Data.Directories, To_Lower (Directory));
+      end if;
+
       return Belong = Direct
         or else (not Direct_Only and then Belong = As_Parent);
    end Directory_Belongs_To_Project;
