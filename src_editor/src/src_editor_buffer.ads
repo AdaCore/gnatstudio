@@ -360,6 +360,14 @@ package Src_Editor_Buffer is
    --  returned if the timestamp is more recent, and the user doesn't want to
    --  force the edition.
 
+   procedure Ref (Buffer : access Source_Buffer_Record);
+   --  Should be called every time that a view is showing Buffer.
+
+   procedure Unref (Buffer : access Source_Buffer_Record);
+   --  Should be called whenever a view showing Buffer is about to be deleted.
+   --  If it was the last reference on Buffer, then free the memory associated
+   --  to Buffer.
+
 private
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
@@ -393,6 +401,9 @@ private
       Timestamp      : Src_Info.Timestamp := 0;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
+
+      References     : Integer := 0;
+      --  The number of objects viewing the buffer.
    end record;
 
 end Src_Editor_Buffer;
