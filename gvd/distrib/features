@@ -1,0 +1,16 @@
+New features in GVD 1.0.1
+
+- Better internalization handling
+  Some duplicate strings have been merged.
+- Complete french translation available
+- Instead of generating a bug box when the underlying debugger dies, GVD
+  now properly closes the debugger window and notifies the user.
+- Basic support for JDB. No support for displaying variables yet.
+- New command line option: --jdb to enable jdb support.
+- New command line option: --no-explorer to disable the explorer window.
+- New command line switch: --target to specify the target host and protocol.
+- Better recovering after a bug box
+  In particular, the cursor no longer looks busy after a bug box.
+- Better handling of the explorer tree. Previous implementation was too
+  costly and caused very long start up times on slow machines with executable
+  containing lots of files.

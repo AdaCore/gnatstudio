@@ -1,0 +1,93 @@
+Known Problems in GVD 1.0.0
+
+- Start with arguments
+  Problem:
+     When starting a program with non null arguments, gvd would only set the
+     arguments and not actually start the program.
+  Workaround:
+     Set the arguments first, and then start the application
+  Status: Fixed in GVD 1.0.1
+
+- Attaching to a process
+  Problem:
+     When trying to attach using the File/Attach menu, GVD would fail to
+     attach to the process.
+  Workaround:
+     Attach by hand by using the attach command in the debugger window.
+  Status: Fixed in GVD 1.0.1
+
+- Call stack not displayed after an attach
+  Problem:
+     When trying to attach using the File/Attach menu, GVD would fail to
+     display the current call stack.
+  Workaround:
+     Either switch from one debugger to another, and back to the first one
+     will force redisplay of the call stack. Any execution command (step, next,
+     ...) will also trigger the call stack display.
+  Status: Fixed in GVD 1.0.1
+
+- Task window does not display the last task name properly
+  Problem:
+     The last task name in the task window was truncated by one character
+  Workaround:
+     This is a small cosmetic problem that does not require any work around
+  Status: Fixed in GVD 1.0.1
+
+- Closing the attach process window would generate a bug box
+  Problem:
+     When closing the attach process window using the close icon of the window
+     manager, GVD would generate a bug box instead of silently close the
+     window
+  Workaround:
+     Use the close button instead.
+  Status: Fixed in GVD 1.0.1
+
+- File/Edit Source is silently ignored
+  Problem:
+     When using the File/Edit Source menu, nothing would happen.
+  Workaround:
+     Set the environment variable GVD_EDITOR (e.g "xterm -e /bin/vi %f +%l")
+     before launching gvd.
+  Status: Fixed in GVD 1.0.1
+
+- Problem in the memory view address handling
+  Problem:
+     In the memory view, when specifying some array variables whose bounds are
+     unknown to gdb in the Address area, gvd would hang.
+  Workaround:
+     Do not try to display memory associated to arrays with non static bounds.
+  Status: Fixed in GVD 1.0.1
+
+- Special characters not properly handled in file and directory names
+  Problem:
+     GVD did not handle files containing special characters such as '!' or ' '
+  Workaround:
+     Avoid using these characters, by e.g using links.
+  Status: Fixed in GVD 1.0.1
+
+- Adding a breakpoint in the Breakpoint window would generate a bug box
+  Problem:
+     When clicking on the Add button in the edit breakpoint window, gvd would
+     generate a Constraint_Error turned into a bug box.
+  Workaround:
+     Set breakpoints using the source code window or the debugger window
+     instead.
+  Status: Fixed in GVD 1.0.1
+
+- Incorrect highlighting with TAB characters in comments
+  Problem:
+     Highlighting was incorrect for files containing tab characters inside
+     comments.
+  Workaround:
+     Ignore the highlighting, or remove tabs from comments.
+  Status: Fixed in GVD 1.0.1
+
+- Under Windows NT/2000, GVD would crash not crash on directory selection
+  Problem:
+     When using the "File/Change Directory" menu item under NT/2000, GVD
+     would generate a bug box.
+  Workaround:
+     Type the directory name explicitely without any pending slash/backslashes
+     or use the "cd" command in the debugger window.
+  Status: Fixed in GVD 1.0.1
+
