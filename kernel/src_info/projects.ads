@@ -226,6 +226,8 @@ package Projects is
    Ide_Package                : constant String := "ide";
    Builder_Package            : constant String := "builder";
    Compiler_Package           : constant String := "compiler";
+   Linker_Package             : constant String := "linker";
+   Binder_Package             : constant String := "binder";
    Naming_Package             : constant String := "naming";
 
    Gnatlist_Attribute         : constant String := "gnatlist";
