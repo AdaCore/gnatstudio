@@ -2855,31 +2855,31 @@ package body VCS_View_API is
 
       --  Process the command.
 
-      if Command = "vcs_get_status" then
+      if Command = "get_status" then
          Open_Explorer (Kernel, null);
          Get_Status (Ref, Files);
 
-      elsif Command = "vcs_update" then
+      elsif Command = "update" then
          Update (Ref, Files);
          Get_Status (Ref, Files);
 
-      elsif Command = "vcs_commit" then
+      elsif Command = "commit" then
          --  ??? Should we check for the existence of logs ?
          Commit_Files (Kernel, Ref, Files);
 
-      elsif Command = "vcs_diff_head" then
+      elsif Command = "diff_head" then
          if Save_Files (Kernel, Files) then
             Diff (Ref, Full);
          end if;
 
-      elsif Command = "vcs_log" then
+      elsif Command = "log" then
          if Number_Of_Arguments (Data) = 2 then
             Log (Ref, Full, Nth_Arg (Data, 2));
          else
             Log (Ref, Full, "");
          end if;
 
-      elsif Command = "vcs_diff_working" then
+      elsif Command = "diff_working" then
          declare
             Status : File_Status_List.List;
          begin
@@ -2898,10 +2898,10 @@ package body VCS_View_API is
             File_Status_List.Free (Status);
          end;
 
-      elsif Command = "vcs_annotate" then
+      elsif Command = "annotate" then
          Annotate (Ref, Full);
 
-      elsif Command = "vcs_remove_annotations" then
+      elsif Command = "remove_annotations" then
          Remove_Line_Information_Column (Kernel, Full, Annotation_Id);
 
       end if;

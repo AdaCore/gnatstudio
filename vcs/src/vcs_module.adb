@@ -492,6 +492,9 @@ package body VCS_Module is
       VCS         : constant String := '/' & VCS_Root;
       VCS_Dir     : constant String := VCS & "/_" & (-"Directory");
 
+      VCS_Class : constant Class_Type := New_Class
+        (Kernel, "VCS", -"General interface to version control systems");
+
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       Register_Module
@@ -586,72 +589,86 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_get_status",
+         Command      => "get_status",
          Params       => "(file)",
          Description  => -"Query the status for file",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_update",
+         Command      => "update",
          Params       => "(file)",
          Description  => -"Update file",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_commit",
+         Command      => "commit",
          Params       => "(file)",
          Description  => -"Commit file",
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler      => VCS_Command_Handler'Access);
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_diff_head",
+         Command      => "diff_head",
          Params       => "(file)",
          Description  =>
            -"Show differences between local file and the head revision",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_diff_working",
+         Command      => "diff_working",
          Params       => "(file)",
          Description  =>
            -"Show differences between local file and the working revision",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_annotate",
+         Command      => "annotate",
          Params       => "(file)",
          Description  => -"Display the annotations for file",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_remove_annotations",
+         Command      => "remove_annotations",
          Params       => "(file)",
          Description  => -"Remove the annotations for file",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_log",
+         Command      => "log",
          Params       => "(file, [revision])",
          Description  =>
            -("Get the revision changelog for file."
@@ -659,11 +676,13 @@ package body VCS_Module is
              & "specific revision, otherwise query the entire changelog"),
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs_status_parse",
+         Command      => "status_parse",
          Params       => "(string, regexp, status_unknown_identifier, "
          & "status_not_registered_identifier, status_up_to_date_identifier, "
          & "status_added_identifier, status_removed_identifier, "
@@ -675,6 +694,8 @@ package body VCS_Module is
             & " See the GPS documentation for detailed usage description."),
          Minimum_Args => 14,
          Maximum_Args => 14,
+         Class         => VCS_Class,
+         Static_Method => True,
          Handler      => Status_Parse_Handler'Access);
    end Register_Module;
 
