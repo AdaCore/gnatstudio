@@ -120,7 +120,7 @@ package body Log_Utils is
       --  Add ChangeLog headers at position POS in the file buffer content.
       --  If Date_Header is True, adds also the ISO date tag.
 
-      ChangeLog   : constant String := Dir_Name (File_Name).all & "ChangeLog";
+      ChangeLog   : aliased String := Dir_Name (File_Name).all & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
       Base_Name   : constant String := VFS.Base_Name (File_Name);
       CL_File     : Virtual_File;   -- ChangeLog file
@@ -173,9 +173,10 @@ package body Log_Utils is
       --  Makes sure that the ChangeLog buffer is saved before continuing
       --  otherwise part of the ChangeLog file could be lost.
 
-      --  ??? This won't work if ChangeLog contains spaces
-      Execute_GPS_Shell_Command (Kernel, "Editor.save_buffer " & ChangeLog);
-      Execute_GPS_Shell_Command (Kernel, "Editor.close " & ChangeLog);
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.save_buffer", (1 => ChangeLog'Unchecked_Access));
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.close", (1 => ChangeLog'Unchecked_Access));
 
       --  Get ChangeLog content
 
