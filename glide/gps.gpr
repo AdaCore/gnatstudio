@@ -38,7 +38,7 @@ project GPS is
 
          when "Production" =>
            for Default_Switches ("Ada") use
-             ("-m", "-a", "-g", "-gnatQ", "-gnatwk", "-gnatwr"");
+             ("-m", "-a", "-g", "-gnatQ", "-gnatwk", "-gnatwr");
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
