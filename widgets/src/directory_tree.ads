@@ -36,11 +36,25 @@
 --  or GNAT.Os_Lib.Directory_Separator as a separator.
 --  They must end with a directory separator.
 
-with Gtk.Ctree;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with Gtk.Box;
+with Gtk.Clist;
+with Gtk.Ctree;
+with Gtk.Menu;
+with GNAT.OS_Lib;
 
 package Directory_Tree is
+
+   ----------------------------------
+   -- Low-level directory selector --
+   ----------------------------------
+   --  The following widget provides a simple directory selector. The
+   --  directories can be expanded dynamically by the user, and the disk is
+   --  read on-demand for efficiency reasons.
+   --  However, this widget only allows the selection of a single
+   --  directory. See below for another widget that provides multiple directory
+   --  selection.
 
    type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with private;
    type Dir_Tree is access all Dir_Tree_Record'Class;
@@ -64,9 +78,69 @@ package Directory_Tree is
    --  Return the absolute directory for the selected node.
    --  An empty string "" is returned if there is no selection currently.
 
+   -----------------------------------
+   -- High-level directory selector --
+   -----------------------------------
+
+   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Directory_Selector is access all Directory_Selector_Record'Class;
+
+   procedure Gtk_New
+     (Selector             : out Directory_Selector;
+      Initial_Directory    : String;
+      Root_Directory       : String := "/";
+      Multiple_Directories : Boolean := False);
+   --  Create a directory selector.
+   --  Multiple_Directories should be True if multiple directories can be
+   --  selected by the user.
+   --  Root_Directory is the directory associated with the root node in the
+   --  tree.
+
+   procedure Initialize
+     (Selector             : access Directory_Selector_Record'Class;
+      Initial_Directory    : String;
+      Root_Directory       : String := "/";
+      Multiple_Directories : Boolean := False);
+   --  Internal function for the creation of new widgets.
+
+   function Get_Single_Selection
+     (Selector  : access Directory_Selector_Record'Class) return String;
+   --  Return the directory selected by the user.
+   --  If Selector allowed multiple directories, only the first one is
+   --  returned.
+   --  The empty string is returned if there is no selection.
+
+   function Get_Multiple_Selection
+     (Selector : access Directory_Selector_Record'Class)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the list of all selected directories in Selector.
+   --  If Selector only allowed the selection of a single directory, then an
+   --  array of size 1 is returned.
+
+   function Single_Directory_Selector_Dialog (Initial_Directory : String)
+      return String;
+   --  Open a dialog in which the user can select a directory.
+   --  Initial_Directory is the directory that is selected initially.
+
+   function Multiple_Directories_Selector_Dialog
+     (Initial_Directory : String) return GNAT.OS_Lib.Argument_List;
+   --  Open a dialog for the selection of multiple directories by the user.
+   --  Return the list of directories selected by the user.
+   --  It is the responsability of the called to free the array.
+
+
 private
    type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Folder_Pix, Ofolder_Pix : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Mask, Ofolder_Mask : Gdk.Bitmap.Gdk_Bitmap;
    end record;
+
+   type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with
+      record
+         Directory : Dir_Tree;
+         List      : Gtk.Clist.Gtk_Clist;
+         Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+         List_Contextual_Menu : Gtk.Menu.Gtk_Menu;
+      end record;
+
 end Directory_Tree;

@@ -30,20 +30,36 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Arrow;                 use Gtk.Arrow;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Clist;                 use Gtk.Clist;
 with Gtk.Ctree;                 use Gtk.Ctree;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
+
+with GUI_Utils;                 use GUI_Utils;
 
 package body Directory_Tree is
 
    --  Each node is associated with a single boolean that indicates whether
    --  the subdirectories where parsed or not.
 
-   package Boolean_Data is new Row_Data (Boolean);
+   package Boolean_Data is new Gtk.Ctree.Row_Data (Boolean);
+
+   package Widget_Menus is new GUI_Utils.User_Contextual_Menus
+     (User_Data => Directory_Selector);
+   --  Used to register contextual menus with a user data.
 
    function Find_In_Tree
      (Tree             : access Dir_Tree_Record'Class;
@@ -87,6 +103,53 @@ package body Directory_Tree is
    --  called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
+
+   procedure Add_Directory
+     (Selector : access Directory_Selector_Record'Class;
+      Dir : String;
+      Recursive : Boolean);
+   --  Add Dir in the tree to the list of source directories associated with
+   --  the project.  If recursive is True, then all the subdirectories are also
+   --  added.
+
+   procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class);
+   --  Callback for the down button in the directory selector widget
+
+   procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
+   --  Callback for the up button in the source directory selection.
+   --  The addition is not recursive.
+   --  ??? This could be merged with the above procedure if Object_Connect
+   --  could use a User_Data parameter.
+
+   procedure Remove_Directory
+     (Selector : access Directory_Selector_Record'Class; Recursive : Boolean);
+   --  Remove the currently selected directory.
+   --  If recursive is True, then all the subdirectories are also removed
+
+   procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class);
+   --  Callback for the up button in the source directory selection
+
+   procedure Remove_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
+   --  Remove the currently selected directory in the selection list. This
+   --  doesn't remove children of the directory.
+
+   function Find_Directory_In_Selection
+     (Selector : access Directory_Selector_Record'Class; Name : String)
+      return Gint;
+   --  -1 if Name is not a source directory for the project defined in Wiz.
+   --  Otherwise, the index of Name in the list is returned.
+
+   function Tree_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+   --  Return the contextual menu to use when the user clicks in the directory
+   --  tree.
+
+   function List_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+   --  Return the contextual menu to use when the user clicks in the list of
+   --  selected directories
 
    -------------
    -- Gtk_New --
@@ -314,7 +377,7 @@ package body Directory_Tree is
       Dir              : String;
       Add_If_Necessary : Boolean := False) return Gtk_Ctree_Node
    is
-      use type Row_List.Glist;
+      use type Gtk.Ctree.Row_List.Glist;
       Dir_Start : Positive := Dir'First;
       Dir_End   : Natural;
       Current, Tmp : Gtk_Ctree_Node;
@@ -323,9 +386,9 @@ package body Directory_Tree is
       pragma Assert
         (Dir (Dir'Last) = '/' or else Dir (Dir'Last) = Directory_Separator);
 
-      if Get_Row_List (Tree) /= Row_List.Null_List then
-         Current :=
-           Find_Node_Ptr (Tree, Row_List.Get_Data (Get_Row_List (Tree)));
+      if Get_Row_List (Tree) /= Gtk.Ctree.Row_List.Null_List then
+         Current := Find_Node_Ptr
+           (Tree, Gtk.Ctree.Row_List.Get_Data (Get_Row_List (Tree)));
       end if;
 
       Freeze (Tree);
@@ -390,7 +453,6 @@ package body Directory_Tree is
    procedure Show_Directory (Tree : access Dir_Tree_Record; Dir : String) is
       N : Gtk_Ctree_Node := Find_In_Tree (Tree, Dir);
       N2 : Gtk_Ctree_Node := N;
---        Pos : Gfloat;
    begin
       if not Is_Viewable (Tree, N) then
          loop
@@ -401,27 +463,7 @@ package body Directory_Tree is
       end if;
 
       Gtk_Select (Tree, N2);
-
-      --  Scroll to make the directory visible
-
---        Pos := 0.0;
---        pragma Assert (Get_Vadjustment (Tree) /= null);
---        while Pos <= Get_Upper (Get_Vadjustment (Tree))
---          and then Node_Is_Visible (Tree, N2) = Visibility_None
---        loop
---           Put_Line ("No match at"
---                     & Get_Value (Get_Vadjustment (Tree))'Img
---                     & "  Visible="
---                     & Node_Is_Visible (Tree, N2)'Img);
---           Set_Value (Get_Vadjustment (Tree), Pos);
---           Pos := Pos + Get_Page_Size (Get_Vadjustment (Tree)) / 2.0;
---        end loop;
-
-      --  Moveto (Tree, 30, 0, 0.0, 0.2);
       Node_Moveto (Tree, N2, 0, 0.1, 0.2);
---        if Node_Is_Visible (Tree, N2) /= Visibility_Full then
---           Node_Moveto (Tree, N2, 0, 0.1, 0.2);
---        end if;
    end Show_Directory;
 
    -------------------
@@ -448,5 +490,425 @@ package body Directory_Tree is
            (Tree, Node_List.Get_Data (Get_Selection (Tree)), Absolute => True);
       end if;
    end Get_Selection;
+
+   ---------------------------------
+   -- Find_Directory_In_Selection --
+   ---------------------------------
+
+   function Find_Directory_In_Selection
+     (Selector : access Directory_Selector_Record'Class; Name : String)
+      return Gint
+   is
+      Num_Rows : constant Gint := Get_Rows (Selector.List);
+   begin
+      --  Check if the directory is already there
+      for J in 0 .. Num_Rows - 1 loop
+         if Get_Text (Selector.List, J, 0) = Name then
+            return J;
+         end if;
+      end loop;
+      return -1;
+   end Find_Directory_In_Selection;
+
+   -------------------
+   -- Add_Directory --
+   -------------------
+
+   procedure Add_Directory
+     (Selector : access Directory_Selector_Record'Class;
+      Dir : String;
+      Recursive : Boolean)
+   is
+      Row : Gint;
+      Handle : Dir_Type;
+      File : String (1 .. 255);
+      Last : Natural;
+   begin
+      pragma Assert
+        (Selector.List /= null, "Not a multiple-directory selector");
+
+      Row := Find_Directory_In_Selection (Selector, Dir);
+      if Row = -1 then
+         Row := Append (Selector.List, Null_Array + Dir);
+      end if;
+      Select_Row (Selector.List, Row, -1);
+
+      if Recursive then
+         Open (Handle, Dir);
+         loop
+            Read (Handle, File, Last);
+            exit when Last = 0;
+
+            --  ??? Should share filter with Directory_Tree
+            if File (File'First .. Last) /= "."
+              and then File (File'First .. Last) /= ".."
+              and then Is_Directory (Dir & File (File'First .. Last))
+            then
+               Add_Directory
+                 (Selector,
+                  Dir & File (1 .. Last) & Directory_Separator,
+                  True);
+            end if;
+         end loop;
+
+         Close (Handle);
+      end if;
+   end Add_Directory;
+
+   ----------------------
+   -- Add_Directory_Cb --
+   ----------------------
+
+   procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
+      Selector : Directory_Selector := Directory_Selector (W);
+   begin
+      pragma Assert
+        (Selector.List /= null, "Not a multiple-directory selector");
+      Freeze (Selector.List);
+      Unselect_All (Selector.List);
+      Add_Directory (Selector, Get_Selection (Selector.Directory), True);
+      Sort (Selector.List);
+      Thaw (Selector.List);
+
+      --  Show the first selected item
+      Moveto (Selector.List,
+              Gint_List.Get_Data (Get_Selection (Selector.Directory)),
+              0, 0.0, 0.2);
+   end Add_Directory_Cb;
+
+   ----------------------
+   -- Remove_Directory --
+   ----------------------
+
+   procedure Remove_Directory
+     (Selector : access Directory_Selector_Record'Class; Recursive : Boolean)
+   is
+      use type Gint_List.Glist;
+      List : Gint_List.Glist := Get_Selection (Selector.List);
+      Next : Gint_List.Glist;
+      Num  : Guint := Gint_List.Length (List);
+   begin
+      --  Add the directories recursively to the selection (we can't remove
+      --  them right away, since this would cancel the current selection and
+      --  thus we wouldn't be able to remove all the user-selected ones).
+
+      if Recursive then
+         for J in 1 .. Num loop
+            declare
+               Row : constant Gint := Gint_List.Get_Data (List);
+               Dir : constant String := Get_Text (Selector.List, Row, 0);
+            begin
+               for J in 0 .. Get_Rows (Selector.List) - 1 loop
+                  declare
+                     N : constant String := Get_Text (Selector.List, J, 0);
+                  begin
+                     if N'Length > Dir'Length
+                       and then N (N'First .. N'First + Dir'Length - 1) = Dir
+                     then
+                        Select_Row (Selector.List, J, -1);
+                     end if;
+                  end;
+               end loop;
+            end;
+            List := Gint_List.Next (List);
+         end loop;
+      end if;
+
+      --  Now remove the whole selection
+
+      List := Get_Selection (Selector.List);
+      while List /= Gint_List.Null_List loop
+         Next := Gint_List.Next (List);
+         Remove (Selector.List, Gint_List.Get_Data (List));
+         List := Next;
+      end loop;
+
+      --  Workaround for a possible bug in gtk+: when all the rows in the
+      --  clist are removed with the loop above, we get a STORAGE_ERROR,
+      --  unless we do the following
+
+      Remove (Selector.List, Append (Selector.List, Null_Array + ""));
+   end Remove_Directory;
+
+   -------------------------
+   -- Remove_Directory_Cb --
+   -------------------------
+
+   procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class) is
+      Selector : Directory_Selector := Directory_Selector (W);
+   begin
+      Freeze (Selector.List);
+      Remove_Directory (Selector, Recursive => True);
+      Thaw (Selector.List);
+   end Remove_Directory_Cb;
+
+   -----------------------------
+   -- Add_Single_Directory_Cb --
+   -----------------------------
+
+   procedure Add_Single_Directory_Cb
+     (W : access Gtk_Widget_Record'Class)
+   is
+      Selector : Directory_Selector := Directory_Selector (W);
+   begin
+      Add_Directory (Selector, Get_Selection (Selector.Directory), False);
+      Sort (Selector.List);
+   end Add_Single_Directory_Cb;
+
+   --------------------------
+   -- Tree_Contextual_Menu --
+   --------------------------
+
+   function Tree_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
+   is
+      Item     : Gtk_Menu_Item;
+      Selected_Row, Selected_Col : Gint;
+      Is_Valid : Boolean;
+
+   begin
+      if Selector.Tree_Contextual_Menu /= null then
+         Destroy (Selector.Tree_Contextual_Menu);
+      end if;
+
+      Get_Selection_Info
+        (Selector.Directory,
+         Gint (Get_X (Event)), Gint (Get_Y (Event)),
+         Selected_Row, Selected_Col, Is_Valid);
+
+      if Is_Valid then
+         Select_Row (Selector.Directory, Selected_Row, Selected_Col);
+
+         Gtk_New (Selector.Tree_Contextual_Menu);
+         Gtk_New (Item, "Add directory recursive");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
+            Selector);
+         Append (Selector.Tree_Contextual_Menu, Item);
+
+         Gtk_New (Item, "Add directory");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller
+            (Add_Single_Directory_Cb'Access),
+            Selector);
+         Append (Selector.Tree_Contextual_Menu, Item);
+
+         return Selector.Tree_Contextual_Menu;
+      end if;
+      return null;
+   end Tree_Contextual_Menu;
+
+   --------------------------------
+   -- Remove_Single_Directory_Cb --
+   --------------------------------
+
+   procedure Remove_Single_Directory_Cb
+     (W : access Gtk_Widget_Record'Class) is
+   begin
+      Remove_Directory (Directory_Selector (W), Recursive => False);
+   end Remove_Single_Directory_Cb;
+
+   --------------------------
+   -- List_Contextual_Menu --
+   --------------------------
+
+   function List_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event  : Gdk.Event.Gdk_Event) return Gtk_Menu
+   is
+      use type Gint_List.Glist;
+      Item : Gtk_Menu_Item;
+      Is_Valid : constant Boolean :=
+        Get_Selection (Selector.List) /= Gint_List.Null_List;
+
+   begin
+      if Selector.List_Contextual_Menu /= null then
+         Destroy (Selector.List_Contextual_Menu);
+      end if;
+
+      Gtk_New (Selector.List_Contextual_Menu);
+      Gtk_New (Item, "Remove directory recursive");
+      Widget_Callback.Object_Connect
+        (Item, "activate",
+         Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
+         Selector);
+      Set_Sensitive (Item, Is_Valid);
+      Append (Selector.List_Contextual_Menu, Item);
+
+      Gtk_New (Item, "Remove directory");
+      Widget_Callback.Object_Connect
+        (Item, "activate",
+         Widget_Callback.To_Marshaller
+         (Remove_Single_Directory_Cb'Access),
+         Selector);
+      Set_Sensitive (Item, Is_Valid);
+      Append (Selector.List_Contextual_Menu, Item);
+
+      return Selector.List_Contextual_Menu;
+   end List_Contextual_Menu;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Selector             : out Directory_Selector;
+      Initial_Directory    : String;
+      Root_Directory       : String := "/";
+      Multiple_Directories : Boolean := False) is
+   begin
+      Selector := new Directory_Selector_Record;
+      Initialize
+        (Selector, Initial_Directory, Root_Directory, Multiple_Directories);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Selector             : access Directory_Selector_Record'Class;
+      Initial_Directory    : String;
+      Root_Directory       : String := "/";
+      Multiple_Directories : Boolean := False)
+   is
+      Scrolled  : Gtk_Scrolled_Window;
+      Bbox      : Gtk_Hbutton_Box;
+      Button    : Gtk_Button;
+      Arrow     : Gtk_Arrow;
+   begin
+      Initialize_Vbox (Selector, Homogeneous => False, Spacing => 0);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
+
+      Gtk_New (Selector.Directory, Root_Directory);
+      Add (Scrolled, Selector.Directory);
+
+      Show_Directory (Selector.Directory, Initial_Directory);
+
+      if Multiple_Directories then
+         Widget_Menus.Register_Contextual_Menu
+           (Selector.Directory, Directory_Selector (Selector),
+            Tree_Contextual_Menu'Access);
+
+         Gtk_New (Bbox);
+         Set_Layout (Bbox, Buttonbox_Spread);
+         Pack_Start (Selector, Bbox, Expand => False, Fill => False);
+
+         Gtk_New (Button);
+         Gtk_New (Arrow, Arrow_Down, Shadow_In);
+         Add (Button, Arrow);
+         Pack_Start (Bbox, Button, Expand => False, Fill => False);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
+            Selector);
+
+         Gtk_New (Button);
+         Gtk_New (Arrow, Arrow_Up, Shadow_In);
+         Add (Button, Arrow);
+         Pack_Start (Bbox, Button, Expand => False, Fill => False);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
+            Selector);
+
+         Gtk_New (Scrolled);
+         Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+         Pack_Start (Selector, Scrolled, Expand => True, Fill => True);
+
+         Gtk_New (Selector.List, Columns => 1);
+         Add (Scrolled, Selector.List);
+         Set_Selection_Mode (Selector.List, Selection_Extended);
+         Widget_Menus.Register_Contextual_Menu
+           (Selector.List, Directory_Selector (Selector),
+            List_Contextual_Menu'Access);
+
+         --  ??? This is a workaround for a horizontal scrollbar problem: When
+         --  the clist is put in a scrolled window, and if this is not called,
+         --  the scrollbar does not allow us to scroll as far right as
+         --  possible...
+         Set_Column_Auto_Resize (Selector.List, 0, True);
+      end if;
+   end Initialize;
+
+   --------------------------
+   -- Get_Single_Selection --
+   --------------------------
+
+   function Get_Single_Selection
+     (Selector  : access Directory_Selector_Record'Class) return String
+   is
+      use type Gint_List.Glist;
+      List : Gint_List.Glist;
+   begin
+      --  A single directory selector ?
+      if Selector.List = null then
+         return Get_Selection (Selector.Directory);
+
+      else
+         List := Get_Selection (Selector.List);
+         if List /= Gint_List.Null_List then
+            return Get_Text (Selector.List, Gint_List.Get_Data (List), 0);
+         end if;
+         return "";
+      end if;
+   end Get_Single_Selection;
+
+   ----------------------------
+   -- Get_Multiple_Selection --
+   ----------------------------
+
+   function Get_Multiple_Selection
+     (Selector : access Directory_Selector_Record'Class)
+      return GNAT.OS_Lib.Argument_List
+   is
+      use type Gint_List.Glist;
+      List : Gint_List.Glist;
+   begin
+      --  A single directory selector ?
+      if Selector.List = null then
+         return (1 => new String' (Get_Selection (Selector.Directory)));
+
+      else
+         List := Get_Selection (Selector.List);
+         declare
+            Length : constant Integer := Integer (Gint_List.Length (List));
+            Args : Argument_List (1 .. Length);
+         begin
+            for A in Args'Range loop
+               Args (A) := new String'
+                 (Get_Text (Selector.List, Gint_List.Get_Data (List), 0));
+               List := Gint_List.Next (List);
+            end loop;
+            return Args;
+         end;
+      end if;
+   end Get_Multiple_Selection;
+
+   --------------------------------------
+   -- Single_Directory_Selector_Dialog --
+   --------------------------------------
+
+   function Single_Directory_Selector_Dialog (Initial_Directory : String)
+      return String is
+   begin
+      return "";
+   end Single_Directory_Selector_Dialog;
+
+   ------------------------------------------
+   -- Multiple_Directories_Selector_Dialog --
+   ------------------------------------------
+
+   function Multiple_Directories_Selector_Dialog
+     (Initial_Directory : String) return GNAT.OS_Lib.Argument_List is
+   begin
+      return (1 => new String' (""));
+   end Multiple_Directories_Selector_Dialog;
 
 end Directory_Tree;
