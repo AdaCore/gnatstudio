@@ -1274,9 +1274,10 @@ changed if you destroy the last visible window in a pane. For instance, if
 you have split the central area in two, with one editor only on each side,
 closing any editor will result in an unsplit central area.
 
-You can bind key shortcuts to the menus @code{Window->Split Horizontally}
-and @code{Window->Split Vertically} as usual, assuming the preference
-@code{Dynamic Key Binding} has been activated. In addition, if you want to
+You may want to bind the key shortcuts to the menus
+@code{Window->Split Horizontally}
+as well as @code{Window->Split Vertically} using either the preference
+@code{Dynamic Key Binding}, or the key manager. In addition, if you want to
 achieve an effect similar to e.g. the standard Emacs behavior (where
 @key{control-x 2} splits a window horizontally, and @key{control-x 3} splits
 a window vertically), you can use the key manager
@@ -2283,19 +2284,27 @@ You can also use the menu @code{File->Save As...} if you want to save the
 file with another name, or in another directory.
 
 If you have multiple files to save, another possibility is to use the menu
-@code{File->Save->All}. This will open a dialog listing all the currently
+@code{File->Save More->All}. This will open a dialog listing all the currently
 modified editors that need saving. You can then select individually which
-one should be saved, and click on @code{OK} to do the actual saving.
+one should be saved, and click on @code{Save} to do the actual saving.
 
 When calling external commands, such as compiling a file, if the
 @code{Auto save} preference is disabled, this same dialog is also used,
 to make sure that e.g. the compiler will take into account your local changes.
 If the preference is enabled, the saving is performed automatically.
 
-@c ??? Add screenshot of save all dialog
+@iftex
+@cindex screen shot
+@image{save-dialog, 10cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{save-dialog}
+@end ifhtml
 
 You can conveniently select or unselect all the files at once by clicking on
-the title of the first column (which contains @i{Save}). This will toggle
+the title of the first column (labelled @i{Select}). This will toggle
 the selection status of the first line, and have the same status for all other
 editors.
 
@@ -2438,7 +2447,7 @@ above.
 GPS provides cross-reference navigation for program entities, such as
 types, procedures, functions, variables, @dots{}, defined in your
 application. The cross-reference support in GPS relies on
-language-specific tools as exlained below.
+language-specific tools as explained below.
 
 @table @b
 @item Ada
@@ -2653,13 +2662,13 @@ displaying references to the current entity or selection.
 @cindex call graph
 @cindex calls
 Open or raise the call graph browser on the specified entity and display all
-the functions/procedures called by @i{entity}. @xref{Call Graph}.
+the subprograms called by @i{entity}. @xref{Call Graph}.
 
 @item @i{Entity} is called by
 @cindex call graph
 @cindex called by
 Open or raise the call graph browser on the specified entity and display all
-the functions/procedures calling @i{entity}. @xref{Call Graph}.
+the subprograms calling @i{entity}. @xref{Call Graph}.
 
 Note that this capability requires a global look up in the project
 cross-references, which may take a significant amount of time the first
@@ -3941,7 +3950,6 @@ compiling files, as well as creating and running executables.
 @item Check Syntax
 Check the syntax of the current source file. Display an error message in
 the @i{Messages} window if no file is currently selected.
-This option is currently only supported for Ada files.
 
 @item Compile File
 Compile the current file. Display an error message in the @i{Messages} window if
@@ -3953,8 +3961,6 @@ source lines will be highlighted in the editors (see
 @ref{The Preferences Dialog}).
 To remove the highlighting on these lines, remove the files from the Locations
 Tree.
-
-This option is currently only supported for Ada files.
 
 @item Make
    @table @i
@@ -5542,13 +5548,13 @@ Whether tool tips should be displayed automatically.
 
 @item Highlight delimiters
 @cindex highlight delimiter
-Whether matching delimiters should be highlighting. The list of delimiters
-include: @code{@{@}[]()}
+Determine whether matching delimiters should be highlighted. The list of
+delimiters includes: @code{@{@}[]()}
 
 @item Autosave delay
 @cindex autosave delay
 @anchor{autosave delay}
-The period (in seconds) after which a source editor is automatically saved.
+The period (in seconds) after which an editor is automatically saved,
 0 if none.
 
 Each modified file is saved under a file called @code{.#filename}, which is
@@ -5580,7 +5586,7 @@ If the editor itself does not provide this capability (such as vi or pico under
 Unix systems), you can use an external terminal command, e.g:
 
 @smallexample
-xterm -geometry 80x50 -exec vi +%l %f
+xterm -geo 80x50 -exe vi +%l %f
 @end smallexample
 
 The following substitutions are provided:
@@ -5595,7 +5601,7 @@ column to display
 full pathname of file to edit
 
 @item %e
-extended lisp command
+extended lisp inline command
 
 @item %p
 top level project file name
@@ -5703,7 +5709,6 @@ end case;
 
 @item Reserved word casing
 How the editor should handle reserved words casing.
-The 5 possible values are: @code{Unchanged, Upper, Lower, Mixed, Smart_Mixed}.
 @code{Unchanged} will keep the casing as-is;
 @code{Upper} will change the casing of all reserved words to upper case;
 @code{Lower} will change the casing to lower case;
@@ -5724,6 +5729,17 @@ If enabled, an extra space will be added when needed in the following cases:
 before an opening parenthesis;
 after a closing parenthesis, comma, semicolon;
 around all Ada operators (e.g. @code{<=}, @code{:=}, @code{=>}, @dots{})
+
+@item Align declarations on colons
+Whether the editor should automatically align colons in declarations and
+parameter lists. Note that the alignment is computed by taking into account
+the current buffer up to the current line (or end of the current selection),
+so if declarations continue after the current line, you can select
+the declarations lines and hit the reformat key.
+
+@item Align associations on arrows
+Whether the editor should automatically align arrows in associations
+(e.g. aggregates or function calls). See also previous preference.
 
 @end table
 
@@ -5774,8 +5790,8 @@ debugger (use the breakpoint editor for running debuggers).
 @item Execution window
 @cindex execution
 @cindex tty
-Whether the debugger should create a separate execution window for the
-program debugged.
+Specifies whether the debugger should create a separate execution window for the
+program being debugged.
 If true, a separate console will be created. Under Unix systems, this
 console is another window in the bottom part of the main window; under
 Windows, this is a separate window created by the underlying gdb, since
@@ -5792,7 +5808,7 @@ is handled outside GPS. For example, when you attach to a running process,
 this process already has a separate associated terminal.
 
 @item Show lines with code
-Specifies whether blue dots should be displayed in the source editor for lines
+Specifies whether the source editor should display blue dots for lines
 that contain code. If set to @i{False}, gray dots will be displayed instead
 on each line, allowing breakpoint on any line. Disabling this option provides
 a faster feedback, since GPS does not need to query the debugger about which
@@ -5880,13 +5896,16 @@ Program used to execute commands externally.
 @cindex a2ps
 @cindex PrintFile
 @anchor{Print Command}
-Program used to print files. On GNU/Linux systems this program is required and
-is @code{a2ps} by default. The @code{a2ps} utility can be used on most Unix
-systems and can be downloaded from @url{http://www.inf.enst.fr/~demaille/a2ps}
+External program used to print files.
 
-On Windows systems this program is optional and is empty by default. A
-replacement will be used if specified. A possible replacement is the PrintFile
-freeware utility available from @url{http://www.lerup.com/printfile/descr.html}
+This program is required under Unix systems in order to print, and is set to
+@code{a2ps} by default.
+If @code{a2ps} is not installed on your system, you can download it
+from @url{www.inf.enst.fr/~demaille/a2ps}
+
+Under Windows systems, this program is optional and is empty by default, since
+a built-in printing is provided. An external tool will be used if specified,
+such as the PrintFile freeware utility available from @url{www.lerup.com/printfile/descr.html}
 
 @end table
 
@@ -6146,8 +6165,8 @@ files found in the user's directory can override any file found in the
 @itemize @bullet
 @item System wide customization
 
-The directory @file{<INSTALL>/share/gps/customize}, where
-@file{<INSTALL>} is the name of the GPS installation directory, should contain
+The @file{INSTALL/share/gps/customize} directory, where
+@file{INSTALL} is the name of the GPS installation directory, should contain
 the files that will always be loaded whenever GPS is loaded, by any user on
 the system
 
@@ -6263,7 +6282,7 @@ Thus, the @code{external} tag would look like:
 
 @smallexample
 <action name="my_command">
-  <external>cmd /c c:\.gps\my_scripts\my_command.cmd</external>
+  <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
 </action>
 @end smallexample
 
@@ -6661,8 +6680,8 @@ etc@dots{}
 @noindent
 You can define new languages in a custom file by using the @code{Language}
 tag. Defining languages gives GPS the ability to highlight the syntax of a
-file, explore a file (using e.g. the project explorer), and find files
-associated with a given language.
+file, explore a file (using e.g. the project explorer), find files
+associated with a given language, @dots{}
 
 As described previously for menu items, any file in the @file{customize}
 directory will be loaded by GPS at start up. Therefore, you can either
@@ -6674,6 +6693,12 @@ The following tags are available in a @code{Language} section:
 @table @code
 @item Name
 A short string describing the name of the language.
+
+@item Parent
+If set to the name of an existing language (e.g. @code{Ada}, @code{C++}) or
+another custom language, this language will inherit by default all its
+properties from this language. Any field explicitely defined for this language
+will override the inherited settings.
 
 @item Spec_Suffix
 A string describing the suffix of spec/definition files for this language.
@@ -6690,6 +6715,61 @@ into a single regular expression.
 
 The full grammar of the regular expression can be found in the spec of the
 file @file{g-regpat.ads} in the GNAT run time.
+
+@item Library
+The name of a dynamic library providing one or several of the functions
+described below.
+
+The name can be a full pathname, or a short name. E.g. under most Unix systems
+if you specify @code{custom}, GPS will look for @code{libcustom.so} in
+the @code{LD_LIBRARY_PATH} run time search path. You can also specify
+explicitly e.g. @code{libcustom.so} or @code{/usr/lib/libcustom.so}.
+
+For each of the following five items, GPS will look for the corresponding
+symbol in @code{Library} and if found, will call this symbol when needed.
+Otherwise, it will default to the static behavior, as defined by the other
+language-related items describing a language.
+
+You will find the required specification for the C and Ada languages
+to implement the following functions in the directory
+@file{<prefix>/share/gps/doc/examples/language} of your GPS installation.
+@file{language_custom.ads} is the Ada spec file; @file{language_custom.h} is
+the C spec file; @file{gprcustom.c} is an example file showing a possible
+C implementation of the functions @code{Comment_Line} and @code{Uncomment_Line}
+for the GPS project files (@file{.gpr} files), or any other Ada-like
+language.
+
+@item Comment_Line
+Name of a symbol in the specified shared library corresponding to a
+function that will comment a line (used to implement the menu
+@code{Edit->Comment Lines}).
+
+@item Uncomment_Line
+Name of a symbol in the specified shared library corresponding to a
+function that will uncomment a line (used to implement the menu
+@code{Edit->Uncomment Lines}).
+
+@item Parse_Constructs
+Name of a symbol in the specified shared library corresponding to a
+function that will parse constructs of a given buffer.
+
+This procedure is used by GPS to implement several capabilities such as
+listing constructs in the project explorer, highlighting the current block of
+code, going to the next or previous procedure, @dots{}
+
+@item Format_Buffer
+Name of a symbol in the specified shared library corresponding to a
+function that will indent and format a given buffer.
+
+This procedure is used to implement the auto indentation when hitting the
+@key{enter} key, or when using the format key on the current selection or
+the current line.
+
+@item Parse_Entities
+Name of a symbol in the specified shared library corresponding to a
+function that will parse entities (e.g. comments, keywords, @dots{}) of a given
+buffer. This procedure is used to highlight the syntax of a file, and
+overrides the @code{Context} node described below.
 
 @item Context
 Describes the context used to highlight the syntax of a file.
@@ -6810,6 +6890,7 @@ Here is an example of a language definition for the GPS project files:
     <Keywords>^(case|e(nd|xte(nds|rnal))|for|is|</Keywords>
     <Keywords>limited|null|others|</Keywords>
     <Keywords>p(ackage|roject)|renames|type|use|w(hen|ith))\b</Keywords>
+
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
       <String_Delimiter>"</String_Delimiter>
@@ -6818,6 +6899,7 @@ Here is an example of a language definition for the GPS project files:
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
+
     <Categories>
       <Category>
         <Name>package</Name>
@@ -6830,6 +6912,10 @@ Here is an example of a language definition for the GPS project files:
         <Index>1</Index>
       </Category>
     </Categories>
+
+    <Library>gpr</Library>
+    <Comment_Line>gpr_comment_line</Comment_Line>
+    <Uncomment_Line>gpr_uncomment_line</Uncomment_Line>
   </Language>
 </Custom>
 @end smallexample
@@ -6998,19 +7084,6 @@ The specific XML tag to use is @i{<alias>}, one per new alias.
 The following example contains a standalone customization file, but you might
 wish to merge the @i{<alias>} tag in any other customization file.
 
-@smallexample
-<?xml version="1.0"?>
-<Aliases>
-  <alias name="proc" >
-    <param name="p" >Proc1</param>
-    <param environment="true" name="env" />
-    <text>procedure %(p) is
-%(env)%_
-end %(p);</text>
-  </alias>
-</Aliases>
-@end smallexample
-
 The following tags are available:
 
 @table @code
@@ -7035,6 +7108,21 @@ These tags contain text, which is the default value for the parameter.
 This is a child of the @code{alias} node, whose value is the
 replacement text for the alias.
 @end table
+
+Here is an example of an alias file:
+
+@smallexample
+<?xml version="1.0"?>
+<Aliases>
+  <alias name="proc" >
+    <param name="p" >Proc1</param>
+    <param environment="true" name="env" />
+    <text>procedure %(p) is
+%(env)%_
+end %(p);</text>
+  </alias>
+</Aliases>
+@end smallexample
 
 @c --------------------------------------------------------------------------
 @node Adding support for new tools
@@ -7065,7 +7153,7 @@ These files have the same format as other customization files
 (@pxref{Customization files}), and the tool descriptions are found in
 @code{<tool>} tags.
 
-This tag acceps the following attributes:
+This tag accepts the following attributes:
 
 @table @code
 @item name (mandatory)
@@ -7363,7 +7451,7 @@ external tool. Spawning the external tool can be done in two ways:
 @end itemize
 
 Both cases are described in an XML customization file, as described previously,
-and both are setup to execute what GPS calls an action, ie a set of commands
+and both are setup to execute what GPS calls an action, i.e. a set of commands
 defined by the @code{<action>} tag.
 
 @subsubsection Chaining commands
@@ -7389,7 +7477,7 @@ The output of the previous commands is substituted exactly as is. However, if
 the output is surrounded by quotes, they are ignored when substitution takes
 place, so you need to put them back if they are needed. The reason for this
 behavior is so that for scripting languages that systematically protect their
-output with quotes (simple or double), these quotes are in sometimes in the
+output with quotes (simple or double), these quotes are sometimes in the
 way when calling external commands.
 
 @ifset python
@@ -7408,31 +7496,33 @@ action is stopped immediately, and no further command is performed.
 
 @subsubsection Saving open windows
 
-@cindex save_windows
+@cindex save_all
 Before launching the external tool, you might want to force GPS to save all
 open files, the project,@dots{}. This is done using the same command GPS itself
-uses before starting a compilation. This command is called @code{save_windows},
+uses before starting a compilation. This command is called @code{save_all},
 and takes one optional argument which specifies whether an interactive dialog
 should be displayed for the user.
 
-Since this command raises an exception when the user presses cancel, you can
+Since this command aborts when the user presses cancel, you can
 simply put it in its own @code{<shell>} command, as in:
 
 @ifset python
-<action name="test save children">
-  <shell lang="python">GPS.save_windows (force=0)</shell>
-  <external> echo Run unless Cancel was pressed </external>
-</action>
-@end ifset
-
-@ifnset python
 @smallexample
 <action name="test save children">
-  <shell>save_windows</shell>
-  <external> echo Run unless Cancel was pressed </external>
+  <shell lang="python">GPS.save_all (force=0)</shell>
+  <external>echo Run unless Cancel was pressed</external>
 </action>
 @end smallexample
-@end ifnset
+@end ifset
+
+@ifclear python
+@smallexample
+<action name="test save children">
+  <shell>save_all</shell>
+  <external>echo Run unless Cancel was pressed</external>
+</action>
+@end smallexample
+@end ifclear
 
 
 @subsubsection Querying switches from the project
@@ -7497,8 +7587,8 @@ The scripting languages provides a number of solutions for these.
 They generally have their own native way to read input, possibly by creating
 a dialog.
 
-However, the simplest solution is to use the predefined GPS commands for this.
-These include two main functions/
+In addition, the simplest solution is to use the predefined GPS commands for
+this. These include two main functions:
 
 @table @code
 @item yes_no_dialog
@@ -7519,8 +7609,6 @@ it doesn't have support for lists, and would return a concatenation of the
 values. However, this function is especially useful with other scripting
 languages.
 @end table
-
-
 
 @ifset python
 The following is a short example that queries the name of a directory and a
@@ -7551,7 +7639,7 @@ a file, available in the GPS installation.
 This example adds support for the "find" Unix utility, with a few switches. All
 these switches are editable through the project properties editor.
 
-It also add a new action and menu. The action associated with this menu gets
+It also adds a new action and menu. The action associated with this menu gets
 the default switches from the currently selected project, and then ask the
 user interactively for the name of the file to search.
 
@@ -8170,30 +8258,32 @@ There is a strong relationship between GPS actions, as defined in the
 customization files, and scripting languages.
 
 Actions can be bound to menus and keys through the customization files or
-the @code{Edit->Key shortcuts} window.
+the @code{Edit->Key shortcuts} dialog.
 
 These actions can execute any script command, @xref{Defining Actions}. This is
 done through the @code{<shell>} XML tag.
 
 But the opposite is also true. From a script, you can execute any action
 registered in GPS. This can for instance be used to split windows, highlight
-lines in the editor,... when no equivalent shell function exist. This can also
-be used to execute external commands, if your scripting language doesn't
+lines in the editor,@dots{} when no equivalent shell function exists. This can
+also be used to execute external commands, if the scripting language doesn't
 support this in an easy manner.
 
 Such calls are made through a call to @code{execute_action}, as in the
-following action.
+following example:
 
 @smallexample
 execute_action "Split horizontally"
 @end smallexample
 
 @ifset python
+@smallexample
 GPS.execute_action (action="Split horizontally")
+@end smallexample
 @end ifset
 
 The list of actions known to GPS can be found through the
-@code{Edit->Key shortcuts} window. Action names are case sensitive.
+@code{Edit->Key shortcuts} dialog. Action names are case sensitive.
 
 
 @node The GPS Shell
@@ -8444,8 +8534,10 @@ Options:
                        program with the given arguments
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
-   --load=lang:file    Execute an external file written in the language lang
-   --eval=lang:file    Execute an in-line script written in the language lang
+   --load=lang:file    Execute an external file written in the
+                       language lang
+   --eval=lang:file    Execute an in-line script written in the
+                       language lang
 
 Source files are searched everywhere on the project's source path
 @end smallexample
@@ -8616,6 +8708,10 @@ GPS will look for all the documentation files under this directory.
    @item @i{prefix}/doc/gps/examples
 This directory contains source code examples.
 
+   @item @i{prefix}/doc/gps/examples/language
+This directory contains sources showing how to provide a shared library to
+dynamically define a new language. See @ref{Adding Support for New Languages}.
+
    @item @i{prefix}/doc/gps/examples/tutorial
 This directory contains the sources used by the GPS tutorial.
 @ifhtml
@@ -8625,8 +8721,8 @@ See @url{gps-tutorial.html}.
 
    @item @i{prefix}/share/gps/customize
 Directory containing files with system-wide customizations
-(see @pxref{Adding Support for New Languages} and
- @pxref{Defining Text Aliases}).
+(see @ref{Adding Support for New Languages} and
+ @ref{Defining Text Aliases}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
