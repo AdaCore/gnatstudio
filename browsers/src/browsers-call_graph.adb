@@ -410,6 +410,7 @@ package body Browsers.Call_Graph is
       return Gtkada.MDI.MDI_Child
    is
       Child   : MDI_Child;
+      Browser : Call_Graph_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Call_Graph_Browser_Record'Tag);
@@ -417,7 +418,10 @@ package body Browsers.Call_Graph is
       if Child /= null then
          Raise_Child (Child);
       else
-         Child := Put (Get_MDI (Kernel), Create_Call_Graph_Browser (Kernel));
+         Browser := Create_Call_Graph_Browser (Kernel);
+         Child := Put
+           (Get_MDI (Kernel), Browser,
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
          Set_Title (Child, -"Call graph Browser");
       end if;
 

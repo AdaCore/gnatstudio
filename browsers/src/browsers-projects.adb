@@ -615,6 +615,7 @@ package body Browsers.Projects is
      (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
    is
       Child : MDI_Child;
+      Browser : Project_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Browser_Record'Tag);
@@ -622,7 +623,10 @@ package body Browsers.Projects is
       if Child /= null then
          Raise_Child (Child);
       else
-         Child := Put (Get_MDI (Kernel), Create_Project_Browser (Kernel));
+         Browser := Create_Project_Browser (Kernel);
+         Child := Put
+           (Get_MDI (Kernel), Browser,
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
          Set_Title (Child, -"Project Browser");
       end if;
 

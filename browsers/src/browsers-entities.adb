@@ -542,6 +542,7 @@ package body Browsers.Entities is
       return Gtkada.MDI.MDI_Child
    is
       Child : MDI_Child;
+      Browser : Type_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Type_Browser_Record'Tag);
@@ -549,7 +550,10 @@ package body Browsers.Entities is
       if Child /= null then
          Raise_Child (Child);
       else
-         Child := Put (Get_MDI (Kernel), Open_Type_Browser (Kernel));
+         Browser := Open_Type_Browser (Kernel);
+         Child := Put
+           (Get_MDI (Kernel), Browser,
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
          Set_Title (Child, -"Entity Browser");
       end if;
 

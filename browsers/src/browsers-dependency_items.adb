@@ -378,6 +378,7 @@ package body Browsers.Dependency_Items is
       return Gtkada.MDI.MDI_Child
    is
       Child   : MDI_Child;
+      Browser : Dependency_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Dependency_Browser_Record'Tag);
@@ -385,7 +386,10 @@ package body Browsers.Dependency_Items is
       if Child /= null then
          Raise_Child (Child);
       else
-         Child := Put (Get_MDI (Kernel), Create_Dependency_Browser (Kernel));
+         Browser := Create_Dependency_Browser (Kernel);
+         Child := Put
+           (Get_MDI (Kernel), Browser,
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
          Set_Title (Child, -"Dependency Browser");
       end if;
 
