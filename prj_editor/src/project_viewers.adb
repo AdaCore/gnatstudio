@@ -2193,14 +2193,14 @@ package body Project_Viewers is
       Ref_Project  : Project_Node_Id)
       return Project_Node_Array
    is
-      pragma Unreferenced (Page, Ref_Project, Scenario_Variables);
+      pragma Unreferenced (Kernel, Page, Ref_Project);
    begin
       return Generate_Project
-        (Switches     => From_Window (Widget),
-         Kernel       => Kernel,
-         Project      => Project,
-         Project_View => Project_View,
-         Files        => (1 .. 0 => null));
+        (Switches           => From_Window (Widget),
+         Project            => Project,
+         Scenario_Variables => Scenario_Variables,
+         Project_View       => Project_View,
+         Files              => (1 .. 0 => null));
    end Project_Editor;
 
    -------------
