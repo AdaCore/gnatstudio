@@ -496,10 +496,6 @@ package body Project_Viewers is
       Load_Project (Callback.Kernel, Item);
 
    exception
-      when Directory_Error =>
-         Console.Insert (Callback.Kernel, -"Invalid directory " & Dir,
-                         Mode => Console.Error);
-
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Activate;
