@@ -600,20 +600,29 @@ package body Vdiff2_Module.Utils is
           (Item_Local.File1, Diff_List.all) = Diff_Head_List.Null_Node
         and then Is_In_Diff_List
           (Item_Local.File2, Diff_List.all) = Diff_Head_List.Null_Node
-        and then Is_In_Diff_List
-          (Item_Local.File3, Diff_List.all) = Diff_Head_List.Null_Node
       then
-         Append (Diff_List.all, Item_Local);
-         Show_Differences3 (Kernel, Item_Local);
-         Goto_Difference (Kernel_Handle (Kernel),
-                          Data (Item_Local.Current_Node));
-      else
+         if Item_Local.File3 /= VFS.No_File
+           and then Is_In_Diff_List
+             (Item.File3, Diff_List.all) = Diff_Head_List.Null_Node
+         then
+            Append (Diff_List.all, Item_Local);
+            Show_Differences3 (Kernel, Item_Local);
+            Goto_Difference (Kernel_Handle (Kernel),
+                             Data (Item_Local.Current_Node));
+            return;
+         elsif Item_Local.File3 = VFS.No_File then
+            Append (Diff_List.all, Item_Local);
+            Show_Differences3 (Kernel, Item_Local);
+            Goto_Difference (Kernel_Handle (Kernel),
+                             Data (Item_Local.Current_Node));
+            return;
+         end if;
+      end if;
+
          Button := Message_Dialog
            (Msg     => -"One of these files is already used in VDiff.",
             Buttons => Button_OK,
             Parent  => Get_Main_Window (Kernel));
-         return;
-      end if;
    end Process_Differences;
 
    ------------------
