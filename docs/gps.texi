@@ -8179,6 +8179,16 @@ GPS.current_context().file().name()
 @end smallexample
 @end ifset
 
+@item %e
+Name of the entity the user clicked on.
+
+@ifset python
+Python equivalent:
+@smallexample
+GPS.current_context().entity().name()
+@end smallexample
+@end ifset
+
 @item %d
 The currently directory.
 
@@ -8731,6 +8741,38 @@ menu entry. If this child is not specified, the menu entry will use the name
 of the action itself. The title is in fact the full path to the new menu entry.
 Therefore, you can create submenus by using a title of the form
 "Parent1/Parent2/Menu".
+
+Special characters can be used in the title, and will be automatically
+expended based on the current context. These special characters are:
+
+@table @bullet
+@item @code{%f}
+Current file
+
+@item @code{%d}
+Current directory
+
+@item @code{%p}
+Current project name
+
+@item @code{%l}
+Current line
+
+@item @code{%c}
+Current column
+
+@item @code{%a}
+Current category when the user clicked in the location window
+
+@item @code{%e}
+Current entity name
+
+@item @code{%i}
+Name of the project importing the current one. This is only available for
+contextual menus in the Project View
+
+@end table
+
 
 The new contextual menu will only be shown if the filters associated with the
 action match the current context.
