@@ -644,6 +644,7 @@ package body Browsers.Call_Graph is
            (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
          Layout (Cb.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Cb.Browser));
+         Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
       else
          Redraw_Title_Bar (Cb.Item);
@@ -678,6 +679,7 @@ package body Browsers.Call_Graph is
       if Data.Callback.Browser /= null then
          Layout (Data.Callback.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Data.Callback.Browser));
+         Show_Item (Get_Canvas (Data.Callback.Browser), Data.Callback.Item);
       end if;
       Clean;
 
