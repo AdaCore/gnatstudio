@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -66,7 +66,7 @@ package GVD.Preferences is
 
    -- General Preferences --
    Default_Font                  : Param_Spec_Font;
-   Fixed_Font                    : Param_Spec_Font;
+   Fixed_Style                   : Param_Spec_Style;
    Break_On_Exception            : Param_Spec_Boolean;
    Hide_Delay                    : Param_Spec_Int;
    Ada_Extensions                : Param_Spec_String;
