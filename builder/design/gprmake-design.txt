@@ -152,13 +152,29 @@ Input needed from gprmake:
     - Builder'Driver (<language>): If set, use this tool to check
       dependencies of sources for a given language, and rebuild them if
       needed.
-      Defaults to ("<prefix>gnat", "make", "-c") for "ada".
+      Defaults to ("<prefix>gnat", "make", "-c", "-u") for "ada".
       Defaults to () otherwise.
 
       Note: the default for Ada assumes that the GNAT_PROJECT environment
       variable has been set and is recognized by the gnat driver.
       Alternatively, we could provide a wrapper that would recognize it,
       and call gnatmake -P -c $GNAT_PROJECT directly.
+
+      This tool is called for each subproject where Builder'Driver is set,
+      recursively. The current directory is set to the subproject's directory
+      before each call to provide a straightforward environment (for instance,
+      to ease calling "make -f relative-make-file-path")
+
+      Note: it's slightly less efficient to call several gnatmake -u than
+      calling one gnatmake -Proot directly, but the cost shouldn't be too
+      high with recent project parsing improvements, and the need to have the
+      same behavior for Ada and other language is higher than the small
+      overhead added by this generalization.
+      Also, a difference in behavior is that gprmake will always compile/
+      recompile all project sources, even for Ada. This is, again, for
+      consistency among languages. The bind phase will take care however of
+      choosing the smallest subset of object files needed, see Binder'Driver
+      below.
 
     - Compiler'Compiler_Kind (<language>): Kind of compiler used for a given
       language. Recognized values are:
@@ -169,20 +185,27 @@ Input needed from gprmake:
       For now, any value other than "GNU" is considered as non-gnu compiler
       (e.g. "unknown").
 
-    - Compiler'Driver (<language>): name of the tool that knows
-      how to compile files of the given language. Defaults to "<prefix>gcc"
+    - Compiler'Driver (<language>): name and switches of the tool that knows
+      how to compile files of the given language. Defaults to
+      ("<prefix>gcc", "-c", "-x", <language>) for GNU compilers,
       where <prefix> is an optional prefix computed based on the name
       of the gprmake tool when launched (e.g. calling powerpc-elf-gprmake
       will set the default Compiler'Driver to "powerpc-elf-gcc").
+      This tool is called inside the project's object directory.
 
-    - Compiler'Compilation_Option (<language>): list of switches to be
-      used to tell the Compiler'Driver to compile-only
-      Defaults to ("-c") for non GNU compilers.
-      Defaults to ("-c", "-x", <language>) for GNU compilers.
+      For non GNU compilers, defaults to ("cc", "-c")
 
-      Note: there's a potential risk of misuse of this attribute vs
-      Default_Switches (<language>) by end users. Clarify in the documentation.
-      -> use another name for this attribute ?
+      Also, if no options are specified, the following default options
+      are appended:
+
+      - ("-c", "-x", <language>) for GNU compilers
+      - ("-c") for non GNU compilers
+
+      This allows for ease of use, such as: ("gcc") instead of having to
+      specify ("gcc", "-c", "-x", "c")
+
+      In addition, if only one empty option is specified, it means that no
+      default option should be appended, e.g: ("jgnat", "")
 
     See below 'Specify how to handle dependencies' for more info on the
     following attributes:
@@ -195,12 +218,10 @@ Input needed from gprmake:
       to "GNU".
       Defaults to () otherwise
 
-      Question: How to specify whether the filename is part of the option,
-      or should be the next option on the command line ?
-
-      Answer: could assume that the name is always appended. If some compiler
-      does not support it, there's always the possibility to use a wrapper,
-      or use the Compute_Dependency attribute instead.
+      Note: the object_dir+file.d is concatenated directly to the last
+      option, so that you can use either a single switch such as
+      -MD,file.d using ("-MD,"), or two separate switches such as
+      -dependency file.d using ("-dependency", "").
 
       If set, the Compute_Dependency attribute is ignored.
 
@@ -208,8 +229,8 @@ Input needed from gprmake:
       the dependency for a given language. This is a list of strings, the
       first string being the command itself, and the remaining strings are
       the options. The path to the filename will be appended to the command,
-      and the source search path will be set via additional switches or
-      environment variables using Compiler'Path_Env and Compiler'Include_Option
+      and the source path will be set as for the compiler (using CPATH and
+      Compiler'Include_Option).
       Defaults to:
       (Compiler'Driver (<language>), "-M") & Default_Switches (<language>)
 
@@ -220,47 +241,53 @@ Input needed from gprmake:
     -> If Dependency_Option and Compute_Dependency are both undefined or set
        to the empty value, gprmake will consider that sources for this language
        have no dependencies and will only compare the timestamp of the object
-       and source file.
+       and its corresponding source file.
 
-    -> Dependency files are assumed to be generated in Makefile format:
-       source_file: source_dependencies
+      Dependency files are assumed to be generated in Makefile format, see
+      'Specify how to handle dependencies' below for more details.
 
-    - Handling of search path
-      The source search path is extracted from the Source_Dirs attribute.
+    - Handling of source path
+      The source path is extracted from the Source_Dirs attribute.
       Depending on the compiler, gprmake will need to:
 
       - use compiler switches (-I/path)
       - set an environment variable (ADA_INCLUDE_PATH, CPATH)
 
-      New attributes are therefore added to tell gprmake how to behave:
+      gprmake will always set the CPATH env variable to the current
+      subproject's source path before calling Compiler'Driver.
+      This list of source dirs is concatenated and separated by the
+      appropriate Path_Separator (":" under unix, ";" under Windows), and
+      concatenated with the previous value of CPATH, if any. If needed,
+      relative source paths are translated to absolute paths, based on the
+      project file's directory.
 
-      - New attribute Compiler'Path_Env (<language>)
-        Defaults to ADA_INCLUDE_PATH for "ada"
-        Defaults to CPATH for "c" and "c++"
-        Defaults to "" otherwise
+      Note: if needed, wrappers can use this variable to set others (e.g.
+      export ADA_INCLUDE_PATH="$CPATH") or use another mechanism (such as
+      creating an input file).
 
-        If not null, gprmake will set this environment variable to the list
-        of source directories for a given project before compiling the
-        project's sources, if some compilations are needed.
-        This list is concatenated and separated by the
-        appropriate Path_Separator (":" under unix, ";" under Windows), and
-        concatenated with the previous value of this env var, if any.
+      A new attribute is added to handle the common case of source path
+      specified on the command line:
 
       - New attribute Compiler'Include_Option (<language>)
-        Simple string, defaults to "-I" for all languages.
+        List of switches to specify an source search dir, defaults to () if
+        Compiler'Compiler_Kind = "GNU"; defaults to ("-I") otherwise.
 
-        If Compiler'Path_Env is null, each source dir is put on the command
-        line, prepended with Compiler'Include_Option, e.g:
+        If Compiler'Include_Option is not empty, each source dir is put on the
+        command line, prepended with Compiler'Include_Option, e.g:
         if Source_Dirs is set to ("/a/b", "../foo"), gprmake appends
         ("-I/a/b", "-I../foo") to the compilation switches, translating if
         needed relative paths to absolute paths, resolved based on the
         project file's directory.
 
-      Note: if a compiler uses/requires another mechanism to pass include
-      options (such as an input file), this can be achieved by using a wrapper
-      that will generate the input file, either from an environment variable
-      (preferred to work around command line limitations) or from the
-      command line.
+        Clarification: the source dir is concatenated directly to the last
+        option of Include_Option, so as to allow both forms:
+        -I/path: ("-I")
+        -include /path: ("-include", "")
+
+    - Handling of object path
+      Before the bind phase, the environment variable LPATH is set to
+      the list of object dirs of the project hierarchy, separated by
+      Path_Separator.
 
   TBC
 
@@ -271,7 +298,7 @@ Input needed from gprmake:
     and verify that the proposed scheme would allow handling of these languages
 
     - fortran: does not really have the notion of dependencies between files,
-    basically each proram is self contained, so the handling of dependencies is
+    basically each program is self contained, so the handling of dependencies is
     a simple matter of comparing the timestamp of the object file against the
     timestamp of the source file (correspond to having no
     Dependency_Option/Compute_Dependency attribute).
@@ -292,6 +319,13 @@ Input needed from gprmake:
     directly, in particular ALI files, so that compilation of Ada files can be
     handled without using gnatmake, and have Ada be handled very much
     like C or C++.
+
+    makefile syntax recognized:
+
+    source: src1 src2 [...]
+
+    A "\" followed by a newline sequence is ignored, and the next line is
+    considered part of the src dependency list.
 
     Note: if some compiler (e.g. proprietary Ada compiler) does not provide
     the capabilities of generating a Makefile, the idea would be to provide a
@@ -315,25 +349,41 @@ Input needed from gprmake:
   take advantage of the source list associated to a given project (for
   instance, to provide source navigation in GPS).
 
-  -> This can be achieved by specifying an empty or special value to
-  Builder'Driver (e.g. "null").
+  -> This can be achieved by specifying an empty value to
+  Builder'Driver: ("")
+
+  Consequently, this notation can also used to e.g. specify that a library
+  project is read-only, and should not be rebuilt (such as an installed
+  library).
 
 - Specify how to handle bind phase between languages
-  TBC
-  New attribute Binder'Driver (<language>)
-  Defaults to "<prefix>gnatbind" for "ada"
-  Defaults to "" for other languages
+  At bind time, GNAT_PROJECT is set to the root project file and never changed
+  until gprmake ends (since it can also be used during the link phase).
 
-  If non null, Binder'Driver (<language>) is called for each language
-  supported by the project.
+  -> New attribute Binder'Driver (<language>)
+  Defaults to ("<prefix>gnat", "bind") for "ada"
+  Defaults to ("") for other languages
 
-  ??? which option should be passed to gnatbind ? Should -P project be passed
-  we well ?
+  If non null, Binder'Driver (<language>) is called for the root project,
+  for each main (or once with no main if none specified) for each language
+  supported by the project hierarchy.
+  This tool is called from the root project's object directory.
+
+  The name of the main object is specified if a main is specified.
+
+  The following changes are needed for "gnat bind" to be compatible with this
+  approach:
+
+  - support the GNAT_PROJECT env var
+  - support object-file instead of ali file, and use corresponding ali file
+    internally
+  - when no object file is specified, consider all ali files from the project
+    hierarchy for the bind phase
 
 - Specify how to handle link phase between languages
   TBC
 
-  Examples, to be generalized:
+  Examples, to be generalized below:
   - C: use Compiler'Driver ("c") (e.g. gcc)
   - C++: use Compiler'Driver ("c++") (e.g. g++)
   - Ada: use gnatlink with GNAT
@@ -342,12 +392,12 @@ Input needed from gprmake:
   - Ada & C++: use gnatlink --LINK=Compiler_Command ("c++")
 
   Add new attribute Linker'Driver (<language>) which defaults to:
-  - <prefix>gnatlink for Ada (or a wrapper called gnatld, see below)
+  - (<prefix>gnat", "link") for Ada
   - Compiler'Driver (<language>) for other languages
 
-  Add new attribute Linker'Default_Driver to specify the name of the tool
-  called to handle linking. The linker driver is called in the object
-  directory of the main project. This attribute is empty by default,
+  Add new attribute Linker'Default_Driver to tool (and options) called
+  to handle linking. The linker driver is called in the object
+  directory of the main project. This attribute is empty by default: (),
   meaning that a built-in driver is used, which behaves as follows:
 
   - for projects with a single language, call Linker'Driver (<language>)
@@ -361,30 +411,29 @@ Input needed from gprmake:
   done by gnatmake for Ada projects.
 
   Note: for Ada, since gnatlink expects an ali file rather than an object
-  file, we could either:
-  - add a new tool called tentatively gnatld, which
-    is a wrapper around gnatlink that will call gnatlink by replacing the
-    object of the main unit by the corresponding ali file (basically by
-    replacing .o by .ali)
-  - or enhance gnatlink to consider that if no .ali is specified, then the
-    first .o file should be used instead (if a corresponding .ali file exists).
+  file, we need to enhance gnat link (and possible gnatlink as well) as
+  follows:
 
-  This last option seems slightly preferrable (avoids having to introduce
-  a new tool, makes it more compatible with other linkers).
+  - consider that if no .ali is specified, then the
+    first .o file should be used instead if a corresponding .ali file exists,
+    and use this .ali file.
 
   - for projects with multiple languages excluding Ada, call
   Linker'Driver (<language of the main unit>) followed by the same arguments
   as single language projects.
 
-  - Ada+C ???
-  - Ada+C++ ???
+  - Ada & C++ (& optionally other languages):
+    use Linker'Driver ("ada") & ("--LINK=" & Linker'Driver ("c++"))
 
-  Arguments passed to Linker'Default_Driver:
-  for each language used in the project, provide the language, the name of the
-  language linker driver, object of the main source if available,
-  language of the main source, list of all objects for this language &
-  associated linker options (such as libraries). This command will typically
-  be a wrapper doing some tests and computation based on the language list.
+  - Ada+languages others than C++: use Linker'Driver ("ada")
+
+  Note: if needed, "--LINK=" & Linker'Driver (language-x) can be added to
+  the root projects' Linker'Default_Switches to cover other simple cases.
+
+  For more exotic cases, an alternate (non built-in) Linker'Default_Driver
+  can be used. Typically, it is expected that this non built-in default driver
+  will parse the project file (using the GNAT_PROJECT env variable) and then
+  act accordingly.
 
   At link time, when some sources or executable are not up-to-date,
   an archive is built containing the object files of each language
@@ -413,6 +462,54 @@ Input needed from gprmake:
   Would it be worth having a meta-configuration file used to set/change
   these default values ?
 
-MISSING:
+- command line option supported by gprmake
+  In order to keep gprmake as generic as possible, options such as
+  -ccargs or -cxxargs should be avoided.
 
-- more details on command line options supported
+  Current gprmake options are:
+
+  -c       Compile only
+  -f       Force recompilations
+  -k       Keep going after compilation errors
+  -o name  Choose an alternate executable name
+  -Pproj   Use GNAT Project File proj
+  -q       Be quiet/terse
+  -u       Unique compilation. Only compile the given files
+  -v       Verbose output
+  -vPx     Specify verbosity when parsing Project Files
+  -Xnm=val Specify an external reference for Project Files
+
+  -cargs opts    opts are passed to the Ada compiler
+  -ccargs opts   opts are passed to the C compiler
+  -cxxargs opts  opts are passed to the C++ compiler
+  -largs opts    opts are passed to the linker
+  -gargs opts    opts directly interpreted by gprmake
+
+  The first set of options is kept as is.
+  The -cargs, -ccargs and -cxxargs options are replaced with:
+
+  -cargs:<lang> opts
+
+  where <lang> is an arbitrary value. The switches are appended to all the
+  compiler switches for <lang>. In particular, Compiler'Default_Switches
+  (<language>), as well as file specific options.
+
+  In addition and for consistency, we give access to the Builder and Binder
+  options:
+
+  -margs:<lang> opts
+
+  same as -cargs, for Builder'Driver (<lang>) (the 'make' driver), if any.
+
+  Typical usage from GPS: gprmake -P project -margs:ada -d
+
+  -bargs:<lang> opts
+
+  same as -cargs, for Binder'Driver (<lang>), if any.
+
+  -largs is replaced with:
+
+  -largs:<lang> opts
+
+  same as -cargs, for Linker'Driver (<lang>), if relevant.
+
