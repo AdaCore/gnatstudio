@@ -195,8 +195,15 @@ package body Debugger.Gdb.C is
       end if;
 
       --  Else a simple type
-
       case Type_Str (Index) is
+         when '<' =>
+            --  Simple types, like <4-byte integer> and <4-byte float>
+            Skip_To_Char (Type_Str, Index, '>');
+            Result := New_Simple_Type;
+            Set_Type_Name (Result, Type_Str (Tmp .. Index));
+            Index := Index + 1;
+            return;
+
          when 'e' =>
             --  Enumeration type.
             --  Either this is the type itself "enum {....}", or this is the
