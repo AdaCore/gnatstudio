@@ -1105,7 +1105,7 @@ package body Src_Editor_Module is
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
 
-         if File /= null then
+         if File /= null and then File.all /= "" then
             Str := Get_Field (Node, "Line");
 
             if Str /= null then
@@ -2992,11 +2992,11 @@ package body Src_Editor_Module is
            Parameter_Names_To_Usage (Edit_Cmd_Parameters, "identifier", 3),
          Description =>
            -("Create a mark for file_name, at position given by line and"
-             & " column."
              & ASCII.LF
-             & "Length corresponds to the text length to highlight"
-             & " after the mark." & ASCII.LF
-             & "The identifier of the mark is returned." & ASCII.LF
+             & "column. Length corresponds to the text length to highlight"
+             & ASCII.LF
+             & "after the mark. The identifier of the mark is returned."
+             & ASCII.LF
              & "Use the command goto_mark to jump to this mark."),
          Minimum_Args => 1,
          Maximum_Args => 4,
@@ -3031,9 +3031,9 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "register_highlighting",
          Usage        => "(category, color) -> None",
-         Description  => -("Create a new highlighting category with"
-                           & " the given color. The format for color is"
-                           & " ""#RRGGBB""."),
+         Description  =>
+           -("Create a new highlighting category with the given color. The"
+             & ASCII.LF & "format for color is ""#RRGGBB""."),
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
@@ -3054,14 +3054,15 @@ package body Src_Editor_Module is
          Usage      =>
            "(file, line, column, [before=-1], [after=-1]) -> String",
          Description  =>
-           -("Get the characters around a certain mark or position."
+           -("Get the characters around a certain position."
              & ASCII.LF
              & "Returns string between <before> characters before the mark"
              & ASCII.LF
-             & "and <after> characters after the position." & ASCII.LF
-             & "If <before> or <after> is omitted, the bounds will be"
+             & "and <after> characters after the position. If <before> or"
              & ASCII.LF
-             & "at the beginning and/or the end of the line."),
+             & "<after> is omitted, the bounds will be at the beginning and/or"
+             & ASCII.LF
+             & "the end of the line."),
          Minimum_Args => 3,
          Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
@@ -3118,14 +3119,14 @@ package body Src_Editor_Module is
          Usage        =>
            "(file, line, column, text, [before=-1], [after=-1]) -> None",
          Description  =>
-           -("Replace the characters around a certain mark or position."
+           -("Replace the characters around a certain position." & ASCII.LF
+             & "<before> characters before (line, column), and up to <after>"
              & ASCII.LF
-             & "Replace string between <before> characters before the mark"
+             & "characters after are removed, and the new text is inserted"
              & ASCII.LF
-             & "and <after> characters after the position." & ASCII.LF
-             & "If <before> or <after> is omitted, the bounds will be"
+             & "instead. If <before> or <after> is omitted, the bounds will"
              & ASCII.LF
-             & "at the beginning and/or the end of the line."),
+             & "be at the beginning and/or the end of the line."),
          Minimum_Args => 4,
          Maximum_Args => 6,
          Handler      => Edit_Command_Handler'Access);
