@@ -134,6 +134,10 @@ package body Src_Editor_Module is
    Before_Cst            : aliased constant String := "before";
    After_Cst             : aliased constant String := "after";
    Name_Cst              : aliased constant String := "name";
+   First_Line_Cst        : aliased constant String := "first_line";
+   Start_Column_Cst      : aliased constant String := "start_column";
+   Last_Line_Cst         : aliased constant String := "last_line";
+   End_Column_Cst        : aliased constant String := "end_column";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -166,6 +170,11 @@ package body Src_Editor_Module is
       5 => After_Cst'Access);
    Case_Exception_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Select_Text_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => First_Line_Cst'Access,
+      2 => Last_Line_Cst'Access,
+      3 => Start_Column_Cst'Access,
+      4 => End_Column_Cst'Access);
 
    type Editor_Child_Record is new GPS_MDI_Child_Record
       with null record;
@@ -964,6 +973,38 @@ package body Src_Editor_Module is
                   Paste_Clipboard (Source);
                else
                   Select_All (Source);
+               end if;
+            end if;
+         end;
+
+      elsif Command = "select_text" then
+         Name_Parameters (Data, Select_Text_Cmd_Parameters);
+
+         declare
+            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+            Buffer       : Source_Buffer;
+            First_Line   : constant Natural := Nth_Arg (Data, 1);
+            Start_Column : constant Natural := Nth_Arg (Data, 3, Default => 1);
+            Last_Line    : Natural := Nth_Arg (Data, 2);
+            End_Column   : Natural := Nth_Arg (Data, 4, Default => 0);
+         begin
+            if Child /= null then
+               if End_Column = 0 then
+                  --  End column not specified, in this case select the
+                  --  whole line
+                  End_Column := 1;
+                  Last_Line  := Last_Line + 1;
+               end if;
+
+               Buffer := Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+
+               if Is_Valid_Position
+                 (Buffer, Gint (First_Line - 1), Gint (Start_Column - 1))
+               then
+                  Select_Region
+                    (Buffer,
+                     Gint (First_Line - 1), Gint (Start_Column - 1),
+                     Gint (Last_Line - 1), Gint (End_Column - 1));
                end if;
             end if;
          end;
@@ -4433,6 +4474,18 @@ package body Src_Editor_Module is
          Description   => -"Select the whole editor contents.",
          Minimum_Args  => 0,
          Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "select_text",
+         Params        =>
+           Parameter_Names_To_Usage (Select_Text_Cmd_Parameters),
+         Description   => -"Select a block in the current editor.",
+         Minimum_Args  => 2,
+         Maximum_Args  => 4,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
