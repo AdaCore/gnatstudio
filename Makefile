@@ -25,8 +25,8 @@ syntax \
 vdiff \
 hypergrep \
 aunit \
-src_editor \
 prj_editor \
+src_editor \
 glide
 
 all: ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
