@@ -584,8 +584,8 @@ package body External_Editor_Module is
             Substitute
               (Args,
                P => Project_Name (Get_Project_View (Kernel)),
-               E => Clients (External_Editor_Module_Id.Client)
-               .Server_Start_Command.all);
+               E => Clients
+                 (External_Editor_Module_Id.Client).Server_Start_Command.all);
 
             Spawn_New_Process
               (Kernel, Path.all, Args.all, Success);
@@ -602,6 +602,7 @@ package body External_Editor_Module is
       if not Success then
          Trace (Me, "Couldn't spawn emacs or the server");
       end if;
+
       return;
    end Spawn_Server;
 
