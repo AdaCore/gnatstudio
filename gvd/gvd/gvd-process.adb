@@ -836,6 +836,11 @@ package body GVD.Process is
 
          Set_Position (Process.Data_Editor_Paned, Geometry_Info.Data_Height);
 
+         if Get_Pref (Display_Explorer) then
+            Set_Position (Process.Editor_Text,
+                          Geometry_Info.Explorer_Width);
+         end if;
+
          if Get_Pref (Separate_Data) then
             if Get_Active (Window.Call_Stack) then
                Set_Default_Size
