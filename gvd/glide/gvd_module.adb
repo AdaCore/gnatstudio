@@ -54,6 +54,7 @@ with Dock_Paned;              use Dock_Paned;
 with Items;                   use Items;
 with GVD.Canvas;              use GVD.Canvas;
 with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Main_Window;         use GVD.Main_Window;
 with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Menu;                use GVD.Menu;
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
@@ -175,6 +176,10 @@ package body GVD_Module is
       File   : String);
    --  Remove the side information columns corresponding to the debugger
    --  in the editors for file.
+
+   procedure Preferences_Changed
+     (Kernel : access GObject_Record'Class; User : GObject);
+   --  Called when the preferences are changed in the GPS kernel
 
    -----------------------------
    -- Create_Debugger_Columns --
@@ -1571,6 +1576,20 @@ package body GVD_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access GObject_Record'Class; User : GObject)
+   is
+      pragma Unreferenced (User);
+      Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
+      Top    : constant Glide_Window := Glide_Window (Window);
+   begin
+      GVD.Main_Window.Preferences_Changed (Top);
+   end Preferences_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1764,6 +1783,11 @@ package body GVD_Module is
          File_Edited_Signal,
          File_Edited_Cb'Access,
          Top);
+      Object_User_Callback.Connect
+        (Kernel,
+         Preferences_Changed_Signal,
+         Object_User_Callback.To_Marshaller (Preferences_Changed'Access),
+         GObject (Kernel));
       Init_Graphics;
    end Register_Module;
 
