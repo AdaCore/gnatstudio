@@ -1886,15 +1886,12 @@ package body Gtkada.MDI is
          Activate_Child (Child);
 
       elsif Child.State = Floating and then not Float then
-         --  Remove the widget from the list of embedded children
-         Gtk.Layout.Put
-           (Gtk_Layout_Record (Child.MDI.all)'Access, Child, Child.X, Child.Y);
-         Widget_List.Remove (Child.MDI.Invisible_Items, Gtk_Widget (Child));
-         Unref (Child);
-         Child.State := Normal;
-
+         --  Reassign the widget to Child instead of the notebook
+         Ref (Child.Initial_Child);
          Win := Gtk_Window (Get_Parent (Child.Initial_Child));
          Reparent (Child.Initial_Child, Gtk_Box (Get_Child (Child)));
+         Unref (Child.Initial_Child);
+         Child.State := Normal;
 
          if Gtk_Widget (Child.Initial) = Gtk_Widget (Win) then
             Hide (Child.Initial);
@@ -1902,12 +1899,20 @@ package body Gtkada.MDI is
             Destroy (Win);
          end if;
 
-         --  If all items are maximized, add Child to the notebook
          if Child.MDI.Docks (None) /= null then
             Put_In_Notebook (Child.MDI, None, Child);
+         else
+            Child.X := Constrain_X (Child.MDI, Child.X);
+            Child.Y := Constrain_Y (Child.MDI, Child.Y);
+            Gtk.Layout.Put
+              (Gtk_Layout_Record (Child.MDI.all)'Access, Child, Child.X, Child.Y);
          end if;
 
          Show_All (Child);
+         Activate_Child (Child);
+
+         Widget_List.Remove (Child.MDI.Invisible_Items, Gtk_Widget (Child));
+         Unref (Child);
       end if;
 
       Update_Float_Menu (Child);
@@ -2147,7 +2152,10 @@ package body Gtkada.MDI is
 
       else
          Note := Gtk_Notebook (MDI.Docks (Side).Initial);
-         Set_Show_Tabs (Note, True);
+         --  Putting the following creates an infinite loop with the
+         --  size_allocate signal in GVD (in the source window, when it is
+         --  maximized).
+         --  ??? Set_Show_Tabs (Note, True);
       end if;
 
       --  If the child was already in a notebook (for instance for maximized
