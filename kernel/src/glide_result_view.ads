@@ -25,6 +25,7 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Box;                  use Gtk.Box;
 
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 
 package Glide_Result_View is
 
@@ -68,6 +69,18 @@ package Glide_Result_View is
    --  If an item if selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
+
+   procedure Add_Action_Item
+     (View          : access Result_View_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Natural;
+      Column        : Natural;
+      Message       : String;
+      Action        : Action_Item);
+   --  Add an action item to be associated to a specified location.
+   --  If Action is null, the action item will be removed from that location.
 
 private
    type Result_View_Record is new Gtk_Hbox_Record with record
