@@ -342,7 +342,8 @@ package body Gtkada.File_Selector is
               (Full_Filename =>
                  Locale_To_UTF8
                    (Normalize_Pathname
-                        (File, Directory => Dialog.Current_Directory.all)));
+                        (File, Directory => Dialog.Current_Directory.all,
+                         Resolve_Links => False)));
          end;
       end if;
    end Get_Selection;
@@ -583,7 +584,8 @@ package body Gtkada.File_Selector is
       else
          declare
             Dir : constant String := Normalize_Pathname
-              (Locale_From_UTF8 (Get_Text (File_Selector.Selection_Entry)));
+              (Locale_From_UTF8 (Get_Text (File_Selector.Selection_Entry)),
+               Resolve_Links => False);
          begin
             Destroy (File_Selector);
             Free (Last_Directory);
@@ -861,7 +863,8 @@ package body Gtkada.File_Selector is
      (Win : access File_Selector_Window_Record'Class;
       Dir : String)
    is
-      Normalized : constant String := Normalize_Pathname (Dir);
+      Normalized : constant String :=
+                     Normalize_Pathname (Dir, Resolve_Links => False);
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
@@ -968,7 +971,8 @@ package body Gtkada.File_Selector is
       H   : String_Access := Getenv ("HOME");
    begin
       if H.all /= "" then
-         Change_Directory (Win, Normalize_Pathname (H.all));
+         Change_Directory
+           (Win, Normalize_Pathname (H.all, Resolve_Links => False));
       else
          Change_Directory (Win, Win.Home_Directory.all);
       end if;
@@ -1536,8 +1540,10 @@ package body Gtkada.File_Selector is
                if Is_Directory (Win.Current_Directory.all
                                   & Best_Match (1 .. Suffix_Length))
                  and then Win.Current_Directory.all
-                   /= Normalize_Pathname (Win.Current_Directory.all
-                                            & Best_Match (1 .. Suffix_Length))
+                   /= Normalize_Pathname
+                     (Win.Current_Directory.all
+                      & Best_Match (1 .. Suffix_Length),
+                      Resolve_Links => False)
                then
                   Set_Text (Win.Selection_Entry, "");
                   Change_Directory (Win,
