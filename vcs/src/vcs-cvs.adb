@@ -629,15 +629,6 @@ package body VCS.CVS is
                   Status_Temp := Next (Status_Temp);
                end loop;
 
-               if not Found then
-                  declare
-                     New_Status : File_Status_Record;
-                  begin
-                     Append (New_Status.File_Name, Data (Filenames_Temp));
-                     Append (The_Result, New_Status);
-                  end;
-               end if;
-
                Filenames_Temp := Next (Filenames_Temp);
             end loop;
 
