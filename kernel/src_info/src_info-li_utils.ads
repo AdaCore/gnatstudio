@@ -42,6 +42,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
@@ -68,12 +69,14 @@ private package Src_Info.LI_Utils is
    function Find_Declaration
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
+      Class_Name              : in String := "";
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
+      Class_Name              : in String := "";
       Filename                : in String := "";
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
