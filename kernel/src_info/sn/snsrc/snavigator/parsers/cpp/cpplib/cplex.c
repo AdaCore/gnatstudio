@@ -60,7 +60,7 @@ MA 02111-1307, USA.
 extern Tcl_Encoding encoding;
 static int yyeof;
 
-#define TABSIZE(pos)		(8 - ((pos) & 7))
+#define TABSIZE(pos)		(9 - ((pos) & 7))
 
 # define input() ( yyleng++, \
                    _prev_yycharno = yycharno, \
