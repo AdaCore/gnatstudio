@@ -7627,10 +7627,14 @@ If this attribute is set to "ide", then the switches cannot be set for a
 specific file, only at the project level. Support for file-specific switches
 currently requires modification of the GPS sources themselves.
 
+@item attribute (Default vluae is default_switches)
+This optional attribute specifies the name of the attribute in the project
+which is used to store the switches for that tool.
+
 @item index (Default value is the tool name)
 This optional attribute specifies what index is used in the project. This is
-mostly for internal use by GPS, and describes what index of the
-@code{Default_Switches} attribute is used to store the switches for that tool.
+mostly for internal use by GPS, and describes what index of the project
+attribute is used to store the switches for that tool.
 
 @end table
 
@@ -7641,11 +7645,14 @@ This tag accepts the following children, described in separate sections:
    (@pxref{Defining tool switches})
 @item <language>
    (@pxref{Defining supported languages})
+@item <default-cmd-line>
+   (@pxref{Defining the default command line})
 @end table
 
 
 @menu
 * Defining supported languages::
+* Defining the default command line::
 * Defining tool switches::
 * Executing external tools::
 * Full tool example::
@@ -7672,6 +7679,28 @@ displayed if that language is supported by the project.
 <tool name="My Tool" >
   <language>Ada</language>
   <language>C</language>
+</tool>
+@end smallexample
+
+@c --------------------------------------------------------------------------
+@node Defining the default command line
+@subsection Defining the default command line
+@cindex <initial-cmd-line>
+@c --------------------------------------------------------------------------
+
+@noindent
+It is possible to define the command line that should be used for a tool when
+the user is using the default project, or hasn't overriden this command line
+in the project.
+
+This is done through the @code{<initial-cmd-line>} tag, as a child of the
+@code{<tool>} tag. Its value is the command line that would be passed to the
+tool. This command line is parsed as usual, eg quotes are taken into account
+to avoid splitting switches each time a space is encountered.
+
+@smallexample
+<tool name="My tool" >
+   <initial-cmd-line>-a -b -c</initial-cmd-line>
 </tool>
 @end smallexample
 
