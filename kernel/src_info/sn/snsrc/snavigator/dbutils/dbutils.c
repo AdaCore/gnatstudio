@@ -2799,7 +2799,6 @@ static struct check_symbol_types {
 
 int get_template_argument (const char* class_name, const char* fn_name,
                 const char* name, char* type_name) {
-    /* first search type_name among func template arguments */
 	 DBT	key;
 	 DBT	data;
 	 DB   *dbp = db_syms [PAF_TEMPLATE_ARG_DEF];
@@ -2808,6 +2807,7 @@ int get_template_argument (const char* class_name, const char* fn_name,
 
     if ( !dbp ) return 0;
 
+    /* first search type_name among func template arguments */
     LongStringInit (&key_str, 0);
     key_str.copystrings (&key_str, fn_name, DB_FLDSEP_STR,
                                    name, DB_FLDSEP_STR, 0);
@@ -2828,6 +2828,11 @@ int get_template_argument (const char* class_name, const char* fn_name,
     }
 
     /* then search type_name among class template arguments */
+    if ( !class_name || !strlen (class_name) ) {
+        key_str.free (&key_str);
+        return 0;
+    }
+
     key_str.copystrings (&key_str, class_name, DB_FLDSEP_STR,
                                    name, DB_FLDSEP_STR, 0);
     key.data = (void*) key_str.buf;

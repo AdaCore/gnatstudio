@@ -1842,7 +1842,6 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
 	      break;
       }
 
-   
       Put_cross_ref( paf_type
                    , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
                    , PAF_REF_SCOPE_GLOBAL
