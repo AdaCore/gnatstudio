@@ -205,8 +205,6 @@ package body Src_Editor_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   package Location_Idle is new Gtk.Main.Idle (Location_Idle_Data);
-
    function Location_Callback (D : Location_Idle_Data) return Boolean;
    --  Idle callback used to scroll the source editors.
 
@@ -650,8 +648,8 @@ package body Src_Editor_Module is
             File : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
          begin
-            Line   := Nth_Arg (Data, 2, Default => 0);
-            Column := Nth_Arg (Data, 3, Default => 0);
+            Line   := Nth_Arg (Data, 2, Default => 1);
+            Column := Nth_Arg (Data, 3, Default => 1);
             Length := Nth_Arg (Data, 4, Default => 0);
 
             if File /= VFS.No_File then
@@ -2705,7 +2703,7 @@ package body Src_Editor_Module is
             File        : constant Virtual_File :=
               Create (Full_Filename => Get_String (Data (Data'First)));
             Line        : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column      : constant Gint    := Get_Int (Data (Data'First + 2));
+            Column      : Gint             := Get_Int (Data (Data'First + 2));
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
             New_File    : constant Boolean :=
               Get_Boolean (Data (Data'First + 5));
@@ -2745,6 +2743,10 @@ package body Src_Editor_Module is
 
                if Source /= null then
                   Edit := Source.Editor;
+               end if;
+
+               if Column = 0 then
+                  Column := 1;
                end if;
 
                if Edit /= null
