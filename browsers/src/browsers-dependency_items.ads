@@ -94,6 +94,11 @@ package Browsers.Dependency_Items is
       Item    : access File_Item_Record);
    --  Redraw the item to its double buffer
 
+   procedure Reset
+     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Item : access File_Item_Record);
+   --  Reset the internal state of the item
+
    ----------------------
    -- Dependency links --
    ----------------------

@@ -61,6 +61,11 @@ package Browsers.Call_Graph is
       Item    : access Entity_Item_Record);
    --  Redraw the item to its double buffer
 
+   procedure Reset
+     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Item    : access Entity_Item_Record);
+   --  Reset the internal state of the item
+
    procedure Destroy (Item : in out Entity_Item_Record);
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.

@@ -1030,4 +1030,17 @@ package body Browsers.Call_Graph is
       return null;
    end Save_Desktop;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Browser : access Glide_Browser_Record'Class;
+                    Item : access Entity_Item_Record)
+   is
+      pragma Unreferenced (Browser);
+   begin
+      Item.To_Parsed := False;
+      Item.From_Parsed := False;
+   end Reset;
+
 end Browsers.Call_Graph;
