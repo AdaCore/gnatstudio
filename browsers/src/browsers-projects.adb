@@ -37,11 +37,6 @@ package body Browsers.Projects is
 
    Margin : constant := 2;
 
-   procedure Update_Display
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
-   --  Refresh the display of the item
-
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -53,17 +48,16 @@ package body Browsers.Projects is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Press
       then
-         Select_Item (Item.Browser, Item, Update_Display'Access);
+         Select_Item (Item.Browser, Item, True);
       end if;
    end On_Button_Click;
 
-   --------------------
-   -- Update_Display --
-   --------------------
+   -------------
+   -- Refresh --
+   -------------
 
-   procedure Update_Display
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class) is
+   procedure Refresh (Browser : access Glide_Browser_Record'Class;
+                      Item    : access Browser_Project_Vertex) is
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -72,9 +66,8 @@ package body Browsers.Projects is
          Get_Text_GC (Browser),
          Margin,
          Get_Ascent (Get_Text_Font (Browser)) + Margin,
-         Get_Name_String (Browser_Project_Vertex_Access (Item).Name)
-         & Prj.Project_File_Extension);
-   end Update_Display;
+         Get_Name_String (Item.Name) & Prj.Project_File_Extension);
+   end Refresh;
 
    -------------------------------
    -- Examine_Project_Hierarchy --
@@ -126,7 +119,7 @@ package body Browsers.Projects is
 
          Set_Screen_Size_And_Pixmap
            (V, Get_Window (In_Browser), Width, Height);
-         Update_Display (In_Browser, V);
+         Refresh (In_Browser, V);
          return Canvas_Item (V);
       end Vertex_Factory;
 

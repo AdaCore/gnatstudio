@@ -47,6 +47,11 @@ package Browsers.Projects is
       return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
+   procedure Refresh
+     (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Item    : access Browser_Project_Vertex);
+   --  Redraw the item to its double buffer
+
 private
    type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
