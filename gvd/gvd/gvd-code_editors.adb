@@ -755,7 +755,12 @@ package body Odd.Code_Editors is
 
       Print_Buffer (Editor);
       Update_Buttons (Editor);
-      Update_Breakpoints (Editor, No_Breakpoint);
+      if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
+         Update_Breakpoints
+           (Editor, Debugger_Process_Tab (Editor.Process).Breakpoints.all);
+      else
+         Update_Breakpoints (Editor, No_Breakpoint);
+      end if;
 
       --  For the buttons to become visible again, we have to hide the layout,
       --  and then show it again... Don't know why !
