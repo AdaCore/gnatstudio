@@ -1892,6 +1892,7 @@ package body Ada_Analyzer is
               and then Prev_Token /= Tok_Semicolon
               and then Prev_Token /= Tok_Colon
               and then Prev_Token /= Tok_Arrow
+              and then Prev_Token /= Tok_Left_Paren
               and then Prev_Token not in Reserved_Token_Type
             then
                --  This is a continuation line, add extra indentation
