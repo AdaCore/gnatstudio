@@ -229,14 +229,14 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'possible mispelling of "=>"'
 
-   type Ligth_Misspelling is new Error_Parser
+   type Light_Misspelling is new Error_Parser
      (new String'("Misspelling"), 1)
    with null record;
 
-   procedure Initialize (This : in out Ligth_Misspelling);
+   procedure Initialize (This : in out Light_Misspelling);
 
    procedure Fix
-     (This         : Ligth_Misspelling;
+     (This         : Light_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
