@@ -25,8 +25,7 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 
-with Prj.Tree;                 use Prj.Tree;
-
+with Prj;
 with String_List_Utils;        use String_List_Utils;
 
 with VCS;                      use VCS;
@@ -116,7 +115,7 @@ package VCS_View_Pkg is
    --  Return the vcs explorer, if created, null otherwise.
 
    function Get_Files_In_Project
-     (Project : Project_Node_Id) return String_List.List;
+     (Project_View : Prj.Project_Id) return String_List.List;
 
    function Get_Dirs_In_Project
      (Kernel : Kernel_Handle) return String_List.List;
