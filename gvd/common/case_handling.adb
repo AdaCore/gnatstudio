@@ -149,6 +149,10 @@ package body Case_Handling is
          --  Check if a substring exception exists for this substring and
          --  apply it.
 
+         -----------
+         -- Apply --
+         -----------
+
          procedure Apply (Substring : String) is
             N : W_Node;
          begin
@@ -433,21 +437,21 @@ package body Case_Handling is
    -------------
 
    procedure Destroy (C : in out Casing_Exceptions) is
-      procedure Free is new Ada.Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_Hash_Table.HTable, Exceptions_Table);
    begin
       --  Word exceptions
 
       if C.E /= null then
          String_Hash_Table.Reset (C.E.all);
-         Free (C.E);
+         Unchecked_Free (C.E);
       end if;
 
       --  Substring exceptions
 
       if C.S /= null then
          String_Hash_Table.Reset (C.S.all);
-         Free (C.E);
+         Unchecked_Free (C.E);
       end if;
    end Destroy;
 
