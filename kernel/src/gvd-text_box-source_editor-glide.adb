@@ -38,6 +38,8 @@ with Ada.Unchecked_Deallocation;
 
 package body GVD.Text_Box.Source_Editor.Glide is
 
+   use String_List_Utils.String_List;
+
    ------------
    -- Attach --
    ------------
@@ -99,6 +101,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
         (Kernel, Editor.Debugger_Current_File.all,
          Editor.Line, 1, Highlight_Line => True,
          Enable_Navigation => False, New_File => False);
+      Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
    end Highlight_Current_Line;
 
    --------------------
@@ -155,7 +158,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
          Open_File_Editor
            (Kernel, Editor.Current_File.all, New_File => False,
-            Highlight_Line => True,
+            Highlight_Line => False,
             Enable_Navigation => False);
       end if;
    end Load_File;
@@ -210,6 +213,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Open_File_Editor
         (Kernel, Editor.Current_File.all, Editor.Line, 1,
          Highlight_Line => True, New_File => False);
+      Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
 
       if Set_Current then
          Add_Line_Information
@@ -435,8 +439,16 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ---------------------
 
    procedure Free_Debug_Info (Editor : access GEdit_Record) is
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
    begin
       Free (Editor.Current_Breakpoints);
+
+      while not Is_Empty (Editor.Highlighted_Files) loop
+         --  Clear the line highlight for files that had an highlight.
+
+         Clear_Highlighting (Kernel, Head (Editor.Highlighted_Files));
+         Next (Editor.Highlighted_Files);
+      end loop;
    end Free_Debug_Info;
 
 end GVD.Text_Box.Source_Editor.Glide;
