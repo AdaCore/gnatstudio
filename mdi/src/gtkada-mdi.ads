@@ -349,7 +349,7 @@ private
       --  visible elsewhere, and we want to be sure that the MDI_Child is never
       --  shown on the canvas.
 
-      MDI_Width, MDI_Height : Glib.Guint := 0;
+      MDI_Width, MDI_Height : Glib.Gint := 0;
       --  Size of the MDI. This is used to avoid infinite loops in
       --  size_allocate
 
