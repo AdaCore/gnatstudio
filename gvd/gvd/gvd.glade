@@ -3931,7 +3931,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <name>editor_label</name>
-	      <label>(no file)</label>
+	      <label></label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
 	      <xalign>0.5</xalign>

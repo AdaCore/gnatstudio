@@ -156,7 +156,7 @@ begin
    Gtk_New_Hseparator (Process_Tab.Explorer_Separator);
    Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Explorer_Separator, False, True, 0);
 
-   Gtk_New (Process_Tab.Editor_Label, -("(no file)"));
+   Gtk_New (Process_Tab.Editor_Label);
    Set_Alignment (Process_Tab.Editor_Label, 0.5, 0.5);
    Set_Padding (Process_Tab.Editor_Label, 0, 0);
    Set_Justify (Process_Tab.Editor_Label, Justify_Center);
