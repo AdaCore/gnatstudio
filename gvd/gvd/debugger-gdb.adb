@@ -28,11 +28,10 @@ with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Unchecked_Conversion;
 
 package body Debugger.Gdb is
-
-   use Main_Debug_Window_Pkg;
 
    ---------------
    -- Constants --
@@ -204,7 +203,7 @@ package body Debugger.Gdb is
       Executable      : String;
       Arguments       : GNAT.OS_Lib.Argument_List;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
