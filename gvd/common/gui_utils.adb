@@ -1036,9 +1036,15 @@ package body GUI_Utils is
 
       Gtk.Main.Main;
 
-      Key  := Get_Key_Val (Output);
-      Mods := Get_State (Output);
-      Free (Output);
+      --  Output could be null if the main loop was exited
+      if Output /= null then
+         Key  := Get_Key_Val (Output);
+         Mods := Get_State (Output);
+         Free (Output);
+      else
+         Key  := 0;
+         Mods := 0;
+      end if;
 
       Grab_Remove (In_Widget);
       Keyboard_Ungrab (0);

@@ -242,7 +242,8 @@ package GUI_Utils is
       Key  : out Gdk.Types.Gdk_Key_Type;
       Mods : out Gdk.Types.Gdk_Modifier_Type);
    --  Temporarily grab the pointer and keyboards for In_Widget, and returns
-   --  the first fully defined key that the user has pressed.
+   --  the first fully defined key that the user has pressed. (Key, Mods) is
+   --  set to (0, 0) if no key could be grabbed.
    --  Nothing is done in In_Widget, it is only used as a target for the grab
    --  operations.
    --  In_Widget must be realized.
