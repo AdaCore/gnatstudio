@@ -15,6 +15,8 @@ BASE_DIR=$(VCS_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
 BASE_DIR=$(VCS_BASE_DIR)/../widgets
 include $(BASE_DIR)/Makefile.widgets
+BASE_DIR=$(VCS_BASE_DIR)/../prj_editor
+include $(BASE_DIR)/Makefile.prj_editor
 
 VCS_SRC_DIRS = $(VCS_BASE_DIR)/src $(VCS_BASE_DIR)/pixmaps
 SRC_DIRS += $(VCS_SRC_DIRS)
