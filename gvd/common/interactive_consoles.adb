@@ -394,7 +394,6 @@ package body Interactive_Consoles is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
       Success     : Boolean;
-      pragma Unreferenced (Success);
 
    begin
       case Key is
@@ -458,13 +457,12 @@ package body Interactive_Consoles is
                return True;
             end if;
 
-         when GDK_LC_c =>
+         when GDK_C =>
             if not Console.Waiting_For_Input
               and then Console.Interrupt /= null
-              and then Get_State (Event) = Control_Mask
+              and then Get_State (Event) = (Control_Mask or Shift_Mask)
             then
-               Console.Interrupt (Console, Console.User_Data);
-               return True;
+               return Console.Interrupt (Console, Console.User_Data);
             else
                return False;
             end if;
@@ -486,9 +484,14 @@ package body Interactive_Consoles is
                return True;
             end if;
 
+            Get_Iter_At_Mark
+              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+            Get_End_Iter (Console.Buffer, Last_Iter);
+            Backward_Char (Last_Iter, Success);
+
             declare
                Command : constant String :=
-                 Read (Console, Whole_Line => False);
+                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                H       : String_List_Access;
             begin
                if Command = ""

@@ -53,10 +53,12 @@ package Interactive_Consoles is
         User_Data : System.Address)
         return String;
 
-   type Interrupt_Handler is access procedure
+   type Interrupt_Handler is access function
      (Console   : access Interactive_Console_Record'Class;
-      User_Data : System.Address);
-   --  Called when ctrl-c is pressed in an interactive console
+      User_Data : System.Address) return Boolean;
+   --  Called when ctrl-c is pressed in an interactive console.
+   --  Should return true if the process was interrupted, False if nothing was
+   --  done.
 
    procedure Gtk_New
      (Console      : out Interactive_Console;
