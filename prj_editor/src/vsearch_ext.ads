@@ -21,6 +21,7 @@
 with Find_Utils;
 with Glide_Kernel;
 with Gtk.Button;
+with Gtk.Main;
 with Gtk.Toggle_Button;
 with Gtk.Widget;
 with Vsearch_Pkg;
@@ -53,9 +54,7 @@ package Vsearch_Ext is
       Label             : String;
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget := null;
-      Mask              : Find_Utils.Search_Options_Mask;
-      Search_Func       : Find_Utils.Module_Search_Function;
-      Replace_Func      : Find_Utils.Module_Replace_Function := null);
+      Mask              : Find_Utils.Search_Options_Mask);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  If Extra_Information is not null, then it will be displayed every time
@@ -67,9 +66,7 @@ package Vsearch_Ext is
    --  this.
    --  Mask indicates what options are relevant for that module. Options that
    --  are not set will be greyed out.
-   --  Search_Func and Replace_Func are the two functions that are actually
-   --  used to perform the actions. If one of them is null, the corresponding
-   --  GUI button will be greyed out.
+   --  If Supports_Replace if false, then the button will be greyed out.
 
    procedure Register_Default_Search
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -85,6 +82,8 @@ private
       Options_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
       Continue               : Boolean := True;
       Extra_Information      : Gtk.Widget.Gtk_Widget;
+      Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
+      Last_Search_Context    : Find_Utils.Search_Context_Access;
    end record;
 
 end Vsearch_Ext;

@@ -54,17 +54,13 @@ package body Vsearch_Ext is
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk_Widget;
-      Search_Func       : Module_Search_Function;
-      Replace_Func      : Module_Replace_Function;
    end record;
 
    No_Search : constant Search_Module_Data :=
      (Label             => null,
       Mask              => 0,
       Factory           => null,
-      Extra_Information => null,
-      Search_Func       => null,
-      Replace_Func      => null);
+      Extra_Information => null);
 
    procedure Free (Data : in out Search_Module_Data);
 
@@ -76,9 +72,7 @@ package body Vsearch_Ext is
    --  functions.
 
    type Idle_Search_Data is record
-      Search_Func : Module_Search_Function;
       Vsearch : Vsearch_Extended;
-      Context : Search_Context_Access;
       Search_Backward : Boolean;
    end record;
 
@@ -95,8 +89,11 @@ package body Vsearch_Ext is
    -- Callbacks --
    ---------------
 
-   procedure On_Search_Next (Object : access Gtk_Widget_Record'Class);
+   procedure On_Search (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Find" is clicked.
+
+   procedure On_Search_Next (Object : access Gtk_Widget_Record'Class);
+   --  Called when button "Next" is clicked.
 
    procedure On_Search_Replace (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Replace" is clicked.
@@ -133,9 +130,8 @@ package body Vsearch_Ext is
       Label             : String;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget := null;
-      Mask              : Search_Options_Mask;
-      Search_Func       : Module_Search_Function;
-      Replace_Func      : Module_Replace_Function := null) is
+      Mask              : Search_Options_Mask)
+   is
       Combo             : Gtk_Combo;
    begin
       Prepend (Search_Modules,
@@ -143,9 +139,7 @@ package body Vsearch_Ext is
                (Label             => new String' (Label),
                 Mask              => Mask,
                 Factory           => Factory,
-                Extra_Information => Extra_Information,
-                Search_Func       => Search_Func,
-                Replace_Func      => Replace_Func));
+                Extra_Information => Extra_Information));
 
       if Extra_Information /= null then
          Ref (Extra_Information);
@@ -183,36 +177,34 @@ package body Vsearch_Ext is
    -----------------
 
    function Idle_Search (Data : Idle_Search_Data) return Boolean is
-      C : Search_Context_Access;
    begin
-      if Data.Search_Func
-        (Data.Vsearch.Kernel, Data.Context, Data.Search_Backward)
+      if Search (Data.Vsearch.Last_Search_Context,
+                 Data.Vsearch.Kernel,
+                 Data.Search_Backward)
         and then Data.Vsearch.Continue
       then
          return True;
       else
-         C := Data.Context;
-         Free (C);
+         Free (Data.Vsearch.Last_Search_Context);
          Set_Sensitive (Data.Vsearch.Stop_Button, False);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
+         Data.Vsearch.Search_Idle_Handler := 0;
          return False;
       end if;
    end Idle_Search;
 
-   --------------------
-   -- On_Search_Next --
-   --------------------
+   ---------------
+   -- On_Search --
+   ---------------
 
-   procedure On_Search_Next (Object : access Gtk_Widget_Record'Class) is
+   procedure On_Search (Object : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
       Options : Search_Options;
       Data    : Search_Module_Data;
-      Context : Search_Context_Access;
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       Has_Next : Boolean;
-      Id       : Idle_Handler_Id;
 
    begin
       Push_State (Vsearch.Kernel, Processing);
@@ -221,16 +213,19 @@ package body Vsearch_Ext is
       if Data.Factory /= null
         and then Get_Text (Vsearch.Pattern_Entry) /= ""
       then
-         Context := Data.Factory (Vsearch.Kernel, Data.Extra_Information);
+         Free (Vsearch.Last_Search_Context);
+         Vsearch.Last_Search_Context := Data.Factory
+           (Vsearch.Kernel, Data.Extra_Information);
 
-         if Context /= null then
+         if Vsearch.Last_Search_Context /= null then
             Options :=
               (Scope          => Search_Scope'Val
                  (Get_Index_In_List (Vsearch.Scope_Combo) + 1),
                Case_Sensitive => Get_Active (Vsearch.Case_Check),
                Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
                Regexp         => Get_Active (Vsearch.Regexp_Check));
-            Set_Context (Context, Get_Text (Vsearch.Pattern_Entry), Options);
+            Set_Context (Vsearch.Last_Search_Context,
+                         Get_Text (Vsearch.Pattern_Entry), Options);
 
             Vsearch.Continue := True;
 
@@ -240,22 +235,60 @@ package body Vsearch_Ext is
                Push_State (Vsearch.Kernel, Processing);
                Set_Sensitive (Vsearch.Stop_Button, True);
                Set_Sensitive (Vsearch.Search_Next_Button, False);
-               Id := Search_Idle_Pkg.Add
+               Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
                  (Idle_Search'Access,
-                  (Search_Func => Data.Search_Func,
-                   Vsearch => Vsearch,
-                   Context => Context,
+                  (Vsearch => Vsearch,
                    Search_Backward => False));
             else
-               Has_Next := Data.Search_Func
-                 (Vsearch.Kernel,
-                  Context,
+               Has_Next := Search
+                 (Vsearch.Last_Search_Context,
+                  Vsearch.Kernel,
                   Search_Backward => False);
-               Free (Context);
             end if;
          end if;
+      else
+         Free (Vsearch.Last_Search_Context);
       end if;
       Pop_State (Vsearch.Kernel);
+   end On_Search;
+
+   --------------------
+   -- On_Search_Next --
+   --------------------
+
+   procedure On_Search_Next (Object : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      All_Occurences : constant Boolean := Get_Active
+        (Vsearch.Search_All_Check);
+      Has_Next : Boolean;
+   begin
+      if Vsearch.Search_Idle_Handler /= 0 then
+         Idle_Remove (Vsearch.Search_Idle_Handler);
+         Vsearch.Search_Idle_Handler := 0;
+      end if;
+
+      if Vsearch.Last_Search_Context /= null then
+         Vsearch.Continue := True;
+
+         if All_Occurences then
+            --  Set up Glide during the search. Everything is automatically
+            --  put back when the idle loop terminates.
+            Push_State (Vsearch.Kernel, Processing);
+            Set_Sensitive (Vsearch.Stop_Button, True);
+            Set_Sensitive (Vsearch.Search_Next_Button, False);
+            Vsearch.Search_Idle_Handler := Search_Idle_Pkg.Add
+              (Idle_Search'Access,
+               (Vsearch => Vsearch,
+                Search_Backward => False));
+         else
+            Push_State (Vsearch.Kernel, Processing);
+            Has_Next := Search
+              (Vsearch.Last_Search_Context,
+               Vsearch.Kernel,
+               Search_Backward => False);
+            Pop_State (Vsearch.Kernel);
+         end if;
+      end if;
    end On_Search_Next;
 
    -----------------------
@@ -318,14 +351,14 @@ package body Vsearch_Ext is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
       Data    : Search_Module_Data := Find_Module
         (Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Replace : Boolean;
 
    begin
       if Data /= No_Search then
-         Set_Sensitive (Vsearch.Replace_Label, Data.Replace_Func /= null);
-         Set_Sensitive (Vsearch.Replace_Combo, Data.Replace_Func /= null);
-         Set_Sensitive
-           (Vsearch.Search_Replace_Button, Data.Replace_Func /= null);
-         Set_Sensitive (Vsearch.Search_Next_Button, Data.Search_Func /= null);
+         Replace := (Data.Mask and Supports_Replace) /= 0;
+         Set_Sensitive (Vsearch.Replace_Label, Replace);
+         Set_Sensitive (Vsearch.Replace_Combo, Replace);
+         Set_Sensitive (Vsearch.Search_Replace_Button, Replace);
 
          Set_Sensitive (Vsearch.Scope_Label, (Data.Mask and Scope_Mask) /= 0);
          Set_Sensitive (Vsearch.Scope_Combo, (Data.Mask and Scope_Mask) /= 0);
@@ -400,7 +433,7 @@ package body Vsearch_Ext is
          -"Search next/all occurrence(s)");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Search_Next'Access), Vsearch);
+         Widget_Callback.To_Marshaller (On_Search'Access), Vsearch);
 
       Gtk_New (Vsearch.Search_Replace_Button, -"Replace");
       Pack_Start
@@ -412,7 +445,18 @@ package body Vsearch_Ext is
         (Vsearch.Search_Replace_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Search_Replace'Access), Vsearch);
 
-      Gtk_New (Vsearch.Search_Previous_Button, -"Previous");
+      Gtk_New (Vsearch.Search_Previous_Button, -"Next");
+      Pack_Start
+        (Vsearch.Buttons_Hbox, Vsearch.Search_Previous_Button,
+         False, False, 0);
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Search_Previous_Button,
+         -"Search next occurrence");
+      Widget_Callback.Object_Connect
+        (Vsearch.Search_Previous_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Search_Next'Access), Vsearch);
+
+      Gtk_New (Vsearch.Search_Previous_Button, -"Prev.");
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Search_Previous_Button,
          False, False, 0);
@@ -468,25 +512,21 @@ package body Vsearch_Ext is
       --     Label             => -"Current File",
       --     Factory           => Current_File_Factory'Access,
       --     Extra_Information => null,
-      --     Mask              => All_Options and not Search_Backward,
-      --     Search_Func       => Search_Current_File'Access,
-      --     Replace_Func      => null);
+      --     Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Project",
          Factory           => Files_From_Project_Factory'Access,
          Extra_Information => null,
-         Mask              => All_Options and not Search_Backward,
-         Search_Func       => Search_Files_From_Project'Access,
-         Replace_Func      => null);
+         Mask              => All_Options
+           and not Search_Backward and not Supports_Replace);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files...",
          Factory           => Files_Factory'Access,
          Extra_Information => Gtk_Widget (Extra),
-         Mask              => All_Options and not Search_Backward,
-         Search_Func       => Search_Files'Access,
-         Replace_Func      => null);
+         Mask              => All_Options
+           and not Search_Backward and not Supports_Replace);
    end Register_Default_Search;
 
 end Vsearch_Ext;
