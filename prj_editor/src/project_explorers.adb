@@ -191,8 +191,7 @@ package body Project_Explorers is
 
    procedure Expand_File_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Ctree_Node;
-      Data     : User_Data);
+      Node     : Gtk_Ctree_Node);
    --  Expand a file node, ie add children for all the entities defined in the
    --  file.
 
@@ -504,6 +503,7 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Kernel, Event_Widget, Menu);
       Context      : Selection_Context_Access;
       T            : Project_Explorer := Project_Explorer (Object);
       Row, Column  : Gint;
@@ -592,6 +592,7 @@ package body Project_Explorers is
    procedure Project_Changed
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
+      pragma Unreferenced (Kernel);
       T : Project_Explorer := Project_Explorer (Explorer);
    begin
       --  Destroy all the items in the tree.
@@ -984,8 +985,7 @@ package body Project_Explorers is
 
    procedure Expand_File_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Ctree_Node;
-      Data     : User_Data)
+      Node     : Gtk_Ctree_Node)
    is
       File_Name  : constant String := Get_File_From_Node (Explorer, Node);
       Name       : constant String := File_Name & ASCII.NUL;
@@ -1087,7 +1087,7 @@ package body Project_Explorers is
                null;
 
             when File_Node =>
-               Expand_File_Node (T, Node, Data);
+               Expand_File_Node (T, Node);
 
             when Category_Node | Entity_Node =>
                --  Work was already done when the file node was open
@@ -1641,6 +1641,7 @@ package body Project_Explorers is
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
+      pragma Unreferenced (Kernel);
       T : Project_Explorer := Project_Explorer (Explorer);
       Selected_Dir : String_Access := null;
    begin
@@ -1899,6 +1900,7 @@ package body Project_Explorers is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Explorer : Project_Explorer;
       Child    : MDI_Child;
    begin
