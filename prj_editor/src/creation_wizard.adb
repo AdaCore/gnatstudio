@@ -40,6 +40,7 @@ with Gtk.Button;            use Gtk.Button;
 with Gtk.Button_Box;        use Gtk.Button_Box;
 with Gtk.Clist;             use Gtk.Clist;
 with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
@@ -210,6 +211,7 @@ package body Creation_Wizard is
       Label  : Gtk_Label;
       Button : Gtk_Button;
       Align  : Gtk_Alignment;
+      Frame  : Gtk_Frame;
    begin
       Gtk_New_Vbox (Box, Spacing => 8);
       Set_Border_Width (Box, 5);
@@ -221,8 +223,12 @@ package body Creation_Wizard is
       Gtk_New (Align, 0.0, 0.5, 1.0, 0.0);
       Pack_Start (Box, Align, Expand => True, Fill => True);
 
+      Gtk_New (Frame, "Name and location");
+      Set_Border_Width (Frame, 5);
+      Add (Align, Frame);
+
       Gtk_New (Table, Rows => 4, Columns => 2, Homogeneous => False);
-      Add (Align, Table);
+      Add (Frame, Table);
 
       Gtk_New (Label, "Enter the name of the project to create:");
       Attach (Table, Label, 0, 2, 0, 1);
