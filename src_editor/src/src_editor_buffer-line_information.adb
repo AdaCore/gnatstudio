@@ -50,6 +50,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 with Pango.Layout;              use Pango.Layout;
+with Pango.Enums;               use Pango.Enums;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Traces; use Traces;
@@ -1653,7 +1654,9 @@ package body Src_Editor_Buffer.Line_Information is
 
             Buffer.Modifying_Editable_Lines := False;
             Buffer.Inserting := True;
+            Buffer.Blocks_Timeout_Registered := True;
             Delete (Buffer, Start_Iter, End_Iter);
+            Buffer.Blocks_Timeout_Registered := False;
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
 
@@ -1707,6 +1710,8 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Iter, End_Iter : Gtk_Text_Iter;
 
       Number_Of_Lines_Unfolded : Natural := 0;
+
+      Command    : Hide_Editable_Lines_Command;
    begin
       Buffer.Modifying_Real_Lines := True;
       Get_Iter_At_Mark (Buffer, Iter, Mark);
@@ -1727,7 +1732,9 @@ package body Src_Editor_Buffer.Line_Information is
 
             Buffer.Modifying_Editable_Lines := False;
             Buffer.Inserting := True;
+            Buffer.Blocks_Timeout_Registered := True;
             Insert (Buffer, Iter, Editable_Lines (Line).Text.all & ASCII.LF);
+            Buffer.Blocks_Timeout_Registered := False;
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
 
@@ -1780,11 +1787,18 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Configuration_Changed (Buffer);
 
-      --  Remove the command that unhides the lines.
+      --  Add an icon to hide the lines.
+
+      Command := new Hide_Editable_Lines_Type;
+      Command.Buffer := Source_Buffer (Buffer);
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
+      Command.Mark := Create_Mark (Buffer, "", Iter);
+      Command.Number := Editable_Line_Type (Number_Of_Lines_Unfolded - 1);
 
       Add_Block_Command
-        (Buffer, Get_Buffer_Line (Buffer, First_Line), null,
-         Null_Pixbuf);
+        (Buffer, Get_Buffer_Line (Buffer, First_Line),
+         Command_Access (Command),
+         Hide_Block_Pixbuf);
       Buffer.Modifying_Real_Lines := False;
    end Unhide_Lines;
 
@@ -2035,6 +2049,7 @@ package body Src_Editor_Buffer.Line_Information is
       Result   : Boolean;
       The_Line : Gint;
       Tag      : Gtk_Text_Tag;
+      New_Tag  : Boolean := False;
    begin
       --  Get the text tag, create it if necessary.
 
@@ -2045,13 +2060,16 @@ package body Src_Editor_Buffer.Line_Information is
             return;
          else
             Gtk_New (Tag, Category);
-
-            Set_Property
-              (Tag, Background_Gdk_Property,
-               Get_Color (Lookup_Category (Category)));
-
-            Add (Get_Tag_Table (Buffer), Tag);
+            New_Tag := True;
          end if;
+      end if;
+
+      Set_Property
+        (Tag, Background_Gdk_Property,
+         Get_Color (Lookup_Category (Category)));
+
+      if New_Tag then
+         Add (Get_Tag_Table (Buffer), Tag);
       end if;
 
       --  Get the boundaries of text to (un)highlight
@@ -2072,6 +2090,10 @@ package body Src_Editor_Buffer.Line_Information is
          else
             Get_Iter_At_Line_Offset
               (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
+
+            if Ends_Line (Start_Iter) then
+               Backward_Char (Start_Iter, Result);
+            end if;
          end if;
 
          if End_Col <= 0
