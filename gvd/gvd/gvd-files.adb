@@ -73,7 +73,7 @@ package body GVD.Files is
       Remote_Host : Basic_Types.String_Access := null)
    is
       F             : File_Descriptor;
-      Length        : Positive;
+      Length        : Natural;
       Name          : aliased constant String :=
         To_Host_Pathname (Cache.File_Name.all) & ASCII.NUL;
       Tmp_File      : GNAT.OS_Lib.Temp_File_Name;
@@ -169,48 +169,53 @@ package body GVD.Files is
       end if;
 
       if F /= Invalid_FD then
-         Length := Positive (File_Length (F));
+         Length := Natural (File_Length (F));
 
-         --  Allocate the buffer
-         --  and strip the ^Ms from the string
-         declare
-            S   : String (1 .. Length);
-            Pos : Natural;
-         begin
-            Length := Read (F, S'Address, Length);
+         if Length = 0 then
+            Contents := new String' ("");
+         else
+            --  Allocate the buffer
+            --  and strip the ^Ms from the string
 
-            Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
+            declare
+               S   : String (1 .. Length);
+               Pos : Natural;
+            begin
+               Length := Read (F, S'Address, Length);
 
-            --  Check whether we should do an automatic strip (since GtkText
-            --  is somewhat unreliable and will sometimes put LF, sometimes CR
-            --  & LF)
-            if not Cache.CR_Stripped then
-               Pos := S'First;
+               Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
 
-               while Pos <= S'Last
-                 and then S (Pos) /= ASCII.CR
-                 and then S (Pos) /= ASCII.LF
-               loop
-                  Pos := Pos + 1;
-               end loop;
+               --  Check whether we should do an automatic strip (since GtkText
+               --  is somewhat unreliable and will sometimes put LF, sometimes
+               --  CR & LF)
 
-               Cache.CR_Stripped := Pos <= S'Last and then S (Pos) = ASCII.CR;
-            end if;
+               if not Cache.CR_Stripped then
+                  Pos := S'First;
 
-            if Cache.CR_Stripped then
-               Contents := new String' (Strip_CR (S));
-            else
-               Contents := new String' (S);
-            end if;
+                  while Pos <= S'Last
+                    and then S (Pos) /= ASCII.CR
+                    and then S (Pos) /= ASCII.LF
+                  loop
+                     Pos := Pos + 1;
+                  end loop;
 
-            --  Only save the contents in the cache for remote files
+                  Cache.CR_Stripped :=
+                    Pos <= S'Last and then S (Pos) = ASCII.CR;
+               end if;
 
-            if Remote_Host /= null
-              and then Remote_Host.all /= ""
-            then
-               Cache.File_Contents := new String' (Contents.all);
-            end if;
-         end;
+               if Cache.CR_Stripped then
+                  Contents := new String' (Strip_CR (S));
+               else
+                  Contents := new String' (S);
+               end if;
+            end;
+         end if;
+
+         --  Only save the contents in the cache for remote files
+
+         if Remote_Host /= null and then Remote_Host.all /= "" then
+            Cache.File_Contents := new String' (Contents.all);
+         end if;
 
          if Should_Delete then
             Delete_File (Tmp_File'Address, Should_Delete);
