@@ -58,6 +58,7 @@ with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
 with Languages_Lists;           use Languages_Lists;
+with Gtk.Event_Box;             use Gtk.Event_Box;
 
 package body Project_Properties is
    use Widget_List;
@@ -675,6 +676,7 @@ package body Project_Properties is
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
       Main_Box     : Gtk_Box;
+      Event        : Gtk_Event_Box;
 
    begin
       Gtk.Dialog.Initialize
@@ -731,10 +733,20 @@ package body Project_Properties is
       for E in Editor.Pages'Range loop
          Page := Get_Nth_Project_Editor_Page (Kernel, E);
 
+         --  We need to put the pages in an event box to workaround a gtk+ bug:
+         --  since a notebook is a NO_WINDOW widget, button_press events are
+         --  sent to the parent of the notebook. In case of nested notebooks,
+         --  this means the event is sent to the parent's of the enclosing
+         --  notebook, and thus is improperly handled by the nested notebooks.
+         Gtk_New (Event);
+
          Gtk_New (Label, Get_Label (Page));
          Editor.Pages (E) := Widget_Factory
            (Page, Project, Project_Path (Project), Editor.Kernel);
-         Append_Page (Main_Note, Editor.Pages (E), Label);
+
+         Add (Event, Editor.Pages (E));
+         Show (Event);
+         Append_Page (Main_Note, Event, Label);
       end loop;
 
       --  Connect this only once we have created the pages
