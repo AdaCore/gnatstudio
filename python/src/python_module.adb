@@ -47,6 +47,7 @@ with VFS;                      use VFS;
 with Interactive_Consoles;
 with HTables;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body Python_Module is
 
@@ -1880,6 +1881,8 @@ package body Python_Module is
 
       if PyInt_Check (Item) then
          return PyInt_AsLong (Item) = 1;
+      elsif PyString_Check (Item) then
+         return To_Lower (PyString_AsString (Item)) = "True";
       else
          Raise_Exception
            (Invalid_Parameter'Identity,
