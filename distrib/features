@@ -3,6 +3,10 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- MDI's central area can be split through drag-and-drop
+
+- New editor views can be created through drag-and-drop
+
 - Ability to format Ada operators and delimiters in the editor
 
 - Auto casing of Ada reserved words and identifiers
