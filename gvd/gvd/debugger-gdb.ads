@@ -127,6 +127,9 @@ package Debugger.Gdb is
       Executable : String;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   function Get_Executable
+     (Debugger : access Gdb_Debugger) return VFS.Virtual_File;
+
    procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;

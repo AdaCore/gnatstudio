@@ -27,6 +27,7 @@ with Gtk.Window;
 with GNAT.Regpat;
 with Basic_Types;
 with GVD.Types;
+with VFS;
 
 package Debugger.Jdb is
 
@@ -82,6 +83,9 @@ package Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Executable : String;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   function Get_Executable
+     (Debugger : access Jdb_Debugger) return VFS.Virtual_File;
 
    procedure Load_Core_File
      (Debugger : access Jdb_Debugger;
@@ -353,6 +357,8 @@ private
       Main_Class : GNAT.OS_Lib.String_Access;
       Frame      : Natural := 1;
       --  Current frame displayed.
+
+      Executable : VFS.Virtual_File := VFS.No_File;
    end record;
 
 end Debugger.Jdb;

@@ -367,6 +367,10 @@ package Debugger is
    --  the debugger.
    --  GDB_COMMAND: "file"
 
+   function Get_Executable
+     (Debugger : access Debugger_Root) return VFS.Virtual_File is abstract;
+   --  Return the name of the executable currently debugged.
+
    procedure Load_Core_File
      (Debugger : access Debugger_Root;
       Core     : String;

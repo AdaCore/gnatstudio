@@ -893,6 +893,34 @@ package body Debugger.Gdb is
    end Set_Args;
 
    --------------------
+   -- Get_Executable --
+   --------------------
+
+   function Get_Executable
+     (Debugger : access Gdb_Debugger) return VFS.Virtual_File
+   is
+      E : GNAT.OS_Lib.String_Access;
+      Result : Virtual_File;
+   begin
+      if Debugger.Executable /= null then
+         if Is_Absolute_Path (Debugger.Executable.all) then
+            Result := Create (Full_Filename => Debugger.Executable.all);
+         else
+            E := Locate_Exec_On_Path (Debugger.Executable.all);
+            if E /= null then
+               Result := Create (Full_Filename => E.all);
+               Free (E);
+            else
+               Result := Create_From_Base (Debugger.Executable.all);
+            end if;
+         end if;
+         return Result;
+      else
+         return VFS.No_File;
+      end if;
+   end Get_Executable;
+
+   --------------------
    -- Set_Executable --
    --------------------
 
@@ -943,7 +971,7 @@ package body Debugger.Gdb is
 
       Set_Is_Started (Debugger, False);
       Free (Debugger.Executable);
-      Debugger.Executable := new String'(Executable);
+      Debugger.Executable := new String'(Exec);
 
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be

@@ -237,10 +237,26 @@ package body Debugger.Jdb is
       Set_Is_Started (Debugger, False);
       Send (Debugger, "load " & Executable, Mode => Mode);
 
+      if Is_Absolute_Path (Executable) then
+         Debugger.Executable := Create (Full_Filename => Executable);
+      else
+         Debugger.Executable := Create_From_Base (Executable);
+      end if;
+
       if Debugger.Window /= null then
          Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
       end if;
    end Set_Executable;
+
+   --------------------
+   -- Get_Executable --
+   --------------------
+
+   function Get_Executable
+     (Debugger : access Jdb_Debugger) return VFS.Virtual_File is
+   begin
+      return Debugger.Executable;
+   end Get_Executable;
 
    --------------------
    -- Load_Core_File --
