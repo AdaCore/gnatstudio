@@ -23,11 +23,8 @@ with Namet;                   use Namet;
 with Types;                   use Types;
 with Projects;                use Projects;
 with VFS;                     use VFS;
-with Traces;                  use Traces;
 
 package body Src_Info.Prj_Utils is
-
-   Me : constant Debug_Handle := Create ("Prj_Utils");
 
    -------------------------
    -- Get_Source_Filename --
