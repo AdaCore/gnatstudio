@@ -432,11 +432,13 @@ package body Projects.Editor.Normalize is
          Max_Scenario_Variables := 50;  --  Random
       end if;
 
+      Trace (Me, "Normalize: Root=" & Project_Name (Root_Project)
+             & ' ' & Boolean'Image (Recurse));
+
       while Current (Iter) /= Projects.No_Project loop
          if not Is_Normalized (Current (Iter)) then
             Project := Current (Iter).Node;
-            Trace (Me, "Normalize: " & Project_Name (Current (Iter))
-                   & ' ' & Recurse'Img);
+            Trace (Me, "Normalize: imported=" & Project_Name (Current (Iter)));
 
             Values := new External_Variable_Value_Array
               (1 .. Max_Scenario_Variables);
