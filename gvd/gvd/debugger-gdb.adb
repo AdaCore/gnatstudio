@@ -52,7 +52,7 @@ package body Debugger.Gdb is
    Gdb_Command   : constant String := "gdb";
    --  Name of the command to launch gdb.
 
-   Gdb_Options   : constant String := "-nw -q -fullname";
+   Gdb_Options   : constant String := "-nw -q";
    --  Options always passed to gdb.
    --  Note that we assume that only one blank is put between each option.
 
@@ -496,6 +496,27 @@ package body Debugger.Gdb is
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
+
+   -----------------
+   -- Stack_Frame --
+   -----------------
+
+   procedure Stack_Frame
+     (Debugger : access Gdb_Debugger;
+      Frame    : Positive;
+      Window   : Gtk.Window.Gtk_Window := null)
+   is
+      Str : constant String := "frame" & Natural'Image (Frame - 1);
+   begin
+      if Window /= null then
+         Text_Output_Handler
+           (Convert (Window, Debugger), Str & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, Str);
+      end if;
+
+      Send (Get_Process (Debugger), Str);
+      Wait_Prompt (Debugger);
+   end Stack_Frame;
 
    ---------------
    -- Backtrace --

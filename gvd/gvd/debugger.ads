@@ -220,8 +220,7 @@ package Debugger is
    --  In all the following subprograms, Window is the main debug window, in
    --  which the debugger is displayed.  It is used to output the command in
    --  the debugger command window. If null is passed for this parameter, the
-   --  command is not show in the command window.
-
+   --  command is not shown in the command window.
 
    procedure Run (Debugger : access Debugger_Root;
                   Window   : Gtk.Window.Gtk_Window := null) is abstract;
@@ -264,19 +263,35 @@ package Debugger is
    -- Stack Management --
    ----------------------
 
-   procedure Stack_Down (Debugger : access Debugger_Root;
-                         Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Stack_Down
+     (Debugger : access Debugger_Root;
+      Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Select and print stack frame called by the current one.
+   --  See above for details on Window.
    --  GDB_COMMAND: "down"
 
-   procedure Stack_Up (Debugger : access Debugger_Root;
-                       Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Stack_Up
+     (Debugger : access Debugger_Root;
+      Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Select and print stack frame that called the current one.
+   --  See above for details on Window.
    --  GDB_COMMAND: "up"
 
-   procedure Finish (Debugger : access Debugger_Root;
-                     Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Stack_Frame
+     (Debugger : access Debugger_Root;
+      Frame    : Positive;
+      Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   --  Select and print the selected stack frame.
+   --  The first frame is 1. It is up to the real debugger to convert to the
+   --  appropriate Id when needed.
+   --  See above for details on Window.
+   --  GDB_COMMAND: "frame"
+
+   procedure Finish
+     (Debugger : access Debugger_Root;
+      Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Finish executing the current frame.
+   --  See above for details on Window.
    --  GDB_COMMAND: "finish"
 
    type Backtrace_Record is record

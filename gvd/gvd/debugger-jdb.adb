@@ -304,6 +304,27 @@ package body Debugger.Jdb is
       Wait_Prompt (Debugger);
    end Stack_Up;
 
+   -----------------
+   -- Stack_Frame --
+   -----------------
+
+   procedure Stack_Frame
+     (Debugger : access Jdb_Debugger;
+      Frame    : Positive;
+      Window   : Gtk.Window.Gtk_Window := null)
+   is
+      Str : constant String := "frame" & Positive'Image (Frame);
+   begin
+      if Window /= null then
+         Text_Output_Handler
+           (Convert (Window, Debugger), Str & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, Str);
+      end if;
+
+      Send (Get_Process (Debugger), Str);
+      Wait_Prompt (Debugger);
+   end Stack_Frame;
+
    ---------------
    -- Backtrace --
    ---------------

@@ -78,28 +78,40 @@ package Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Executable : String);
 
-   procedure Run (Debugger : access Gdb_Debugger;
-                  Window   : Gtk.Window.Gtk_Window := null);
+   procedure Run
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Start (Debugger : access Gdb_Debugger;
-                    Window   : Gtk.Window.Gtk_Window := null);
+   procedure Start
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Step_Into (Debugger : access Gdb_Debugger;
-                        Window   : Gtk.Window.Gtk_Window := null);
+   procedure Step_Into
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Step_Over (Debugger : access Gdb_Debugger;
-                        Window   : Gtk.Window.Gtk_Window := null);
+   procedure Step_Over
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Continue (Debugger : access Gdb_Debugger;
-                       Window   : Gtk.Window.Gtk_Window := null);
+   procedure Continue
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Interrupt (Debugger : access Gdb_Debugger);
 
-   procedure Stack_Down (Debugger : access Gdb_Debugger;
-                         Window   : Gtk.Window.Gtk_Window := null);
+   procedure Stack_Down
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Stack_Up (Debugger : access Gdb_Debugger;
-                       Window   : Gtk.Window.Gtk_Window := null);
+   procedure Stack_Up
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
+
+   procedure Stack_Frame
+     (Debugger : access Gdb_Debugger;
+      Frame    : Positive;
+      Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Break_Subprogram
      (Debugger : access Gdb_Debugger;
@@ -115,8 +127,9 @@ package Debugger.Gdb is
       Name      : String  := "";
       Unhandled : Boolean := False);
 
-   procedure Finish (Debugger : access Gdb_Debugger;
-                     Window   : Gtk.Window.Gtk_Window := null);
+   procedure Finish
+     (Debugger : access Gdb_Debugger;
+      Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Backtrace
      (Debugger : access Gdb_Debugger;
