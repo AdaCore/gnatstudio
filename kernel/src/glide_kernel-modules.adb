@@ -27,7 +27,12 @@ with GUI_Utils;         use GUI_Utils;
 with Gdk.Event;         use Gdk.Event;
 with Glib;              use Glib;
 with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
 with Glide_Main_Window; use Glide_Main_Window;
+with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
+with Gtk.Accel_Group;   use Gtk.Accel_Group;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Image;         use Gtk.Image;
 with Gtk.Label;         use Gtk.Label;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
@@ -93,7 +98,8 @@ package body Glide_Kernel.Modules is
      (Module_Name             : String;
       Priority                : Module_Priority     := Default_Priority;
       Initializer             : Module_Initializer  := null;
-      Contextual_Menu_Handler : Module_Menu_Handler := null)
+      Contextual_Menu_Handler : Module_Menu_Handler := null;
+      Mime_Handler            : Module_Mime_Handler := null)
       return Module_ID
    is
       ID : Module_ID := new Module_ID_Information'
@@ -102,6 +108,7 @@ package body Glide_Kernel.Modules is
          Priority        => Priority,
          Initializer     => Initializer,
          Contextual_Menu => Contextual_Menu_Handler,
+         Mime_Handler    => Mime_Handler,
          Was_Initialized => False);
    begin
       --  ??? Should check that the module isn't already in the list
@@ -502,5 +509,110 @@ package body Glide_Kernel.Modules is
          Show_All (Item);
       end if;
    end Register_Menu;
+
+   -------------------
+   -- Register_Menu --
+   -------------------
+
+   procedure Register_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Text        : String;
+      Stock_Image : String := "";
+      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True)
+   is
+      Item : Gtk_Menu_Item;
+      Image : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
+   begin
+      if Stock_Image = "" then
+         Gtk_New_With_Mnemonic (Item, Text);
+      else
+         Gtk_New_With_Mnemonic (Image, Text);
+         Gtk_New (Pix, Stock_Image, Icon_Size_Menu);
+         Set_Image (Image, Pix);
+         Item := Gtk_Menu_Item (Image);
+      end if;
+
+      if Guint (Accel_Key) > 0 then
+         Add_Accelerator
+           (Item, "activate", Get_Default_Accelerators (Kernel),
+            Accel_Key, Accel_Mods, Accel_Visible);
+      end if;
+
+      Register_Menu (Kernel, Parent_Path, Item, Ref_Item, Add_Before);
+      Kernel_Callback.Connect
+        (Item, "activate",
+         Kernel_Callback.To_Marshaller (Callback),
+         Kernel_Handle (Kernel));
+   end Register_Menu;
+
+   -----------------
+   -- Mime_Action --
+   -----------------
+
+   function Mime_Action
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean
+   is
+      Current : Module_List.List := Global_Modules_List;
+      Result  : Boolean := False;
+   begin
+      Set_Busy_Cursor (Get_Window (Kernel.Main_Window), True, True);
+
+      while not Module_List.Is_Empty (Current) loop
+         if Module_List.Head (Current).Mime_Handler /= null then
+            Result := Module_List.Head (Current).Mime_Handler
+              (Kernel, Mime_Type, Data, Mode);
+            exit when Result;
+         end if;
+
+         Current := Module_List.Next (Current);
+      end loop;
+
+      Set_Busy_Cursor (Get_Window (Kernel.Main_Window), False);
+
+      return Result;
+   end Mime_Action;
+
+   ----------------------
+   -- Open_File_Editor --
+   ----------------------
+
+   procedure Open_File_Editor
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : String;
+      Line     : Natural := 0;
+      Column   : Natural := 0;
+      Highlight_Line : Boolean := True)
+   is
+      Value : GValue_Array (1 .. 4);
+      Success : Boolean;
+   begin
+      Init (Value (1), Glib.GType_String);
+      Set_String (Value (1), Filename);
+
+      Init (Value (2), Glib.GType_Int);
+      Set_Int (Value (2), Gint (Line));
+
+      Init (Value (3), Glib.GType_Int);
+      Set_Int (Value (3), Gint (Column));
+
+      Init (Value (4), Glib.GType_Boolean);
+      Set_Boolean (Value (4), Highlight_Line);
+
+      Success := Mime_Action (Kernel, Mime_Source_File, Value);
+
+      Unset (Value (1));
+      Unset (Value (2));
+      Unset (Value (3));
+      Unset (Value (4));
+   end Open_File_Editor;
 
 end Glide_Kernel.Modules;

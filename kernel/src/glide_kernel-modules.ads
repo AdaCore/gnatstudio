@@ -81,6 +81,7 @@
 
 with Gdk.Event;
 with Glib.Object;
+with Gdk.Types;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
@@ -112,7 +113,8 @@ package Glide_Kernel.Modules is
      (Module_Name             : String;
       Priority                : Module_Priority := Default_Priority;
       Initializer             : Module_Initializer  := null;
-      Contextual_Menu_Handler : Module_Menu_Handler := null) return Module_ID;
+      Contextual_Menu_Handler : Module_Menu_Handler := null;
+      Mime_Handler            : Module_Mime_Handler := null) return Module_ID;
    --  Register a new module into Glide.
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
@@ -186,6 +188,51 @@ package Glide_Kernel.Modules is
    --    - after Ref_Item if the latter is not the empty string and Add_Before
    --      is false
    --    - at the end of the menu
+
+   procedure Register_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Text        : String;
+      Stock_Image : String := "";
+      Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
+      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True);
+   --  Same as the above, but creates the menu item directly, and connects the
+   --  appropriate callback.
+
+   --------------------
+   -- Mime callbacks --
+   --------------------
+   --  The following subprograms are provided so that the kernel can request
+   --  each of its module whether it can display some specific data.
+   --  The type of data is indicated through standard MIME types.
+
+   Mime_Source_File : constant String := "application/text";
+   --  There are multiple data associated with this type:
+   --     first  : full name of the source file to open (use Get_String)
+   --     second : line to display initially (use Get_Int). Ignored if 0
+   --     third  : column to display initially (use Get_Int). Ignored if 0
+   --     fourth : True if the line should be highlighted (use Get_Boolean)
+   --  See also the function Glide_Kernel.Editor.Open_Or_Create.
+
+   function Mime_Action
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean;
+   --  This function calls each of the registered module, and check whether it
+   --  can handle the data.
+   --  If any of the module was able to, True is returned.
+
+   procedure Open_File_Editor
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Filename       : String;
+      Line           : Natural := 0;
+      Column         : Natural := 0;
+      Highlight_Line : Boolean := True);
+   --  Open, or create, an editor that edits Filename (Mime_Source_File type)
 
    -------------------
    -- File Contexts --
