@@ -121,14 +121,24 @@ package body Glide_Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel : access Kernel_Handle_Record'class; Project : String) is
+     (Kernel : access Kernel_Handle_Record'class; Project : String)
+   is
+      New_Project : Project_Node_Id;
    begin
       Free (Kernel.Scenario_Variables);
       Kernel.Project_Is_Default := False;
-      Prj.Part.Parse (Kernel.Project, Project, True);
-      Kernel.Project_View := No_Project;
-      Project_Changed (Kernel);
-      Recompute_View (Kernel);
+      Prj.Part.Parse (New_Project, Project, True);
+
+      if New_Project /= Empty_Node then
+         Kernel.Project := New_Project;
+         Kernel.Project_View := No_Project;
+         Project_Changed (Kernel);
+         Recompute_View (Kernel);
+      else
+         Trace (Me, "Couldn't load or parse the project " & Project);
+         Insert_In_Console
+           (Kernel, Text => "Couldn't parse the project " & Project);
+      end if;
    end Load_Project;
 
    -----------------
