@@ -9,6 +9,8 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 
+#include <sys/ioctl.h>
+#include <sys/stropts.h>
 #include "sol2-4.h"
 
 /* -lgen is needed for the regex and regcmp functions
