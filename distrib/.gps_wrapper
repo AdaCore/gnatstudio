@@ -13,4 +13,4 @@ LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 PANGO_RC_FILE=$root/share/gps/pangorc
 export LD_LIBRARY_PATH PANGO_RC_FILE
 GDK_USE_XFT=False
-exec $root/bin/${prog}_exe "$@" 2>&1 | grep -v 'No such file or directory'
+exec $root/bin/${prog}_exe "$@"
