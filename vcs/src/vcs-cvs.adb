@@ -142,6 +142,34 @@ package body VCS.CVS is
    --  Display comparison between file given in Head and patch
    --  given in List.
 
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Remove the log file stored in the first element of Head.
+
+   ---------------------
+   -- Checkin_Handler --
+   ---------------------
+
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel, List);
+      Success : Boolean;
+
+   begin
+      --  Delete the associated log file, if it exists.
+
+      if not String_List.Is_Empty (Head) then
+         GNAT.OS_Lib.Delete_File (String_List.Head (Head), Success);
+      end if;
+
+      return True;
+   end Checkin_Handler;
+
    ----------
    -- Name --
    ----------
@@ -808,25 +836,51 @@ package body VCS.CVS is
    is
       use String_List;
 
+      Checkin_File_Command : External_Command_Access;
+
       Arguments      : String_List.List;
       Filenames_Temp : List_Node := First (Filenames);
       Logs_Temp      : List_Node := First (Logs);
-      Single_File    : String_List.List;
 
    begin
       while Filenames_Temp /= Null_Node loop
-         Append (Arguments, "-Q");
-         Append (Arguments, "commit");
-         Append (Arguments, "-m");
-         Append (Arguments, Data (Logs_Temp));
-         Append (Single_File, Data (Filenames_Temp));
+         declare
+            File     : constant String := Data (Filenames_Temp);
+            Head     : List;
+            Log_File : constant String := Get_Tmp_Dir
+            & GNAT.OS_Lib.Directory_Separator
+            & "cvs_log_" & Base_Name (File);
+            Ft : File_Type;
+         begin
+            Append (Arguments, "-Q");
+            Append (Arguments, "commit");
+            Append (Arguments, "-F");
 
-         Simple_Action (Rep, Single_File, Arguments);
+            Append (Arguments, Log_File);
 
-         Free (Arguments);
-         Free (Single_File);
-         Logs_Temp      := Next (Logs_Temp);
-         Filenames_Temp := Next (Filenames_Temp);
+            Create (Ft, Out_File, Log_File);
+            Put_Line (Ft, Data (Logs_Temp));
+            Close (Ft);
+
+            Append (Head, Log_File);
+
+            Create
+              (Checkin_File_Command,
+               Rep.Kernel,
+               Get_Pref (Rep.Kernel, CVS_Command),
+               Dir_Name (File),
+               Arguments,
+               Head,
+               Checkin_Handler'Access);
+
+            Enqueue (Rep.Queue, Checkin_File_Command);
+
+            Free (Arguments);
+            Free (Head);
+
+            Logs_Temp      := Next (Logs_Temp);
+            Filenames_Temp := Next (Filenames_Temp);
+         end;
       end loop;
 
    exception
