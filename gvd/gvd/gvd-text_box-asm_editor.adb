@@ -331,7 +331,8 @@ package body Odd.Asm_Editors is
       --  invisible column in this editor.
 
       Highlight_Range
-        (Editor, Gint (Pos_Start), Gint (Pos_End), 0,
+        (Editor, Gint (Pos_Start), Gint (Pos_End),
+         Gint (Pos_Start), Line => 0,
          Fore => Editor.Highlight_Color);
 
       Thaw (Get_Buttons (Editor));
