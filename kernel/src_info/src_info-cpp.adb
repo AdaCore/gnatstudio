@@ -412,19 +412,19 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List);
    --  Finds arguments for the template specified by (Scope, Template_Args,
    --  File_Name). Here Scope is the name of either class/struct/union or
-   --  function/procedure. Tempalte_Args - image of all template arguments
+   --  function/procedure. Template_Args - image of all template arguments
    --  as is in CL/FU_Table.
    --  For each template argument Insert_Declaration is called with appropriate
    --  parameters
 
    procedure Process_Class_To_TA_Refs
-     (CL_Tab             : CL_Table;
-      Arg                : TA_Table;
-      Handler            : access CPP_LI_Handler_Record'Class;
-      File               : in out LI_File_Ptr;
-      Decl_Info          : in out E_Declaration_Info_List);
-   --  Finds references CL-to-TA for the specified argument and creates
-   --  correspondent declarations
+     (CL_Tab    : CL_Table;
+      Arg       : TA_Table;
+      Handler   : access CPP_LI_Handler_Record'Class;
+      File      : in out LI_File_Ptr;
+      Decl_Info : in out E_Declaration_Info_List);
+   --  Find references CL-to-TA for the specified argument and create
+   --  corresponding declarations.
 
    procedure Create_DB_Directory (DB_Dir : String);
    --  Create the database directory if it doesn't exist yet.
@@ -846,13 +846,13 @@ package body Src_Info.CPP is
       --  Save xref pools
       if Iterator.Handler.Prj_HTable /= Empty_SN_Prj_HTable then
          declare
-            I    : Imported_Project_Iterator := Start
+            Iter : Imported_Project_Iterator := Start
               (Get_Project_From_View (Iterator.Root_Project),
                Recursive => True);
          begin
-            while Current (I) /= Prj.No_Project loop
+            while Current (Iter) /= Prj.No_Project loop
                declare
-                  DB_Dir : constant String := Get_DB_Dir (Current (I));
+                  DB_Dir : constant String := Get_DB_Dir (Current (Iter));
                begin
                   if DB_Dir /= "" then
                      declare
@@ -865,7 +865,8 @@ package body Src_Info.CPP is
                      end;
                   end if;
                end;
-               Next (I);
+
+               Next (Iter);
             end loop;
          end;
       end if;
