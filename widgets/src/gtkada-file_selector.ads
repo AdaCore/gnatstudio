@@ -60,6 +60,8 @@
 --
 --  </description>
 
+with Gdk.Color;           use Gdk.Color;
+with Gdk.Pixbuf;          use Gdk.Pixbuf;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Widget;          use Gtk.Widget;
@@ -67,16 +69,13 @@ with Gtk.Label;           use Gtk.Label;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist;           use Gtk.Clist;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Image;           use Gtk.Image;
-with Gtk.Style;           use Gtk.Style;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with Gtk.Widget;
-
-with Gdk.Pixmap;
-with Gdk.Bitmap;
 
 with Directory_Tree; use Directory_Tree;
 with Generic_Stack;
@@ -211,8 +210,7 @@ package Gtkada.File_Selector is
       Dir       : String;
       File      : String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out String_Access) is abstract;
    --  This is the function that is called every time that a file could
    --  be shown in the file explorer.
@@ -295,8 +293,7 @@ private
       Dir       : String;
       File      : String;
       State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Pixbuf    : out Gdk_Pixbuf;
       Text      : out String_Access);
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
@@ -326,14 +323,8 @@ private
       Filters : Filter_List.List;
       --  A list of all registered filters.
 
-      Normal_Style : Gtk_Style;
-      --  The style for displaying normal state;
-
-      Highlighted_Style : Gtk_Style;
-      --  How the highlighted file names should be displayed.
-
-      Insensitive_Style : Gtk_Style;
-      --  How the inactive file names should be displayed.
+      Highlighted_Color : Gdk_Color;
+      Insensitive_Color : Gdk_Color;
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons.
@@ -370,7 +361,10 @@ private
       Explorer_Tree : Dir_Tree;
 
       Files_Scrolledwindow : Gtk_Scrolled_Window;
-      File_List : Gtk_Clist;
+
+      File_Tree  : Gtk_Tree_View;
+      File_Model : Gtk_Tree_Store;
+
       File_Icon_Label : Gtk_Label;
       File_Name_Label : Gtk_Label;
       File_Text_Label : Gtk_Label;
