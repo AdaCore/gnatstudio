@@ -1377,6 +1377,10 @@ package body KeyManager_Module is
 
       Show_All (Dialog);
 
+      --  The initial position has been computed, and now we want to make sure
+      --  that selecting new items will not resize the pane every time.
+      Set_Position (Pane, Get_Position (Pane));
+
       while Run (Dialog) = Gtk_Response_OK loop
          declare
             Iter  : Gtk_Tree_Iter;
