@@ -698,36 +698,46 @@ package body Projects.Registry is
             Read (Dir, Buffer, Length);
             exit when Length = 0;
 
-            --  Have to use the naming scheme, since the hash-table hasn't been
-            --  filled yet (Get_Language_From_File wouldn't work)
+            --  ??? Should check that the file is in Project'Source_Files
 
-            Get_Unit_Part_And_Name_From_Filename
-              (Filename  => Buffer (1 .. Length),
-               Project   => Get_View (Project),
-               Part      => Part,
-               Unit_Name => Unit,
-               Lang      => Lang);
+            --  Nothing to do if the file is already registered
 
-            --  Check if the returned language belongs to the supported
-            --  languages for the project
+            if Get_Project_From_File
+              (Registry          => Registry,
+               Source_Filename   => Buffer (1 .. Length),
+               Root_If_Not_Found => False) = No_Project
+            then
+               --  Have to use the naming scheme, since the hash-table hasn't
+               --  been filled yet (Get_Language_From_File wouldn't work)
 
-            if Lang /= No_Name then
-               Get_Name_String (Lang);
-               for C in 1 .. Name_Len loop
-                  Name_Buffer (C) := To_Lower (Name_Buffer (C));
-               end loop;
+               Get_Unit_Part_And_Name_From_Filename
+                 (Filename  => Buffer (1 .. Length),
+                  Project   => Get_View (Project),
+                  Part      => Part,
+                  Unit_Name => Unit,
+                  Lang      => Lang);
 
-               if Name_Buffer (1 .. Name_Len) /= Ada_String then
-                  for Index in Languages'Range loop
-                     if Languages (Index).all =
-                       Name_Buffer (1 .. Name_Len)
-                     then
-                        Record_Source (Buffer (1 .. Length), Lang);
-                        Has_File := True;
-                        Languages2 (Index) := null;
-                        exit;
-                     end if;
+               --  Check if the returned language belongs to the supported
+               --  languages for the project
+
+               if Lang /= No_Name then
+                  Get_Name_String (Lang);
+                  for C in 1 .. Name_Len loop
+                     Name_Buffer (C) := To_Lower (Name_Buffer (C));
                   end loop;
+
+                  if Name_Buffer (1 .. Name_Len) /= Ada_String then
+                     for Index in Languages'Range loop
+                        if Languages (Index).all =
+                          Name_Buffer (1 .. Name_Len)
+                        then
+                           Record_Source (Buffer (1 .. Length), Lang);
+                           Has_File := True;
+                           Languages2 (Index) := null;
+                           exit;
+                        end if;
+                     end loop;
+                  end if;
                end if;
             end if;
          end loop;
