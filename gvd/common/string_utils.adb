@@ -651,6 +651,43 @@ package body String_Utils is
       return Result;
    end To_File_Name;
 
+   --------------
+   --  Shorten --
+   --------------
+
+   function Shorten
+     (Path    : String;
+      Max_Len : Natural := 40) return String
+   is
+      Len : constant Natural := Path'Length;
+   begin
+      if Len <= Max_Len then
+         return Path;
+      else
+         declare
+            Prefix       : constant String  := "[...]";
+            Search_Start : constant Natural
+              := Path'Last - Max_Len + Prefix'Length;
+            New_Start    : Natural;
+         begin
+            if Search_Start > Path'Last then
+               --  Max_Len < Prefix'Length
+               --  Shorten anyway, but might give a strange result
+               return Path (Path'Last - Max_Len .. Path'Last);
+            end if;
+
+            New_Start := Index (Path (Search_Start .. Path'Last), "/");
+
+            if New_Start = 0 and New_Start not in Path'Range then
+               --  Shorten anyway (but it might not make sense)
+               New_Start := Search_Start;
+            end if;
+
+            return (Prefix & Path (New_Start .. Path'Last));
+         end;
+      end if;
+   end Shorten;
+
    ----------------
    -- Mixed_Case --
    ----------------

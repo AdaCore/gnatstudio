@@ -237,6 +237,12 @@ package String_Utils is
    --  and '-' to the appropriate characters).
    --  ??? Note: this should be modified to use the naming schemes, if needed.
 
+   function Shorten (Path : String; Max_Len : Natural := 40) return String;
+   --  Shorten a path to at most Max_Len characters, by replacing the first
+   --  directories with "[...]".
+   --  For example, "directory_1/directory_2/directory_3/filename"
+   --  is shortened as "[...]/directory_3/filename"
+
    ---------------------------
    -- C String manipulation --
    ---------------------------
