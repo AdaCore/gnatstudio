@@ -6,4 +6,8 @@ project GVD is
   for Source_Dirs use ("gvd");
   for Object_Dir use "gvd";
 
+   package Compiler is
+      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+   end Compiler;
+
 end GVD;
