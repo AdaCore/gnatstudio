@@ -20,6 +20,7 @@
 
 with Glib.Error;                use Glib.Error;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Image;                 use Gtk.Image;
@@ -28,9 +29,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Glide_Main_Window is
-
-   Animated_Image : constant String := "glide-animation.gif";
-   --  <preferences>
 
    -------------
    -- Anim_Cb --
@@ -92,7 +90,8 @@ package body Glide_Main_Window is
 
       declare
          File : constant String := Format_Pathname
-           (Prefix_Directory & "/share/glide/" & Animated_Image);
+           (Prefix_Directory & "/share/glide/" &
+            Get_Pref (Main_Window.Kernel, Animated_Image));
       begin
          if Is_Regular_File (File) then
             Gtk_New (Main_Window.Animation_Frame);
