@@ -582,7 +582,8 @@ package body Commands.Custom is
             then
                Insert
                  (Kernel,
-                  -"Warning: attribute ""on-failure"" is no longer supported");
+                  -"Warning: ""on-failure"" attribute is ignored. " &
+                  "Use the ""on-failure"" tag instead");
             end if;
 
             Index := Index + 1;
