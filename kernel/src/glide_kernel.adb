@@ -1687,4 +1687,77 @@ package body Glide_Kernel is
       end case;
    end Scope_To_String;
 
+   --------------------
+   -- Get_Scope_Tree --
+   --------------------
+
+   procedure Get_Scope_Tree
+     (Kernel : access Kernel_Handle_Record;
+      Entity : Entity_Information;
+      Tree   : out Src_Info.Queries.Scope_Tree;
+      Node   : out Src_Info.Queries.Scope_Tree_Node)
+   is
+      Lib_Info : LI_File_Ptr;
+      Location : File_Location;
+      Status   : Find_Decl_Or_Body_Query_Status;
+   begin
+      Lib_Info := Locate_From_Source_And_Complete
+        (Kernel, Get_Declaration_File_Of (Entity));
+
+      if Lib_Info /= No_LI_File then
+         --  We need to find the body of the entity in fact. In Ada, this
+         --  will always be the same LI as the spec, but this is no
+         --  longer true for C or C++.
+         Find_Next_Body
+           (Kernel             => Kernel,
+            Lib_Info           => Lib_Info,
+            File_Name          => Get_Declaration_File_Of (Entity),
+            Entity_Name        => Get_Name (Entity),
+            Line               => Get_Declaration_Line_Of (Entity),
+            Column             => Get_Declaration_Column_Of (Entity),
+            Location           => Location,
+            Status             => Status);
+
+         --  In case there is no body, do nothing.
+         if Location /= Null_File_Location then
+            Lib_Info := Locate_From_Source_And_Complete
+              (Kernel, Get_File (Location));
+         end if;
+      end if;
+
+      if Lib_Info = No_LI_File then
+         Insert (Kernel,
+                 -"LI file not found for " & Get_Declaration_File_Of (Entity));
+         Tree := Null_Scope_Tree;
+         Node := Null_Scope_Tree_Node;
+         return;
+      end if;
+
+      Trace (Me, "Get_Scope_Tree: using LI file: "
+             & Get_LI_Filename (Lib_Info));
+
+      Tree := Create_Tree (Lib_Info);
+
+      if Tree = Null_Scope_Tree then
+         Trace (Me, "Couldn't create scope tree for "
+                & Get_LI_Filename (Lib_Info));
+         Node := Null_Scope_Tree_Node;
+         return;
+      end if;
+
+      Node := Find_Entity_Scope (Tree, Entity);
+
+      if Node = Null_Scope_Tree_Node then
+         Insert (Kernel,
+                 -"Couldn't find the scope tree for " & Get_Name (Entity));
+         Trace (Me, "Couldn't find entity "
+                & Get_Name (Entity) & " in "
+                & Get_LI_Filename (Lib_Info)
+                & " at line" & Get_Declaration_Line_Of (Entity)'Img
+                & " column"  & Get_Declaration_Column_Of (Entity)'Img);
+         Free (Tree);
+         Node := Null_Scope_Tree_Node;
+      end if;
+   end Get_Scope_Tree;
+
 end Glide_Kernel;

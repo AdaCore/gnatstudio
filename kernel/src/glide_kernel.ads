@@ -274,6 +274,14 @@ package Glide_Kernel is
    --  find the LI file matching a given source file (for instance, with a
    --  separate krunched file in Ada).
 
+   procedure Get_Scope_Tree
+     (Kernel : access Kernel_Handle_Record;
+      Entity : Src_Info.Queries.Entity_Information;
+      Tree   : out Src_Info.Queries.Scope_Tree;
+      Node   : out Src_Info.Queries.Scope_Tree_Node);
+   --  Create the scope tree for the entity.
+   --  The returned Tree must be freed by the caller, if not Null_Scope_Tree.
+
    function Scope_To_String (Scope : Src_Info.E_Scope) return String;
    --  Return a printable string for the scope.
 
