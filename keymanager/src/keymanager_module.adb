@@ -176,7 +176,7 @@ package body KeyManager_Module is
          Next := Current.Next;
          Free (Current.Action);
 
-         --  Do not free the context, since this are shared
+         --  Do not free the context, since it is shared
          --  among key bindings
 
          Current := Next;
