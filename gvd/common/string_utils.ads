@@ -130,7 +130,8 @@ package String_Utils is
    --  This function works correctly with multiple-line strings.
 
    procedure Mixed_Case (S : in out String);
-   --  Return S with a casing matching Ada style.
+   --  Return S with a casing matching Ada style: upper case after an
+   --  underscore or a dot.
 
    procedure Lower_Case (S : in out String);
    --  Return S with all characters lowered.
