@@ -93,6 +93,7 @@ package Gtkada.File_Selector is
      (Title             : String  := "Select a file";
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
+      Pattern_Name      : String  := "";
       Use_Native_Dialog : Boolean := False) return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
@@ -100,7 +101,9 @@ package Gtkada.File_Selector is
    --  directory is invalid, then the dialog will point to the current
    --  directory.
    --  File_Pattern is a globbing pattern, as described in GNAT.Regexp
-   --  (e.g. "{*.htm,*.html}").
+   --  (e.g. "{*.htm,*.html}"), or null for no filter.
+   --  If Pattern_Name is not null, use this parameter instead of File_Pattern
+   --  as the filter name.
    --  If Use_Native_Dialog is True, this function will use the native file
    --  selection widget instead of a GtkAda based one. This option has
    --  currently no effect, but will provide in the future support for e.g.

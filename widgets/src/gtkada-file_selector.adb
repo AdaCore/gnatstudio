@@ -92,10 +92,14 @@ package body Gtkada.File_Selector is
 
    type Regexp_Filter is access all Regexp_Filter_Record'Class;
 
-   function Regexp_File_Filter (Pattern : String) return Regexp_Filter;
+   function Regexp_File_Filter
+     (Pattern : String;
+      Name    : String) return Regexp_Filter;
    --  Return a new filter that only shows files matching pattern.
    --  New memory is allocated, that will be freed automatically by the file
    --  selector where the filter is registered.
+   --  If Name is not null, use it instead of Pattern for the name of the
+   --  filter.
 
    procedure Use_File_Filter
      (Filter    : access Regexp_Filter_Record;
@@ -193,10 +197,18 @@ package body Gtkada.File_Selector is
    -- Regexp_File_Filter --
    ------------------------
 
-   function Regexp_File_Filter (Pattern : String) return Regexp_Filter is
+   function Regexp_File_Filter
+     (Pattern : String;
+      Name    : String) return Regexp_Filter
+   is
       Filter : Regexp_Filter := new Regexp_Filter_Record;
    begin
-      Filter.Label := new String'(Pattern);
+      if Name = "" then
+         Filter.Label := new String'(Pattern);
+      else
+         Filter.Label := new String'(Name);
+      end if;
+
       Filter.Pattern :=
         Compile
           (Pattern        => Pattern,
@@ -298,6 +310,7 @@ package body Gtkada.File_Selector is
      (Title             : String  := "Select a file";
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
+      Pattern_Name      : String  := "";
       Use_Native_Dialog : Boolean := False) return String
    is
       pragma Unreferenced (Use_Native_Dialog);
@@ -308,7 +321,9 @@ package body Gtkada.File_Selector is
         (File_Selector, (1 => Directory_Separator), Base_Directory, Title);
 
       if File_Pattern /= "" then
-         Register_Filter (File_Selector, Regexp_File_Filter (File_Pattern));
+         Register_Filter
+           (File_Selector,
+            Regexp_File_Filter (File_Pattern, Pattern_Name));
       end if;
 
       return Select_File (File_Selector);
