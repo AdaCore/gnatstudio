@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.2.0
 
+- Printing Ada arrays of access types with repeated values
+  Problem:    when printing an Ada array that has repeated equal values,
+              the indexes are incorrectly computed and displayed.
+  Workaround: use the "print" contextual menu to see the value of the item.
+
 - Dereferencing variable sometimes fails in C mode
   Problem:    When dereferencing a variable in the data window whose name
               already contains a dereference but no parentheses around
