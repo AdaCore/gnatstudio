@@ -382,7 +382,7 @@ package body Src_Contexts is
       if Scope = Whole or else Lang = null then
          Scan_Buffer_No_Scope
            (Context,
-            Buffer,
+            Buffer, Buffer'First, Buffer'Last,
             Callback,
             Pos, Line, Column, Was_Partial);
          return;
@@ -404,7 +404,7 @@ package body Src_Contexts is
 
             if Scanning_Allowed (Old_State) then
                Scan_Buffer_No_Scope
-                 (Context, Buffer (Line_Start .. Section_End),
+                 (Context, Buffer, Line_Start, Section_End,
                   Callback, Last_Index, Line, Column, Was_Partial);
 
                if Was_Partial then
