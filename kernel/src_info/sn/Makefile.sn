@@ -18,7 +18,7 @@ ifeq ($(BASE_DIR),)
 endif
 
 SN_BASE_DIR := $(BASE_DIR)
-LDFLAGS += -L$(SN_BASE_DIR)/lib -lpafdb $(SN_BASE_DIR)/lib/db_capi.o
+LDFLAGS += -L$(SN_BASE_DIR)/snsrc/db/PORT -ldb $(SN_BASE_DIR)/lib/db_capi.o
 
 ifneq ($(SN_ROOT),True)
    DEPS_PROJECTS += $(SN_BASE_DIR)/sn
