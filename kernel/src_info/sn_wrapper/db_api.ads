@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Interfaces.C.Strings;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package DB_API is
 
@@ -69,7 +68,7 @@ package DB_API is
 
    procedure Open
      (DB         : out DB_File;
-      File_Names : String_List_Access;
+      Files      : Interfaces.C.Strings.chars_ptr_array;
       Success    : out Boolean);
    --  Opens specified file as database file.
    --  Sets cursor to the first key/data pair in database (see
