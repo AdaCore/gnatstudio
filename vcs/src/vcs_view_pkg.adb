@@ -19,8 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;        use Glib;
-with Glib.Values; use Glib.Values;
-with Glib.Object; use Glib.Object;
 
 with Gdk.Event;  use Gdk.Event;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
@@ -101,9 +99,6 @@ package body VCS_View_Pkg is
    Rep_Rev_Column            : constant := 3;
    Status_Description_Column : constant := 4;
    Status_Pixbuf_Column      : constant := 5;
-   Log_Column                : constant := 6;
-   Log_Editor_Column         : constant := 7;
-   Log_Editable_Column       : constant := 8;
 
    -------------------
    -- Columns_Types --
@@ -117,10 +112,7 @@ package body VCS_View_Pkg is
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
-         Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
-         Log_Column                => GType_String,
-         Log_Editor_Column         => GType_Object,
-         Log_Editable_Column       => GType_Boolean);
+         Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type);
       --  The Log_Editor_Column should contain a procedure which returns the
       --  log string given a filename.
    end Columns_Types;
@@ -161,11 +153,6 @@ package body VCS_View_Pkg is
    ---------------
    -- Callbacks --
    ---------------
-
-   procedure Edited_Callback
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues);
-   --  ???
 
    procedure Change_Hide_Up_To_Date
      (Item     : access Gtk_Check_Menu_Item_Record'Class;
@@ -437,9 +424,6 @@ package body VCS_View_Pkg is
 
       Set (Explorer.Model, Iter, Status_Description_Column,
            File_Status'Image (Status_Record.Status));
-      Set (Explorer.Model, Iter, Log_Column, "");
-      Set (Explorer.Model, Iter, Log_Editor_Column, GObject' (null));
-      Set (Explorer.Model, Iter, Log_Editable_Column, True);
    end Fill_Info;
 
    ------------------------
@@ -516,29 +500,6 @@ package body VCS_View_Pkg is
         (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
    end Push_Message;
 
-   ---------------------
-   -- Edited_Callback --
-   ---------------------
-
-   procedure Edited_Callback
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Explorer      : constant VCS_View_Access := VCS_View_Access (Object);
-      Iter          : Gtk_Tree_Iter;
-      Path_String   : String := Get_String (Nth (Params, 1));
-      Text_Value    : GValue := Nth (Params, 2);
-
-   begin
-      Iter := Get_Iter_From_String (Explorer.Model, Path_String);
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
-   end Edited_Callback;
-
    ----------------------
    -- Set_Column_Types --
    ----------------------
@@ -546,13 +507,11 @@ package body VCS_View_Pkg is
    procedure Set_Column_Types (Explorer : access VCS_View_Record'Class) is
       Col           : Gtk_Tree_View_Column;
       Text_Rend     : Gtk_Cell_Renderer_Text;
-      Editable_Rend : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
       Dummy         : Gint;
 
    begin
       Gtk_New (Text_Rend);
-      Gtk_New (Editable_Rend);
       Gtk_New (Pixbuf_Rend);
 
       Set_Rules_Hint (Explorer.Tree, True);
@@ -584,20 +543,6 @@ package body VCS_View_Pkg is
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Rep_Rev_Column);
       Dummy := Append_Column (Explorer.Tree, Col);
-
-      Gtk_New (Col);
-      Set_Title (Col, -"Log");
-      Pack_Start (Col, Editable_Rend, True);
-      Add_Attribute (Col, Editable_Rend, "text", Log_Column);
-      Add_Attribute (Col, Editable_Rend, "editable", Log_Editable_Column);
-
-      Dummy := Append_Column (Explorer.Tree, Col);
-
-      Widget_Callback.Object_Connect
-        (Editable_Rend,
-         "edited",
-         Edited_Callback'Access,
-         Gtk_Widget (Explorer));
    end Set_Column_Types;
 
    -------------------
