@@ -25,7 +25,6 @@ with Ada.Exceptions;          use Ada.Exceptions;
 
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Intl;              use Glide_Intl;
 
 with Traces;                  use Traces;
 with Commands;                use Commands;
