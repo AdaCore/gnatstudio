@@ -31,6 +31,7 @@ with SN;                use SN;
 with SN.DB_Structures;  use SN.DB_Structures;
 with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
+with HTables;
 
 with File_Buffer;
 with Ada.Unchecked_Deallocation;
@@ -51,6 +52,76 @@ package body Src_Info.CPP is
 
    Global_LI_File : LI_File_Ptr;
    Global_LI_File_List : LI_File_List;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+         (String, SN.String_Access);
+
+   --------------------------------
+   -- Type hash table defintions --
+   --------------------------------
+   Type_Table_Size : constant := 113;
+
+   type String_Hash_Table_Range is range 1 .. Type_Table_Size;
+
+   function Type_Hash_Function (Key : SN.String_Access)
+      return String_Hash_Table_Range;
+   --  string hash function wrapper
+
+   ------------------------
+   -- Type_Hash_Function --
+   ------------------------
+   function Type_Hash_Function (Key : SN.String_Access)
+      return String_Hash_Table_Range
+   is
+      function String_Hash_Function is
+         new HTables.Hash (String_Hash_Table_Range);
+   begin
+      return String_Hash_Function (Key.all);
+   end Type_Hash_Function;
+
+   function Type_Equal_Function (K1, K2 : SN.String_Access)
+      return Boolean;
+
+   function Type_Equal_Function (K1, K2 : SN.String_Access)
+      return Boolean
+   is
+   begin
+      return K1.all = K2.all;
+   end Type_Equal_Function;
+
+   type Type_Parse_State is (Incomplete, Complete, Unknown);
+
+   package String_Hash_Table is new HTables.Simple_HTable
+     (Header_Num => String_Hash_Table_Range,
+      Element    => Type_Parse_State,
+      Key        => SN.String_Access,
+      No_Element => Unknown,
+      Hash       => Type_Hash_Function,
+      Equal      => Type_Equal_Function);
+
+   use  String_Hash_Table;
+
+   Module_Typedefs : HTable;
+   --  global table for types defined in the file
+   --  key = type name
+   --  data = whether this type has been successfully identified
+
+   procedure Free (HT : in out HTable);
+   --  Frees Module_Typedefs
+
+   ----------
+   -- Free --
+   ----------
+   procedure Free (HT : in out HTable) is
+      Elmt : Type_Parse_State;
+   begin
+      Get_First (HT, Elmt);
+      loop
+         exit when Elmt = Unknown;
+         --  Remove (HT, Get_Key (???)); -- FIXME key is not deleted!
+         Get_Next (HT, Elmt);
+      end loop;
+   end Free;
 
    ------------------------
    -- Global_CPP_Handler --
@@ -298,6 +369,7 @@ package body Src_Info.CPP is
          Free (P);
       end loop;
       File_Buffer.Done;
+      Free (Module_Typedefs);
    end Process_File;
 
    ---------------------------
@@ -637,9 +709,16 @@ package body Src_Info.CPP is
       Success   : out Boolean)
    is
       Typedef   : T_Table;
+      State     : Type_Parse_State;
+      Key       : SN.String_Access;
+      Seek_Key  : SN.String_Access;
    begin
 
       Success := False;
+
+      Key := new String'(Type_Name);
+      Set (Module_Typedefs, Key, Incomplete);
+      --  add this type as an unidentified one
 
       if not Is_Open (SN_Table (T)) then
          --  typedef table does not exist
@@ -650,6 +729,20 @@ package body Src_Info.CPP is
 
       --  typedef found, it is time to set Is_Typedef
       Desc.Is_Typedef := True;
+
+      --  lookup left side of the typedef in our type
+      --  hash table
+      Seek_Key  := new String'
+         (Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
+      State     := Get (Module_Typedefs, Seek_Key);
+      Free (Seek_Key);
+
+      if State = Incomplete then -- loop detected
+         Desc.Kind := Unresolved_Entity;
+         Success   := True;
+         Free (Typedef);
+         return;
+      end if;
 
       Type_Name_To_Kind (Typedef.Buffer (
               Typedef.Original.First .. Typedef.Original.Last),
@@ -668,6 +761,7 @@ package body Src_Info.CPP is
 
          Free (Typedef);
          Success := True;
+         Set (Module_Typedefs, Key, Complete);
          return;
       end if;
 
@@ -768,8 +862,6 @@ package body Src_Info.CPP is
    -- Free --
    ----------
    procedure Free (Desc : in out CType_Description) is
-      procedure Free is new Ada.Unchecked_Deallocation
-         (String, SN.String_Access);
    begin
       if Desc.Parent_Point /= Invalid_Point then
          Free (Desc.Parent_Filename);
