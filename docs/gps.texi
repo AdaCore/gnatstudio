@@ -84,7 +84,10 @@ Project Handling
 
 
 Compilation/Build
-
+* Ada Compilation and Build::
+* C/C++ Compilation and Build::
+* Multi-language Build::
+* Integrating existing build procedures with the GPS build system::
 
 Source Navigation
 * Spec/Body::
@@ -447,6 +450,29 @@ project files very attractive.
 @node Compilation/Build
 @chapter Compilation/Build
 @c --------------------------------------------------------------------
+
+@menu
+* Ada Compilation and Build::
+* C/C++ Compilation and Build::
+* Multi-language Build::
+* Integrating existing build procedures with the GPS build system::
+@end menu
+
+@node Ada Compilation and Build
+@section Ada Compilation and Build
+@noindent
+
+@node C/C++ Compilation and Build
+@section C/C++ Compilation and Build
+@noindent
+
+@node Multi-language Build
+@section Multi-language Build
+@noindent
+
+@node Integrating existing build procedures with the GPS build system
+@section Integrating existing build procedures with the GPS build system
+@noindent
 
 @c --------------------------------------------------------------------
 @node Source Browsing
