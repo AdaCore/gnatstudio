@@ -28,14 +28,14 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Window;                use Gtk.Window;
 with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Bitmap;                use Gdk.Bitmap;
-
 with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
+--   with Pixmaps_IDE;               use Pixmaps_IDE;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Basic_Types;               use Basic_Types;
-with Diff_Utils;                use Diff_Utils;
+with Diff_Utils2;               use Diff_Utils2;
 
 with Vdiff2_Utils;              use Vdiff2_Utils;
 with Vdiff2_Command;            use Vdiff2_Command;
@@ -55,7 +55,8 @@ with Gtk.Handlers;              use Gtk.Handlers;
 
 
 package body Vdiff2_Module is
-   use Diff_Occurrence_List;
+   use Diff_Head_List;
+   use Diff_Chunk_List;
 
    Me : constant Debug_Handle := Create (Vdiff_Module_Name);
 
@@ -66,7 +67,7 @@ package body Vdiff2_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
-   procedure On_Compare_Tree_Files
+   procedure On_Compare_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Compare Two Files...
 
@@ -74,7 +75,7 @@ package body Vdiff2_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Compare Tree Files...
 
-   procedure On_Merge_Tree_Files
+   procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Merge Two Files...
 
@@ -88,13 +89,17 @@ package body Vdiff2_Module is
       Kernel  : Kernel_Handle);
    --  Callback for the "file_closed" signal.
 
+   procedure On_Preferences_Changed
+     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
+   --  Called when the preferences have changed
+
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
    type VDiff2_Module_Record is new Module_ID_Record with record
       Kernel              : Kernel_Handle;
       Is_Active           : Boolean := False;
       Number_active       : Natural := 0;
-      List_Diff           : Diff_Occurrence_List_Access;
+      List_Diff           : Diff_Head_List_Access;
       Command_Prev        : Diff_Command_Access;
       Command_Next        : Diff_Command_Access;
       Command_First       : Diff_Command_Access;
@@ -112,12 +117,12 @@ package body Vdiff2_Module is
    -- On_Compare_Tree_Files --
    ---------------------------
 
-   procedure On_Compare_Tree_Files
+   procedure On_Compare_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_List_Head;
-      Result : Diff_Occurrence_Link;
+      Item   : Diff_Head;
+      Result : Diff_List;
       File1  : constant String :=
         Select_File
           (Title             => -"Select Common Ancestor",
@@ -132,25 +137,28 @@ package body Vdiff2_Module is
       if File1 = "" then
          return;
       end if;
-
+      Change_Dir (Dir_Name (File1));
       declare
          File2 : constant String :=
            Select_File
              (Title             => -"Select First Changes",
+              Base_Directory    => "",
               Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
-
+         Dummy : Command_Return_Type;
+         pragma Unreferenced (Dummy);
       begin
          if File2 = "" then
             return;
          end if;
-
+         Change_Dir (Dir_Name (File2));
          declare
             File3 : constant String :=
               Select_File
                 (Title             => -"Select Second Changes",
+                 Base_Directory    => "",
                  Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -163,7 +171,7 @@ package body Vdiff2_Module is
 
             Result := Diff3 (Kernel, File1, File2, File3);
 
-            if Result = null then
+            if Result = Diff_Chunk_List.Null_List then
                Button := Message_Dialog
                  (Msg         => -"No differences found.",
                   Buttons     => Button_OK,
@@ -174,16 +182,18 @@ package body Vdiff2_Module is
                      File1 => new String'(File1),
                      File2 => new String'(File2),
                      File3 => new String'(File3),
-                     Current_Diff => Result);
+                     Current_Node => First (Result),
+                     Ref_File => 2);
+            Show_Differences3 (Kernel, Item);
             Append (Id.List_Diff.all, Item);
-            Show_Differences (Kernel, Item);
+            Dummy := Execute (Id.Command_First);
             --  Free (Result);
          end;
       end;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Compare_Tree_Files;
+   end On_Compare_Three_Files;
 
    --------------------------
    -- On_Compare_Two_Files --
@@ -193,11 +203,12 @@ package body Vdiff2_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_List_Head;
-      Result : Diff_Occurrence_Link;
+      Item   : Diff_Head;
+      Result : Diff_List;
       File1  : constant String :=
         Select_File
           (Title             => -"Select First File",
+           Base_Directory    => "",
            Parent            => Get_Main_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
@@ -209,15 +220,18 @@ package body Vdiff2_Module is
       if File1 = "" then
          return;
       end if;
-
+      Change_Dir (Dir_Name (File1));
       declare
          File2 : constant String :=
            Select_File
              (Title             => -"Select Second File",
+              Base_Directory    => "",
               Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
+         Dummy : Command_Return_Type;
+         pragma Unreferenced (Dummy);
 
       begin
          if File2 = "" then
@@ -226,20 +240,23 @@ package body Vdiff2_Module is
 
          Result := Diff (Kernel, File1, File2);
 
-         if Result = null then
+         if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
               (Msg         => -"No differences found.",
                Buttons     => Button_OK,
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
+
          Item := (List => Result,
                   File1 => new String'(File1),
                   File2 => new String'(File2),
                   File3 => null,
-                  Current_Diff => Result);
+                  Current_Node => First (Result),
+                  Ref_File => 2);
+         Show_Differences3 (Kernel, Item);
          Append (Id.List_Diff.all, Item);
-         Show_Differences (Kernel, Item);
+         Dummy := Execute (Id.Command_First);
       end;
 
    exception
@@ -251,15 +268,16 @@ package body Vdiff2_Module is
    -- On_Merge_Tree_Files --
    -------------------------
 
-   procedure On_Merge_Tree_Files
+   procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_List_Head;
-      Result : Diff_Occurrence_Link;
+      Item   : Diff_Head;
+      Result : Diff_List;
       File1  : constant String :=
         Select_File
           (Title             => -"Select Common Ancestor",
+           Base_Directory    => "",
            Parent            => Get_Main_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
@@ -271,11 +289,12 @@ package body Vdiff2_Module is
       if File1 = "" then
          return;
       end if;
-
+      Change_Dir (Dir_Name (File1));
       declare
          File2 : constant String :=
            Select_File
              (Title             => -"Select First Changes",
+              Base_Directory    => "",
               Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
@@ -285,41 +304,49 @@ package body Vdiff2_Module is
          if File2 = "" then
             return;
          end if;
-
+         Change_Dir (Dir_Name (File2));
          declare
             File3 : constant String :=
               Select_File
                 (Title             => -"Select Second Changes",
+                 Base_Directory    => "",
                  Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
+            Dummy : Command_Return_Type;
+            pragma Unreferenced (Dummy);
+
          begin
             if File3 = "" then
                return;
             end if;
+            Change_Dir (Dir_Name (File3));
+            Result := Diff3 (Kernel, File1, File2, File3);
 
-            Result := Diff (Kernel, File1, File2, File3);
-
-            if Result = null then
+            if Result = Diff_Chunk_List.Null_List then
                Button := Message_Dialog
                  (Msg         => -"No differences found.",
                   Buttons     => Button_OK,
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
+
             Item := (List => Result,
                      File1 => new String'(File1),
                      File2 => new String'(File2),
                      File3 => new String'(File3),
-                     Current_Diff => Result);
+                     Current_Node => First (Result),
+                     Ref_File => 2);
+            Show_Differences3 (Kernel, Item);
             Append (Id.List_Diff.all, Item);
-            Show_Differences (Kernel, Item);
+            Dummy := Execute (Id.Command_First);
 
             declare
                Merge     : constant String :=
                  Select_File
                    (Title             => -"Select Merge File",
+                    Base_Directory    => "",
                     Parent            => Get_Main_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                     Kind              => Unspecified,
@@ -339,7 +366,7 @@ package body Vdiff2_Module is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Merge_Tree_Files;
+   end On_Merge_Three_Files;
 
    ------------------------
    -- On_Merge_Two_Files --
@@ -349,8 +376,8 @@ package body Vdiff2_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_List_Head;
-      Result : Diff_Occurrence_Link;
+      Item   : Diff_Head;
+      Result : Diff_List;
       File1  : constant String :=
         Select_File
           (Title             => -"Select First File",
@@ -365,42 +392,49 @@ package body Vdiff2_Module is
       if File1 = "" then
          return;
       end if;
-
+      Change_Dir (Dir_Name (File1));
       declare
          File2 : constant String :=
            Select_File
              (Title             => -"Select Second File",
+              Base_Directory    => "",
               Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
+         Dummy : Command_Return_Type;
+         pragma Unreferenced (Dummy);
 
       begin
          if File2 = "" then
             return;
          end if;
-
+         Change_Dir (Dir_Name (File2));
          Result := Diff (Kernel, File1, File2);
 
-         if Result = null then
+         if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
               (Msg         => -"No differences found.",
                Buttons     => Button_OK,
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
+
          Item := (List => Result,
-                  File1 => new String'(File1),
-                  File2 => new String'(File2),
-                  File3 => null,
-                  Current_Diff => Result);
+                     File1 => new String'(File1),
+                     File2 => new String'(File2),
+                     File3 => null,
+                     Current_Node => First (Result),
+                     Ref_File => 2);
+         Show_Differences3 (Kernel, Item);
          Append (Id.List_Diff.all, Item);
-         Show_Differences (Kernel, Item);
+         Dummy := Execute (Id.Command_First);
 
          declare
             Merge     : constant String :=
               Select_File
                 (Title             => -"Select Merge File",
+                 Base_Directory    => "",
                  Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -431,13 +465,15 @@ package body Vdiff2_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
       Id      : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item    : Diff_List_Head;
-      Result  : Diff_Occurrence_Link;
+      Item    : Diff_Head;
+      Result  : Diff_List;
       Success : Boolean;
       Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Mode, Button);
+      Dummy : Command_Return_Type;
+      pragma Unreferenced (Mode, Button, Dummy);
 
    begin
+
       if Mime_Type = Mime_Diff_File then
          declare
             Orig_File : constant String := Get_String (Data (Data'First));
@@ -458,7 +494,7 @@ package body Vdiff2_Module is
                   Result := Diff
                     (Kernel, Ref_File, New_File, Diff_File, Revert => True);
 
-                  if Result = null then
+                  if Result = Diff_Chunk_List.Null_List then
                      Button := Message_Dialog
                        (Msg         => -"No differences found.",
                         Buttons     => Button_OK,
@@ -471,9 +507,10 @@ package body Vdiff2_Module is
                      File1 => new String'(Ref_File),
                      File2 => new String'(New_File),
                      File3 => null,
-                     Current_Diff => Result);
+                     Current_Node => First (Result),
+                     Ref_File => 2);
                   Append (Id.List_Diff.all, Item);
-                  Show_Differences (Kernel, Item);
+                  Show_Differences3 (Kernel, Item);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -489,7 +526,7 @@ package body Vdiff2_Module is
                begin
                   Result := Diff (Kernel, Orig_File, Ref_File, Diff_File);
 
-                  if Result = null then
+                  if Result = Diff_Chunk_List.Null_List then
                      Button := Message_Dialog
                        (Msg         => -"No differences found.",
                         Buttons     => Button_OK,
@@ -497,12 +534,13 @@ package body Vdiff2_Module is
                      return False;
                   end if;
                   Item := (List => Result,
-                           File1 => new String'(Orig_File),
-                           File2 => new String'(Ref_File),
-                           File3 => null,
-                           Current_Diff => Result);
+                                 File1 => new String'(Orig_File),
+                                 File2 => new String'(Ref_File),
+                                 File3 => null,
+                                 Current_Node => First (Result),
+                                 Ref_File => 2);
                   Append (Id.List_Diff.all, Item);
-                  Show_Differences (Kernel, Item);
+                  Show_Differences3 (Kernel, Item);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -511,7 +549,7 @@ package body Vdiff2_Module is
 
                Result := Diff (Kernel, Orig_File, New_File, Diff_File);
 
-               if Result = null then
+               if Result = Diff_Chunk_List.Null_List then
                   Button := Message_Dialog
                     (Msg         => -"No differences found.",
                      Buttons     => Button_OK,
@@ -524,11 +562,13 @@ package body Vdiff2_Module is
                   File1 => new String'(Orig_File),
                   File2 => new String'(New_File),
                   File3 => null,
-                  Current_Diff => Result);
+                  Current_Node => First (Result),
+                  Ref_File => 2);
                Append (Id.List_Diff.all, Item);
-               Show_Differences (Kernel, Item);
+               Show_Differences3 (Kernel, Item);
             end if;
 
+            Dummy := Execute (Id.Command_First);
             return True;
          end;
       end if;
@@ -555,7 +595,7 @@ package body Vdiff2_Module is
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
       VDiff2_Module (Vdiff_Module_ID).List_Diff :=
-        new Diff_Occurrence_List.List;
+        new Diff_Head_List.List;
       VDiff2_Module (Vdiff_Module_ID).File_Closed_Id :=
         Kernel_Callback.Connect
           (Kernel,
@@ -564,39 +604,39 @@ package body Vdiff2_Module is
            Kernel_Handle (Kernel));
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Last,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Last_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Last_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_First,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              First_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                First_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Next,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Next_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Next_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Prev,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Prev_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Prev_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Close,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Close_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Close_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Reload,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Reload_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Reload_Difference'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight,
-              VDiff2_Module (Vdiff_Module_ID).Kernel,
-              VDiff2_Module (Vdiff_Module_ID).List_Diff,
-              Unhighlight_Difference'Access);
+                VDiff2_Module (Vdiff_Module_ID).Kernel,
+                VDiff2_Module (Vdiff_Module_ID).List_Diff,
+                Unhighlight_Difference'Access);
 
       Register_Module
         (Module       => Vdiff_Module_ID,
@@ -605,31 +645,82 @@ package body Vdiff2_Module is
          Priority     => Default_Priority,
          Mime_Handler => Mime_Action'Access);
 
-      Diff3_Cmd := Param_Spec_String (Gnew_String
-        (Name  => "Diff-Utils-Diff3",
-         Nick  => -"Diff3 command",
-         Blurb => -("Command used to compute differences between three files."
-                     & " Arguments can also be specified"),
-         Default => "diff3"));
-
+      Diff3_Cmd := Param_Spec_String
+      (Gnew_String
+       (Name  => "Diff-Utils-Diff3",
+        Nick  => -"Diff3 command",
+        Blurb => -("Command used to compute differences between three files."
+                         & " Arguments can also be specified"),
+            Default => "diff3"));
       Register_Property
         (Kernel, Param_Spec (Diff3_Cmd), -"Visual diff");
+
+      Diff_Default_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Diff-Default-Color",
+            Nick     => -"Default Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#AAAAFF"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Default_Color), -"Visual diff");
+
+      Diff_Old_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Diff-Old-Color",
+            Nick     => -"Old Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#C1C1C1"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Old_Color), -"Visual diff");
+
+      Diff_Append_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Diff-Append-Color",
+            Nick     => -"Append Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#88EEAA"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Append_Color), -"Visual diff");
+
+      Diff_Remove_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Diff-Remove-Color",
+            Nick     => -"Remove Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#FFA0A0"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Remove_Color), -"Visual diff");
+
+      Diff_Change_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Diff-Change-Color",
+            Nick     => -"Change Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#ECECAA"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Change_Color), -"Visual diff");
+
+      Kernel_Callback.Connect
+        (Kernel, "preferences_changed",
+         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
+         Kernel_Handle (Kernel));
+
       Register_Menu
         (Kernel, Tools, -"Compare Two Files...", "",
          On_Compare_Two_Files'Access);
       Register_Menu
-        (Kernel, Tools, -"Compare Tree Files...", "",
-         On_Compare_Tree_Files'Access);
+        (Kernel, Tools, -"Compare Three Files...", "",
+         On_Compare_Three_Files'Access);
       Register_Menu
         (Kernel, Tools, -"Merge Two Files...", "",
          On_Merge_Two_Files'Access);
       Register_Menu
-        (Kernel, Tools, -"Merge Tree Files...", "",
-         On_Merge_Tree_Files'Access);
+        (Kernel, Tools, -"Merge Three Files...", "",
+         On_Merge_Three_Files'Access);
       Append_Space (Toolbar);
 
       Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, up_xpm);
+        (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button
         (Kernel, -"Go to prev mark",
@@ -637,50 +728,50 @@ package body Vdiff2_Module is
          Image);
 
       Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, down_xpm);
+        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button (Kernel, -"Go to next mark",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-                       Image);
+                         Command_Access
+                           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
+                         Image);
 
---        Create_From_Xpm_D
---          (PixMap, Get_Window (Window), Mask, Null_Color, last_xpm);
---        Gtk_New (Image, PixMap, Mask);
---        Register_Button (Kernel, -"Go to the last difference",
---                         Command_Access
---                           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
---                         Image);
---        Create_From_Xpm_D
---          (PixMap, Get_Window (Window), Mask, Null_Color, first_xpm);
---        Gtk_New (Image, PixMap, Mask);
---        Register_Button (Kernel, -"Go to the First difference",
---                         Command_Access
---                           (VDiff2_Module (Vdiff_Module_ID).Command_First),
---                         Image);
---
---        Create_From_Xpm_D
---          (PixMap, Get_Window (Window), Mask, Null_Color, reload_xpm);
---        Gtk_New (Image, PixMap, Mask);
---        Register_Button (Kernel, -"Recalculate Differences",
---                         Command_Access
---                           (VDiff2_Module (Vdiff_Module_ID).Command_Reload),
---                         Image);
---        Create_From_Xpm_D
---          (PixMap, Get_Window (Window), Mask, Null_Color, close_xpm);
---        Gtk_New (Image, PixMap, Mask);
---        Register_Button (Kernel, -"Go to the First difference",
---                         Command_Access
---                           (VDiff2_Module (Vdiff_Module_ID).Command_Close),
---                         Image);
---
---        Create_From_Xpm_D
---          (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_xpm);
---        Gtk_New (Image, PixMap, Mask);
---       Register_Button (Kernel, -"remove highlighting",
---                         Command_Access
---                      (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
---                        Image);
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Go to the last difference",
+                         Command_Access
+                           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
+                         Image);
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Go to the First difference",
+                         Command_Access
+                           (VDiff2_Module (Vdiff_Module_ID).Command_First),
+                         Image);
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, reload_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Recalculate Differences",
+                         Command_Access
+                           (VDiff2_Module (Vdiff_Module_ID).Command_Reload),
+                         Image);
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, close_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"Close difference",
+                         Command_Access
+                           (VDiff2_Module (Vdiff_Module_ID).Command_Close),
+                         Image);
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button (Kernel, -"remove highlighting",
+                         Command_Access
+                         (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
+                         Image);
    end Register_Module;
 
 
@@ -688,15 +779,18 @@ package body Vdiff2_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out VDiff2_Module_Record) is
+   procedure Destroy (Id : in out VDiff2_Module_Record)
+   is
    begin
       Free_List (Id.List_Diff.all);
       Free (Id.List_Diff.all);
       Free (Root_Command (Id.Command_Prev.all));
       Free (Root_Command (Id.Command_Next.all));
-      --  Free (Root_Command (Id.Command_First.all));
-      --  Free (Root_Command (Id.Command_Last.all));
-
+      Free (Root_Command (Id.Command_First.all));
+      Free (Root_Command (Id.Command_Last.all));
+      Free (Root_Command (Id.Command_Close.all));
+      Free (Root_Command (Id.Command_Reload.all));
+      Free (Root_Command (Id.Command_Unhighlight.all));
    end Destroy;
 
    --------------------
@@ -708,32 +802,53 @@ package body Vdiff2_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle)
    is
-      Diff     : Diff_Head_Access := new Diff_List_Head;
+      Diff     : Diff_Head_Access := new Diff_Head;
       File     : constant String := Get_String (Nth (Args, 1));
-      CurrNode : Diff_Occurrence_List.List_Node :=
+      CurrNode : Diff_Head_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       pragma Unreferenced (Widget);
 
    begin
-      while CurrNode /= Null_Node
+      while CurrNode /= Diff_Head_List.Null_Node
       loop
          Diff.all := Data (CurrNode);
          exit when ((Diff.File1 /= null and then Diff.File1.all = File)
-                    or else
-                      (Diff.File2 /= null and then Diff.File2.all = File)
-                    or else
-                      (Diff.File3 /= null and then Diff.File3.all = File));
+                       or else
+                         (Diff.File2 /= null and then Diff.File2.all = File)
+                       or else
+                         (Diff.File3 /= null and then Diff.File3.all = File));
          CurrNode := Next (CurrNode);
       end loop;
 
-      if CurrNode /= Null_Node then
+      if CurrNode /= Diff_Head_List.Null_Node then
          Hide_Differences (Kernel, Diff.all);
          Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                       Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                              CurrNode),
-                       CurrNode);
-         Free (Diff);
+                          Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                             CurrNode),
+                          CurrNode);
       end if;
+      Free (Diff);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Closed_Cb;
 
+   procedure On_Preferences_Changed
+     (Kernel : access GObject_Record'Class; K : Kernel_Handle) is
+      pragma Unreferenced (Kernel);
+   begin
+      Register_Highlighting (K);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Preferences_Changed;
+
 end Vdiff2_Module;
+
+
+
+
+
+
+
+
