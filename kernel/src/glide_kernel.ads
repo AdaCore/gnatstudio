@@ -471,6 +471,26 @@ package Glide_Kernel is
    --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
    --  create a tooltip that only contains text
 
+   type Customization_Level is
+     (Hard_Coded, System_Wide, Project_Wide, User_Specific);
+   --  The various level of customization (See Glide_Kernel.Custom).
+   --  Hard_Coded is used for customization that are hard-coded in the GPS code
+   --  System_Wide is used if customization comes from a custom file found in
+   --  the installation directory of GPS.
+   --  Project_Wide is used if the customization comes from a custom file found
+   --  in one of the directories lists in GPS_CUSTOM_PATH.
+   --  User_Specific is used if the customization comes from a custom file
+   --  found in the user's own directory (see GPS_HOME/.gps/customize).
+
+   type Module_Customization_Handler is access procedure
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  Subprogram called when a new customization has been parsed.
+   --  It is initially called just after all modules have been registered,
+   --  and gets passed the first child of the XML file (that is you must go
+   --  through the list, following the Next nodes).
+
    ---------------------
    -- Action contexts --
    ---------------------
@@ -881,13 +901,14 @@ package Glide_Kernel is
 private
 
    type Module_ID_Information (Name_Length : Natural) is record
-      Name            : String (1 .. Name_Length);
-      Priority        : Module_Priority;
-      Contextual_Menu : Module_Menu_Handler;
-      Mime_Handler    : Module_Mime_Handler;
-      Default_Factory : Module_Default_Context_Factory;
-      Save_Function   : Module_Save_Function;
-      Tooltip_Handler : Module_Tooltip_Handler;
+      Name                  : String (1 .. Name_Length);
+      Priority              : Module_Priority;
+      Contextual_Menu       : Module_Menu_Handler;
+      Mime_Handler          : Module_Mime_Handler;
+      Default_Factory       : Module_Default_Context_Factory;
+      Save_Function         : Module_Save_Function;
+      Tooltip_Handler       : Module_Tooltip_Handler;
+      Customization_Handler : Module_Customization_Handler;
    end record;
 
    type Module_ID_Information_Access is access Module_ID_Information;
@@ -1009,6 +1030,14 @@ private
 
       Tasks : Task_Manager.Task_Manager_Access;
       --  The GPS task manager.
+
+      Custom_Files_Loaded : Boolean := False;
+      --  Whether all custom files have already been loaded
+
+      Customization_Strings : Glib.Xml_Int.Node_Ptr;
+      --  The customization strings hard-coded by the modules, and they have
+      --  been registered before all modules are loaded.
+
    end record;
 
 end Glide_Kernel;
