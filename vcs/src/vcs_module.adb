@@ -22,11 +22,9 @@ with Glib.Object;               use Glib.Object;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Main;                  use Gtk.Main;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 
 with Traces;                    use Traces;
@@ -35,6 +33,7 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_View_API;              use VCS_View_API;
 
 with VCS;                       use VCS;
+with Ada.Exceptions;            use Ada.Exceptions;
 with String_List;
 
 package body VCS_Module is
@@ -42,15 +41,6 @@ package body VCS_Module is
    VCS_Module_ID : Module_ID;
 
    Me : Debug_Handle := Create ("VCS_Module");
-
-   procedure Idle;
-   --  This procedure will be called whenever the process in the background is
-   --  waiting for something (command line output, network connection, etc)
-
-   procedure Handle_VCS_Error
-     (Message  : String;
-      Kernel   : GObject);
-   --  Handle the error message output by VCS operations.
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -64,10 +54,12 @@ package body VCS_Module is
    procedure On_Update_All
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
+   --  ???
 
    procedure List_Open_Files
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
+   --  ???
 
    procedure Update_Files_In_Current_Dir
      (Widget  : access GObject_Record'Class;
@@ -91,8 +83,8 @@ package body VCS_Module is
    ---------------------------------
 
    procedure Update_Files_In_Current_Dir
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
       Files    : String_List.List;
@@ -123,6 +115,10 @@ package body VCS_Module is
 
       String_List.Free (Dirs);
       String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Update_Files_In_Current_Dir;
 
    --------------------------------
@@ -160,6 +156,10 @@ package body VCS_Module is
 
       String_List.Free (Dirs);
       String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Get_Status_For_Current_Dir;
 
    -----------------------
@@ -173,6 +173,10 @@ package body VCS_Module is
       pragma Unreferenced (Widget);
    begin
       Open_Explorer (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Interface;
 
    -------------------
@@ -188,11 +192,15 @@ package body VCS_Module is
       Ref  : VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Dirs);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Update_All;
 
-   -------------------
+   ---------------------
    -- List_Open_Files --
-   -------------------
+   ---------------------
 
    procedure List_Open_Files
      (Widget : access GObject_Record'Class;
@@ -207,35 +215,11 @@ package body VCS_Module is
 
       Clear (Explorer);
       Get_Status (Ref, Get_Files_In_Project (Kernel));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end List_Open_Files;
-
-   ----------
-   -- Idle --
-   ----------
-
-   procedure Idle is
-      No_Main_Loop : Boolean;
-      Count        : Natural := 0;
-   begin
-      while Gtk.Main.Events_Pending
-        and then Count /= 30
-      loop
-         No_Main_Loop := Gtk.Main.Main_Iteration;
-         Count := Count + 1;
-      end loop;
-   end Idle;
-
-   ----------------------
-   -- Handle_VCS_Error --
-   ----------------------
-
-   procedure Handle_VCS_Error
-     (Message  : String;
-      Kernel   : GObject) is
-   begin
-      Push_Message (Kernel_Handle (Kernel),
-                    Glide_Kernel.Console.Error, Message);
-   end Handle_VCS_Error;
 
    -----------------------
    -- Initialize_Module --
