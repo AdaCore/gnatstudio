@@ -52,7 +52,7 @@ package body Glide_Menu is
       GNAT_RM_Help,
       ARM95_Help,
       GDB_Help,
-      Glide_Help,
+      GPS_Help,
       GCC_Help);
 
    --------------------
@@ -95,7 +95,7 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Help->Manual menu
 
-   procedure On_About_Glide
+   procedure On_About_GPS
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
@@ -241,7 +241,7 @@ package body Glide_Menu is
               Format_Pathname
                 (Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html"));
 
-         when Glide_Help =>
+         when GPS_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
                 (Top.Prefix_Directory.all & "/doc/glide2/html/glide2.html"));
@@ -277,11 +277,11 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Manual;
 
-   --------------------
-   -- On_About_Glide --
-   --------------------
+   ------------------
+   -- On_About_GPS --
+   ------------------
 
-   procedure On_About_Glide
+   procedure On_About_GPS
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget)
@@ -291,7 +291,7 @@ package body Glide_Menu is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        (-"Glide 2" & ASCII.LF & ASCII.LF & "(c) 2001 ACT-Europe",
+        (-"GPS" & ASCII.LF & ASCII.LF & "(c) 2001 ACT-Europe",
          Help_Msg =>
            (-"This is the About information box.") & ASCII.LF & ASCII.LF &
            (-"Click on the OK button to close this window."),
@@ -300,7 +300,7 @@ package body Glide_Menu is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_About_Glide;
+   end On_About_GPS;
 
    ----------------------
    -- Glide_Menu_Items --
@@ -348,7 +348,7 @@ package body Glide_Menu is
                   Callback_Action => Help_Context'Pos (Welcome_Help)),
          Gtk_New (Help & (-"Using the GPS Development Environment"), "",
                   Callback => On_Manual'Access,
-                  Callback_Action => Help_Context'Pos (Glide_Help)),
+                  Callback_Action => Help_Context'Pos (GPS_Help)),
          Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (GVD_Help)),
@@ -367,7 +367,7 @@ package body Glide_Menu is
          Gtk_New (Help & (-"Using GCC"), "",
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (GCC_Help)),
-         Gtk_New (Help & (-"About Glide"), "", On_About_Glide'Access));
+         Gtk_New (Help & (-"About GPS"), "", On_About_GPS'Access));
    end Glide_Menu_Items;
 
 end Glide_Menu;
