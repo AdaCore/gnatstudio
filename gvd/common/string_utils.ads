@@ -128,7 +128,7 @@ package Odd.Strings is
    --  Return a version of Text after stripping all the ^M from the string.
    --  This function is used on Windows.
 
-   function To_Unix_Pathname (Path : string) return String;
+   function To_Unix_Pathname (Path : String) return String;
    --  Convert all occurences of Directory_Separator to '/'.
 
 private

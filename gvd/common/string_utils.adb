@@ -467,7 +467,7 @@ package body Odd.Strings is
    function To_Unix_Pathname (Path : String) return String is
       Result : String (Path'Range);
    begin
-      if GNAT.OS_Lib.Directory_Separator ='/' then
+      if GNAT.OS_Lib.Directory_Separator = '/' then
          return Path;
       end if;
 
