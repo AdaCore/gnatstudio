@@ -25,13 +25,11 @@ with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Event;            use Gdk.Event;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
-with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Image;            use Gtk.Image;
 with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -204,6 +202,10 @@ package body Browsers.Dependency_Items is
       Args    : String_List_Utils.String_List.List) return String;
    --  Handler for the command "depends_on"
 
+   procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class);
+   procedure Examine_From_Dependencies (Item : access Arrow_Item_Record'Class);
+   --  Callbacks for the title bar buttons
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -355,9 +357,9 @@ package body Browsers.Dependency_Items is
          Refresh (Initial);
       end if;
 
-      if Get_Right_Arrow (Initial) then
-         Set_Right_Arrow (Initial, False);
-         Refresh (Initial);
+      if not Children_Shown (Initial) then
+         Set_Children_Shown (Initial, True);
+         Redraw_Title_Bar (Initial);
 
          Find_Dependencies (Lib_Info, F, List, Status);
 
@@ -537,8 +539,8 @@ package body Browsers.Dependency_Items is
          Refresh (Item);
       end if;
 
-      Set_Left_Arrow (Item, False);
-      Refresh (Item);
+      Set_Parents_Shown (Item, True);
+      Redraw_Title_Bar (Item);
 
       Data := (Iter             => new Dependency_Iterator,
                Browser          => Browser,
@@ -823,8 +825,8 @@ package body Browsers.Dependency_Items is
             loop
                Found := Get (Iter);
                exit when Found = null
-                 or else Get_Left_Arrow (File_Item (Found))
-                 or else Get_Right_Arrow (File_Item (Found));
+                 or else not Parents_Shown (File_Item (Found))
+                 or else not Children_Shown (File_Item (Found));
                Next (Iter);
             end loop;
 
@@ -948,29 +950,35 @@ package body Browsers.Dependency_Items is
       Browser : access General_Browser_Record'Class;
       File  : Internal_File) is
    begin
-      Initialize (Item, Browser, Get_Source_Filename (File));
+      Initialize (Item, Browser, Get_Source_Filename (File),
+                  Examine_From_Dependencies'Access,
+                  Examine_Dependencies'Access);
       Item.Source := File;
    end Initialize;
 
-   --------------------------
-   -- Button_Click_On_Left --
-   --------------------------
+   -------------------------------
+   -- Examine_From_Dependencies --
+   -------------------------------
 
-   procedure Button_Click_On_Left (Item : access File_Item_Record) is
+   procedure Examine_From_Dependencies
+     (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_From_Dependencies
-        (Get_Kernel (Get_Browser (Item)), Get_Source_Filename (Item.Source));
-   end Button_Click_On_Left;
+        (Get_Kernel (Get_Browser (Item)),
+         Get_Source_Filename (File_Item (Item).Source));
+   end Examine_From_Dependencies;
 
-   ---------------------------
-   -- Button_Click_On_Right --
-   ---------------------------
+   --------------------------
+   -- Examine_Dependencies --
+   --------------------------
 
-   procedure Button_Click_On_Right (Item : access File_Item_Record) is
+   procedure Examine_Dependencies
+     (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Dependencies
-        (Get_Kernel (Get_Browser (Item)), Get_Source_Filename (Item.Source));
-   end Button_Click_On_Right;
+        (Get_Kernel (Get_Browser (Item)),
+         Get_Source_Filename (File_Item (Item).Source));
+   end Examine_Dependencies;
 
    ----------------
    -- Get_Source --
@@ -1000,7 +1008,7 @@ package body Browsers.Dependency_Items is
 
    procedure Destroy (Item : in out File_Item_Record) is
    begin
-      Destroy (Text_Item_Record (Item));
+      Destroy (Arrow_Item_Record (Item));
       Destroy (Item.Source);
    end Destroy;
 
@@ -1109,7 +1117,7 @@ package body Browsers.Dependency_Items is
             Slot_Object => Browser);
 
          Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
-         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+         Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
@@ -1117,11 +1125,11 @@ package body Browsers.Dependency_Items is
             Context_Callback.To_Marshaller
               (Edit_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+         Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New
            (Mitem, Label => (-"Examining files depending on ") & Filename);
-         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+         Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
@@ -1129,7 +1137,7 @@ package body Browsers.Dependency_Items is
             Context_Callback.To_Marshaller
               (Edit_Ancestor_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+         Set_Sensitive (Mitem, not Parents_Shown (Item));
       end if;
 
       return Context;
@@ -1167,5 +1175,24 @@ package body Browsers.Dependency_Items is
 
       return null;
    end Save_Desktop;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item                        : access File_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
+   begin
+      --  Just reserve a little bit of space so that there is something else
+      --  than the title bar
+      Resize_And_Draw
+        (Arrow_Item_Record (Item.all)'Access,
+         Width, Height + 10,
+         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
+   end Resize_And_Draw;
 
 end Browsers.Dependency_Items;

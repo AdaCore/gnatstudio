@@ -18,9 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gdk.Event;
 with Gtk.Main;
 with Gtk.Menu;
+with Pango.Layout;
 
 with Src_Info;
 with Glide_Kernel;
@@ -42,7 +44,7 @@ package Browsers.Dependency_Items is
    ----------------
    --  These items represent source files from the application.
 
-   type File_Item_Record is new Browsers.Canvas.Text_Item_With_Arrows_Record
+   type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record
      with private;
    type File_Item is access all File_Item_Record'Class;
 
@@ -64,12 +66,6 @@ package Browsers.Dependency_Items is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       File    : Src_Info.Internal_File);
    --  Internal initialization function
-
-   procedure Button_Click_On_Left (Item : access File_Item_Record);
-   --  Handles button clicks on the left arrow.
-
-   procedure Button_Click_On_Right (Item : access File_Item_Record);
-   --  Handles button clicks on the right arrow.
 
    function Get_Source (Item : access File_Item_Record)
       return Src_Info.Internal_File;
@@ -100,17 +96,19 @@ package Browsers.Dependency_Items is
 
 
 private
-   type File_Item_Record is new
-     Browsers.Canvas.Text_Item_With_Arrows_Record with
+   procedure Resize_And_Draw
+     (Item                        : access File_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record with
    record
       Source : Src_Info.Internal_File;
       Project_Name : Types.Name_Id := Types.No_Name;
       --  Project that the file belongs to. This is only computed on demand
-
-      From_Parsed, To_Parsed : Boolean := False;
-      --  These two booleans are set to True when the parents of the item have
-      --  been fully parsed (ie all the subprograms that call Entity), or when
-      --  all the children have been parsed.
    end record;
 
    type Dependency_Link_Record is new Browsers.Canvas.Browser_Link_Record
