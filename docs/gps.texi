@@ -547,6 +547,8 @@ This is currently only supported under Linux, when using the GNOME 2 desktop.
 @section General Information
 @noindent
 
+@c ??? No tooltips if there are no LI files
+
 @node Navigation in the Source Editor
 @section Navigation in the Source Editor
 @noindent
