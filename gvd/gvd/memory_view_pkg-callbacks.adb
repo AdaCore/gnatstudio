@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
+with Glib;  use Glib;
 
 with Gdk.Event;   use Gdk.Event;
 
@@ -120,11 +120,24 @@ package body Memory_View_Pkg.Callbacks is
 
    function On_View_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
+      Params : GValues) return Boolean
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
-      Arg1 : Gdk_Event := To_Event (Params, 1);
+      View  : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      Arg1  : Gdk_Event;
+      Proxy : C_Proxy := Get_Proxy (Nth (Params, 1));
    begin
+      if Proxy = null then
+         return False;
+      else
+         Arg1 := Gdk_Event (Proxy);
+      end if;
+
+      if Arg1 = null
+        or else Get_Event_Type (Arg1) /= Key_Press
+      then
+         return False;
+      end if;
+
       case Get_Key_Val (Arg1) is
          when GDK_Right =>
             Move_Cursor (View, Right);
@@ -219,21 +232,8 @@ package body Memory_View_Pkg.Callbacks is
          Watch_Cursor_Location (View);
       end if;
 
-      return True;
-   end On_View_Button_Release_Event;
-
-   --------------------------------
-   -- On_View_Button_Press_Event --
-   --------------------------------
-
-   function On_View_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Object, Params);
-   begin
       return False;
-   end On_View_Button_Press_Event;
+   end On_View_Button_Release_Event;
 
    ----------------------
    -- On_Reset_Clicked --
