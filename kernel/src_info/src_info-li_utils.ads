@@ -1,9 +1,10 @@
 with SN; use SN;
+
 private package Src_Info.LI_Utils is
 
    procedure Insert_Declaration (
       Handler                 : in LI_Handler;
-      --  Language Information handler
+      --  Library Information handler
       File                    : in out LI_File_Ptr;
       --  root pointer to whole LI_File structure
       Symbol_Name             : in String;
@@ -32,8 +33,8 @@ private package Src_Info.LI_Utils is
       --  parameter.
    );
    --  Inserts new declaration with specified parameters to given
-   --  LI structure tree. The tree is specified by pointer to it's root element
-   --  - File arg).
+   --  LI structure tree. The tree is specified by pointer to it's root
+   --  element - File arg).
    --  This procedure:
    --    1. Inserts new declaration into the LI structrure tree
    --    2. Returns pointer to created declaration (Declaration_Info param)
@@ -52,8 +53,8 @@ private package Src_Info.LI_Utils is
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
       Declaration_Info        : out E_Declaration_Info_List);
-   --  Inserts new dependency declaration with specified parameters to given
-   --  LI structure tree.
+   --  Inserts new dependency declaration with specified parameters
+   --  to given LI structure tree.
 
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
