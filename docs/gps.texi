@@ -11122,7 +11122,7 @@ user interactively for the name of the file to search.
   <action name="action find">
     <shell>Project %p</shell>
     <shell>Project.get_tool_switches_as_string %1 Find </shell>
-    <shell>input_dialog "Name of file to search" Filename</shell>
+    <shell>MDI.input_dialog "Name of file to search" Filename</shell>
     <external>find . -name %1 %2</external>
   </action>
 
