@@ -4672,7 +4672,7 @@ package body Src_Editor_Buffer is
          Line   : Editable_Line_Type);
       --  Analyse line content and set refill separator if comment
 
-      procedure Add_Result (Str : String; Last_Line : Boolean);
+      procedure Add_Result (Str : String);
       --  Add Str to the result string, Last_Line is set to true if Str is
       --  the last line content.
 
@@ -4680,8 +4680,7 @@ package body Src_Editor_Buffer is
       -- Add_Result --
       ----------------
 
-      procedure Add_Result (Str : String; Last_Line : Boolean) is
-         Insert_EOL : Boolean := True;
+      procedure Add_Result (Str : String) is
 
          procedure Add (Str : String);
          pragma Inline (Add);
@@ -4691,8 +4690,8 @@ package body Src_Editor_Buffer is
          --  Add Word to the result string, properly insert a new-line if
          --  line goes over the right margin.
 
-         procedure Add_EOL (Force : Boolean := False);
-         --  Add LF to the result string if needed
+         procedure Add_EOL;
+         --  Add LF to the result string
 
          ---------
          -- Add --
@@ -4715,17 +4714,11 @@ package body Src_Editor_Buffer is
          -- Add_EOL --
          -------------
 
-         procedure Add_EOL (Force : Boolean := False) is
+         procedure Add_EOL is
          begin
-            if Force or else Insert_EOL then
-               Add ((1 => ASCII.LF));
-               Is_Start := True;
-               Line_Size := 0;
-
-            else
-               --  EOL was temporaryly disabled, reenable it now
-               Insert_EOL := True;
-            end if;
+            Add ((1 => ASCII.LF));
+            Is_Start := True;
+            Line_Size := 0;
          end Add_EOL;
 
          --------------
@@ -4739,7 +4732,7 @@ package body Src_Editor_Buffer is
 
             if Line_Size + Word'Length + 1 >= Max then
                --  +1 for the space before the word
-               Add_EOL (True);
+               Add_EOL;
             end if;
 
             if Is_Start then
@@ -4792,15 +4785,6 @@ package body Src_Editor_Buffer is
          F, L : Natural;
 
       begin
-         if Str'Length > Max then
-            --  This line is longer than the limit, do not insert a new-line
-            --  after it, we want the following line to continue on the same
-            --  line.
-            Insert_EOL := False;
-         else
-            Insert_EOL := True;
-         end if;
-
          F := Str'First;
 
          while F < Str'Last loop
@@ -4842,8 +4826,6 @@ package body Src_Editor_Buffer is
 
             F := L + 1;
          end loop;
-
-         Add_EOL (Force => Last_Line);
       end Add_Result;
 
       ------------------
@@ -4980,14 +4962,15 @@ package body Src_Editor_Buffer is
          declare
             Line : constant Src_String := Get_String (Buffer, K);
          begin
-            if Line.Contents = null then
-               Add_Result ("", Last_Line => K = To_Line);
-            else
-               Add_Result
-                 (Line.Contents (1 .. Line.Length), Last_Line => K = To_Line);
+            if Line.Contents /= null then
+               Add_Result (Line.Contents (1 .. Line.Length));
             end if;
          end;
       end loop;
+
+      --  Add final LF
+
+      Append (New_Text, String'(1 => ASCII.LF));
 
       --  Replace text with the new one
 
