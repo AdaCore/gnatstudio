@@ -1132,7 +1132,12 @@ package body VCS.CVS is
          return False;
       end if;
 
-      Open_File_Editor (Kernel, Current_File, From_Path => False);
+      if Is_Open (Kernel, Current_File) then
+         Open_File_Editor
+           (Kernel, Current_File, From_Path => False, Line => 0);
+      else
+         Open_File_Editor (Kernel, Current_File, From_Path => False);
+      end if;
 
       L_Temp := Next (Next (L_Temp));
 
