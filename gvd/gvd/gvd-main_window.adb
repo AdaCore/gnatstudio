@@ -66,7 +66,9 @@ package body GVD.Main_Window is
          Page := Get_Nth_Page (Window.Process_Notebook, J);
          Tab  := Process_User_Data.Get (Page);
 
-         if Command_In_Process (Get_Process (Tab.Debugger)) then
+         if Tab.Debugger /= null
+           and then Command_In_Process (Get_Process (Tab.Debugger))
+         then
             Interrupt (Tab.Debugger);
          end if;
       end loop;
