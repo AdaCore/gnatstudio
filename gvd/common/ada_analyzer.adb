@@ -22,7 +22,13 @@ package body Source_Analyzer is
 
    type Extended_Token is record
       Token       : Token_Type;
+      --  Enclosing token
+
       Declaration : Boolean;
+      --  Are we inside a declarative part ?
+
+      Identifier  : String_Access;
+      --  Name of the enclosing token
    end record;
 
    package Token_Stack is new Generic_Stack (Extended_Token);
@@ -830,10 +836,10 @@ package body Source_Analyzer is
             Index := Index + 1;
          end loop;
 
-         if Top (Indents) = None then
+         if Top (Indents).all = None then
             Indentation := Num_Spaces;
          else
-            Indentation := Top (Indents);
+            Indentation := Top (Indents).all;
          end if;
 
          Replace_Text (New_Buffer, Start, Index, Spaces (1 .. Indentation));
@@ -879,7 +885,7 @@ package body Source_Analyzer is
       Prev_Token          : Token_Type := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
       Indents             : Indent_Stack.Simple_Stack;
-      Val                 : Extended_Token;
+      Val                 : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
 
       procedure Handle_Reserved_Word (Word : Token_Type);
@@ -890,7 +896,7 @@ package body Source_Analyzer is
       --------------------------
 
       procedure Handle_Reserved_Word (Word : Token_Type) is
-         Temp : Extended_Token := (Word, False);
+         Temp : Extended_Token := (Word, False, null);
       begin
          --  Note: the order of the following conditions is important
 
@@ -978,9 +984,7 @@ package body Source_Analyzer is
             --  end if;
 
             if Word = Tok_End then
-               Pop (Tokens, Val);
-
-               case Val.Token is
+               case Top (Tokens).Token is
                   when Tok_Exception =>
                      --  Undo additional level of indentation, as in:
                      --     ...
@@ -1000,6 +1004,8 @@ package body Source_Analyzer is
                   when others =>
                      null;
                end case;
+
+               Pop (Tokens);
             end if;
 
             Num_Spaces := Num_Spaces - Indent_Level;
@@ -1055,9 +1061,7 @@ package body Source_Analyzer is
 
                      if Val.Declaration then
                         Num_Spaces := Num_Spaces - Indent_Level;
-                        Pop (Tokens);
                         Val.Declaration := False;
-                        Push (Tokens, Val);
                      else
                         Push (Tokens, Temp);
                      end if;
@@ -1099,9 +1103,8 @@ package body Source_Analyzer is
                   Type_Decl     := False;
 
                else
-                  Pop (Tokens, Val);
+                  Val := Top (Tokens);
                   Val.Declaration := True;
-                  Push (Tokens, Val);
                   Subprogram_Decl := False;
                end if;
             end if;
@@ -1149,7 +1152,7 @@ package body Source_Analyzer is
       New_Buffer := To_Line_Buffer (Buffer);
 
       --  Push a dummy token so that stack will never be empty.
-      Push (Tokens, (No_Token, False));
+      Push (Tokens, (No_Token, False, null));
 
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
