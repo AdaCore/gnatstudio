@@ -490,7 +490,8 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Type_Name (Type_Name'Last) = '*' then
+      if Type_Name (Type_Name'Last) = '*'
+         or Type_Name (Type_Name'Last) = '&' then
          Success      := True;
          Desc.Kind    := Access_Type;
          return;
