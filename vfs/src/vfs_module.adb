@@ -34,7 +34,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
-with Shell;                     use Shell;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 package body VFS_Module is
 
@@ -52,10 +52,9 @@ package body VFS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the conextual menu if necessary
 
-   function VFS_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure VFS_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
    --  Interactive command handler for the vfs module.
 
    procedure On_Delete
@@ -67,13 +66,10 @@ package body VFS_Module is
    -- VFS_Command_Handler --
    --------------------------
 
-   function VFS_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+   procedure VFS_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
    is
-      pragma Unreferenced (Kernel);
-
       Success  : Boolean;
       Result   : GNAT.OS_Lib.String_Access;
 
@@ -161,19 +157,21 @@ package body VFS_Module is
 
    begin
       if Command = "pwd" then
-         return Get_Current_Dir;
+         Set_Return_Value (Data, Get_Current_Dir);
 
       elsif Command = "cd" or else Command = "delete" then
          declare
-            File : constant String := Args (Args'First).all;
+            File : constant String := Nth_Arg (Data, 1);
          begin
             if Command = "cd" then
                begin
                   Change_Dir (File);
                exception
                   when Directory_Error =>
-                     return Command & ": " &
-                       (-"cannot change current directory");
+                     Set_Error_Msg
+                       (Data, Command & ": " &
+                        (-"cannot change current directory"));
+                     return;
                end;
 
             elsif Command = "delete" then
@@ -182,47 +180,44 @@ package body VFS_Module is
                      Remove_Dir (File, True);
                   exception
                      when Directory_Error =>
-                        return Command & ": " & "cannot delete directory";
+                        Set_Error_Msg
+                          (Data, Command & ": " & "cannot delete directory");
+                        return;
                   end;
 
                else
                   Delete_File (File, Success);
 
                   if not Success then
-                     return Command & ": " & (-"cannot delete file");
+                     Set_Error_Msg
+                       (Data, Command & ": " & (-"cannot delete file"));
+                     return;
                   end if;
                end if;
             end if;
-
-            return "";
          end;
 
       elsif Command = "dir" or else Command = "ls" then
          Result := new String'("");
 
-         if Args'Length = 0 then
+         if Number_Of_Arguments (Data) = 0 then
             List_Files ("*");
          else
-            for Index in Args'Range loop
+            for A in 1 .. Number_Of_Arguments (Data) loop
                begin
-                  List_Files (Args (Index).all);
+                  List_Files (Nth_Arg (Data, A));
                exception
                   when Error_In_Regexp =>
                      Free (Result);
-                     return -"error in regexp: " & Args (Index).all;
+                     Set_Error_Msg
+                       (Data, -"error in regexp: " & Nth_Arg (Data, A));
+                     return;
                end;
             end loop;
          end if;
 
-         declare
-            R : constant String := Result.all;
-         begin
-            Free (Result);
-            return R;
-         end;
-
-      else
-         return -"command not recognized: " & Command;
+         Set_Return_Value (Data, Result.all);
+         Free (Result);
       end if;
    end VFS_Command_Handler;
 
@@ -336,7 +331,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "pwd",
-         Usage        => "pwd",
+         Usage        => "pwd () -> None",
          Description  => -"Print name of current/working directory.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -344,7 +339,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "cd",
-         Usage        => "cd dir",
+         Usage        => "cd (dir) -> None",
          Description  => -"Change the current directory to dir.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -352,7 +347,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "delete",
-         Usage        => "delete name",
+         Usage        => "delete (name) -> None",
          Description  => -"Delete file/directory name from the file system.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -360,7 +355,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "dir",
-         Usage        => "dir [pattern]",
+         Usage        => "dir ([pattern]) -> None",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
@@ -369,7 +364,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "ls",
-         Usage        => "ls [pattern]",
+         Usage        => "ls ([pattern]) -> None",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
