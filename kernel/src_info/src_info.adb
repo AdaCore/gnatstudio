@@ -161,20 +161,24 @@ package body Src_Info is
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table;
       --  ??? Make a copy of the table since Get_First and Get_Next need
-      --  ??? a Read/Writable HTable. This is temporary since we should stop
-      --  ??? using Get_First/Next soon. See ??? comment below.
+      --  a Read/Writable HTable. This is temporary since we should stop
+      --  using Get_First/Next soon. See ??? comment below.
+
    begin
       --  ??? The best way of doing this is to convert the filename into the
-      --  ??? Library Info filename, and then use the Htable to retrieve the
-      --  ??? LI_File. This poses a few problems because the conversion is
-      --  ??? language dependent. We might want to play with dispatching
-      --  ??? using Language.* later on. For the moment, we do a brutal
-      --  ??? search; that'll do for now, and it works fast enough on small
-      --  ??? projects.
+      --  Library Info filename, and then use the Htable to retrieve the
+      --  LI_File. This poses a few problems because the conversion is
+      --  language dependent. We might want to play with dispatching
+      --  using Language.* later on. For the moment, we do a brutal
+      --  search; that'll do for now, and it works fast enough on small
+      --  projects.
+
       Get_First (Table, Current_LI);
+
       LI_File_Loop :
       while Current_LI /= null loop
          --  See if the filename matches the spec filename
+
          if Current_LI.LI.Spec_Info /= null
            and then Current_LI.LI.Spec_Info.Source_Filename.all =
               Short_Filename
@@ -183,6 +187,7 @@ package body Src_Info is
          end if;
 
          --  Check if the filename matches the body filename
+
          if Current_LI.LI.Body_Info /= null
            and then Current_LI.LI.Body_Info.Source_Filename.all =
               Short_Filename
@@ -191,20 +196,25 @@ package body Src_Info is
          end if;
 
          --  Finally, check the filenames of the separates
+
          Current_Sep := Current_LI.LI.Separate_Info;
+
          Separate_Loop :
          while Current_Sep /= null loop
             if Current_Sep.Value.Source_Filename.all = Short_Filename then
                return Current_LI;
             end if;
+
             Current_Sep := Current_Sep.Next;
          end loop Separate_Loop;
 
          --  This LI_File does not match, try the next one in the table...
+
          Get_Next (Table, Current_LI);
       end loop LI_File_Loop;
 
       --  If we reach this point, then there is no matching LI_File
+
       return null;
    end Locate_From_Source;
 
@@ -292,10 +302,12 @@ package body Src_Info is
    begin
       --  Make sure no LI_File with the same unit name already exists before
       --  inserting in the table.
+
       if Tmp /= null then
          Success := False;
          return;
       end if;
+
       LI_File_HTable.Set (HT, new LI_File_Node'(Value => LIFP, Next => null));
       Success := True;
    end Add;
@@ -309,13 +321,17 @@ package body Src_Info is
       Next_Unit    : LI_File_Node_Ptr;
    begin
       --  Destroy all elements pointed by the hash-table...
+
       LI_File_HTable.Get_First (HT, Current_Unit);
+
       while Current_Unit /= null loop
          LI_File_HTable.Get_Next (HT, Next_Unit);
          Destroy (Current_Unit);
          Current_Unit := Next_Unit;
       end loop;
+
       --  And finally, reset the hash-table itself...
+
       LI_File_HTable.Reset (HT);
    end Reset;
 
@@ -329,6 +345,7 @@ package body Src_Info is
       Name : aliased String := Base_Name (LI_Filename);
       Node : constant LI_File_Node_Ptr :=
         LI_File_HTable.Get (HT, Name'Unchecked_Access);
+
    begin
       if Node = null then
          return No_LI_File;
@@ -347,6 +364,7 @@ package body Src_Info is
       Node : LI_File_Node_Ptr;
    begin
       LI_File_HTable.Get_First (HT, Node);
+
       if Node = null then
          Result := No_LI_File;
       else
@@ -364,6 +382,7 @@ package body Src_Info is
       Node : LI_File_Node_Ptr;
    begin
       LI_File_HTable.Get_Next (HT, Node);
+
       if Node = null then
          Result := No_LI_File;
       else
@@ -406,6 +425,7 @@ package body Src_Info is
       Destroy (LIF.Spec_Info);
       Destroy (LIF.Body_Info);
       Destroy (LIF.Separate_Info);
+
       if LIF.Parsed then
          Destroy (LIF.Dependencies_Info);
       end if;
@@ -423,6 +443,7 @@ package body Src_Info is
    begin
       --  Do not deallocate SF.LI, we are just pointing to it, we did
       --  not allocate it for this object.
+
       Free (SF.Unit_Name);
    end Destroy;
 
@@ -436,8 +457,7 @@ package body Src_Info is
       Destroy (ER.Location);
    end Destroy;
 
-   procedure Destroy (ERL : in out E_Reference_List)
-   is
+   procedure Destroy (ERL : in out E_Reference_List) is
       Current_Node : E_Reference_List renames ERL;
       Next_Node    : E_Reference_List;
    begin
@@ -509,8 +529,7 @@ package body Src_Info is
       Destroy (DFI.Declarations);
    end Destroy;
 
-   procedure Destroy (DFIL : in out Dependency_File_Info_List)
-   is
+   procedure Destroy (DFIL : in out Dependency_File_Info_List) is
       Current_Node : Dependency_File_Info_List renames DFIL;
       Next_Node    : Dependency_File_Info_List;
    begin
@@ -522,8 +541,7 @@ package body Src_Info is
       end loop;
    end Destroy;
 
-   procedure Destroy (LIFNP : in out LI_File_Node_Ptr)
-   is
+   procedure Destroy (LIFNP : in out LI_File_Node_Ptr) is
       Current_Node : LI_File_Node_Ptr renames LIFNP;
       Next_Node    : LI_File_Node_Ptr;
    begin
@@ -545,6 +563,7 @@ package body Src_Info is
       if SF.Unit_Name /= null then
          Result.Unit_Name := new String'(SF.Unit_Name.all);
       end if;
+
       return Result;
    end Copy;
 
@@ -607,6 +626,7 @@ package body Src_Info is
          Source_Filename        => Source_Filename,
          Project                => Project,
          Predefined_Source_Path => Predefined_Source_Path);
+
    begin
       return (File_Name => new String' (Source_Filename),
               Unit_Name => null,
@@ -659,10 +679,11 @@ package body Src_Info is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return String
    is
-      SF : Source_File := Find_Source_File (Source_Info_List, File);
+      SF  : Source_File := Find_Source_File (Source_Info_List, File);
       Ptr : File_Info_Ptr := Get_File_Info (SF);
       Dir : constant String := Get_Directory_Name
         (Ptr, Project, Predefined_Source_Path);
+
    begin
       return Dir & Ptr.Source_Filename.all;
    end Get_Full_Source_Filename;
@@ -711,13 +732,16 @@ package body Src_Info is
      (Source_Info_List : LI_File_List; File : Internal_File)
       return Source_File
    is
-      Source : constant String := Get_Source_Filename (File);
-      LI : LI_File_Ptr := Get (Source_Info_List.Table, File.LI_Name.all);
+      Source       : constant String := Get_Source_Filename (File);
+      LI           : LI_File_Ptr :=
+        Get (Source_Info_List.Table, File.LI_Name.all);
       Current_Node : File_Info_Ptr_List;
+
    begin
       --  We must have found an LI file. However, it might still be
       --  incomplete. But since we have the filename, it has to be associated
       --  with the LI file already.
+
       pragma Assert (LI /= No_LI_File);
 
       if LI.LI.Spec_Info /= null
@@ -736,6 +760,7 @@ package body Src_Info is
 
       else
          Current_Node := LI.LI.Separate_Info;
+
          while Current_Node /= null loop
             if Current_Node.Value.Source_Filename.all = Source then
                return (LI        => LI,
@@ -796,6 +821,7 @@ package body Src_Info is
       --  since then (and it would be fine to use the same path), but it might
       --  also be because the project has changed and we are pointing to some
       --  other files.
+
       if File.Directory_Name /= null then
          Ts := To_Timestamp (File_Time_Stamp
             (File.Directory_Name.all & File.Source_Filename.all));
@@ -825,6 +851,7 @@ package body Src_Info is
       --  its LI file, we don't have any timestamp
       --  information. Memorizing it here will allow the cache for the
       --  directory name to work properly.
+
       if File.File_Timestamp = 0 then
          if Ts = 0 then
             Ts := To_Timestamp (File_Time_Stamp
@@ -843,7 +870,7 @@ package body Src_Info is
 
    function Check_Language_Of
      (Project : Project_Id; Source_Filename : String; Language : Name_Id)
-     return Boolean
+      return Boolean
    is
       function Check_Exception (List : Array_Element_Id) return Boolean;
       --  Return True if SourcE_Filename is part of the exceptions List.
@@ -869,6 +896,7 @@ package body Src_Info is
 
       Naming : Naming_Data := Projects.Table (Project).Naming;
       Spec, Bodies : Name_Id;
+
    begin
       Spec   := Value_Of (Language, Naming.Specification_Suffix);
       Bodies := Value_Of (Language, Naming.Implementation_Suffix);
@@ -920,6 +948,7 @@ package body Src_Info is
          then
             return Tmp.Handler;
          end if;
+
          Tmp := Tmp.Next;
       end loop;
 
@@ -951,6 +980,7 @@ package body Src_Info is
       Split_Time_Stamp (Str, Year, Month, Day, Hour, Minutes, Seconds);
 
       --  Save some space on the year
+
       return Timestamp (Year - Base_Year) * Seconds_In_Year
         + Timestamp (Month) * Seconds_In_Month
         * Timestamp (Day) * Seconds_In_Day
