@@ -27,6 +27,7 @@ with Glib.Xml_Int;          use Glib.Xml_Int;
 with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
+with Gtk.Clipboard;         use Gtk.Clipboard;
 with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Combo;             use Gtk.Combo;
@@ -39,6 +40,7 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Gtk.Selection;         use Gtk.Selection;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
@@ -62,7 +64,8 @@ with Generic_List;
 with Histories;             use Histories;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
@@ -1230,15 +1233,17 @@ package body Vsearch_Ext is
       Raise_Widget : Boolean := False;
       Float_Widget : Boolean := True) return Vsearch_Extended
    is
-      Child  : MDI_Child;
+      Child   : MDI_Child;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Vsearch_Extended_Record'Tag);
 
       --  If not currently displayed
       if Child = null then
-
          --  Create if not done yet
+
          if Vsearch_Module_Id.Search = null then
             Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
 
@@ -1251,6 +1256,21 @@ package body Vsearch_Ext is
               (Vsearch_Module_Id.Search, "delete_event",
                Return_Callback.To_Marshaller (On_Delete'Access));
          end if;
+
+         --  Automatically fill the pattern text entry with the selection, if
+         --  there is one which does not contain multiple lines.
+
+         declare
+            Text : constant UTF8_String :=
+              Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
+         begin
+            if Text /= ""
+              and then Text'Length < 128
+              and then Index (Text, (1 => ASCII.LF)) = 0
+            then
+               Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
+            end if;
+         end;
 
          Child := Put (Kernel, Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient
