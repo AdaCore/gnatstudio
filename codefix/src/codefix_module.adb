@@ -128,7 +128,7 @@ package body Codefix_Module is
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => Compilation_Category,
+         Category      => -Compilation_Category,
          File          => Create
            (Get_Error_Message (Mitem.Error).File_Name.all,
             Codefix_Module_ID.Kernel),
@@ -251,7 +251,7 @@ package body Codefix_Module is
          Location := Message_Context_Access (Context);
 
          if not Has_Category_Information (Location)
-           or else Category_Information (Location) /= Compilation_Category
+           or else Category_Information (Location) /= -Compilation_Category
          then
             return;
          end if;
@@ -293,7 +293,7 @@ package body Codefix_Module is
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => Compilation_Category,
+         Category      => -Compilation_Category,
          File          => Create
            (Get_Error_Message (Error).File_Name.all,
             Codefix_Module_ID.Kernel),
@@ -332,7 +332,7 @@ package body Codefix_Module is
       Add_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => Compilation_Category,
+         Category      => -Compilation_Category,
          File          => Create
            (Get_Error_Message (Error).File_Name.all,
             Codefix_Module_ID.Kernel),

@@ -194,9 +194,9 @@ package body Commands.Builder is
       if Buffer_Pos /= Buffer'First then
          Parse_Compiler_Output
            (Kernel,
-            Error_Category,
-            Warning_Category,
-            Style_Category,
+            -Error_Category,
+            -Warning_Category,
+            -Style_Category,
             Buffer (Buffer'First .. Buffer_Pos - 1));
       end if;
 
@@ -209,18 +209,18 @@ package body Commands.Builder is
          if Buffer_Pos /= Buffer'First then
             Parse_Compiler_Output
               (Kernel,
-               Error_Category,
-               Warning_Category,
-               Style_Category,
+               -Error_Category,
+               -Warning_Category,
+               -Style_Category,
                Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all));
          end if;
 
          Free (Buffer);
          Parse_Compiler_Output
            (Kernel,
-            Error_Category,
-            Warning_Category,
-            Style_Category,
+            -Error_Category,
+            -Warning_Category,
+            -Style_Category,
             Expect_Out (Fd.all));
          Close (Fd.all, Status);
 
