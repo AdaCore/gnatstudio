@@ -127,19 +127,15 @@ package body Glide_Kernel.Modules is
       return ID.Name;
    end Module_Name;
 
-   --------------------------
-   -- Set_File_Information --
-   --------------------------
+   -------------------------------
+   -- Set_File_Name_Information --
+   -------------------------------
 
-   procedure Set_File_Information
-     (Context : access File_Selection_Context;
-      Project_View : Prj.Project_Id := Prj.No_Project;
+   procedure Set_File_Name_Information
+     (Context : access File_Name_Selection_Context;
       Directory : String := "";
-      File_Name : String := "";
-      Importing_Project : Prj.Project_Id := Prj.No_Project) is
+      File_Name : String := "") is
    begin
-      Context.Project_View := Project_View;
-      Context.Importing_Project := Importing_Project;
       Free (Context.Directory);
       Free (Context.File_Name);
 
@@ -150,6 +146,19 @@ package body Glide_Kernel.Modules is
       if File_Name /= "" then
          Context.File_Name := new String' (File_Name);
       end if;
+   end Set_File_Name_Information;
+
+   --------------------------
+   -- Set_File_Information --
+   --------------------------
+
+   procedure Set_File_Information
+     (Context           : access File_Selection_Context;
+      Project_View      : Prj.Project_Id := Prj.No_Project;
+      Importing_Project : Prj.Project_Id := Prj.No_Project) is
+   begin
+      Context.Project_View := Project_View;
+      Context.Importing_Project := Importing_Project;
    end Set_File_Information;
 
    -----------------------------
@@ -176,8 +185,8 @@ package body Glide_Kernel.Modules is
    -- Has_Directory_Information --
    -------------------------------
 
-   function Has_Directory_Information (Context : access File_Selection_Context)
-      return Boolean is
+   function Has_Directory_Information
+     (Context : access File_Name_Selection_Context) return Boolean is
    begin
       return Context.Directory /= null;
    end Has_Directory_Information;
@@ -186,8 +195,8 @@ package body Glide_Kernel.Modules is
    -- Directory_Information --
    ---------------------------
 
-   function Directory_Information (Context : access File_Selection_Context)
-      return String is
+   function Directory_Information
+     (Context : access File_Name_Selection_Context) return String is
    begin
       if Context.Directory = null then
          return "";
@@ -200,8 +209,8 @@ package body Glide_Kernel.Modules is
    -- Has_File_Information --
    --------------------------
 
-   function Has_File_Information (Context : access File_Selection_Context)
-      return Boolean is
+   function Has_File_Information
+     (Context : access File_Name_Selection_Context) return Boolean is
    begin
       return Context.File_Name /= null;
    end Has_File_Information;
@@ -210,8 +219,8 @@ package body Glide_Kernel.Modules is
    -- File_Information --
    ----------------------
 
-   function File_Information (Context : access File_Selection_Context)
-      return String is
+   function File_Information
+     (Context : access File_Name_Selection_Context) return String is
    begin
       if Context.File_Name = null then
          return "";
@@ -240,11 +249,94 @@ package body Glide_Kernel.Modules is
       return Context.Importing_Project;
    end Importing_Project_Information;
 
+   ----------------------------
+   -- Set_Entity_Information --
+   ----------------------------
+
+   procedure Set_Entity_Information
+     (Context     : access Entity_Selection_Context;
+      Entity_Name : String := "";
+      Line        : Integer := 0;
+      Column      : Integer := 0) is
+   begin
+      Free (Context.Entity_Name);
+      if Entity_Name /= "" then
+         Context.Entity_Name := new String' (Entity_Name);
+      end if;
+
+      Context.Line := Line;
+      Context.Column := Column;
+   end Set_Entity_Information;
+
+   ---------------------------------
+   -- Has_Entity_Name_Information --
+   ---------------------------------
+
+   function Has_Entity_Name_Information
+     (Context : access Entity_Selection_Context) return Boolean is
+   begin
+      return Context.Entity_Name /= null;
+   end Has_Entity_Name_Information;
+
+   -----------------------------
+   -- Entity_Name_Information --
+   -----------------------------
+
+   function Entity_Name_Information
+     (Context : access Entity_Selection_Context) return String is
+   begin
+      if Context.Entity_Name = null then
+         return "";
+      else
+         return Context.Entity_Name.all;
+      end if;
+   end Entity_Name_Information;
+
+   --------------------------
+   -- Has_Line_Information --
+   --------------------------
+
+   function Has_Line_Information
+     (Context : access Entity_Selection_Context) return Boolean is
+   begin
+      return Context.Line /= 0;
+   end Has_Line_Information;
+
+   ----------------------
+   -- Line_Information --
+   ----------------------
+
+   function Line_Information
+     (Context : access Entity_Selection_Context) return Integer is
+   begin
+      return Context.Line;
+   end Line_Information;
+
+   ----------------------------
+   -- Has_Column_Information --
+   ----------------------------
+
+   function Has_Column_Information
+     (Context : access Entity_Selection_Context) return Boolean is
+   begin
+      return Context.Column /= 0;
+   end Has_Column_Information;
+
+   ------------------------
+   -- Column_Information --
+   ------------------------
+
+   function Column_Information
+     (Context : access Entity_Selection_Context) return Integer is
+   begin
+      return Context.Column;
+   end Column_Information;
+
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Context : in out File_Selection_Context) is
+   procedure Destroy (Context : in out File_Name_Selection_Context) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);

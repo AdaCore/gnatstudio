@@ -103,7 +103,7 @@ package Glide_Kernel.Modules is
    --  See also the types defined in glide_kernel.ads
 
    package Context_Callback is new Gtk.Handlers.User_Callback
-     (Gtk.Widget.Gtk_Widget_Record, Selection_Context_Access);
+     (Glib.Object.GObject_Record, Selection_Context_Access);
 
    -------------------------
    -- Module manipulation --
@@ -264,21 +264,53 @@ package Glide_Kernel.Modules is
    --  case, the contents of the file is computed from the other file and the
    --  diff file.
 
+   ------------------------
+   -- File_Name contexts --
+   ------------------------
+
+   type File_Name_Selection_Context is new Selection_Context with private;
+   type File_Name_Selection_Context_Access is access all
+     File_Name_Selection_Context'Class;
+
+   procedure Set_File_Name_Information
+     (Context : access File_Name_Selection_Context;
+      Directory : String := "";
+      File_Name : String := "");
+   --  Set the information in this context.
+
+   function Has_Directory_Information
+     (Context : access File_Name_Selection_Context) return Boolean;
+   --  True if the context has information about a selected directory.
+
+   function Directory_Information
+     (Context : access File_Name_Selection_Context) return String;
+   --  Return the information about the selected project. This is only relevant
+   --  if Has_Directory_Information is True.
+   --  This directory name always ends with a '/'
+
+   function Has_File_Information
+     (Context : access File_Name_Selection_Context) return Boolean;
+   --  True if the context has information about a selected file.
+
+   function File_Information
+     (Context : access File_Name_Selection_Context) return String;
+   --  Return the information about the selected project. This is only relevant
+   --  if Has_File_Information is True.
+   --  This is the base file name for the file
+
+   procedure Destroy (Context : in out File_Name_Selection_Context);
+   --  Free the memory associated with the context
+
    -------------------
    -- File Contexts --
    -------------------
 
-   type File_Selection_Context is new Selection_Context with private;
+   type File_Selection_Context is new File_Name_Selection_Context with private;
    type File_Selection_Context_Access is access all File_Selection_Context;
-   --  This type contains all the information about the selection in any
-   --  module. Note that this is a tagged type, so that it can easily be
-   --  extended for modules external to Glide
 
    procedure Set_File_Information
      (Context : access File_Selection_Context;
       Project_View : Prj.Project_Id := Prj.No_Project;
-      Directory : String := "";
-      File_Name : String := "";
       Importing_Project : Prj.Project_Id := Prj.No_Project);
    --  Set the information in Context.
    --  File_Name should always be the base file name (no directory
@@ -302,36 +334,55 @@ package Glide_Kernel.Modules is
      (Context : access File_Selection_Context) return Prj.Project_Id;
    --  Return the project that imports the one returned by Project_Information.
 
-   function Has_Directory_Information (Context : access File_Selection_Context)
-      return Boolean;
-   --  True if the context has information about a selected directory.
+   ---------------------
+   -- Entity Contexts --
+   ---------------------
 
-   function Directory_Information (Context : access File_Selection_Context)
-      return String;
-   --  Return the information about the selected project. This is only relevant
-   --  if Has_Directory_Information is True.
-   --  This directory name always ends with a '/'
+   type Entity_Selection_Context is new File_Name_Selection_Context
+     with private;
+   type Entity_Selection_Context_Access is access all Entity_Selection_Context;
 
-   function Has_File_Information (Context : access File_Selection_Context)
-      return Boolean;
-   --  True if the context has information about a selected file.
+   procedure Set_Entity_Information
+     (Context     : access Entity_Selection_Context;
+      Entity_Name : String := "";
+      Line        : Integer := 0;
+      Column      : Integer := 0);
+   --  Set the information in the context
 
-   function File_Information (Context : access File_Selection_Context)
-      return String;
-   --  Return the information about the selected project. This is only relevant
-   --  if Has_File_Information is True.
-   --  This is the base file name for the file
+   function Has_Entity_Name_Information
+     (Context : access Entity_Selection_Context) return Boolean;
+   function Entity_Name_Information
+     (Context : access Entity_Selection_Context) return String;
+   --  Check whether there is some directory information, and return it.
 
-   procedure Destroy (Context : in out File_Selection_Context);
-   --  Free the memory associated with the context
+   function Has_Line_Information
+     (Context : access Entity_Selection_Context) return Boolean;
+   function Line_Information
+     (Context : access Entity_Selection_Context) return Integer;
+   --  Check whether there is some line information, and return it.
+
+   function Has_Column_Information
+     (Context : access Entity_Selection_Context) return Boolean;
+   function Column_Information
+     (Context : access Entity_Selection_Context) return Integer;
+   --  Check whether there is some line information, and return it.
+
 
 private
 
-   type File_Selection_Context is new Selection_Context with record
-      Project_View : Prj.Project_Id            := Prj.No_Project;
+   type File_Name_Selection_Context is new Selection_Context with record
       Directory    : GNAT.OS_Lib.String_Access := null;
       File_Name    : GNAT.OS_Lib.String_Access := null;
+   end record;
+
+   type File_Selection_Context is new File_Name_Selection_Context with record
+      Project_View : Prj.Project_Id            := Prj.No_Project;
       Importing_Project : Prj.Project_Id       := Prj.No_Project;
+   end record;
+
+   type Entity_Selection_Context is new File_Name_Selection_Context with record
+      Entity_Name : GNAT.OS_Lib.String_Access := null;
+      Line, Column : Integer := 0;
    end record;
 
    pragma Inline (Has_Project_Information,
@@ -339,5 +390,11 @@ private
                   Has_Importing_Project_Information,
                   Importing_Project_Information,
                   Project_Information,
-                  Has_File_Information);
+                  Has_File_Information,
+                  Has_Entity_Name_Information,
+                  Entity_Name_Information,
+                  Has_Line_Information,
+                  Line_Information,
+                  Has_Column_Information,
+                  Column_Information);
 end Glide_Kernel.Modules;
