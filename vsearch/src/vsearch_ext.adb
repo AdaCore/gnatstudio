@@ -30,6 +30,7 @@ with Gtk.Button;            use Gtk.Button;
 with Gtk.Hbutton_Box;       use Gtk.Hbutton_Box;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Combo;             use Gtk.Combo;
+with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
@@ -241,7 +242,6 @@ package body Vsearch_Ext is
    --  Called when the search widget should be closed
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
-   procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    --  The floating state of the search widget has changed
 
    ------------------
@@ -300,19 +300,19 @@ package body Vsearch_Ext is
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
       Child : constant MDI_Child := MDI_Child (Search_Child);
+      Vsearch : constant Vsearch_Extended :=
+        Vsearch_Extended (Get_Widget (Child));
+      Close_Button : Gtk_Button;
    begin
-      Show_All (Vsearch_Extended (Get_Widget (Child)).Close_Button);
+      Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
+      Close_Button := Gtk_Button
+        (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
+                     Stock_Close,
+                     Gtk_Response_Cancel));
+      Widget_Callback.Object_Connect
+        (Close_Button, "clicked",
+         Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
    end Float_Vsearch;
-
-   ---------------------
-   -- Unfloat_Vsearch --
-   ---------------------
-
-   procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
-      Child : constant MDI_Child := MDI_Child (Search_Child);
-   begin
-      Hide_All (Vsearch_Extended (Get_Widget (Child)).Close_Button);
-   end Unfloat_Vsearch;
 
    -------------------
    -- Close_Vsearch --
@@ -689,10 +689,15 @@ package body Vsearch_Ext is
    procedure On_Options_Toggled (Object : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
    begin
+      Set_Child_Visible (Vsearch.Options_Frame,
+                         Get_Active (Vsearch.Options_Toggle));
+
+      --  We need to explicitely hide the options frame, otherwise the size is
+      --  incorrectly recomputed by gtk+. Looks like a bug to me...
       if Get_Active (Vsearch.Options_Toggle) then
-         Show_All (Vsearch.Options_Frame);
+         Show (Vsearch_Module_Id.Search.Options_Frame);
       else
-         Hide_All (Vsearch.Options_Frame);
+         Hide (Vsearch_Module_Id.Search.Options_Frame);
       end if;
 
       Resize_If_Needed (Vsearch);
@@ -1039,12 +1044,6 @@ package body Vsearch_Ext is
       Set_Layout (Bbox, Buttonbox_Spread);
       Pack_End (Vsearch, Bbox, Expand => False, Padding => 5);
 
-      Gtk_New_From_Stock (Vsearch.Close_Button, Stock_Close);
-      Pack_Start (Bbox, Vsearch.Close_Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Vsearch.Close_Button, "clicked",
-         Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
-
       --  Any change to the fields resets the search mode
       Return_Callback.Object_Connect
         (Vsearch.Pattern_Entry, "key_press_event",
@@ -1169,38 +1168,21 @@ package body Vsearch_Ext is
                Return_Callback.To_Marshaller (On_Delete'Access));
          end if;
 
-         --  Temporarily remove the options frame, to avoid immediate resizing
-         --  of the floating window, whose size_request would include it
-
-         Ref (Vsearch_Module_Id.Search.Options_Frame);
-         Remove (Vsearch_Module_Id.Search,
-                 Vsearch_Module_Id.Search.Options_Frame);
-
          Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient
-                       or Always_Destroy_Float);
+                       or Always_Destroy_Float,
+                       Default_Width => 1, Default_Height => 1);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 
-         if Float_Widget then
-            Float_Child (Child, True);
-         else
-            Unfloat_Vsearch (Child);
-         end if;
-
-         --  Put back the options frame under control
-         Pack_Start
-           (Vsearch_Module_Id.Search,
-            Vsearch_Module_Id.Search.Options_Frame, True, True, 0);
-         Unref (Vsearch_Module_Id.Search.Options_Frame);
-
          Widget_Callback.Connect
            (Child, "float_child",
             Widget_Callback.To_Marshaller (Float_Vsearch'Access));
-         Widget_Callback.Connect
-           (Child, "unfloat_child",
-            Widget_Callback.To_Marshaller (Unfloat_Vsearch'Access));
+
+         Float_Child (Child, Float_Widget);
+
+         On_Options_Toggled (Vsearch_Module_Id.Search);
       end if;
 
       if Raise_Widget then
