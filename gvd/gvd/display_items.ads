@@ -27,6 +27,8 @@ with Odd.Process;
 with Gdk.Event;
 with Odd.Types;
 with Gtkada.Canvas;
+with Language;
+with Gdk.Pixmap;
 
 package Display_Items is
 
@@ -36,6 +38,10 @@ package Display_Items is
 
    type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
    type Odd_Link is access all Odd_Link_Record'Class;
+
+   procedure Init_Graphics (Win : Gdk.Window.Gdk_Window);
+   --  Initializes the pixmaps, colors, etc.
+   --  ??? This function is to be removed when all global variables are removed
 
    procedure Gtk_New
      (Item           : out Display_Item;
@@ -163,6 +169,16 @@ package Display_Items is
    --  It also warns the canvas that the item has changed.
    --  If Hide_Big_Items, then components higher than a specific limit are
    --  forced to hidden state.
+
+   function Create_Drawing_Context
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mode   : Items.Display_Mode := Items.Value;
+      Lang   : Language.Language_Access := null)
+     return Items.Drawing_Context;
+   --  Return a graphic context that can be used to display an item.
+   --  The item will be drawn on Pixmap. Mode indicates which information
+   --  should be displayed, and Lang is provided to get type information
+   --  when needed (it can null if only the Value is displayed).
 
 private
 

@@ -370,30 +370,16 @@ package body Display_Items is
       end if;
    end Gtk_New_And_Put;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   -------------------
+   -- Init_Graphics --
+   -------------------
 
-   procedure Initialize
-     (Item          : access Display_Item_Record'Class;
-      Win           : Gdk.Window.Gdk_Window;
-      Variable_Name : String;
-      Auto_Refresh  : Boolean := True)
-   is
+   procedure Init_Graphics (Win : Gdk.Window.Gdk_Window) is
       use type Gdk.GC.Gdk_GC;
       Color  : Gdk_Color;
       Box_Pixmap    : Gdk_Pixmap;
       Box_Mask      : Gdk_Bitmap;
-
    begin
-      Item.Name          := new String'(Variable_Name);
-      Item.Auto_Refresh  := Auto_Refresh;
-      Item.Is_Dereference := False;
-
-      if not Is_Visible (Item) then
-         return;
-      end if;
-
       if Thaw_Bg_Gc = null then
          Color := Parse (Thaw_Bg_Color);
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
@@ -443,6 +429,29 @@ package body Display_Items is
          Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
          Set_Unknown_Pixmap (Trash_Pixmap, Trash_Mask);
       end if;
+   end Init_Graphics;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Item          : access Display_Item_Record'Class;
+      Win           : Gdk.Window.Gdk_Window;
+      Variable_Name : String;
+      Auto_Refresh  : Boolean := True)
+   is
+      use type Gdk.GC.Gdk_GC;
+   begin
+      Item.Name          := new String'(Variable_Name);
+      Item.Auto_Refresh  := Auto_Refresh;
+      Item.Is_Dereference := False;
+
+      if not Is_Visible (Item) then
+         return;
+      end if;
+
+      Init_Graphics (Win);
 
       --  Compute the size, hidding if necessary the big components. However,
       --  we never want the top level item to be hidden, so we force it to
@@ -1752,15 +1761,34 @@ package body Display_Items is
      return Drawing_Context
    is
    begin
+      return Create_Drawing_Context
+        (Pixmap => Pixmap (Item),
+         Mode   => Item.Mode,
+         Lang   => Get_Language (Item.Debugger.Debugger));
+   end Create_Drawing_Context;
+
+   ----------------------------
+   -- Create_Drawing_Context --
+   ----------------------------
+
+   function Create_Drawing_Context
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mode   : Items.Display_Mode := Value;
+      Lang   : Language.Language_Access := null)
+     return Drawing_Context
+   is
+   begin
       return Drawing_Context'
-        (Pixmap      => Pixmap (Item),
-         GC          => Black_GC,
-         Xref_GC     => Xref_GC,
-         Modified_GC => Change_GC,
-         Font        => Font,
-         Type_Font   => Type_Font,
-         Mode        => Item.Mode,
-         Lang        => Get_Language (Item.Debugger.Debugger));
+        (Pixmap       => Pixmap,
+         GC           => Black_GC,
+         Xref_GC      => Xref_GC,
+         Thaw_Bg_Gc   => Thaw_Bg_Gc,
+         Freeze_Bg_Gc => Freeze_Bg_Gc,
+         Modified_GC  => Change_GC,
+         Font         => Font,
+         Type_Font    => Type_Font,
+         Mode         => Mode,
+         Lang         => Lang);
    end Create_Drawing_Context;
 
 end Display_Items;
