@@ -1093,7 +1093,7 @@ package body String_Utils is
             Len := Len + Args (J)'Length + 3;
 
             for T in Args (J)'Range loop
-               if Args (J)(T) = Quote then
+               if Args (J)(T) = Quote or else Args (J)(T) = '\' then
                   Len := Len + 1;
                end if;
             end loop;
@@ -1114,9 +1114,9 @@ package body String_Utils is
          procedure Append (Str : String) is
          begin
             for J in Str'Range loop
-               if Str (J) = Quote then
+               if Str (J) = Quote or else Str (J) = '\' then
                   Result (Ind)     := '\';
-                  Result (Ind + 1) := Quote;
+                  Result (Ind + 1) := Str (J);
                   Ind := Ind + 2;
                else
                   Result (Ind) := Str (J);
@@ -1128,9 +1128,7 @@ package body String_Utils is
       begin
          for J in Args'Range loop
             if Args (J) /= null then
-               if Index (Args (J).all, " ") > 0
-                 and then Index (Args (J).all, (1 => Quote)) = 0
-               then
+               if Index (Args (J).all, " ") > 0 then
                   Result (Ind) := Quote;
                   Ind := Ind + 1;
                   Append (Args (J).all);
