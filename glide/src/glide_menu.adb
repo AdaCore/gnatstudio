@@ -312,30 +312,34 @@ package body Glide_Menu is
       Matcher   : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Title     : constant String := "";
+      Title     : String_Access;
       --  ??? Should get the name of the real main
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
       Cmd       : constant String :=
         "gnatmake -P" & Project & " "
         & Scenario_Variables_Cmd_Line (Top.Kernel)
-        & " " & Title;
+        & " ";
 
    begin
-      --  ??? if Title = "" then
-      --      return;
-      --   end if;
+      if Get_Current_Explorer_Context (Top.Kernel) /= null then
+         Title := new String'
+           (File_Information (File_Selection_Context_Access (
+             Get_Current_Explorer_Context (Top.Kernel))));
+      else
+         return;
+      end if;
 
       Set_Busy (Top.Kernel, True);
 
       if Project = "" then
          --  This is the default internal project
 
-         Args := Argument_String_To_List ("gnatmake -d " & Title);
-         Console.Insert (Top.Kernel, "gnatmake " & Title, False);
+         Args := Argument_String_To_List ("gnatmake -d " & Title.all);
+         Console.Insert (Top.Kernel, "gnatmake " & Title.all, False);
 
       else
-         Args := Argument_String_To_List (Cmd & " -d");
-         Console.Insert (Top.Kernel, Cmd, False);
+         Args := Argument_String_To_List (Cmd & Title.all & " -d");
+         Console.Insert (Top.Kernel, Cmd & Title.all, False);
       end if;
 
       Top.Interrupted := False;
@@ -367,6 +371,8 @@ package body Glide_Menu is
             end if;
          end;
       end loop;
+
+      Free (Title);
 
    exception
       when Process_Died =>
