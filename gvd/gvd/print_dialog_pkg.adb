@@ -68,8 +68,8 @@ begin
    Set_Child_Ipadding (Print_Dialog.Hbuttonbox1, 7, 0);
 
    Gtk_New (Print_Dialog.Print_Button, "Print");
-   Set_Flags (Print_Dialog.Print_Button, Can_Default);
-   Grab_Default (Print_Dialog.Print_Button);
+--   Set_Flags (Print_Dialog.Print_Button, Can_Default);
+--   Grab_Default (Print_Dialog.Print_Button);
    Widget_Callback.Object_Connect
      (Print_Dialog.Print_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access), Print_Dialog);
