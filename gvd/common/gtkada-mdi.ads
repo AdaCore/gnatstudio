@@ -409,9 +409,6 @@ private
          --  The order in which the docks should be displayed. See the
          --  description of Priorities_Array.
 
-         Menu_Item_Group : Gtk.Widget.Widget_SList.GSlist;
-         --  The group to which the menu items of the children should belong
-
          Menu               : Gtk.Menu.Gtk_Menu;
          Dock_Menu_Item     : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
          Dock_Menu_Item_Id  : Gtk.Handlers.Handler_Id;

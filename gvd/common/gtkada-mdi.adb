@@ -1117,6 +1117,7 @@ package body Gtkada.MDI is
    -------------------
 
    procedure Destroy_Child (Child : access Gtk_Widget_Record'Class) is
+      use type Widget_SList.GSlist;
       C : MDI_Child := MDI_Child (Child);
    begin
       --  We know at that stage that Child has already been unparent-ed
@@ -2901,10 +2902,26 @@ package body Gtkada.MDI is
    -----------------------
 
    procedure Create_Menu_Entry (Child : access MDI_Child_Record'Class) is
-      G : Widget_SList.GSlist;
+      use Widget_List, Widget_SList;
+      G : Widget_SList.Gslist := Widget_SList.Null_List;
+      First_Child : MDI_Child;
+      Tmp : Widget_List.Glist;
    begin
       if Child.Menu_Item = null then
-         G := Child.MDI.Menu_Item_Group;
+
+         --  Find the group to which the radio menu items should belong. We
+         --  cannot save this group into a variable, since it might change when
+         --  the first child is removed from the MDI.
+         Tmp := Child.MDI.Items;
+         while Tmp /= Widget_List.Null_List loop
+            First_Child := MDI_Child (Get_Data (Tmp));
+            if First_Child.Menu_Item /= null then
+               G := Group (First_Child.Menu_Item);
+               exit;
+            end if;
+            Tmp := Next (Tmp);
+         end loop;
+
          Gtk_New (Child.Menu_Item, G, Child.Title.all);
          Append (Child.MDI.Menu, Child.Menu_Item);
          Set_Active
@@ -2918,7 +2935,6 @@ package body Gtkada.MDI is
            (Child.Menu_Item, "destroy",
             Widget_Callback.To_Marshaller (Menu_Entry_Destroyed'Access),
             Child);
-         Child.MDI.Menu_Item_Group := Group (Child.Menu_Item);
       end if;
    end Create_Menu_Entry;
 
@@ -2931,7 +2947,6 @@ package body Gtkada.MDI is
       MDI_Window (MDI).Menu := null;
       MDI_Window (MDI).Dock_Menu_Item := null;
       MDI_Window (MDI).Float_Menu_Item := null;
-      MDI_Window (MDI).Menu_Item_Group := Widget_SList.Null_List;
    end Menu_Destroyed;
 
    -----------------
