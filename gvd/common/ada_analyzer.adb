@@ -1729,26 +1729,21 @@ package body Ada_Analyzer is
                      Len : Natural;
                   begin
                      First := P;
-                     P     := Next_Char (P);
 
-                     while P <= End_Of_Line and then Buffer (P) /= '"' loop
+                     while P < End_Of_Line loop
                         P := Next_Char (P);
+
+                        exit when Buffer (P) = '"';
                      end loop;
 
-                     if Buffer (P) /= '"' and then Num_Parens > 0 then
+                     if Buffer (P) /= '"' then
                         --  Syntax error: the string was not terminated
                         --  Try to recover properly, and in particular, try
                         --  to reset the parentheses stack.
 
-                        Close_Parenthesis;
-                     end if;
-
-                     --  P must point to the end of the string, and thus we
-                     --  need special handling if the string wasn't correctly
-                     --  terminated
-
-                     if P > Buffer'Last or else Buffer (P) /= '"' then
-                        P := Prev_Char (P);
+                        if Num_Parens > 0 then
+                           Close_Parenthesis;
+                        end if;
                      end if;
 
                      if Top_Token.Token in Token_Class_Declk
