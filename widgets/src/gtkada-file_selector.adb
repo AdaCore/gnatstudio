@@ -765,20 +765,23 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
-      Dir : String) is
+      Dir : String)
+   is
+      Normalized : constant String := Normalize_Pathname (Dir);
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
 
       if Dir /= ""
-        and then Win.Current_Directory.all /= Normalize_Pathname (Dir)
+        and then Win.Current_Directory.all /= Normalized
+        and then Is_Directory (Normalized)
       then
          Free (Win.Current_Directory);
 
          if Dir = -"Drives" then
             Win.Current_Directory := new String'("");
          else
-            Win.Current_Directory := new String'(Normalize_Pathname (Dir));
+            Win.Current_Directory := new String'(Normalized);
          end if;
 
          --  If we are currently moving through the history,
@@ -810,7 +813,7 @@ package body Gtkada.File_Selector is
 
          if Dir /= Get_Selection (Win.Explorer_Tree) then
             Show_Directory (Win.Explorer_Tree,
-                            Normalize_Pathname (Dir),
+                            Normalized,
                             Get_Window (Win));
          end if;
 
@@ -980,6 +983,10 @@ package body Gtkada.File_Selector is
       Change_Directory
         (Win, Locale_From_UTF8
            (Get_Text (Win.Location_Combo_Entry)));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Directory_Selected;
 
    ---------------------
@@ -993,6 +1000,10 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Refresh_Files (Win);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Filter_Selected;
 
    --------------------------------------
