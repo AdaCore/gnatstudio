@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -201,6 +201,8 @@ private
       Lines_Hook               : Lines_Revealed_Hook;
 
       Display_Line_Numbers     : Boolean    := False;
+
+      Show_Subprogram_Names    : Boolean    := False;
 
       Stored_Marks             : Mark_Identifier_List.List;
       Next_Mark_Id             : Natural := 0;
