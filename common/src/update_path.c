@@ -19,6 +19,10 @@
  *********************************************************************/
 
 
+/* Dummy version of run_path_option, needed by mlib.adb */
+
+const char *run_path_option = "";
+
 /* Dummy versions of update_path and set_std_prefix (needed by osint.adb) */
 
 void
