@@ -79,11 +79,16 @@ package body Src_Info.Debug is
    procedure Dump_Pos_And_E_Kind
      (FL : File_Location; Kind : E_Kind := Overloaded_Entity) is
    begin
-      Put (Get_File (FL) & ":");
-      if Kind /= Overloaded_Entity then
-         Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
+      if FL = Null_File_Location then
+         Put ("<null file location, kind="
+              & Kind'Img & ">");
       else
-         Put (Image (FL.Line) & ' ' & Image (FL.Column));
+         Put (Get_File (FL) & ":");
+         if Kind /= Overloaded_Entity then
+            Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
+         else
+            Put (Image (FL.Line) & ' ' & Image (FL.Column));
+         end if;
       end if;
    end Dump_Pos_And_E_Kind;
 
@@ -404,7 +409,11 @@ package body Src_Info.Debug is
               (Current_Dep_File_Info.Value.File).Unit_Name /= null
             then
                Put (Get_File_Info
-                    (Current_Dep_File_Info.Value.File).Unit_Name.all);
+                      (Current_Dep_File_Info.Value.File).Unit_Name.all);
+            else
+               Put ("<unknown unit name, filename=" & Get_File_Info
+                    (Current_Dep_File_Info.Value.File).Source_Filename.all
+                    & ">");
             end if;
             New_Line;
          end if;
