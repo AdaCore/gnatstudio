@@ -61,6 +61,7 @@ package VCS is
       History_Revision,   --  Get the revision history for specified revision
       Annotate,           --  Get the annotations for one file
       Diff_Head,          --  Diff current against head revision
+      Diff_Working,       --  Diff current against working revision
       Diff_Base_Head,     --  Diff base against head revision
       Diff,               --  Diff current against specified revision
       Diff2,              --  Diff between two specified revisions
@@ -269,6 +270,11 @@ package VCS is
    --
    --  This procedure should call Glide_Kernel.Modules.Display_Differences
    --  in order to display a GPS visual diff.
+
+   procedure Diff_Working
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File) is abstract;
+   --  Compare local against working revison of File.
 
    procedure Diff_Base_Head
      (Rep  : access VCS_Record;
