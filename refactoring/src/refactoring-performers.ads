@@ -47,7 +47,6 @@ package Refactoring.Performers is
    procedure Free (Factor : in out Refactor_Performer_Record);
    --  Free the memory occupied by Factor.
 
-
    procedure Get_All_Locations
      (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity                : Src_Info.Queries.Entity_Information;
