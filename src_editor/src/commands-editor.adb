@@ -240,6 +240,7 @@ package body Commands.Editor is
    is
       Iter       : Gtk_Text_Iter;
       Result     : Boolean;
+      Editor     : Source_Editor_Box;
    begin
       if not
         Is_Valid_Position
@@ -282,6 +283,13 @@ package body Commands.Editor is
          Command.End_Column_After := Integer (Get_Line_Offset (Iter));
       end if;
 
+      Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+      Set_Cursor_Position
+        (Command.Buffer,
+         Gint (Command.End_Line_After),
+         Gint (Command.End_Column_After));
+      Scroll_To_Cursor_Location (Editor);
+
       Command_Finished (Command, True);
 
       return True;
@@ -292,6 +300,7 @@ package body Commands.Editor is
    ----------
 
    function Undo (Command : access Editor_Replace_Slice_Type) return Boolean is
+      Editor : Source_Editor_Box;
    begin
       if not Is_Valid_Position
         (Command.Buffer,
@@ -309,6 +318,15 @@ package body Commands.Editor is
          Gint (Command.End_Column_After),
          Command.Text_Before.all,
          False);
+
+      Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+
+      Set_Cursor_Position
+        (Command.Buffer,
+         Gint (Command.Start_Line),
+         Gint (Command.Start_Column));
+      Scroll_To_Cursor_Location (Editor);
+
       Command_Finished (Command, True);
       return True;
    end Undo;
