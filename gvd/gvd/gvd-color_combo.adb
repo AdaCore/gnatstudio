@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -45,7 +45,6 @@ package body GVD.Color_Combo is
    Combo_Class_Record : GObject_Class := Uninitialized_Class;
    Combo_Signals : constant chars_ptr_array :=
      (1 => New_String ("color_changed"));
-
 
    --  ??? Should implement a destroy callback
 
