@@ -126,10 +126,6 @@ package body Glide_Main_Window is
    procedure Quit (Main_Window : access Glide_Window_Record'Class) is
    begin
       if Save_All_MDI_Children (Main_Window.Kernel) then
-         if Get_Pref (Main_Window.Kernel, Save_Desktop_On_Exit) then
-            Save_Desktop (Main_Window.Kernel);
-         end if;
-
          Main_Quit;
       end if;
    end Quit;
@@ -324,11 +320,17 @@ package body Glide_Main_Window is
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
       Win : constant Glide_Window := Glide_Window (Main_Window);
+
+      use Glib;
    begin
       Free (Win.Home_Dir);
       Free (Win.Prefix_Directory);
       Unref (Win.Animation);
       Unref (Win.Animation_Iter);
+
+      if Main_Level > 0 then
+         Main_Quit;
+      end if;
    end On_Destroy;
 
    ------------------
