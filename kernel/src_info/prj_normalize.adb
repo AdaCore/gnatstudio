@@ -29,6 +29,7 @@
 with Prj_API; use Prj_API;
 with Traces;  use Traces;
 with String_Utils; use String_Utils;
+with Glide_Intl; use Glide_Intl;
 
 with Prj;      use Prj;
 with Prj.Ext;  use Prj.Ext;
@@ -151,7 +152,7 @@ package body Prj_Normalize is
 
                if Case_Construction_Found then
                   Trace (Me, "Two case constructions at the same level");
-                  return "Two case constructions at the same level";
+                  return -"Two case constructions at the same level";
                end if;
 
                if Standard_Node_Found
@@ -159,7 +160,7 @@ package body Prj_Normalize is
                then
                   Trace (Me, "Mix of case construction and items in a"
                          & " case item");
-                  return "Mix of case construction and items in a case item";
+                  return -"Mix of case construction and items in a case item";
                end if;
 
                Var_Name := External_Variable_Name
@@ -172,7 +173,7 @@ package body Prj_Normalize is
                     (Nested_Case_Names (J).Variable_Name, Var_Name)
                   then
                      Trace (Me, "Duplicate variables in case constructions");
-                     return "Duplicate variables in case constructions";
+                     return -"Duplicate variables in case constructions";
                   end if;
                end loop;
 
@@ -183,7 +184,7 @@ package body Prj_Normalize is
                   if First_Choice_Of (Case_Item) = Empty_Node then
                      Trace
                        (Me, "when others not allowed in normalized projects");
-                     return """when others"" not allowed in normalized"
+                     return -"""when others"" not allowed in normalized"
                        & "projects";
                   end if;
 
@@ -191,7 +192,7 @@ package body Prj_Normalize is
                     Empty_Node
                   then
                      Trace (Me, "case items must have a single choice");
-                     return "Case items must have a single choice in"
+                     return -"Case items must have a single choice in"
                        & " normalized projects";
                   end if;
 
@@ -229,7 +230,7 @@ package body Prj_Normalize is
                then
                   Trace (Me, "Mix of case construction and items in a"
                          & " case item");
-                  return "Mix of case construction and items in a case item";
+                  return -"Mix of case construction and items in a case item";
                end if;
 
                if Kind_Of (Current_Node) = N_Typed_Variable_Declaration
@@ -237,7 +238,7 @@ package body Prj_Normalize is
                  and then Kind_Of (Node) = N_Package_Declaration
                then
                   Trace (Me, "Scenario variable declared in package");
-                  return "Scenario variable declared in package";
+                  return -"Scenario variable declared in package";
                end if;
 
          end case;
@@ -384,7 +385,7 @@ package body Prj_Normalize is
                             & "variable in case construction");
                      if Print_Error /= null then
                         Print_Error
-                          ("Case constructions referencing non-external"
+                          (-"Case constructions referencing non-external"
                            & " variables can not be modified");
                      end if;
                      raise Normalize_Error;
@@ -506,17 +507,6 @@ package body Prj_Normalize is
                   null;
 
                when others =>
-                  --  if Debug_Mode then
-                  --     Trace (Me, "Before For_Each_Matching_Case_Item");
-                  --     Pretty_Print (Decl_Item);
-                  --     for J in Values'First .. Last_Values loop
-                  --        Trace (Me, J'Img
-                  --            & " " & Get_String (Values (J).Variable_Name)
-                  --            & " " & Get_String (Values (J).Variable_Value)
-                  --            & " " & Values (J).Negated'Img);
-                  --     end loop;
-                  --  end if;
-
                   For_Each_Matching_Case_Item
                     (Project_Norm, Current_Pkg,
                      Values (Values'First .. Last_Values),
