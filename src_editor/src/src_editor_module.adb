@@ -1572,7 +1572,7 @@ package body Src_Editor_Module is
                      On_Open_File'Access, GDK_F3, Ref_Item => -"Save...");
       Register_Menu (Kernel, File, -"Open From Project...",  Stock_Open,
                      On_Open_From_Path'Access,
-                     GDK_F4, Ref_Item => -"Save...");
+                     GDK_F3, Shift_Mask, Ref_Item => -"Save...");
 
       Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
         Register_Menu (Kernel, File, -"Reopen", "", null,
