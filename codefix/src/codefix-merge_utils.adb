@@ -272,7 +272,6 @@ package body Codefix.Merge_Utils is
       Free (This.Infos);
       This.Str := New_Str;
       This.Infos := New_Infos;
-
    end Insert;
 
    ------------

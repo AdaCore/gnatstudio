@@ -61,8 +61,7 @@ package Commands.VCS is
 
    function Execute (Command : access Get_Status_Command_Type) return Boolean;
    function Execute
-     (Command : access Update_Files_Command_Type)
-      return Boolean;
+     (Command : access Update_Files_Command_Type) return Boolean;
 
    procedure Free (X : in out Commit_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);

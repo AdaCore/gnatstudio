@@ -65,7 +65,6 @@ package body Commands.VCS is
    begin
       Commit (Command.Rep, Command.Filenames, Command.Logs);
       Command_Finished (Command, True);
-
       return True;
    end Execute;
 
@@ -106,8 +105,7 @@ package body Commands.VCS is
    end Execute;
 
    function Execute
-     (Command : access Update_Files_Command_Type)
-      return Boolean
+     (Command : access Update_Files_Command_Type) return Boolean
    is
       use String_List;
       L_Temp : List_Node := First (Command.Filenames);
