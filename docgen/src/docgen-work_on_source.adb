@@ -51,120 +51,122 @@ package body Docgen.Work_On_Source is
       Parsed_List       : Construct_List;
 
    begin
+      --  Parse the source file and create the Parsed_List
 
-      --  parse the source file and create the Parsed_List
       File_Text := Read_File (Source_Filename);
 
-      Process_Open_File (Doc_File,
-                         Source_Filename,
-                         Next_Package,
-                         Prev_Package,
-                         Package_Name,
-                         Source_File_List,
-                         Options);
-      Process_Header (Doc_File,
-                      Package_Name,
-                      Source_Filename,
-                      Process_Body_File,
-                      Options);
+      Process_Open_File
+        (Doc_File,
+         Source_Filename,
+         Next_Package,
+         Prev_Package,
+         Package_Name,
+         Source_File_List,
+         Options);
+      Process_Header
+        (Doc_File,
+         Package_Name,
+         Source_Filename,
+         Process_Body_File,
+         Options);
 
-      --  different ways of process for spec and body files
+      --  Different ways of process for spec and body files
+
       if Is_Spec_File (Source_Filename) then
-
-         Parse_Constructs (Ada_Lang,
-                           File_Text.all,
-                           Parsed_List);
-
+         Parse_Constructs (Ada_Lang, File_Text.all, Parsed_List);
          Sort_List_Name (Entity_List);
 
-         --  the order of the following procedure calls can't be changed
-         --  without changing the order in texi_output!
-         --  See: Doc_TEXI_Subtitle !!!
+         --  ??? The order of the following procedure calls can't be changed
+         --  without changing the order in texi_output.
+         --  See Doc_TEXI_Subtitle
 
-         Process_Package_Description (Doc_File,
-                                      Package_Name,
-                                      File_Text.all,
-                                      Options);
-         Process_With_Clause (Doc_File,
-                              Source_Filename,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
-         Process_Packages     (Doc_File,
-                               Entity_List,
-                               Source_Filename,
-                               Package_Name,
-                               Parsed_List,
-                               File_Text,
-                               LI_Unit,
-                               Source_File_List,
-                               Options);
-         Process_Vars        (Doc_File,
-                              Entity_List,
-                              Source_Filename,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
-         Process_Exceptions  (Doc_File,
-                              Entity_List,
-                              Source_Filename,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
-         Process_Types       (Doc_File,
-                              Entity_List,
-                              Source_Filename,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
-         Process_Entries     (Doc_File,
-                              Entity_List,
-                              Source_Filename,
-                              Process_Body_File,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
-         Process_Subprograms (Doc_File,
-                              Entity_List,
-                              Source_Filename,
-                              Process_Body_File,
-                              Package_Name,
-                              Parsed_List,
-                              File_Text,
-                              LI_Unit,
-                              Source_File_List,
-                              Options);
+         Process_Package_Description
+           (Doc_File, Package_Name, File_Text.all, Options);
+         Process_With_Clause
+           (Doc_File,
+            Source_Filename,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Packages
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Vars
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Exceptions
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Types
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Entries
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Process_Body_File,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
+         Process_Subprograms
+           (Doc_File,
+            Entity_List,
+            Source_Filename,
+            Process_Body_File,
+            Package_Name,
+            Parsed_List,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
          Free (Parsed_List);
 
       else
-         Process_One_Body_File (Doc_File,
-                                Source_Filename,
-                                File_Text,
-                                LI_Unit,
-                                Source_File_List,
-                                Options);
+         Process_One_Body_File
+           (Doc_File,
+            Source_Filename,
+            File_Text,
+            LI_Unit,
+            Source_File_List,
+            Options);
       end if;
-      Process_Footer (Doc_File,
-                      Source_Filename,
-                      Options);
 
+      Process_Footer (Doc_File, Source_Filename, Options);
       Process_Close_File (Doc_File, Source_Filename, Options);
-
       Free (File_Text);
    end Process_Source;
 
@@ -181,7 +183,7 @@ package body Docgen.Work_On_Source is
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options)
    is
-      Data_Open   : Doc_Info (Info_Type => Open_Info);
+      Data_Open : Doc_Info (Info_Type => Open_Info);
    begin
       --  initialise the Doc_Info data
       Data_Open := Doc_Info'
@@ -206,11 +208,11 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Close_File
-     (Doc_File      : File_Type;
-      File_Name     : String;
-      Options       : All_Options)
+     (Doc_File  : File_Type;
+      File_Name : String;
+      Options   : All_Options)
    is
-      Data_Close    : Doc_Info (Info_Type => Close_Info);
+      Data_Close : Doc_Info (Info_Type => Close_Info);
    begin
       --  initialise the Doc_Info data
       Data_Close := Doc_Info'
@@ -232,16 +234,17 @@ package body Docgen.Work_On_Source is
    ---------------------------
 
    procedure Process_One_Body_File
-     (Doc_File           : File_Type;
-      Source_File        : String;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      LI_Unit            : LI_File_Ptr;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options)
+     (Doc_File         : File_Type;
+      Source_File      : String;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      LI_Unit          : LI_File_Ptr;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options)
    is
-      Data_Line          : Doc_Info (Info_Type => Body_Line_Info);
+      Data_Line : Doc_Info (Info_Type => Body_Line_Info);
    begin
-      --  initialise the Doc_Info data
+      --  Initialise the Doc_Info data
+
       Data_Line := Doc_Info'
         (Body_Line_Info,
          Doc_Info_Options => Options,
@@ -251,7 +254,8 @@ package body Docgen.Work_On_Source is
          new String'(Source_File),
          Doc_File_List => Source_File_List);
 
-      --  call the documentation procedure
+      --  Call the documentation procedure
+
       Options.Doc_Subprogram (Doc_File, Data_Line);
 
       Free (Data_Line.Body_Text);
@@ -292,7 +296,8 @@ package body Docgen.Work_On_Source is
          Source_File_Node := TSFL.First (Source_File_List);
          Source_Filename  := TSFL.Data (Source_File_Node).File_Name;
 
-            --  if first body file, take the next one, which must be spec file
+         --  if first body file, take the next one, which must be spec file
+
          if not Is_Spec_File (Source_Filename.all) then
             Source_File_Node := TSFL.Next (Source_File_Node);
             Source_Filename := TSFL.Data (Source_File_Node).File_Name;
@@ -316,9 +321,10 @@ package body Docgen.Work_On_Source is
            One_Ready loop
             Source_Filename := TSFL.Data (Source_File_Node).File_Name;
 
-            --  add unit, but only if from a spec file
+            --  Add unit, but only if from a spec file
+
             if Is_Spec_File (Source_Filename.all) then
-               Package_Name    := TSFL.Data (Source_File_Node).Package_Name;
+               Package_Name := TSFL.Data (Source_File_Node).Package_Name;
                Data_Item :=
                  Doc_Info'(Index_Item_Info,
                            Doc_Info_Options => Options,
@@ -437,20 +443,20 @@ package body Docgen.Work_On_Source is
 
    procedure Process_Type_Index
      (Type_Index_List : Type_Entity_List.List;
-      Options          : All_Options)
+      Options         : All_Options)
    is
-      Source_Filename  : GOL.String_Access;
-      Type_Index_Node  : Type_Entity_List.List_Node;
+      Source_Filename : GOL.String_Access;
+      Type_Index_Node : Type_Entity_List.List_Node;
 
-      Index_File       : File_Type;
+      Index_File      : File_Type;
 
-      Data_Type        : Doc_Info (Info_Type => Type_Index_Info);
-      Data_Item        : Doc_Info (Info_Type => Index_Item_Info);
-      Data_End         : Doc_Info (Info_Type => End_Of_Index_Info);
+      Data_Type       : Doc_Info (Info_Type => Type_Index_Info);
+      Data_Item       : Doc_Info (Info_Type => Index_Item_Info);
+      Data_End        : Doc_Info (Info_Type => End_Of_Index_Info);
 
-      Doc_File_Name    : constant String := "index_type";
+      Doc_File_Name   : constant String := "index_type";
+
    begin
-
       Create (Index_File,
               Out_File,
               Options.Doc_Directory.all &
@@ -517,10 +523,8 @@ package body Docgen.Work_On_Source is
       Process_Body_File  : Boolean;
       Options            : All_Options)
    is
-      Data_Header   : Doc_Info (Info_Type => Header_Info);
-
+      Data_Header : Doc_Info (Info_Type => Header_Info);
    begin
-
       Data_Header := Doc_Info'
         (Header_Info,
          Doc_Info_Options => Options,
@@ -535,7 +539,6 @@ package body Docgen.Work_On_Source is
       Free (Data_Header.Header_Package);
       Free (Data_Header.Header_File);
    end Process_Header;
-
 
    --------------------
    -- Process_Footer --
@@ -566,13 +569,13 @@ package body Docgen.Work_On_Source is
    ---------------------------------
 
    procedure Process_Package_Description
-     (Doc_File        : File_Type;
-      Package_Name    : String;
-      Text            : String;
-      Options         : All_Options)
+     (Doc_File     : File_Type;
+      Package_Name : String;
+      Text         : String;
+      Options      : All_Options)
    is
-      Data_Subtitle    : Doc_Info (Info_Type => Subtitle_Info);
-      Data_Package     : Doc_Info (Info_Type => Package_Desc_Info);
+      Data_Subtitle : Doc_Info (Info_Type => Subtitle_Info);
+      Data_Package  : Doc_Info (Info_Type => Package_Desc_Info);
 
       Description_Found, Start_Found : Boolean;
       Line                           : Natural;
@@ -581,26 +584,28 @@ package body Docgen.Work_On_Source is
       Description                    : GNAT.OS_Lib.String_Access;
 
    begin
-      --  tries to find the first line of the description of the package
+      --  Try to find the first line of the description of the package
       --  if something else is found than a comment line => no description
+
       Description_Found := False;
       Start_Found       := False;
       Line              := 1;
+
       while not Start_Found and Line < Max_Lines + 1 loop
          if Line_Is_Comment (Get_Line_From_String (Text, Line)) then
             Description_Found := True;
             Start_Found       := True;
+
          elsif not Line_Is_Empty
-           (Get_Line_From_String (Text, Line)) then
-            Start_Found       := True;
+           (Get_Line_From_String (Text, Line))
+         then
+            Start_Found := True;
          else
             Line := Line + 1;
          end if;
       end loop;
 
-      --  if package description found
       if Description_Found then
-
          Data_Subtitle := Doc_Info'
            (Subtitle_Info,
             Doc_Info_Options => Options,
@@ -610,12 +615,7 @@ package body Docgen.Work_On_Source is
             Subtitle_Kind => Package_Desc_Info,
             Subtitle_Package => new String'(Package_Name));
          Options.Doc_Subprogram (Doc_File, Data_Subtitle);
-         Description := Extract_Comment
-           (Text,
-            Line,
-            0,
-            True,
-            Options);
+         Description := Extract_Comment (Text, Line, 0, True, Options);
          Data_Package := Doc_Info'
            (Package_Desc_Info,
             Doc_Info_Options => Options,
@@ -641,8 +641,8 @@ package body Docgen.Work_On_Source is
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options)
    is
-      Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
-      Data_With       : Doc_Info (Info_Type => With_Info);
+      Data_Subtitle      : Doc_Info (Info_Type => Subtitle_Info);
+      Data_With          : Doc_Info (Info_Type => With_Info);
 
       Old_Line, New_Line : GNAT.OS_Lib.String_Access;
       Parse_Node         : Construct_Access;
@@ -655,10 +655,9 @@ package body Docgen.Work_On_Source is
       Parsed_List_End := False;
       First_With_Line := 0;
 
-      --  exception if no paresed entities found: later
+      --  ??? Exception if no parsed entities found: later
 
       while not Parsed_List_End loop
-
          if Parse_Node.Category = Cat_With then
             Old_Line := New_Line;
             New_Line := new String'
@@ -672,17 +671,17 @@ package body Docgen.Work_On_Source is
             end if;
          end if;
 
-         if Parse_Node = Parsed_List.Last or
-           Parse_Node.Category = Cat_Procedure or
-           Parse_Node.Category = Cat_Function then
+         if Parse_Node = Parsed_List.Last
+           or else Parse_Node.Category = Cat_Procedure
+           or else Parse_Node.Category = Cat_Function
+         then
             Parsed_List_End := True;
          else
             Parse_Node := Parse_Node.Next;
          end if;
       end loop;
 
-      if New_Line.all'Length > 0 then
-
+      if New_Line'Length > 0 then
          Data_Subtitle := Doc_Info'
            (Subtitle_Info,
             Doc_Info_Options => Options,
@@ -746,8 +745,8 @@ package body Docgen.Work_On_Source is
          Entity_Node := TEL.First (Entity_List);
 
          for J in 1 .. TEL.Length (Entity_List) loop
+            --  Check if the entity is a package
 
-            --  check if the entity is a package
             if TEL.Data (Entity_Node).Kind = Package_Entity
             --  but NOT the package itself
               and then To_Lower (TEL.Data (Entity_Node).Name.all) /=
@@ -755,34 +754,37 @@ package body Docgen.Work_On_Source is
             --  check if defined in this file, the others used only for bodys!
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-
-               --  check if the subtitle has been set already.
+               --  Check if the subtitle has been set already.
                --  Can't be set before the "if"
+
                if not First_Already_Set then
                   Options.Doc_Subprogram (Doc_File, Data_Subtitle);
                   First_Already_Set := True;
                end if;
 
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
-
-               Description := Extract_Comment
+               Header := Get_Whole_Header
                  (File_Text.all,
-                  TEL.Data (Entity_Node).Line,
-                  Count_Lines (Header.all),
-                  False,
-                  Options);
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
+
+               if Header /= null then
+                  Description := Extract_Comment
+                    (File_Text.all,
+                     TEL.Data (Entity_Node).Line,
+                     Count_Lines (Header.all),
+                     False,
+                     Options);
+               end if;
+
                Data_Package := Doc_Info'
                  (Package_Info,
-                  Doc_Info_Options => Options,
-                  Doc_LI_Unit => LI_Unit,
-                  Doc_File_List => Source_File_List,
+                  Doc_Info_Options    => Options,
+                  Doc_LI_Unit         => LI_Unit,
+                  Doc_File_List       => Source_File_List,
                   Package_Entity      => TEL.Data (Entity_Node),
                   Package_Description => Description,
-                  Package_Header => Header,
+                  Package_Header      => Header,
                   Package_Header_Line => TEL.Data (Entity_Node).Line);
                Options.Doc_Subprogram (Doc_File, Data_Package);
             end if;
@@ -792,6 +794,7 @@ package body Docgen.Work_On_Source is
             Free (Header);
             Free (Data_Package.Package_Header);
          end loop;
+
          Free (Data_Subtitle.Subtitle_Name);
          Free (Data_Subtitle.Subtitle_Package);
       end if;
@@ -812,24 +815,23 @@ package body Docgen.Work_On_Source is
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options)
    is
-      Entity_Node     : Type_Entity_List.List_Node;
-      Description     : GNAT.OS_Lib.String_Access;
-      Header          : GNAT.OS_Lib.String_Access;
-      Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
-      Data_Var        : Doc_Info (Info_Type => Var_Info);
-
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      Header            : GNAT.OS_Lib.String_Access;
+      Data_Subtitle     : Doc_Info (Info_Type => Subtitle_Info);
+      Data_Var          : Doc_Info (Info_Type => Var_Info);
       First_Already_Set : Boolean;
-   begin
 
+   begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'
            (Subtitle_Info,
             Doc_Info_Options => Options,
-            Doc_LI_Unit => No_LI_File,
-            Doc_File_List => TSFL.Null_List,
-            Subtitle_Name => new String'("Constants and Named Numbers"),
-            Subtitle_Kind => Var_Info,
+            Doc_LI_Unit      => No_LI_File,
+            Doc_File_List    => TSFL.Null_List,
+            Subtitle_Name    => new String'("Constants and Named Numbers"),
+            Subtitle_Kind    => Var_Info,
             Subtitle_Package => new String'(Package_Name));
          Entity_Node := TEL.First (Entity_List);
 
@@ -840,18 +842,19 @@ package body Docgen.Work_On_Source is
             --  Check if defined in this file, the others used only for bodys!
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
+               Header := Get_Whole_Header
+                 (File_Text.all,
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
 
-               --  check if it was a entity with its own header
+               --  Check if it was a entity with its own header
+
                if Header /= null then
-
-                  --  check if the subtitle "Constand and Named Numbers:"
+                  --  Check if the subtitle "Constand and Named Numbers:"
                   --  has been set already.
                   --  Can't be set before the "if"
+
                   if not First_Already_Set then
                      Options.Doc_Subprogram (Doc_File, Data_Subtitle);
                      First_Already_Set := True;
@@ -924,24 +927,26 @@ package body Docgen.Work_On_Source is
          Entity_Node := TEL.First (Entity_List);
 
          for J in 1 .. TEL.Length (Entity_List) loop
-            --  If not a renamed exception...!  ***change this later!!!***
+            --  If not a renamed exception... ??? change this later
 
-            --  Check if the entity is a exception
+            --  Check if the entity is an exception
+
             if TEL.Data (Entity_Node).Kind = Exception_Entity
             --  Check if defined in this file, the others used only for bodys!
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
+               Header := Get_Whole_Header
+                 (File_Text.all,
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
 
-               --  check if it was a entity with its own header
+               --  Check if it was a entity with its own header
+
                if Header /= null then
-
-                  --  check if the subtitle "Exceptions:" has been set already.
+                  --  Check if the subtitle "Exceptions:" has been set already.
                   --  Can't be set before the "if"
+
                   if not First_Already_Set then
                      Options.Doc_Subprogram (Doc_File, Data_Subtitle);
                      First_Already_Set := True;
@@ -1022,17 +1027,16 @@ package body Docgen.Work_On_Source is
             --  only for the body documentation)
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
-
+               Header := Get_Whole_Header
+                 (File_Text.all,
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
 
                --  Check if it was a entity with its own header
 
                if Header /= null then
-                  --  check if still the subtitle "Types:" has to be set.
+                  --  Check if still the subtitle "Types:" has to be set.
                   --  Can't be set before the "if"
 
                   if not First_Already_Set then
@@ -1087,12 +1091,11 @@ package body Docgen.Work_On_Source is
       Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options)
    is
-      Entity_Node             : Type_Entity_List.List_Node;
-      Description             : GNAT.OS_Lib.String_Access;
-      Header                  : GNAT.OS_Lib.String_Access;
-      Data_Subtitle           : Doc_Info (Info_Type => Subtitle_Info);
-      Data_Entry              : Doc_Info (Info_Type => Entry_Info);
-
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      Header            : GNAT.OS_Lib.String_Access;
+      Data_Subtitle     : Doc_Info (Info_Type => Subtitle_Info);
+      Data_Entry        : Doc_Info (Info_Type => Entry_Info);
       First_Already_Set : Boolean;
 
    begin
@@ -1116,11 +1119,11 @@ package body Docgen.Work_On_Source is
             --  entities only for the body documentation)
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
+               Header := Get_Whole_Header
+                 (File_Text.all,
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
 
                --  Check if it was a entity with its own header
 
@@ -1181,12 +1184,11 @@ package body Docgen.Work_On_Source is
       Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options)
    is
-      Entity_Node             : Type_Entity_List.List_Node;
-      Description             : GNAT.OS_Lib.String_Access;
-      Header                  : GNAT.OS_Lib.String_Access;
-      Data_Subtitle           : Doc_Info (Info_Type => Subtitle_Info);
-      Data_Subprogram         : Doc_Info (Info_Type => Subprogram_Info);
-
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      Header            : GNAT.OS_Lib.String_Access;
+      Data_Subtitle     : Doc_Info (Info_Type => Subtitle_Info);
+      Data_Subprogram   : Doc_Info (Info_Type => Subprogram_Info);
       First_Already_Set : Boolean;
 
    begin
@@ -1195,18 +1197,18 @@ package body Docgen.Work_On_Source is
          Data_Subtitle := Doc_Info'
            (Subtitle_Info,
             Doc_Info_Options => Options,
-            Doc_LI_Unit => No_LI_File,
-            Doc_File_List => TSFL.Null_List,
-            Subtitle_Name => new String'("Subprograms"),
-            Subtitle_Kind => Subprogram_Info,
+            Doc_LI_Unit      => No_LI_File,
+            Doc_File_List    => TSFL.Null_List,
+            Subtitle_Name    => new String'("Subprograms"),
+            Subtitle_Kind    => Subprogram_Info,
             Subtitle_Package => new String'(Package_Name));
          Entity_Node := TEL.First (Entity_List);
 
          for J in 1 .. TEL.Length (Entity_List) loop
-            --  check if the entity is a procedure or a function
+            --  Check if the entity is a procedure or a function
 
             if (TEL.Data (Entity_Node).Kind = Subprogram_Entity)
-            --  check if defined in this file (the rest of
+            --  Check if defined in this file (the rest of
             --  entities only for the body documentation)
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
@@ -1218,14 +1220,14 @@ package body Docgen.Work_On_Source is
                   First_Already_Set := True;
                end if;
 
-               Header :=
-                 Get_Whole_Header (File_Text.all,
-                                   Parsed_List,
-                                   TEL.Data (Entity_Node).Short_Name.all,
-                                   TEL.Data (Entity_Node).Line);
+               Header := Get_Whole_Header
+                 (File_Text.all,
+                  Parsed_List,
+                  TEL.Data (Entity_Node).Short_Name.all,
+                  TEL.Data (Entity_Node).Line);
 
+               --  Check if it was a entity with its own header
 
-               --  check if it was a entity with its own header
                if Header /= null then
                   Description := Extract_Comment
                     (File_Text.all,
@@ -1264,9 +1266,7 @@ package body Docgen.Work_On_Source is
    -- Line_Is_Comment --
    ---------------------
 
-   function Line_Is_Comment
-     (Line : String) return Boolean is
-
+   function Line_Is_Comment (Line : String) return Boolean is
       Min_Comment_Length : constant Natural := 4;
       Comment_String     : constant String := "--";
    begin
@@ -1278,10 +1278,12 @@ package body Docgen.Work_On_Source is
               and Line (J) /= ASCII.HT
               and Line (J) /= ASCII.LF
               and Line (J) /= ASCII.CR
-            then return False;
+            then
+               return False;
             end if;
          end loop;
       end if;
+
       return False;
    end Line_Is_Comment;
 
@@ -1289,8 +1291,7 @@ package body Docgen.Work_On_Source is
    -- Line_Is_Empty --
    -------------------
 
-   function Line_Is_Empty
-     (Line : String) return Boolean is
+   function Line_Is_Empty (Line : String) return Boolean is
    begin
       for J in Line'First .. Line'Last loop
          if    Line (J) /= ' '
@@ -1301,6 +1302,7 @@ package body Docgen.Work_On_Source is
             return False;
          end if;
       end loop;
+
       return True;
    end Line_Is_Empty;
 
@@ -1308,23 +1310,22 @@ package body Docgen.Work_On_Source is
    -- Is_Ignorable_Comment --
    --------------------------
 
-   function Is_Ignorable_Comment
-     (Comment_Line : String) return Boolean is
+   function Is_Ignorable_Comment (Comment_Line : String) return Boolean is
       Min_Comment_Length : constant Natural := 4;
       Comment_String     : constant String := "--";
    begin
       if Comment_Line'Length > Min_Comment_Length then
          for J in Comment_Line'First ..
-           Comment_Line'Last - (Comment_String'Length + 1) loop
-            if Comment_Line (J) = '-' and Comment_Line (J + 1) = '-' then
-               if Comment_Line (J + 2) = '!' then
-                  return True;
-               else
-                  return False;
-               end if;
+           Comment_Line'Last - (Comment_String'Length + 1)
+         loop
+            if Comment_Line (J .. J + Comment_String'Length - 1) =
+              Comment_String
+            then
+               return Comment_Line (J + Comment_String'Length) = '!';
             end if;
          end loop;
       end if;
+
       return False;
    end Is_Ignorable_Comment;
 
@@ -1332,14 +1333,15 @@ package body Docgen.Work_On_Source is
    -- Kill_Prefix --
    -----------------
 
-   function Kill_Prefix
-     (Comment_Line : String) return String is
+   function Kill_Prefix (Comment_Line : String) return String is
       J : Natural;
    begin
       J := Comment_Line'First;
-      while (Comment_Line (J) /= '-' and Comment_Line (J + 1) /= '-') loop
+
+      while Comment_Line (J) /= '-' and then Comment_Line (J + 1) /= '-' loop
          J := J + 1;
       end loop;
+
       return Comment_Line (J + 3 .. Comment_Line'Last);
    end Kill_Prefix;
 
@@ -1363,10 +1365,10 @@ package body Docgen.Work_On_Source is
 
       --  The comments are under the header of the entity
 
-      if Options.Comments_Under or Package_Description then
+      if Options.Comments_Under or else Package_Description then
          J := Line + Header_Lines;
 
-         --  the comments are above the header of the entity
+         --  The comments are above the header of the entity
 
       else
          J := Line - 1;
@@ -1454,14 +1456,15 @@ package body Docgen.Work_On_Source is
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access
    is
-      Parse_Node         : Construct_Access;
-      Parsed_List_End    : Boolean;
-      Result             : GNAT.OS_Lib.String_Access;
+      Parse_Node      : Construct_Access;
+      Parsed_List_End : Boolean;
+      Result          : GNAT.OS_Lib.String_Access;
+
    begin
       Parse_Node      := Parsed_List.First;
       Parsed_List_End := False;
 
-      --  exception if no paresed entities found: later
+      --  ??? Exception if no parsed entities found: later
 
       while not Parsed_List_End loop
          if To_Lower (Parse_Node.Name.all) =
@@ -1471,7 +1474,7 @@ package body Docgen.Work_On_Source is
             Result := new String (1 .. Parse_Node.Sloc_End.Index -
                                     Parse_Node.Sloc_Start.Index + 1);
             Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
-                                             Parse_Node.Sloc_End.Index);
+                                       Parse_Node.Sloc_End.Index);
             return Result;
          end if;
 

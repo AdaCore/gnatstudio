@@ -347,7 +347,7 @@ package body Docgen.Work_On_File is
          else
             return No_Body_Line_Needed;
          end if;
-      end  Search_Line_In_Body;
+      end Search_Line_In_Body;
 
       ------------------------
       -- Process_Subprogram --
@@ -398,16 +398,15 @@ package body Docgen.Work_On_File is
             Child_Node := Get (Child_Iterator);
 
             while Child_Node /= Null_Scope_Tree_Node loop
-
-            --  Put_Line (Get_Name (Get_Entity (Child_Node)));for testing!
-
-               if Is_Subprogram (Child_Node) and
-                 Is_Spec_File (Get_Declaration_File_Of
-                                 (Get_Entity (Child_Node))) then
+               if Is_Subprogram (Child_Node)
+                 and then Is_Spec_File
+                   (Get_Declaration_File_Of (Get_Entity (Child_Node)))
+               then
                   if Options.Info_Output then
                      Put_Line (-"Reference found: " &
                                Get_Name (Get_Entity (Child_Node)));
                   end if;
+
                   Reference_Node.File_Name := new String'
                     (Get_Declaration_File_Of (Get_Entity (Child_Node)));
                   Reference_Node.Line :=
@@ -417,15 +416,15 @@ package body Docgen.Work_On_File is
                   Reference_Node.Subprogram_Name := new String'
                     (Get_Name (Get_Entity (Child_Node)));
                   Reference_Node.Set_Link :=
-                    (Options.Link_All or
-                    Source_File_In_List (Source_File_List,
-                                         Reference_Node.File_Name.all)) and
-                    (Get_Scope (Get_Entity (Child_Node)) = Global_Scope or
-                       Options.Show_Private);
+                    (Options.Link_All
+                     or else Source_File_In_List
+                       (Source_File_List, Reference_Node.File_Name.all))
+                     and then
+                       (Get_Scope (Get_Entity (Child_Node)) = Global_Scope
+                        or else Options.Show_Private);
 
-                  Type_Reference_List.Append (Local_Calls_List,
-                                              Reference_Node);
-
+                  Type_Reference_List.Append
+                    (Local_Calls_List, Reference_Node);
                end if;
 
                Next (Child_Iterator);
@@ -445,10 +444,11 @@ package body Docgen.Work_On_File is
             Reference_Node  : Reference_List_Information;
          begin
             if Is_Renaming then
-               Put_Line (-"Is_Renaming: ");    --  just for testing later!
+               Put_Line (-"Is_Renaming: ");    --  just for testing ???
             end if;
 
             --  get the name of the subprogram which calls the entity
+
             Local_Tree_Node := Get_Parent (Node);
 
             if Local_Tree_Node /= Null_Scope_Tree_Node then
@@ -487,15 +487,16 @@ package body Docgen.Work_On_File is
                Sort_List_Name (List);
 
                Ref_Node_1 := First (List);
+
                while Ref_Node_1 /= Last (List) loop
                   Ref_Node_2 := Next (Ref_Node_1);
 
                   if Data (Ref_Node_1).Subprogram_Name.all =
-                    Data (Ref_Node_2).Subprogram_Name.all and then
-                    Data (Ref_Node_1).File_Name.all =
-                    Data (Ref_Node_2).File_Name.all and then
-                    Data (Ref_Node_1).Line =
-                    Data (Ref_Node_2).Line
+                     Data (Ref_Node_2).Subprogram_Name.all
+                    and then Data (Ref_Node_1).File_Name.all =
+                     Data (Ref_Node_2).File_Name.all
+                    and then Data (Ref_Node_1).Line =
+                     Data (Ref_Node_2).Line
                   then
                      Remove_Nodes (List, Ref_Node_1, Ref_Node_2);
                   else
@@ -506,12 +507,11 @@ package body Docgen.Work_On_File is
          end Remove_Double_Nodes;
 
       begin   --  Process_Subprogram
-
-         --  only if the procedure is defined in this file AND
+         --  Only if the procedure is defined in this file AND
          --  the references are wished:
-         if File_Name (Entity_Node.File_Name.all) =
-           File_Name (Source_Filename)
-           and Options.References
+
+         if File_Name (Entity_Node.File_Name.all) = File_Name (Source_Filename)
+           and then Options.References
          then
             Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
             Find_All_References
@@ -523,21 +523,23 @@ package body Docgen.Work_On_File is
                Project_View,
                True);
 
-            --  1. find all subprograms called in the subprogram processed
-            Reference_Scope_Tree :=
-              Create_Tree (LI_Unit);
-            Entity_Tree_Node :=
-              Find_Entity_Scope (Reference_Scope_Tree, Info);
+            --  1. Find all subprograms called in the subprogram processed
+
+            Reference_Scope_Tree := Create_Tree (LI_Unit);
+            Entity_Tree_Node := Find_Entity_Scope (Reference_Scope_Tree, Info);
 
             if Entity_Tree_Node /= Null_Scope_Tree_Node then
                Add_Calls_References (Entity_Tree_Node);
             end if;
+
             Free (Reference_Scope_Tree);
 
             --  2. look for all references where this subprogram is called
+
             while Get (Reference_Iter) /= No_Reference loop
-               --  set the global variable: is the file known, where the
+               --  Set the global variable: is the file known, where the
                --  declaration of the reference can be found?
+
                if Source_File_In_List
                  (Source_File_List,
                   Get_File (Get_Location (Get (Reference_Iter))))
@@ -547,7 +549,7 @@ package body Docgen.Work_On_File is
                   Decl_Found := False;
                end if;
 
-               --  for the rest use the scope tree
+               --  For the rest use the scope tree
 
                Reference_Scope_Tree :=
                  Create_Tree (Get_LI (Reference_Iter));
@@ -560,14 +562,16 @@ package body Docgen.Work_On_File is
                Next (Handler, Reference_Iter, Source_Info_List);
             end loop;
 
-            --  pass the local lists to the entity_node lists
+            --  Pass the local lists to the entity_node lists
+
             Entity_Node.Called_List := Local_Ref_List;
             Remove_Double_Nodes (Local_Calls_List);
             Entity_Node.Calls_List  := Local_Calls_List;
          end if;
 
-         --  if defined in a spec file, add entity to the
+         --  If defined in a spec file, add entity to the
          --  Subprogram_Index_List
+
          if Is_Spec_File (Source_Filename)
            and then Source_Filename = Entity_File
          then
