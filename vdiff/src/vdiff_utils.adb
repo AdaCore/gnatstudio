@@ -20,6 +20,8 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with Interfaces.C.Strings;
+with Ada.Unchecked_Deallocation;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
@@ -172,9 +174,6 @@ package body Vdiff_Utils is
       Context_Len     : Integer :=
         Integer (Get_Pref (Kernel, Diff_Context_Length));
       --  Number of lines displayed before and after each chunk of differences
-
-      Num_Line_Sep    : constant := 3;
-      --  Number of empty lines separating each chunk.
 
       S               : String (1 .. 8192);
       Last            : Natural;
@@ -409,6 +408,9 @@ package body Vdiff_Utils is
 
                Line1 := Link.Range1.Last;
                Line2 := Link.Range2.First;
+
+            when others =>
+               null;
          end case;
 
          Link := Link.Next;
@@ -441,6 +443,202 @@ package body Vdiff_Utils is
          Thaw (List1);
          Close (Infile2);
          Close (Infile1);
+   end Fill_Diff_Lists;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Text_Iterator_Access) is
+      procedure Free_Data is
+         new Ada.Unchecked_Deallocation (Text_Iterator, Text_Iterator_Access);
+   begin
+      if This = null then
+         return;
+      end if;
+
+      if This.Next /= null then
+         Free (This.Next);
+      end if;
+
+      Free (This.New_Line);
+      Free (This.Old_Line);
+      Free_Data (This);
+   end Free;
+
+   ---------------------
+   -- Fill_Diff_Lists --
+   ---------------------
+
+   --  ??? This function is not yet terminated. It is working with a vritual
+   --  Kernel.
+   procedure Fill_Diff_Lists
+     (Kernel     : access Kernel_Handle_Record'Class;
+      List1      : access Gtk_Clist_Record'Class;
+      List2      : access Gtk_Clist_Record'Class;
+      First_Line : Text_Iterator_Access)
+   is
+
+      Texts            : ICS.chars_ptr_array (0 .. 1);
+      Row              : Gint;
+      Default_Style    : Gtk_Style;
+      Old_Style        : Gtk_Style;
+      Append_Style     : Gtk_Style;
+      Remove_Style     : Gtk_Style;
+      Change_Style     : Gtk_Style;
+      Color            : Gdk_Color;
+
+      Info_1           : Vdiff_Info_Access;
+      Info_2           : Vdiff_Info_Access;
+
+      Current_Line     : Text_Iterator_Access;
+      Offset_Line      : Integer := 0;
+      Last_Line_Number : Natural;
+
+      procedure Add_Line
+        (List   : access Gtk_Clist_Record'Class;
+         Style  : Gtk_Style;
+         Number : Natural := 0;
+         Line   : String := "");
+      --  Add a line constaining Line in List, using Style for font/color.
+
+      procedure Add_Line
+        (List   : access Gtk_Clist_Record'Class;
+         Style  : Gtk_Style;
+         Number : Natural := 0;
+         Line   : String := "") is
+      begin
+         if Number = 0 then
+            Texts (0) := ICS.Null_Ptr;
+         else
+            Texts (0) := ICS.New_String (Image (Number));
+         end if;
+         Texts (1) := ICS.New_String (Line);
+         Row := Append (List, Texts);
+         Set_Cell_Style (List, Row, 0, Style);
+         Set_Cell_Style (List, Row, 1, Style);
+         ICS.Free (Texts (0));
+         ICS.Free (Texts (1));
+      end Add_Line;
+
+   begin
+      Gtk_New (Info_1, Kernel_Handle (Kernel), "");
+      Gtk_New (Info_2, Kernel_Handle (Kernel), "");
+
+      GObject_Callback.Object_Connect
+        (List1, "destroy",
+         On_Destroy'Access,
+         Info_1);
+
+--      Register_Contextual_Menu
+--        (Kernel,
+--         List1,
+--         Info_1,
+--         Vdiff_Module_ID,
+--         Context_Factory'Access);
+
+--      Register_Contextual_Menu
+--        (Kernel,
+--         List2,
+--         Info_2,
+--         Vdiff_Module_ID,
+--         Context_Factory'Access);
+
+      --  ??? When are these styles freed ?
+      Default_Style := Copy (Get_Style (List1));
+--      Set_Font_Description (Default_Style, Desc);
+
+      Old_Style     := Copy (Default_Style);
+      Append_Style  := Copy (Default_Style);
+      Remove_Style  := Copy (Default_Style);
+      Change_Style  := Copy (Default_Style);
+
+      --  <preferences>
+      Set_Rgb (Color, 50000, 50000, 50000);
+      Set_Base (Old_Style, State_Normal, Color);
+      Set_Rgb (Color, 0, 56000, 0);
+      Set_Base (Append_Style, State_Normal, Color);
+      Set_Rgb (Color, 56000, 0, 0);
+      Set_Base (Remove_Style, State_Normal, Color);
+      Set_Rgb (Color, 0, 40000, 65000);
+      Set_Base (Change_Style, State_Normal, Color);
+
+      Freeze (List1);
+      Freeze (List2);
+
+
+      Last_Line_Number := 0;
+      Current_Line := First_Line;
+
+      while Current_Line /= null loop
+
+         if Last_Line_Number + 1 < Current_Line.Original_Position then
+            for J in 1 .. Num_Line_Sep loop
+               Add_Line (List1, Default_Style);
+               Add_Line (List2, Default_Style);
+            end loop;
+         end if;
+
+         Last_Line_Number := Current_Line.Original_Position;
+
+         case Current_Line.Action is
+            when Append =>
+               Offset_Line := Offset_Line + 1;
+
+               Add_Line (List1, Old_Style);
+               Add_Line
+                 (List2,
+                  Append_Style,
+                  Current_Line.Original_Position + Offset_Line,
+                  Current_Line.New_Line.all);
+
+            when Change =>
+               Add_Line
+                 (List1,
+                  Old_Style,
+                  Current_Line.Original_Position,
+                  Current_Line.Old_Line.all);
+               Add_Line
+                 (List2,
+                  Change_Style,
+                  Current_Line.Original_Position + Offset_Line,
+                  Current_Line.New_Line.all);
+
+            when Delete =>
+               Add_Line
+                 (List1,
+                  Old_Style,
+                  Current_Line.Original_Position,
+                  Current_Line.Old_Line.all);
+               Add_Line (List2, Remove_Style);
+
+               Offset_Line := Offset_Line - 1;
+
+            when Nothing =>
+               Add_Line
+                 (List1,
+                  Default_Style,
+                  Current_Line.Original_Position,
+                  Current_Line.Old_Line.all);
+               Add_Line
+                 (List2,
+                  Default_Style,
+                  Current_Line.Original_Position + Offset_Line,
+                  Current_Line.New_Line.all);
+
+         end case;
+
+         Current_Line := Current_Line.Next;
+
+      end loop;
+
+      Thaw (List2);
+      Thaw (List1);
+
+   exception
+      when End_Error =>
+         Thaw (List2);
+         Thaw (List1);
    end Fill_Diff_Lists;
 
    --------------------
