@@ -1363,7 +1363,7 @@ package body Projects.Registry is
          --  This is most probably one of the runtime files.
          --  For now, we simply consider the standard GNAT extensions, although
          --  we should search in the list of registered languages
-         --  (language_handlers-glide)
+         --  (language_handlers-gps)
 
          declare
             Ext : constant String := File_Extension (Base_Name);
