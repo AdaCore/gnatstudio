@@ -25,7 +25,6 @@ with Gdk.Pixmap;            use Gdk.Pixmap;
 pragma Warnings (Off);
 with Gdk.Types;             use Gdk.Types;
 pragma Warnings (On);
-with Gdk.Event;             use Gdk.Event;
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Ctree;             use Gtk.Ctree;
 pragma Elaborate_All (Gtk.Ctree);
@@ -54,6 +53,7 @@ with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Files;             use GVD.Files;
+with GUI_Utils;             use GUI_Utils;
 
 package body GVD.Explorer is
 
@@ -97,11 +97,6 @@ package body GVD.Explorer is
    --  Compute the contents of a file if needed. This is not done
    --  systematically, so as to speed things up.
 
-   function Button_Press_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Boolean;
-   --  Handle button press events in the Explorer.
-
    procedure Display_Shared (Explorer : access Explorer_Record'Class);
    --  Load and display the files found in shared libraries.
 
@@ -114,7 +109,7 @@ package body GVD.Explorer is
    --  Show and select the node that matches the current source file.
 
    function Explorer_Contextual_Menu
-     (Explorer : access Explorer_Record'Class) return Gtk.Menu.Gtk_Menu;
+     (Explorer : access Gtk_Widget_Record'Class) return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) the contextual menu for an explorer widget.
 
    function Convert (Explorer : access Explorer_Record'Class)
@@ -207,8 +202,6 @@ package body GVD.Explorer is
       Explorer := new Explorer_Record;
       Initialize (Explorer, Columns => 1);
 
-      Add_Events (Explorer, Button_Press_Mask or Button_Release_Mask);
-
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
       Widget_Callback.Connect
@@ -216,10 +209,8 @@ package body GVD.Explorer is
       Tree_Cb.Connect
         (Explorer, "tree_select_row",
          Tree_Cb.To_Marshaller (First_Handler'Access));
-      Gtkada.Handlers.Return_Callback.Connect
-        (Explorer, "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press_Cb'Access));
+
+      Register_Contextual_Menu (Explorer, Explorer_Contextual_Menu'Access);
 
       Create_From_Xpm_D
         (Explorer.Folder_Open_Pixmap,
@@ -853,50 +844,26 @@ package body GVD.Explorer is
       Free (List);
    end On_Executable_Changed;
 
-   ---------------------
-   -- Button_Press_Cb --
-   ---------------------
-
-   function Button_Press_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Boolean
-   is
-      Explorer : constant Explorer_Access := Explorer_Access (Widget);
-      Menu    : Gtk_Menu;
-   begin
-      if Get_Button (Event) = 3
-        and then Get_Event_Type (Event) = Button_Press
-      then
-         Menu := Explorer_Contextual_Menu (Explorer);
-         Popup (Menu,
-                Button        => Gdk.Event.Get_Button (Event),
-                Activate_Time => Gdk.Event.Get_Time (Event));
-         Emit_Stop_By_Name (Explorer, "button_press_event");
-         return True;
-      end if;
-
-      return False;
-   end Button_Press_Cb;
-
    ------------------------------
    -- Explorer_Contextual_Menu --
    ------------------------------
 
    function Explorer_Contextual_Menu
-     (Explorer : access Explorer_Record'Class)
+     (Explorer : access Gtk_Widget_Record'Class)
      return Gtk.Menu.Gtk_Menu
    is
+      Exp : Explorer_Access := Explorer_Access (Explorer);
       --  Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;
       Tips  : Gtk_Tooltips;
-      Process : Debugger_Process_Tab := Convert (Explorer);
+      Process : Debugger_Process_Tab := Convert (Exp);
 
    begin
-      if Explorer.Contextual_Menu /= null then
-         Destroy (Explorer.Contextual_Menu);
+      if Exp.Contextual_Menu /= null then
+         Destroy (Exp.Contextual_Menu);
       end if;
 
-      Gtk_New (Explorer.Contextual_Menu);
+      Gtk_New (Exp.Contextual_Menu);
       Gtk_New (Tips);
       Ref (Tips);
 
@@ -910,8 +877,8 @@ package body GVD.Explorer is
       Tree_Cb.Object_Connect
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Show_System_Files'Access),
-         Explorer);
-      Append (Explorer.Contextual_Menu, Mitem);
+         Exp);
+      Append (Exp.Contextual_Menu, Mitem);
       --  Set_Tip (Tips, Check, -"Foo", "");
 
       Gtk_New (Mitem, Label => -"Reload Files");
@@ -919,8 +886,8 @@ package body GVD.Explorer is
       Tree_Cb.Object_Connect
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Display_Shared'Access),
-         Explorer);
-      Append (Explorer.Contextual_Menu, Mitem);
+         Exp);
+      Append (Exp.Contextual_Menu, Mitem);
       --  Set_Tip (Tips, Mitem,
       --     -"Activated only when the executable has started", "");
 
@@ -928,19 +895,19 @@ package body GVD.Explorer is
       Tree_Cb.Object_Connect
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Delete_Not_Found'Access),
-         Explorer);
-      Append (Explorer.Contextual_Menu, Mitem);
+         Exp);
+      Append (Exp.Contextual_Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Show Current File");
       Tree_Cb.Object_Connect
         (Mitem, "activate",
          Tree_Cb.To_Marshaller (Show_Current_File'Access),
-         Explorer);
-      Append (Explorer.Contextual_Menu, Mitem);
+         Exp);
+      Append (Exp.Contextual_Menu, Mitem);
 
-      Show_All (Explorer.Contextual_Menu);
+      Show_All (Exp.Contextual_Menu);
       Enable (Tips);
-      return Explorer.Contextual_Menu;
+      return Exp.Contextual_Menu;
    end Explorer_Contextual_Menu;
 
    --------------------
