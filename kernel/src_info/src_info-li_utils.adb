@@ -149,7 +149,8 @@ package body Src_Info.LI_Utils is
       Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Source_Filename         : in String;
-      Referred_Filename       : in String)
+      Referred_Filename       : in String;
+      Referred_Xref_Filename  : in String)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
@@ -187,11 +188,11 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Xref_Filename));
+      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Referred_Xref_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
-            Xref_Filename     => Xref_Filename,
+            Xref_Filename     => Referred_Xref_Filename,
             Handler           => Handler,
             Source_Filename   => Referred_Filename,
             Parsed            => True);
@@ -263,6 +264,7 @@ package body Src_Info.LI_Utils is
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Referred_Filename       : in String;
+      Referred_Xref_Filename  : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -310,12 +312,12 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Xref_Filename));
+      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Referred_Xref_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
             File               => Tmp_LI_File_Ptr,
-            Xref_Filename      => Xref_Filename,
+            Xref_Filename      => Referred_Xref_Filename,
             List               => List,
             Symbol_Name        => Symbol_Name,
             Source_Filename    => Referred_Filename,
@@ -341,7 +343,7 @@ package body Src_Info.LI_Utils is
                Insert_Declaration
                  (Handler            => Handler,
                   File               => Tmp_LI_File_Ptr,
-                  Xref_Filename      => Xref_Filename,
+                  Xref_Filename      => Referred_Xref_Filename,
                   List               => List,
                   Symbol_Name        => Symbol_Name,
                   Source_Filename    => Referred_Filename,
@@ -422,10 +424,21 @@ package body Src_Info.LI_Utils is
             D_Ptr := D_Ptr.Next;
          end loop;
       end if;
-      Insert_Declaration_Internal (D_Ptr, File, Xref_Filename, List,
-         Symbol_Name, Referred_Filename, Location,
-         Parent_Filename, Parent_Location, Kind, Scope,
-         End_Of_Scope_Location, Rename_Filename, Rename_Location);
+      Insert_Declaration_Internal
+        (D_Ptr,
+         Tmp_LI_File_Ptr,
+         Referred_Xref_Filename,
+         List,
+         Symbol_Name,
+         Referred_Filename,
+         Location,
+         Parent_Filename,
+         Parent_Location,
+         Kind,
+         Scope,
+         End_Of_Scope_Location,
+         Rename_Filename,
+         Rename_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 

@@ -55,7 +55,8 @@ private package Src_Info.LI_Utils is
       --  The base name of this path will be assigned to the LI_File
       List                    : in out LI_File_List;
       Source_Filename         : in String;
-      Referred_Filename       : in String);
+      Referred_Filename       : in String;
+      Referred_Xref_Filename  : in String);
    --  Insert file-level dependency
 
    procedure Insert_Dependency_Declaration
@@ -67,6 +68,7 @@ private package Src_Info.LI_Utils is
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Referred_Filename       : in String;
+      Referred_Xref_Filename  : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";

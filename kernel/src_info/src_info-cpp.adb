@@ -945,9 +945,11 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                    Xref_Filename_For (Class_Def.Buffer
-                       (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
+                    Xref_Filename_For (Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
                   List               => Env.List_Of_Files,
@@ -955,8 +957,12 @@ package body Src_Info.CPP is
                     (Class_Def.Name.First .. Class_Def.Name.Last),
                   Referred_Filename  => Class_Def.Buffer
                     (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all)
+                     & Xref_Filename_For (Class_Def.Buffer
+                       (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
                   Location           => Class_Def.Start_Position,
                   Kind               => Record_Type,
                   Scope              => Global_Scope,
@@ -1114,27 +1120,39 @@ package body Src_Info.CPP is
                      Scope             => Scope,
                      Referred_Filename =>
                         Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For (Var.Buffer
+                          (Var.File_Name.First .. Var.File_Name.Last),
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Declaration_Info  => Decl_Info);
                else
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
+                     Source_Filename   =>
+                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
-                          (Var.Buffer
-                             (Var.File_Name.First .. Var.File_Name.Last),
+                          (Ref.Buffer
+                             (Ref.File_Name.First .. Ref.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
                      List              => Env.List_Of_Files,
                      Symbol_Name       =>
                         Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
                      Referred_Filename =>
                         Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all) &
+                        Xref_Filename_For (Var.Buffer
+                           (Var.File_Name.First .. Var.File_Name.Last),
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                      Parent_Location   => Desc.Parent_Point,
                      Parent_Filename   => Xref_Filename_For
                           (Desc.Parent_Filename.all,
@@ -1217,9 +1235,11 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Enum_Def.Buffer
-                       (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
+                     Xref_Filename_For (Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
                   List               => Env.List_Of_Files,
@@ -1227,8 +1247,12 @@ package body Src_Info.CPP is
                     (Enum_Def.Name.First .. Enum_Def.Name.Last),
                   Referred_Filename  => Enum_Def.Buffer
                     (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all)
+                     & Xref_Filename_For (Enum_Def.Buffer
+                       (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
                   Location           => Enum_Def.Start_Position,
                   Kind               => Enumeration_Type,
                   Scope              => Global_Scope,
@@ -1337,22 +1361,28 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
+                  Source_Filename   =>
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Enum_Const.Buffer
-                       (Enum_Const.File_Name.First ..
-                        Enum_Const.File_Name.Last),
+                     Xref_Filename_For (Ref.Buffer
+                       (Ref.File_Name.First ..  Ref.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
                   List              => Env.List_Of_Files,
                   Symbol_Name       => Ref_Id,
-                  Source_Filename   =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Enum_Const.Start_Position,
                   Kind              => Enumeration_Literal,
                   Scope             => Global_Scope,
                   Referred_Filename =>
                      Enum_Const.Buffer (Enum_Const.File_Name.First ..
                                         Enum_Const.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all) &
+                     Xref_Filename_For (Enum_Const.Buffer
+                       (Enum_Const.File_Name.First ..
+                        Enum_Const.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
                   Declaration_Info  => Decl_Info);
          end;
       end if;
@@ -1559,20 +1589,27 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
+                     Source_Filename    =>
+                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
                         Xref_Filename_For
-                          (Buffer (Filename.First .. Filename.Last),
+                          (Ref.Buffer (Ref.File_Name.First ..
+                                       Ref.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
                      List               => Env.List_Of_Files,
                      Symbol_Name        => Ref_Id,
-                     Source_Filename    =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location           => Start_Position,
                      Kind               => Kind,
                      Scope              => Global_Scope,
                      Referred_Filename  => Buffer
                        (Filename.First .. Filename.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all) &
+                        Xref_Filename_For
+                          (Buffer (Filename.First .. Filename.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
                      Declaration_Info   => Decl_Info);
             end;
          end if;
@@ -1705,43 +1742,57 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
+                     Source_Filename   =>
+                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Ref.Buffer
+                              (Ref.File_Name.First .. Ref.File_Name.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
+                     List              => Env.List_Of_Files,
+                     Symbol_Name       =>
+                        Var.Buffer (Var.Name.First .. Var.Name.Last),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Referred_Filename =>
+                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Var.Buffer
                               (Var.File_Name.First .. Var.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       =>
-                        Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location          => Var.Start_Position,
-                     Kind              => Type_To_Object (Desc.Kind),
-                     Scope             => Scope,
-                     Referred_Filename =>
-                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                      Declaration_Info  => Decl_Info);
                else
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
+                     Source_Filename   =>
+                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
-                          (Var.Buffer
-                             (Var.File_Name.First .. Var.File_Name.Last),
+                          (Ref.Buffer
+                             (Ref.File_Name.First .. Ref.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
                      List              => Env.List_Of_Files,
                      Symbol_Name       =>
                         Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Source_Filename   =>
-                        Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
                      Referred_Filename =>
                         Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Var.Buffer
+                             (Var.File_Name.First .. Var.File_Name.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
                      Parent_Location   => Desc.Parent_Point,
                      Parent_Filename   => Xref_Filename_For
                           (Desc.Parent_Filename.all,
@@ -1840,21 +1891,28 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => LI_Handler (Global_CPP_Handler),
                   File              => Env.File,
+                  Source_Filename   => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
-                       (Macro.Buffer
-                          (Macro.File_Name.First .. Macro.File_Name.Last),
+                       (Ref.Buffer
+                          (Ref.File_Name.First .. Ref.File_Name.Last),
                         Env.DB_Dir.all,
                         Env.Xrefs).all,
                   List              => Env.List_Of_Files,
                   Symbol_Name       => Ref_Id,
-                  Source_Filename   => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Macro.Start_Position,
                   Kind              => Unresolved_Entity,
                   Scope             => Global_Scope,
                   Referred_Filename => Macro.Buffer
                     (Macro.File_Name.First .. Macro.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all)
+                     & Xref_Filename_For
+                       (Macro.Buffer
+                          (Macro.File_Name.First .. Macro.File_Name.Last),
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                   Declaration_Info  => Decl_Info);
          end;
       end if;
@@ -2099,25 +2157,39 @@ package body Src_Info.CPP is
                   Filename             => Filename_Buf
                     (Filename.First .. Filename.Last),
                   Location             => Start_Position);
+               Info ("Dep Declaration for " & Ref_Id
+                  & " in " & Filename_Buf (Filename.First .. Filename.Last)
+                  & " found");
             exception
                when Declaration_Not_Found => -- insert dep decl
+                  Info ("Declaration not found "
+                     & " Fname = " & Filename_Buf (Filename.First ..
+                     Filename.Last) & "ref_fname = " &
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last));
                   Insert_Dependency_Declaration
                     (Handler            => LI_Handler (Global_CPP_Handler),
                      File               => Env.File,
+                     Source_Filename    => Ref.Buffer
+                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                       Xref_Filename_For
-                          (Filename_Buf (Filename.First .. Filename.Last),
+                          Xref_Filename_For
+                          (Ref.Buffer (Ref.File_Name.First ..
+                                       Ref.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
                      List               => Env.List_Of_Files,
                      Symbol_Name        => Ref_Id,
-                     Source_Filename    => Ref.Buffer
-                        (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location           => Start_Position,
                      Kind               => Kind,
                      Scope              => Global_Scope,
                      Referred_Filename  => Filename_Buf
                         (Filename.First .. Filename.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Filename_Buf (Filename.First .. Filename.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
                      Declaration_Info   => Decl_Info);
             end;
          end if;
@@ -2330,62 +2402,75 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
+                     Source_Filename   => Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Ref.Buffer
+                             (Ref.File_Name.First ..  Ref.File_Name.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
+                     List              => Env.List_Of_Files,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Referred_Filename => Typedef.Buffer
+                       (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Typedef.Buffer
                              (Typedef.File_Name.First ..
                               Typedef.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location          => Typedef.Start_Position,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Referred_Filename => Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last),
                      Declaration_Info  => Decl_Info);
                elsif Desc.Ancestor_Point = Predefined_Point then
                   --  typedef for builtin type
                   Insert_Dependency_Declaration
                     (Handler           => LI_Handler (Global_CPP_Handler),
                      File              => Env.File,
+                     Source_Filename   => Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
-                          (Typedef.Buffer
-                             (Typedef.File_Name.First ..
-                              Typedef.File_Name.Last),
+                          (Ref.Buffer
+                             (Ref.File_Name.First .. Ref.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
                      List              => Env.List_Of_Files,
                      Symbol_Name       => Ref_Id,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
                      Location          => Typedef.Start_Position,
                      Parent_Location   => Predefined_Point,
                      Kind              => Desc.Kind,
                      Scope             => Global_Scope,
                      Referred_Filename => Typedef.Buffer
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Declaration_Info  => Decl_Info);
-               else
-                  --  parent type found
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
                         & Xref_Filename_For
                           (Typedef.Buffer
                              (Typedef.File_Name.First ..
                               Typedef.File_Name.Last),
                            Env.DB_Dir.all,
                            Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
+                     Declaration_Info  => Decl_Info);
+               else
+                  --  parent type found
+                  Insert_Dependency_Declaration
+                    (Handler           => LI_Handler (Global_CPP_Handler),
+                     File              => Env.File,
                      Source_Filename   => Ref.Buffer
                        (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Ref.Buffer
+                             (Ref.File_Name.First .. Ref.File_Name.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
+                     List              => Env.List_Of_Files,
+                     Symbol_Name       => Ref_Id,
                      Location          => Typedef.Start_Position,
                      Parent_Location   => Desc.Ancestor_Point,
                      Parent_Filename   => Xref_Filename_For
@@ -2396,6 +2481,14 @@ package body Src_Info.CPP is
                      Scope             => Global_Scope,
                      Referred_Filename => Typedef.Buffer
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                     Referred_Xref_Filename =>
+                        Name_As_Directory (Env.DB_Dir.all)
+                        & Xref_Filename_For
+                          (Typedef.Buffer
+                             (Typedef.File_Name.First ..
+                              Typedef.File_Name.Last),
+                           Env.DB_Dir.all,
+                           Env.Xrefs).all,
                      Declaration_Info  => Decl_Info);
                end if;
 
@@ -2467,11 +2560,12 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Env.File,
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
                      & Xref_Filename_For
-                       (Union_Def.Buffer
-                          (Union_Def.File_Name.First ..
-                           Union_Def.File_Name.Last),
+                       (Ref.Buffer
+                          (Ref.File_Name.First .. Ref.File_Name.Last),
                         Env.DB_Dir.all,
                         Env.Xrefs).all,
                   List               => Env.List_Of_Files,
@@ -2479,8 +2573,14 @@ package body Src_Info.CPP is
                     (Union_Def.Name.First .. Union_Def.Name.Last),
                   Referred_Filename  => Union_Def.Buffer
                     (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all)
+                     & Xref_Filename_For
+                       (Union_Def.Buffer
+                          (Union_Def.File_Name.First ..
+                           Union_Def.File_Name.Last),
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
                   Location           => Union_Def.Start_Position,
                   Kind               => Record_Type,
                   Scope              => Global_Scope,
@@ -3348,15 +3448,19 @@ package body Src_Info.CPP is
       Insert_Dependency
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
+         Source_Filename   =>
+           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Xref_Filename     => Xref_Filename_For
            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Env.DB_Dir.all,
             Env.Xrefs).all,
          List              => Env.List_Of_Files,
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Referred_Filename =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Referred_Xref_Filename => Xref_Filename_For
+           (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Env.DB_Dir.all,
+            Env.Xrefs).all);
 
    end Sym_IU_Handler;
 
