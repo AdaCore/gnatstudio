@@ -249,7 +249,14 @@ package body Language.Debugger.Ada is
                             return String
    is
    begin
-      return Name & '(' & Index & ')';
+      --  Simplify the expression by getting rid of unnecessary ".all"
+      if Name'Length > 4
+        and then Name (Name'Last - 3 .. Name'Last) = ".all"
+      then
+         return Name (Name'First .. Name'Last - 4) & '(' & Index & ')';
+      else
+         return Name & '(' & Index & ')';
+      end if;
    end Array_Item_Name;
 
    -----------------------
@@ -262,7 +269,14 @@ package body Language.Debugger.Ada is
                               return String
    is
    begin
-      return Name & '.' & Field;
+      --  Simplify the expression by getting rid of unnecessary ".all"
+      if Name'Length > 4
+        and then Name (Name'Last - 3 .. Name'Last) = ".all"
+      then
+         return Name (Name'First .. Name'Last - 4) & '.' & Field;
+      else
+         return Name & '.' & Field;
+      end if;
    end Record_Field_Name;
 
    -----------
