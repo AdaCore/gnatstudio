@@ -77,6 +77,26 @@ package Glide_Kernel.Project is
    --  are saved at the same time.
    --  The kernel registers that it is no longer using the default project.
 
+   function Save_Project_Conditional
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Force     : Boolean) return Boolean;
+   --  Ask the user whether to save the project (if Force is False), or save it
+   --  inconditionnaly if Force is True.
+   --  False is returned if the user has selected the "Cancel" button in the
+   --  popup dialog.
+
+   procedure Set_Project_Modified
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Modified  : Boolean);
+   --  See Project_Hash.Set_Project_Modified.
+
+   function Project_Modified
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean := False) return Boolean;
+   --  See Project_Hash.Project_Modified.
+
    function Get_Subproject_Name
      (Handle    : access Kernel_Handle_Record'Class;
       File_Name : String) return String;

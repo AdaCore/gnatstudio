@@ -33,9 +33,12 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+
 with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
+with Project_Hash;       use Project_Hash;
 
 with Traces;  use Traces;
 with Glide_Intl; use Glide_Intl;
@@ -43,6 +46,8 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
+
+   use Project_Hash.Project_Htable;
 
    Me : Debug_Handle := Create ("glide_kernel.project");
 
@@ -276,6 +281,11 @@ package body Glide_Kernel.Project is
 
       Reset_Normalized_Flag (Kernel.Project);
       Output.Set_Special_Output (null);
+
+      --  Clear the projects data table. Note that we do not need to reset the
+      --  Modified fields to False, since this is the default. Entries will be
+      --  created on demand.
+      Reset (Kernel.Projects_Data);
 
    exception
       when others =>
@@ -562,8 +572,70 @@ package body Glide_Kernel.Project is
       Recursive : Boolean := False) is
    begin
       Kernel.Project_Is_Default := False;
-      Save_Project (Project, Recursive);
+      Save_Project (Project, Kernel.Projects_Data, Recursive);
    end Save_Project;
+
+   ------------------------------
+   -- Save_Project_Conditional --
+   ------------------------------
+
+   function Save_Project_Conditional
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Force     : Boolean) return Boolean
+   is
+      Button   : Message_Dialog_Buttons;
+   begin
+      if Force then
+         Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+
+      elsif Project_Modified
+        (Kernel.Projects_Data, Get_Project (Kernel), Recursive => True)
+      then
+         Button := Message_Dialog
+           (Msg            => -"Do you want to save the project ?",
+            Dialog_Type    => Confirmation,
+            Buttons        => Button_Yes or Button_No or Button_Cancel,
+            Default_Button => Button_Cancel,
+            Parent         => Get_Main_Window (Kernel));
+
+         case Button is
+            when Button_Yes =>
+               Save_Project
+                 (Kernel, Get_Project (Kernel), Recursive => True);
+
+            when Button_No =>
+               null;
+
+            when others =>
+               return False;
+         end case;
+      end if;
+      return True;
+   end Save_Project_Conditional;
+
+   --------------------------
+   -- Set_Project_Modified --
+   --------------------------
+
+   procedure Set_Project_Modified
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Modified  : Boolean) is
+   begin
+      Set_Project_Modified (Kernel.Projects_Data, Project, Modified);
+   end Set_Project_Modified;
+
+   ----------------------
+   -- Project_Modified --
+   ----------------------
+
+   function Project_Modified
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean := False) return Boolean is
+   begin
+      return Project_Modified (Kernel.Projects_Data, Project, Recursive);
+   end Project_Modified;
 
 end Glide_Kernel.Project;
 
