@@ -30,48 +30,48 @@ procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
-   Return_Callback.Connect
-     (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
    Set_Title (Breakpoints, -"Breakpoints");
    Set_Policy (Breakpoints, True, True, False);
    Set_Position (Breakpoints, Win_Pos_Center);
    Set_Modal (Breakpoints, False);
    Set_Default_Size (Breakpoints, 430, 460);
+   Return_Callback.Connect
+     (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
 
    Gtk_New_Vbox (Breakpoints.Vbox1, False, 4);
    Add (Breakpoints, Breakpoints.Vbox1);
 
    Gtk_New (Breakpoints.Notebook1);
-   Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
    Set_Scrollable (Breakpoints.Notebook1, False);
    Set_Show_Border (Breakpoints.Notebook1, True);
    Set_Show_Tabs (Breakpoints.Notebook1, True);
    Set_Tab_Hborder (Breakpoints.Notebook1, 2);
    Set_Tab_Vborder (Breakpoints.Notebook1, 2);
    Set_Tab_Pos (Breakpoints.Notebook1, Pos_Top);
+   Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
 
    Gtk_New_Hbox (Breakpoints.Hbox2, False, 0);
    Add (Breakpoints.Notebook1, Breakpoints.Hbox2);
 
    Gtk_New_Vbox (Breakpoints.Vbox2, False, 0);
-   Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbox2, True, True, 0);
    Set_Border_Width (Breakpoints.Vbox2, 7);
+   Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbox2, True, True, 0);
 
    Gtk_New (Breakpoints.Frame12);
-   Pack_Start (Breakpoints.Vbox2, Breakpoints.Frame12, True, True, 0);
    Set_Shadow_Type (Breakpoints.Frame12, Shadow_Etched_In);
+   Pack_Start (Breakpoints.Vbox2, Breakpoints.Frame12, True, True, 0);
 
    Gtk_New_Vbox (Breakpoints.Vbox15, False, 0);
-   Add (Breakpoints.Frame12, Breakpoints.Vbox15);
    Set_Border_Width (Breakpoints.Vbox15, 3);
+   Add (Breakpoints.Frame12, Breakpoints.Vbox15);
 
    Gtk_New (Breakpoints.Location_Selected, Vbox15_Group, -"Source location");
    Vbox15_Group := Group (Breakpoints.Location_Selected);
+   Set_Active (Breakpoints.Location_Selected, False);
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Location_Selected, False, False, 0);
    Widget_Callback.Object_Connect
      (Breakpoints.Location_Selected, "toggled",
       Widget_Callback.To_Marshaller (On_Location_Selected_Toggled'Access), Breakpoints);
-   Set_Active (Breakpoints.Location_Selected, False);
 
    Gtk_New
      (Breakpoints.Alignment5, 0.5, 0.5, 0.88, 
@@ -82,20 +82,20 @@ begin
    Add (Breakpoints.Alignment5, Breakpoints.Hbox5);
 
    Gtk_New (Breakpoints.Label61, -("File:"));
-   Pack_Start (Breakpoints.Hbox5, Breakpoints.Label61, False, False, 0);
    Set_Alignment (Breakpoints.Label61, 0.5, 0.5);
    Set_Padding (Breakpoints.Label61, 5, 0);
    Set_Justify (Breakpoints.Label61, Justify_Center);
    Set_Line_Wrap (Breakpoints.Label61, False);
+   Pack_Start (Breakpoints.Hbox5, Breakpoints.Label61, False, False, 0);
 
    Gtk_New (Breakpoints.File_Combo);
-   Pack_Start (Breakpoints.Hbox5, Breakpoints.File_Combo, True, True, 0);
    Set_Case_Sensitive (Breakpoints.File_Combo, False);
    Set_Use_Arrows (Breakpoints.File_Combo, True);
    Set_Use_Arrows_Always (Breakpoints.File_Combo, False);
    String_List.Append (File_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.File_Combo, File_Combo_Items);
    Free_String_List (File_Combo_Items);
+   Pack_Start (Breakpoints.Hbox5, Breakpoints.File_Combo, True, True, 0);
 
    Breakpoints.Combo_Entry5 := Get_Entry (Breakpoints.File_Combo);
    Set_Editable (Breakpoints.Combo_Entry5, True);
@@ -104,28 +104,28 @@ begin
    Set_Visibility (Breakpoints.Combo_Entry5, True);
 
    Gtk_New (Breakpoints.Label62, -("Line:"));
-   Pack_Start (Breakpoints.Hbox5, Breakpoints.Label62, False, False, 0);
    Set_Alignment (Breakpoints.Label62, 1.0, 0.5);
    Set_Padding (Breakpoints.Label62, 8, 0);
    Set_Justify (Breakpoints.Label62, Justify_Center);
    Set_Line_Wrap (Breakpoints.Label62, False);
+   Pack_Start (Breakpoints.Hbox5, Breakpoints.Label62, False, False, 0);
 
    Gtk_New (Line_Spin_Adj, 1.0, 0.0, 1e+08.0, 1.0, 10.0, 10.0);
    Gtk_New (Breakpoints.Line_Spin, Line_Spin_Adj, 1.0, 0);
-   Pack_Start (Breakpoints.Hbox5, Breakpoints.Line_Spin, True, True, 0);
    Set_Numeric (Breakpoints.Line_Spin, False);
    Set_Snap_To_Ticks (Breakpoints.Line_Spin, False);
    Set_Update_Policy (Breakpoints.Line_Spin, Update_Always);
    Set_Value (Breakpoints.Line_Spin, 1.0);
    Set_Wrap (Breakpoints.Line_Spin, False);
+   Pack_Start (Breakpoints.Hbox5, Breakpoints.Line_Spin, True, True, 0);
 
    Gtk_New (Breakpoints.Subprogram_Selected, Vbox15_Group, -"Subprogram Name");
    Vbox15_Group := Group (Breakpoints.Subprogram_Selected);
+   Set_Active (Breakpoints.Subprogram_Selected, False);
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Subprogram_Selected, False, False, 0);
    Widget_Callback.Object_Connect
      (Breakpoints.Subprogram_Selected, "toggled",
       Widget_Callback.To_Marshaller (On_Subprogam_Selected_Toggled'Access), Breakpoints);
-   Set_Active (Breakpoints.Subprogram_Selected, False);
 
    Gtk_New
      (Breakpoints.Alignment6, 0.5, 0.5, 0.88, 
@@ -133,14 +133,14 @@ begin
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment6, True, True, 0);
 
    Gtk_New (Breakpoints.Subprogram_Combo);
-   Set_Sensitive (Breakpoints.Subprogram_Combo, False);
-   Add (Breakpoints.Alignment6, Breakpoints.Subprogram_Combo);
    Set_Case_Sensitive (Breakpoints.Subprogram_Combo, False);
    Set_Use_Arrows (Breakpoints.Subprogram_Combo, True);
    Set_Use_Arrows_Always (Breakpoints.Subprogram_Combo, False);
    String_List.Append (Subprogram_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.Subprogram_Combo, Subprogram_Combo_Items);
    Free_String_List (Subprogram_Combo_Items);
+   Set_Sensitive (Breakpoints.Subprogram_Combo, False);
+   Add (Breakpoints.Alignment6, Breakpoints.Subprogram_Combo);
 
    Breakpoints.Entry20 := Get_Entry (Breakpoints.Subprogram_Combo);
    Set_Editable (Breakpoints.Entry20, True);
@@ -150,11 +150,11 @@ begin
 
    Gtk_New (Breakpoints.Address_Selected, Vbox15_Group, -"Address");
    Vbox15_Group := Group (Breakpoints.Address_Selected);
+   Set_Active (Breakpoints.Address_Selected, False);
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Address_Selected, False, False, 0);
    Widget_Callback.Object_Connect
      (Breakpoints.Address_Selected, "toggled",
       Widget_Callback.To_Marshaller (On_Address_Selected_Toggled'Access), Breakpoints);
-   Set_Active (Breakpoints.Address_Selected, False);
 
    Gtk_New
      (Breakpoints.Alignment7, 0.5, 0.5, 0.88, 
@@ -162,14 +162,14 @@ begin
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment7, True, True, 0);
 
    Gtk_New (Breakpoints.Address_Combo);
-   Set_Sensitive (Breakpoints.Address_Combo, False);
-   Add (Breakpoints.Alignment7, Breakpoints.Address_Combo);
    Set_Case_Sensitive (Breakpoints.Address_Combo, False);
    Set_Use_Arrows (Breakpoints.Address_Combo, True);
    Set_Use_Arrows_Always (Breakpoints.Address_Combo, False);
    String_List.Append (Address_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.Address_Combo, Address_Combo_Items);
    Free_String_List (Address_Combo_Items);
+   Set_Sensitive (Breakpoints.Address_Combo, False);
+   Add (Breakpoints.Alignment7, Breakpoints.Address_Combo);
 
    Breakpoints.Entry21 := Get_Entry (Breakpoints.Address_Combo);
    Set_Editable (Breakpoints.Entry21, True);
@@ -179,11 +179,11 @@ begin
 
    Gtk_New (Breakpoints.Regexp_Selected, Vbox15_Group, -"Regular expression");
    Vbox15_Group := Group (Breakpoints.Regexp_Selected);
+   Set_Active (Breakpoints.Regexp_Selected, False);
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Regexp_Selected, False, False, 0);
    Widget_Callback.Object_Connect
      (Breakpoints.Regexp_Selected, "toggled",
       Widget_Callback.To_Marshaller (On_Regexp_Selected_Toggled'Access), Breakpoints);
-   Set_Active (Breakpoints.Regexp_Selected, False);
 
    Gtk_New
      (Breakpoints.Alignment8, 0.5, 0.5, 0.88, 
@@ -191,14 +191,14 @@ begin
    Pack_Start (Breakpoints.Vbox15, Breakpoints.Alignment8, True, True, 0);
 
    Gtk_New (Breakpoints.Regexp_Combo);
-   Set_Sensitive (Breakpoints.Regexp_Combo, False);
-   Add (Breakpoints.Alignment8, Breakpoints.Regexp_Combo);
    Set_Case_Sensitive (Breakpoints.Regexp_Combo, False);
    Set_Use_Arrows (Breakpoints.Regexp_Combo, True);
    Set_Use_Arrows_Always (Breakpoints.Regexp_Combo, False);
    String_List.Append (Regexp_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.Regexp_Combo, Regexp_Combo_Items);
    Free_String_List (Regexp_Combo_Items);
+   Set_Sensitive (Breakpoints.Regexp_Combo, False);
+   Add (Breakpoints.Alignment8, Breakpoints.Regexp_Combo);
 
    Breakpoints.Entry22 := Get_Entry (Breakpoints.Regexp_Combo);
    Set_Editable (Breakpoints.Entry22, True);
@@ -207,18 +207,18 @@ begin
    Set_Visibility (Breakpoints.Entry22, True);
 
    Gtk_New (Breakpoints.Temporary_Location, -"Temporary breakpoint");
-   Pack_Start (Breakpoints.Vbox2, Breakpoints.Temporary_Location, False, False, 5);
    Set_Active (Breakpoints.Temporary_Location, False);
+   Pack_Start (Breakpoints.Vbox2, Breakpoints.Temporary_Location, False, False, 5);
 
    Gtk_New_Vseparator (Breakpoints.Vseparator1);
    Pack_Start (Breakpoints.Hbox2, Breakpoints.Vseparator1, False, False, 0);
 
    Gtk_New (Breakpoints.Vbuttonbox2);
-   Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbuttonbox2, False, False, 0);
    Set_Spacing (Breakpoints.Vbuttonbox2, 10);
    Set_Layout (Breakpoints.Vbuttonbox2, Buttonbox_Start);
    Set_Child_Size (Breakpoints.Vbuttonbox2, 85, 27);
    Set_Child_Ipadding (Breakpoints.Vbuttonbox2, 7, 0);
+   Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbuttonbox2, False, False, 0);
 
    Gtk_New (Breakpoints.Add_Location, -"Add");
    Set_Flags (Breakpoints.Add_Location, Can_Default);
@@ -245,32 +245,31 @@ begin
    Add (Breakpoints.Notebook1, Breakpoints.Hbox3);
 
    Gtk_New_Vbox (Breakpoints.Vbox7, False, 0);
-   Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbox7, True, True, 0);
    Set_Border_Width (Breakpoints.Vbox7, 7);
+   Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbox7, True, True, 0);
 
    Gtk_New (Breakpoints.Label9, -("Break when the variable:"));
-   Pack_Start (Breakpoints.Vbox7, Breakpoints.Label9, False, False, 5);
    Set_Alignment (Breakpoints.Label9, 0.0, 0.5);
    Set_Padding (Breakpoints.Label9, 0, 0);
    Set_Justify (Breakpoints.Label9, Justify_Left);
    Set_Line_Wrap (Breakpoints.Label9, False);
+   Pack_Start (Breakpoints.Vbox7, Breakpoints.Label9, False, False, 5);
 
    Gtk_New (Breakpoints.Watchpoint_Name);
-   Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Name, False, False, 0);
    Set_Editable (Breakpoints.Watchpoint_Name, True);
    Set_Max_Length (Breakpoints.Watchpoint_Name, 0);
    Set_Text (Breakpoints.Watchpoint_Name, -"");
    Set_Visibility (Breakpoints.Watchpoint_Name, True);
+   Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Name, False, False, 0);
 
    Gtk_New (Breakpoints.Label10, -("is"));
-   Pack_Start (Breakpoints.Vbox7, Breakpoints.Label10, False, False, 5);
    Set_Alignment (Breakpoints.Label10, 0.0, 0.5);
    Set_Padding (Breakpoints.Label10, 0, 0);
    Set_Justify (Breakpoints.Label10, Justify_Left);
    Set_Line_Wrap (Breakpoints.Label10, False);
+   Pack_Start (Breakpoints.Vbox7, Breakpoints.Label10, False, False, 5);
 
    Gtk_New (Breakpoints.Watchpoint_Type);
-   Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Type, False, False, 0);
    Set_Case_Sensitive (Breakpoints.Watchpoint_Type, False);
    Set_Use_Arrows (Breakpoints.Watchpoint_Type, True);
    Set_Use_Arrows_Always (Breakpoints.Watchpoint_Type, False);
@@ -279,6 +278,7 @@ begin
    String_List.Append (Watchpoint_Type_Items, -"read or written");
    Combo.Set_Popdown_Strings (Breakpoints.Watchpoint_Type, Watchpoint_Type_Items);
    Free_String_List (Watchpoint_Type_Items);
+   Pack_Start (Breakpoints.Vbox7, Breakpoints.Watchpoint_Type, False, False, 0);
 
    Breakpoints.Combo_Entry3 := Get_Entry (Breakpoints.Watchpoint_Type);
    Set_Editable (Breakpoints.Combo_Entry3, False);
@@ -290,11 +290,11 @@ begin
    Pack_Start (Breakpoints.Hbox3, Breakpoints.Vseparator2, False, False, 0);
 
    Gtk_New (Breakpoints.Vbuttonbox3);
-   Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbuttonbox3, False, True, 0);
    Set_Spacing (Breakpoints.Vbuttonbox3, 10);
    Set_Layout (Breakpoints.Vbuttonbox3, Buttonbox_Start);
    Set_Child_Size (Breakpoints.Vbuttonbox3, 85, 27);
    Set_Child_Ipadding (Breakpoints.Vbuttonbox3, 7, 0);
+   Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbuttonbox3, False, True, 0);
 
    Gtk_New (Breakpoints.Add_Watchpoint, -"Add");
    Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
@@ -321,27 +321,27 @@ begin
    Add (Breakpoints.Notebook1, Breakpoints.Hbox4);
 
    Gtk_New_Vbox (Breakpoints.Vbox8, False, 0);
-   Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbox8, True, True, 0);
    Set_Border_Width (Breakpoints.Vbox8, 7);
+   Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbox8, True, True, 0);
 
    Gtk_New (Breakpoints.Label11, -("Break on exception:"));
-   Pack_Start (Breakpoints.Vbox8, Breakpoints.Label11, False, False, 0);
    Set_Alignment (Breakpoints.Label11, 0.0, 0.5);
    Set_Padding (Breakpoints.Label11, 0, 0);
    Set_Justify (Breakpoints.Label11, Justify_Left);
    Set_Line_Wrap (Breakpoints.Label11, False);
+   Pack_Start (Breakpoints.Vbox8, Breakpoints.Label11, False, False, 0);
 
    Gtk_New_Hbox (Breakpoints.Hbox14, False, 8);
    Pack_Start (Breakpoints.Vbox8, Breakpoints.Hbox14, False, True, 0);
 
    Gtk_New (Breakpoints.Exception_Name);
-   Pack_Start (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
    Set_Case_Sensitive (Breakpoints.Exception_Name, False);
    Set_Use_Arrows (Breakpoints.Exception_Name, True);
    Set_Use_Arrows_Always (Breakpoints.Exception_Name, False);
    String_List.Append (Exception_Name_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.Exception_Name, Exception_Name_Items);
    Free_String_List (Exception_Name_Items);
+   Pack_Start (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
 
    Breakpoints.Combo_Entry25 := Get_Entry (Breakpoints.Exception_Name);
    Set_Editable (Breakpoints.Combo_Entry25, True);
@@ -356,36 +356,36 @@ begin
       Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access), Breakpoints);
 
    Gtk_New (Breakpoints.Temporary_Exception, -"Temporary breakpoint");
-   Pack_Start (Breakpoints.Vbox8, Breakpoints.Temporary_Exception, False, False, 0);
    Set_Active (Breakpoints.Temporary_Exception, False);
+   Pack_Start (Breakpoints.Vbox8, Breakpoints.Temporary_Exception, False, False, 0);
 
    Gtk_New (Breakpoints.Frame4, -"Action");
-   Pack_Start (Breakpoints.Vbox8, Breakpoints.Frame4, False, False, 7);
    Set_Shadow_Type (Breakpoints.Frame4, Shadow_Etched_In);
+   Pack_Start (Breakpoints.Vbox8, Breakpoints.Frame4, False, False, 7);
 
    Gtk_New_Vbox (Breakpoints.Vbox9, False, 0);
-   Add (Breakpoints.Frame4, Breakpoints.Vbox9);
    Set_Border_Width (Breakpoints.Vbox9, 7);
+   Add (Breakpoints.Frame4, Breakpoints.Vbox9);
 
    Gtk_New (Breakpoints.Stop_Always_Exception, Vbox9_Group, -"Stop always");
    Vbox9_Group := Group (Breakpoints.Stop_Always_Exception);
-   Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Always_Exception, False, False, 0);
    Set_Active (Breakpoints.Stop_Always_Exception, True);
+   Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Always_Exception, False, False, 0);
 
    Gtk_New (Breakpoints.Stop_Not_Handled_Exception, Vbox9_Group, -"Stop if not handled");
    Vbox9_Group := Group (Breakpoints.Stop_Not_Handled_Exception);
-   Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Not_Handled_Exception, False, False, 0);
    Set_Active (Breakpoints.Stop_Not_Handled_Exception, False);
+   Pack_Start (Breakpoints.Vbox9, Breakpoints.Stop_Not_Handled_Exception, False, False, 0);
 
    Gtk_New_Vseparator (Breakpoints.Vseparator3);
    Pack_Start (Breakpoints.Hbox4, Breakpoints.Vseparator3, False, False, 0);
 
    Gtk_New (Breakpoints.Vbuttonbox4);
-   Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbuttonbox4, False, False, 0);
    Set_Spacing (Breakpoints.Vbuttonbox4, 10);
    Set_Layout (Breakpoints.Vbuttonbox4, Buttonbox_Start);
    Set_Child_Size (Breakpoints.Vbuttonbox4, 85, 27);
    Set_Child_Ipadding (Breakpoints.Vbuttonbox4, 7, 0);
+   Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbuttonbox4, False, False, 0);
 
    Gtk_New (Breakpoints.Add_Exception, -"Add");
    Set_Flags (Breakpoints.Add_Exception, Can_Default);
@@ -409,30 +409,30 @@ begin
    Set_Tab (Breakpoints.Notebook1, 2, Breakpoints.Except);
 
    Gtk_New (Breakpoints.Frame11, -"Breakpoints");
-   Pack_Start (Breakpoints.Vbox1, Breakpoints.Frame11, True, True, 0);
    Set_Shadow_Type (Breakpoints.Frame11, Shadow_Etched_In);
+   Pack_Start (Breakpoints.Vbox1, Breakpoints.Frame11, True, True, 0);
 
    Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
    Add (Breakpoints.Frame11, Breakpoints.Vbox16);
 
    Gtk_New (Breakpoints.Label72, -("Click in the 'Enb' column to change the status"));
-   Pack_Start (Breakpoints.Vbox16, Breakpoints.Label72, False, False, 0);
    Set_Alignment (Breakpoints.Label72, 0.05, 0.5);
    Set_Padding (Breakpoints.Label72, 0, 0);
    Set_Justify (Breakpoints.Label72, Justify_Center);
    Set_Line_Wrap (Breakpoints.Label72, False);
+   Pack_Start (Breakpoints.Vbox16, Breakpoints.Label72, False, False, 0);
 
    Gtk_New (Breakpoints.Scrolledwindow2);
-   Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
    Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
+   Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
 
    Gtk_New (Breakpoints.Clist1, 2);
-   Add (Breakpoints.Scrolledwindow2, Breakpoints.Clist1);
    Set_Selection_Mode (Breakpoints.Clist1, Selection_Single);
    Set_Shadow_Type (Breakpoints.Clist1, Shadow_In);
    Set_Show_Titles (Breakpoints.Clist1, True);
    Set_Column_Width (Breakpoints.Clist1, 0, 80);
    Set_Column_Width (Breakpoints.Clist1, 1, 186);
+   Add (Breakpoints.Scrolledwindow2, Breakpoints.Clist1);
 
    Gtk_New (Breakpoints.Label15, -("label15"));
    Set_Alignment (Breakpoints.Label15, 0.5, 0.5);
@@ -449,11 +449,11 @@ begin
    Set_Column_Widget (Breakpoints.Clist1, 1, Breakpoints.Label16);
 
    Gtk_New (Breakpoints.Hbuttonbox8);
-   Pack_Start (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
    Set_Spacing (Breakpoints.Hbuttonbox8, 30);
    Set_Layout (Breakpoints.Hbuttonbox8, Buttonbox_Spread);
    Set_Child_Size (Breakpoints.Hbuttonbox8, 85, 27);
    Set_Child_Ipadding (Breakpoints.Hbuttonbox8, 7, 0);
+   Pack_Start (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
 
    Gtk_New (Breakpoints.Remove, -"Remove");
    Set_Flags (Breakpoints.Remove, Can_Default);
@@ -470,11 +470,11 @@ begin
    Add (Breakpoints.Hbuttonbox8, Breakpoints.View);
 
    Gtk_New (Breakpoints.Hbuttonbox4);
-   Pack_Start (Breakpoints.Vbox1, Breakpoints.Hbuttonbox4, False, False, 0);
    Set_Spacing (Breakpoints.Hbuttonbox4, 30);
    Set_Layout (Breakpoints.Hbuttonbox4, Buttonbox_Spread);
    Set_Child_Size (Breakpoints.Hbuttonbox4, 85, 27);
    Set_Child_Ipadding (Breakpoints.Hbuttonbox4, 7, 0);
+   Pack_Start (Breakpoints.Vbox1, Breakpoints.Hbuttonbox4, False, False, 0);
 
    Gtk_New (Breakpoints.Ok_Button, -"Close");
    Set_Flags (Breakpoints.Ok_Button, Can_Default);

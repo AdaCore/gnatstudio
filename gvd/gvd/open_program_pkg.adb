@@ -54,26 +54,27 @@ begin
    Add (Open_Program, Open_Program.Vbox13);
 
    Gtk_New (Open_Program.Frame8);
-   Pack_Start (Open_Program.Vbox13, Open_Program.Frame8, True, True, 0);
    Set_Shadow_Type (Open_Program.Frame8, Shadow_Etched_In);
+   Pack_Start (Open_Program.Vbox13, Open_Program.Frame8, True, True, 0);
 
    Gtk_New (Open_Program.Table7, 5, 7, False);
-   Add (Open_Program.Frame8, Open_Program.Table7);
    Set_Row_Spacings (Open_Program.Table7, 3);
    Set_Col_Spacings (Open_Program.Table7, 3);
+   Add (Open_Program.Frame8, Open_Program.Table7);
 
    Gtk_New (Open_Program.Gdb_Button, Table7_Group, -"GDB");
    Table7_Group := Group (Open_Program.Gdb_Button);
+   Set_Active (Open_Program.Gdb_Button, False);
    Attach (Open_Program.Table7, Open_Program.Gdb_Button, 1, 2, 3, 4,
      0, 0,
      0, 0);
    Radio_Button_Callback.Connect
      (Open_Program.Gdb_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Gdb_Button, False);
 
    Gtk_New (Open_Program.Dbx_Button, Table7_Group, -"DBX");
    Table7_Group := Group (Open_Program.Dbx_Button);
+   Set_Active (Open_Program.Dbx_Button, False);
    Set_Sensitive (Open_Program.Dbx_Button, False);
    Attach (Open_Program.Table7, Open_Program.Dbx_Button, 2, 3, 3, 4,
      0, 0,
@@ -81,10 +82,10 @@ begin
    Radio_Button_Callback.Connect
      (Open_Program.Dbx_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Dbx_Button, False);
 
    Gtk_New (Open_Program.Xdb_Button, Table7_Group, -"XDB");
    Table7_Group := Group (Open_Program.Xdb_Button);
+   Set_Active (Open_Program.Xdb_Button, False);
    Set_Sensitive (Open_Program.Xdb_Button, False);
    Attach (Open_Program.Table7, Open_Program.Xdb_Button, 3, 4, 3, 4,
      0, 0,
@@ -92,20 +93,20 @@ begin
    Radio_Button_Callback.Connect
      (Open_Program.Xdb_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Xdb_Button, False);
 
    Gtk_New (Open_Program.Jdb_Button, Table7_Group, -"JDB");
    Table7_Group := Group (Open_Program.Jdb_Button);
+   Set_Active (Open_Program.Jdb_Button, False);
    Attach (Open_Program.Table7, Open_Program.Jdb_Button, 4, 5, 3, 4,
      0, 0,
      0, 0);
    Radio_Button_Callback.Connect
      (Open_Program.Jdb_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Jdb_Button, False);
 
    Gtk_New (Open_Program.Pydb_Button, Table7_Group, -"PYDB");
    Table7_Group := Group (Open_Program.Pydb_Button);
+   Set_Active (Open_Program.Pydb_Button, False);
    Set_Sensitive (Open_Program.Pydb_Button, False);
    Attach (Open_Program.Table7, Open_Program.Pydb_Button, 5, 6, 3, 4,
      0, 0,
@@ -113,10 +114,10 @@ begin
    Radio_Button_Callback.Connect
      (Open_Program.Pydb_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Pydb_Button, False);
 
    Gtk_New (Open_Program.Perl_Button, Table7_Group, -"Perl");
    Table7_Group := Group (Open_Program.Perl_Button);
+   Set_Active (Open_Program.Perl_Button, False);
    Set_Sensitive (Open_Program.Perl_Button, False);
    Attach (Open_Program.Table7, Open_Program.Perl_Button, 6, 7, 3, 4,
      0, 0,
@@ -124,18 +125,17 @@ begin
    Radio_Button_Callback.Connect
      (Open_Program.Perl_Button, "toggled",
       Radio_Button_Callback.To_Marshaller (On_Radio_Button_Toggled'Access));
-   Set_Active (Open_Program.Perl_Button, False);
 
    Gtk_New (Open_Program.Program_Combo);
-   Attach (Open_Program.Table7, Open_Program.Program_Combo, 1, 6, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
    Set_Case_Sensitive (Open_Program.Program_Combo, False);
    Set_Use_Arrows (Open_Program.Program_Combo, True);
    Set_Use_Arrows_Always (Open_Program.Program_Combo, False);
    String_List.Append (Program_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Open_Program.Program_Combo, Program_Combo_Items);
    Free_String_List (Program_Combo_Items);
+   Attach (Open_Program.Table7, Open_Program.Program_Combo, 1, 6, 0, 1,
+     Expand or Fill, 0,
+     0, 0);
 
    Open_Program.Program_Entry := Get_Entry (Open_Program.Program_Combo);
    Set_Editable (Open_Program.Program_Entry, True);
@@ -152,15 +152,15 @@ begin
       Button_Callback.To_Marshaller (On_Open_Button_Clicked'Access));
 
    Gtk_New (Open_Program.Host_Combo);
-   Attach (Open_Program.Table7, Open_Program.Host_Combo, 1, 6, 1, 2,
-     Expand or Fill, 0,
-     0, 0);
    Set_Case_Sensitive (Open_Program.Host_Combo, False);
    Set_Use_Arrows (Open_Program.Host_Combo, True);
    Set_Use_Arrows_Always (Open_Program.Host_Combo, False);
    String_List.Append (Host_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Open_Program.Host_Combo, Host_Combo_Items);
    Free_String_List (Host_Combo_Items);
+   Attach (Open_Program.Table7, Open_Program.Host_Combo, 1, 6, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
 
    Open_Program.Host_Entry := Get_Entry (Open_Program.Host_Combo);
    Set_Editable (Open_Program.Host_Entry, True);
@@ -169,36 +169,33 @@ begin
    Set_Visibility (Open_Program.Host_Entry, True);
 
    Gtk_New (Open_Program.Label57, -("Debugger"));
-   Attach (Open_Program.Table7, Open_Program.Label57, 0, 1, 3, 4,
-     Fill, 0,
-     0, 0);
    Set_Alignment (Open_Program.Label57, 0.0, 0.5);
    Set_Padding (Open_Program.Label57, 0, 0);
    Set_Justify (Open_Program.Label57, Justify_Center);
    Set_Line_Wrap (Open_Program.Label57, False);
-
-   Gtk_New (Open_Program.Label55, -("Program File"));
-   Attach (Open_Program.Table7, Open_Program.Label55, 0, 1, 0, 1,
+   Attach (Open_Program.Table7, Open_Program.Label57, 0, 1, 3, 4,
      Fill, 0,
      0, 0);
+
+   Gtk_New (Open_Program.Label55, -("Program File"));
    Set_Alignment (Open_Program.Label55, 7.45058e-09, 0.5);
    Set_Padding (Open_Program.Label55, 0, 0);
    Set_Justify (Open_Program.Label55, Justify_Center);
    Set_Line_Wrap (Open_Program.Label55, False);
-
-   Gtk_New (Open_Program.Label56, -("Debugger Host"));
-   Attach (Open_Program.Table7, Open_Program.Label56, 0, 1, 1, 2,
+   Attach (Open_Program.Table7, Open_Program.Label55, 0, 1, 0, 1,
      Fill, 0,
      0, 0);
+
+   Gtk_New (Open_Program.Label56, -("Debugger Host"));
    Set_Alignment (Open_Program.Label56, 7.45058e-09, 0.5);
    Set_Padding (Open_Program.Label56, 0, 0);
    Set_Justify (Open_Program.Label56, Justify_Center);
    Set_Line_Wrap (Open_Program.Label56, False);
+   Attach (Open_Program.Table7, Open_Program.Label56, 0, 1, 1, 2,
+     Fill, 0,
+     0, 0);
 
    Gtk_New (Open_Program.Protocol_Combo);
-   Attach (Open_Program.Table7, Open_Program.Protocol_Combo, 4, 6, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
    Set_Case_Sensitive (Open_Program.Protocol_Combo, False);
    Set_Use_Arrows (Open_Program.Protocol_Combo, True);
    Set_Use_Arrows_Always (Open_Program.Protocol_Combo, False);
@@ -207,6 +204,9 @@ begin
    String_List.Append (Protocol_Combo_Items, -"remote");
    Combo.Set_Popdown_Strings (Open_Program.Protocol_Combo, Protocol_Combo_Items);
    Free_String_List (Protocol_Combo_Items);
+   Attach (Open_Program.Table7, Open_Program.Protocol_Combo, 4, 6, 2, 3,
+     Expand or Fill, 0,
+     0, 0);
 
    Open_Program.Protocol_Entry := Get_Entry (Open_Program.Protocol_Combo);
    Set_Editable (Open_Program.Protocol_Entry, True);
@@ -215,24 +215,24 @@ begin
    Set_Visibility (Open_Program.Protocol_Entry, True);
 
    Gtk_New (Open_Program.Label60, -("Protocol"));
-   Attach (Open_Program.Table7, Open_Program.Label60, 3, 4, 2, 3,
-     0, 0,
-     0, 0);
    Set_Alignment (Open_Program.Label60, 0.5, 0.5);
    Set_Padding (Open_Program.Label60, 0, 0);
    Set_Justify (Open_Program.Label60, Justify_Center);
    Set_Line_Wrap (Open_Program.Label60, False);
+   Attach (Open_Program.Table7, Open_Program.Label60, 3, 4, 2, 3,
+     0, 0,
+     0, 0);
 
    Gtk_New (Open_Program.Program_Host_Combo);
-   Attach (Open_Program.Table7, Open_Program.Program_Host_Combo, 1, 3, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
    Set_Case_Sensitive (Open_Program.Program_Host_Combo, False);
    Set_Use_Arrows (Open_Program.Program_Host_Combo, True);
    Set_Use_Arrows_Always (Open_Program.Program_Host_Combo, False);
    String_List.Append (Program_Host_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Open_Program.Program_Host_Combo, Program_Host_Combo_Items);
    Free_String_List (Program_Host_Combo_Items);
+   Attach (Open_Program.Table7, Open_Program.Program_Host_Combo, 1, 3, 2, 3,
+     Expand or Fill, 0,
+     0, 0);
 
    Open_Program.Target_Entry := Get_Entry (Open_Program.Program_Host_Combo);
    Set_Editable (Open_Program.Target_Entry, True);
@@ -241,33 +241,33 @@ begin
    Set_Visibility (Open_Program.Target_Entry, True);
 
    Gtk_New (Open_Program.Label59, -("Program Host"));
-   Attach (Open_Program.Table7, Open_Program.Label59, 0, 1, 2, 3,
-     Fill, 0,
-     0, 0);
    Set_Alignment (Open_Program.Label59, 7.45058e-09, 0.5);
    Set_Padding (Open_Program.Label59, 0, 0);
    Set_Justify (Open_Program.Label59, Justify_Center);
    Set_Line_Wrap (Open_Program.Label59, False);
-
-   Gtk_New (Open_Program.Label73, -("Debugger Name"));
-   Attach (Open_Program.Table7, Open_Program.Label73, 0, 1, 4, 5,
+   Attach (Open_Program.Table7, Open_Program.Label59, 0, 1, 2, 3,
      Fill, 0,
      0, 0);
+
+   Gtk_New (Open_Program.Label73, -("Debugger Name"));
    Set_Alignment (Open_Program.Label73, 0.0, 0.5);
    Set_Padding (Open_Program.Label73, 0, 0);
    Set_Justify (Open_Program.Label73, Justify_Center);
    Set_Line_Wrap (Open_Program.Label73, False);
+   Attach (Open_Program.Table7, Open_Program.Label73, 0, 1, 4, 5,
+     Fill, 0,
+     0, 0);
 
    Gtk_New (Open_Program.Debugger_Combo);
-   Attach (Open_Program.Table7, Open_Program.Debugger_Combo, 1, 6, 4, 5,
-     Expand or Fill, 0,
-     0, 0);
    Set_Case_Sensitive (Open_Program.Debugger_Combo, False);
    Set_Use_Arrows (Open_Program.Debugger_Combo, True);
    Set_Use_Arrows_Always (Open_Program.Debugger_Combo, False);
    String_List.Append (Debugger_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Open_Program.Debugger_Combo, Debugger_Combo_Items);
    Free_String_List (Debugger_Combo_Items);
+   Attach (Open_Program.Table7, Open_Program.Debugger_Combo, 1, 6, 4, 5,
+     Expand or Fill, 0,
+     0, 0);
 
    Open_Program.Debugger_Entry := Get_Entry (Open_Program.Debugger_Combo);
    Set_Editable (Open_Program.Debugger_Entry, True);
@@ -276,11 +276,11 @@ begin
    Set_Visibility (Open_Program.Debugger_Entry, True);
 
    Gtk_New (Open_Program.Hbuttonbox7);
-   Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
    Set_Spacing (Open_Program.Hbuttonbox7, 30);
    Set_Layout (Open_Program.Hbuttonbox7, Buttonbox_Spread);
    Set_Child_Size (Open_Program.Hbuttonbox7, 85, 27);
    Set_Child_Ipadding (Open_Program.Hbuttonbox7, 7, 0);
+   Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
 
    Gtk_New (Open_Program.Ok_Button, -"OK");
    Set_Flags (Open_Program.Ok_Button, Can_Default);

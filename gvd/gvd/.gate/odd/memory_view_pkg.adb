@@ -24,21 +24,21 @@ procedure Initialize (Memory_View : access Memory_View_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Memory_View, Window_Toplevel);
-   Return_Callback.Connect
-     (Memory_View, "delete_event", On_Memory_View_Delete_Event'Access);
-   Window_Callback.Connect
-     (Memory_View, "size_allocate", On_Memory_View_Size_Allocate'Access);
    Set_Title (Memory_View, -"Memory View");
    Set_Policy (Memory_View, False, True, False);
    Set_Position (Memory_View, Win_Pos_None);
    Set_Modal (Memory_View, False);
+   Return_Callback.Connect
+     (Memory_View, "delete_event", On_Memory_View_Delete_Event'Access);
+   Window_Callback.Connect
+     (Memory_View, "size_allocate", On_Memory_View_Size_Allocate'Access);
 
    Gtk_New_Vbox (Memory_View.Vbox20, False, 0);
    Add (Memory_View, Memory_View.Vbox20);
 
    Gtk_New (Memory_View.Frame);
-   Pack_Start (Memory_View.Vbox20, Memory_View.Frame, False, False, 0);
    Set_Shadow_Type (Memory_View.Frame, Shadow_Etched_In);
+   Pack_Start (Memory_View.Vbox20, Memory_View.Frame, False, False, 0);
 
    Gtk_New_Hbox (Memory_View.Hbox8, False, 0);
    Add (Memory_View.Frame, Memory_View.Hbox8);
@@ -50,47 +50,47 @@ begin
    Pack_Start (Memory_View.Hbox11, Memory_View.Vbox23, False, False, 7);
 
    Gtk_New (Memory_View.Label95, -("Address"));
-   Pack_Start (Memory_View.Vbox23, Memory_View.Label95, False, False, 0);
    Set_Alignment (Memory_View.Label95, 0.5, 0.5);
    Set_Padding (Memory_View.Label95, 0, 0);
    Set_Justify (Memory_View.Label95, Justify_Center);
    Set_Line_Wrap (Memory_View.Label95, False);
+   Pack_Start (Memory_View.Vbox23, Memory_View.Label95, False, False, 0);
 
    Gtk_New (Memory_View.Label96, -("Find"));
-   Set_Sensitive (Memory_View.Label96, False);
-   Pack_Start (Memory_View.Vbox23, Memory_View.Label96, False, False, 0);
    Set_Alignment (Memory_View.Label96, 0.5, 0.5);
    Set_Padding (Memory_View.Label96, 0, 0);
    Set_Justify (Memory_View.Label96, Justify_Center);
    Set_Line_Wrap (Memory_View.Label96, False);
+   Set_Sensitive (Memory_View.Label96, False);
+   Pack_Start (Memory_View.Vbox23, Memory_View.Label96, False, False, 0);
 
    Gtk_New_Vbox (Memory_View.Vbox24, True, 0);
    Pack_Start (Memory_View.Hbox11, Memory_View.Vbox24, True, True, 0);
 
    Gtk_New (Memory_View.Address_Entry);
-   Pack_Start (Memory_View.Vbox24, Memory_View.Address_Entry, False, False, 0);
-   Entry_Callback.Connect
-     (Memory_View.Address_Entry, "activate",
-      Entry_Callback.To_Marshaller (On_Address_Entry_Activate'Access));
    Set_Editable (Memory_View.Address_Entry, True);
    Set_Max_Length (Memory_View.Address_Entry, 0);
    Set_Text (Memory_View.Address_Entry, -"");
    Set_Visibility (Memory_View.Address_Entry, True);
+   Pack_Start (Memory_View.Vbox24, Memory_View.Address_Entry, False, False, 0);
+   Entry_Callback.Connect
+     (Memory_View.Address_Entry, "activate",
+      Entry_Callback.To_Marshaller (On_Address_Entry_Activate'Access));
 
    Gtk_New (Memory_View.Search_Entry);
-   Set_Sensitive (Memory_View.Search_Entry, False);
-   Pack_Start (Memory_View.Vbox24, Memory_View.Search_Entry, False, False, 0);
    Set_Editable (Memory_View.Search_Entry, True);
    Set_Max_Length (Memory_View.Search_Entry, 0);
    Set_Text (Memory_View.Search_Entry, -"");
    Set_Visibility (Memory_View.Search_Entry, True);
+   Set_Sensitive (Memory_View.Search_Entry, False);
+   Pack_Start (Memory_View.Vbox24, Memory_View.Search_Entry, False, False, 0);
 
    Gtk_New (Memory_View.Vbuttonbox6);
-   Pack_Start (Memory_View.Hbox8, Memory_View.Vbuttonbox6, False, False, 0);
    Set_Spacing (Memory_View.Vbuttonbox6, 10);
    Set_Layout (Memory_View.Vbuttonbox6, Buttonbox_Spread);
    Set_Child_Size (Memory_View.Vbuttonbox6, 85, 27);
    Set_Child_Ipadding (Memory_View.Vbuttonbox6, 7, 0);
+   Pack_Start (Memory_View.Hbox8, Memory_View.Vbuttonbox6, False, False, 0);
 
    Gtk_New (Memory_View.Address_View, -"View");
    Set_Flags (Memory_View.Address_View, Can_Default);
@@ -108,21 +108,20 @@ begin
    Pack_Start (Memory_View.Vbox20, Memory_View.Hbox12, False, False, 4);
 
    Gtk_New (Memory_View.Vbuttonbox5);
-   Pack_Start (Memory_View.Hbox12, Memory_View.Vbuttonbox5, False, False, 0);
    Set_Spacing (Memory_View.Vbuttonbox5, 10);
    Set_Layout (Memory_View.Vbuttonbox5, Buttonbox_Spread);
    Set_Child_Size (Memory_View.Vbuttonbox5, 85, 27);
    Set_Child_Ipadding (Memory_View.Vbuttonbox5, 7, 0);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Vbuttonbox5, False, False, 0);
 
    Gtk_New (Memory_View.Label98, -("Unit size: "));
-   Pack_Start (Memory_View.Hbox12, Memory_View.Label98, True, True, 4);
    Set_Alignment (Memory_View.Label98, 0.5, 0.5);
    Set_Padding (Memory_View.Label98, 0, 0);
    Set_Justify (Memory_View.Label98, Justify_Center);
    Set_Line_Wrap (Memory_View.Label98, False);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Label98, True, True, 4);
 
    Gtk_New (Memory_View.Size);
-   Pack_Start (Memory_View.Hbox12, Memory_View.Size, True, True, 0);
    Set_Case_Sensitive (Memory_View.Size, False);
    Set_Use_Arrows (Memory_View.Size, True);
    Set_Use_Arrows_Always (Memory_View.Size, False);
@@ -131,28 +130,28 @@ begin
    String_List.Append (Size_Items, -"Word");
    Combo.Set_Popdown_Strings (Memory_View.Size, Size_Items);
    Free_String_List (Size_Items);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Size, True, True, 0);
 
    Memory_View.Size_Entry := Get_Entry (Memory_View.Size);
-   Entry_Callback.Connect
-     (Memory_View.Size_Entry, "changed",
-      Entry_Callback.To_Marshaller (On_Size_Entry_Changed'Access));
    Set_Editable (Memory_View.Size_Entry, False);
    Set_Max_Length (Memory_View.Size_Entry, 0);
    Set_Text (Memory_View.Size_Entry, -"Byte");
    Set_Visibility (Memory_View.Size_Entry, True);
+   Entry_Callback.Connect
+     (Memory_View.Size_Entry, "changed",
+      Entry_Callback.To_Marshaller (On_Size_Entry_Changed'Access));
 
    Gtk_New_Vseparator (Memory_View.Vseparator7);
    Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator7, False, True, 10);
 
    Gtk_New (Memory_View.Label97, -("Format: "));
-   Pack_Start (Memory_View.Hbox12, Memory_View.Label97, True, True, 0);
    Set_Alignment (Memory_View.Label97, 0.5, 0.5);
    Set_Padding (Memory_View.Label97, 0, 0);
    Set_Justify (Memory_View.Label97, Justify_Center);
    Set_Line_Wrap (Memory_View.Label97, False);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Label97, True, True, 0);
 
    Gtk_New (Memory_View.Format);
-   Pack_Start (Memory_View.Hbox12, Memory_View.Format, True, True, 7);
    Set_Case_Sensitive (Memory_View.Format, False);
    Set_Use_Arrows (Memory_View.Format, True);
    Set_Use_Arrows_Always (Memory_View.Format, False);
@@ -162,21 +161,23 @@ begin
    String_List.Append (Format_Items, -"ASCII");
    Combo.Set_Popdown_Strings (Memory_View.Format, Format_Items);
    Free_String_List (Format_Items);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Format, True, True, 7);
 
    Memory_View.Data_Entry := Get_Entry (Memory_View.Format);
-   Entry_Callback.Connect
-     (Memory_View.Data_Entry, "changed",
-      Entry_Callback.To_Marshaller (On_Data_Entry_Changed'Access));
    Set_Editable (Memory_View.Data_Entry, False);
    Set_Max_Length (Memory_View.Data_Entry, 0);
    Set_Text (Memory_View.Data_Entry, -"Hex");
    Set_Visibility (Memory_View.Data_Entry, True);
+   Entry_Callback.Connect
+     (Memory_View.Data_Entry, "changed",
+      Entry_Callback.To_Marshaller (On_Data_Entry_Changed'Access));
 
    Gtk_New (Memory_View.Scrolledwindow);
-   Pack_Start (Memory_View.Vbox20, Memory_View.Scrolledwindow, True, True, 0);
    Set_Policy (Memory_View.Scrolledwindow, Policy_Automatic, Policy_Automatic);
+   Pack_Start (Memory_View.Vbox20, Memory_View.Scrolledwindow, True, True, 0);
 
    Gtk_New (Memory_View.View);
+   Set_Editable (Memory_View.View, True);
    Return_Callback.Connect
      (Memory_View.View, "key_press_event", On_View_Key_Press_Event'Access);
    Text_Callback.Connect
@@ -188,40 +189,39 @@ begin
    Text_Callback.Connect
      (Memory_View.View, "insert_text", On_View_Insert_Text'Access);
    Add (Memory_View.Scrolledwindow, Memory_View.View);
-   Set_Editable (Memory_View.View, True);
 
    Gtk_New_Hbox (Memory_View.Hbox13, False, 0);
    Pack_Start (Memory_View.Vbox20, Memory_View.Hbox13, False, False, 0);
 
    Gtk_New (Memory_View.Label99, -("Page size:"));
-   Pack_Start (Memory_View.Hbox13, Memory_View.Label99, True, True, 5);
    Set_Alignment (Memory_View.Label99, 0.5, 0.5);
    Set_Padding (Memory_View.Label99, 0, 0);
    Set_Justify (Memory_View.Label99, Justify_Center);
    Set_Line_Wrap (Memory_View.Label99, False);
+   Pack_Start (Memory_View.Hbox13, Memory_View.Label99, True, True, 5);
 
    Gtk_New (Value_Adj, 256.0, 256.0, 4096.0, 256.0, 256.0, 256.0);
    Gtk_New (Memory_View.Value, Value_Adj, 1.0, 0);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Value, True, True, 0);
    Set_Numeric (Memory_View.Value, True);
    Set_Snap_To_Ticks (Memory_View.Value, False);
    Set_Update_Policy (Memory_View.Value, Update_Always);
    Set_Value (Memory_View.Value, 256.0);
    Set_Wrap (Memory_View.Value, False);
+   Pack_Start (Memory_View.Hbox13, Memory_View.Value, True, True, 0);
 
    Gtk_New (Memory_View.Label100, -("bytes"));
-   Pack_Start (Memory_View.Hbox13, Memory_View.Label100, False, False, 0);
    Set_Alignment (Memory_View.Label100, 0.5, 0.5);
    Set_Padding (Memory_View.Label100, 0, 0);
    Set_Justify (Memory_View.Label100, Justify_Center);
    Set_Line_Wrap (Memory_View.Label100, False);
+   Pack_Start (Memory_View.Hbox13, Memory_View.Label100, False, False, 0);
 
    Gtk_New (Memory_View.Hbuttonbox12);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Hbuttonbox12, True, True, 0);
    Set_Spacing (Memory_View.Hbuttonbox12, 30);
    Set_Layout (Memory_View.Hbuttonbox12, Buttonbox_Default_Style);
    Set_Child_Size (Memory_View.Hbuttonbox12, 85, 27);
    Set_Child_Ipadding (Memory_View.Hbuttonbox12, 7, 0);
+   Pack_Start (Memory_View.Hbox13, Memory_View.Hbuttonbox12, True, True, 0);
 
    Gtk_New (Memory_View.Page_Size_Button, -"OK");
    Set_Flags (Memory_View.Page_Size_Button, Can_Default);
@@ -241,9 +241,9 @@ begin
       Button_Callback.To_Marshaller (On_Pgup_Clicked'Access));
 
    Gtk_New (Memory_View.Arrow1, Arrow_Up, Shadow_Out);
-   Add (Memory_View.Pgup, Memory_View.Arrow1);
    Set_Alignment (Memory_View.Arrow1, 0.5, 0.5);
    Set_Padding (Memory_View.Arrow1, 0, 0);
+   Add (Memory_View.Pgup, Memory_View.Arrow1);
 
    Gtk_New (Memory_View.Pgdn);
    Set_Flags (Memory_View.Pgdn, Can_Default);
@@ -253,19 +253,19 @@ begin
       Button_Callback.To_Marshaller (On_Pgdn_Clicked'Access));
 
    Gtk_New (Memory_View.Arrow2, Arrow_Down, Shadow_Out);
-   Add (Memory_View.Pgdn, Memory_View.Arrow2);
    Set_Alignment (Memory_View.Arrow2, 0.5, 0.5);
    Set_Padding (Memory_View.Arrow2, 0, 0);
+   Add (Memory_View.Pgdn, Memory_View.Arrow2);
 
    Gtk_New_Hseparator (Memory_View.Hseparator2);
    Pack_Start (Memory_View.Vbox20, Memory_View.Hseparator2, False, False, 3);
 
    Gtk_New (Memory_View.Hbuttonbox11);
-   Pack_Start (Memory_View.Vbox20, Memory_View.Hbuttonbox11, False, False, 0);
    Set_Spacing (Memory_View.Hbuttonbox11, 30);
    Set_Layout (Memory_View.Hbuttonbox11, Buttonbox_Spread);
    Set_Child_Size (Memory_View.Hbuttonbox11, 85, 27);
    Set_Child_Ipadding (Memory_View.Hbuttonbox11, 7, 0);
+   Pack_Start (Memory_View.Vbox20, Memory_View.Hbuttonbox11, False, False, 0);
 
    Gtk_New (Memory_View.Reset, -"Undo changes");
    Set_Flags (Memory_View.Reset, Can_Default);

@@ -54,36 +54,28 @@ begin
    --  Set_Modal (Process_Tab, False);
 
    Gtk_New_Vpaned (Process_Tab.Process_Paned);
-   --  Add (Process_Tab, Process_Tab.Process_Paned);
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
    Set_Position (Process_Tab.Process_Paned, 500);
+   --  Add (Process_Tab, Process_Tab.Process_Paned);
 
    Gtk_New_Vpaned (Process_Tab.Vpaned6);
-   Add (Process_Tab.Process_Paned, Process_Tab.Vpaned6);
    Set_Handle_Size (Process_Tab.Vpaned6, 10);
    Set_Gutter_Size (Process_Tab.Vpaned6, 6);
    Set_Position (Process_Tab.Vpaned6, 200);
+   Add (Process_Tab.Process_Paned, Process_Tab.Vpaned6);
 
    Gtk_New_Hpaned (Process_Tab.Hpaned1);
-   Add (Process_Tab.Vpaned6, Process_Tab.Hpaned1);
    Set_Handle_Size (Process_Tab.Hpaned1, 10);
    Set_Gutter_Size (Process_Tab.Hpaned1, 6);
    Set_Position (Process_Tab.Hpaned1, 200);
+   Add (Process_Tab.Vpaned6, Process_Tab.Hpaned1);
 
    Gtk_New (Process_Tab.Scrolledwindow13);
-   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow13);
    Set_Policy (Process_Tab.Scrolledwindow13, Policy_Automatic, Policy_Automatic);
+   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow13);
 
    Gtk_New (Process_Tab.Stack_List, 5);
-   Set_Events (Process_Tab.Stack_List,
-     Button_Press_Mask or
-     Button_Release_Mask);
-   Process_Tab.Stack_List_Select_Id := C_List_Callback.Connect
-     (Process_Tab.Stack_List, "select_row", On_Stack_List_Select_Row'Access);
-   Return_Callback.Object_Connect
-     (Process_Tab.Stack_List, "button_press_event", On_Stack_List_Button_Press_Event'Access, Process_Tab);
-   Add (Process_Tab.Scrolledwindow13, Process_Tab.Stack_List);
    Set_Selection_Mode (Process_Tab.Stack_List, Selection_Single);
    Set_Shadow_Type (Process_Tab.Stack_List, Shadow_In);
    Set_Show_Titles (Process_Tab.Stack_List, True);
@@ -92,6 +84,14 @@ begin
    Set_Column_Width (Process_Tab.Stack_List, 2, 80);
    Set_Column_Width (Process_Tab.Stack_List, 3, 80);
    Set_Column_Width (Process_Tab.Stack_List, 4, 80);
+   Set_Events (Process_Tab.Stack_List, 
+     Button_Press_Mask or
+     Button_Release_Mask);
+   Process_Tab.Stack_List_Select_Id := C_List_Callback.Connect
+     (Process_Tab.Stack_List, "select_row", On_Stack_List_Select_Row'Access);
+   Return_Callback.Object_Connect
+     (Process_Tab.Stack_List, "button_press_event", On_Stack_List_Button_Press_Event'Access, Process_Tab);
+   Add (Process_Tab.Scrolledwindow13, Process_Tab.Stack_List);
 
    Gtk_New (Process_Tab.Label101, -("Num"));
    Set_Alignment (Process_Tab.Label101, 0.5, 0.5);
@@ -129,21 +129,22 @@ begin
    Set_Column_Widget (Process_Tab.Stack_List, 4, Process_Tab.Label204);
 
    Gtk_New (Process_Tab.Scrolledwindow12);
-   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow12);
    Set_Policy (Process_Tab.Scrolledwindow12, Policy_Automatic, Policy_Automatic);
+   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow12);
 
    Gtk_New (Process_Tab.Data_Canvas);
-   Add (Process_Tab.Scrolledwindow12, Process_Tab.Data_Canvas);
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
+   Add (Process_Tab.Scrolledwindow12, Process_Tab.Data_Canvas);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
    Add (Process_Tab.Vpaned6, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Scrolledwindow7);
-   Add (Process_Tab.Process_Paned, Process_Tab.Scrolledwindow7);
    Set_Policy (Process_Tab.Scrolledwindow7, Policy_Never, Policy_Always);
+   Add (Process_Tab.Process_Paned, Process_Tab.Scrolledwindow7);
 
    Gtk_New (Process_Tab.Debugger_Text);
+   Set_Editable (Process_Tab.Debugger_Text, True);
    Widget_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text'Access, Process_Tab);
    Process_Tab.Delete_Text_Handler_Id := Widget_Callback.Object_Connect
@@ -154,7 +155,6 @@ begin
      (Process_Tab.Debugger_Text, "grab_focus",
       Widget_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access), Process_Tab);
    Add (Process_Tab.Scrolledwindow7, Process_Tab.Debugger_Text);
-   Set_Editable (Process_Tab.Debugger_Text, True);
 
 end Initialize;
 
