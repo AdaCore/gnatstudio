@@ -244,6 +244,10 @@ package body Builder_Module is
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
       Timeout : Integer := 1;
+      Line_Matcher : constant Pattern_Matcher := Compile (".+");
+      Buffer : String_Access := new String (1 .. 1000);
+      Buffer_Pos : Natural := Buffer'First;
+      Tmp : String_Access;
 
       procedure Free is new Ada.Unchecked_Deallocation
         (Process_Descriptor'Class, Process_Descriptor_Access);
@@ -259,7 +263,7 @@ package body Builder_Module is
       end if;
 
       loop
-         Expect (Fd.all, Result, ".+", Timeout => Timeout);
+         Expect (Fd.all, Result, Line_Matcher, Timeout => Timeout);
 
          exit when Result = Expect_Timeout;
 
@@ -269,7 +273,16 @@ package body Builder_Module is
             Match (Matcher, S, Matched);
 
             if Matched (0) = No_Match then
-               Console.Insert (Kernel, S, Add_LF => False);
+               --  Coalesce all the output into one single chunck, which is
+               --  much faster to display in the console.
+               if Buffer_Pos + S'Length > Buffer'Last then
+                  Tmp := new String (1 .. Buffer'Length * 2);
+                  Tmp (1 .. Buffer'Length) := Buffer.all;
+                  Free (Buffer);
+                  Buffer := Tmp;
+               end if;
+               Buffer (Buffer_Pos .. Buffer_Pos + S'Length - 1) := S;
+               Buffer_Pos := Buffer_Pos + S'Length;
             else
                Set_Fraction
                  (Top.Statusbar,
@@ -281,10 +294,22 @@ package body Builder_Module is
          end;
       end loop;
 
+      if Buffer_Pos /= Buffer'First then
+         Console.Insert (Kernel, Buffer (Buffer'First .. Buffer_Pos),
+                         Add_LF => False);
+      end if;
+      Free (Buffer);
+
       return True;
 
    exception
       when Process_Died =>
+         if Buffer_Pos /= Buffer'First then
+            Console.Insert (Kernel, Buffer (Buffer'First .. Buffer_Pos),
+                            Add_LF => False);
+         end if;
+         Free (Buffer);
+
          Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
          --  ??? Check returned status.
          Console.Insert (Kernel, -"process terminated.");
@@ -296,6 +321,7 @@ package body Builder_Module is
          return False;
 
       when E : others =>
+         Free (Buffer);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
          Close (Fd.all);
