@@ -192,7 +192,10 @@ you can either click on the left mouse button and select the area while
 holding the button, or using the keyboard by pressing the @key{Shift} key
 and moving the cursor using the @key{Up} or @key{Down} keys.
 
-Press the @key{F4} key to build again.
+Press the @key{F4} key to build again. GPS will automatically save the
+modified files, and start a build. This behavior (automatic saving of files
+before building) can be configured in the preferences dialog.
+
 If you look at the progress bar, you will see that while the build is in
 progress the state of the compilation is displayed, giving you
 the current number of files compiled, and the number of remaining files.
