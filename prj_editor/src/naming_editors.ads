@@ -53,6 +53,7 @@ package Naming_Editors is
    function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
       Project         : Projects.Project_Type;
+      Languages       : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
@@ -103,6 +104,7 @@ package Naming_Editors is
    function Create_Project_Entry
      (Editor             : access Language_Naming_Editor_Record;
       Project            : Projects.Project_Type;
+      Languages          : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
       is abstract;
    --  Create a new entry in the project file Project for the naming scheme

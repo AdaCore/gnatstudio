@@ -199,6 +199,7 @@ package body Naming_Editors is
    function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
       Project         : Projects.Project_Type;
+      Languages       : Argument_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       Changed : Boolean := False;
@@ -211,7 +212,8 @@ package body Naming_Editors is
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Is_Visible then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Naming, Project, Scenario_Variables);
+              (Editor.Pages (P).Naming,
+               Project, Languages, Scenario_Variables);
          end if;
       end loop;
 

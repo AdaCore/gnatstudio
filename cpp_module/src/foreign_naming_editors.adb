@@ -128,10 +128,12 @@ package body Foreign_Naming_Editors is
    --------------------------
 
    function Create_Project_Entry
-     (Editor  : access Foreign_Naming_Editor_Record;
-      Project : Projects.Project_Type;
+     (Editor             : access Foreign_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : Argument_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
+      pragma Unreferenced (Languages);
       Changed  : Boolean;
 
    begin

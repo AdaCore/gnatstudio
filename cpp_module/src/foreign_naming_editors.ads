@@ -43,8 +43,9 @@ package Foreign_Naming_Editors is
      (Editor : access Foreign_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget;
    function Create_Project_Entry
-     (Editor  : access Foreign_Naming_Editor_Record;
-      Project : Projects.Project_Type;
+     (Editor             : access Foreign_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;

@@ -24,6 +24,7 @@ with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with Projects;
 with Naming_Editors;
 with Glide_Kernel;
+with GNAT.OS_Lib;
 
 package Ada_Naming_Editors is
 
@@ -38,8 +39,9 @@ package Ada_Naming_Editors is
    function Get_Window
      (Editor : access Ada_Naming_Editor_Record) return Gtk.Widget.Gtk_Widget;
    function Create_Project_Entry
-     (Editor  : access Ada_Naming_Editor_Record;
-      Project : Projects.Project_Type;
+     (Editor             : access Ada_Naming_Editor_Record;
+      Project            : Projects.Project_Type;
+      Languages          : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
    procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
