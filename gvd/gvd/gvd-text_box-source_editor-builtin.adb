@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;           use Ada.Text_IO;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
@@ -58,6 +57,8 @@ with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
 with Process_Proxies;       use Process_Proxies;
+with GVD.Files;             use GVD.Files;
+with Odd.Status_Bar;        use Odd.Status_Bar;
 
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.Types; use Gdk.Types;
@@ -795,9 +796,10 @@ package body Odd.Source_Editors is
       File_Name   : String;
       Set_Current : Boolean := True)
    is
-      F      : File_Descriptor;
-      Length : Positive;
-      Name   : aliased constant String := File_Name & ASCII.NUL;
+      Process   : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      Contents  : Odd.Types.String_Access;
+      Error_Msg : Odd.Types.String_Access;
 
    begin
       --  Avoid reloading a file twice.
@@ -808,33 +810,26 @@ package body Odd.Source_Editors is
         and then Editor.Current_File.all = File_Name
       then
          return;
-      else
-         Free (Editor.Current_File);
-         Set_Buffer (Editor, null);
-         Editor.Current_File := new String'(File_Name);
       end if;
 
-      --  Read the size of the file
-      F := Open_Read (Name'Address, Binary);
+      Free (Editor.Current_File);
+      Editor.Current_File := new String'(File_Name);
+      Editor.Current_File_Cache := Find_In_Cache
+        (Process.Window, Editor.Current_File.all);
 
-      if F = Invalid_FD then
+      --  Load the file (possibly from the remote host)
+
+      Load_File (Contents, Error_Msg, Editor.Current_File_Cache,
+                 Process.Descriptor.Remote_Host);
+
+      if Contents = null then
+         Print_Message (Process.Window.Statusbar1, Error, Error_Msg.all);
+         Free (Error_Msg);
          File_Not_Found (Editor, File_Name);
          return;
-      else
-         Length := Positive (File_Length (F));
-
-         --  Allocate the buffer
-         --  and strip the ^Ms from the string
-         declare
-            S : String (1 .. Length);
-         begin
-            Length := Read (F, S'Address, Length);
-            Set_Buffer (Editor, new String' (Strip_Control_M (S)));
-         end;
-
-         Close (F);
       end if;
 
+      Set_Buffer (Editor, Contents);
       Update_Child (Editor);
       Update_Buttons (Editor, True);
 
@@ -889,8 +884,6 @@ package body Odd.Source_Editors is
       Pix       : Gtk_Pixmap;
       Num_Lines : Natural := 0;
       Value     : Gfloat;
-      Process   : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
    begin
       if Is_Empty (Editor) then
          return;
@@ -907,9 +900,6 @@ package body Odd.Source_Editors is
       Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
 
       --  Display the breakpoint icons
-
-      Editor.Current_File_Cache := Find_In_Cache
-        (Process.Window, Editor.Current_File.all);
 
       if Editor.Idle_Id /= 0 then
          Idle_Remove (Editor.Idle_Id);
@@ -1167,6 +1157,7 @@ package body Odd.Source_Editors is
       --  Check whether the line contains code
 
       Kind := Line_Contains_Code (Debug, Editor.Current_File.all, Line);
+
       Editor.Current_File_Cache.Line_Parsed (Line) := True;
 
       Set_Parse_File_Name (Get_Process (Debug), True);

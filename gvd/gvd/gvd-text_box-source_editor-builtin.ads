@@ -203,7 +203,7 @@ private
       --  Id for the Idle handle that is used to recompute the lines that
       --  contain some code.
 
-      Current_File_Cache : Odd.Types.File_Cache_Access;
+      Current_File_Cache : Odd.Types.File_Cache_List;
       --  Cached data for the file currently displayed
 
       Tooltip : Editor_Tooltips.Tooltips;
