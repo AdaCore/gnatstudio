@@ -108,7 +108,8 @@ package body VCS_Module is
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
@@ -311,9 +312,11 @@ package body VCS_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr
    is
+      pragma Unreferenced (User);
       N : Node_Ptr;
    begin
       if Widget.all in VCS_View_Record'Class then
