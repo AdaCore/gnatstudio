@@ -57,6 +57,15 @@ package OS_Utils is
    --  The caller is responsible for freeing the returned memory.
    --  File is a UTF8-encoded string
 
+   procedure Put (File : File_Descriptor; Str : String);
+   --  Write Str to File.
+
+   procedure Put_Line (File : File_Descriptor; Str : String);
+   --  Write Str to File, and appends an end-of-line sequence.
+
+   procedure New_Line (File : File_Descriptor; Count : Natural := 1);
+   --  Write an end-of-line sequence to File.
+
    type Ctrl_C_Handler is access procedure;
    --  Any parameterless library level procedure can be used as a handler.
    --  Ctrl_C_Handler should not propagate exceptions.

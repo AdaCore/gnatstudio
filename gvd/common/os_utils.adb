@@ -260,4 +260,47 @@ package body OS_Utils is
       end loop;
    end Make_Dir_Recursive;
 
+   --------------
+   -- New_Line --
+   --------------
+
+   EOL : aliased constant String := (1 => ASCII.LF);
+
+   procedure New_Line (File : File_Descriptor; Count : Natural := 1) is
+      N : Integer;
+      pragma Unreferenced (N);
+   begin
+      for J in 1 .. Count loop
+         N := Write (File, EOL'Address, EOL'Length);
+      end loop;
+   end New_Line;
+
+   ---------
+   -- Put --
+   ---------
+
+   procedure Put (File : File_Descriptor; Str : String) is
+      N : Integer;
+      pragma Unreferenced (N);
+   begin
+      if Str'Length /= 0 then
+         N := Write (File, Str (Str'First)'Address, Str'Length);
+      end if;
+   end Put;
+
+   --------------
+   -- Put_Line --
+   --------------
+
+   procedure Put_Line (File : File_Descriptor; Str : String) is
+      N : Integer;
+      pragma Unreferenced (N);
+   begin
+      if Str'Length /= 0 then
+         N := Write (File, Str (Str'First)'Address, Str'Length);
+      end if;
+
+      N := Write (File, EOL'Address, EOL'Length);
+   end Put_Line;
+
 end OS_Utils;
