@@ -52,13 +52,12 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Prj;                      use Prj;
 with Namet;                    use Namet;
 with Stringt;                  use Stringt;
 
 with Types;                    use Types;
 
-with Prj_API;                  use Prj_API;
+with Projects.Registry;        use Projects, Projects.Registry;
 with Language;                 use Language;
 with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
@@ -182,7 +181,7 @@ package body Project_Explorers is
 
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Parent_Node  : Gtk_Tree_Iter := Null_Iter;
       Modified_Project : Boolean := False) return Gtk_Tree_Iter;
    --  Add a new project node in the tree.
@@ -195,7 +194,7 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
-      Project          : Project_Id;
+      Project          : Project_Type;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Tree_Iter;
    --  Add a new directory node in the tree, for Directory.
@@ -278,7 +277,7 @@ package body Project_Explorers is
    function Get_Project_From_Node
      (Explorer  : access Project_Explorer_Record'Class;
       Node      : Gtk_Tree_Iter;
-      Importing : Boolean) return Project_Id;
+      Importing : Boolean) return Project_Type;
    --  Return the name of the project that Node belongs to. If Importing is
    --  True, we return the importing project, not the one associated with Node.
 
@@ -298,7 +297,7 @@ package body Project_Explorers is
    --  expanded.
 
    function Has_Entries
-     (Project   : Project_Id;
+     (Project   : Project_Type;
       Directory : String;
       Files     : String_Array_Access) return Boolean;
    --  Return True if Directory contains any file among Files.
@@ -383,6 +382,10 @@ package body Project_Explorers is
    --  Parse all the LI information contained in the object directory of the
    --  current selection.
 
+   function Get_Imported_Projects (Project : Project_Type)
+      return Project_Type_Array;
+   --  Return the list of imported projects as an array
+
    ----------------------
    -- Set_Column_Types --
    ----------------------
@@ -466,7 +469,7 @@ package body Project_Explorers is
          Directory    =>
            Normalize_Pathname (Get_Directory_From_Node (T.Tree.Model, Node)),
          File_Name    => Get_File_From_Node (T.Tree.Model, Node),
-         Project_View => Get_Project_From_Node (T, Node, False));
+         Project      => Get_Project_From_Node (T, Node, False));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
 
@@ -689,7 +692,7 @@ package body Project_Explorers is
               Normalize_Pathname
                 (Get_Directory_From_Node (T.Tree.Model, Iter)),
             File_Name    => Get_File_From_Node (T.Tree.Model, Iter),
-            Project_View => Get_Project_From_Node (T, Iter, False),
+            Project      => Get_Project_From_Node (T, Iter, False),
             Importing_Project => Get_Project_From_Node (T, Iter, True));
       end if;
 
@@ -723,19 +726,18 @@ package body Project_Explorers is
 
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Parent_Node  : Gtk_Tree_Iter := Null_Iter;
       Modified_Project : Boolean := False) return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
       Is_Leaf   : constant Boolean :=
-        Projects.Table (Project).Imported_Projects = Empty_Project_List
+        not Has_Imported_Projects (Project)
         and then (not Get_Pref (Explorer.Kernel, Show_Directories)
-                  or else Projects.Table (Project).Source_Dirs = Nil_String);
+                  or else Direct_Sources_Count (Project) = 0);
       Node_Type : Node_Types := Project_Node;
-      Node_Text : constant String :=
-        Get_String (Projects.Table (Project).Name);
+      Node_Text : constant String := Project_Name (Project);
 
    begin
       if Project = No_Project then
@@ -745,9 +747,7 @@ package body Project_Explorers is
       if Modified_Project then
          Node_Type := Extends_Project_Node;
 
-      elsif Project_Modified
-        (Explorer.Kernel, Get_Project_From_View (Project))
-      then
+      elsif Project_Modified (Project) then
          Node_Type := Modified_Project_Node;
       end if;
 
@@ -778,7 +778,7 @@ package body Project_Explorers is
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
 
       Set (Explorer.Tree.Model, N, Project_Column,
-           Gint (Projects.Table (Project).Name));
+           Gint (Name_Id'(Project_Name (Project))));
 
       if not Is_Leaf then
          Append_Dummy_Iter (Explorer.Tree.Model, N);
@@ -792,7 +792,7 @@ package body Project_Explorers is
    -----------------
 
    function Has_Entries
-     (Project   : Project_Id;
+     (Project   : Project_Type;
       Directory : String;
       Files     : String_Array_Access) return Boolean
    is
@@ -822,7 +822,7 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
-      Project          : Project_Id;
+      Project          : Project_Type;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Tree_Iter
    is
@@ -912,20 +912,11 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      Prj_List    : Project_List;
-      Project     : constant Project_Id :=
+      use String_List_Utils.String_List;
+      Project     : constant Project_Type :=
         Get_Project_From_Node (Explorer, Node, False);
-      N           : Gtk_Tree_Iter;
-      pragma Unreferenced (N);
-
-      Dir         : String_List_Id;
       Files       : String_Array_Access := Get_Source_Files
         (Project, Recursive => False, Full_Path => True, Normalized => True);
-
-      Dirs        : String_List_Utils.String_List.List;
-      Dir_Node    : String_List_Utils.String_List.List_Node;
-
-      use String_List_Utils.String_List;
 
       procedure Add_Projects;
       --  Adds the subprojects.
@@ -933,90 +924,89 @@ package body Project_Explorers is
       procedure Add_Directories;
       --  Adds the project subdirectories;
 
+      procedure Add_Source_Directories;
+      --  Add the source directories to the project
+
       procedure Add_Projects is
+         Iter : Imported_Project_Iterator :=
+           Start (Project, Recursive => True, Direct_Only => True);
+         P    : Project_Type;
+         N    : Gtk_Tree_Iter;
+         pragma Unreferenced (N);
       begin
          --  The modified project, if any, is always first
 
-         if Projects.Table (Project).Extends /= No_Project then
+         if Parent_Project (Project) /= No_Project then
             N := Add_Project_Node
-              (Explorer, Projects.Table (Project).Extends, Node, True);
+              (Explorer, Parent_Project (Project), Node, True);
          end if;
 
          --  Imported projects
 
-         Prj_List := Projects.Table (Project).Imported_Projects;
-         while Prj_List /= Empty_Project_List loop
-            N := Add_Project_Node
-              (Explorer, Project_Lists.Table (Prj_List).Project, Node);
-            Prj_List := Project_Lists.Table (Prj_List).Next;
+         loop
+            P := Current (Iter);
+            exit when P = No_Project;
+
+            if P /= Project then
+               N := Add_Project_Node (Explorer, P, Node);
+            end if;
+            Next (Iter);
          end loop;
       end Add_Projects;
 
+      procedure Add_Source_Directories is
+         N    : Gtk_Tree_Iter;
+         pragma Unreferenced (N);
+         Dirs : String_List_Utils.String_List.List;
+         Dir  : constant String_Id_Array := Source_Dirs (Project);
+         Dir_Node : String_List_Utils.String_List.List_Node;
+      begin
+         --  ??? Should show only first-level directories
+
+         for D in Dir'Range loop
+            String_To_Name_Buffer (Dir (D));
+            Append (Dirs, Name_Buffer (1 .. Name_Len));
+         end loop;
+
+         if Filenames_Are_Case_Sensitive then
+            String_List_Utils.Sort (Dirs);
+         else
+            String_List_Utils.Sort_Case_Insensitive (Dirs);
+         end if;
+
+         Dir_Node := First (Dirs);
+
+         while Dir_Node /= Null_Node loop
+            N := Add_Directory_Node
+              (Explorer         => Explorer,
+               Directory        => Data (Dir_Node),
+               Project          => Project,
+               Parent_Node      => Node,
+               Files_In_Project => Files);
+            Dir_Node := Next (Dir_Node);
+         end loop;
+
+         Free (Dirs);
+      end Add_Source_Directories;
+
       procedure Add_Directories is
+         N    : Gtk_Tree_Iter;
+         pragma Unreferenced (N);
+         Obj : constant String := Object_Path (Project, False);
       begin
          if Get_Pref (Explorer.Kernel, Show_Directories) then
             --  Object directory
-
-            Start_String;
-            Store_String_Chars
-              (Get_String (Projects.Table (Project).Object_Directory));
-
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        =>
-                 Get_String (Projects.Table (Project).Object_Directory),
-               Project          => Project,
-               Parent_Node      => Node,
-               Files_In_Project => null,
-               Object_Directory => True);
-
-            --  Source directories
-            --  ??? Should show only first-level directories
-
-            Dir := Projects.Table (Project).Source_Dirs;
-
-            while Dir /= Nil_String loop
-               String_To_Name_Buffer (String_Elements.Table (Dir).Value);
-               Append (Dirs, Name_Buffer (1 .. Name_Len));
-               Dir := String_Elements.Table (Dir).Next;
-            end loop;
-
-            if Filenames_Are_Case_Sensitive then
-               String_List_Utils.Sort (Dirs);
-            else
-               String_List_Utils.Sort_Case_Insensitive (Dirs);
-            end if;
-
-            --  If the projects are to be prepended, reverse the list.
-
-            if not Projects_Before_Directories then
-               declare
-                  Dirs2 : String_List_Utils.String_List.List;
-                  Dirs2_Node : List_Node := First (Dirs);
-               begin
-                  while Dirs2_Node /= Null_Node loop
-                     Prepend (Dirs2, Data (Dirs2_Node));
-                     Dirs2_Node := Next (Dirs2_Node);
-                  end loop;
-
-                  Free (Dirs);
-                  Dirs := Dirs2;
-               end;
-            end if;
-
-            Dir_Node := First (Dirs);
-
-            while Dir_Node /= Null_Node loop
+            if Obj /= "" then
                N := Add_Directory_Node
                  (Explorer         => Explorer,
-                  Directory        => Data (Dir_Node),
+                  Directory        => Obj,
                   Project          => Project,
                   Parent_Node      => Node,
-                  Files_In_Project => Files);
-               Dir_Node := Next (Dir_Node);
-            end loop;
+                  Files_In_Project => null,
+                  Object_Directory => True);
+            end if;
 
-            Free (Dirs);
+            Add_Source_Directories;
          end if;
 
       end Add_Directories;
@@ -1024,8 +1014,13 @@ package body Project_Explorers is
    begin
       Push_State (Explorer.Kernel, Busy);
 
-      Add_Projects;
-      Add_Directories;
+      if Projects_Before_Directories then
+         Add_Projects;
+         Add_Directories;
+      else
+         Add_Directories;
+         Add_Projects;
+      end if;
 
       Free (Files);
       Pop_State (Explorer.Kernel);
@@ -1045,30 +1040,26 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      Project_View : constant Project_Id :=
-        Get_Project_From_Node (Explorer, Node, False);
-      Src          : String_List_Id;
-
-      Dir          : constant String :=
-        Get_Directory_From_Node (Explorer.Tree.Model, Node);
-
       use String_List_Utils.String_List;
 
+      Project : constant Project_Type :=
+        Get_Project_From_Node (Explorer, Node, False);
+      Dir     : constant String :=
+        Get_Directory_From_Node (Explorer.Tree.Model, Node);
       Files     : String_List_Utils.String_List.List;
       File_Node : List_Node;
+      Src       : constant String_Id_Array :=
+        Get_Source_Files (Project, Recursive => False);
 
    begin
-      Src := Projects.Table (Project_View).Sources;
-
-      while Src /= Nil_String loop
-         if Is_Regular_File
-           (Dir & Get_String (String_Elements.Table (Src).Value))
-         then
-            Append
-              (Files, Dir & Get_String (String_Elements.Table (Src).Value));
-         end if;
-
-         Src := String_Elements.Table (Src).Next;
+      for S in Src'Range loop
+         declare
+            F : constant String := Dir & Get_String (Src (S));
+         begin
+            if Is_Regular_File (F) then
+               Append (Files, F);
+            end if;
+         end;
       end loop;
 
       if Filenames_Are_Case_Sensitive then
@@ -1295,6 +1286,35 @@ package body Project_Explorers is
       end if;
    end Collapse_Tree_Cb;
 
+   ---------------------------
+   -- Get_Imported_Projects --
+   ---------------------------
+
+   function Get_Imported_Projects (Project : Project_Type)
+      return Project_Type_Array
+   is
+      Count : Natural := 0;
+      Iter  : Imported_Project_Iterator := Start
+        (Project, Recursive => True, Direct_Only => True);
+   begin
+      while Current (Iter) /= No_Project loop
+         Count := Count + 1;
+         Next (Iter);
+      end loop;
+
+      declare
+         Imported : Project_Type_Array (1 .. Count);
+      begin
+         Iter := Start (Project, Recursive => True, Direct_Only => True);
+         for Index in Imported'Range loop
+            Imported (Index) := Current (Iter);
+            Next (Iter);
+         end loop;
+
+         return Imported;
+      end;
+   end Get_Imported_Projects;
+
    -------------------------
    -- Update_Project_Node --
    -------------------------
@@ -1304,45 +1324,22 @@ package body Project_Explorers is
       Files    : String_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
-      function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
-      --  Return the list of imported projects, as an array
-
       function Is_Same_Directory (Dir1, Dir2 : String) return Boolean;
       --  Compare the two directories. The first one is first normalized, the
       --  second one is assumed to be normalized already
 
-      -----------------------
-      -- Imported_Projects --
-      -----------------------
+      procedure Add_Directories;
+      --  Add the subdirectories;
 
-      function Imported_Projects (Prj : Project_Id) return Project_Id_Array is
-         Count  : Natural := 0;
-         Import : Project_List := Projects.Table (Prj).Imported_Projects;
-      begin
-         while Import /= Empty_Project_List loop
-            Count := Count + 1;
-            Import := Project_Lists.Table (Import).Next;
-         end loop;
+      procedure Add_Projects;
+      --  Add the subprojects that weren't present for the previous view
 
-         declare
-            Imported : Project_Id_Array (1 .. Count);
-         begin
-            Count := Imported'First;
-            Import := Projects.Table (Prj).Imported_Projects;
+      N, N2 : Gtk_Tree_Iter;
 
-            while Import /= Empty_Project_List loop
-               Imported (Count) := Project_Lists.Table (Import).Project;
-               Count := Count + 1;
-               Import := Project_Lists.Table (Import).Next;
-            end loop;
-
-            return Imported;
-         end;
-      end Imported_Projects;
-
-      -----------------------
-      -- Is_Same_Directory --
-      -----------------------
+      Project : constant Project_Type :=
+        Get_Project_From_Node (Explorer, Node, False);
+      Sources : String_Id_Array := Source_Dirs (Project);
+      Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
       function Is_Same_Directory (Dir1, Dir2 : String) return Boolean is
          D1 : constant String := Name_As_Directory
@@ -1350,21 +1347,6 @@ package body Project_Explorers is
       begin
          return D1 = Dir2;
       end Is_Same_Directory;
-
-
-      Index : Natural;
-      N, N2 : Gtk_Tree_Iter;
-
-      Project : constant Project_Id :=
-        Get_Project_From_Node (Explorer, Node, False);
-      Sources : String_Id_Array := Source_Dirs (Project);
-      Imported : Project_Id_Array := Imported_Projects (Project);
-
-      procedure Add_Directories;
-      --  Add the subdirectories;
-
-      procedure Add_Projects;
-      --  Add the subprojects;
 
       procedure Add_Directories is
          Dirs        : String_List_Utils.String_List.List;
@@ -1375,14 +1357,9 @@ package body Project_Explorers is
       begin
          --  Object directory
 
-         Start_String;
-         Store_String_Chars
-           (Get_String (Projects.Table (Project).Object_Directory));
-
          N := Add_Directory_Node
            (Explorer         => Explorer,
-            Directory        =>
-              Get_String (Projects.Table (Project).Object_Directory),
+            Directory        => Object_Path (Project, False),
             Project          => Project,
             Parent_Node      => Node,
             Files_In_Project => null,
@@ -1437,14 +1414,19 @@ package body Project_Explorers is
       end Add_Directories;
 
       procedure Add_Projects is
+         N : Gtk_Tree_Iter;
+         pragma Unreferenced (N);
       begin
-         for J in Imported'Range loop
-            if Imported (J) /= No_Project then
+         for P in Imported'Range loop
+            if Imported (P) /= No_Project then
                N := Add_Project_Node
-                 (Explorer, Project => Imported (J),  Parent_Node => Node);
+                 (Explorer, Project => Imported (P), Parent_Node => Node);
             end if;
          end loop;
       end Add_Projects;
+
+      Index : Natural;
+      Prj   : Project_Type;
    begin
       --  The goal here is to keep the directories if their current state
       --  (expanded or not), while doing the update.
@@ -1458,24 +1440,20 @@ package body Project_Explorers is
          N2 := N;
          Next (Explorer.Tree.Model, N2);
 
-         declare
-            Prj  : Project_Id;
-            Obj  : String_Id;
-            pragma Unreferenced (Prj, Obj);
-            Dir  : constant String :=
-              Get_Directory_From_Node (Explorer.Tree.Model, N);
-
-         begin
-            case Get_Node_Type (Explorer.Tree.Model, N) is
-               when Directory_Node =>
+         case Get_Node_Type (Explorer.Tree.Model, N) is
+            when Directory_Node =>
+               declare
+                  Dir  : constant String :=
+                    Get_Directory_From_Node (Explorer.Tree.Model, N);
+               begin
                   Index := Sources'First;
 
                   while Index <= Sources'Last loop
                      if Sources (Index) /= No_String
                        and then
-                         (Get_String (Sources (Index)) = Dir
-                          or else Is_Same_Directory
-                            (Get_String (Sources (Index)), Dir))
+                       (Get_String (Sources (Index)) = Dir
+                        or else Is_Same_Directory
+                        (Get_String (Sources (Index)), Dir))
                      then
                         Sources (Index) := No_String;
                         exit;
@@ -1489,55 +1467,43 @@ package body Project_Explorers is
                   else
                      Update_Node (Explorer, N, Files);
                   end if;
+               end;
 
-               when Obj_Directory_Node =>
-                  Prj := Get_Project_From_Node (Explorer, N, True);
-                  Remove (Explorer.Tree.Model, N);
-                  Start_String;
-                  Store_String_Chars
-                    (Get_String (Projects.Table
-                                   (Project).Object_Directory));
-                  Obj := End_String;
+            when Obj_Directory_Node =>
+               Remove (Explorer.Tree.Model, N);
 
-               when Project_Node | Modified_Project_Node =>
-                  --  The list of imported project files cannot change with
-                  --  the scenario, so there is nothing to be done here
-                  declare
-                     Prj_Name : constant String
-                       := Project_Name
-                         (Get_Project_From_Node (Explorer, N, False));
-                  begin
-                     Index := Imported'First;
-                     while Index <= Imported'Last loop
-                        if Imported (Index) /= No_Project
-                          and then Project_Name (Imported (Index)) = Prj_Name
-                        then
-                           Imported (Index) := No_Project;
-                           exit;
-                        end if;
-                        Index := Index + 1;
-                     end loop;
+            when Project_Node | Modified_Project_Node =>
+               --  The list of imported projects could change if another
+               --  dependency was added, so we need to check for this case
+               --  as well.
 
-                     if Index > Imported'Last then
-                        Remove (Explorer.Tree.Model, N);
-
-                     else
-                        Update_Node (Explorer, N, Files_In_Project => null);
+               Prj := Get_Project_From_Node (Explorer, N, False);
+               if Prj /= No_Project then
+                  Index := Imported'First;
+                  while Index <= Imported'Last loop
+                     if Imported (Index) = Prj then
+                        Imported (Index) := No_Project;
+                        exit;
                      end if;
-                  end;
+                     Index := Index + 1;
+                  end loop;
+               else
+                  Index := Natural'Last;
+               end if;
 
-               when others =>
-                  --  No other node type is possible
-                  null;
-            end case;
-         end;
+               if Index > Imported'Last then
+                  Remove (Explorer.Tree.Model, N);
+               else
+                  Update_Node (Explorer, N, Files_In_Project => null);
+               end if;
+
+            when others =>
+               --  No other node type is possible
+               null;
+         end case;
+
          N := N2;
       end loop;
-
-      --  Then add all imported projects
-      --  Since they are not expanded initially, we do not need to update their
-      --  contents.
-      --  Then add all the new directories
 
       Add_Projects;
       Add_Directories;
@@ -1643,7 +1609,7 @@ package body Project_Explorers is
       Node_Type : constant Node_Types
         := Get_Node_Type (Explorer.Tree.Model, Node);
       N_Type    : Node_Types;
-      Prj       : constant Project_Id
+      Prj       : constant Project_Type
         := Get_Project_From_Node (Explorer, Node, False);
       Files     : String_Array_Access := Files_In_Project;
       Expanded  : Boolean := Get_Expanded (Explorer.Tree, Node);
@@ -1669,18 +1635,16 @@ package body Project_Explorers is
               := Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
          begin
             if (Node_Type = Directory_Node
-                  and then Has_Entries (Prj, Str, Files))
+                and then Has_Entries (Prj, Str, Files))
               or else
-                (Node_Type = Project_Node
-                 and then
-                 (Projects.Table (Prj).Imported_Projects /= Empty_Project_List
-                or else
-                    (Get_Pref (Explorer.Kernel, Show_Directories)
-                     and then Projects.Table (Prj).Source_Dirs /= Nil_String)))
+              (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
+              or else
+              (Get_Pref (Explorer.Kernel, Show_Directories)
+               and then Direct_Sources_Count (Prj) /= 0)
             then
                Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
                Set (Explorer.Tree.Model, Node, Project_Column,
-                    Gint (Projects.Table (Prj).Name));
+                    Gint (Name_Id'(Project_Name (Prj))));
 
                Append_Dummy_Iter (Explorer.Tree.Model, Node);
             end if;
@@ -1694,7 +1658,7 @@ package body Project_Explorers is
 
          if Force_Expanded or else Expanded then
             case Node_Type is
-               when Project_Node   =>
+               when Project_Node | Modified_Project_Node =>
                   Update_Project_Node (Explorer, Files, Node);
                when Directory_Node =>
                   Update_Directory_Node (Explorer, Files, Node);
@@ -1723,9 +1687,7 @@ package body Project_Explorers is
         or else Node_Type = Modified_Project_Node
       then
          if Project_Modified
-           (Explorer.Kernel,
-            Get_Project_From_View
-              (Get_Project_From_Node (Explorer, Node, False)))
+           (Get_Project_From_Node (Explorer, Node, False))
          then
             N_Type := Modified_Project_Node;
          else
@@ -1755,7 +1717,7 @@ package body Project_Explorers is
 
    begin
       --  No project view => Clean up the tree
-      if Get_Project_View (T.Kernel) = No_Project then
+      if Get_Project (T.Kernel) = No_Project then
          Clear (T.Tree.Model);
 
          --  ??? must free memory associated with entities !
@@ -1766,7 +1728,7 @@ package body Project_Explorers is
       --  need to do it now
 
       if Get_Iter_First (T.Tree.Model) = Null_Iter then
-         Iter := Add_Project_Node (T, Get_Project_View (T.Kernel));
+         Iter := Add_Project_Node (T, Get_Project (T.Kernel));
          Path := Get_Path (T.Tree.Model, Iter);
          Dummy := Expand_Row (T.Tree, Path, False);
          Path_Free (Path);
@@ -1792,17 +1754,17 @@ package body Project_Explorers is
    function Get_Project_From_Node
      (Explorer  : access Project_Explorer_Record'Class;
       Node      : Gtk_Tree_Iter;
-      Importing : Boolean) return Project_Id
+      Importing : Boolean) return Project_Type
    is
       Parent_Iter : Gtk_Tree_Iter;
       Node_Type   : Node_Types;
-      Project     : Project_Id;
+      Project     : Project_Type;
    begin
       if Importing then
          Parent_Iter := Parent (Explorer.Tree.Model, Node);
 
          if Parent_Iter = Null_Iter then
-            return Get_Project_View (Explorer.Kernel);
+            return Get_Project (Explorer.Kernel);
          end if;
       else
          Parent_Iter := Node;
@@ -1823,10 +1785,11 @@ package body Project_Explorers is
 
       if Parent_Iter /= Null_Iter then
          Project :=
-           Get_Project_View_From_Name
-             (Name_Id ((Get_Int
-                          (Gtk_Tree_Model (Explorer.Tree.Model),
-                           Parent_Iter, Project_Column))));
+           Get_Project_From_Name
+             (Get_Registry (Explorer.Kernel),
+              Name_Id ((Get_Int
+                        (Gtk_Tree_Model (Explorer.Tree.Model),
+                         Parent_Iter, Project_Column))));
       else
          Project := No_Project;
       end if;
@@ -2009,7 +1972,7 @@ package body Project_Explorers is
       --  Move to the next node, starting from a file node
 
       function Check_Entities
-        (File : String; Project : Project_Id) return Boolean;
+        (File : String; Project : Project_Type) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
       --  Return True if there is a match
@@ -2018,7 +1981,7 @@ package body Project_Explorers is
         (Base           : String;
          Full_Name      : String;
          Project_Marked : Boolean;
-         Project        : Project_Id;
+         Project        : Project_Type;
          Mark_File      : Search_Status;
          Increment      : Search_Status);
       pragma Inline (Mark_File_And_Projects);
@@ -2206,13 +2169,13 @@ package body Project_Explorers is
 
       function Check_Entities
         (File      : String;
-         Project   : Project_Id)
+         Project   : Project_Type)
          return Boolean
       is
          Languages : constant Glide_Language_Handler :=
            Glide_Language_Handler (Get_Language_Handler (Kernel));
          Handler : constant Src_Info.LI_Handler := Get_LI_Handler_From_File
-           (Languages, File, Project);
+           (Languages, File);
          Constructs : Construct_List;
          Status : Boolean := False;
       begin
@@ -2250,7 +2213,7 @@ package body Project_Explorers is
         (Base           : String;
          Full_Name      : String;
          Project_Marked : Boolean;
-         Project        : Project_Id;
+         Project        : Project_Type;
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
@@ -2258,6 +2221,7 @@ package body Project_Explorers is
          Dir  : constant String := Full_Name
            (Full_Name'First ..
             Full_Name'Last - Base'Length);
+         Iter : Imported_Project_Iterator;
 
       begin
          Set (C.Matches, Base, Mark_File);
@@ -2281,19 +2245,19 @@ package body Project_Explorers is
                Set (C.Matches, N, Get (C.Matches, N) + Increment);
             end;
 
-            declare
-               Prjs : constant Project_Id_Array := Find_All_Projects_Importing
-                 (Root_Project => Get_Project (Kernel),
-                  Project      => Project);
-            begin
-               for P in Prjs'Range loop
-                  declare
-                     N : constant String := Project_Name (Prjs (P));
-                  begin
-                     Set (C.Matches, N, Get (C.Matches, N) + Increment);
-                  end;
-               end loop;
-            end;
+            Iter := Find_All_Projects_Importing
+              (Root_Project => Get_Project (Kernel),
+               Project      => Project);
+
+            while Current (Iter) /= No_Project loop
+               declare
+                  N : constant String := Project_Name (Current (Iter));
+               begin
+                  Set (C.Matches, N, Get (C.Matches, N) + Increment);
+               end;
+
+               Next (Iter);
+            end loop;
          end if;
       end Mark_File_And_Projects;
 
@@ -2321,10 +2285,10 @@ package body Project_Explorers is
 
             declare
                Sources : String_Array_Access := Get_Source_Files
-                 (Project_View => Current (Iter),
-                  Recursive    => False,
-                  Full_Path    => True,
-                  Normalized   => False);
+                 (Project    => Current (Iter),
+                  Recursive  => False,
+                  Full_Path  => True,
+                  Normalized => False);
             begin
                Project_Marked := False;
                for S in Sources'Range loop
