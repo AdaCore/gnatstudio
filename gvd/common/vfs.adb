@@ -365,6 +365,39 @@ package body VFS is
       end if;
    end Adjust;
 
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (File1, File2 : Virtual_File) return Boolean is
+      C1, C2 : Character;
+   begin
+      if File1.Value = null then
+         return True;
+      elsif File2.Value = null then
+         return False;
+      elsif Filenames_Are_Case_Sensitive then
+         return File1.Value.Full_Name.all < File2.Value.Full_Name.all;
+      else
+         for C in File1.Value.Full_Name'Range loop
+            if C > File2.Value.Full_Name'Last then
+               return False;
+            end if;
+
+            C1 := To_Lower (File1.Value.Full_Name (C));
+            C2 := To_Lower (File2.Value.Full_Name (C));
+
+            if C1 < C2 then
+               return True;
+            elsif C1 > C2 then
+               return False;
+            end if;
+
+         end loop;
+         return True;
+      end if;
+   end "<";
+
    ----------
    -- Sort --
    ----------
@@ -389,18 +422,8 @@ package body VFS is
 
       function Lt (Op1, Op2 : Natural) return Boolean is
       begin
-         --  ??? What about case sensitivity ?
-         --  Do we lower-case file names automatically if we are on a
-         --  case-insensitive system ? would it be interesting to do so ?
-         --  We need to decide on this and then either implement the suggestion
-         --  above, or else do a case-insensitive compare just below.
-         --  (Or maybe write a "Case_Insensitive_Lt" for more efficiency).
-
-         return
-           Files (Files'First - 1 + Op2).Value /= null
-            and then Files (Files'First - 1 + Op1).Value /= null
-            and then Files (Files'First - 1 + Op1).Value.Full_Name.all
-              < Files (Files'First - 1 + Op2).Value.Full_Name.all;
+         return Files (Files'First - 1 + Op1) <
+           Files (Files'First - 1 + Op2);
       end Lt;
    begin
       Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);

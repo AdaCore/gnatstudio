@@ -60,6 +60,10 @@ package VFS is
    function "=" (File1, File2 : Virtual_File) return Boolean;
    --  Overloading of the standard operator
 
+   function "<" (File1, File2 : Virtual_File) return Boolean;
+   --  Compare two files, possibly case insensitively on file systems that
+   --  require this.
+
    function Base_Name
      (File   : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
    --  Return the base name of the file.
