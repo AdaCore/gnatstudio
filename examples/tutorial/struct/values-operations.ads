@@ -16,7 +16,7 @@ package Values.Operations is
 
 private
 
-   type Operation is (Add, Div, Mul, Sub);
+   type Operation is (Add, Div, Mul, Sub, Matrix);
 
 end Values.Operations;
 
