@@ -19,9 +19,12 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;               use Glide_Intl;
 with Glib.Object;              use Glib.Object;
 with VFS;                      use VFS;
@@ -134,7 +137,7 @@ package body Docgen_Module is
    --  Create a list of files with those contained in the array
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    -----------------------------
@@ -306,22 +309,27 @@ package body Docgen_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Set_Options
         (Type_Api_Doc'Val
            (Get_Pref
-              (K, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Comments_Before),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_References),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).One_Document_File),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Link_All_References),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Process_Tagged_Types));
+              (Kernel, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Comments_Before),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
+         Get_Pref (Kernel, Docgen_Module (Docgen_Module_ID).Show_References),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).One_Document_File),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Link_All_References),
+         Get_Pref
+           (Kernel, Docgen_Module (Docgen_Module_ID).Process_Tagged_Types));
    end On_Preferences_Changed;
 
    -----------------------
@@ -816,12 +824,9 @@ package body Docgen_Module is
          Param_Spec (Docgen_Module (Docgen_Module_ID).Process_Tagged_Types),
          -"Documentation");
 
-      Kernel_Callback.Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Kernel_Handle (Kernel));
-
-      On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+      On_Preferences_Changed (Kernel);
 
       Register_Menu
         (Kernel,
