@@ -20,8 +20,6 @@
 
 --  This package provides the implementation for a general interactive console.
 
-with Glib.Object; use Glib.Object;
-
 with Gdk.Color;   use Gdk.Color;
 
 with Gtk.Enums;
@@ -37,6 +35,7 @@ with GNAT.OS_Lib;
 with Basic_Types;       use Basic_Types;
 with Histories;
 with GUI_Utils;
+with System;
 
 with Pango.Font;
 
@@ -49,15 +48,16 @@ package Interactive_Consoles is
 
    type Command_Handler is access
      function
-       (Input     : String;
-        User_Data : access GObject_Record'Class)
+       (Console   : access Interactive_Console_Record'Class;
+        Input     : String;
+        User_Data : System.Address)
         return String;
 
    procedure Gtk_New
      (Console      : out Interactive_Console;
       Prompt       : String;
       Handler      : Command_Handler;
-      User_Data    : GObject;
+      User_Data    : System.Address;
       Font         : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
@@ -75,7 +75,7 @@ package Interactive_Consoles is
      (Console   : access Interactive_Console_Record'Class;
       Prompt    : String;
       Handler   : Command_Handler;
-      User_Data : GObject;
+      User_Data : System.Address;
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
@@ -120,7 +120,7 @@ package Interactive_Consoles is
    procedure Set_Command_Handler
      (Console   : access Interactive_Console_Record'Class;
       Handler   : Command_Handler;
-      User_Data : GObject);
+      User_Data : System.Address);
    --  Reset the command handler for the console
 
    procedure Set_Completion_Handler
@@ -157,7 +157,7 @@ private
    with record
       Handler    : Command_Handler;
       Completion : GUI_Utils.Completion_Handler;
-      User_Data  : GObject;
+      User_Data  : System.Address;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       View   : Gtk.Text_View.Gtk_Text_View;

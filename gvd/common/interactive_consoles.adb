@@ -663,7 +663,7 @@ package body Interactive_Consoles is
      (Console   : out Interactive_Console;
       Prompt    : String;
       Handler   : Command_Handler;
-      User_Data : GObject;
+      User_Data : System.Address;
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
@@ -685,7 +685,7 @@ package body Interactive_Consoles is
      (Console             : access Interactive_Console_Record'Class;
       Prompt              : String;
       Handler             : Command_Handler;
-      User_Data           : GObject;
+      User_Data           : System.Address;
       Font                : Pango.Font.Pango_Font_Description;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
@@ -821,7 +821,7 @@ package body Interactive_Consoles is
    procedure Set_Command_Handler
      (Console   : access Interactive_Console_Record'Class;
       Handler   : Command_Handler;
-      User_Data : GObject) is
+      User_Data : System.Address) is
    begin
       Console.Handler := Handler;
       Console.User_Data := User_Data;
@@ -990,7 +990,7 @@ package body Interactive_Consoles is
 
    begin
       Output := new String'
-        (Console.Handler (Command, Console.User_Data));
+        (Console.Handler (Console, Command, Console.User_Data));
 
       Get_End_Iter (Console.Buffer, Last_Iter);
       Insert (Console.Buffer, Last_Iter, Output.all);
