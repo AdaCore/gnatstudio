@@ -83,7 +83,9 @@ package body Help_Module is
      (1 => Dir_Cst'Access);
 
    type Help_File_Record is record
-      File  : VFS.Virtual_File;
+      File       : VFS.Virtual_File;
+      Shell_Cmd  : GNAT.OS_Lib.String_Access;
+      Shell_Lang : GNAT.OS_Lib.String_Access;
       Descr : GNAT.OS_Lib.String_Access;
    end record;
 
@@ -198,12 +200,16 @@ package body Help_Module is
    --  Load HMTL_File in the HTML/Help widget
 
    procedure Register_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      HTML_File : VFS.Virtual_File;
-      Descr     : String;
-      Category  : String;
-      Menu_Path : String);
-   --  Register the menu in the GPS menubar
+     (Kernel     : access Kernel_Handle_Record'Class;
+      HTML_File  : VFS.Virtual_File := VFS.No_File;
+      Shell_Cmd  : String := "";
+      Shell_Lang : String := "";
+      Descr      : String;
+      Category   : String;
+      Menu_Path  : String);
+   --  Register the menu in the GPS menubar.
+   --  The name of the HTML file is either hard-coded in HTML_File or
+   --  read from the result of a shell_cmd
 
    procedure On_Open_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -216,6 +222,13 @@ package body Help_Module is
       File   : VFS.Virtual_File;
       Anchor : String := "");
    --  Open an HTML file.
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Handles customization strings for this module
 
    procedure Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
@@ -238,10 +251,11 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Menu Help->About...
 
-   type String_Menu_Item_Record (Length : Natural) is new Gtk_Menu_Item_Record
-     with record
-        File : String (1 .. Length);
-     end record;
+   type String_Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      File       : VFS.Virtual_File;
+      Shell      : GNAT.OS_Lib.String_Access;
+      Shell_Lang : GNAT.OS_Lib.String_Access;
+   end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class);
@@ -429,7 +443,30 @@ package body Help_Module is
    is
       Item : constant String_Menu_Item := String_Menu_Item (Widget);
    begin
-      Open_Html (Kernel, Create_Html (Item.File, Kernel));
+      if Item.File /= VFS.No_File then
+         Open_Html (Kernel, Create_Html (Full_Name (Item.File).all, Kernel));
+      elsif Item.Shell /= null then
+         declare
+            Errors : aliased Boolean := False;
+            File   : constant String := Execute_Command
+              (Script      =>
+                 Lookup_Scripting_Language (Kernel, Item.Shell_Lang.all),
+               Command     => Item.Shell.all,
+               Console     => null,
+               Hide_Output => True,
+               Errors      => Errors'Unchecked_Access);
+         begin
+            if Errors then
+               Insert
+                 (Kernel,
+                  -"Couldn't generate the HTML file through the shell command "
+                  & Item.Shell.all,
+                  Mode => Error);
+            else
+               Open_Html (Kernel, Create_Html (File, Kernel));
+            end if;
+         end;
+      end if;
 
    exception
       when E : others =>
@@ -442,21 +479,29 @@ package body Help_Module is
    -------------------
 
    procedure Register_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      HTML_File : Virtual_File;
-      Descr     : String;
-      Category  : String;
-      Menu_Path : String)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      HTML_File  : VFS.Virtual_File := VFS.No_File;
+      Shell_Cmd  : String := "";
+      Shell_Lang : String := "";
+      Descr      : String;
+      Category   : String;
+      Menu_Path  : String)
    is
-      Full : constant String := Full_Name (HTML_File).all;
       Item : String_Menu_Item;
       Node : Help_Category_List.List_Node;
       Cat  : Help_Category_Access;
    begin
-      if Menu_Path /= "" and then HTML_File /= VFS.No_File then
-         Item := new String_Menu_Item_Record (Full'Length);
+      if Menu_Path /= "" then
+         Item := new String_Menu_Item_Record;
          Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
-         Item.File := Full;
+         Item.File       := HTML_File;
+         Item.Shell      := new String'(Shell_Cmd);
+
+         if Shell_Lang = "" then
+            Item.Shell_Lang := new String'(GPS_Shell_Name);
+         else
+            Item.Shell_Lang := new String'(Shell_Lang);
+         end if;
 
          Register_Menu
            (Kernel      => Kernel,
@@ -478,13 +523,16 @@ package body Help_Module is
 
       if Node = Help_Category_List.Null_Node then
          Cat := new Help_Category_Record'
-           (Name  => new String'(Category), Files => Help_File_List.Null_List);
+           (Name  => new String'(Category),
+            Files => Help_File_List.Null_List);
          Append (Help_Module_ID.Categories, Cat);
       end if;
 
       Append (Cat.Files,
-              (File  => HTML_File,
-               Descr => new String'(Descr)));
+              (File       => HTML_File,
+               Shell_Cmd  => new String'(Shell_Cmd),
+               Shell_Lang => new String'(Shell_Lang),
+               Descr      => new String'(Descr)));
    end Register_Help;
 
    ---------------
@@ -549,9 +597,15 @@ package body Help_Module is
 
                F := First (Data (Cat).Files);
                while F /= Help_File_List.Null_Node loop
-                  Append (Str,
-                          "<tr><td><a href=""" & Full_Name (Data (F).File).all
-                          & """>" & Data (F).Descr.all
+                  Append (Str, "<tr><td><a href=""");
+                  if Data (F).File = VFS.No_File then
+                     Append (Str, "%" & Data (F).Shell_Lang.all
+                             & ":" & Protect (Data (F).Shell_Cmd.all));
+                  else
+                     Append (Str, Full_Name (Data (F).File).all);
+                  end if;
+
+                  Append (Str, """>" & Data (F).Descr.all
                           & "</a></td></tr>");
                   F := Next (F);
                end loop;
@@ -636,12 +690,35 @@ package body Help_Module is
    is
       Html : constant Help_Browser := Help_Browser (Object);
       Url  : constant String := Get_String (Nth (Params, 1));
+      First, Last : Integer;
 
    begin
       Trace (Me, "Link_Clicked: " & Url);
 
       if Is_Absolute_Path_Or_URL (Url) then
          Open_Html (Kernel, Create_Html (Url, Kernel));
+
+      elsif Url (Url'First) = '%' then
+         First := Url'First + 1;
+         Last := First;
+         while Last <= Url'Last and then Url (Last) /= ':' loop
+            Last := Last + 1;
+         end loop;
+
+         declare
+            Errors : aliased Boolean := False;
+            File   : constant String := Execute_Command
+              (Script      => Lookup_Scripting_Language
+                 (Kernel, Url (First .. Last - 1)),
+               Command     => Url (Last + 1 .. Url'Last),
+               Console     => null,
+               Hide_Output => True,
+               Errors      => Errors'Unchecked_Access);
+         begin
+            if not Errors then
+               Open_Html (Kernel, Create_Html (File, Kernel));
+            end if;
+         end;
 
       elsif Url (Url'First) = '#' then
          Open_Html
@@ -1204,13 +1281,96 @@ package body Help_Module is
       Free (Context.URL);
    end Destroy;
 
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Level);
+      Name, Descr, Menu, Cat : Node_Ptr;
+      Shell, Shell_Lang : GNAT.OS_Lib.String_Access;
+      N     : Node_Ptr := Node;
+      Field : Node_Ptr;
+   begin
+      while N /= null loop
+         if N.Tag.all = "documentation_file" then
+            Name  := null;
+            Descr := null;
+            Menu  := null;
+            Cat   := null;
+            Shell := null;
+            Shell_Lang := null;
+
+            Field := N.Child;
+            while Field /= null loop
+               if Field.Tag.all = "name" then
+                  Name := Field;
+               elsif Field.Tag.all = "descr" then
+                  Descr := Field;
+               elsif Field.Tag.all = "menu" then
+                  Menu := Field;
+               elsif Field.Tag.all = "category" then
+                  Cat := Field;
+               elsif Field.Tag.all = "shell" then
+                  Shell := new String'(Field.Value.all);
+                  Shell_Lang := new String'
+                    (Get_Attribute (Field, "lang", "shell"));
+               else
+                  Insert
+                    (Kernel,
+                     -"Invalid node in customization file "
+                     & Full_Name (File).all & ": " & Field.Tag.all);
+               end if;
+
+               Field := Field.Next;
+            end loop;
+
+            if Name /= null then
+               Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
+               Register_Help
+                 (Kernel,
+                  HTML_File  => Create_Html (Name.Value.all, Kernel),
+                  Descr      => Descr.Value.all,
+                  Category   => Cat.Value.all,
+                  Menu_Path  => Menu.Value.all);
+            else
+               if Shell = null then
+                  Insert
+                    (Kernel,
+                     -("<documentation_file> customization must specify either"
+                       & " a <name> or a <shell> node"),
+                     Mode => Error);
+               else
+                  Register_Help
+                    (Kernel,
+                     HTML_File  => VFS.No_File,
+                     Shell_Cmd  => Shell.all,
+                     Shell_Lang => Shell_Lang.all,
+                     Descr      => Descr.Value.all,
+                     Category   => Cat.Value.all,
+                     Menu_Path  => Menu.Value.all);
+               end if;
+            end if;
+
+            Free (Shell);
+            Free (Shell_Lang);
+         end if;
+
+         N := N.Next;
+      end loop;
+   end Customize;
+
    -----------------------
    -- Parse_Index_Files --
    -----------------------
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
       Iter : Path_Iterator;
-      Node, Tmp, Field : Node_Ptr;
       Err : GNAT.OS_Lib.String_Access;
    begin
       Iter := Start (Help_Module_ID.Doc_Path.all);
@@ -1219,8 +1379,7 @@ package body Help_Module is
             Dir : constant String :=
               Current (Help_Module_ID.Doc_Path.all, Iter);
             Full : constant String := Name_As_Directory (Dir) & Index_File;
-            Name, Descr, Menu, Cat : String_Ptr;
-            Empty : aliased String := "";
+            Node : Node_Ptr;
          begin
             exit when Dir = "";
 
@@ -1233,50 +1392,7 @@ package body Help_Module is
                   Insert (Kernel, Err.all, Mode => Error);
                   Free (Err);
                else
-                  Tmp := Node.Child;
-                  while Tmp /= null loop
-                     if Tmp.Tag.all = "file" then
-                        Name  := Empty'Unrestricted_Access;
-                        Descr := Empty'Unrestricted_Access;
-                        Menu  := Empty'Unrestricted_Access;
-                        Cat   := Empty'Unrestricted_Access;
-
-                        Field := Tmp.Child;
-                        while Field /= null loop
-                           if Field.Tag.all = "name" then
-                              Name := Field.Value;
-
-                           elsif Field.Tag.all = "descr" then
-                              Descr := Field.Value;
-
-                           elsif Field.Tag.all = "menu" then
-                              Menu := Field.Value;
-
-                           elsif Field.Tag.all = "category" then
-                              Cat := Field.Value;
-
-                           else
-                              Insert
-                                (Kernel,
-                                 -"Invalid field in documentation index file "
-                                 & Full);
-                           end if;
-
-                           Field := Field.Next;
-                        end loop;
-
-                        Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
-                        Register_Help
-                          (Kernel,
-                           HTML_File => Create_Html (Name.all, Kernel),
-                           Descr     => Descr.all,
-                           Category  => Cat.all,
-                           Menu_Path => Menu.all);
-                     end if;
-
-                     Tmp := Tmp.Next;
-                  end loop;
-
+                  Customize (Kernel, Create (Full), Node.Child, System_Wide);
                   Free (Node);
                end if;
             end if;
@@ -1309,6 +1425,7 @@ package body Help_Module is
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority - 20,
          Contextual_Menu_Handler => null,
+         Customization_Handler   => Customize'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
@@ -1383,9 +1500,9 @@ package body Help_Module is
       declare
          Item : String_Menu_Item;
       begin
-         Item := new String_Menu_Item_Record (Template_Index'Length);
+         Item := new String_Menu_Item_Record;
          Gtk.Menu_Item.Initialize_With_Mnemonic (Item, -"_Contents");
-         Item.File := Template_Index;
+         Item.File := Create (Template_Index);
          Register_Menu
            (Kernel      => Kernel,
             Parent_Path => Help,
