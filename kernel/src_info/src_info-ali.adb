@@ -65,11 +65,6 @@ package body Src_Info.ALI is
    --  Translate the given character into the associated Reference_Kind value.
    --  Raise ALI_Internal_Error if C does not represent any Reference_Kind.
 
-   function Search_Dependency
-     (ALI : ALIs_Record; Filename : File_Name_Type) return Sdep_Id;
-   --  Search all dependencies associated with the given ALI record, and
-   --  return the dependency which Source File is equal to Filename.
-
    function Get_ALI_Filename (Sig_Filename : File_Name_Type) return String;
    --  Converts the given source filename Sig_Filename into the corresponding
    --  ALI filename.
@@ -119,17 +114,6 @@ package body Src_Info.ALI is
       File             : out Source_File);
    --  Perform the job of Get_Unit_Source_File knowing that the Source Filename
    --  from which the ALI filename is derived is Sig_Filename.
-
-   procedure Get_Subunit_Source_File
-     (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
-      New_ALI          : ALIs_Record;
-      Source_Filename  : File_Name_Type;
-      Subunit_Name     : Name_Id;
-      Project          : Prj.Project_Id;
-      File             : out Source_File);
-   --  Perform the job of Get_Source_File in the case where Subunit_Name is set
-   --  (case when it is a separate).
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
@@ -330,23 +314,6 @@ package body Src_Info.ALI is
       raise ALI_Internal_Error;
    end Char_To_R_Kind;
 
-   -----------------------
-   -- Search_Dependency --
-   -----------------------
-
-   function Search_Dependency
-     (ALI : ALIs_Record; Filename : File_Name_Type) return Sdep_Id is
-   begin
-      for Dep in ALI.First_Sdep .. ALI.Last_Sdep loop
-         if Sdep.Table (Dep).Sfile = Filename then
-            return Dep;
-         end if;
-      end loop;
-
-      --  If we reach this point, this means we did not find any matching Sdep
-      return No_Sdep_Id;
-   end Search_Dependency;
-
    ----------------------
    -- Get_ALI_Filename --
    ----------------------
@@ -495,37 +462,8 @@ package body Src_Info.ALI is
       --  Second Case: We have a separate
       --  -------------------------------
       --
-      --  The problem is to find the compilation unit that contains the
-      --  separate. The general algorithm is to strip the separate name
-      --  from the last '.', but a more elaborate algorithm is needed, since
-      --  separates of separates can exist and thus we might need to strip
-      --  several times. So the algorithm must also be able to detect when
-      --  stripping should be stopped... Basically, we should stop when we
-      --  detect that the stripped name is a valid compilation Unit.
-      --
-      --    Strip_Loop : loop
-      --
-      --      1/ Strip from last '.' character
-      --         (getting rid of the separate suffix in the subunit name)
-      --
-      --      2/ Check the body exception list for the resulting Unit.
-      --         If found, then DONE.
-      --
-      --      3/ Search the body filename (computed using the naming scheme)
-      --         in our list of dependencies. If found, then DONE.
-      --
-      --         At this stage, we know that the potential unit is not a body.
-      --         So we try as a spec now.
-      --
-      --      4/ Check the spec exception list. If found, then DONE.
-      --
-      --      5/ Search the spec filename (computed using the naming scheme)
-      --         in our list of dependencies. If found then DONE.
-      --
-      --      6/ Iterate one more time, as it appears that the current unit
-      --         name does not represent a compilation unit...
-      --
-      --    end loop Strip_Loop;
+      --  The ALI file associated with the separate is the one we are currently
+      --  parsing, so this case is much simpler.
 
       Prj := Get_Project_From_File
         (Project, Get_Name_String (Source_Filename));
@@ -535,7 +473,8 @@ package body Src_Info.ALI is
            (Handler, List, Source_Filename, Prj, Source_Path, File);
       else
          Get_Subunit_Source_File
-           (Handler, List, New_ALI, Source_Filename, Subunit_Name, Prj, File);
+           (Handler, List, Source_Filename, New_ALI.Sfile,
+            Subunit_Name, File);
       end if;
    end Get_Source_File;
 
@@ -805,114 +744,6 @@ package body Src_Info.ALI is
    -----------------------------
    -- Get_Subunit_Source_File --
    -----------------------------
-
-   procedure Get_Subunit_Source_File
-     (Handler          : ALI_Handler;
-      List             : in out LI_File_List;
-      New_ALI          : ALIs_Record;
-      Source_Filename  : File_Name_Type;
-      Subunit_Name     : Name_Id;
-      Project          : Prj.Project_Id;
-      File             : out Source_File)
-   is
-      Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
-      Naming         : Naming_Data renames Prj_Data.Naming;
-
-      Sep_Name       : constant String := Get_Name_String (Subunit_Name);
-      Sep_Name_Index : Integer := Sep_Name'Last;
-      Unit_Id        : Name_Id;
-
-      Body_Id        : Prj.Array_Element_Id;
-      Spec_Id        : Prj.Array_Element_Id;
-      Filename       : File_Name_Type;
-      Dep            : Sdep_Id;
-
-      procedure Search_Dot_Backward;
-      --  Decrement Index until Index points just before a Dot in Sep_Name.
-      --  Index is set to Sep_Name'First - 1 if no new dot found.
-
-      procedure Search_Dot_Backward is
-      begin
-         while Sep_Name_Index >= Sep_Name'First loop
-            Sep_Name_Index := Sep_Name_Index - 1;
-            exit when Sep_Name (Sep_Name_Index + 1) = '.';
-         end loop;
-      end Search_Dot_Backward;
-
-   begin
-      --  Note that the search algorigthm in this procedure is documented
-      --  inside Get_Source_File. Any change to this algorithm should be
-      --  documented there.
-
-      Search_Dot_Backward;
-
-      Unit_Name_Search :
-      while Sep_Name_Index >= Sep_Name'First loop
-         --  Get the Name_Id associated to this would-be Unit...
-
-         Namet.Name_Len := Sep_Name_Index - Sep_Name'First + 1;
-         Namet.Name_Buffer (1 .. Namet.Name_Len) :=
-           Sep_Name (Sep_Name'First .. Sep_Name_Index);
-         Unit_Id := Namet.Name_Find;
-
-         --  Try to locate this unit in the body exception list
-
-         Body_Id := Search_Unit_Name (Naming.Bodies, Unit_Id);
-
-         if Body_Id /= No_Array_Element then
-            Get_Subunit_Source_File
-              (Handler, List, Source_Filename, Get_Filename (Body_Id),
-               Subunit_Name, File);
-            return;
-         end if;
-
-         --  Search the body filename in the dependency list
-
-         Filename := Get_Body_Filename (Unit_Id, Naming);
-         Dep := Search_Dependency (New_ALI, Filename);
-
-         if Dep /= No_Sdep_Id then
-            Get_Subunit_Source_File
-              (Handler, List, Source_Filename, Filename, Subunit_Name, File);
-            return;
-         end if;
-
-         --  We didn't find this unit as a body, try as a spec now
-
-         --  Search the spec exception list
-
-         Spec_Id := Search_Unit_Name (Naming.Specifications, Unit_Id);
-
-         if Spec_Id /= No_Array_Element then
-            Get_Subunit_Source_File
-              (Handler, List, Source_Filename, Get_Filename (Spec_Id),
-               Subunit_Name, File);
-            return;
-         end if;
-
-         --  Search the spec filename in the dependency list
-
-         Filename := Get_Spec_Filename (Unit_Id, Naming);
-         Dep := Search_Dependency (New_ALI, Filename);
-
-         if Dep /= No_Sdep_Id then
-            Get_Subunit_Source_File
-              (Handler, List, Source_Filename, Filename, Subunit_Name, File);
-            return;
-         end if;
-
-         --  Hmm, our would-be unit name appears to be in fact a separate.
-         --  Strip the separate name part and give it another try.
-
-         Search_Dot_Backward;
-      end loop Unit_Name_Search;
-
-      --  If we reach this point, something went wrong because we did not find
-      --  any suitable Unit Name.
-
-      Trace (Me, "Get_Subunit_Source_File: unexpected end");
-      raise ALI_Internal_Error;
-   end Get_Subunit_Source_File;
 
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
@@ -1673,6 +1504,7 @@ package body Src_Info.ALI is
       Process_Units (Tmp, New_ALI);
       Process_Sdeps
         (Handler, Tmp, New_ALI, Project, Source_Path, Sfiles, List);
+
       Process_Withs (Tmp, New_ALI, Project);
       Process_Xrefs (Tmp, New_ALI, Sfiles);
 
