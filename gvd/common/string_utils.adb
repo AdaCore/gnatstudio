@@ -688,6 +688,10 @@ package body String_Utils is
       S_Last  : Integer := S'Last;
 
    begin
+      if S = "" then
+         return "";
+      end if;
+
       while S (S_First) = ' ' or else S (S_First) = '"' loop
          S_First := S_First + 1;
       end loop;
