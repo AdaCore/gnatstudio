@@ -270,7 +270,8 @@ package body Gtkada.MDI is
    --  children).
 
    procedure Docked_Switch_Page
-     (Docked_Child : access Gtk_Widget_Record'Class);
+     (Docked_Child : access Gtk_Widget_Record'Class;
+      Args : GValues);
    --  Called when the current page in Docked_Child has changed.
    --  This is used to refresh the notebook so that is reflects the selected
    --  widget.
@@ -1764,17 +1765,24 @@ package body Gtkada.MDI is
          C.Title := new String' (" ");
       end if;
 
+      --  We need to show the widget before inserting it in a notebook,
+      --  otherwise the notebook page will not be made visible.
+      Show_All (C);
+
+      Widget_List.Prepend (MDI.Items, Gtk_Widget (C));
+
       --  If all items are maximized, add Child to the notebook
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
       else
          Put (MDI.Layout, C, 0, 0);
-         --  Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
          Alloc := (C.X, C.Y, 10, 10);
          Size_Allocate (C, Alloc);
-      end if;
 
-      Widget_List.Prepend (MDI.Items, Gtk_Widget (C));
+         if Realized_Is_Set (MDI) then
+            Queue_Resize (MDI);
+         end if;
+      end if;
 
       if MDI.Menu /= null then
          Create_Menu_Entry (C);
@@ -1784,11 +1792,10 @@ package body Gtkada.MDI is
       --  this will be done automatically in Realize_MDI
 
       if Realized_Is_Set (MDI) then
+         Realize (C);
          Activate_Child (C);
-         Queue_Resize (MDI);
       end if;
 
-      Show_All (C);
       return C;
    end Put;
 
@@ -1993,7 +2000,9 @@ package body Gtkada.MDI is
       Update_Dock_Menu (C);
       Update_Float_Menu (C);
 
-      if C.Menu_Item /= null then
+      if C.Menu_Item /= null
+        and then not Get_Active (C.Menu_Item)
+      then
          Set_Active (C.Menu_Item, True);
       end if;
    end Activate_Child;
@@ -2256,13 +2265,14 @@ package body Gtkada.MDI is
    ------------------------
 
    procedure Docked_Switch_Page
-     (Docked_Child : access Gtk_Widget_Record'Class)
+     (Docked_Child : access Gtk_Widget_Record'Class; Args : GValues)
    is
-      Note  : Gtk_Notebook := Gtk_Notebook (Docked_Child);
+      Page_Num : Guint := To_Guint (Args, 2);
    begin
-      if Get_Current_Page (Note) /= -1 then
+      if Page_Num /= -1 then
          Activate_Child
-           (MDI_Child (Get_Nth_Page (Note, Get_Current_Page (Note))));
+           (MDI_Child (Get_Nth_Page
+                       (Gtk_Notebook (Docked_Child), Gint (Page_Num))));
       end if;
    end Docked_Switch_Page;
 
@@ -2283,8 +2293,7 @@ package body Gtkada.MDI is
          Put (MDI, MDI.Docks (Side), 0, 0);
          Widget_Callback.Connect
            (MDI.Docks (Side), "switch_page",
-            Widget_Callback.To_Marshaller (Docked_Switch_Page'Access),
-            After => True);
+            Docked_Switch_Page'Access, After => True);
 
          --   Size to be computed
          if Side /= None then
