@@ -531,6 +531,11 @@ package body Builder_Module is
                end if;
             end;
 
+         --  There is no context: compile the main units of the root project
+         elsif Context = null then
+            Args := Compute_Arguments
+              (Kernel, Syntax, Project_Path (Project), VFS.No_File);
+
          --  There is no current file, so we can't compile anything
 
          else
