@@ -516,6 +516,8 @@ package body Glide_Kernel.Scripts is
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
       then
+         Trace (Me, "Expected FileClass, got "
+                & Get_Name (Get_Class (Instance)));
          raise Invalid_Data;
       end if;
 
@@ -781,6 +783,7 @@ package body Glide_Kernel.Scripts is
             C    : constant Integer := Nth_Arg (Data, 4);
 
          begin
+            Ref (File);
             Set_Data (Instance, File_Location_Info'(File, L, C));
          end;
 
@@ -2289,5 +2292,15 @@ package body Glide_Kernel.Scripts is
       Set_Data (Instance, Selection_Context_Access (Context));
       return Instance;
    end Create_Entity_Context;
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Instance : access Class_Instance_Record) is
+      pragma Unreferenced (Instance);
+   begin
+      null;
+   end Ref;
 
 end Glide_Kernel.Scripts;

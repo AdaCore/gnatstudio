@@ -295,6 +295,13 @@ package Glide_Kernel.Scripts is
    procedure Free (Instance : access Class_Instance_Record'Class);
    --  Free the class instance.
 
+   procedure Ref (Instance : access Class_Instance_Record);
+   --  This increments the reference counting on Instance. Use Free to
+   --  decrement. This should be called to make sure that the underlying shell
+   --  doesn't destroy the object while the instance is stored in some data
+   --  structure in the program.
+   --  By default, this does nothing
+
    -------------------------
    -- Scripting languages --
    -------------------------
