@@ -33,11 +33,11 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Style;                 use Gtk.Style;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Module;              use Vdiff_Module;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -62,12 +62,6 @@ package body Vdiff_Utils is
    Num_Line_Sep : constant := 3;
    --  Number of empty lines separating each chunk, in Fill_Diff_List
    --  functions.
-
-   --------------------
-   -- Local packages --
-   --------------------
-
-   package GObject_Callback is new Gtk.Handlers.Callback (GObject_Record);
 
    -----------------------
    -- Local subprograms --
@@ -292,7 +286,7 @@ package body Vdiff_Utils is
       Gtk_New (Info_1, Kernel_Handle (Kernel), File1);
       Gtk_New (Info_2, Kernel_Handle (Kernel), File2);
 
-      GObject_Callback.Object_Connect
+      Object_Callback.Object_Connect
         (List1, "destroy",
          On_Destroy'Access,
          Info_1);
@@ -327,11 +321,11 @@ package body Vdiff_Utils is
       --  <preferences>
       Set_Rgb (Color, 50000, 50000, 50000);
       Set_Base (Old_Style, State_Normal, Color);
-      Set_Rgb (Color, 0, 56000, 0);
+      Set_Rgb (Color, 170 * 256, 254 * 256, 170 * 256);
       Set_Base (Append_Style, State_Normal, Color);
-      Set_Rgb (Color, 56000, 0, 0);
+      Set_Rgb (Color, 254 * 256, 170 * 256, 170 * 256);
       Set_Base (Remove_Style, State_Normal, Color);
-      Set_Rgb (Color, 0, 40000, 65000);
+      Set_Rgb (Color, 164 * 256, 223 * 256, 255 * 256);
       Set_Base (Change_Style, State_Normal, Color);
 
       begin
@@ -568,7 +562,7 @@ package body Vdiff_Utils is
       Gtk_New (Info_1, Kernel_Handle (Kernel), "");
       Gtk_New (Info_2, Kernel_Handle (Kernel), "");
 
-      GObject_Callback.Object_Connect
+      Object_Callback.Object_Connect
         (List1, "destroy",
          On_Destroy'Access,
          Info_1);
