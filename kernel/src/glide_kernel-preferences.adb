@@ -103,6 +103,17 @@ package body Glide_Kernel.Preferences is
 
       -- Diff_Utils --
 
+      Diff_Context_Length := Param_Spec_Int (Gnew_Int
+        (Name    => "Diff_Utils-Context-Length",
+         Minimum => -1,
+         Maximum => Gint'Last,
+         Default => 5,
+         Blurb   => -("The number of lines displayed before and after each"
+                      & " chunk of differences. -1 to display the whole file"),
+         Nick    => -"Context length"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Diff_Context_Length), -"Visual diff");
+
       Diff_Cmd := Param_Spec_String (Gnew_String
         (Name  => "Diff-Utils-Diff",
          Nick  => -"Diff command",

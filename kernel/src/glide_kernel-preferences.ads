@@ -91,8 +91,9 @@ package Glide_Kernel.Preferences is
    Highlight_Error : Param_Spec_Color;
 
    -- Diff_Utils --
-   Diff_Cmd  : Param_Spec_String;
-   Patch_Cmd : Param_Spec_String;
+   Diff_Context_Length : Param_Spec_Int;
+   Diff_Cmd            : Param_Spec_String;
+   Patch_Cmd           : Param_Spec_String;
 
    -- Explorer --
    Normalized_Directories       : Param_Spec_Boolean;
