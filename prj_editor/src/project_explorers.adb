@@ -87,7 +87,7 @@ with Unchecked_Conversion;
 
 package body Project_Explorers is
 
-   Me : Debug_Handle := Create ("Project_Explorers");
+   Me : constant Debug_Handle := Create ("Project_Explorers");
 
    ---------------------
    -- Local constants --
@@ -555,7 +555,7 @@ package body Project_Explorers is
    is
       N       : Gtk_Tree_Iter;
       Sibling : Gtk_Tree_Iter;
-      Name    : String := Category_Name (Category);
+      Name    : constant String := Category_Name (Category);
    begin
       --  ??? code duplication from Add_Category_Node
       Sibling := Children (Explorer.File_Model, Parent_Iter);
@@ -878,7 +878,7 @@ package body Project_Explorers is
                declare
                   Success   : Boolean;
                   Path      : Gtk_Tree_Path;
-                  Expanding : Boolean := D.Explorer.Expanding;
+                  Expanding : constant Boolean := D.Explorer.Expanding;
                begin
                   Path := Get_Path (D.Explorer.File_Model, D.Base);
 
@@ -900,7 +900,7 @@ package body Project_Explorers is
                   declare
                      Success   : Boolean;
                      Path      : Gtk_Tree_Path;
-                     Expanding : Boolean := D.Explorer.Expanding;
+                     Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
                      Path := Get_Path (D.Explorer.File_Model, Iter);
 
@@ -1232,10 +1232,8 @@ package body Project_Explorers is
         (Explorer.Tree, "button_press_event",
          Button_Press_Release'Access, Explorer);
 
-      --  Update the tree with the current project
-      Trace (Me, "MANU: Start of refresh");
-      Refresh (Kernel, GObject (Explorer));
-      Trace (Me, "MANU: End of refresh");
+      --  The explorer (project view) is automatically refreshed when the
+      --  project view is changed.
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
@@ -1249,8 +1247,8 @@ package body Project_Explorers is
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues)
    is
-      E     : Project_Explorer := Project_Explorer (Explorer);
-      Child : MDI_Child := MDI_Child (To_Object (Args, 1));
+      E     : constant Project_Explorer := Project_Explorer (Explorer);
+      Child : constant MDI_Child := MDI_Child (To_Object (Args, 1));
    begin
       if Child = null
         or else not (Get_Widget (Child).all in Project_Explorer_Record'Class)
@@ -1300,9 +1298,10 @@ package body Project_Explorers is
    -------------------
 
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class) is
-      E    : Project_Explorer := Project_Explorer (Explorer);
-      Node : Gtk_Ctree_Node := Node_List.Get_Data (Get_Selection (E.Tree));
-      Data : User_Data := Node_Get_Row_Data (E.Tree, Node);
+      E    : constant Project_Explorer := Project_Explorer (Explorer);
+      Node : constant Gtk_Ctree_Node :=
+        Node_List.Get_Data (Get_Selection (E.Tree));
+      Data : constant User_Data := Node_Get_Row_Data (E.Tree, Node);
    begin
       pragma Assert (Data.Node_Type = Obj_Directory_Node);
       Push_State (E.Kernel, Busy);
@@ -1329,7 +1328,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Kernel, Event_Widget);
 
-      T       : Project_Explorer := Project_Explorer (Object);
+      T       : constant Project_Explorer := Project_Explorer (Object);
       Context : Selection_Context_Access;
       Item    : Gtk_Menu_Item;
 
@@ -1367,7 +1366,7 @@ package body Project_Explorers is
             Parent := Row_Get_Parent (Node_Get_Row (Node));
 
             declare
-               Data : User_Data := Node_Get_Row_Data (T.Tree, Node);
+               Data : constant User_Data := Node_Get_Row_Data (T.Tree, Node);
             begin
                if Data.Node_Type = Entity_Node then
                   Context := new Entity_Selection_Context;
@@ -1480,8 +1479,7 @@ package body Project_Explorers is
       Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
-
-      T : Project_Explorer := Project_Explorer (Explorer);
+      T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       File_Remove_Idle_Calls (T);
    end On_File_Destroy;
@@ -1494,8 +1492,9 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues)
    is
-      T    : Project_Explorer := Project_Explorer (Explorer);
-      Path : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      T    : constant Project_Explorer := Project_Explorer (Explorer);
+      Path : constant Gtk_Tree_Path :=
+        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter : Gtk_Tree_Iter;
 
    begin
@@ -1523,7 +1522,7 @@ package body Project_Explorers is
      (T    : Project_Explorer;
       Iter : Gtk_Tree_Iter)
    is
-      Child_Iter : Gtk_Tree_Iter := Children (T.File_Model, Iter);
+      Child_Iter : constant Gtk_Tree_Iter := Children (T.File_Model, Iter);
       Current    : Gtk_Tree_Iter;
       Val        : GValue;
       User       : User_Data_Access;
@@ -1560,7 +1559,8 @@ package body Project_Explorers is
       Values   : GValues)
    is
       T       : Project_Explorer := Project_Explorer (Explorer);
-      Path    : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Path    : constant Gtk_Tree_Path :=
+        Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
 
@@ -1577,7 +1577,7 @@ package body Project_Explorers is
          declare
             Iter_Name : constant String :=
               Get_String (T.File_Model, Iter, Absolute_Name_Column);
-            N_Type : Real_Node_Types := Node_Types'Val
+            N_Type : constant Real_Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
          begin
@@ -1623,8 +1623,9 @@ package body Project_Explorers is
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      T       : Project_Explorer := Project_Explorer (Explorer);
-      Node    : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      T       : constant Project_Explorer := Project_Explorer (Explorer);
+      Node    : constant Gtk_Ctree_Node :=
+        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Context : File_Selection_Context_Access;
 
    begin
@@ -1652,7 +1653,7 @@ package body Project_Explorers is
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
       pragma Unreferenced (Kernel);
-      T : Project_Explorer := Project_Explorer (Explorer);
+      T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       --  Destroy all the items in the tree.
       --  The next call to refresh via the "project_view_changed" signal will
@@ -1771,14 +1772,12 @@ package body Project_Explorers is
    function Has_Entries
      (Directory : String; Files : String_Array_Access) return Boolean
    is
-      Dir   : constant String := Name_As_Directory (Directory);
-      First : Integer;
+      Dir : constant String := Name_As_Directory (Directory);
    begin
       if Files /= null then
          --  We check in the project itself whether there are some files in the
          --  directory.
          for F in Files'Range loop
-            First := Files (F)'First;
             if Dir_Name (Files (F).all) = Dir then
                return True;
             end if;
@@ -2012,7 +2011,8 @@ package body Project_Explorers is
       Data     : User_Data)
    is
       Prj_List    : Project_List;
-      Project     : Project_Id := Get_Project_View_From_Name (Data.Name);
+      Project     : constant Project_Id :=
+        Get_Project_View_From_Name (Data.Name);
       N           : Gtk_Ctree_Node := null;
       Dir         : String_List_Id;
       Current_Dir : constant String := String (Get_Current_Dir);
@@ -2086,7 +2086,8 @@ package body Project_Explorers is
       Node     : Gtk_Ctree_Node;
       Data     : User_Data)
    is
-      Project_View : Project_Id := Get_Project_From_Node (Explorer, Node);
+      Project_View : constant Project_Id :=
+        Get_Project_From_Node (Explorer, Node);
       Src : String_List_Id;
       N : Gtk_Ctree_Node;
       Dir : constant String :=
@@ -2191,8 +2192,9 @@ package body Project_Explorers is
    procedure Expand_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      T        : Project_Explorer := Project_Explorer (Explorer);
-      Node     : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      T        : constant Project_Explorer := Project_Explorer (Explorer);
+      Node     : constant Gtk_Ctree_Node :=
+        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Data     : User_Data := Node_Get_Row_Data (T.Tree, Node);
    begin
       --  If the node is not already up-to-date
@@ -2640,7 +2642,7 @@ package body Project_Explorers is
       Data   : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
       N, N2  : Gtk_Ctree_Node;
       N_Type : Node_Types;
-      Prj    : Project_Id := Get_Project_From_Node (Explorer, Node);
+      Prj    : constant Project_Id := Get_Project_From_Node (Explorer, Node);
       Files  : String_Array_Access := Files_In_Project;
 
    begin
@@ -2750,7 +2752,7 @@ package body Project_Explorers is
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
-      K : Kernel_Handle := Kernel_Handle (Kernel);
+      K : constant Kernel_Handle := Kernel_Handle (Kernel);
       T : Project_Explorer := Project_Explorer (Explorer);
       Selected_Dir : String_Access := null;
    begin
@@ -2809,7 +2811,7 @@ package body Project_Explorers is
 
          if T.Old_Selection /= null then
             declare
-               U : User_Data := Node_Get_Row_Data
+               U : constant User_Data := Node_Get_Row_Data
                  (T.Tree, Node_List.Get_Data (Get_Selection (T.Tree)));
             begin
                if U.Node_Type = Directory_Node then
@@ -2877,7 +2879,7 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class) return Gtk_Ctree_Node
    is
       use type Node_List.Glist;
-      Selection : Node_List.Glist := Get_Selection (Explorer.Tree);
+      Selection : constant Node_List.Glist := Get_Selection (Explorer.Tree);
       N : Gtk_Ctree_Node;
    begin
       if Selection /= Node_List.Null_List then
@@ -3240,18 +3242,18 @@ package body Project_Explorers is
       N := First (L);
 
       declare
-         Greatest_Prefix        : String  := Data (N);
-         Greatest_Prefix_First  : Natural := Greatest_Prefix'First;
+         Greatest_Prefix        : constant String  := Data (N);
+         Greatest_Prefix_First  : constant Natural := Greatest_Prefix'First;
          Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
       begin
          N := Next (N);
 
          while N /= Null_Node loop
             declare
-               Challenger : String  := Data (N);
-               First      : Natural := Challenger'First;
+               Challenger : constant String  := Data (N);
+               First      : constant Natural := Challenger'First;
                Index      : Natural := 0;
-               Length     : Natural := Challenger'Length;
+               Length     : constant Natural := Challenger'Length;
             begin
                while Index < Greatest_Prefix_Length
                  and then Index < Length
