@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 2.1.0
 
+- D715-005 Regular expression search fails sometimes
+  Problem:    When you search for a regular expression in a source editor,
+              it happens that GPS highlights the first line of the editor
+              instead of a matching line (this indicates there is a match,
+              since you didn't get the "No match" dialog)
+  Workaround: Search for a static string instead, although this will likely
+              not be the exact same result the regular expression would
+              have returned.
+
 - D701-001 Can't edit file-specific switches
   Problem:    If you select the menu "Edit switches for <file>", the project
               file is not modified
