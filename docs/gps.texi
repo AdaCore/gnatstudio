@@ -1519,10 +1519,8 @@ generated. If there is no relevant information, no tooltip is displayed.
 See @ref{Support for Cross-References} for more information.
 
 In debugging mode, the value of the variable under the mouse is displayed in
-the pop up window if the variable is known to the debugger, the variable
-belongs to the current stack frame,
-and the program being debugged is in the right state. If one of these
-conditions is not met, the normal mode information is displayed.
+the pop up window if the variable is known to the debugger.
+Otherwise, the normal mode information is displayed.
 
 You can disable the automatic pop up of tool tips in the Editor section of
 the preferences dialog. @xref{The Preferences Dialog}.
