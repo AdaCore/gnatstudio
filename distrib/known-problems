@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.2.0
 
+- E204-007 Wrong search results in comments
+  Problem:    When searching for a string in comments only, or all but
+              comments, GPS will sometimes report incorrect matches, or
+              not report valid ones.
+  Workaround: Use the 'Whole Text' context instead.
+
 - E106-004 GPS crashes when closing editors of a file that has been modified
   Problem:    When a file is modified outside of GPS, and when closing the
               editor associated to this file, it is possible that the editor
