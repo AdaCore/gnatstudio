@@ -2941,8 +2941,8 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"_Save", Stock_Save,
                      On_Save'Access, null,
                      GDK_S, Control_Mask, Ref_Item => -"Save...");
-      Register_Menu (Kernel, Save, -"_File As...", Stock_Save_As,
-                     On_Save_As'Access, Ref_Item => -"Desktop");
+      Register_Menu (Kernel, File, -"Save _As...", Stock_Save_As,
+                     On_Save_As'Access, Ref_Item => -"Save...");
       Register_Menu (Kernel, Save, -"All _Editors", "",
                      On_Save_All_Editors'Access, Sensitive => False,
                      Ref_Item => -"Desktop");
