@@ -2232,11 +2232,16 @@ package body GPS.Kernel.Scripts is
      (Script : access Scripting_Language_Record'Class;
       Entity : Entity_Information) return Class_Instance
    is
-      Instance : constant Class_Instance := New_Instance
-        (Script, Get_Entity_Class (Get_Kernel (Script)));
+      Instance : Class_Instance;
    begin
-      Set_Data (Instance, Entity);
-      return Instance;
+      if Entity = null then
+         return null;
+      else
+         Instance := New_Instance
+           (Script, Get_Entity_Class (Get_Kernel (Script)));
+         Set_Data (Instance, Entity);
+         return Instance;
+      end if;
    end Create_Entity;
 
    -----------------
