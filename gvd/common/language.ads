@@ -361,6 +361,11 @@ package Language is
       Cat_Accept_Statement,
       Cat_Declare_Block,
       Cat_Simple_Block,
+
+      --------------------
+      -- Sub-constructs --
+      --------------------
+
       Cat_Exception_Handler);
 
    subtype Enclosing_Entity_Category is Language_Category
@@ -383,7 +388,7 @@ package Language is
      range Cat_With .. Cat_Include;
 
    subtype Construct_Category is Language_Category
-     range Cat_Loop_Statement .. Cat_Exception_Handler;
+     range Cat_Loop_Statement .. Cat_Simple_Block;
 
    function Category_Name
      (Category : Language.Language_Category) return String;
