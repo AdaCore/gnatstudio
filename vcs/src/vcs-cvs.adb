@@ -20,6 +20,8 @@
 
 with Glib.Convert;              use Glib.Convert;
 
+with Gtkada.MDI;                use Gtkada.MDI;
+
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -39,7 +41,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with String_Utils;              use String_Utils;
 with OS_Utils;                  use OS_Utils;
-
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
@@ -1322,7 +1323,7 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
-      Open_File_Editor (Kernel, Text_File);
+      Open_File_Editor (Kernel, Text_File, Dock => Bottom);
       Delete (Text_File);
 
       return True;
