@@ -31,7 +31,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Rc;
 
-with Glide_Page;
 with Glide_Menu;
 with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -72,6 +71,7 @@ with Src_Editor_Module;
 with VCS_Module;
 with VCS.CVS;
 with VCS.ClearCase;
+with VFS_Module;
 with Vdiff_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
@@ -79,6 +79,7 @@ with Navigation_Module;
 with Custom_Module;
 with Vsearch_Ext;
 with Help_Module;
+with Codefix_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -92,7 +93,6 @@ procedure GPS is
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
    GPS            : Glide_Window;
-   Page           : Glide_Page.Glide_Page;
    Directory      : Dir_Type;
    Str            : String (1 .. 1024);
    Last           : Natural;
@@ -331,7 +331,6 @@ procedure GPS is
       GPS.Log_Level  := GVD.Types.Hidden;
       GPS.Log_File   := Create_File (Log, Fmode => Text);
 
-      Glide_Page.Gtk_New (Page, GPS);
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
 
@@ -342,6 +341,7 @@ procedure GPS is
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
+
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
       Browsers.Call_Graph.Register_Module (GPS.Kernel);
@@ -358,6 +358,8 @@ procedure GPS is
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
+      VFS_Module.Register_Module (GPS.Kernel);
+      Codefix_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
@@ -484,7 +486,7 @@ procedure GPS is
 
       --  Load_Desktop should call Show_All.
 
-      Glide_Page.Load_Desktop (GPS);
+      Load_Desktop (GPS);
 
       --  Then load all the source files given on the command line.
 
@@ -628,7 +630,6 @@ begin
      (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
    Free_Modules (GPS.Kernel);
-   Glide_Page.Destroy (Page);
 
    --  Call Handlers_Destroy after Free_Modules and Glide_Page.Destroy,
    --  since some handlers are already disconnected by these functions, and
