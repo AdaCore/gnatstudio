@@ -496,77 +496,44 @@ package Glide_Kernel is
    --  and gets passed the first child of the XML file (that is you must go
    --  through the list, following the Next nodes).
 
-   ---------------------
-   -- Action contexts --
-   ---------------------
-   --  These contexts describe when an action (see below) can take place.
-
-   type Action_Context_Record is abstract tagged null record;
-   type Action_Context is access all Action_Context_Record'Class;
-
-   function Get_Name
-     (Context : access Action_Context_Record) return String is abstract;
-   --  Return the description of the context (a short string suitable for
-   --  display in the key manager GUI
-
-   function Context_Matches
-     (Context : access Action_Context_Record;
-      Kernel  : access Kernel_Handle_Record'Class)
-      return Boolean is abstract;
-   --  Whether the current context matches Context
-
-   procedure Register_Context
-     (Kernel  : access Kernel_Handle_Record;
-      Context : access Action_Context_Record'Class);
-   --  Record the context in the kernel, so that it is available through the
-   --  key manager GUI.
-
-   function Lookup_Context
-     (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Action_Context;
-   --  Lookup a context by name. Return null if no such action has been
-   --  registered.
-
-   type Action_Context_Iterator is private;
-
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Context_Iterator;
-   --  Return the first context registered in the kernel (this is in no
-   --  particular order).
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : in out Action_Context_Iterator);
-   --  Move to the next action
-
-   function Get (Iter : Action_Context_Iterator) return Action_Context;
-   --  Return the current context
-
    --------------------
    -- Action filters --
    --------------------
 
-   type Action_Filter_Record (<>) is private;
-   type Action_Filter is access all Action_Filter_Record;
+   type Action_Filter_Record is abstract tagged private;
+   type Action_Filter is access all Action_Filter_Record'Class;
+
+   function Filter_Matches_Primitive
+     (Filter : access Action_Filter_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
+   --  Whether the current context matches Filter
+
+
+   type Base_Action_Filter_Record (<>)
+      is new Action_Filter_Record with private;
+   type Base_Action_Filter is access Base_Action_Filter_Record'Class;
+
+   function Filter_Matches_Primitive
+     (Filter : access Base_Action_Filter_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   --  See docs for inherited subprograms
 
    function Create
-     (Language  : String := "";
-      Action    : String := "";
-      Context   : Action_Context := null) return Action_Filter;
+     (Language   : String := "";
+      Shell      : String := "";
+      Shell_Lang : String := "Shell") return Base_Action_Filter;
    --  Create a new filter.
    --  It does a logical AND for all its attributes specified as parameters.
    --  The default values for the parameters indicate that no special filter
    --  is done for this particular parameter.
 
-   function "and" (Filter1, Filter2 : Action_Filter) return Action_Filter;
-   function "or"  (Filter1, Filter2 : Action_Filter) return Action_Filter;
+   function "and"
+     (Filter1, Filter2 : access Action_Filter_Record'Class)
+      return Base_Action_Filter;
+   function "or"
+     (Filter1, Filter2 : access Action_Filter_Record'Class)
+      return Base_Action_Filter;
    --  Execute logical operations between filters
-
-   function Get_Context (Filter : Action_Filter) return Action_Context;
-   --  Return the context which applies to the filter.
-   --  If this is a simple filter created with Create, this is the context
-   --  passed in argument. If this is a compound filter created through
-   --  logical operations, null is returned.
 
    procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
    --  Set the error message to display if Filter doesn't match
@@ -574,10 +541,43 @@ package Glide_Kernel is
    function Get_Error_Message (Filter : Action_Filter) return String;
    --  Return the error message to display if the filter doesn't match.
 
+   function Get_Name (Filter : Action_Filter) return String;
+   --  Return the description of the filter (a short string suitable for
+   --  display in the key manager GUI
+
    function Filter_Matches
      (Filter : Action_Filter;
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   --  Whether the current context matches Filter
+   --  Same as Filter_Matches_Primitive, except it matches if Filter is null
+
+
+   procedure Register_Filter
+     (Kernel  : access Kernel_Handle_Record;
+      Filter  : access Action_Filter_Record'Class;
+      Name    : String);
+   --  Record the filter in the kernel, so that it is can be referenced in
+   --  other places.
+
+   function Lookup_Filter
+     (Kernel : access Kernel_Handle_Record;
+      Name   : String) return Action_Filter;
+   --  Lookup a filter by name. Return null if no such filter has been
+   --  registered.
+
+   type Action_Filter_Iterator is private;
+
+   function Start (Kernel : access Kernel_Handle_Record'Class)
+      return Action_Filter_Iterator;
+   --  Return the first filter registered in the kernel (this is in no
+   --  particular order).
+
+   procedure Next
+     (Kernel : access Kernel_Handle_Record'Class;
+      Iter   : in out Action_Filter_Iterator);
+   --  Move to the next action
+
+   function Get (Iter : Action_Filter_Iterator) return Action_Filter;
+   --  Return the current filter
 
    --------------
    -- Actions --
@@ -955,13 +955,19 @@ private
 
    type Filter_Type is (Filter_And, Filter_Or, Standard_Filter);
 
-   type Action_Filter_Record (Kind : Filter_Type) is record
+   type Action_Filter_Record is abstract tagged record
       Error_Msg : GNAT.OS_Lib.String_Access;
+      Name      : GNAT.OS_Lib.String_Access;
+   end record;
+
+   type Base_Action_Filter_Record (Kind : Filter_Type)
+      is new Action_Filter_Record
+   with record
       case Kind is
          when Standard_Filter =>
-            Language : GNAT.OS_Lib.String_Access;
-            Context  : Action_Context;
-            Action   : GNAT.OS_Lib.String_Access;
+            Language   : GNAT.OS_Lib.String_Access;
+            Shell      : GNAT.OS_Lib.String_Access;
+            Shell_Lang : GNAT.OS_Lib.String_Access;
 
          when Filter_And =>
             And1, And2 : Action_Filter;
@@ -1010,14 +1016,14 @@ private
    package Actions_Htable is new String_Hash
      (Action_Record, Free, No_Action);
 
-   procedure Do_Nothing (Context : in out Action_Context);
+   procedure Do_Nothing (Filter : in out Action_Filter);
    --  Do nothing
 
-   package Action_Contexts_Htable is new String_Hash
-     (Action_Context, Do_Nothing, null);
+   package Action_Filters_Htable is new String_Hash
+     (Action_Filter, Do_Nothing, null);
 
-   type Action_Context_Iterator is record
-      Iterator : Action_Contexts_Htable.String_Hash_Table.Iterator;
+   type Action_Filter_Iterator is record
+      Iterator : Action_Filters_Htable.String_Hash_Table.Iterator;
    end record;
 
    type Action_Iterator is record
@@ -1037,7 +1043,7 @@ private
       Actions : Actions_Htable.String_Hash_Table.HTable;
       --  The actions registered in the kernel
 
-      Action_Contexts : Action_Contexts_Htable.String_Hash_Table.HTable;
+      Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
       --  The action contexts registered in the kernel
 
       Modules_List : Module_List.List;
