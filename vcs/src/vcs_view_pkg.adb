@@ -903,7 +903,8 @@ package body VCS_View_Pkg is
             Iter := Get_Iter (Page.Model, Path);
             Open_File_Editor
               (Kernel,
-               Get_String (Page.Model, Iter, Name_Column));
+               Get_String (Page.Model, Iter, Name_Column),
+               From_Path => False);
          end if;
 
          return True;

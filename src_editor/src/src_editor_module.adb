@@ -576,7 +576,8 @@ package body Src_Editor_Module is
                  (Kernel,
                   Filename.all,
                   Line,
-                  Column);
+                  Column,
+                  From_Path => True);
 
             elsif Command = "create_mark" then
                declare
@@ -730,7 +731,8 @@ package body Src_Editor_Module is
                                        Mark_Record.Line,
                                        Mark_Record.Column,
                                        Mark_Record.Column
-                                         + Mark_Record.Length);
+                                         + Mark_Record.Length,
+                                       From_Path => True);
                      Fill_Marks (Kernel_Handle (Kernel), Mark_Record.File.all);
                   end if;
                end if;
@@ -1920,7 +1922,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Open_File_Editor (Kernel, Filename);
+         Open_File_Editor (Kernel, Filename, From_Path => False);
          Change_Project_Dir (Kernel, Dir_Name (Filename));
       end;
 
@@ -2012,7 +2014,7 @@ package body Src_Editor_Module is
       Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
       Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
    begin
-      Open_File_Editor (Kernel, Get_Text (Label));
+      Open_File_Editor (Kernel, Get_Text (Label), From_Path => False);
 
    exception
       when E : others =>
@@ -2331,7 +2333,7 @@ package body Src_Editor_Module is
       if Status = 0
         and then Is_Regular_File (Body_Name)
       then
-         Open_File_Editor (Data.Kernel, Body_Name);
+         Open_File_Editor (Data.Kernel, Body_Name, From_Path => False);
       end if;
    end Generate_Body_Cb;
 
@@ -2433,7 +2435,8 @@ package body Src_Editor_Module is
 
    begin
       if Status = 0 then
-         Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all));
+         Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all),
+                           From_Path => True);
       end if;
    end Pretty_Print_Cb;
 
@@ -2891,7 +2894,8 @@ package body Src_Editor_Module is
       Trace (Me, "On_Edit_File: " & File_Information (File));
       Open_File_Editor
         (Get_Kernel (Context),
-         Directory_Information (File) & File_Information (File));
+         Directory_Information (File) & File_Information (File),
+         From_Path => False);
 
    exception
       when E : others =>

@@ -459,7 +459,8 @@ package body Project_Explorers_Common is
                   then
                      Open_File_Editor
                        (Kernel,
-                        Get_String (Model, Iter, Absolute_Name_Column));
+                        Get_String (Model, Iter, Absolute_Name_Column),
+                        From_Path => False);
                      return True;
                   end if;
 
@@ -471,7 +472,8 @@ package body Project_Explorers_Common is
                     (Kernel,
                      Get_String (Model, Iter, Absolute_Name_Column),
                      Line   => Natural (Line),
-                     Column => Natural (Column));
+                     Column => Natural (Column),
+                     From_Path => False);
                   return False;
 
                when others =>

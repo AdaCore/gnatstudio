@@ -534,7 +534,8 @@ package body Src_Contexts is
            (Kernel,
             File_Name,
             To_Positive (Match.Line), To_Positive (Match.Column),
-            To_Positive (Match.End_Column));
+            To_Positive (Match.End_Column),
+            From_Path => True);
       else
          Insert_Result
            (Kernel,

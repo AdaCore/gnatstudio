@@ -181,13 +181,15 @@ package body Commands.Locations is
             Command.Column,
             Command.Column_End,
             Command.Highlight_Line,
-            False);
+            False,
+            From_Path => False);
 
       else
          Open_File_Editor
            (Command.Kernel,
             Command.Filename.all,
-            Enable_Navigation => False);
+            Enable_Navigation => False,
+            From_Path => False);
       end if;
 
       Command_Finished (Command, True);

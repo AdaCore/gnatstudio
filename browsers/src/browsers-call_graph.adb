@@ -831,15 +831,17 @@ package body Browsers.Call_Graph is
       if Status /= Success and then Status /= Fuzzy_Match then
          Open_File_Editor
            (Get_Kernel (Context),
-            Directory_Information (C) & File_Information (C),
+            File_Information (C),
             Line   => Line_Information (C),
-            Column => Column_Information (C));
+            Column => Column_Information (C),
+            From_Path => True);
       else
          Open_File_Editor
            (Get_Kernel (Context),
             Filename => Get_File (Location),
             Line     => Get_Line (Location),
-            Column   => Get_Column (Location));
+            Column   => Get_Column (Location),
+            From_Path => True);
       end if;
 
    exception
@@ -872,7 +874,8 @@ package body Browsers.Call_Graph is
            (Get_Kernel (Context),
             Get_Declaration_File_Of (Entity),
             Line   => Get_Declaration_Line_Of (Entity),
-            Column => Get_Declaration_Column_Of (Entity));
+            Column => Get_Declaration_Column_Of (Entity),
+            From_Path => True);
       end if;
 
    exception

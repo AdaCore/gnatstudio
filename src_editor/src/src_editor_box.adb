@@ -467,7 +467,7 @@ package body Src_Editor_Box is
                Filename        => Get_File (Location),
                Use_Source_Path => True,
                Use_Object_Path => False),
-            L, C, C + Length, False);
+            L, C, C + Length, False, From_Path => False);
 
       else
          --  Open the file, and reset Source to the new editor in order to
@@ -483,7 +483,7 @@ package body Src_Editor_Box is
                Filename        => Get_Declaration_File_Of (Entity),
                Use_Source_Path => True,
                Use_Object_Path => False),
-            L, C, C + Length, False);
+            L, C, C + Length, False, From_Path => False);
       end if;
 
       --  Find the correct location for the entity, in case it is in fact
@@ -532,7 +532,7 @@ package body Src_Editor_Box is
                      Filename        => Get_File (Location),
                      Use_Source_Path => True,
                      Use_Object_Path => False),
-                  L, C, C + Length, False);
+                  L, C, C + Length, False, From_Path => False);
             else
                Open_File_Editor
                  (Kernel,
@@ -541,7 +541,7 @@ package body Src_Editor_Box is
                      Filename        => Get_Declaration_File_Of (Entity),
                      Use_Source_Path => True,
                      Use_Object_Path => False),
-                  L, C, C + Length, False);
+                  L, C, C + Length, False, From_Path => False);
             end if;
          end if;
       end if;
@@ -1530,7 +1530,8 @@ package body Src_Editor_Box is
               (Kernel, File_Information (C));
          begin
             if Other_File /= "" then
-               Open_File_Editor (Kernel, Other_File, Line => 0);
+               Open_File_Editor (Kernel, Other_File, Line => 0,
+                                 From_Path => True);
             end if;
          end;
       end if;

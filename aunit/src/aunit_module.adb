@@ -74,8 +74,8 @@ package body Aunit_Module is
             File : constant String := Make_Test_Window.Name.all;
          begin
             --  ??? Should use correct body and spec names
-            Open_File_Editor (Kernel, File & ".ads");
-            Open_File_Editor (Kernel, File & ".adb");
+            Open_File_Editor (Kernel, File & ".ads", From_Path => True);
+            Open_File_Editor (Kernel, File & ".adb", From_Path => True);
          end;
       end if;
 
@@ -107,7 +107,7 @@ package body Aunit_Module is
          declare
             File : constant String := Make_Suite_Window.Name.all;
          begin
-            Open_File_Editor (Kernel, File & ".adb");
+            Open_File_Editor (Kernel, File & ".adb", From_Path => True);
          end;
       end if;
 
@@ -139,7 +139,7 @@ package body Aunit_Module is
          declare
             File : constant String := Make_Harness_Window.Procedure_Name.all;
          begin
-            Open_File_Editor (Kernel, File & ".adb");
+            Open_File_Editor (Kernel, File & ".adb", From_Path => True);
          end;
       end if;
 

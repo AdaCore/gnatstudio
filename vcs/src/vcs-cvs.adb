@@ -761,7 +761,7 @@ package body VCS.CVS is
       Free (Arguments);
 
       while Node /= Null_Node loop
-         Open_File_Editor (Rep.Kernel, Data (Node));
+         Open_File_Editor (Rep.Kernel, Data (Node), From_Path => False);
          Node := Next (Node);
       end loop;
    end Open;
@@ -1092,7 +1092,7 @@ package body VCS.CVS is
          return False;
       end if;
 
-      Open_File_Editor (Kernel, Current_File);
+      Open_File_Editor (Kernel, Current_File, From_Path => False);
 
       L_Temp := Next (Next (L_Temp));
 
@@ -1150,7 +1150,7 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
-      Open_File_Editor (Kernel, Text_File);
+      Open_File_Editor (Kernel, Text_File, From_Path => False);
       GNAT.OS_Lib.Delete_File (Text_File, Success);
 
       return True;

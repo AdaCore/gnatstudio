@@ -384,7 +384,8 @@ package body Navigation_Module is
               (Kernel, File_Information (File));
          begin
             if Other_File /= "" then
-               Open_File_Editor (Kernel, Other_File, Line => 0);
+               Open_File_Editor (Kernel, Other_File, Line => 0,
+                                 From_Path => True);
             end if;
          end;
       else

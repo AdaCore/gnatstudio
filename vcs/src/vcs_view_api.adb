@@ -360,7 +360,7 @@ package body VCS_View_API is
          L_Temp : List_Node := First (Files);
       begin
          while L_Temp /= Null_Node loop
-            Open_File_Editor (Kernel, Data (L_Temp));
+            Open_File_Editor (Kernel, Data (L_Temp), From_Path => False);
             L_Temp := Next (L_Temp);
          end loop;
       end;
@@ -1091,7 +1091,8 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          Open_File_Editor
-           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List), True));
+           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List), True),
+            From_Path => False);
          String_List.Next (List);
       end loop;
 
@@ -1439,7 +1440,8 @@ package body VCS_View_API is
             Open_File_Editor
               (Kernel,
                Get_Log_From_File
-                 (Kernel, String_List.Data (Files_Temp), True));
+                 (Kernel, String_List.Data (Files_Temp), True),
+               From_Path => False);
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
