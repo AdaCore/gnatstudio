@@ -68,6 +68,13 @@ private package Src_Info.LI_Utils is
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
 
+   procedure Add_Parent
+     (Declaration_Info        : in out E_Declaration_Info_List;
+      List                    : in LI_File_List;
+      Parent_Filename         : in String;
+      Parent_Location         : in Point);
+   --  Adds a new parent to the list of parent locations for given declaration
+
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;

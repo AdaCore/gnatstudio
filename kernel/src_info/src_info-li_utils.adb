@@ -369,6 +369,56 @@ package body Src_Info.LI_Utils is
    end Insert_Dependency_Declaration;
 
 
+   ------------------
+   --  Add_Parent  --
+   ------------------
+
+   procedure Add_Parent
+     (Declaration_Info        : in out E_Declaration_Info_List;
+      List                    : in LI_File_List;
+      Parent_Filename         : in String;
+      Parent_Location         : in Point)
+   is
+      FL_Ptr : File_Location_List;
+      Tmp_LI_File_Ptr : LI_File_Ptr;
+   begin
+      if Declaration_Info = null then
+         raise Declaration_Not_Found;
+      end if;
+      if Declaration_Info.Value.Declaration.Parent_Location = null then
+         Declaration_Info.Value.Declaration.Parent_Location
+               := new File_Location_Node;
+         FL_Ptr := Declaration_Info.Value.Declaration.Parent_Location;
+      else
+         FL_Ptr := Declaration_Info.Value.Declaration.Parent_Location;
+         loop
+            if FL_Ptr.Value.Line = Parent_Location.Line
+              and then FL_Ptr.Value.Column = Parent_Location.Column
+              and then FL_Ptr.Value.File.Source_Filename.all = Parent_Filename
+            then
+               return;
+            end if;
+            if FL_Ptr.Next = null then
+               FL_Ptr.Next := new File_Location_Node;
+               FL_Ptr := FL_Ptr.Next;
+               exit;
+            end if;
+            FL_Ptr := FL_Ptr.Next;
+         end loop;
+      end if;
+      Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
+      if Tmp_LI_File_Ptr = No_LI_File then
+         raise Parent_Not_Available;
+      end if;
+      FL_Ptr.Value :=
+        (File        => (LI => Tmp_LI_File_Ptr,
+                         Part => Unit_Body,
+                         Source_Filename =>
+                               new String'(Parent_Filename)),
+         Line        => Parent_Location.Line,
+         Column      => Parent_Location.Column);
+      FL_Ptr.Next.Next := null;
+   end Add_Parent;
 
    ------------------------
    --  Insert_Reference  --
