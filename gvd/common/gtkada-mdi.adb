@@ -804,8 +804,8 @@ package body Gtkada.MDI is
          Alloc.Height := Allocation_Int (Handle_Size);
          Alloc.Y := M.Docks_Size (Top);
 
-         if M.Priorities (Top) < M.Priorities (Left)
-           and then M.Docks_Size (Left) /= 0
+         if M.Docks_Size (Left) = 0
+           or else M.Priorities (Top) < M.Priorities (Left)
          then
             Alloc.X := 0;
          else
@@ -834,8 +834,8 @@ package body Gtkada.MDI is
          Alloc.Y :=
            Gint (MDI_Height - M.Docks_Size (Bottom) - Handle_Size);
 
-         if M.Priorities (Bottom) < M.Priorities (Left)
-           and then M.Docks_Size (Left) /= 0
+         if M.Docks_Size (Left) = 0
+           or else M.Priorities (Bottom) < M.Priorities (Left)
          then
             Alloc.X := 0;
          else
