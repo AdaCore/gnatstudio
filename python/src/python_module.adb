@@ -459,7 +459,7 @@ package body Python_Module is
          400, 100,
          "Python", "Python Console",
          Docked, Bottom,
-         True, True);
+         Focus => False, Raised => False);
 
       --  Create the GPS module, in which all functions and classes are
       --  registered
