@@ -201,7 +201,8 @@ package body Language.Debugger.Ada is
          --  First skip the current word
          if Is_Letter (Buffer (Next_Char)) then
             while Next_Char <= Buffer'Last
-              and then Is_Letter (Buffer (Next_Char))
+              and then (Is_Letter (Buffer (Next_Char))
+                        or else Buffer (Next_Char) = '_')
             loop
                Next_Char := Next_Char + 1;
             end loop;
