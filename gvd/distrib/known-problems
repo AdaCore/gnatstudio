@@ -1,5 +1,11 @@
 Known Problems in GVD 1.0.1
 
+- Opening the preferences dialog multiple times
+  Problem: If the preferences dialog was closed with the title bar's X button,
+           it wasn't possible to reopen it afterwards.
+  Workaround: Close the dialog with the Cancel button
+  Status: Fixed in GVD 1.0.2
+
 - [8327-010] NT directory separators not handled properly in the command line.
   Problem:
      When specifying an executable on the command line that contains
@@ -115,4 +121,3 @@ Known Problems in GVD 1.0.0
      Type the directory name explicitely without any pending slash/backslashes
      or use the "cd" command in the debugger window.
   Status: Fixed in GVD 1.0.1
-
