@@ -721,7 +721,6 @@ package body Src_Editor_View is
             Iter                       : Gtk_Text_Iter;
             Top_Line                   : Buffer_Line_Type;
             Bottom_Line                : Buffer_Line_Type;
-            Scroll                     : Boolean := False;
 
          begin
             Get_Geometry (Window, X, Y, Width, Height, Depth);
@@ -742,11 +741,6 @@ package body Src_Editor_View is
 
             --  If one of the values hadn't been initialized, display the
             --  whole range of lines.
-
-            if View.Top_Line /= Top_Line then
-               Scroll := True;
-            end if;
-
             View.Top_Line    := Top_Line;
             View.Bottom_Line := Bottom_Line;
 
@@ -775,10 +769,6 @@ package body Src_Editor_View is
 
             if Bottom_Line >= Top_Line then
                Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
-            end if;
-
-            if Scroll then
-               On_Scroll (View);
             end if;
          end;
 
@@ -1153,6 +1143,12 @@ package body Src_Editor_View is
          After       => False,
          Slot_Object => View);
 
+      Widget_Callback.Object_Connect
+        (Get_Vadjustment (View.Scroll),
+         "value_changed",
+         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
+         After       => True,
+         Slot_Object => View);
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
 
@@ -1939,6 +1935,7 @@ package body Src_Editor_View is
 
    begin
       Redraw_Speed_Column (Src_View);
+      Redraw_Columns (Src_View);
 
       if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then
          return;
