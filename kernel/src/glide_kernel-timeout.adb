@@ -119,7 +119,7 @@ package body Glide_Kernel.Timeout is
    ----------------
 
    function Process_Cb (Data : Console_Process) return Boolean is
-      Fd     : constant Process_Descriptor_Access := Data.D.Descriptor;
+      Fd     : Process_Descriptor_Access;
       Result : Expect_Match;
 
    begin
@@ -127,10 +127,13 @@ package body Glide_Kernel.Timeout is
          return False;
       end if;
 
-      Expect (Fd.all, Result, "\n", Timeout => 1);
+      Fd := Data.D.Descriptor;
+      Expect (Fd.all, Result, ".+", Timeout => 1);
 
       if Result /= Expect_Timeout then
          Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
+         Highlight_Child
+           (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
       end if;
 
       return True;
@@ -138,6 +141,8 @@ package body Glide_Kernel.Timeout is
    exception
       when Process_Died =>
          Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
+         Highlight_Child
+           (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
 
          if Data.D.Callback /= null then
             Data.D.Callback (Data.D);
