@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with GVD.Status_Bar; use GVD.Status_Bar;
-with GVD.Types; use GVD.Types;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with GVD.Main_Window; use GVD.Main_Window;
+with GVD.Status_Bar;  use GVD.Status_Bar;
+with GVD.Types;       use GVD.Types;
 with Process_Proxies; use Process_Proxies;
-with Debugger; use Debugger;
+with Debugger;        use Debugger;
 with System;
 with Ada.Unchecked_Conversion;
 
@@ -38,13 +38,13 @@ package body GVD.Trace is
    Verbose_HT    : aliased constant String := "\t";
 
    function To_Main_Window is new
-     Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+     Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
 
    ------------------
    -- Output_Error --
    ------------------
 
-   procedure Output_Error (Window : Main_Debug_Window_Access; Str : String) is
+   procedure Output_Error (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "# " & Str);
       Print_Message (Window.Statusbar1, Error, Str);
@@ -54,7 +54,7 @@ package body GVD.Trace is
    -- Output_Info --
    -----------------
 
-   procedure Output_Info (Window : Main_Debug_Window_Access; Str : String) is
+   procedure Output_Info (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "% " & Str);
       Print_Message (Window.Statusbar1, Help, Str);
@@ -64,7 +64,7 @@ package body GVD.Trace is
    -- Output_Line --
    -----------------
 
-   procedure Output_Line (Window : Main_Debug_Window_Access; Str : String) is
+   procedure Output_Line (Window : GVD_Main_Window; Str : String) is
       N  : Integer;
       LF : aliased constant String := (1 => ASCII.LF);
 
@@ -136,7 +136,7 @@ package body GVD.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
+      Window : constant GVD_Main_Window := To_Main_Window (User_Data);
    begin
       declare
          Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);
@@ -158,7 +158,7 @@ package body GVD.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
+      Window : constant GVD_Main_Window := To_Main_Window (User_Data);
    begin
       declare
          Tab : constant Debugger_Process_Tab := Convert (Window, Descriptor);

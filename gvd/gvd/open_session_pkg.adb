@@ -36,7 +36,7 @@ with Debugger; use Debugger;
 with GVD.Process; use GVD.Process;
 with String_Utils; use String_Utils;
 with GVD.Types; use GVD.Types;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window; use GVD.Main_Window;
 
 with Ada.Unchecked_Deallocation;
 
@@ -186,8 +186,7 @@ procedure Save_Session
    Dir    : in String)
 is
    File          : File_Type;
-   Top           : constant Main_Debug_Window_Access :=
-     Main_Debug_Window_Access (Window);
+   Top           : constant GVD_Main_Window := GVD_Main_Window (Window);
    Tab           : Debugger_Process_Tab;
    Directory     : Dir_Type;
    Buffer        : String (1 .. 256);
@@ -425,7 +424,7 @@ begin
             if Get_Active (Current_Button.Button) then
                Processes (J) :=
                  Create_Debugger
-                 (Main_Debug_Window_Access (Window),
+                 (GVD_Main_Window (Window),
                   Program.Debugger,
                   Program.Program.all,
                   List, "",

@@ -48,7 +48,7 @@ with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Debugger;         use Debugger;
 
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;  use GVD.Main_Window;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 package body GVD.Canvas is
@@ -930,9 +930,8 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
-      Top  : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access
-          (Debugger_Process_Tab (Item.Canvas.Process).Window);
+      Top  : constant GVD_Main_Window :=
+        GVD_Main_Window (Debugger_Process_Tab (Item.Canvas.Process).Window);
       View : constant GVD_Memory_View := Top.Memory_View;
 
    begin

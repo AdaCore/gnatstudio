@@ -849,7 +849,7 @@ private
       Processing_User_Command : Boolean := False;
       --  True when a user command is being handled by the debugger.
       --  ??? Would be nice to merge Process_Proxy.Command_In_Process and
-      --  Main_Debug_Window.Locked with this field
+      --  GVD_Main_Window.Locked with this field
 
       Remote_Host     : GNAT.OS_Lib.String_Access;
       Remote_Target   : GNAT.OS_Lib.String_Access;

@@ -33,7 +33,7 @@ with Gtk.Window;        use Gtk.Window;
 with GVD.Process;       use GVD.Process;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;   use GVD.Main_Window;
 
 package body Debugger.Jdb is
 
@@ -147,7 +147,7 @@ package body Debugger.Jdb is
 
       --  ??? Should avoid the duplication of this code with debugger-*
 
-      if Main_Debug_Window_Access (Window).Debug_Mode then
+      if GVD_Main_Window (Window).Debug_Mode then
          Add_Filter
            (Get_Descriptor (Debugger.Process).all,
             Output_Filter'Access, Output,
@@ -158,7 +158,7 @@ package body Debugger.Jdb is
             Window.all'Address);
       end if;
 
-      if Main_Debug_Window_Access (Window).TTY_Mode then
+      if GVD_Main_Window (Window).TTY_Mode then
          Add_Filter
            (Get_Descriptor (Debugger.Process).all,
             TTY_Filter'Access, Output,

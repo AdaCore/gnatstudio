@@ -37,7 +37,7 @@ with Gtk.Widget;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
-with Main_Debug_Window_Pkg;
+with GVD.Main_Window;
 with Process_Tab_Pkg;
 with Items;
 with GVD.Code_Editors;
@@ -47,7 +47,7 @@ with GVD.Types;
 package GVD.Process is
 
    package Standard_Input_Package is new Gdk.Input.Input_Add
-     (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
+     (GVD.Main_Window.GVD_Main_Window_Record'Class);
    --  This package is needed to handle the tty mode.
 
    procedure Input_Available
@@ -122,7 +122,7 @@ package GVD.Process is
       Debugger                : Debugger_Access;
       --  The underlying debugger process.
 
-      Window                  : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Window                  : GVD.Main_Window.GVD_Main_Window;
       --  The associated main window.
 
       Edit_Pos                : Glib.Guint;
@@ -196,8 +196,7 @@ package GVD.Process is
    --  a Gtk_VPaned, instead of a toplevel window.
 
    function Create_Debugger
-     (Window          : access
-        Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+     (Window          : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Executable      : String;
       Debugger_Args   : Argument_List;
@@ -235,9 +234,9 @@ package GVD.Process is
    --  To be used with Add_Regexp_Filter below.
 
    procedure Add_Regexp_Filter
-     (Process   : access Debugger_Process_Tab_Record'Class;
-      Filter    : Regexp_Filter_Function;
-      Regexp    : Pattern_Matcher);
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Filter  : Regexp_Filter_Function;
+      Regexp  : Pattern_Matcher);
    --  Add a new regexp filter.
    --  This filter will be run when output from a debugger is received
    --  that matches regexp.
@@ -246,9 +245,8 @@ package GVD.Process is
    --  Return the number identifying the debugger associated with a process tab
 
    function Convert
-     (Main_Debug_Window : access
-        Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Descriptor : GNAT.Expect.Process_Descriptor'Class)
+     (Main_Debug_Window : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Descriptor        : GNAT.Expect.Process_Descriptor'Class)
       return Debugger_Process_Tab;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.

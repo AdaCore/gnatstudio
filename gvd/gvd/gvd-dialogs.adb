@@ -45,7 +45,7 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
 with GVD.Utils;             use GVD.Utils;
 with Odd_Intl;              use Odd_Intl;

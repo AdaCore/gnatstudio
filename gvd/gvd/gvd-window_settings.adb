@@ -18,22 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gint_Xml;                use Gint_Xml;
+with Gint_Xml;            use Gint_Xml;
 
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Notebook;            use Gtk.Notebook;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 
-with Gtkada.Canvas;           use Gtkada.Canvas;
+with Gtkada.Canvas;       use Gtkada.Canvas;
 
-with Main_Debug_Window_Pkg;   use Main_Debug_Window_Pkg;
-with GVD.Memory_View;         use GVD.Memory_View;
-with GVD.Dialogs;             use GVD.Dialogs;
-with GVD.Process;             use GVD.Process;
-with GVD.Preferences;         use GVD.Preferences;
-with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Main_Window;     use GVD.Main_Window;
+with GVD.Memory_View;     use GVD.Memory_View;
+with GVD.Dialogs;         use GVD.Dialogs;
+with GVD.Process;         use GVD.Process;
+with GVD.Preferences;     use GVD.Preferences;
+with GVD.Code_Editors;    use GVD.Code_Editors;
 
 package body GVD.Window_Settings is
 
@@ -92,9 +92,7 @@ package body GVD.Window_Settings is
      (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Main_Debug_Window);
-
+      Top : constant GVD_Main_Window := GVD_Main_Window (Main_Debug_Window);
    begin
       if Current_Window_Settings /= null then
          Free (Current_Window_Settings);
@@ -127,8 +125,8 @@ package body GVD.Window_Settings is
      (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top       : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Main_Debug_Window);
+      Top       : constant GVD_Main_Window :=
+        GVD_Main_Window (Main_Debug_Window);
       Process   : Debugger_Process_Tab;
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=

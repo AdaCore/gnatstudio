@@ -33,7 +33,7 @@ with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Process;           use GVD.Process;
 with Debugger;              use Debugger;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -68,8 +68,8 @@ package body GVD.Dialogs.Callbacks is
       Top           : constant GVD_Dialog :=
         GVD_Dialog (Get_Toplevel (Object));
 
-      Main_Window   : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Top.Main_Window);
+      Main_Window   : constant GVD_Main_Window :=
+        GVD_Main_Window (Top.Main_Window);
 
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
@@ -176,8 +176,8 @@ package body GVD.Dialogs.Callbacks is
    is
       History_Dialog : History_Dialog_Access :=
         History_Dialog_Access (Get_Toplevel (Object));
-      Top  : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (History_Dialog.Window);
+      Top  : constant GVD_Main_Window :=
+        GVD_Main_Window (History_Dialog.Window);
       Page : constant Gtk_Widget :=
         Get_Nth_Page
           (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));

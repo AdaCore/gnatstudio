@@ -32,7 +32,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
 with Gtk.Window;        use Gtk.Window;
 
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;   use GVD.Main_Window;
 with OS_Utils;          use OS_Utils;
 with Odd_Intl;          use Odd_Intl;
 with Language;          use Language;
@@ -197,8 +197,8 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called.
 
-   function To_Main_Debug_Window is new Standard.Ada.Unchecked_Conversion
-     (System.Address, Main_Debug_Window_Access);
+   function To_Main_Debug_Window is new
+     Standard.Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
 
    ---------------------
    -- Language_Filter --
@@ -563,7 +563,7 @@ package body Debugger.Gdb is
 
          --  ??? Should avoid the duplication of this code between debugger-*
 
-         if Main_Debug_Window_Access (Window).Debug_Mode then
+         if GVD_Main_Window (Window).Debug_Mode then
             Add_Filter
               (Get_Descriptor (Debugger.Process).all,
                Output_Filter'Access, Output,
@@ -574,7 +574,7 @@ package body Debugger.Gdb is
                Window.all'Address);
          end if;
 
-         if Main_Debug_Window_Access (Window).TTY_Mode then
+         if GVD_Main_Window (Window).TTY_Mode then
             Add_Filter
               (Get_Descriptor (Debugger.Process).all,
                TTY_Filter'Access, Output,

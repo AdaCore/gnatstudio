@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
-with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
+with Gtk.Widget;             use Gtk.Widget;
+with GVD.Main_Window;        use GVD.Main_Window;
 with GVD.Preferences;        use GVD.Preferences;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
@@ -53,9 +53,9 @@ package body General_Preferences_Pkg.Callbacks is
    begin
       Set_Preferences (Pref);
       Hide (Get_Toplevel (Object));
-      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+      Preferences_Changed (GVD_Main_Window (Pref.Main_Window));
       Save_Preferences
-        (Main_Debug_Window_Access (Pref.Main_Window).Gvd_Home_Dir.all
+        (GVD_Main_Window (Pref.Main_Window).Gvd_Home_Dir.all
          & Directory_Separator & "preferences");
    end On_Ok_Button_Clicked;
 
@@ -69,7 +69,7 @@ package body General_Preferences_Pkg.Callbacks is
       Pref : GVD_Preferences_Access := GVD_Preferences_Access (Object);
    begin
       Apply_Preferences (Pref);
-      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+      Preferences_Changed (GVD_Main_Window (Pref.Main_Window));
    end On_Test_Button_Clicked;
 
    ------------------------------
@@ -83,7 +83,7 @@ package body General_Preferences_Pkg.Callbacks is
    begin
       Cancel_Preferences (Pref);
       Hide (Get_Toplevel (Object));
-      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+      Preferences_Changed (GVD_Main_Window (Pref.Main_Window));
    end On_Cancel_Button_Clicked;
 
 end General_Preferences_Pkg.Callbacks;

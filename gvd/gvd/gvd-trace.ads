@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect; use GNAT.Expect;
-with GVD.Process; use GVD.Process;
-with GVD.Types;   use GVD.Types;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GNAT.Expect;     use GNAT.Expect;
+with GVD.Process;     use GVD.Process;
+with GVD.Types;       use GVD.Types;
+with GVD.Main_Window; use GVD.Main_Window;
 with System;
 
 package GVD.Trace is
@@ -31,15 +31,15 @@ package GVD.Trace is
    --  Input_Kind means input strings sent to the debugger.
    --  Output_Kind means output strings received from the debugger.
 
-   procedure Output_Error (Window : Main_Debug_Window_Access; Str : String);
+   procedure Output_Error (Window : GVD_Main_Window; Str : String);
    --  Output an error line on the statusbar associated with Window, and
    --  on its log file.
 
-   procedure Output_Info (Window : Main_Debug_Window_Access; Str : String);
+   procedure Output_Info (Window : GVD_Main_Window; Str : String);
    --  Output an information line on the statusbar associated with Window, and
    --  on its log file.
 
-   procedure Output_Line (Window : Main_Debug_Window_Access; Str : String);
+   procedure Output_Line (Window : GVD_Main_Window; Str : String);
    --  Write on the log file associated with Window.
 
    procedure Output_Message

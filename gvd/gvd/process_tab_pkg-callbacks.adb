@@ -35,7 +35,7 @@ with Gtk.Menu;              use Gtk.Menu;
 
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with Basic_Types;           use Basic_Types;
@@ -89,7 +89,7 @@ package body Process_Tab_Pkg.Callbacks is
          Notebook := Gtk_Notebook (Get_Parent (Box));
          Page     := Page_Num (Notebook, Box);
       else
-         Notebook := Main_Debug_Window_Access (Top_Level).Process_Notebook;
+         Notebook := GVD_Main_Window (Top_Level).Process_Notebook;
          Page     := Get_Current_Page (Notebook);
       end if;
 

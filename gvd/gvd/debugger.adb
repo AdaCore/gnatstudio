@@ -48,9 +48,9 @@ with String_Utils;      use String_Utils;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;   use GVD.Main_Window;
 
-with Gtkada.Dialogs;     use Gtkada.Dialogs;
+with Gtkada.Dialogs;    use Gtkada.Dialogs;
 
 package body Debugger is
 
@@ -656,8 +656,7 @@ package body Debugger is
       Mode         : Invisible_Command := Hidden) return String
    is
       Process : Debugger_Process_Tab;
-      Main    : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Debugger.Window);
+      Main    : constant GVD_Main_Window := GVD_Main_Window (Debugger.Window);
 
    begin
       if Debugger.Processing_User_Command then

@@ -65,7 +65,7 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Jdb;               use Debugger.Jdb;
 with Process_Proxies;            use Process_Proxies;
 with Items.Simples;              use Items.Simples;
-with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
+with GVD.Main_Window;            use GVD.Main_Window;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
@@ -108,7 +108,7 @@ package body GVD.Process is
      (Debugger_Process_Tab_Record, Boolean);
 
    function To_Main_Debug_Window is new
-     Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+     Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
 
    --  This pointer will keep a pointer to the C 'class record' for
    --  gtk. To avoid allocating memory for each widget, this may be done
@@ -297,7 +297,7 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Main_Debug_Window : access Main_Debug_Window_Record'Class;
+     (Main_Debug_Window : access GVD_Main_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)
       return Debugger_Process_Tab
    is
@@ -353,7 +353,7 @@ package body GVD.Process is
      (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
       Debugger : access Debugger_Root'Class) return Debugger_Process_Tab is
    begin
-      return Convert (Main_Debug_Window_Access (Main_Debug_Window),
+      return Convert (GVD_Main_Window (Main_Debug_Window),
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
@@ -689,8 +689,7 @@ package body GVD.Process is
    ---------------------
 
    function Create_Debugger
-     (Window          : access
-        Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+     (Window          : access GVD_Main_Window_Record'Class;
       Kind            : Debugger_Type;
       Executable      : String;
       Debugger_Args   : Argument_List;
@@ -1335,7 +1334,7 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger (Debugger : Debugger_Process_Tab) is
-      Top      : constant Main_Debug_Window_Access := Debugger.Window;
+      Top      : constant GVD_Main_Window := Debugger.Window;
       Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
       Length   : Guint;
       use String_History;
@@ -1598,7 +1597,7 @@ package body GVD.Process is
       return Debugger_Process_Tab
    is
       Page : Gtk.Gtk_Notebook_Page := Get_Cur_Page
-        (Main_Debug_Window_Access (Main_Window).Process_Notebook);
+        (GVD_Main_Window (Main_Window).Process_Notebook);
    begin
       if Page = null then
          return null;

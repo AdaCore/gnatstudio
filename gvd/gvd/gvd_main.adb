@@ -29,7 +29,7 @@ with Gtk.Notebook;          use Gtk.Notebook;
 with Gtkada.Intl;           use Gtkada.Intl;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with Debugger;
 with Process_Proxies;
 with OS_Utils;              use OS_Utils;
@@ -59,7 +59,7 @@ procedure GVD_Main is
    Debugger_List     : Argument_List (1 .. Argument_Count);
    Program_Args      : String_Access := new String' ("");
    Debugger_Index    : Natural := 0;
-   Main_Debug_Window : Main_Debug_Window_Access;
+   Main_Debug_Window : GVD_Main_Window;
    Id                : Glib.Gint;
    Level             : Integer;
    Debug_Type        : Debugger_Type := Gdb_Type;
@@ -79,7 +79,7 @@ procedure GVD_Main is
    --  Set up environment for GVD.
 
    procedure Bug_Dialog
-     (Win : Main_Debug_Window_Access; E : Exception_Occurrence);
+     (Win : GVD_Main_Window; E : Exception_Occurrence);
    --  Display a bug box on the screen with as much information as possible.
 
    procedure Help;
@@ -175,7 +175,7 @@ procedure GVD_Main is
    end Init;
 
    procedure Bug_Dialog
-     (Win : Main_Debug_Window_Access; E : Exception_Occurrence) is
+     (Win : GVD_Main_Window; E : Exception_Occurrence) is
    begin
       Output_Line (Win, "# Bug detected in GVD");
       Output_Line (Win, "# Version: " & GVD.Version);

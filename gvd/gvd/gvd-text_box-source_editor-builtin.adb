@@ -45,7 +45,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with Debugger;              use Debugger;
 with Language;              use Language;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with Process_Proxies;       use Process_Proxies;
 
 with GVD.Canvas;            use GVD.Canvas;
@@ -1261,7 +1261,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record)
    is
-      Top  : constant Main_Debug_Window_Access := Br.Process.Window;
+      Top  : constant GVD_Main_Window := Br.Process.Window;
       View : constant GVD_Memory_View := Top.Memory_View;
    begin
       if not Visible_Is_Set (View) then

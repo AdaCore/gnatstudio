@@ -24,17 +24,17 @@ with Gtk.Arguments; use Gtk.Arguments;
 with GVD.Types;
 with GVD.Process;
 with GVD.Source_Editors;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window; use GVD.Main_Window;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with Ada.Unchecked_Conversion;
 
 package body GVD.API is
 
    function "+" is new
-     Ada.Unchecked_Conversion (Main_Debug_Window, Main_Debug_Window_Access);
+     Ada.Unchecked_Conversion (Main_Debug_Window, GVD_Main_Window);
 
    function "-" is new
-     Ada.Unchecked_Conversion (Main_Debug_Window_Access, Main_Debug_Window);
+     Ada.Unchecked_Conversion (GVD_Main_Window, Main_Debug_Window);
 
    function "+" is new
      Ada.Unchecked_Conversion
@@ -241,7 +241,7 @@ package body GVD.API is
    ------------------------
 
    function Create_Main_Window return Main_Debug_Window is
-      Window : Main_Debug_Window_Access;
+      Window : GVD_Main_Window;
    begin
       Gtk_New (Window);
       return -Window;

@@ -23,12 +23,12 @@
 --  that is displayed in the source window.
 
 with Basic_Types;
-with Main_Debug_Window_Pkg;
+with GVD.Main_Window;
 
 package GVD.Files is
 
    function Find_In_Cache
-     (Window    : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+     (Window    : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       File_Name : String) return Basic_Types.File_Cache_List;
    --  Return the cached data for a given file.
    --  If no data was previously cached for that file, then a new File_Cache
@@ -49,8 +49,8 @@ package GVD.Files is
    --  Error_Msg is left to null if the file could be found.
 
    procedure Clear_Cache
-     (Window : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Force : Boolean := True);
+     (Window : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Force  : Boolean := True);
    --  Clear the contents of the cached data for Window.
    --  if Force is False, then only the entries for which the Carriage return
    --  were not stripped are deleted, otherwise all entries are removed

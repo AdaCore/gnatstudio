@@ -20,7 +20,7 @@
 
 with Basic_Types;           use Basic_Types;
 with GVD.Preferences;       use GVD.Preferences;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_Utils;          use String_Utils;
 with Gtkada.Intl;           use Gtkada.Intl;
@@ -40,7 +40,7 @@ package body GVD.Files is
    -------------------
 
    function Find_In_Cache
-     (Window    : access Main_Debug_Window_Record'Class;
+     (Window    : access GVD_Main_Window_Record'Class;
       File_Name : String) return File_Cache_List
    is
       Tmp : File_Cache_List := Window.File_Caches;
@@ -232,8 +232,8 @@ package body GVD.Files is
    -----------------
 
    procedure Clear_Cache
-     (Window : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Force : Boolean := True)
+     (Window : access GVD_Main_Window_Record'Class;
+      Force  : Boolean := True)
    is
       Tmp : File_Cache_List := Window.File_Caches;
       Next : File_Cache_List;
