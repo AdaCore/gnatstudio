@@ -755,6 +755,8 @@ procedure GPS is
          Destroy (Splash);
       end if;
 
+      Python_Module.Load_Python_Startup_Files (GPS.Kernel);
+
       if Batch_Script /= null then
          Execute_Batch (Batch_Script.all, As_File => False);
       end if;
