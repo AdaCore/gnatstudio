@@ -30,6 +30,8 @@ package VCS.CVS is
 
    type CVS_Access is access all CVS_Record'Class;
 
+   procedure Free (Ref : access CVS_Record);
+
    function Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
@@ -83,22 +85,9 @@ package VCS.CVS is
      (Rep  : access CVS_Record;
       File : String) return String_List.List;
 
-   function Success (Rep : access CVS_Record) return Boolean;
-
-   function Get_Message (Rep : access CVS_Record) return String;
-
-   procedure Register_Idle_Function
-     (Rep     : access CVS_Record;
-      Func    : Idle_Function;
-      Timeout : Integer := 200);
+   procedure Register_Module;
 
 private
-   type Parameterless_Procedure is access procedure;
+   type CVS_Record is new VCS_Record with null record;
 
-   type CVS_Record is new VCS_Record with record
-      Success              : Boolean := True;
-      Message              : String_List.List;
-      Local_Idle_Function  : Idle_Function := null;
-      Timeout              : Integer := 200;
-   end record;
 end VCS.CVS;
