@@ -1,17 +1,19 @@
 New features in GPS 1.0.2
 
+- Documentation updates
+
 - Standard open file dialog used by default under Windows
 
-- Possibility to add buttons to the toolbar via the custom file.
+- Possibility to add buttons to the toolbar via the custom file
 
 - New editors for the GNAT switches: style warnings, validity tests, and
-  general warnings.
+  general warnings
 
-- Implement recursive directory operations for version control.
+- Implement recursive directory operations for version control
 
-- Possibility in the editor to jump to the matching parenthesis/brackets.
+- Possibility in the editor to jump to the matching parenthesis/brackets
 
-- Builds/Run can now be launched on a remote host.
+- Builds/Run can now be launched on a remote host
 
 - Goto Spec/Body will now work even if the file was not previously compiled
 
@@ -46,7 +48,7 @@ New features in GPS 1.0.2
 
 - The "File" column in the VCS explorer can now be resized.
 
-- Multiple line comment/uncomment.
+- Multiple line comment/uncomment
 
 New features in GPS 1.0.1
 
