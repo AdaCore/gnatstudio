@@ -11,6 +11,7 @@ with "../vcs/vcs";
 with "../metrics/metrics";
 with "../builder/builder";
 with "../navigation/navigation";
+with "../custom/custom";
 with "../shared";
 
 project GPS is
