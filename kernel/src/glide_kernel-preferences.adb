@@ -18,16 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;           use Gdk.Color;
-with Gdk.Types;           use Gdk.Types;
-with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
-with Glib;                use Glib;
-with Glib.Properties;     use Glib.Properties;
-with Gdk.Color;           use Gdk.Color;
-with Pango.Font;          use Pango.Font;
-with Glide_Intl;          use Glide_Intl;
+with Gdk.Color;                use Gdk.Color;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Glib;                     use Glib;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Generic_Properties;  use Glib.Generic_Properties;
+with Gdk.Color;                use Gdk.Color;
+with Pango.Font;               use Pango.Font;
+with Glide_Intl;               use Glide_Intl;
 
 package body Glide_Kernel.Preferences is
+
+   package Line_Terminators_Properties is new Generic_Enumeration_Property
+     ("Line_Terminators", Line_Terminators);
+
+   package Key_Themes_Properties is new Generic_Enumeration_Property
+     ("Key_Themes", Key_Themes);
 
    ---------------------------------
    -- Register_Global_Preferences --
@@ -46,12 +53,12 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Font), -"General");
 
-      Key_Theme_Name := Param_Spec_String (Gnew_String
+      Key_Theme_Name := Param_Spec_Enum (Key_Themes_Properties.Gnew_Enum
         (Name    => "General-Key-Theme-Name",
          Nick    => -"Key theme",
          Blurb   =>
            -"Name of key theme to use. Default and Emacs are supported",
-         Default => "Default"));
+         Default => Default));
       Register_Property
         (Kernel.Preferences, Param_Spec (Key_Theme_Name), -"General");
 
@@ -279,17 +286,25 @@ package body Glide_Kernel.Preferences is
       Strip_Blanks := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Strip-Blanks",
          Default => True,
-         Blurb   => -("Whether the editor should remove trailing blanks"
-                      & " when saving a file"),
+         Blurb   =>
+           -"Should the editor remove trailing blanks when saving files",
          Nick    => -"Strip blanks"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor:General");
+
+      Line_Terminator := Param_Spec_Enum (Line_Terminators_Properties.Gnew_Enum
+        (Name  => "Src-Editor-Line-Terminator",
+         Nick  => -"Line terminator",
+         Blurb => -"Line terminator style to use when saving files",
+         Default => Unchanged));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Line_Terminator), -"Editor:General");
 
       Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Line_Numbers",
          Default => True,
          Blurb   =>
-           -("Whether the line numbers should be displayed in file editors"),
+           -"Whether the line numbers should be displayed in file editors",
          Nick    => -"Display line numbers"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Line_Numbers),
@@ -341,7 +356,7 @@ package body Glide_Kernel.Preferences is
          Default_Modifier => Control_Mask,
          Default_Key      => GDK_Tab);
       Register_Property
-        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:Keys");
 
       Completion_Key := Gnew_Key
         (Name  => "Src-Editor-Complete-Key",
@@ -350,7 +365,7 @@ package body Glide_Kernel.Preferences is
          Default_Modifier => Control_Mask,
          Default_Key      => GDK_slash);
       Register_Property
-        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:Keys");
 
       Delimiters_Jump_Key := Gnew_Key
         (Name  => "Src-Editor-Delimiters-Jump-Key",
@@ -359,9 +374,7 @@ package body Glide_Kernel.Preferences is
          Default_Modifier => Control_Mask,
          Default_Key      => GDK_apostrophe);
       Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Delimiters_Jump_Key),
-           -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Delimiters_Jump_Key), -"Editor:Keys");
 
       Default_Keyword_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Keyword-Color",
@@ -728,6 +741,7 @@ package body Glide_Kernel.Preferences is
          -"Browsers:File Dependencies");
 
       -- VCS --
+
       Hide_Up_To_Date := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "VCS-Hide-Up-To-Date",
          Default => False,
@@ -764,7 +778,7 @@ package body Glide_Kernel.Preferences is
                       & " not maximized"),
          Nick    => -"Opaque"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:MDI");
+        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:Windows");
 
       MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Destroy-Floats",
@@ -775,7 +789,8 @@ package body Glide_Kernel.Preferences is
                       & " destroyed"),
          Nick    => -"Destroy floats"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats), -"General:MDI");
+        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats),
+         -"General:Windows");
 
       MDI_Title_Font := Param_Spec_Font (Gnew_Font
         (Name    => "MDI-Title-Font",
@@ -783,7 +798,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Font used in the title bar of the items",
          Nick    => -"Title font"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Title_Font), -"General:MDI");
+        (Kernel.Preferences, Param_Spec (MDI_Title_Font), -"General:Windows");
 
       MDI_Background_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Background-Color",
@@ -792,7 +807,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Background color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_Background_Color),
-         -"General:MDI");
+         -"General:Windows");
 
       MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Title-Bar-Color",
@@ -801,7 +816,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Title bar color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color),
-         -"General:MDI");
+         -"General:Windows");
 
       MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Focus-Title-Color",
@@ -810,7 +825,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Selected title bar color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
-         -"General:MDI");
+         -"General:Windows");
 
       --------------
       -- Debugger --
