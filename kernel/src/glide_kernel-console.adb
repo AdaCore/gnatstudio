@@ -668,7 +668,7 @@ package body Glide_Kernel.Console is
             Identifier : constant String := Get_String (Data (Data'First));
             Category   : constant String := Get_String (Data (Data'First + 1));
             File       : constant Virtual_File :=
-              Create (Full_Filename => Get_String (Data (Data'First + 2)));
+              Get_File (Data (Data'First + 2));
             Line       : constant Gint   := Get_Int (Data (Data'First + 3));
             Column     : constant Gint   := Get_Int (Data (Data'First + 4));
             Message    : constant String := Get_String (Data (Data'First + 5));
