@@ -205,20 +205,34 @@ package body Src_Editor_Buffer.Text_Handling is
 
    function Get_Chars
      (Buffer     : access Source_Buffer_Record'Class;
-      Line       : Editable_Line_Type;
+      Line       : Editable_Line_Type := 0;
       Column     : Natural := 0;
       Before     : Integer := -1;
       After      : Integer := -1) return UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Natural;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Has_Selection : Boolean;
    begin
-      Get_Location
-        (Buffer, Line, Column, Before, After,
-         Line_Begin, Column_Begin, Line_End, Column_End);
+      if Line = 0 then
+         Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
 
-      return
-        Get_Chars (Buffer, Line_Begin, Column_Begin, Line_End, Column_End);
+         if Has_Selection then
+            return Get_Text (Buffer, Start_Iter, End_Iter, False);
+         else
+            return "";
+         end if;
+
+      else
+         Get_Location
+           (Buffer, Line, Column, Before, After,
+            Line_Begin, Column_Begin, Line_End, Column_End);
+
+         return
+           Get_Chars (Buffer, Line_Begin, Column_Begin, Line_End, Column_End);
+      end if;
    end Get_Chars;
 
    -------------------

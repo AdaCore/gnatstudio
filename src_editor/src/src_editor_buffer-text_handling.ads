@@ -34,11 +34,12 @@ package Src_Editor_Buffer.Text_Handling is
 
    function Get_Chars
      (Buffer     : access Source_Buffer_Record'Class;
-      Line       : Editable_Line_Type;
+      Line       : Editable_Line_Type := 0;
       Column     : Natural := 0;
       Before     : Integer := -1;
       After      : Integer := -1) return UTF8_String;
    --  Return the characters around given position.
+   --  If Line is 0, then the contents of the current selection is returned
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record'Class;
