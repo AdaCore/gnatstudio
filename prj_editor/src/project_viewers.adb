@@ -1821,12 +1821,12 @@ package body Project_Viewers is
             if New_Src /= "" then
                Set_Predefined_Source_Path
                  (Get_Registry (Kernel).all,
-                  Old_Src & Path_Separator & New_Src);
+                  New_Src & Path_Separator & Old_Src);
             end if;
             if Old_Obj /= "" then
                Set_Predefined_Object_Path
                  (Get_Registry (Kernel).all,
-                  Old_Obj & Path_Separator & New_Obj);
+                  New_Obj & Path_Separator & Old_Obj);
             end if;
          end;
       end if;
