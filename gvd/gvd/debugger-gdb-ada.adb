@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                  GPS                              --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                                AdaCore                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -973,7 +973,7 @@ package body Debugger.Gdb.Ada is
                Parse_Item;
          end case;
 
-         exit when Dim = 0;
+         exit when Dim = 0 or else Index >= Type_Str'Last;
 
          --  If the loop exit condition did not change, do not attempt to parse
          --  the item as an array.
