@@ -103,11 +103,11 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->Close menu
 
-   procedure On_Save_Session
+   procedure On_Save_Desktop
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  File->Save Session menu
+   --  File->Save Desktop menu
 
    procedure On_Exit
      (Object : Data_Type_Access;
@@ -437,18 +437,18 @@ package body Glide_Menu is
    end On_Exit;
 
    ---------------------
-   -- On_Save_Session --
+   -- On_Save_Desktop --
    ---------------------
 
-   procedure On_Save_Session
+   procedure On_Save_Desktop
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget)
    is
       Top  : constant Glide_Window := Glide_Window (Object);
    begin
-      Save_Session (Top.Kernel);
-   end On_Save_Session;
+      Save_Desktop (Top.Kernel);
+   end On_Save_Desktop;
 
    -------------
    -- On_Undo --
@@ -1078,7 +1078,7 @@ package body Glide_Menu is
          Gtk_New (-"/_File/Save As...", "", Stock_Save_As, On_Save_As'Access),
          Gtk_New (-"/_File/Close", "", Stock_Close, On_Close'Access),
          Gtk_New (-"/_File/Close All", "", null),
-         Gtk_New (-"/_File/Save Session", "", On_Save_Session'Access),
+         Gtk_New (-"/_File/Save Desktop", "", On_Save_Desktop'Access),
          Gtk_New (-"/_File/sep3", Item_Type => Separator),
          Gtk_New (-"/_File/Print", "", Stock_Print, null),
          Gtk_New (-"/_File/sep4", Item_Type => Separator),
