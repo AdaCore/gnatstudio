@@ -3,6 +3,11 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
+- On-the-fly syntax checking
+
+- Ability to change the default foreground and background colors in the editors
+  through the preferences dialog
+
 - Callgraph now shows clickable references location
 
 - Improved handling of C++ classes in the Entity Browser
