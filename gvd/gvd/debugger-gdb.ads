@@ -154,7 +154,7 @@ package Debugger.Gdb is
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
       File     : String;
-      Line     : Positive) return Boolean;
+      Line     : Positive) return Line_Kind;
 
 private
 

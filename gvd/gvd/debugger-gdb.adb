@@ -208,7 +208,7 @@ package body Debugger.Gdb is
    function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
-      Send (Debugger, "ptype " & Entity, Empty_Buffer => True);
+      Send (Debugger, "ptype " & Entity);
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
@@ -232,7 +232,7 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String is
    begin
-      Send (Debugger, "print " & Entity, Empty_Buffer => True);
+      Send (Debugger, "print " & Entity);
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
@@ -265,7 +265,7 @@ package body Debugger.Gdb is
    begin
       --  ??? Probably, this should be language-dependent.
 
-      Send (debugger, "print &(" & Entity & ")", Empty_Buffer => True);
+      Send (debugger, "print &(" & Entity & ")");
 
       declare
          S       : String := Expect_Out (Get_Process (Debugger));
@@ -370,16 +370,23 @@ package body Debugger.Gdb is
 
    procedure Initialize (Debugger : access Gdb_Debugger) is
    begin
+      --  Make sure that the prompt is what odd is expecting.
+
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
+      Send (Debugger, "set prompt (gdb) ", Wait_For_Prompt => False);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
+
       --  Wait for initial prompt (and display it in the window)
       Wait_Prompt (Debugger);
       Push_Internal_Command_Status (Get_Process (Debugger), True);
 
-      Send (Debugger, "set prompt (gdb) ");
       Send (Debugger, "set width 0");
       Send (Debugger, "set height 0");
       Send (Debugger, "set annotate 1");
 
       --  Connect to the remote target if needed.
+
+      Pop_Internal_Command_Status (Get_Process (Debugger));
 
       if Debugger.Target_Command /= null then
          Send (Debugger, Debugger.Target_Command.all);
@@ -390,8 +397,7 @@ package body Debugger.Gdb is
       if Debugger.Executable /= null then
          Set_Executable (Debugger, Debugger.Executable.all);
       else
-         --  ??? This part should not be required if the executable was
-         --  correctly parsed from the command line.
+         Push_Internal_Command_Status (Get_Process (Debugger), True);
 
          --  Detect the current language. Note that most of the work is done
          --  in fact directly by Language_Filter.
@@ -405,8 +411,8 @@ package body Debugger.Gdb is
 
          Send (Debugger, "list");
          Send (Debugger, "info line");
+         Pop_Internal_Command_Status (Get_Process (Debugger));
       end if;
-      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Initialize;
 
    -----------
@@ -723,7 +729,7 @@ package body Debugger.Gdb is
    begin
       Send
         (Debugger,
-         Thread_List (Get_Language (Debugger)), Empty_Buffer => True);
+         Thread_List (Get_Language (Debugger)));
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
@@ -740,7 +746,7 @@ package body Debugger.Gdb is
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
       File     : String;
-      Line     : Positive) return Boolean
+      Line     : Positive) return Line_Kind
    is
       Line_String : String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
@@ -749,8 +755,17 @@ package body Debugger.Gdb is
             & Base_File_Name (File)
             & ':' &
             Line_String (Line_String'First + 1 .. Line_String'Last));
-      return Index
-        (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0;
+      if Index
+        (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0
+      then
+         return Have_Code;
+      elsif Index
+        (Expect_Out (Get_Process (Debugger)), "out of range") /= 0
+      then
+         return No_More_Code;
+      else
+         return No_Code;
+      end if;
    end Line_Contains_Code;
 
    --------------------------
@@ -820,11 +835,10 @@ package body Debugger.Gdb is
    -- Source_Files_List --
    -----------------------
 
-   function Source_Files_List (Debugger : access Gdb_Debugger)
-                              return Odd.Types.String_Array
-   is
+   function Source_Files_List
+     (Debugger : access Gdb_Debugger) return Odd.Types.String_Array is
    begin
-      Send (Debugger, "info sources", Empty_Buffer => True);
+      Send (Debugger, "info sources");
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
