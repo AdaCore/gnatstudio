@@ -34,7 +34,6 @@
 --
 --  </description>
 
-with Glib;
 with Gtk.Ctree;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
@@ -42,7 +41,7 @@ with Gdk.Bitmap;
 with Types;
 with Prj;
 
-with Prj_Manager;
+with Glide_Kernel;
 
 package Project_Trees is
 
@@ -51,9 +50,7 @@ package Project_Trees is
 
    procedure Gtk_New
      (Tree        : out Project_Tree;
-      Manager     : access Prj_Manager.Project_Manager_Record'Class;
-      Columns     : Glib.Gint;
-      Tree_Column : Glib.Gint := 0);
+      Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new tree.
    --  This tree displays the current view of Manager, and is refreshed
    --  automatically every time this view is updated.
@@ -73,12 +70,19 @@ package Project_Trees is
 
    function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return Types.Name_Id;
+      Project : Prj.Project_Id) return Types.String_Id;
    --  Return the name of the selected directory for Project.
    --  It returns No_String if a project node is selected, and the name of the
    --  directory containing the file is a File_Node, Category_Node or
    --  Entity_Node is selected.
-   --  No_String is also returned if the directory is not in Project.
+   --  No_Name is also returned if the directory is not in Project.
+
+   function Get_Selected_File
+     (Tree    : access Project_Tree_Record) return Types.String_Id;
+   --  Return the name of the selected file, or No_Name if no file is selected.
+   --  When a project_node or directory_node is selected, No_Name is returned.
+   --  When a category node or an entity node is selected, the name of the
+   --  containing file is returned.
 
    -------------
    -- Signals --
@@ -112,7 +116,7 @@ private
 
 
    type Project_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
-      Manager            : Prj_Manager.Project_Manager;
+      Kernel             : Glide_Kernel.Kernel_Handle;
       Open_Pixmaps       : Pixmap_Array;
       Close_Pixmaps      : Pixmap_Array;
       Open_Masks         : Mask_Array;

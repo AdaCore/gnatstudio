@@ -36,6 +36,7 @@ with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Enums;            use Gtk.Enums;
@@ -58,6 +59,8 @@ with Language.C;   use Language.C;
 with Language.Cpp; use Language.Cpp;
 with Basic_Types;  use Basic_Types;
 with String_Utils; use String_Utils;
+with Glide_Kernel; use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 package body Project_Trees is
 
@@ -276,7 +279,7 @@ package body Project_Trees is
    --  Select a specific project, and (if not "") a specific directory
    --  in that project
 
-   procedure Refresh (Tree : access Gtk_Widget_Record'Class);
+   procedure Refresh (Kernel : access GObject_Record'Class; Tree : GObject);
    --  Refresh the contents of the tree after the project view has changed.
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
@@ -287,9 +290,7 @@ package body Project_Trees is
 
    procedure Gtk_New
      (Tree        : out Project_Tree;
-      Manager     : access Prj_Manager.Project_Manager_Record'Class;
-      Columns     : Gint;
-      Tree_Column : Gint := 0)
+      Kernel      : access Kernel_Handle_Record'Class)
    is
       procedure Create_Pixmaps
         (Node_Type : Node_Types; Open, Close : Chars_Ptr_Array);
@@ -313,7 +314,7 @@ package body Project_Trees is
 
    begin
       Tree := new Project_Tree_Record;
-      Gtk.Ctree.Initialize (Tree, Number_Of_Columns, Tree_Column);
+      Gtk.Ctree.Initialize (Tree, 1, 0);
 
       Create_Pixmaps (Project_Node, project_xpm, project_closed_xpm);
       Create_Pixmaps
@@ -336,10 +337,11 @@ package body Project_Trees is
       Set_Column_Auto_Resize (Tree, 0, True);
 
       --  Automatic update of the tree when the project changes
-      Tree.Manager := Project_Manager (Manager);
-      Widget_Callback.Object_Connect
-        (Manager, "project_view_changed",
-         Widget_Callback.To_Marshaller (Refresh'Access), Tree);
+      Tree.Kernel := Kernel_Handle (Kernel);
+      Object_User_Callback.Connect
+        (Kernel, "project_view_changed",
+         Object_User_Callback.To_Marshaller (Refresh'Access),
+         GObject (Tree));
    end Gtk_New;
 
    --------------------
@@ -1011,7 +1013,7 @@ package body Project_Trees is
 
       --  Count the number of subdirectories
 
-      Src := Projects.Table (Get_Project_View (Tree.Manager)).Source_Dirs;
+      Src := Projects.Table (Get_Project_View (Tree.Kernel)).Source_Dirs;
       while Src /= Nil_String loop
          Count := Count + 1;
          Src := String_Elements.Table (Src).Next;
@@ -1022,7 +1024,7 @@ package body Project_Trees is
       begin
          --  Store the directories
          Index := Sources'First;
-         Src := Projects.Table (Get_Project_View (Tree.Manager)).Source_Dirs;
+         Src := Projects.Table (Get_Project_View (Tree.Kernel)).Source_Dirs;
          while Src /= Nil_String loop
             Sources (Index) := String_Elements.Table (Src).Value;
             Index := Index + 1;
@@ -1095,7 +1097,7 @@ package body Project_Trees is
 
       --  Count the number of subdirectories
 
-      Src := Projects.Table (Get_Project_View (Tree.Manager)).Sources;
+      Src := Projects.Table (Get_Project_View (Tree.Kernel)).Sources;
       while Src /= Nil_String loop
          Count := Count + 1;
          Src := String_Elements.Table (Src).Next;
@@ -1106,7 +1108,7 @@ package body Project_Trees is
       begin
          --  Store the source files
          Index := Sources'First;
-         Src := Projects.Table (Get_Project_View (Tree.Manager)).Sources;
+         Src := Projects.Table (Get_Project_View (Tree.Kernel)).Sources;
          while Src /= Nil_String loop
             Sources (Index) := String_Elements.Table (Src).Value;
             String_To_Name_Buffer (Sources (Index));
@@ -1216,7 +1218,9 @@ package body Project_Trees is
    -- Refresh --
    -------------
 
-   procedure Refresh (Tree : access Gtk_Widget_Record'Class) is
+   procedure Refresh
+     (Kernel : access GObject_Record'Class; Tree : GObject)
+   is
       T : Project_Tree := Project_Tree (Tree);
       Selected_P   : Gtk_Ctree_Node := null;
       Selected_Dir : String_Access := null;
@@ -1227,7 +1231,7 @@ package body Project_Trees is
       --  need to do it now
 
       if Node_Nth (T, 0) = null then
-         Expand (T, Add_Project_Node (T, Get_Project_View (T.Manager)));
+         Expand (T, Add_Project_Node (T, Get_Project_View (T.Kernel)));
 
 
       --  If we are displaying a new view of the tree that was there before, we
@@ -1345,7 +1349,7 @@ package body Project_Trees is
 
    function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return Name_Id
+      Project : Prj.Project_Id) return String_Id
    is
       use type Node_List.Glist;
       Selection : Node_List.Glist := Get_Selection (Tree);
@@ -1361,14 +1365,13 @@ package body Project_Trees is
             begin
                case User.Node_Type is
                   when Project_Node =>
-                     return No_Name;
+                     return No_String;
 
                   when Directory_Node =>
                      if Get_Parent_Project (Tree, N) /= Project then
-                        return No_Name;
+                        return No_String;
                      else
-                        String_To_Name_Buffer (User.Directory);
-                        return Name_Find;
+                        return User.Directory;
                      end if;
 
                   when others =>
@@ -1379,8 +1382,37 @@ package body Project_Trees is
             N := Row_Get_Parent (Node_Get_Row (N));
          end loop;
       end if;
-      return No_Name;
+      return No_String;
    end Get_Selected_Directory;
+
+   -----------------------
+   -- Get_Selected_File --
+   -----------------------
+
+   function Get_Selected_File
+     (Tree    : access Project_Tree_Record) return Types.String_Id
+   is
+      use type Node_List.Glist;
+      Selection : Node_List.Glist := Get_Selection (Tree);
+      N : Gtk_Ctree_Node;
+   begin
+      if Selection /= Node_List.Null_List then
+         N := Node_List.Get_Data (Selection);
+
+         --  Loop until we get to a file
+         while N /= null loop
+            declare
+               User : constant User_Data   := Node_Get_Row_Data (Tree, N);
+            begin
+               if User.Node_Type = File_Node then
+                  return User.File;
+               end if;
+            end;
+            N := Row_Get_Parent (Node_Get_Row (N));
+         end loop;
+      end if;
+      return No_String;
+   end Get_Selected_File;
 
 begin
    --  ??? Temporaru, this will be done in Glide itself.
