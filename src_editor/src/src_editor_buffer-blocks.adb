@@ -45,6 +45,7 @@ package body Src_Editor_Buffer.Blocks is
       Text          : GNAT.OS_Lib.String_Access;
       Block         : Block_Access;
       Buffer_Line   : Buffer_Line_Type;
+      First_Buffer_Line : Buffer_Line_Type;
       Block_Folded  : Boolean;
 
    begin
@@ -65,6 +66,10 @@ package body Src_Editor_Buffer.Blocks is
       for Line in Buffer.Line_Data'Range loop
          Buffer.Line_Data (Line).Block := null;
       end loop;
+
+      if Buffer.Block_Folding then
+         Remove_Block_Folding_Commands (Buffer, False);
+      end if;
 
       Text := Get_String (Source_Buffer (Buffer));
 
@@ -94,27 +99,30 @@ package body Src_Editor_Buffer.Blocks is
                Block_Type        => Current.Category,
                GC                => null);
 
-            Buffer_Line := Get_Buffer_Line (Buffer, Line_Start);
+            First_Buffer_Line := Get_Buffer_Line (Buffer, Line_Start);
 
-            if Buffer_Line = 0 then
+            --  Make sure the block is not folded.
+
+            if First_Buffer_Line = 0 or else
+              Get_Buffer_Line (Buffer, Line_End) - First_Buffer_Line /=
+              Buffer_Line_Type (Line_End - Line_Start)
+            then
                Block_Folded := True;
+            end if;
+
+            if Block_Folded then
+               Unchecked_Free (Block);
             else
-               Buffer.Line_Data (Buffer_Line).Block := Block;
-               Append (Buffer.Blocks, Block);
-
-               for J in Line_Start + 1 .. Line_End loop
-
+               for J in Line_Start .. Line_End loop
                   Buffer_Line := Get_Buffer_Line (Buffer, J);
-
-                  if Buffer_Line = 0 then
-                     Block_Folded := True;
-                     exit;
-                  end if;
 
                   if Buffer.Line_Data (Buffer_Line).Block = null then
                      Buffer.Line_Data (Buffer_Line).Block := Block;
                   end if;
                end loop;
+
+               Buffer.Line_Data (First_Buffer_Line).Block := Block;
+               Append (Buffer.Blocks, Block);
             end if;
          end if;
 
