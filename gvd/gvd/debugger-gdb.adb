@@ -904,7 +904,7 @@ package body Debugger.Gdb is
       Len := Value'First - 1;
 
       while Len /= Value'Last loop
-         Match (Frame_Pattern, S (First .. S'Last - Prompt_Length), Matched);
+         Match (Frame_Pattern, S (First .. S'Last), Matched);
 
          exit when Matched (0) = No_Match;
 
