@@ -151,7 +151,7 @@ Here is a detailed list of the menu items that can be found in the menu bar:
 @anchor{open program menu}
 Open a file selection dialog that allows you to choose a program to
 debug. The program to debug is either an executable for native debugging, or
-a partially linked module for cross environments (e.g vxWorks).
+a partially linked module for cross environments (e.g VxWorks).
 Do not use this menu to edit a source file, see the @ref{The Explorer Window},
 or the @ref{open source menu}.
 
@@ -1356,10 +1356,10 @@ There are a few caveats in remote mode:
   Transfer the executable to the remote target.
 
   Optionally start gdbserver on the remote target (e.g under Lynx OS). This
-    is not needed for environments such as vxWorks.
+    is not needed for environments such as VxWorks.
 
   Start GVD using a properly configured cross GDB, e.g powerpc-wrs-vxworks-gdb
-  for a gdb configured for vxWorks PowerPC and specify the name of the remote
+  for a gdb configured for VxWorks PowerPC and specify the name of the remote
   target, as well as the protocol used to communicate with it. To specify
   the cross gdb and the remote target, you can use either the --debugger and
   --target command line options, e.g:
