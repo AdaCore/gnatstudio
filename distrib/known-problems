@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC03-028 GPS exits even though it couldn't save some files
+  Problem:    If you exit GPS with some modified files, GPS displays a dialog
+              asking which should be saved. However, if there is an error
+              saving some of these, GPS will still exit, losing modification
+  Workaround: Save the files through the File->Save All menu before exiting
+
 - DC06-007 Crash when selecting some fonts under Windows
   Problem:    When selecting some particular fonts (e.g. 'Serif') in the
               font selector under Windows, GPS will crash.
