@@ -37,6 +37,12 @@ package GVD.Preferences is
    --  provides a better support for remote debuggers and the "interrupt"
    --  button, among other things.
 
+   Async_Commands : constant Boolean := True;
+   --  True if user commands are handled asynchronousely, to avoid recursion
+   --  in the event processing. See design/commands.txt for more details.
+   --  This variable is useful for debugging, and also for systems that do
+   --  not fully support the Gdk_Input package (e.g Windows).
+
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
