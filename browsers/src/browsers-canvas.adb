@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                      Copyright (C) 2001-2004                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1988,6 +1988,7 @@ package body Browsers.Canvas is
       GC          : Gdk_GC;
       W, H        : Gint;
       Num_In_Line : Natural;
+      Text        : String_Access;
 
       procedure Display (Text : String; Line : Xref_Line);
       --  Display Text on Item.
@@ -2039,41 +2040,34 @@ package body Browsers.Canvas is
       end if;
 
       for L in List.Lines'Range loop
-         declare
-            Text : constant String := List.Lines (L).Text.all;
-            --  We should not need to copy Text.all here, but for some
-            --  unknown reason if we don't, List.Lines (L).Text'First
-            --  will end up being read as 0, generating a Constraint_Error ???
+         Text        := List.Lines (L).Text;
+         First       := Text'First;
+         Last        := First;
+         X2          := X;
+         In_Xref     := False;
+         Num_In_Line := 0;
 
-         begin
-            First       := Text'First;
-            Last        := First;
-            X2          := X;
-            In_Xref     := False;
-            Num_In_Line := 0;
+         while Last <= Text'Last loop
+            if Last - Text'First = List.Lines (L).Length then
+               Display (Text (First .. Last - 1), List.Lines (L));
+               First   := Last;
+               X2      := X + Second_Column;
+            end if;
 
-            while Last <= Text'Last loop
-               if Last - Text'First = List.Lines (L).Length then
-                  Display (Text (First .. Last - 1), List.Lines (L));
-                  First   := Last;
-                  X2      := X + Second_Column;
+            if Text (Last) = '@' then
+               Display (Text (First .. Last - 1), List.Lines (L));
+               First   := Last + 1;
+               In_Xref := not In_Xref;
+
+               if In_Xref then
+                  Num_In_Line := Num_In_Line + 1;
                end if;
+            end if;
 
-               if Text (Last) = '@' then
-                  Display (Text (First .. Last - 1), List.Lines (L));
-                  First   := Last + 1;
-                  In_Xref := not In_Xref;
+            Last := Last + 1;
+         end loop;
 
-                  if In_Xref then
-                     Num_In_Line := Num_In_Line + 1;
-                  end if;
-               end if;
-
-               Last := Last + 1;
-            end loop;
-
-            Display (Text (First .. Last - 1), List.Lines (L));
-         end;
+         Display (Text (First .. Last - 1), List.Lines (L));
 
          --  No need to query the size again, we just did
 
