@@ -38,11 +38,9 @@ with Gtk.Button;        use Gtk.Button;
 with Gtk.Dnd;           use Gtk.Dnd;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Image;         use Gtk.Image;
-with Gtk.Label;         use Gtk.Label;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
-with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Selection;     use Gtk.Selection;
 with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
@@ -57,6 +55,7 @@ with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Ada.Exceptions;    use Ada.Exceptions;
 with VFS;               use VFS;
+with File_Utils;        use File_Utils;
 
 package body Glide_Kernel.Modules is
 
@@ -81,15 +80,6 @@ package body Glide_Kernel.Modules is
    procedure Destroy_Contextual_Menu
      (User : Contextual_Menu_User_Data; Menu : Gtk_Menu);
    --  Destroy the contextual menu that was created before
-
-   procedure Find_Menu_Item_By_Name
-     (Menu_Bar  : Gtk_Menu_Bar;
-      Menu      : Gtk_Menu;
-      Name      : String;
-      Menu_Item : out Gtk_Menu_Item;
-      Index     : out Gint);
-   --  Return the menu item with name Name, either from Menu, or from Menu_Bar
-   --  if the latter is null.
 
    type Non_Interactive_Action is record
       Command : Command_Access;
@@ -407,114 +397,15 @@ package body Glide_Kernel.Modules is
 
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;
-      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item
-   is
-      First, Last : Natural := Path'First + 1;
-      Parent      : Gtk_Menu := null;
-      Menu_Item   : Gtk_Menu_Item;
-      Index       : Gint;
-
+      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item is
    begin
-      Assert (Me, Path (Path'First) = '/', "Menu path must start with /");
-
-      --  Find the existing parents
-
-      loop
-         Last := First + 1;
-         Skip_To_Char (Path, Last, '/');
-
-         Find_Menu_Item_By_Name
-           (Glide_Window (Kernel.Main_Window).Menu_Bar,
-            Parent,
-            Path (First .. Last - 1),
-            Menu_Item,
-            Index);
-
-         if Menu_Item = null then
-            return null;
-         end if;
-
-         First := Last + 1;
-
-         exit when First > Path'Last;
-
-         if Get_Submenu (Menu_Item) = null then
-            return null;
-         end if;
-
-         Parent := Gtk_Menu (Get_Submenu (Menu_Item));
-      end loop;
-
-      return Menu_Item;
+      return Find_Or_Create_Menu_Tree
+        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+         Menu         => null,
+         Path         => Path,
+         Accelerators => Get_Default_Accelerators (Kernel),
+         Allow_Create => False);
    end Find_Menu_Item;
-
-   ----------------------------
-   -- Find_Menu_Item_By_Name --
-   ----------------------------
-
-   procedure Find_Menu_Item_By_Name
-     (Menu_Bar  : Gtk_Menu_Bar;
-      Menu      : Gtk_Menu;
-      Name      : String;
-      Menu_Item : out Gtk_Menu_Item;
-      Index     : out Gint)
-   is
-      use type Widget_List.Glist;
-      Children, Tmp : Widget_List.Glist;
-      Label         : Gtk_Label;
-      New_Name      : String := Name;
-      Last          : Integer := New_Name'First;
-
-   begin
-      Menu_Item := null;
-
-      if Name = "" then
-         Index := -1;
-         return;
-      end if;
-
-      for J in Name'Range loop
-         if Name (J) = '_' then
-            if J - 1 >= Name'First and then Name (J - 1) = '_' then
-               New_Name (Last) := '_';
-               Last := Last + 1;
-            end if;
-         else
-            New_Name (Last) := Name (J);
-            Last := Last + 1;
-         end if;
-      end loop;
-
-      if Menu = null then
-         Children := Get_Children (Menu_Bar);
-      else
-         Children := Get_Children (Menu);
-      end if;
-
-      Index := 0;
-      Tmp := Children;
-
-      while Tmp /= Widget_List.Null_List loop
-         Menu_Item := Gtk_Menu_Item (Widget_List.Get_Data (Tmp));
-
-         if Get_Child (Menu_Item) /= null
-           and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
-         then
-            Label := Gtk_Label (Get_Child (Menu_Item));
-            exit when Get_Text (Label) = New_Name (New_Name'First .. Last - 1);
-         end if;
-
-         Index := Index + 1;
-         Tmp := Widget_List.Next (Tmp);
-         Menu_Item := null;
-      end loop;
-
-      Widget_List.Free (Children);
-
-      if Menu_Item = null then
-         Index := -1;
-      end if;
-   end Find_Menu_Item_By_Name;
 
    -------------------
    -- Register_Menu --
@@ -527,107 +418,29 @@ package body Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True)
    is
-      procedure Add_Menu
-        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint);
-      --  Append Item either to Parent, if not null, or directly to the menu
-      --  bar
-
-      --------------
-      -- Add_Menu --
-      --------------
-
-      procedure Add_Menu
-        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint)
-      is
-         P : Gtk_Menu_Shell := Gtk_Menu_Shell (Parent);
-      begin
-         --  Insertion in the menu bar
-         if Parent = null then
-            P := Gtk_Menu_Shell (Glide_Window (Kernel.Main_Window).Menu_Bar);
-         end if;
-
-         if Index = -1 then
-            Append (P, Item);
-         elsif Add_Before then
-            Insert (P, Item, Index);
-         else
-            Insert (P, Item, Index + 1);
-         end if;
-      end Add_Menu;
-
-      First, Last     : Natural := Parent_Path'First + 1;
-      Parent          : Gtk_Menu := null;
-      Menu_Item, Pred : Gtk_Menu_Item;
-      Menu            : Gtk_Menu;
+      Parent, Pred    : Gtk_Menu_Item;
       Index           : Gint;
 
    begin
-      Assert (Me, Parent_Path (Parent_Path'First) = '/',
-             "Menu path must start with /");
+      Parent := Find_Or_Create_Menu_Tree
+        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+         Menu         => null,
+         Path         => Name_As_Directory (Parent_Path),
+         Accelerators => Get_Default_Accelerators (Kernel),
+         Add_Before   => Add_Before,
+         Ref_Item     => Ref_Item,
+         Allow_Create => True);
 
-      --  Find the existing parents
-
-      while First <= Parent_Path'Last loop
-         Last := First + 1;
-         Skip_To_Char (Parent_Path, Last, '/');
-
-         Find_Menu_Item_By_Name
-           (Glide_Window (Kernel.Main_Window).Menu_Bar,
-            Parent,
-            Parent_Path (First .. Last - 1),
-            Menu_Item,
-            Index);
-
-         exit when Menu_Item = null;
-
-         if Get_Submenu (Menu_Item) = null then
-            Trace (Me, Parent_Path (First .. Last - 1)
-                   & (-" doesn't have a submenu, can't create item in")
-                   & Parent_Path);
-            return;
-         end if;
-
-         Parent := Gtk_Menu (Get_Submenu (Menu_Item));
-         First  := Last + 1;
-      end loop;
-
-      --  Create the missing parents
-
-      while First <= Parent_Path'Last loop
-         Last := First + 1;
-         Skip_To_Char (Parent_Path, Last, '/');
-
-         Gtk_New (Menu);
-         Gtk_New_With_Mnemonic (Menu_Item, Parent_Path (First .. Last - 1));
-         Set_Submenu (Menu_Item, Menu);
-
-         Set_Accel_Group
-           (Menu, Get_Default_Accelerators (Kernel));
-
-         if Item = null
-           and then Last >= Parent_Path'Last
-         then
+      if Parent /= null then
+         if Item /= null then
             Find_Menu_Item_By_Name
               (Glide_Window (Kernel.Main_Window).Menu_Bar,
-               Parent, Ref_Item, Pred, Index);
-            Add_Menu (Parent, Menu_Item, Index);
-         else
-            Add_Menu (Parent, Menu_Item, -1);
+               Gtk_Menu (Get_Submenu (Parent)), Ref_Item, Pred, Index);
+            Add_Menu (Gtk_Menu (Get_Submenu (Parent)),
+                      Glide_Window (Kernel.Main_Window).Menu_Bar,
+                      Item, Index, Add_Before);
+            Show_All (Item);
          end if;
-
-         Show_All (Menu_Item);
-         Parent := Menu;
-
-         First := Last + 1;
-      end loop;
-
-      if Item /= null then
-         Find_Menu_Item_By_Name
-           (Glide_Window (Kernel.Main_Window).Menu_Bar,
-            Parent, Ref_Item, Pred, Index);
-         Add_Menu (Parent, Item, Index);
-
-         Show_All (Item);
       end if;
    end Register_Menu;
 
