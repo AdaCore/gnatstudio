@@ -31,9 +31,6 @@
 --
 --  See package VCS for a complete spec of this package.
 
--- generic
---    type Data_Type is private;
-
 package VCS.CVS is
 
    type CVS_Record is new VCS_Record with private;
