@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -70,6 +70,8 @@ with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 with Src_Editor_Box;              use Src_Editor_Box;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View;             use Src_Editor_View;
 with Src_Editor_View.Commands;    use Src_Editor_View.Commands;
 with String_List_Utils;           use String_List_Utils;
@@ -885,7 +887,7 @@ package body Src_Editor_Module is
                         Box := Source_Box (Get_Widget (Child));
                         Mark_Record.Mark :=
                           Create_Mark
-                            (Box.Editor,
+                            (Get_Buffer (Box.Editor),
                              Editable_Line_Type (Line),
                              Column);
                      else
@@ -985,7 +987,7 @@ package body Src_Editor_Module is
                   Paste_Clipboard (Source);
                   External_End_Action (Get_Buffer (Source));
                else
-                  Select_All (Source);
+                  Select_All (Get_Buffer (Source));
                end if;
             end if;
          end;
@@ -1779,7 +1781,7 @@ package body Src_Editor_Module is
                      Line   => Mark_Record.Line,
                      Mark   =>
                        Create_Mark
-                         (Box.Editor,
+                         (Get_Buffer (Box.Editor),
                           Editable_Line_Type (Mark_Record.Line),
                           Mark_Record.Column),
                      Column => Mark_Record.Column,
@@ -2541,8 +2543,8 @@ package body Src_Editor_Module is
                   end;
                end if;
 
-               Set_File_Identifier (Editor, Ident);
-               Set_Filename (Editor, Get_Filename (Child));
+               Set_File_Identifier (Get_Buffer (Editor), Ident);
+               Set_Filename (Get_Buffer (Editor), Get_Filename (Child));
                File_Edited (Kernel, Ident);
             end;
          end if;
@@ -2998,7 +3000,7 @@ package body Src_Editor_Module is
         Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
-         Select_All (Source);
+         Select_All (Get_Buffer (Source));
       end if;
 
    exception

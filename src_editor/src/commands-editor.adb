@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Module;        use Src_Editor_Module;
+with Src_Editor_View;          use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Interfaces.C;
@@ -265,12 +266,14 @@ package body Commands.Editor is
    is
       First  : constant Natural := Command.Current_Text'First;
       Editor : Source_Editor_Box;
+      View   : Source_View;
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
       else
          Editor := Get_Source_Box_From_MDI
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+         View := Get_View (Editor);
 
          case Command.Edition_Mode is
             when Insertion =>
@@ -278,7 +281,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column);
-               Scroll_To_Cursor_Location (Editor);
+               Scroll_To_Cursor_Location (View);
                Insert
                  (Command.Buffer,
                   Command.Line,
@@ -292,14 +295,14 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Command.Cursor_Line,
                      Command.Cursor_Column);
-                  Scroll_To_Cursor_Location (Editor);
+                  Scroll_To_Cursor_Location (View);
 
                elsif Command.Direction = Backward then
                   Set_Cursor_Position
                     (Command.Buffer,
                      Command.Line,
                      Command.Column);
-                  Scroll_To_Cursor_Location (Editor);
+                  Scroll_To_Cursor_Location (View);
                end if;
 
             when Deletion =>
@@ -318,7 +321,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column);
-               Scroll_To_Cursor_Location (Editor);
+               Scroll_To_Cursor_Location (View);
          end case;
       end if;
 
@@ -393,7 +396,7 @@ package body Commands.Editor is
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After);
-         Scroll_To_Cursor_Location (Editor);
+         Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
 
       Command_Finished (Command, True);
@@ -440,7 +443,7 @@ package body Commands.Editor is
             Command.Start_Column);
       end if;
 
-      Scroll_To_Cursor_Location (Editor);
+      Scroll_To_Cursor_Location (Get_View (Editor));
 
       Command_Finished (Command, True);
       return True;
