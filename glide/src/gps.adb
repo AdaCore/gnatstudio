@@ -1117,7 +1117,8 @@ procedure GPS is
             Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
          else
             Reset_Title
-              (Glide_Window (Get_Main_Window (Kernel)), Get_Title (Child));
+              (Glide_Window (Get_Main_Window (Kernel)),
+               Get_Short_Title (Child));
          end if;
       end if;
 
