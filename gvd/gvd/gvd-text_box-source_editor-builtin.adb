@@ -25,6 +25,7 @@ with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
+with Gdk.Types;             use Gdk.Types;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Adjustment;        use Gtk.Adjustment;
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
@@ -190,12 +191,10 @@ package body Odd.Source_Editors is
         (Editor, "destroy", Editor_Cb.To_Marshaller (Destroy_Cb'Access));
       Show_All (Editor);
 
-      if Tooltips_In_Source /= None then
-         Data.Lang := Editor.Lang;
-         Data.Box  := Source_Editor (Editor);
-         Editor_Tooltips.New_Tooltip
-           (Get_Child (Editor), Data, Editor.Tooltip);
-      end if;
+      Data.Lang := Editor.Lang;
+      Data.Box  := Source_Editor (Editor);
+      Editor_Tooltips.New_Tooltip
+        (Get_Child (Editor), Data, Editor.Tooltip);
    end Initialize;
 
    -------------------
@@ -1145,32 +1144,43 @@ package body Odd.Source_Editors is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
-      Variable_Name : String := Get_Entity (Data.Box);
 
       Debugger : Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
 
       Context : Items.Drawing_Context;
+      Mask : Gdk.Types.Gdk_Modifier_Type;
+      Win : Gdk_Window;
+      X, Y : Gint;
    begin
 
-      if Tooltips_In_Source = None then
+      if Tooltips_In_Source = None
+        or else not Is_Started (Debugger.Debugger)
+      then
          return;
       end if;
 
-      Width := 0;
-      Height := 0;
+      Get_Pointer (Get_Window (Data.Box), X, Y, Mask, Win);
+      declare
+         Variable_Name : constant String := Get_Entity (Data.Box, X, Y);
+      begin
 
-      if Variable_Name = "" then
-         return;
-      end if;
+         Width := 0;
+         Height := 0;
 
-      Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+         if Variable_Name = "" then
+            return;
+         end if;
 
-      if Entity = null then
-         return;
-      else
-         Parse_Value (Debugger.Debugger, Variable_Name, Entity, Value_Found);
-      end if;
+         Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+
+         if Entity = null then
+            return;
+         else
+            Parse_Value
+              (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+         end if;
+      end;
 
       if Value_Found then
          Set_Valid (Entity);
