@@ -423,8 +423,6 @@ package body GVD.Code_Editors is
          case Data.Editor.Mode is
             when Source_Only =>
                Add (Data.Editor.Editor_Container, Data.Editor.Source);
-               --  Why is this line commented out ???
-               --  Add2 (Data.Editor.Explorer_Editor_Pane, Data.Editor.Source);
                Show_All (Data.Editor.Source);
                Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
                          Set_Current => True);
@@ -435,8 +433,6 @@ package body GVD.Code_Editors is
 
             when Asm_Only =>
                Add (Data.Editor.Editor_Container, Data.Editor.Asm);
-               --  Why is this line commented out ???
-               --  Add2 (Data.Editor.Explorer_Editor_Pane, Data.Editor.Asm);
                Show_All (Data.Editor.Asm);
 
                if Data.Editor.Asm_Address /= null then
