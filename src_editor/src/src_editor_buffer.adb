@@ -460,9 +460,9 @@ package body Src_Editor_Buffer is
          Len := Len + A (J).Length;
       end loop;
 
-      Output := new String (1 .. Len + A'Length);
+      Output := new String (1 .. Len + A'Length - 1);
 
-      for J in A'Range loop
+      for J in A'First .. A'Last - 1 loop
          Len := A (J).Length;
 
          if Len /= 0 then
@@ -473,6 +473,14 @@ package body Src_Editor_Buffer is
          Index := Index + Len + 1;
          Free (A (J));
       end loop;
+
+      Len := A (A'Last).Length;
+
+      if Len /= 0 then
+         Output (Index .. Index + Len - 1) := A (A'Last).Contents (1 .. Len);
+      end if;
+
+      Free (A (A'Last));
 
       return Output;
    end Get_First_Lines;
