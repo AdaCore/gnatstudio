@@ -1548,19 +1548,15 @@ package body Src_Editor_Module is
             Line        : constant Integer := Nth_Arg (Data, 2);
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
-            GC          : Gdk.Gdk_GC;
             Box         : Source_Box;
             Mark_Record : Mark_Identifier_Record;
+            Highlight_Category : Natural := 0;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Number_Of_Arguments (Data) >= 4 then
-               GC := Line_Highlighting.Get_GC
-                 (Line_Highlighting.Lookup_Category (Nth_Arg (Data, 4)));
-            end if;
-
-            if GC = null then
-               GC := Id.Blank_Lines_GC;
+               Highlight_Category :=
+                 Line_Highlighting.Lookup_Category (Nth_Arg (Data, 4));
             end if;
 
             if Child /= null then
@@ -1577,7 +1573,7 @@ package body Src_Editor_Module is
                   Mark_Record.Mark :=
                     Add_Blank_Lines
                       (Box.Editor, Editable_Line_Type (Line),
-                       GC, "", Number);
+                       Highlight_Category, "", Number);
                   Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
                   Set_Return_Value (Data, Image (Mark_Record.Id));
                end if;
