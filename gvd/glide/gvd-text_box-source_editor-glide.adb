@@ -326,7 +326,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String'("");
-      Console.Insert (Kernel, Message, Mode => Error);
+      Console.Insert (Kernel, Message);
+      --  ??? Do not insert an error, to avoid loosing the focus from the
+      --  debugger console. Consider putting a message in the status bar
+      --  instead
    end Show_Message;
 
    ------------------------
