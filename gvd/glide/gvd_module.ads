@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -30,5 +30,9 @@ package GVD_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   procedure Initialize_Debugger
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Initialize the debugger if needed.
 
 end GVD_Module;
