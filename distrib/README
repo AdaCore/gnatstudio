@@ -18,3 +18,7 @@ The GPS user's guide is a work in progress at this stage; the tutorial is
 pretty complete, so it is recommended to get familiar with most of the
 functionalities.
 
+You can optionally install the GNAT documentation in HTML format
+(user's guide, reference manual, gvd, gdb, gcc, Ada reference manual) in the
+directory <prefix>/doc/gps/html. This will be automatically detected by GPS.
+
