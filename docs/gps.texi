@@ -1651,7 +1651,7 @@ This capability is currently implemented for Ada, C and C++ languages.
 @item Automatic syntax checking
 @cindex automatic syntax checking
 When enabled, the editor will perform on-the-fly syntax checks, and will
-underline the errors in you file as you type.
+underline the errors in your file as you type.
 
 @item Auto save
 @cindex auto save
@@ -4366,7 +4366,7 @@ explorer and source editor, by selecting one of the items:
 All boxes in this browser list several information: the location of their
 declaration, and the list of all their references in the other entities
 currently displayed in the browser. If you close the box for an entity that
-call them, the matching references are also hidden, to keep the contents
+calls them, the matching references are also hidden, to keep the contents
 of the browser simpler.
 
 @table @command
