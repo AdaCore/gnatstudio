@@ -544,8 +544,8 @@ can also specify exceptions that use non standard file names.
 Click on @code{Forward}: this is the main units selection, used mainly for
 building executables and debugging.
 
-Click on @code{Add}, select the @code{common} directory on the left, click on
-@code{sdc.adb} on the right, click on @code{OK}.
+Click on @code{Add}, open the @code{common} directory and select
+@code{sdc.adb}.
 
 Click on @code{Forward}: we're now in the switch selector.
 Select @code{Recompile if switches changed}, @code{Debug information}.
