@@ -187,6 +187,7 @@ package body Custom_Module is
             Register_Contextual_Menu
               (Kernel,
                Name       => Title.all,
+               Label      => Title.all,
                Action     => Command,
                Ref_Item   => Before,
                Add_Before => True);
@@ -194,6 +195,7 @@ package body Custom_Module is
             Register_Contextual_Menu
               (Kernel,
                Name       => Title.all,
+               Label      => Title.all,
                Action     => Command,
                Ref_Item   => After,
                Add_Before => False);
@@ -201,6 +203,7 @@ package body Custom_Module is
             Register_Contextual_Menu
               (Kernel,
                Name       => Title.all,
+               Label      => Title.all,
                Action     => Command);
          end if;
 
