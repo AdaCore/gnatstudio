@@ -206,6 +206,7 @@ package body Memory_View_Pkg.Callbacks is
       then
          Watch_Cursor_Location (View);
       end if;
+
       return True;
    end On_View_Button_Release_Event;
 
