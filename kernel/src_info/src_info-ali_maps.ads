@@ -80,6 +80,7 @@ private package Src_Info.ALI_Maps is
 
    Reference_Kind_To_Char : constant Reference_Kind_To_Char_Map :=
      (Reference                                => 'r',
+      Instantiation_Reference                  => ' ',
       Modification                             => 'm',
       Body_Entity                              => 'b',
       Completion_Of_Private_Or_Incomplete_Type => 'c',
@@ -89,20 +90,6 @@ private package Src_Info.ALI_Maps is
       End_Of_Spec_With_Label                   => 'E',
       End_Of_Body                              => 't',
       End_Of_Body_With_Label                   => 'T');
-
-   type Reference_Kind_To_Boolean_Map is array (Reference_Kind) of Boolean;
-
-   Is_End_Reference : constant Reference_Kind_To_Boolean_Map :=
-     (Reference                                => False,
-      Modification                             => False,
-      Body_Entity                              => False,
-      Completion_Of_Private_Or_Incomplete_Type => False,
-      Type_Extension                           => False,
-      Implicit                                 => False,
-      End_Of_Spec                              => True,
-      End_Of_Spec_With_Label                   => True,
-      End_Of_Body                              => True,
-      End_Of_Body_With_Label                   => True);
 
    type E_Scope_To_Char_Map is array (E_Scope) of Character;
 
