@@ -120,6 +120,11 @@ package body Task_Manager.GUI is
       Index   : Integer);
    --  Resume command referenced by Index.
 
+   procedure Interrupt_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+   --  Resume command referenced by Index.
+
    function Menu_Create
      (View   : Manager_Index_Record;
       Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
@@ -137,6 +142,12 @@ package body Task_Manager.GUI is
    --  Pause the referenced command in the task manager.
 
    procedure On_Resume_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record);
+   --  Resume the referenced command in the task manager.
+
+   procedure On_Interrupt_Command
      (Object  : access GObject_Record'Class;
       Params  : GValues;
       Manager : Manager_Index_Record);
@@ -190,6 +201,22 @@ package body Task_Manager.GUI is
       end if;
    end On_Resume_Command;
 
+   --------------------------
+   -- On_Interrupt_Command --
+   --------------------------
+
+   procedure On_Interrupt_Command
+     (Object  : access GObject_Record'Class;
+      Params  : GValues;
+      Manager : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object, Params);
+   begin
+      if Manager.Manager.Referenced_Command = Manager.Index then
+         Interrupt_Command (Manager.Manager, Manager.Index);
+      end if;
+   end On_Interrupt_Command;
+
    -----------------
    -- Menu_Create --
    -----------------
@@ -220,7 +247,9 @@ package body Task_Manager.GUI is
       Append (Menu, Item);
 
       Gtk_New (Item, -"Interrupt");
-      Set_Sensitive (Item, False);
+      Task_Manager_Handler.Connect
+        (Item, "activate", On_Interrupt_Command'Access,
+         (View.Manager, View.Manager.Referenced_Command));
       Append (Menu, Item);
 
       return Menu;
@@ -271,11 +300,25 @@ package body Task_Manager.GUI is
      (Manager : Task_Manager_Access;
       Index   : Integer)
    is
+      One_Running : Boolean := False;
+      Result      : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
       if Index in Manager.Queues'Range then
          Manager.Queues (Index).Status := Paused;
          Manager.Queues (Index).Need_Refresh := True;
          Refresh_Command (Manager, Index);
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Status = Running then
+            One_Running := True;
+            exit;
+         end if;
+      end loop;
+
+      if not One_Running then
+         Result := Execute (Manager.Pop_Command);
       end if;
    end Pause_Command;
 
@@ -287,13 +330,43 @@ package body Task_Manager.GUI is
      (Manager : Task_Manager_Access;
       Index   : Integer)
    is
+      One_Running : Boolean := False;
+      Result      : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Status = Running then
+            One_Running := True;
+            exit;
+         end if;
+      end loop;
+
+      if not One_Running then
+         Result := Execute (Manager.Push_Command);
+      end if;
+
       if Index in Manager.Queues'Range then
          Manager.Queues (Index).Status := Running;
          Manager.Queues (Index).Need_Refresh := True;
          Refresh_Command (Manager, Index);
       end if;
    end Resume_Command;
+
+   -----------------------
+   -- Interrupt_Command --
+   -----------------------
+
+   procedure Interrupt_Command
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+   begin
+      if Index in Manager.Queues'Range then
+         Manager.Queues (Index).Status := Interrupted;
+         Manager.Queues (Index).Need_Refresh := True;
+         Refresh_Command (Manager, Index);
+      end if;
+   end Interrupt_Command;
 
    ---------------------
    -- On_View_Destroy --
@@ -483,7 +556,7 @@ package body Task_Manager.GUI is
                      Command_Status_Column,
                        -(To_Lower (Progress.Activity'Img)));
 
-               when Not_Started | Paused | Completed =>
+               when Not_Started | Paused | Completed | Interrupted =>
                   Set
                     (View.Tree.Model,
                      View.Lines (Index),
