@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9612-006] Bad handling of (gdb) prompt
+  Problem:    When output from gdb or the program being debugged contains the
+              string "(gdb)", GVD gets confused and thinks this is an end of
+              command. This happens in particular with gdb 5 when running the
+              "show" command.
+  Workaround: Avoid using commands that output the gdb prompt.
+
 - [9326-006] GVD fails to start if previous session failed on exit
   Problem:    On exit, GVD tries to save the window settings. However, if it
               crashes at that time, the save file is incorrect, and GVD can't
