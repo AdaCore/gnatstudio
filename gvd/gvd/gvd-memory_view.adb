@@ -502,7 +502,7 @@ package body GVD.Memory_View is
                  Conversion (Current (Index .. Index + View.Unit_Size - 1),
                              View.Unit_Size,
                              View.Display,
-                             View.Unit_Size / 2));
+                             View.Trunc));
             Insert
               (View.View,
                Font  => View.View_Font,
