@@ -446,11 +446,26 @@ package body Glide_Kernel.Preferences is
    ----------------------
 
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class) is
+      procedure On_Changed (Manager : access Preferences_Manager_Record'Class);
+      --  Called when the preferences have been changed.
+
+      ----------------
+      -- On_Changed --
+      ----------------
+
+      procedure On_Changed
+        (Manager : access Preferences_Manager_Record'Class)
+      is
+         pragma Unreferenced (Manager);
+      begin
+         Preferences_Changed (Kernel);
+      end On_Changed;
+
    begin
       Edit_Preferences
         (Manager           => Kernel.Preferences,
          Parent            => Get_Main_Window (Kernel),
-         On_Changed        => null);
+         On_Changed        => On_Changed'Unrestricted_Access);
    end Edit_Preferences;
 
    ----------------------
