@@ -647,7 +647,8 @@ package Entities is
       return Source_File is abstract;
    --  Return a handle to the source file structure corresponding to
    --  Source_Filename. If necessary, the LI file is parsed from the disk to
-   --  update the internal structure.
+   --  update the internal structure. This doesn't recreate the LI file itself,
+   --  though.
    --  If no cross-reference information was found, File_Has_No_LI_Report is
    --  called with the file in parameter
 
