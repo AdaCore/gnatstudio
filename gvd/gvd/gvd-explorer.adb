@@ -106,6 +106,9 @@ package body Odd.Explorer is
    --  These are files that we won't be able to display in the code_editor,
    --  and that can't be explored anyway.
 
+   procedure Show_Current_File (Explorer : access Explorer_Record'Class);
+   --  Show and select the node that matches the current source file.
+
    function Explorer_Contextual_Menu
      (Explorer : access Explorer_Record'Class)
      return Gtk.Menu.Gtk_Menu;
@@ -863,6 +866,13 @@ package body Odd.Explorer is
          Explorer);
       Append (Menu, Mitem);
 
+      Gtk_New (Mitem, Label => -"Show Current File");
+      Tree_Cb.Object_Connect
+        (Mitem, "activate",
+         Tree_Cb.To_Marshaller (Show_Current_File'Access),
+         Explorer);
+      Append (Menu, Mitem);
+
       Show_All (Menu);
       Menu_User_Data.Set (Explorer, Menu, Explorer_Contextual_Menu_Name);
 
@@ -1048,5 +1058,21 @@ package body Odd.Explorer is
       Set_Busy_Cursor (Process, False);
       Thaw (Explorer);
    end Show_System_Files;
+
+   -----------------------
+   -- Show_Current_File --
+   -----------------------
+
+   procedure Show_Current_File (Explorer : access Explorer_Record'Class) is
+   begin
+      if Explorer.Current_File_Node /= null then
+         if not Is_Viewable (Explorer, Explorer.Current_File_Node) then
+            Expand
+              (Explorer,
+               Row_Get_Parent (Node_Get_Row (Explorer.Current_File_Node)));
+         end if;
+         Gtk_Select (Explorer, Explorer.Current_File_Node);
+      end if;
+   end Show_Current_File;
 
 end Odd.Explorer;
