@@ -958,65 +958,39 @@ package body Glide_Kernel is
       State := Get_State (Get_Window (Handle.Main_Window));
 
       if (State and Window_State_Maximized) = 0 then
-         M := new Node'
-           (Tag           => new String'("GPS_Width"),
-            Value         => new String'
-              (Allocation_Int'Image
-                 (Get_Allocation_Width (Handle.Main_Window))),
-            Child         => null,
-            Parent        => null,
-            Next          => null,
-            Specific_Data => 0,
-            Attributes    => null);
+         M       := new Node;
+         M.Tag   := new String'("Width");
+         M.Value := new String'
+           (Allocation_Int'Image
+              (Get_Allocation_Width (Handle.Main_Window)));
          Add_Child (N, M);
 
-         M := new Node'
-           (Tag           => new String'("GPS_Height"),
-            Value         => new String'
-              (Allocation_Int'Image
-                 (Get_Allocation_Height (Handle.Main_Window))),
-            Child         => null,
-            Parent        => null,
-            Next          => null,
-            Specific_Data => 0,
-            Attributes    => null);
+         M       := new Node;
+         M.Tag   := new String'("Height");
+         M.Value := new String'
+           (Allocation_Int'Image
+              (Get_Allocation_Height (Handle.Main_Window)));
          Add_Child (N, M);
 
          Get_Root_Origin (Get_Window (Handle.Main_Window), X, Y);
 
-         M := new Node'
-           (Tag           => new String'("GPS_X"),
-            Value         => new String'(Gint'Image (X)),
-            Child         => null,
-            Parent        => null,
-            Next          => null,
-            Specific_Data => 0,
-            Attributes    => null);
+         M       := new Node;
+         M.Tag   := new String'("X");
+         M.Value := new String'(Gint'Image (X));
          Add_Child (N, M);
 
-         M := new Node'
-           (Tag           => new String'("GPS_Y"),
-            Value         => new String'(Gint'Image (Y)),
-            Child         => null,
-            Parent        => null,
-            Next          => null,
-            Specific_Data => 0,
-            Attributes    => null);
+         M       := new Node;
+         M.Tag   := new String'("Y");
+         M.Value := new String'(Gint'Image (Y));
          Add_Child (N, M);
       end if;
 
-      M := new Node'
-        (Tag           => new String'("GPS_State"),
-         Value         => new String'(Gdk_Window_State'Image (State)),
-         Child         => null,
-         Parent        => null,
-         Next          => null,
-         Specific_Data => 0,
-         Attributes    => null);
+      M       := new Node;
+      M.Tag   := new String'("State");
+      M.Value := new String'(Gdk_Window_State'Image (State));
       Add_Child (N, M);
 
       Print (N);
-
       Free (N);
 
       Set_Output (Standard_Output);
@@ -1071,15 +1045,15 @@ package body Glide_Kernel is
                  and then Get_Attribute (Child, "project") = Project_Name
                then
                   Desktop_Node := Child;
-               elsif Child.Tag.all = "GPS_Height" then
+               elsif Child.Tag.all = "Height" then
                   Height := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "GPS_Width" then
+               elsif Child.Tag.all = "Width" then
                   Width := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "GPS_X" then
+               elsif Child.Tag.all = "X" then
                   X := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "GPS_Y" then
+               elsif Child.Tag.all = "Y" then
                   Y := Gint'Value (Child.Value.all);
-               elsif Child.Tag.all = "GPS_State" then
+               elsif Child.Tag.all = "State" then
                   State := Gdk_Window_State'Value (Child.Value.all);
                end if;
             end if;
