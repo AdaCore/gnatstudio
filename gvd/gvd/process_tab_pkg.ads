@@ -33,6 +33,7 @@ package Process_Tab_Pkg is
 
    type Process_Tab_Record is new Gtk_Window_Record with record
       Notebook_Handler_Id : Gtk.Handlers.Handler_Id;
+      Delete_Text_Handler_Id : Gtk.Handlers.Handler_Id;
       Process_Paned : Gtk_Vpaned;
       Vpaned6 : Gtk_Vpaned;
       Scrolledwindow9 : Gtk_Scrolled_Window;

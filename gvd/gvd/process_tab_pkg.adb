@@ -104,7 +104,7 @@ begin
    Gtk_New (Process_Tab.Debugger_Text);
    Widget_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text'Access, Process_Tab);
-   Widget_Callback.Object_Connect
+   Process_Tab.Delete_Text_Handler_Id := Widget_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "delete_text", On_Debugger_Text_Delete_Text'Access, Process_Tab);
    Return_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "key_press_event", On_Debugger_Text_Key_Press_Event'Access, Process_Tab);
