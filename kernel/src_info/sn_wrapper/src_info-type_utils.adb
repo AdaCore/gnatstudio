@@ -423,6 +423,9 @@ package body Src_Info.Type_Utils is
 
       if Success then
          --  parent type found (E_Kind is resolved)
+         if Desc.Parent_Point /= Invalid_Point then
+            Free (Desc.Parent_Filename);
+         end if;
          Desc.Parent_Point    := Typedef.Start_Position;
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
@@ -644,6 +647,7 @@ package body Src_Info.Type_Utils is
             end if;
 
             Success := True;
+            Free (Arg);
             return;
          end if;
 

@@ -1213,6 +1213,8 @@ package body SN.DB_Structures is
    procedure Free (target : in out BY_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Caller_Argument_Types);
+      Segment_Vector.Release_Vector (target.Referred_Argument_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1261,24 +1263,31 @@ package body SN.DB_Structures is
    procedure Free (target : in out FD_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Arg_Types);
+      Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FIL_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Types_Of_Arguments);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FR_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Arg_Types);
+      Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FU_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Arg_Types);
+      Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1309,6 +1318,7 @@ package body SN.DB_Structures is
    procedure Free (target : in out LV_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Arg_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1321,6 +1331,8 @@ package body SN.DB_Structures is
    procedure Free (target : in out MD_Table) is
    begin
       Free (target.Buffer);
+      Segment_Vector.Release_Vector (target.Arg_Types);
+      Segment_Vector.Release_Vector (target.Arg_Names);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 

@@ -3049,6 +3049,7 @@ package body Src_Info.CPP is
          Kind                 => Reference);
 
       Free (Typedef);
+      Free (Desc);
 
    exception
       when DB_Error | Not_Found  =>
@@ -3214,41 +3215,49 @@ package body Src_Info.CPP is
       end if;
 
       --  Find all the base classes for this one
-      Set_Cursor
-        (Handler.SN_Table (SN_IN),
-         By_Key,
-         --  Use name from Class_Def for it does not hold <> when
-         --  template class is encountered
-         Class_Def.Buffer (Class_Def.Name.First .. Class_Def.Name.Last)
-            & Field_Sep,
-         False);
+      if Is_Open (Handler.SN_Table (SN_IN)) then
+         begin
+            Set_Cursor
+              (Handler.SN_Table (SN_IN),
+               By_Key,
+               --  Use name from Class_Def for it does not hold <> when
+               --  template class is encountered
+               Class_Def.Buffer (Class_Def.Name.First .. Class_Def.Name.Last)
+                  & Field_Sep,
+               False);
 
-      loop
-         P := Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key);
-         exit when P = null;
-         Super := Parse_Pair (P.all);
-         --  Lookup base class definition to find its precise location
-         Find_Class
-           (Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last),
-            Handler.SN_Table,
-            Super_Desc,
-            Super_Def,
-            Success);
-         if Success then -- if found, add it to parent list
-            Add_Parent
-              (Decl_Info,
-               Handler => CPP_LI_Handler (Handler),
-               List => List,
-               Parent_Filename => Super_Def.Buffer
-                 (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
-               Parent_Location => Super_Def.Start_Position);
-            Free (Super_Desc);
-            Free (Super_Def);
-         end if;
-         Free (Super);
-         Free (P);
-      end loop;
-      Release_Cursor (Handler.SN_Table (SN_IN));
+            loop
+               P := Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key);
+               exit when P = null;
+               Super := Parse_Pair (P.all);
+               --  Lookup base class definition to find its precise location
+               Find_Class
+                 (Super.Buffer
+                    (Super.Base_Class.First .. Super.Base_Class.Last),
+                  Handler.SN_Table,
+                  Super_Desc,
+                  Super_Def,
+                  Success);
+               if Success then -- if found, add it to parent list
+                  Add_Parent
+                    (Decl_Info,
+                     Handler => CPP_LI_Handler (Handler),
+                     List => List,
+                     Parent_Filename => Super_Def.Buffer
+                       (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
+                     Parent_Location => Super_Def.Start_Position);
+                  Free (Super_Desc);
+                  Free (Super_Def);
+               end if;
+               Free (Super);
+               Free (P);
+            end loop;
+            Release_Cursor (Handler.SN_Table (SN_IN));
+         exception
+            when DB_Error => -- something went wrong, ignore it
+               null;
+         end;
+      end if;
 
       Free (Desc);
       Free (Class_Def);
