@@ -271,72 +271,51 @@ package body Vdiff2_Module.Utils is
       File              : Virtual_File;
       Line              : Natural)
    is
-      Long_Min : Natural;
-      First    : Natural;
-      Last     : Natural;
-      In_Block : Boolean := False;
+      Hor_List : constant Diff_List := Horizontal_Diff
+        (Current_Line_Source, Current_Line_Dest);
       Args_Highlight_Range : Argument_List :=
         (1 => new String'(Full_Name (File)),
          2 => new String'(Fine_Change_Style),
          3 => new String'(Natural'Image (Line)),
          4 => null,
          5 => null);
-   begin
-      if (Current_Line_Source'Length) <
-        (Current_Line_Dest'Length)
-      then
-         Long_Min := Current_Line_Source'Length;
-      else
-         Long_Min := Current_Line_Dest'Length;
-      end if;
+      Curr_Node : Diff_Chunk_List.List_Node := First (Hor_List);
+      Diff      : Diff_Chunk;
+      First     : Natural;
+      Last      : Natural;
 
-      for Ind in 1 .. Long_Min loop
-         if Current_Line_Source (Ind) /=
-           Current_Line_Dest (Ind)
-         then
-            if not In_Block then
-               First    := Ind;
-               In_Block := True;
-            end if;
-         elsif In_Block then
-            Last := Ind;
-            Free (Args_Highlight_Range (4));
-            Free (Args_Highlight_Range (5));
-            Args_Highlight_Range (4) :=
-              new String'(Natural'Image (First));
-            Args_Highlight_Range (5) :=
-              new String'(Natural'Image (Last));
-            Execute_GPS_Shell_Command
-              (Kernel, "highlight_range", Args_Highlight_Range);
-            In_Block := False;
+   begin
+
+      while Curr_Node /= Diff_Chunk_List.Null_Node
+      loop
+         Diff := Data (Curr_Node).all;
+         Free (Args_Highlight_Range (4));
+         Free (Args_Highlight_Range (5));
+
+         First := Diff.Range1.First;
+
+         Last := Diff.Range1.Last;
+
+         if First = 0 then
+            First := 1;
+            Last := Last + 1;
          end if;
+
+         if Last = 0 then
+            Last := 2;
+            First := 1;
+         end if;
+         --  just for testing
+
+         Args_Highlight_Range (4) :=
+           new String'(Natural'Image (First));
+         Args_Highlight_Range (5) :=
+           new String'(Natural'Image (Last));
+         Execute_GPS_Shell_Command
+           (Kernel, "highlight_range", Args_Highlight_Range);
+         Curr_Node := Next (Curr_Node);
       end loop;
 
-      if In_Block then
-         Last := Long_Min;
-         Free (Args_Highlight_Range (4));
-         Free (Args_Highlight_Range (5));
-         Args_Highlight_Range (4) :=
-           new String'(Natural'Image (First));
-         Args_Highlight_Range (5) :=
-           new String'(Natural'Image (Last));
-         Execute_GPS_Shell_Command
-           (Kernel, "highlight_range", Args_Highlight_Range);
-         In_Block := False;
-      end if;
-
-      if Long_Min < Current_Line_Dest'Length then
-         Free (Args_Highlight_Range (4));
-         Free (Args_Highlight_Range (5));
-         Last := Current_Line_Dest'Length;
-         First := Long_Min;
-         Args_Highlight_Range (4) :=
-           new String'(Natural'Image (First));
-         Args_Highlight_Range (5) :=
-           new String'(Natural'Image (Last));
-         Execute_GPS_Shell_Command
-           (Kernel, "highlight_range", Args_Highlight_Range);
-      end if;
       Basic_Types.Free (Args_Highlight_Range);
    end Fine_Highlight_Line;
 
