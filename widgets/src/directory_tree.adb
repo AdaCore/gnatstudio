@@ -456,6 +456,21 @@ package body Directory_Tree is
       return Current;
    end Find_In_Tree;
 
+   -----------------
+   -- Show_Parent --
+   -----------------
+
+   procedure Show_Parent (Tree : access Dir_Tree_Record) is
+      N : Gtk_Ctree_Node;
+   begin
+      N := Row_Get_Parent
+        (Node_Get_Row (Node_List.Get_Data (Get_Selection (Tree))));
+      if N /= null then
+         Gtk_Select (Tree, N);
+         Node_Moveto (Tree, N, 0, 0.1, 0.2);
+      end if;
+   end Show_Parent;
+
    --------------------
    -- Show_Directory --
    --------------------

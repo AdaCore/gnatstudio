@@ -65,6 +65,9 @@ package Directory_Tree is
    procedure Initialize (Tree : access Dir_Tree_Record'Class; Root : String);
    --  Internal function used to create the tree.
 
+   procedure Show_Parent (Tree : access Dir_Tree_Record);
+   --  Shows the parent of the selected node.
+
    procedure Show_Directory (Tree : access Dir_Tree_Record; Dir : String);
    --  Expand the tree so that the directory Dir is visible.
    --  Dir must end with a directory separator.
