@@ -10735,6 +10735,19 @@ import common_package1, common_package2
 @end smallexample
 @end itemize
 
+All the methods above require you to modify the installation of GPS somehow.
+Alternatively, you can also provide a small wrapper script to launch GPS.
+Here is an example of such a script, assuming your files are in /dir/support
+and the file to load is support_autoexec.py.
+
+This is a unix-shell syntax. Such shells are also available on Windows, but
+you can also do the following using a windows @file{.bat} file
+
+@smallexample
+  export LD_LIBRARY_PATH=/dir/support:$LD_LIBRARY_PATH
+  gps --eval=python:'import support_autoexec.py' $*
+@end smallexample
+
 
 @c --------------------------------------------------------------------
 @node Hooks
