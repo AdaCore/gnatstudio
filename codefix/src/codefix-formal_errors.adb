@@ -519,7 +519,7 @@ package body Codefix.Formal_Errors is
 
       function Add_Parameter_Pragma return Extract;
 
-      function Delete_With return Extract;
+      function Delete_With return Ada_List;
 
       ----------------
       -- Delete_Var --
@@ -591,31 +591,60 @@ package body Codefix.Formal_Errors is
       -- Delete_With --
       -----------------
 
-      function Delete_With return Extract is
-         New_Extract               : Extract;
-         Extract_Use, Extract_With : Ada_List;
-         Use_Info                  : Construct_Information;
+      function Delete_With return Ada_List is
+
+         Extract_Use, New_Extract  : Ada_List;
+         Temp_Extract              : Extract;
+         Use_Info, With_Info       : Construct_Information;
          Cursor_Use                : File_Cursor := File_Cursor (Cursor);
-         Success                   : Boolean;
+         Success                   : Boolean := True;
+         Index_Name, Prev_Index    : Natural := 0;
 
       begin
-         Use_Info := Search_Unit
-             (Current_Text, Cursor.File_Name.all, Cat_Use, Name);
+         With_Info := Search_Unit
+           (Current_Text, Cursor.File_Name.all, Cat_With, Name);
 
-         Get_Unit (Current_Text, Cursor, Extract_With);
-         Remove_Elements (Extract_With, Name);
+         Get_Unit (Current_Text, Cursor, New_Extract);
+         Remove_Elements (New_Extract, Name);
 
-         if Use_Info.Category /= Cat_Unknown then
-            Cursor_Use.Col := Use_Info.Sloc_Start.Column;
-            Cursor_Use.Line := Use_Info.Sloc_Start.Line;
-            Get_Unit (Current_Text, Cursor_Use, Extract_Use);
-            Remove_Elements (Extract_Use, Name);
+         loop
+            Index_Name := Index_Name + 1;
+            Skip_To_Char (With_Info.Name.all, Index_Name, '.');
+            exit when Index_Name > With_Info.Name'Last + 1;
+            Put_Line (Index_Name'Img);
+
+            Use_Info := Search_Unit
+              (Current_Text,
+               Cursor.File_Name.all,
+               Cat_Use,
+               With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+
+            Put_Line (With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+
+            if Use_Info.Category /= Cat_Unknown then
+               Cursor_Use.Col := Use_Info.Sloc_Start.Column;
+               Cursor_Use.Line := Use_Info.Sloc_Start.Line;
+               Get_Unit (Current_Text, Cursor_Use, Extract_Use);
+               Remove_Elements (Extract_Use, Name);
+               Unchecked_Assign (Temp_Extract, New_Extract);
+               Unchecked_Free (New_Extract);
+               Merge
+                 (New_Extract,
+                  Temp_Extract,
+                  Extract_Use,
+                  Current_Text,
+                  Success);
+               Free (Temp_Extract);
+               Free (Extract_Use);
+               exit when not Success;
+            end if;
+
+            Prev_Index := Index_Name;
+         end loop;
+
+         if not Success then
+            null;
          end if;
-
-         Merge (New_Extract, Extract_With, Extract_Use, Current_Text, Success);
-
-         Free (Extract_With);
-         Free (Extract_Use);
 
          return New_Extract;
 
@@ -623,8 +652,9 @@ package body Codefix.Formal_Errors is
 
       --  begin of Not_Referenced
 
-      New_Extract   : Extract;
-      New_Solutions : Solution_List;
+      New_Extract      : Extract;
+      New_Extract_List : Ada_List;
+      New_Solutions    : Solution_List;
 
 
    begin
@@ -675,11 +705,11 @@ package body Codefix.Formal_Errors is
 
          when Cat_With =>
 
-            New_Extract := Delete_With;
+            New_Extract_List := Delete_With;
             Set_Caption
-              (New_Extract,
+              (New_Extract_List,
                "Delete with and use clause for unit """ & Name & """");
-            Append (New_Solutions, New_Extract);
+            Append (New_Solutions, New_Extract_List);
 
          when others =>
 
