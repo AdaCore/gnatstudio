@@ -535,11 +535,6 @@ package Src_Editor_Buffer is
       return Natural_Array_Access;
    --  Return Buffer.Real_Lines;
 
-   procedure Set_Real_Lines
-     (Buffer     : access Source_Buffer_Record;
-      Real_Lines : Natural_Array_Access);
-   --  Set Buffer.Real_Lines.
-
    procedure Create_Line_Information_Column
      (Buffer        : access Source_Buffer_Record;
       Identifier    : String;
