@@ -18,13 +18,18 @@ GVD_GLIDE_SRC_DIRS = $(GVD_GLIDE_BASE_DIR)/glide
 SRC_DIRS += $(GVD_GLIDE_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(GVD_GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+GVD_GLIDE_C_SRCS := \
+  $(foreach name,$(GVD_GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 GVD_GLIDE_OBJ_DIR = $(GVD_GLIDE_BASE_DIR)/obj
 OBJ_DIR = $(GVD_GLIDE_OBJ_DIR)
 
 CFLAGS = -g -O2
 
 PROJECT_FILE = gvd_glide
-LIBS := $(GVD_GLIDE_OBJ_DIR)/libgvd_glide$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(GVD_GLIDE_C_SRCS)),)
+   LIBS := $(GVD_GLIDE_OBJ_DIR)/libgvd_glide$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(GVD_GLIDE_ROOT),True)
    include ../builder/src/Makefile.glide

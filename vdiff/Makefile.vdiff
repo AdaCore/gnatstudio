@@ -20,6 +20,8 @@ VDIFF_SRC_DIRS = $(VDIFF_BASE_DIR)/src
 SRC_DIRS += $(VDIFF_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(VDIFF_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+VDIFF_C_SRCS := \
+  $(foreach name,$(VDIFF_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 VDIFF_OBJ_DIR = $(VDIFF_BASE_DIR)/obj
 OBJ_DIR = $(VDIFF_OBJ_DIR)
 
@@ -27,7 +29,10 @@ CFLAGS = -g -O2
 ADA_SOURCES = tdiff.adb vdiff.adb
 
 PROJECT_FILE = vdiff
-LIBS := $(VDIFF_OBJ_DIR)/libvdiff$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(VDIFF_C_SRCS)),)
+   LIBS := $(VDIFF_OBJ_DIR)/libvdiff$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(VDIFF_ROOT),True)
    include ../builder/src/Makefile.glide

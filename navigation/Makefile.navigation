@@ -20,6 +20,8 @@ NAVIGATION_SRC_DIRS = $(NAVIGATION_BASE_DIR)/src $(NAVIGATION_BASE_DIR)/pixmaps
 SRC_DIRS += $(NAVIGATION_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(NAVIGATION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+NAVIGATION_C_SRCS := \
+  $(foreach name,$(NAVIGATION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 NAVIGATION_OBJ_DIR = $(NAVIGATION_BASE_DIR)/obj
 OBJ_DIR = $(NAVIGATION_OBJ_DIR)
 
@@ -27,7 +29,10 @@ CFLAGS = -g -O2
 ADA_SOURCES = test_navigation.adb
 
 PROJECT_FILE = navigation
-LIBS := $(NAVIGATION_OBJ_DIR)/libnavigation$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(NAVIGATION_C_SRCS)),)
+   LIBS := $(NAVIGATION_OBJ_DIR)/libnavigation$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(NAVIGATION_ROOT),True)
    include ../builder/src/Makefile.glide

@@ -17,13 +17,18 @@ BUILDER_SRC_DIRS = $(BUILDER_BASE_DIR)/src
 SRC_DIRS += $(BUILDER_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(BUILDER_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+BUILDER_C_SRCS := \
+  $(foreach name,$(BUILDER_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 BUILDER_OBJ_DIR = $(BUILDER_BASE_DIR)/obj
 OBJ_DIR = $(BUILDER_OBJ_DIR)
 
 CFLAGS = -g -O2
 
 PROJECT_FILE = builder
-LIBS := $(BUILDER_OBJ_DIR)/libbuilder$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(BUILDER_C_SRCS)),)
+   LIBS := $(BUILDER_OBJ_DIR)/libbuilder$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(BUILDER_ROOT),True)
    include ../builder/src/Makefile.glide

@@ -41,6 +41,8 @@ GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+GLIDE_C_SRCS := \
+  $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 GLIDE_OBJ_DIR = $(GLIDE_BASE_DIR)/obj
 OBJ_DIR = $(GLIDE_OBJ_DIR)
 
@@ -48,7 +50,10 @@ CFLAGS = -g -O2
 ADA_SOURCES = glide2.adb
 
 PROJECT_FILE = glide
-LIBS := $(GLIDE_OBJ_DIR)/libglide$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(GLIDE_C_SRCS)),)
+   LIBS := $(GLIDE_OBJ_DIR)/libglide$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(GLIDE_ROOT),True)
 

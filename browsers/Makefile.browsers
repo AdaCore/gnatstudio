@@ -18,13 +18,18 @@ BROWSERS_SRC_DIRS = $(BROWSERS_BASE_DIR)/src
 SRC_DIRS += $(BROWSERS_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(BROWSERS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+BROWSERS_C_SRCS := \
+  $(foreach name,$(BROWSERS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 BROWSERS_OBJ_DIR = $(BROWSERS_BASE_DIR)/obj
 OBJ_DIR = $(BROWSERS_OBJ_DIR)
 
 CFLAGS = -g -O2
 
 PROJECT_FILE = browsers
-LIBS := $(BROWSERS_OBJ_DIR)/libbrowsers$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(BROWSERS_C_SRCS)),)
+   LIBS := $(BROWSERS_OBJ_DIR)/libbrowsers$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(BROWSERS_ROOT),True)
    include ../builder/src/Makefile.glide
