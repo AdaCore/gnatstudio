@@ -1689,6 +1689,7 @@ package body Src_Editor_Buffer is
          First, Current  : Natural := 1;
          Blanks          : Natural := 0;
          Ignore, Length  : Natural;
+         Strip_Blank     : Boolean;
 
       begin
          Length := Integer (Strlen (UTF8));
@@ -1729,9 +1730,7 @@ package body Src_Editor_Buffer is
                null;
          end case;
 
-         if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
-            Current := Length + 1;
-         end if;
+         Strip_Blank := Get_Pref (Buffer.Kernel, Strip_Blanks);
 
          while Current <= Length loop
             case Contents (Current) is
@@ -1739,13 +1738,17 @@ package body Src_Editor_Buffer is
                   if Blanks /= 0 then
                      Bytes_Written := Write
                        (FD, Contents (First)'Address, Blanks - First);
-                     New_Line (FD);
-                     Blanks := 0;
-                     First := Current + 1;
+                  else
+                     Bytes_Written := Write
+                       (FD, Contents (First)'Address, Current - First);
                   end if;
 
+                  New_Line (FD);
+                  Blanks := 0;
+                  First := Current + 1;
+
                when ' ' | ASCII.HT =>
-                  if Blanks = 0 then
+                  if Strip_Blank and Blanks = 0 then
                      Blanks := Current;
                   end if;
 
@@ -1766,9 +1769,7 @@ package body Src_Editor_Buffer is
                Bytes_Written :=
                  Write (FD, Contents (First)'Address, Current - First);
 
-               if Contents (Length) /= ASCII.LF
-                 and then Contents (Length) /= ASCII.CR
-               then
+               if Contents (Length) /= ASCII.LF then
                   New_Line (FD);
                end if;
             end if;
