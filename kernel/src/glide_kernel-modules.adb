@@ -56,6 +56,7 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with VFS;               use VFS;
 
 package body Glide_Kernel.Modules is
 
@@ -92,7 +93,7 @@ package body Glide_Kernel.Modules is
 
    procedure General_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True;
@@ -284,24 +285,13 @@ package body Glide_Kernel.Modules is
 
    procedure Set_File_Information
      (Context           : access File_Selection_Context;
-      Directory         : String := "";
-      File_Name         : String := "";
+      File              : VFS.Virtual_File := VFS.No_File;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
       Column            : Integer := 0) is
    begin
-      Free (Context.Directory);
-      Free (Context.File_Name);
-
-      if Directory /= "" then
-         Context.Directory := new String'(Directory);
-      end if;
-
-      if File_Name /= "" then
-         Context.File_Name := new String'(File_Name);
-      end if;
-
+      Context.File := File;
       Context.Line := Line;
       Context.Column := Column;
       Context.Creator_Provided_Project := Project /= No_Project;
@@ -342,7 +332,7 @@ package body Glide_Kernel.Modules is
    function Has_Directory_Information
      (Context : access File_Selection_Context) return Boolean is
    begin
-      return Context.Directory /= null;
+      return Dir_Name (Context.File) /= "";
    end Has_Directory_Information;
 
    ---------------------------
@@ -352,11 +342,7 @@ package body Glide_Kernel.Modules is
    function Directory_Information
      (Context : access File_Selection_Context) return String is
    begin
-      if Context.Directory = null then
-         return "";
-      else
-         return Context.Directory.all;
-      end if;
+      return Dir_Name (Context.File);
    end Directory_Information;
 
    --------------------------
@@ -366,7 +352,7 @@ package body Glide_Kernel.Modules is
    function Has_File_Information
      (Context : access File_Selection_Context) return Boolean is
    begin
-      return Context.File_Name /= null;
+      return Context.File /= VFS.No_File;
    end Has_File_Information;
 
    ----------------------
@@ -374,13 +360,9 @@ package body Glide_Kernel.Modules is
    ----------------------
 
    function File_Information
-     (Context : access File_Selection_Context) return String is
+     (Context : access File_Selection_Context) return Virtual_File is
    begin
-      if Context.File_Name = null then
-         return "";
-      else
-         return Context.File_Name.all;
-      end if;
+      return Context.File;
    end File_Information;
 
    ---------------------------------------
@@ -571,8 +553,6 @@ package body Glide_Kernel.Modules is
 
    procedure Destroy (Context : in out File_Selection_Context) is
    begin
-      Free (Context.Directory);
-      Free (Context.File_Name);
       Glide_Kernel.Destroy (Selection_Context (Context));
    end Destroy;
 
@@ -1213,7 +1193,7 @@ package body Glide_Kernel.Modules is
 
    procedure General_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True;
@@ -1234,13 +1214,13 @@ package body Glide_Kernel.Modules is
       Set_Boolean (Value (4), Stick_To_Data);
       Set_Boolean (Value (5), Every_Line);
 
-      if File /= "" then
+      if File /= VFS.No_File then
          Init (Value (1),  Glib.GType_String);
 
          if Normalize then
-            Set_String (Value (1), Normalize_Pathname (File));
+            Set_String (Value (1), Full_Name (File, Normalize => True));
          else
-            Set_String (Value (1), File);
+            Set_String (Value (1), Full_Name (File));
          end if;
 
          if not Mime_Action
@@ -1288,7 +1268,7 @@ package body Glide_Kernel.Modules is
 
    procedure Add_Editor_Label
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : Virtual_File;
       Identifier : String;
       Label      : String)
    is
@@ -1311,7 +1291,7 @@ package body Glide_Kernel.Modules is
 
    procedure Create_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : Virtual_File;
       Identifier     : String;
       Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True;
@@ -1338,7 +1318,7 @@ package body Glide_Kernel.Modules is
 
    procedure Remove_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : Virtual_File;
       Identifier     : String)
    is
       A : Line_Information_Array (1 .. 0);
@@ -1353,7 +1333,7 @@ package body Glide_Kernel.Modules is
 
    procedure Add_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
       Normalize      : Boolean := True) is
@@ -1370,7 +1350,7 @@ package body Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : Virtual_File;
       Line          : Integer;
       Column        : Integer;
       Message       : String;
@@ -1387,7 +1367,7 @@ package body Glide_Kernel.Modules is
       Init (Value (7),  Glib.GType_Pointer);
       Set_String (Value (1), Identifier);
       Set_String (Value (2), Category);
-      Set_String (Value (3), Normalize_Pathname (File));
+      Set_String (Value (3), Full_Name (File, Normalize => True));
       Set_Int (Value (4), Gint (Line));
       Set_Int (Value (5), Gint (Column));
       Set_String (Value (6), Message);
@@ -1412,7 +1392,7 @@ package body Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : Virtual_File;
       Line          : Integer;
       Column        : Integer;
       Message       : String) is
@@ -1428,7 +1408,7 @@ package body Glide_Kernel.Modules is
 
    procedure Clear_Highlighting
      (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String) is
+      Filename : Virtual_File) is
    begin
       if Is_Open (Kernel, Filename) then
          Open_File_Editor
@@ -1445,47 +1425,22 @@ package body Glide_Kernel.Modules is
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
+      Filename          : VFS.Virtual_File;
       Line              : Natural := 1;
       Column            : Natural := 1;
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True;
-      From_Path         : Boolean := True)
+      New_File          : Boolean := True)
    is
       Value      : GValue_Array (1 .. 6);
-      File_Found : Boolean := False;
-      Real_File  : Basic_Types.String_Access;
 
    begin
-      if From_Path then
-         declare
-            Full : constant String := Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => Filename,
-               Use_Source_Path => True,
-               Use_Object_Path => True);
-         begin
-            File_Found := (Full /= Filename) and then Is_Regular_File (Full);
-
-            if File_Found then
-               Real_File := new String'(Full);
-            end if;
-         end;
-      end if;
-
-      if Real_File = null then
-         --  Else just open the relative paths. This is mostly intended
-         --  for files opened from the command line.
-         Real_File := new String'(Normalize_Pathname (Filename));
-      end if;
-
       if Enable_Navigation then
          declare
             Length : constant Integer := Integer'Max (0, Column_End - Column);
             Args   : Argument_List :=
               (new String'("edit"),
-               new String'(Real_File.all),
+               new String'(Full_Name (Filename)),
                new String'(Image (Line)),
                new String'(Image (Column)),
                new String'(Image (Length)));
@@ -1496,8 +1451,7 @@ package body Glide_Kernel.Modules is
       end if;
 
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Real_File.all);
-      Free (Real_File);
+      Set_String (Value (1), Full_Name (Filename));
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), Gint (Line));
@@ -1529,12 +1483,12 @@ package body Glide_Kernel.Modules is
 
    procedure Close_File_Editors
      (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String)
+      Filename : Virtual_File)
    is
       Value : GValue_Array (1 .. 6);
    begin
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Filename);
+      Set_String (Value (1), Full_Name (Filename));
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), -1);
@@ -1560,93 +1514,35 @@ package body Glide_Kernel.Modules is
       end loop;
    end Close_File_Editors;
 
-   ----------------------
-   -- Locate_Html_File --
-   ----------------------
-
-   function Locate_Html_File
-     (Kernel       : access Kernel_Handle_Record'Class;
-      HTML_File    : String) return String
-   is
-      Top  : constant Glide_Window := Glide_Window
-        (Get_Main_Window (Kernel));
-      Full : GNAT.OS_Lib.String_Access;
-      Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
-      Anchor : Natural := Index (HTML_File, "#");
-   begin
-      if Is_Absolute_Path (HTML_File) then
-         return HTML_File;
-      end if;
-
-      if Anchor = 0 then
-         Anchor := HTML_File'Last + 1;
-      end if;
-
-      if Path = null or else Path.all = "" then
-         Free (Path);
-         Path := new String'(Top.Prefix_Directory.all & "/doc/gps/html/");
-      end if;
-
-      Full := Locate_Regular_File
-        (HTML_File (HTML_File'First .. Anchor - 1), Path.all);
-      Free (Path);
-
-      if Full = null then
-         return "";
-      else
-         declare
-            F : constant String := Full.all;
-         begin
-            Free (Full);
-            if Anchor <= HTML_File'Last then
-               return F & HTML_File (Anchor .. HTML_File'Last);
-            else
-               return F;
-            end if;
-         end;
-      end if;
-   end Locate_Html_File;
-
    ---------------
    -- Open_Html --
    ---------------
 
    procedure Open_Html
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
+      Filename          : Virtual_File;
       Enable_Navigation : Boolean := True)
    is
       Value  : GValue_Array (1 .. 3);
-      Anchor : Natural := Index (Filename, "#");
+      Full   : constant String := Full_Name (Filename);
+      Anchor : Natural := Index (Full, "#");
    begin
       if Anchor = 0 then
-         Anchor := Filename'Last + 1;
+         Anchor := Full'Last + 1;
       end if;
 
       Init (Value (1), Glib.GType_String);
-
-      declare
-         F : constant String := Locate_Html_File
-           (Kernel, Filename (Filename'First .. Anchor - 1));
-      begin
-         if F = "" then
-            Insert (Kernel, "File not found: " & Filename, Mode => Error);
-            --  File not found, nothing to do
-            return;
-         end if;
-
-         Set_String (Value (1), F);
-      end;
+      Set_String (Value (1), Full (Full'First .. Anchor - 1));
 
       Init (Value (2), Glib.GType_Boolean);
       Set_Boolean (Value (2), Enable_Navigation);
 
       Init (Value (3), Glib.GType_String);
 
-      if Anchor >= Filename'Last then
+      if Anchor >= Full'Last then
          Set_String (Value (3), "");
       else
-         Set_String (Value (3), Filename (Anchor + 1 .. Filename'Last));
+         Set_String (Value (3), Full (Anchor + 1 .. Full'Last));
       end if;
 
       if not Mime_Action (Kernel, Mime_Html_File, Value) then
@@ -1664,9 +1560,9 @@ package body Glide_Kernel.Modules is
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;
-      Orig_File      : String := "";
-      New_File       : String := "";
-      Diff_File      : String)
+      Orig_File      : Virtual_File := VFS.No_File;
+      New_File       : Virtual_File := VFS.No_File;
+      Diff_File      : Virtual_File)
    is
       Value   : GValue_Array (1 .. 3);
       Success : Boolean;
@@ -1674,13 +1570,13 @@ package body Glide_Kernel.Modules is
 
    begin
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Orig_File);
+      Set_String (Value (1), Full_Name (Orig_File));
 
       Init (Value (2), Glib.GType_String);
-      Set_String (Value (2), New_File);
+      Set_String (Value (2), Full_Name (New_File));
 
       Init (Value (3), Glib.GType_String);
-      Set_String (Value (3), Diff_File);
+      Set_String (Value (3), Full_Name (Diff_File));
 
       Success := Mime_Action (Kernel, Mime_Diff_File, Value);
 
@@ -1707,7 +1603,7 @@ package body Glide_Kernel.Modules is
 
          if Lib_Info = No_LI_File then
             Trace (Me, "Couldn't find LI file for "
-                   & File_Information (Context));
+                   & Full_Name (File_Information (Context)));
          else
             Find_Declaration_Or_Overloaded
               (Kernel      => Get_Kernel (Context),

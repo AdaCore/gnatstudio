@@ -137,6 +137,7 @@ with Src_Info;
 with Basic_Types; use Basic_Types;
 with Commands; use Commands;
 with Src_Info.Queries;  use Src_Info.Queries;
+with VFS;
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -471,62 +472,47 @@ package Glide_Kernel.Modules is
 
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
+      Filename          : VFS.Virtual_File;
       Line              : Natural := 1;
       Column            : Natural := 1;
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True;
-      From_Path         : Boolean := True);
+      New_File          : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
    --
-   --  If Filename contains a relative path, the editor will open it as is. It
-   --  thus depends on the current directory, and should only be used for files
-   --  opened from the command line. As a result, Filename might be found even
-   --  if it doesn't directly belong to a project.
+   --  Consider using Glide_Kernel.Create if you do not know the full path
+   --  name of the file you want to open
    --
    --  If not found and New_File is True, a new file is edited.
-   --
-   --  If From_Path is True and the file doesn't contain any directory, then it
-   --  is searched on the source path for the current project.
 
    procedure Clear_Highlighting
      (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String);
+      Filename : VFS.Virtual_File);
    --  If Filename is currently open, clear all highlighting currently
    --  associated to it.
 
    procedure Close_File_Editors
      (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String);
+      Filename : VFS.Virtual_File);
    --  Close all file editors that edit Filename.
    --  Filename must be an absolute file name.
 
    procedure Open_Html
      (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
+      Filename          : VFS.Virtual_File;
       Enable_Navigation : Boolean := True);
    --  Open, or create, an html viewer for Filename (Mime_Html_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
-   --  Filename can be a full name or a base name, and can include ancors (e.g
-   --  "foo.html#anchor").
-
-   function Locate_Html_File
-     (Kernel       : access Kernel_Handle_Record'Class;
-      HTML_File    : String) return String;
-   --  Return the full path for an html file, or the empty string if the file
-   --  was not found.
-   --  This function correctly handles anchor references in HTML_File (e.g
-   --  "foo.html#anchor")
+   --  Create Filename with Glide_Kernel.Create_Html.
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;
-      Orig_File      : String := "";
-      New_File       : String := "";
-      Diff_File      : String);
+      Orig_File      : VFS.Virtual_File := VFS.No_File;
+      New_File       : VFS.Virtual_File := VFS.No_File;
+      Diff_File      : VFS.Virtual_File);
    --  Display differences between Orig_File and New_File (Mime_Diff_File type)
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the
@@ -568,14 +554,14 @@ package Glide_Kernel.Modules is
 
    procedure Add_Editor_Label
      (Kernel     : access Kernel_Handle_Record'Class;
-      File       : String;
+      File       : VFS.Virtual_File;
       Identifier : String;
       Label      : String);
    --  Add a label in the editors for File.
 
    procedure Create_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : VFS.Virtual_File;
       Identifier     : String;
       Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True;
@@ -591,14 +577,14 @@ package Glide_Kernel.Modules is
 
    procedure Remove_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : VFS.Virtual_File;
       Identifier     : String);
    --  Remove the column identified by Identifier for the editors of File.
    --  If File is empty, then the column will be removed for all open files.
 
    procedure Add_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
+      File           : VFS.Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
       Normalize      : Boolean := True);
@@ -611,7 +597,7 @@ package Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Line          : Integer;
       Column        : Integer;
       Message       : String;
@@ -623,7 +609,7 @@ package Glide_Kernel.Modules is
      (Kernel        : access Kernel_Handle_Record'Class;
       Identifier    : String;
       Category      : String;
-      File          : String;
+      File          : VFS.Virtual_File;
       Line          : Integer;
       Column        : Integer;
       Message       : String);
@@ -639,13 +625,13 @@ package Glide_Kernel.Modules is
 
    procedure Set_File_Information
      (Context           : access File_Selection_Context;
-      Directory         : String := "";
-      File_Name         : String := "";
+      File              : VFS.Virtual_File := VFS.No_File;
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line              : Integer := 0;
       Column            : Integer := 0);
    --  Set the information in this context.
+   --  File_Name must be UTF8-encoded.
 
    function Has_Directory_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -662,10 +648,10 @@ package Glide_Kernel.Modules is
    --  True if the context has information about a selected file.
 
    function File_Information
-     (Context : access File_Selection_Context) return String;
+     (Context : access File_Selection_Context) return VFS.Virtual_File;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
-   --  This is the base file name for the file
+   --  This is the base file name for the file. This name is UTF8-encoded.
 
    function Has_Line_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -781,7 +767,8 @@ package Glide_Kernel.Modules is
      (Context : access Entity_Selection_Context) return Boolean;
    function Entity_Name_Information
      (Context : access Entity_Selection_Context) return String;
-   --  Check whether there is some entity information, and return it.
+   --  Check whether there is some entity information, and return it. This is
+   --  a UTF8-encoded string.
 
    function Has_Entity_Column_Information
      (Context : access Entity_Selection_Context) return Boolean;
@@ -809,8 +796,7 @@ package Glide_Kernel.Modules is
 private
 
    type File_Selection_Context is new Selection_Context with record
-      Directory         : GNAT.OS_Lib.String_Access := null;
-      File_Name         : GNAT.OS_Lib.String_Access := null;
+      File              : VFS.Virtual_File          := VFS.No_File;
       Project           : Projects.Project_Type     := Projects.No_Project;
       Importing_Project : Projects.Project_Type     := Projects.No_Project;
       Line, Column      : Integer := 0;
