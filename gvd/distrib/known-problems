@@ -31,7 +31,7 @@ Known Problems fixed in GVD 1.1.0
               the variable.
 
 - Closing of the first of multiple debuggers.
-  Problem:    When multiple debuggers were present, closing the first one raised
+  Problem:    When multiple debuggers are present, closing the first one raises
               an error.
   Workaround: No workaround for this problem, fixed in GVD 1.1.0.
 
