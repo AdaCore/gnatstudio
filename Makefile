@@ -9,7 +9,7 @@ gtkada \
 gvd
 
 DEPENDENCIES= \
-kbody \
+kernel \
 common \
 widgets \
 syntax \
