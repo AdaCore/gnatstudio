@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -33,8 +33,6 @@ package Debugger.Jdb.Java is
    type Jdb_Java_Language is new
      Language.Debugger.Language_Debugger with private;
    type Jdb_Java_Language_Access is access all Jdb_Java_Language'Class;
-
-   function Is_Case_Sensitive (Lang : access Jdb_Java_Language) return Boolean;
 
    --------------------
    -- Simple Parsing --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -33,8 +33,6 @@ package Debugger.Gdb.Ada is
 
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with private;
-
-   function Is_Case_Sensitive (Lang : access Gdb_Ada_Language) return Boolean;
 
    --------------------
    -- Simple Parsing --
