@@ -147,8 +147,8 @@ package body Src_Editor_Box is
 
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
-      Line   : Gint;
-      Column : Gint);
+      Line   : Editable_Line_Type;
+      Column : Integer);
    --  Redraw the cursor position in the Line/Column areas of the status bar.
 
    procedure Show_Which_Function
@@ -832,12 +832,12 @@ package body Src_Editor_Box is
 
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
-      Line   : Gint;
-      Column : Gint) is
+      Line   : Editable_Line_Type;
+      Column : Integer) is
    begin
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ':' & Image (Integer (Column)));
+         Image (Integer (Line)) & ':' & Image (Column));
    end Show_Cursor_Position;
 
    -------------------------
@@ -950,6 +950,16 @@ package body Src_Editor_Box is
       Show_All (Box.Label_Box);
    end Buffer_Information_Handler;
 
+   --------------------------
+   -- Show_Subprogram_Name --
+   --------------------------
+
+   procedure Show_Subprogram_Name (Box : Source_Editor_Box) is
+   begin
+      Show_Which_Function
+        (Box, Get_Subprogram_Name (Box, Box.Current_Line));
+   end Show_Subprogram_Name;
+
    -------------------------------------
    -- Cursor_Position_Changed_Handler --
    -------------------------------------
@@ -961,30 +971,16 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
 
-      Line : constant Gint :=
-        Gint (Values.Get_Int (Values.Nth (Params, 1)));
-
-      --  ??? Would be good to avoid querying the preference each time the
-      --  cursor moves, and cache it somewhere
-
-      Display_Subprogram : constant Boolean :=
-        Get_Pref (Box.Kernel, Display_Subprogram_Names);
 
    begin
+      Box.Current_Line :=
+        Editable_Line_Type (Values.Get_Int (Values.Nth (Params, 1)));
+
       if Has_Focus_Is_Set (Box.Source_View) then
          Show_Cursor_Position
            (Box,
-            Line   => Line,
-            Column => Values.Get_Int (Values.Nth (Params, 2)));
-
-         if Display_Subprogram then
-            Show_Which_Function
-              (Box,
-               Get_Subprogram_Name
-                 (Box,
-                  Get_Editable_Line
-                    (Box.Source_Buffer, Buffer_Line_Type (Line))));
-         end if;
+            Line   => Box.Current_Line,
+            Column => Integer (Values.Get_Int (Values.Nth (Params, 2))));
       end if;
 
    exception
