@@ -91,13 +91,13 @@ package body GUI_Utils is
       --  This field is used only under Windows, see
       --  Button_Release_On_Contextual_Menu.
       --  ??? Note that this field is present only to avoid having to
-      --  instanciate a new handler only for usage under windows.
+      --  instantiate a new handler only for usage under windows.
    end record;
 
    Dummy_Time : constant Time := Time_Of (1901, 1, 1);
    --  A Time value that is not used.
 
-   Menu_Stay_Delay    : constant Duration := 0.2;
+   Menu_Stay_Delay    : constant Duration := 0.1;
    --  Time (in seconds) to wait before accepting the button_release_event on
    --  a popup menu as valid. See comment for Button_Release_On_Contextual_Menu
 
