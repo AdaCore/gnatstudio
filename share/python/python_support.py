@@ -93,7 +93,7 @@ def before_exit (hook_name):
 GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
 
 GPS.Hook ("project_view_changed").add (project_recomputed)
-GPS.Hook ("context_changed").add (context_changed);
+#GPS.Hook ("context_changed").add (context_changed);
 GPS.Hook ("before_exit_action_hook").add (before_exit)
 
 GPS.parse_xml ("""
