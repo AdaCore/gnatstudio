@@ -68,6 +68,11 @@ package Odd.Preferences is
    Keywords_Color : constant String := "#0000FF";
    --  Color used for keywords (blue).
 
+   Tab_Size : constant Natural := 8;
+   --  Horizontal Tab size.
+   --  Please note : the implemented tab behaviour is to jump at the next
+   --  column with a number equal to a multiple of Tab_Size.
+
    type Tooltips_In_Source_Type is (None, Simple, Full);
    --  The types of tooltips that can be displayed in the source window:
    --    None: no tooltips will be displayed.
