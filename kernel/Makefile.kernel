@@ -17,10 +17,10 @@ BASE_DIR=$(KERNEL_BASE_DIR)/../widgets
 include $(BASE_DIR)/Makefile.widgets
 BASE_DIR=$(KERNEL_BASE_DIR)/../gvd
 include $(BASE_DIR)/Makefile.gvd
-BASE_DIR=${KERNEL_BASE_DIR}/src_info/sn
-include ${KERNEL_BASE_DIR}/src_info/sn/Makefile.sn
+BASE_DIR=$(KERNEL_BASE_DIR)/src_info/sn
+include $(KERNEL_BASE_DIR)/src_info/sn/Makefile.sn
 
-KERNEL_SRC_DIRS = $(KERNEL_BASE_DIR)/src $(KERNEL_BASE_DIR)/src_info ${KERNEL_BASE_DIR}/src_info/sn
+KERNEL_SRC_DIRS = $(KERNEL_BASE_DIR)/src $(KERNEL_BASE_DIR)/src_info
 SRC_DIRS += $(KERNEL_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(KERNEL_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
