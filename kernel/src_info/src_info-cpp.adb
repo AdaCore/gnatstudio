@@ -3594,7 +3594,7 @@ package body Src_Info.CPP is
                               = Sym.Start_Position.Line
                            and then Ref.Value.Location.Column
                               = 0
-                           and then Ref.Value.Kind = Reference);
+                           and then Ref.Value.Kind = Primitive_Operation);
                      Ref := Ref.Next;
                   end loop;
                   if Ref = null then
@@ -3604,7 +3604,7 @@ package body Src_Info.CPP is
                         (Sym.Start_Position.Line, 0),
                         --  we don't know the precise position of the class
                         --  name, so set the column to "anywhere"
-                        Reference);
+                        Primitive_Operation);
                   end if;
                end if;
                Free (Class_Def);
@@ -4174,7 +4174,7 @@ package body Src_Info.CPP is
                (Sym.Start_Position.Line, 0),
                --  we don't know the precise position of the class
                --  name, so set the column to "anywhere"
-               Reference);
+               Primitive_Operation);
          end if;
          Free (Class_Def);
       exception
