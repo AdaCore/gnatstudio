@@ -24,6 +24,7 @@ with Basic_Types;          use Basic_Types;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Diff_Utils2;          use Diff_Utils2;
 with Vdiff2_Utils;         use Vdiff2_Utils;
+with VFS;                  use VFS;
 
 package body Vdiff2_Command is
 
@@ -69,6 +70,19 @@ package body Vdiff2_Command is
    -------------
 
    function Execute
+     (Command : access Diff_Command;
+      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type
+   is
+      pragma Unreferenced (Event);
+   begin
+      return Execute (Command);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
      (Command : access Diff_Command)
       return Command_Return_Type
    is
@@ -76,16 +90,15 @@ package body Vdiff2_Command is
         := Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.List_Node;
       Diff          : Diff_Head_Access := new Diff_Head;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
 
    begin
       if Has_File_Information (File_Selection_Context_Access (Context))
         and then
           Has_Directory_Information (File_Selection_Context_Access (Context))
       then
-         Selected_File := new String'
-           (Directory_Information (File_Selection_Context_Access (Context)) &
-            File_Information (File_Selection_Context_Access (Context)));
+         Selected_File :=
+           File_Information (File_Selection_Context_Access (Context));
 
          Curr_Node := Is_In_Diff_List (Selected_File, Command.List_Diff.all);
 
@@ -99,7 +112,6 @@ package body Vdiff2_Command is
                              Prev (Command.List_Diff.all, Curr_Node),
                              Curr_Node);
             end if;
-            Free (Selected_File);
             Free (Diff);
          end if;
       end if;
@@ -114,7 +126,7 @@ package body Vdiff2_Command is
    ---------------------
 
    function Is_In_Diff_List
-     (Selected_File : GNAT.OS_Lib.String_Access;
+     (Selected_File : Virtual_File;
       List          : Diff_Head_List.List) return Diff_Head_List.List_Node
    is
       Curr_Node : Diff_Head_List.List_Node := First (List);
@@ -122,12 +134,9 @@ package body Vdiff2_Command is
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff := Data (Curr_Node);
-         exit when (Diff.File1 /= null
-                    and then Diff.File1.all = Selected_File.all)
-           or else (Diff.File2 /= null
-                    and then Diff.File2.all = Selected_File.all)
-           or else (Diff.File3 /= null
-                    and then Diff.File3.all = Selected_File.all);
+         exit when Diff.File1 = Selected_File
+           or else Diff.File2 = Selected_File
+           or else Diff.File3 = Selected_File;
          Curr_Node := Next (Curr_Node);
       end loop;
 
@@ -221,8 +230,7 @@ package body Vdiff2_Command is
       Unhighlight_Difference (Kernel, Diff);
       Free (Diff.List);
       Diff.List := Diff3
-        (Kernel, Diff.File1.all,
-         Diff.File2.all, Diff.File3.all);
+        (Kernel, Diff.File1, Diff.File2, Diff.File3);
       Diff.Current_Node := First (Diff.List);
       Show_Differences3 (Kernel, Diff.all);
    end Reload_Difference;
@@ -236,19 +244,24 @@ package body Vdiff2_Command is
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access)
    is
-      Args1 : Argument_List := (1 => Diff.File1);
-      Args2 : Argument_List := (1 => Diff.File2);
-      Args3 : Argument_List := (1 => Diff.File3);
-
+      Arg   : Argument_List (1 .. 1);
    begin
-      Execute_GPS_Shell_Command (Kernel, "close", Args1);
-
-      if Args2 (1) /= null then
-         Execute_GPS_Shell_Command (Kernel, "close", Args2);
+      if Diff.File1 /= VFS.No_File then
+         Arg (1) := new String'(Full_Name (Diff.File1));
+         Execute_GPS_Shell_Command (Kernel, "close", Arg);
+         Free (Arg);
       end if;
 
-      if Args3 (1) /= null then
-         Execute_GPS_Shell_Command (Kernel, "close", Args3);
+      if Diff.File2 /= VFS.No_File then
+         Arg (1) := new String'(Full_Name (Diff.File2));
+         Execute_GPS_Shell_Command (Kernel, "close", Arg);
+         Free (Arg);
+      end if;
+
+      if Diff.File3 /= VFS.No_File then
+         Arg (1) := new String'(Full_Name (Diff.File3));
+         Execute_GPS_Shell_Command (Kernel, "close", Arg);
+         Free (Arg);
       end if;
    end Close_Difference;
 

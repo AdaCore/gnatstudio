@@ -36,6 +36,7 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 
 with Vdiff2_Module;            use Vdiff2_Module;
+with VFS;                      use VFS;
 with Ada.Exceptions; use Ada.Exceptions;
 
 package body Diff_Utils2 is
@@ -224,11 +225,10 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Ref_File, New_File : String) return Diff_List
+     (Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
       Diff_Command : constant String := "diff";
    begin
-
       return Diff (Diff_Command, Ref_File, New_File);
    end Diff;
 
@@ -238,12 +238,11 @@ package body Diff_Utils2 is
 
    function Diff
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ref_File, New_File : String)
+      Ref_File, New_File : VFS.Virtual_File)
       return Diff_List
    is
       Diff_Command : constant String := Get_Pref (Kernel, Diff_Cmd);
    begin
-
       return Diff (Diff_Command, Ref_File, New_File);
    end Diff;
 
@@ -253,7 +252,7 @@ package body Diff_Utils2 is
 
    function Diff
      (Diff_Command  : String;
-      Ref_File, New_File : String) return Diff_List
+      Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
       Descriptor   : TTY_Process_Descriptor;
       Pattern      : constant Pattern_Matcher :=
@@ -270,10 +269,11 @@ package body Diff_Utils2 is
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
-      Args (1) := new String'(Ref_File);
-      Args (2) := new String'(New_File);
+      Args (1) := new String'(Locale_Full_Name (Ref_File));
+      Args (2) := new String'(Locale_Full_Name (New_File));
 
-      Trace (Me, "spawn: " & Diff_Command & " " & New_File & " " & Ref_File);
+      Trace (Me, "spawn: " & Diff_Command
+             & " " & Full_Name (New_File) & " " & Full_Name (Ref_File));
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -306,9 +306,9 @@ package body Diff_Utils2 is
 
    function Diff
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Orig_File : String;
-      New_File  : String;
-      Diff_File : String;
+      Orig_File : VFS.Virtual_File;
+      New_File  : VFS.Virtual_File;
+      Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List
    is
       Args       : Argument_List (1 .. 6);
@@ -332,17 +332,17 @@ package body Diff_Utils2 is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Orig_File);
+         Args (3) := new String'(Locale_Full_Name (Orig_File));
          Args (4) := new String'("-R");
-         Args (5) := new String'(New_File);
+         Args (5) := new String'(Locale_Full_Name (New_File));
          Num_Args := 6;
       else
-         Args (3) := new String'(New_File);
-         Args (4) := new String'(Orig_File);
+         Args (3) := new String'(Locale_Full_Name (New_File));
+         Args (4) := new String'(Locale_Full_Name (Orig_File));
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Diff_File);
+      Args (Num_Args) := new String'(Locale_Full_Name (Diff_File));
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
       Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
@@ -350,7 +350,9 @@ package body Diff_Utils2 is
       Free (Cmd);
       Free (Cmd_Args);
       Basic_Types.Free (Args);
-      Open (File, In_File, Diff_File);
+
+      --  ??? Should use VFS.Read_File instead, more efficient
+      Open (File, In_File, Locale_Full_Name (Diff_File));
 
       while not End_Of_File (File)
       loop
@@ -382,13 +384,11 @@ package body Diff_Utils2 is
       Item   : in out Diff_Head) is
    begin
       Free_List (Item.List);
-      if Item.File1 /= null and Item.File2 /= null then
-         if Item.File3 /= null then
-            Item.List := Diff3
-              (Kernel, Item.File1.all, Item.File2.all, Item.File3.all);
+      if Item.File1 /= VFS.No_File and Item.File2 /= VFS.No_File then
+         if Item.File3 /= VFS.No_File then
+            Item.List := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
          else
-            Item.List := Diff
-              (Kernel, Item.File1.all, Item.File2.all);
+            Item.List := Diff (Kernel, Item.File1, Item.File2);
          end if;
       end if;
    end Diff3;
@@ -399,7 +399,7 @@ package body Diff_Utils2 is
 
    function Diff3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      My_Change, Old_File, Your_Change : String)
+      My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is
       Diff3_Command  : constant String := Get_Pref (Kernel, Diff3_Cmd);
@@ -414,14 +414,12 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (My_Change, Old_File, Your_Change : String)
+     (My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is
       Diff3_Command : constant String := "diff3";
    begin
-
-      return Diff3 (Diff3_Command, My_Change,
-                              Old_File, Your_Change);
+      return Diff3 (Diff3_Command, My_Change, Old_File, Your_Change);
    end Diff3;
 
    -----------
@@ -430,7 +428,7 @@ package body Diff_Utils2 is
 
    function Diff3
      (Diff3_Command  : String;
-      My_Change, Old_File, Your_Change : String)
+      My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is
       Descriptor     : TTY_Process_Descriptor;
@@ -457,12 +455,14 @@ package body Diff_Utils2 is
       Cmd_Args := Argument_String_To_List (Diff3_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
 
-      Args (1) := new String'(My_Change);
-      Args (2) := new String'(Old_File);
-      Args (3) := new String'(Your_Change);
+      Args (1) := new String'(Locale_Full_Name (My_Change));
+      Args (2) := new String'(Locale_Full_Name (Old_File));
+      Args (3) := new String'(Locale_Full_Name (Your_Change));
 
       Trace (Me, "spawn: " & Diff3_Command & " " &
-             My_Change & " " & Old_File & " " & Your_Change);
+             Full_Name (My_Change)
+             & " " & Full_Name (Old_File)
+             & " " & Full_Name (Your_Change));
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -640,9 +640,6 @@ package body Diff_Utils2 is
    procedure Free_All (Link : in out Diff_Head) is
    begin
       Free_List (Link.List);
-      Free (Link.File1);
-      Free (Link.File2);
-      Free (Link.File3);
    end Free_All;
 
    ----------

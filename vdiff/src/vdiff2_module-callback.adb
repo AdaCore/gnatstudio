@@ -43,6 +43,7 @@ with Vdiff2_Module;             use Vdiff2_Module;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with OS_Utils;                  use OS_Utils;
+with VFS;                       use VFS;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 
@@ -105,12 +106,18 @@ package body Vdiff2_Module.Callback is
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
 
+            F1, F2, F3 : Virtual_File;
          begin
             if File3 = "" then
                return;
             end if;
+
+            F1 := Create (Full_Filename => File1);
+            F2 := Create (Full_Filename => File2);
+            F3 := Create (Full_Filename => File3);
+
             Trace (Me, "begin Diff3");
-            Result := Diff3 (Kernel, File1, File2, File3);
+            Result := Diff3 (Kernel, F1, F2, F3);
             Trace (Me, "end Diff3 ");
 
             if Result = Diff_Chunk_List.Null_List then
@@ -121,9 +128,9 @@ package body Vdiff2_Module.Callback is
                return;
             end if;
             Item := (List => Result,
-                     File1 => new String'(File1),
-                     File2 => new String'(File2),
-                     File3 => new String'(File3),
+                     File1 => F1,
+                     File2 => F2,
+                     File3 => F3,
                      Current_Node => First (Result),
                      Ref_File => 2);
             Append (Id.List_Diff.all, Item);
@@ -178,12 +185,17 @@ package body Vdiff2_Module.Callback is
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
+         F1, F2 : Virtual_File;
+
       begin
          if File2 = "" then
             return;
          end if;
 
-         Result := Diff (Kernel, File1, File2);
+         F1 := Create (Full_Filename => File1);
+         F2 := Create (Full_Filename => File2);
+
+         Result := Diff (Kernel, F1, F2);
 
          if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
@@ -194,9 +206,9 @@ package body Vdiff2_Module.Callback is
          end if;
 
          Item := (List => Result,
-                  File1 => new String'(File1),
-                  File2 => new String'(File2),
-                  File3 => null,
+                  File1 => F1,
+                  File2 => F2,
+                  File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
          Append (Id.List_Diff.all, Item);
@@ -262,12 +274,18 @@ package body Vdiff2_Module.Callback is
             Dummy : Command_Return_Type;
             pragma Unreferenced (Dummy);
 
+            F1, F2, F3 : Virtual_File;
          begin
             if File3 = "" then
                return;
             end if;
+
+            F1 := Create (Full_Filename => File1);
+            F2 := Create (Full_Filename => File2);
+            F3 := Create (Full_Filename => File3);
+
             Change_Dir (Dir_Name (File3));
-            Result := Diff3 (Kernel, File1, File2, File3);
+            Result := Diff3 (Kernel, F1, F2, F3);
 
             if Result = Diff_Chunk_List.Null_List then
                Button := Message_Dialog
@@ -278,9 +296,9 @@ package body Vdiff2_Module.Callback is
             end if;
 
             Item := (List => Result,
-                     File1 => new String'(File1),
-                     File2 => new String'(File2),
-                     File3 => new String'(File3),
+                     File1 => F1,
+                     File2 => F2,
+                     File3 => F3,
                      Current_Node => First (Result),
                      Ref_File => 2);
             Append (Id.List_Diff.all, Item);
@@ -350,12 +368,18 @@ package body Vdiff2_Module.Callback is
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
+         F1, F2 : Virtual_File;
+
       begin
          if File2 = "" then
             return;
          end if;
+
+         F1 := Create (Full_Filename => File1);
+         F2 := Create (Full_Filename => File2);
+
          Change_Dir (Dir_Name (File2));
-         Result := Diff (Kernel, File1, File2);
+         Result := Diff (Kernel, F1, F2);
 
          if Result = Diff_Chunk_List.Null_List then
             Button := Message_Dialog
@@ -366,9 +390,9 @@ package body Vdiff2_Module.Callback is
          end if;
 
          Item := (List => Result,
-                  File1 => new String'(File1),
-                  File2 => new String'(File2),
-                  File3 => null,
+                  File1 => F1,
+                  File2 => F2,
+                  File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
          Append (Id.List_Diff.all, Item);
@@ -426,6 +450,8 @@ package body Vdiff2_Module.Callback is
             New_File  : constant String := Get_String (Data (Data'First + 1));
             Diff_File : constant String := Get_String (Data (Data'First + 2));
 
+            Orig_F, New_F, Diff_F : Virtual_File;
+
          begin
             if Orig_File = "" then
                if New_File = "" then
@@ -435,10 +461,15 @@ package body Vdiff2_Module.Callback is
                declare
                   Base     : constant String := Base_Name (New_File);
                   Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
+                  Ref_F    : Virtual_File;
 
                begin
-                  Result := Diff
-                    (Kernel, Ref_File, New_File, Diff_File, Revert => True);
+                  New_F  := Create (Full_Filename => New_File);
+                  Diff_F := Create (Full_Filename => Diff_File);
+                  Ref_F  := Create (Full_Filename => Ref_File);
+
+                  Result :=
+                    Diff (Kernel, Ref_F, New_F, Diff_F, Revert => True);
 
                   if Result = Diff_Chunk_List.Null_List then
                      Button := Message_Dialog
@@ -450,9 +481,9 @@ package body Vdiff2_Module.Callback is
 
                   Item :=
                     (List => Result,
-                     File1 => new String'(Ref_File),
-                     File2 => new String'(New_File),
-                     File3 => null,
+                     File1 => Ref_F,
+                     File2 => New_F,
+                     File3 => VFS.No_File,
                      Current_Node => First (Result),
                      Ref_File => 2);
                   Append (Id.List_Diff.all, Item);
@@ -468,9 +499,13 @@ package body Vdiff2_Module.Callback is
                declare
                   Base     : constant String := Base_Name (Orig_File);
                   Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
-
+                  Ref_F    : Virtual_File;
                begin
-                  Result := Diff (Kernel, Orig_File, Ref_File, Diff_File);
+                  Orig_F := Create (Full_Filename => Orig_File);
+                  Ref_F  := Create (Full_Filename => Ref_File);
+                  Diff_F := Create (Full_Filename => Diff_File);
+
+                  Result := Diff (Kernel, Orig_F, Ref_F, Diff_F);
 
                   if Result = Diff_Chunk_List.Null_List then
                      Button := Message_Dialog
@@ -480,9 +515,9 @@ package body Vdiff2_Module.Callback is
                      return False;
                   end if;
                   Item := (List => Result,
-                                 File1 => new String'(Orig_File),
-                                 File2 => new String'(Ref_File),
-                                 File3 => null,
+                                 File1 => Orig_F,
+                                 File2 => Ref_F,
+                                 File3 => VFS.No_File,
                                  Current_Node => First (Result),
                                  Ref_File => 2);
                   Append (Id.List_Diff.all, Item);
@@ -493,7 +528,10 @@ package body Vdiff2_Module.Callback is
             else
                --  All arguments are specified
 
-               Result := Diff (Kernel, Orig_File, New_File, Diff_File);
+               Orig_F := Create (Full_Filename => Orig_File);
+               New_F  := Create (Full_Filename => New_File);
+               Diff_F := Create (Full_Filename => Diff_File);
+               Result := Diff (Kernel, Orig_F, New_F, Diff_F);
 
                if Result = Diff_Chunk_List.Null_List then
                   Button := Message_Dialog
@@ -505,9 +543,9 @@ package body Vdiff2_Module.Callback is
 
                Item :=
                  (List => Result,
-                  File1 => new String'(Orig_File),
-                  File2 => new String'(New_File),
-                  File3 => null,
+                  File1 => Orig_F,
+                  File2 => New_F,
+                  File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
                Append (Id.List_Diff.all, Item);
@@ -522,7 +560,6 @@ package body Vdiff2_Module.Callback is
       return False;
    end Mime_Action;
 
-
    --------------------
    -- File_Closed_Cb --
    --------------------
@@ -533,7 +570,8 @@ package body Vdiff2_Module.Callback is
       Kernel  : Kernel_Handle)
    is
       Diff     : Diff_Head_Access := new Diff_Head;
-      File     : constant String := Get_String (Nth (Args, 1));
+      File     : constant Virtual_File :=
+        Create (Full_Filename => Get_String (Nth (Args, 1)));
       CurrNode : Diff_Head_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       pragma Unreferenced (Widget);
@@ -542,9 +580,9 @@ package body Vdiff2_Module.Callback is
       Trace (Me, "begin Close Difference");
       while CurrNode /= Diff_Head_List.Null_Node loop
          Diff.all := Data (CurrNode);
-         exit when (Diff.File1 /= null and then Diff.File1.all = File)
-           or else (Diff.File2 /= null and then Diff.File2.all = File)
-           or else (Diff.File3 /= null and then Diff.File3.all = File);
+         exit when Diff.File1 = File
+           or else Diff.File2 = File
+           or else Diff.File3 = File;
          CurrNode := Next (CurrNode);
       end loop;
 
@@ -586,7 +624,7 @@ package body Vdiff2_Module.Callback is
       Context : Selection_Context_Access) is
       pragma Unreferenced (Widget);
       Node          : Diff_Head_List.List_Node;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Diff          : Diff_Head;
    begin
@@ -596,26 +634,22 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Change_Ref_File'Access);
 
-      Selected_File := new String'
-        (Directory_Information
-           (File_Selection_Context_Access (Context)) &
-         File_Information
-           (File_Selection_Context_Access (Context)));
+      Selected_File :=
+        File_Information (File_Selection_Context_Access (Context));
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       Diff := Data (Node);
 
-      if Diff.File1.all = Selected_File.all then
+      if Diff.File1 = Selected_File then
          Diff.Ref_File := 1;
-      elsif Diff.File2.all = Selected_File.all then
+      elsif Diff.File2 = Selected_File then
          Diff.Ref_File := 2;
-      elsif Diff.File3.all = Selected_File.all then
+      elsif Diff.File3 = Selected_File then
          Diff.Ref_File := 3;
       end if;
 
       Set_Data (Node, Diff);
-      Free (Selected_File);
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
    end On_Ref_Change;
@@ -628,9 +662,9 @@ package body Vdiff2_Module.Callback is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
       Node          : Diff_Head_List.List_Node;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
 
    begin
@@ -640,17 +674,13 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Unhighlight_Difference'Access);
 
-      Selected_File := new String'
-        (Directory_Information
-           (File_Selection_Context_Access (Context)) &
-         File_Information
-           (File_Selection_Context_Access (Context)));
+      Selected_File :=
+         File_Information (File_Selection_Context_Access (Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Free (Selected_File);
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
    end On_Hide_Differences;
@@ -663,9 +693,9 @@ package body Vdiff2_Module.Callback is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
       Node          : Diff_Head_List.List_Node;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
 
    begin
@@ -675,17 +705,13 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Reload_Difference'Access);
 
-      Selected_File := new String'
-        (Directory_Information
-           (File_Selection_Context_Access (Context)) &
-         File_Information
-           (File_Selection_Context_Access (Context)));
+      Selected_File :=
+         File_Information (File_Selection_Context_Access (Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Free (Selected_File);
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
    end On_Recalculate;
@@ -698,9 +724,9 @@ package body Vdiff2_Module.Callback is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
       Node          : Diff_Head_List.List_Node;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
 
    begin
@@ -710,17 +736,13 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
 
-      Selected_File := new String'
-        (Directory_Information
-           (File_Selection_Context_Access (Context)) &
-         File_Information
-           (File_Selection_Context_Access (Context)));
+      Selected_File :=
+         File_Information (File_Selection_Context_Access (Context));
 
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Free (Selected_File);
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
    end On_Close_Difference;

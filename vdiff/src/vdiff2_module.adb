@@ -21,8 +21,6 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -46,6 +44,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Commands.Interactive;      use Commands.Interactive;
+with VFS;                       use VFS;
 
 
 package body Vdiff2_Module is
@@ -290,7 +289,7 @@ package body Vdiff2_Module is
       Submenu : Gtk_Menu;
       Mitem   : Gtk_Menu_Item;
       Dummy   : Diff_Head_List.List_Node;
-      Selected_File : GNAT.OS_Lib.String_Access;
+      Selected_File : Virtual_File;
 
    begin
 
@@ -300,11 +299,8 @@ package body Vdiff2_Module is
          if Has_File_Information (File) and then
            Has_Directory_Information (File_Selection_Context_Access (Context))
          then
-            Selected_File := new String'
-              (Directory_Information
-                 (File_Selection_Context_Access (Context)) &
-               File_Information
-                 (File_Selection_Context_Access (Context)));
+            Selected_File :=
+              File_Information (File_Selection_Context_Access (Context));
             Dummy := Is_In_Diff_List
               (Selected_File,
                VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
@@ -343,8 +339,6 @@ package body Vdiff2_Module is
                   Context_Callback.To_Marshaller (On_Close_Difference'Access),
                   Selection_Context_Access (Context));
             end if;
-
-            Free (Selected_File);
          end if;
       end if;
    end VDiff_Contextual;

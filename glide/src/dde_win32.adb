@@ -24,6 +24,7 @@ with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Glide_Kernel.Modules;
 with System;
+with VFS; use VFS;
 
 package body DDE is
 
@@ -163,7 +164,7 @@ package body DDE is
                case Operation is
                   when FileOpen =>
                      Glide_Kernel.Modules.Open_File_Editor
-                       (Kernel_Local, Argument);
+                       (Kernel_Local, Create (Full_Filename => Argument));
                end case;
 
             exception

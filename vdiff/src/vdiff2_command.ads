@@ -23,9 +23,9 @@
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
 with Diff_Utils2;          use Diff_Utils2;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Commands.Interactive; use Commands.Interactive;
 with Gdk.Event;
+with VFS;
 
 package Vdiff2_Command is
 
@@ -64,8 +64,9 @@ package Vdiff2_Command is
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
+
    function Is_In_Diff_List
-     (Selected_File : String_Access;
+     (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Diff_Head_List.List_Node;
    --  ???
