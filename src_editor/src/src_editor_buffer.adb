@@ -218,7 +218,7 @@ package body Src_Editor_Buffer is
    function Automatic_Save (Buffer : Source_Buffer) return Boolean is
       Success : Boolean;
    begin
-      if not Buffer.Modified_Auto then
+      if not Buffer.Modified_Auto or else Buffer.Filename = null then
          return True;
       end if;
 
@@ -1084,6 +1084,8 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
+      Close (FD);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1106,6 +1108,7 @@ package body Src_Editor_Buffer is
       Success  : out Boolean)
    is
       Name_Changed : Boolean;
+      Result       : Boolean;
    begin
       Internal_Save_To_File (Buffer.all'Access, Filename, Success);
 
@@ -1113,9 +1116,12 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Delete_File
-        (Dir_Name (Buffer.Filename.all) & ".#" &
-         Base_Name (Buffer.Filename.all), Success);
+      if Buffer.Filename /= null then
+         Delete_File
+           (Dir_Name (Buffer.Filename.all) & ".#" &
+            Base_Name (Buffer.Filename.all), Result);
+      end if;
+
       Set_Modified (Buffer, False);
       Buffer.Modified_Auto := False;
       Name_Changed := Buffer.Filename = null
