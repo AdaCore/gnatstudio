@@ -324,7 +324,12 @@ private
       --  might change when new dependencies are added.
 
       Last_Context_For_Contextual : Selection_Context_Access := null;
-      --  The context used in the last selection.
+      --  The context used in the last contextual menu.
+
+      Explorer_Context : Selection_Context_Access := null;
+      --  The last context emitted by the explorer.
+      --  This implies knowledge of the explorer (at least to check the module
+      --  ID, but there is no way around that).
    end record;
 
 end Glide_Kernel;
