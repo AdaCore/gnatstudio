@@ -56,7 +56,6 @@ package body Socket_Module is
 
    type Socket_Module_Record is new Module_ID_Record with record
       Timeout_Handler  : Timeout_Handler_Id;
-      Kernel           : Kernel_Handle;
       Commands_Present : Boolean := False;
       Commands_List    : List;
 
@@ -284,7 +283,7 @@ package body Socket_Module is
                         then
                            Create
                              (Command,
-                              Module_Data.Kernel,
+                              Get_Kernel (Module_Data.all),
                               Data.Buffer (8 .. Data.Index - 1),
                               "Python",
                               Data.Channel);
@@ -292,7 +291,7 @@ package body Socket_Module is
                         else
                            Create
                              (Command,
-                              Module_Data.Kernel,
+                              Get_Kernel (Module_Data.all),
                               Data.Buffer (1 .. Data.Index - 1),
                               Stream => Data.Channel);
                            Result := Execute (Command);
@@ -425,11 +424,8 @@ package body Socket_Module is
       pragma Unreferenced (T);
    begin
       Socket_Module_ID := new Socket_Module_Record;
-      Socket_Module (Socket_Module_ID).Kernel := Kernel_Handle (Kernel);
-
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
         Timeout_Add (100, Timeout_Process_Commands'Access);
-
       Socket_Module (Socket_Module_ID).Address.Addr :=
         Addresses (Get_Host_By_Name (Host_Name), 1);
 
@@ -466,10 +462,10 @@ package body Socket_Module is
       T := Timeout_Add (2000, Idle_Accept'Access);
 
       Register_Module
-        (Module                  => Socket_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Socket_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Socket_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Socket_Module_Name,
+         Priority    => Default_Priority);
 
       Register_Command
         (Kernel, "send_socket",
