@@ -268,6 +268,18 @@ package body Glide_Kernel is
       Next (Get_Language_Handler (Kernel), Iterator, Kernel.Source_Info_List);
    end Next;
 
+   -----------------
+   -- Renaming_Of --
+   -----------------
+
+   function Renaming_Of
+     (Kernel : access Kernel_Handle_Record;
+      Entity : Src_Info.Queries.Entity_Information)
+      return Src_Info.Queries.Entity_Information is
+   begin
+      return Renaming_Of (Kernel.Source_Info_List, Entity);
+   end Renaming_Of;
+
    ----------------------------
    -- Reset_Source_Info_List --
    ----------------------------
