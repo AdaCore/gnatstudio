@@ -20,6 +20,7 @@
 
 --  This package is the root of the glide's kernel API.
 
+with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
 with Gint_Xml;
@@ -183,6 +184,21 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record)
       return Gtk.Widget.Gtk_Widget;
    --  Return the search module.
+
+   function Get_Home_Dir
+     (Handle : access Kernel_Handle_Record)
+     return String;
+   --  Return the Home directory. (eg ~/.glide).
+
+   function Get_Logs_Mapper
+     (Handle : access Kernel_Handle_Record)
+     return Basic_Mapper.File_Mapper_Access;
+   --  Return the mapper for file logs.
+
+   procedure Set_Logs_Mapper
+     (Handle : access Kernel_Handle_Record;
+      Mapper : Basic_Mapper.File_Mapper_Access);
+   --  Set the mapper for file logs.
 
    --------------
    -- Contexts --
@@ -436,6 +452,9 @@ private
 
       Search : Gtk.Widget.Gtk_Widget;
       --  The search module
+
+      Logs_Mapper : Basic_Mapper.File_Mapper_Access;
+      --  Mapping between files and logs.
    end record;
 
 end Glide_Kernel;
