@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001-2002 ACT-Europe              --
+--                 Copyright (C) 2001-2002 ACT-Europe                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -139,10 +139,6 @@ package body Gtkada.File_Selector is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
    --  ???
-
-   procedure Quit_Main_Loop
-     (Object : access Gtk_Widget_Record'Class);
-   --  Quit the Main_Loop.
 
    procedure On_Destroy
      (Object : access Gtk_Widget_Record'Class);
@@ -747,18 +743,6 @@ package body Gtkada.File_Selector is
    begin
       null;
    end On_Selection_Entry_Changed;
-
-   ---------------------
-   --  Quit_Main_Loop --
-   ---------------------
-
-   procedure Quit_Main_Loop
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      pragma Unreferenced (Object);
-   begin
-      Main_Quit;
-   end Quit_Main_Loop;
 
    --------------------------
    -- On_Ok_Button_Clicked --

@@ -52,13 +52,6 @@ with Unchecked_Deallocation;
 
 package body Directory_Tree is
 
-   --  Each node is associated with a single boolean that indicates whether
-   --  the subdirectories where parsed or not.
-
-   type My_Dialog_Record is new Gtk_Dialog_Record with record
-      Cancelled : Boolean := False;
-   end record;
-
    package Boolean_Data is new Gtk.Ctree.Row_Data (Boolean);
 
    type Idle_Data is record
