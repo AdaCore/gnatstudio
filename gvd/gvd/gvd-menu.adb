@@ -565,7 +565,7 @@ package body GVD.Menu is
       Widget : Limited_Widget) is
    begin
       Save_Window_Settings
-        (GVD_Main_Window (Object).Gvd_Home_Dir.all
+        (GVD_Main_Window (Object).Home_Dir.all
          & Directory_Separator & "window_settings",
          Gtk_Widget (Object));
       Cleanup_Debuggers (GVD_Main_Window (Object));
