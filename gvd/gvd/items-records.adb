@@ -926,16 +926,19 @@ package body Items.Records is
 
       for F in Item1.Fields'Range loop
          if (Item1.Fields (F).Variant_Part /= null
-             and then Record_Type_Access (Item2).Fields (F).Variant_Part = null)
+             and then Record_Type_Access
+                        (Item2).Fields (F).Variant_Part = null)
            or else
            (Item1.Fields (F).Variant_Part = null
-            and then Record_Type_Access (Item2).Fields (F).Variant_Part /= null)
+            and then Record_Type_Access
+                       (Item2).Fields (F).Variant_Part /= null)
          then
             return False;
          end if;
 
          if not Structurally_Equivalent
-           (Item1.Fields (F).Value, Record_Type_Access (Item2).Fields (F).Value)
+           (Item1.Fields (F).Value,
+            Record_Type_Access (Item2).Fields (F).Value)
          then
             return False;
          end if;

@@ -221,80 +221,80 @@ package body GVD.Window_Settings is
                              (Process.Stack_Scrolledwindow)),
                        True);
 
-                   if Process.Backtrace_Mask / (2 ** 1) = 0 then
-                      A := 2;
-                   else
-                      A := 1;
-                   end if;
-
-                   Set (String_Gint
-                        ("Stack_Num_Width"
-                         & Image (Image'First + 1 .. Image'Last)),
-                        Gint (Get_Allocation_Width
-                               (Get_Column_Widget
-                                (Process.Stack_List, 0)) - A),
-                        True);
-
-                   if Process.Backtrace_Mask / (2 ** 2) = 0 then
-                      A := 2;
-                   else
-                      A := 1;
-                   end if;
-
-                   Set (String_Gint
-                        ("Stack_PC_Width"
-                         & Image (Image'First + 1 .. Image'Last)),
-                         Gint (Get_Allocation_Width
-                               (Get_Column_Widget
-                                 (Process.Stack_List, 1)) - A),
-                         True);
-
-                   if Process.Backtrace_Mask / (2 ** 3) = 0 then
-                      A := 2;
-                   else
-                      A := 1;
-                   end if;
-
-                   Set (String_Gint
-                        ("Stack_Subprogram_Width"
-                         & Image (Image'First + 1 .. Image'Last)),
-                        Gint (Get_Allocation_Width
-                               (Get_Column_Widget
-                                 (Process.Stack_List, 2)) - A),
-                        True);
-
-                   if Process.Backtrace_Mask / (2 ** 4) = 0 then
-                      A := 2;
+                  if Process.Backtrace_Mask / (2 ** 1) = 0 then
+                     A := 2;
                   else
-                      A := 1;
-                   end if;
+                     A := 1;
+                  end if;
 
-                   Set (String_Gint
-                        ("Stack_Parameters_Width"
-                         & Image (Image'First + 1 .. Image'Last)),
-                        Gint (Get_Allocation_Width
-                               (Get_Column_Widget
-                                 (Process.Stack_List, 3)) - A),
-                        True);
+                  Set (String_Gint
+                       ("Stack_Num_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Column_Widget
+                              (Process.Stack_List, 0)) - A),
+                       True);
 
-                   if Process.Backtrace_Mask / (2 ** 5) = 0 then
-                      A := 2;
-                   else
-                      A := 1;
-                   end if;
+                  if Process.Backtrace_Mask / (2 ** 2) = 0 then
+                     A := 2;
+                  else
+                     A := 1;
+                  end if;
 
-                   Set (String_Gint
-                        ("Stack_Location_Width"
-                         & Image (Image'First + 1 .. Image'Last)),
-                        Gint (Get_Allocation_Width
-                               (Get_Column_Widget
-                                 (Process.Stack_List, 4)) - A),
-                        True);
+                  Set (String_Gint
+                       ("Stack_PC_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Column_Widget
+                              (Process.Stack_List, 1)) - A),
+                       True);
 
-                   Set (String_Gint
-                        ("Stack_Mask" &
-                         Image (Image'First + 1 .. Image'Last)),
-                        Gint (Process.Backtrace_Mask),
+                  if Process.Backtrace_Mask / (2 ** 3) = 0 then
+                     A := 2;
+                  else
+                     A := 1;
+                  end if;
+
+                  Set (String_Gint
+                       ("Stack_Subprogram_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Column_Widget
+                              (Process.Stack_List, 2)) - A),
+                       True);
+
+                  if Process.Backtrace_Mask / (2 ** 4) = 0 then
+                     A := 2;
+                  else
+                     A := 1;
+                  end if;
+
+                  Set (String_Gint
+                       ("Stack_Parameters_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Column_Widget
+                              (Process.Stack_List, 3)) - A),
+                       True);
+
+                  if Process.Backtrace_Mask / (2 ** 5) = 0 then
+                     A := 2;
+                  else
+                     A := 1;
+                  end if;
+
+                  Set (String_Gint
+                       ("Stack_Location_Width"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Width
+                             (Get_Column_Widget
+                              (Process.Stack_List, 4)) - A),
+                       True);
+
+                  Set (String_Gint
+                       ("Stack_Mask" &
+                        Image (Image'First + 1 .. Image'Last)),
+                       Gint (Process.Backtrace_Mask),
                        True);
                end if;
 
@@ -376,17 +376,17 @@ package body GVD.Window_Settings is
         (String_Gint ("Editor_Height" & Image));
       Result.Stack_Width := Get_Setting (String_Gint ("Stack_Width" & Image));
       Result.Stack_Num_Width :=
-         Get_Setting (String_Gint ("Stack_Num_Width" & Image));
-       Result.Stack_PC_Width :=
-         Get_Setting (String_Gint ("Stack_PC_Width" & Image));
-       Result.Stack_Subprogram_Width :=
-         Get_Setting (String_Gint ("Stack_Subprogram_Width" & Image));
-       Result.Stack_Parameters_Width :=
-         Get_Setting (String_Gint ("Stack_Parameters_Width" & Image));
-       Result.Stack_Location_Width :=
-         Get_Setting (String_Gint ("Stack_Location_Width" & Image));
-       Result.Stack_Mask :=
-         Get_Setting (String_Gint ("Stack_Mask" & Image));
+        Get_Setting (String_Gint ("Stack_Num_Width" & Image));
+      Result.Stack_PC_Width :=
+        Get_Setting (String_Gint ("Stack_PC_Width" & Image));
+      Result.Stack_Subprogram_Width :=
+        Get_Setting (String_Gint ("Stack_Subprogram_Width" & Image));
+      Result.Stack_Parameters_Width :=
+        Get_Setting (String_Gint ("Stack_Parameters_Width" & Image));
+      Result.Stack_Location_Width :=
+        Get_Setting (String_Gint ("Stack_Location_Width" & Image));
+      Result.Stack_Mask :=
+        Get_Setting (String_Gint ("Stack_Mask" & Image));
       Result.Explorer_Width := Get_Setting
         (String_Gint ("Explorer_Width" & Image));
 
@@ -412,29 +412,29 @@ package body GVD.Window_Settings is
          Result.Explorer_Width := 200;
       end if;
 
-       if Result.Stack_Num_Width = -1 then
-          Result.Stack_Num_Width := 30;
-       end if;
+      if Result.Stack_Num_Width = -1 then
+         Result.Stack_Num_Width := 30;
+      end if;
 
-       if Result.Stack_PC_Width = -1 then
-          Result.Stack_PC_Width := 30;
-       end if;
+      if Result.Stack_PC_Width = -1 then
+         Result.Stack_PC_Width := 30;
+      end if;
 
-       if Result.Stack_Subprogram_Width = -1 then
-          Result.Stack_Subprogram_Width := 80;
-       end if;
+      if Result.Stack_Subprogram_Width = -1 then
+         Result.Stack_Subprogram_Width := 80;
+      end if;
 
-       if Result.Stack_Parameters_Width = -1 then
-          Result.Stack_Parameters_Width := 80;
-       end if;
+      if Result.Stack_Parameters_Width = -1 then
+         Result.Stack_Parameters_Width := 80;
+      end if;
 
-       if Result.Stack_Location_Width = -1 then
-          Result.Stack_Location_Width := 80;
-       end if;
+      if Result.Stack_Location_Width = -1 then
+         Result.Stack_Location_Width := 80;
+      end if;
 
-       if Result.Stack_Mask = -1 then
-          Result.Stack_Mask := 6;
-        end if;
+      if Result.Stack_Mask = -1 then
+         Result.Stack_Mask := 6;
+      end if;
 
       return Result;
    end Get_Process_Tab_Geometry;
