@@ -205,17 +205,20 @@ package body Odd.Dialogs.Callbacks is
       Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;
+
       use Widget_List;
+
       Selected : Widget_List.Glist := First (Get_Selection (List));
       New_List : Widget_List.Glist;
-   begin
 
+   begin
       while Selected /= Null_List loop
          Append (New_List, Get_Data (Selected));
          Selected := Next (Selected);
       end loop;
 
       New_List := Last (New_List);
+
       while New_List /= Null_List loop
          Process_User_Command
            (Tab,
@@ -224,7 +227,11 @@ package body Odd.Dialogs.Callbacks is
                 (Get_Data (Children (Gtk_Container (Get_Data (New_List)))))));
          New_List := Prev (New_List);
       end loop;
+
       Update (Top.History_Dialog, Gtk_Widget (Tab));
+      --  When is New_List freed ???
+      --  This does not take into account the fact that the selection can be
+      --  done in an arbitrary order ???
    end On_Replay_Selection_Clicked;
 
    -------------------------------
