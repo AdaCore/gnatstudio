@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;          use Gdk.Color;
-with Gdk.Font;           use Gdk.Font;
 with Glib.Object;        use Glib.Object;
 with Glib;               use Glib;
 with Gtk.Box;            use Gtk.Box;
@@ -35,7 +34,6 @@ with Gtk.Style;          use Gtk.Style;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with Pango.Font;         use Pango.Font;
 with Unchecked_Deallocation;
 
 with Glide_Kernel;             use Glide_Kernel;
@@ -105,8 +103,6 @@ package body Wizards is
         (1 => (1 => GType_Uint, 2 => GType_None));
       Color : Gdk_Color;
       Style : Gtk_Style;
-      Font  : Gdk_Font;
-      Desc  : Pango_Font_Description;
       Event : Gtk_Event_Box;
       Vbox  : Gtk_Vbox;
 
@@ -127,9 +123,7 @@ package body Wizards is
       Alloc (Get_Default_Colormap, Color);
       Style := Copy (Get_Style (Wiz));
       Set_Background (Style, State_Normal, Color);
-
-      Desc := Get_Pref (Kernel, Wizard_Title_Font);
-      Font := From_Description (Desc);
+      Set_Font_Description (Style, Get_Pref (Kernel, Wizard_Title_Font));
 
       Gtk_New_Hbox (Wiz.Page_Box, False, 0);
       Pack_Start (Get_Vbox (Wiz), Wiz.Page_Box, True, True, 0);
@@ -150,18 +144,15 @@ package body Wizards is
 
       Gtk_New (Event);
       Set_Style (Event, Style);
-      Set_Size_Request (Event, -1,
-                        (Get_Ascent (Font) + Get_Descent (Font)) * 3);
       Pack_Start (Vbox, Event, False, False, 0);
 
       Gtk_New (Wiz.Title, Title);
       Set_Alignment (Wiz.Title, 0.5, 0.5);
-      Set_Padding (Wiz.Title, 0, 0);
+      Set_Padding (Wiz.Title, 0, 10);
       Set_Justify (Wiz.Title, Justify_Center);
       Set_Line_Wrap (Wiz.Title, False);
       Add (Event, Wiz.Title);
 
-      Set_Font_Description (Style, Desc);
       Set_Style (Wiz.Title, Style);
 
       --  The actual contents of the wizard is put in a frame
