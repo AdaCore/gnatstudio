@@ -374,7 +374,16 @@ package body VCS.CVS is
       C : Command_Record;
    begin
       String_List.Append (C.Dir, Get_Path (String_List.Head (Filenames)));
-      String_List.Concat (C.Args, Arguments);
+
+      declare
+         Args_Temp : String_List.List := Arguments;
+      begin
+         while not String_List.Is_Empty (Args_Temp) loop
+            String_List.Append (C.Args, String_List.Head (Args_Temp));
+            Args_Temp := String_List.Next (Args_Temp);
+         end loop;
+      end;
+
       String_List.Append (C.Command, CVS_Command);
 
       if String_List.Head (Filenames)
