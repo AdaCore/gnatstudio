@@ -59,9 +59,11 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
+   --  Callback called when the file selector's "OK" button is clicked.
 
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
+   --  Callback called when the file selector's "Cancel" button is clicked.
 
    ---------------------------------------
    -- On_Make_Suite_Window_Delete_Event --
