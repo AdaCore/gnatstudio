@@ -1,6 +1,7 @@
 with "../shared";
 with "../kernel/kernel";
 with "../templates_parser/templates_parser";
+with "../vsearch/vsearch";
 
 project Docgen is
 
