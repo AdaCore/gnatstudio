@@ -7645,9 +7645,10 @@ Here is an example that defines a few new preferences:
    <preference name="my-enum"
                page="Editor:Fonts &amp; Colors"
                label="My Enum"
+               default="1"
                type="choices" >
      <choice>Choice1</choice>
-     <choice>Choice2</choice>
+     <choice>Choice2</choice>  <!--  The default choice -->
      <choice>Choice3</choice>
    </preference>
 </custom>
