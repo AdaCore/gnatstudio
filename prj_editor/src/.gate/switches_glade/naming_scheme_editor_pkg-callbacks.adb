@@ -73,21 +73,6 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       null;
    end On_Update_Clicked;
 
-   ------------------------------------
-   -- On_Unit_Name_Entry_Insert_Text --
-   ------------------------------------
-
-   procedure On_Unit_Name_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
-   begin
-      null;
-   end On_Unit_Name_Entry_Insert_Text;
-
    ----------------------------------------
    -- On_Unit_Name_Entry_Key_Press_Event --
    ----------------------------------------
@@ -101,21 +86,6 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       return False;
    end On_Unit_Name_Entry_Key_Press_Event;
 
-   ----------------------------------------
-   -- On_Spec_Filename_Entry_Insert_Text --
-   ----------------------------------------
-
-   procedure On_Spec_Filename_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
-   begin
-      null;
-   end On_Spec_Filename_Entry_Insert_Text;
-
    --------------------------------------------
    -- On_Spec_Filename_Entry_Key_Press_Event --
    --------------------------------------------
@@ -128,21 +98,6 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    begin
       return False;
    end On_Spec_Filename_Entry_Key_Press_Event;
-
-   ----------------------------------------
-   -- On_Body_Filename_Entry_Insert_Text --
-   ----------------------------------------
-
-   procedure On_Body_Filename_Entry_Insert_Text
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
-   begin
-      null;
-   end On_Body_Filename_Entry_Insert_Text;
 
    --------------------------------------------
    -- On_Body_Filename_Entry_Key_Press_Event --
