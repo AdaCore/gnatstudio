@@ -89,17 +89,21 @@ package body Glide_Kernel.Modules is
    type Contextual_Menu_Record;
    type Contextual_Menu_Access is access all Contextual_Menu_Record;
    type Contextual_Menu_Record is record
-      Name   : GNAT.OS_Lib.String_Access;
-      Label  : Contextual_Menu_Label_Creator;
-      Pix    : GNAT.OS_Lib.String_Access;
-      Next   : Contextual_Menu_Access;
-      Visible : Boolean := True;
+      Name     : GNAT.OS_Lib.String_Access;
+      Label    : Contextual_Menu_Label_Creator;
+      Pix      : GNAT.OS_Lib.String_Access;
+      Next     : Contextual_Menu_Access;
       Ref_Item : Contextual_Menu_Access;
 
-      Action : Action_Record_Access;
+      Action   : Action_Record_Access;
 
-      Command : Commands.Interactive.Interactive_Command_Access;
-      Filter : Glide_Kernel.Action_Filter;
+      Command  : Commands.Interactive.Interactive_Command_Access;
+      Filter   : Glide_Kernel.Action_Filter;
+
+      Visible  : Boolean := True;
+
+      Filter_Matched : Boolean;
+      --  Only valid while computing a contextual menu
    end record;
    --  A contextual menu entry declared by a user or GPS itself internally
    --  If Action is not null, then (Command, Filter) should be ignored. We do
@@ -519,21 +523,157 @@ package body Glide_Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-      Current : Module_List.List_Node :=
-        Module_List.First (User.Kernel.Modules_List);
+      procedure Insert_Hard_Coded_Entries
+        (Context : Selection_Context_Access;
+         Menu    : Gtk_Menu);
+      --  Insert the entries that hard coded in the GPS code
+
+      function Menu_Is_Visible
+        (C : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return Boolean;
+      --  Whether the menu C should be made visible
+
+      procedure Create_Item
+        (C         : Contextual_Menu_Access;
+         Context   : Selection_Context_Access;
+         Item      : out Gtk_Menu_Item;
+         Full_Name : out GNAT.OS_Lib.String_Access);
+      --  Create the menu item to use when displaying C.
+      --  Full_Name is the label of the menu
+
+      -------------------------------
+      -- Insert_Hard_Coded_Entries --
+      -------------------------------
+
+      procedure Insert_Hard_Coded_Entries
+        (Context : Selection_Context_Access;
+         Menu    : Gtk_Menu)
+      is
+         use type Module_List.List_Node;
+         Current : Module_List.List_Node :=
+           Module_List.First (User.Kernel.Modules_List);
+      begin
+         while Current /= Module_List.Null_Node loop
+            if Module_List.Data (Current) /= User.ID
+              and then Module_List.Data (Current).Info.Contextual_Menu /= null
+            then
+               Module_List.Data (Current).Info.Contextual_Menu
+                 (Object  => User.Object,
+                  Context => Context,
+                  Menu    => Menu);
+            end if;
+            Current := Module_List.Next (Current);
+         end loop;
+      end Insert_Hard_Coded_Entries;
+
+      ---------------------
+      -- Menu_Is_Visible --
+      ---------------------
+
+      function Menu_Is_Visible
+        (C : Contextual_Menu_Access;
+         Context : Selection_Context_Access) return Boolean
+      is
+         Has_Following_Entry : Boolean := False;
+         C2   : Contextual_Menu_Access;
+         Matches : Boolean;
+      begin
+         if not C.Visible then
+            return False;
+         end if;
+
+         --  A separator is visible only:
+         --     - Its own filter matches
+         --     - Or if it has no own filter, then only if the reference
+         --       item is also visible
+         --     - Always visible if there is no reference item
+         --  and then only if it isn't the last entry the contextual
+         --  menu
+
+         if C.Action = null and then C.Command = null then
+            C2 := C.Next;
+            while C2 /= null loop
+               if (C2.Action /= null or else C2.Command /= null)
+                 and then C2.Filter_Matched
+               then
+                  Has_Following_Entry := True;
+                  exit;
+               end if;
+               C2 := C2.Next;
+            end loop;
+
+            if not Has_Following_Entry then
+               Matches := False;
+            elsif C.Filter /= null then
+               Matches := Filter_Matches (C.Filter, Context);
+            else
+               Matches := C.Ref_Item = null
+                 or else C.Ref_Item.Filter_Matched;
+            end if;
+
+         elsif C.Action /= null then
+            Matches := Filter_Matches (C.Action.Filter, Context);
+         else
+            Matches := Filter_Matches (C.Filter, Context);
+         end if;
+
+         return Matches;
+      end Menu_Is_Visible;
+
+      -----------------
+      -- Create_Item --
+      -----------------
+
+      procedure Create_Item
+        (C         : Contextual_Menu_Access;
+         Context   : Selection_Context_Access;
+         Item      : out Gtk_Menu_Item;
+         Full_Name : out GNAT.OS_Lib.String_Access)
+      is
+         use type GNAT.OS_Lib.String_Access;
+         Image     : Gtk_Image_Menu_Item;
+         Pix       : Gtk_Image;
+      begin
+         if C.Label = null then
+            Full_Name := new String'(C.Name.all);
+         else
+            Full_Name := new String'(Get_Label (C.Label, Context));
+         end if;
+
+         --  A separator ?
+
+         if C.Action = null and then C.Command = null then
+            Gtk_New (Item, "");
+         elsif Full_Name.all /= "" then
+            if C.Pix = null then
+               Gtk_New (Item, Base_Name (Full_Name.all));
+            else
+               Gtk_New (Image, Base_Name (Full_Name.all));
+               Gtk_New (Pix,
+                        Stock_Id => C.Pix.all,
+                        Size     => Icon_Size_Menu);
+               Set_Image (Image, Pix);
+               Item := Gtk_Menu_Item (Image);
+            end if;
+
+            Action_Callback.Object_Connect
+              (Item, "activate",
+               Contextual_Action'Access,
+               User_Data   => C,
+               Slot_Object => User.Kernel);
+         else
+            Item := null;
+         end if;
+      end Create_Item;
+
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
+      Full_Name : GNAT.OS_Lib.String_Access;
       C       : Contextual_Menu_Access;
       Item    : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
-      Matches : Boolean;
       Parent_Menu : Gtk_Menu;
-      Full_Name : GNAT.OS_Lib.String_Access;
-      Image : Gtk_Image_Menu_Item;
-      Pix   : Gtk_Image;
 
-      use type GNAT.OS_Lib.String_Access;
-      use type Module_List.List_Node;
       use type Gtk.Widget.Widget_List.Glist;
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
@@ -559,111 +699,58 @@ package body Glide_Kernel.Modules is
             Kernel  => User.Kernel,
             Creator => User.ID);
 
+         Insert_Hard_Coded_Entries (Context, Menu);
+
+         --  Compute what items should be made visible, except for separators
+         --  for the moment
          C := Convert (User.Kernel.Contextual);
          while C /= null loop
-            if C.Visible then
-               --  A separator is visible only:
-               --     - Its own filter matches
-               --     - Or if it has no own filter, then only if the reference
-               --       item is also visible
-               --     - Always visible if there is no reference item
-               if C.Action = null and then C.Command = null then
-                  if C.Filter /= null then
-                     Matches := Filter_Matches (C.Filter, Context);
-                  else
-                     Matches := C.Ref_Item = null
-                       or else
-                        (C.Ref_Item.Action /= null
-                         and then Filter_Matches
-                           (C.Ref_Item.Action.Filter, Context))
-                       or else
-                        (C.Ref_Item.Action = null
-                         and then Filter_Matches (C.Ref_Item.Filter, Context));
-                  end if;
-               elsif C.Action /= null then
-                  Matches := Filter_Matches (C.Action.Filter, Context);
-               else
-                  Matches := Filter_Matches (C.Filter, Context);
-               end if;
-
-               if Matches then
-
-                  if C.Label = null then
-                     Full_Name := new String'(C.Name.all);
-                  else
-                     Full_Name := new String'(Get_Label (C.Label, Context));
-                  end if;
-
-                  --  A separator ?
-
-                  if C.Action = null and then C.Command = null then
-                     Gtk_New (Item, "");
-                  else
-                     --  Implicit filters for %p, ...
-                     if Full_Name.all /= "" then
-                        if C.Pix = null then
-                           Gtk_New (Item, Base_Name (Full_Name.all));
-                        else
-                           Gtk_New (Image, Base_Name (Full_Name.all));
-                           Gtk_New (Pix,
-                                    Stock_Id => C.Pix.all,
-                                    Size     => Icon_Size_Menu);
-                           Set_Image (Image, Pix);
-                           Item := Gtk_Menu_Item (Image);
-                        end if;
-
-                        Action_Callback.Object_Connect
-                          (Item, "activate",
-                           Contextual_Action'Access,
-                           User_Data   => C,
-                           Slot_Object => User.Kernel);
-                     else
-                        Item := null;
-                     end if;
-                  end if;
-
-                  --  Find the parent menu
-
-                  if Item /= null then
-                     Parent_Item := Find_Or_Create_Menu_Tree
-                       (Menu_Bar      => null,
-                        Menu          => Menu,
-                        Path          => Dir_Name ('/' & Full_Name.all),
-                        Accelerators => Get_Default_Accelerators (User.Kernel),
-                        Allow_Create  => True,
-                        Use_Mnemonics => False);
-                     if Parent_Item /= null then
-                        Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
-                        if Parent_Menu = null then
-                           Gtk_New (Parent_Menu);
-                           Set_Submenu (Parent_Item, Parent_Menu);
-                        end if;
-                     else
-                        Parent_Menu := Menu;
-                     end if;
-
-                     Add_Menu (Parent => Parent_Menu, Item => Item);
-                  end if;
-
-                  GNAT.OS_Lib.Free (Full_Name);
-               end if;
+            if C.Action /= null or else C.Command /= null then
+               C.Filter_Matched := Menu_Is_Visible (C, Context);
             end if;
-
             C := C.Next;
          end loop;
 
+         --  Same, but only for separators now, since their visibility might
+         --  depend on the visibility of other items
+         C := Convert (User.Kernel.Contextual);
+         while C /= null loop
+            if C.Action = null and then C.Command = null then
+               C.Filter_Matched := Menu_Is_Visible (C, Context);
+            end if;
+            C := C.Next;
+         end loop;
 
-         while Current /= Module_List.Null_Node loop
-            if Module_List.Data (Current) /= User.ID
-              and then Module_List.Data (Current).Info.Contextual_Menu /= null
-            then
-               Module_List.Data (Current).Info.Contextual_Menu
-                 (Object  => User.Object,
-                  Context => Context,
-                  Menu    => Menu);
+         C := Convert (User.Kernel.Contextual);
+         while C /= null loop
+            if C.Filter_Matched then
+               Create_Item (C, Context, Item, Full_Name);
+
+               if Item /= null then
+                  Parent_Item := Find_Or_Create_Menu_Tree
+                    (Menu_Bar      => null,
+                     Menu          => Menu,
+                     Path          => Dir_Name ('/' & Full_Name.all),
+                     Accelerators  => Get_Default_Accelerators (User.Kernel),
+                     Allow_Create  => True,
+                     Use_Mnemonics => False);
+                  if Parent_Item /= null then
+                     Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
+                     if Parent_Menu = null then
+                        Gtk_New (Parent_Menu);
+                        Set_Submenu (Parent_Item, Parent_Menu);
+                     end if;
+                  else
+                     Parent_Menu := Menu;
+                  end if;
+
+                  Add_Menu (Parent => Parent_Menu, Item => Item);
+               end if;
+
+               GNAT.OS_Lib.Free (Full_Name);
             end if;
 
-            Current := Module_List.Next (Current);
+            C := C.Next;
          end loop;
       end if;
 
@@ -1333,6 +1420,7 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
@@ -1368,6 +1456,7 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
          Add_Before);
@@ -1404,6 +1493,7 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
          Add_Before);
@@ -1448,6 +1538,7 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
