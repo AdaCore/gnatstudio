@@ -150,9 +150,6 @@ package GVD.Process is
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
 
-      Continuation_Line       : Boolean := False;
-      --  Whether the debugger is currently handling a multiple line command.
-
       Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
 
