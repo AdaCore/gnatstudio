@@ -2834,30 +2834,22 @@ package body Src_Editor_Module is
 
       File     : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Location : Message_Context_Access;
       Line     : Natural;
 
    begin
       Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)));
 
-      if File.all in Message_Context'Class then
-         Location := Message_Context_Access (File);
-
-         if Has_Line_Information (Location) then
-            Line := Modules.Line_Information (Location);
-         else
-            Line := 1;
-         end if;
-
-         Open_File_Editor
-           (Get_Kernel (Context),
-            Filename  => File_Information (File),
-            Line      => Line,
-            Column    => Column_Information (Location));
-
+      if Has_Line_Information (File) then
+         Line := Modules.Line_Information (File);
       else
-         Open_File_Editor (Get_Kernel (Context), File_Information (File));
+         Line := 1;
       end if;
+
+      Open_File_Editor
+        (Get_Kernel (Context),
+         Filename  => File_Information (File),
+         Line      => Line,
+         Column    => Column_Information (File));
 
    exception
       when E : others =>
