@@ -34,12 +34,12 @@ package Open_Program_Pkg is
       Label56 : Gtk_Label;
       Label58 : Gtk_Label;
       Launch_Menu : Gtk_Option_Menu;
-      Label59 : Gtk_Label;
       Combo8 : Gtk_Combo;
       Protocol_Entry : Gtk_Entry;
       Label60 : Gtk_Label;
       Combo7 : Gtk_Combo;
       Target_Entry : Gtk_Entry;
+      Label59 : Gtk_Label;
       Hbuttonbox7 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;

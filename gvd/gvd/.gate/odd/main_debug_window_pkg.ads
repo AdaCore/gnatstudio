@@ -9,7 +9,6 @@ with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Toolbar; use Gtk.Toolbar;
 with Gtk.Pixmap; use Gtk.Pixmap;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Frame; use Gtk.Frame;
@@ -158,7 +157,6 @@ package Main_Debug_Window_Pkg is
       Separator32 : Gtk_Menu_Item;
       About_Odd1 : Gtk_Menu_Item;
       Toolbar1 : Gtk_Toolbar;
-      Label53 : Gtk_Label;
       Combo6 : Gtk_Combo;
       Entry15 : Gtk_Entry;
       Button62 : Gtk_Widget;

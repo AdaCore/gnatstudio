@@ -1037,30 +1037,31 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Lookup () in the source",
+      Tooltip_Text => -"Lookup selection in the source",
       Icon => Gtk_Widget (Create_Pixmap (lookup_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button63 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
+      Tooltip_Text => -"Find selection in the source",
       Icon => Gtk_Widget (Create_Pixmap (findfwd_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button64 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Set/Delete breakpoint at ()",
+      Tooltip_Text => -"Set/Delete breakpoint at selection",
       Icon => Gtk_Widget (Create_Pixmap (breakat_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button65 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Stop whenever () changes",
+      Tooltip_Text => -"Stop whenever selection changes",
       Icon => Gtk_Widget (Create_Pixmap (watch_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button66 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Print ()",
+      Tooltip_Text => -"Print Dialog",
       Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button66, "clicked", On_Print1_Clicked'Access, Main_Debug_Window);
@@ -1068,7 +1069,7 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Display ()",
+      Tooltip_Text => -"Display Dialog",
       Icon => Gtk_Widget (Create_Pixmap (display_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button67, "clicked", On_Display1_Clicked'Access, Main_Debug_Window);
@@ -1076,21 +1077,14 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Plot ()",
+      Tooltip_Text => -"Plot selection",
       Icon => Gtk_Widget (Create_Pixmap (plot_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button71 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Set the value of ()",
+      Tooltip_Text => -"Set the value of selection",
       Icon => Gtk_Widget (Create_Pixmap (set_xpm, Main_Debug_Window)));
-
-   Gtk_New (Main_Debug_Window.Label53, -("( ): "));
-   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Label53);
-   Set_Alignment (Main_Debug_Window.Label53, 0.5, 0.5);
-   Set_Padding (Main_Debug_Window.Label53, 0, 0);
-   Set_Justify (Main_Debug_Window.Label53, Justify_Center);
-   Set_Line_Wrap (Main_Debug_Window.Label53, False);
 
    Gtk_New (Main_Debug_Window.Combo6);
    Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Combo6);
@@ -1173,40 +1167,40 @@ begin
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
-      Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Main_Debug_Window)));
+      Tooltip_Text => -"Execute until selected stack frame returns",
+      Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button58, "clicked", On_Continue1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button60 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Select and print stack frame that called this one",
-      Icon => Gtk_Widget (Create_Pixmap (up_xpm, Main_Debug_Window)));
+      Tooltip_Text => -"Continue program being debugged, after signal or breakpoint",
+      Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button60, "clicked", On_Up1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button61 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Select and print stack frame called by this one",
-      Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
+      Tooltip_Text => -"Interrupt debugged program",
+      Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button61, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Execute until selected stack frame returns",
-      Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Main_Debug_Window)));
+      Tooltip_Text => -"Select and print stack frame that called this one",
+      Icon => Gtk_Widget (Create_Pixmap (up_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button57, "clicked", On_Finish1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button51 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
-      Tooltip_Text => -"Interrupt debugged program",
-      Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
+      Tooltip_Text => -"Select and print stack frame called by this one",
+      Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button51, "clicked", On_Interrupt1_Activate'Access, Main_Debug_Window);
 
