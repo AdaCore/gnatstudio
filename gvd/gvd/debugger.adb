@@ -401,14 +401,15 @@ package body Debugger is
    begin
       Set_Command_In_Process (Get_Process (Debugger));
 
-      if Mode >= Visible then
-         Set_Busy_Cursor (Process);
-      end if;
-
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       if Debugger.Window /= null then
          Process := Convert (Debugger.Window, Debugger);
+
+         if Mode >= Visible then
+            Set_Busy_Cursor (Process);
+         end if;
+
          Send_Init (Process);
 
          --  Display the command in the output window if necessary
