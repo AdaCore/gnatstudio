@@ -566,9 +566,6 @@ begin
       end;
    end loop;
 
-   Save_Window_Settings (Dir.all & Directory_Separator & "window_settings",
-                         Gtk_Widget (Main_Debug_Window));
-
    Destroy (Main_Debug_Window);
 
 exception

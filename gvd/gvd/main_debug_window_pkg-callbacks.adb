@@ -46,6 +46,7 @@ with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Preferences;     use GVD.Preferences;
+with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Unchecked_Deallocation;
 with Gtk.Paned;           use Gtk.Paned;
@@ -112,7 +113,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Ref the object since we will destroy it in the main procedure.
 
       Ref (Object);
+
+      Save_Window_Settings (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all
+                            & Directory_Separator & "window_settings",
+                            Gtk_Widget (Object));
+
       Cleanup_Debuggers (Main_Debug_Window_Access (Object));
+
       Main_Quit;
       return False;
    end On_Main_Debug_Window_Delete_Event;
@@ -429,6 +436,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
+      Save_Window_Settings (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all
+                            & Directory_Separator & "window_settings",
+                            Gtk_Widget (Object));
       Cleanup_Debuggers (Main_Debug_Window_Access (Object));
       Main_Quit;
    end On_Exit1_Activate;
