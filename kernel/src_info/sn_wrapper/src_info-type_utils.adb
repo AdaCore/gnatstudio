@@ -21,7 +21,6 @@
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with SN.Find_Fns;       use SN.Find_Fns;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with VFS;               use VFS;
 
@@ -102,6 +101,10 @@ package body Src_Info.Type_Utils is
       Desc.Parent_Point    := Invalid_Point;
       Desc.Parent_Filename := VFS.No_File;
 
+      --  ??? Should be optimized by having predefined constants, and a big
+      --  case statement on the length of Type_Name. If we have constants,
+      --  this might also remove the need for dynamic allocation.
+
       if Type_Name = "char"              or else Type_Name = "signed char"
          or else Type_Name = "int"       or else Type_Name = "signed int"
          or else Type_Name = "long"      or else Type_Name = "signed long"
@@ -127,6 +130,8 @@ package body Src_Info.Type_Utils is
       elsif Type_Name = "float"
         or else Type_Name = "signed float"
         or else Type_Name = "unsigned float"
+        or else Type_Name = "unsigned double"
+        or else Type_Name = "double"    or else Type_Name = "signed double"
       then
          Desc.Kind         := Floating_Point_Entity;
          Desc.Parent_Point := Predefined_Point;
@@ -211,7 +216,8 @@ package body Src_Info.Type_Utils is
       end if;
 
       if Type_Name (Type_Name'Last) = '*'
-         or Type_Name (Type_Name'Last) = '&' then
+        or else Type_Name (Type_Name'Last) = '&'
+      then
          Success      := True;
          Desc.Kind    := Access_Kind_Entity;
          return;
@@ -258,7 +264,6 @@ package body Src_Info.Type_Utils is
       begin
          Find_Class (Type_Name, SN_Table, Desc, Class_Def, Success);
          if Success then
-            Free (Class_Def);
             return;
          end if;
       end;
@@ -269,7 +274,6 @@ package body Src_Info.Type_Utils is
       begin
          Find_Union (Type_Name, SN_Table, Desc, Union_Def, Success);
          if Success then
-            Free (Union_Def);
             return;
          end if;
       end;
@@ -280,23 +284,26 @@ package body Src_Info.Type_Utils is
       begin
          Find_Enum (Type_Name, SN_Table, Desc, Enum_Def, Success);
          if Success then
-            Free (Enum_Def);
             return;
          end if;
       end;
 
       --  try template arguments
-      if (Symbol /= Undef) and (Symbol /= CL) and (Symbol /= UN) then
+      if Symbol /= Undef
+        and then Symbol /= CL
+        and then Symbol /= UN
+      then
          Find_Template_Argument
            (Type_Name,
             SN_Table,
             Desc,
             Symbol,
-            FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last),
-            FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last),
-            FU_Tab.Buffer (FU_Tab.Template_Parameters.First ..
-                           FU_Tab.Template_Parameters.Last),
-            FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last),
+            String (FU_Tab.Key (FU_Tab.Name.First .. FU_Tab.Name.Last)),
+            String
+              (FU_Tab.Key (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)),
+            String (FU_Tab.Data (FU_Tab.Template_Parameters.First ..
+                                   FU_Tab.Template_Parameters.Last)),
+            String (FU_Tab.Key (FU_Tab.Class.First .. FU_Tab.Class.Last)),
             Success);
          if Success then
             return;
@@ -311,10 +318,11 @@ package body Src_Info.Type_Utils is
             SN_Table,
             Desc,
             Symbol,
-            CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last),
-            CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
-            CL_Tab.Buffer (CL_Tab.Template_Parameters.First ..
-                           CL_Tab.Template_Parameters.Last),
+            String (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last)),
+            String
+              (CL_Tab.Key (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)),
+            String (CL_Tab.Data (CL_Tab.Template_Parameters.First ..
+                                   CL_Tab.Template_Parameters.Last)),
             "",
             Success);
          if Success then
@@ -359,14 +367,17 @@ package body Src_Info.Type_Utils is
       --  hash table
       HTTypedef := Get
         (Module_Typedefs.all,
-         Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
+         String
+           (Typedef.Data (Typedef.Original.First .. Typedef.Original.Last)));
 
       if Desc.Is_Typedef
          and then Desc.Ancestor_Point = Invalid_Point
       then -- was not set yet
          Desc.Ancestor_Point    := Typedef.Start_Position;
          Desc.Ancestor_Filename := Create
-          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last));
+           (String
+              (Typedef.Key
+                 (Typedef.File_Name.First .. Typedef.File_Name.Last)));
       end if;
 
       Desc.Is_Typedef := True;
@@ -376,11 +387,10 @@ package body Src_Info.Type_Utils is
          if Desc.Parent_Point = Invalid_Point then
             Desc.Parent_Point    := Typedef.Start_Position;
             Desc.Parent_Filename := Create
-              (Typedef.Buffer
-                 (Typedef.File_Name.First .. Typedef.File_Name.Last));
+              (String (Typedef.Key
+                 (Typedef.File_Name.First .. Typedef.File_Name.Last)));
          end if;
          Success   := True;
-         Free (Typedef);
          return;
       end if;
 
@@ -391,8 +401,8 @@ package body Src_Info.Type_Utils is
             Desc    : CType_Description;
          begin
             Find_Class
-              (Type_Name => Typedef.Buffer
-                 (Typedef.Class_Name.First .. Typedef.Class_Name.Last),
+              (Type_Name => String (Typedef.Data
+                 (Typedef.Class_Name.First .. Typedef.Class_Name.Last)),
                SN_Table  => SN_Table,
                Desc      => Desc,
                Class_Def => Enclosed_Class,
@@ -401,8 +411,8 @@ package body Src_Info.Type_Utils is
                Enclosed_Symbol := CL;
             else
                Find_Union
-                 (Type_Name => Typedef.Buffer
-                    (Typedef.Class_Name.First .. Typedef.Class_Name.Last),
+                 (Type_Name => String (Typedef.Data
+                    (Typedef.Class_Name.First .. Typedef.Class_Name.Last)),
                   SN_Table  => SN_Table,
                   Desc      => Desc,
                   Union_Def => Enclosed_Class,
@@ -415,8 +425,8 @@ package body Src_Info.Type_Utils is
       end if;
 
       Type_Name_To_Kind
-        (Type_Name       => Typedef.Buffer (
-           Typedef.Original.First .. Typedef.Original.Last),
+        (Type_Name       => String (Typedef.Data
+           (Typedef.Original.First .. Typedef.Original.Last)),
          SN_Table        => SN_Table,
          Module_Typedefs => Module_Typedefs,
          Desc            => Desc,
@@ -424,14 +434,11 @@ package body Src_Info.Type_Utils is
          Symbol          => Enclosed_Symbol,
          CL_Tab          => Enclosed_Class);
 
-      Free (Enclosed_Class);
-
       if Success then
          Desc.Parent_Point    := Typedef.Start_Position;
          Desc.Parent_Filename := Create
-           (Typedef.Buffer
-              (Typedef.File_Name.First .. Typedef.File_Name.Last));
-         Free (Typedef);
+           (String (Typedef.Key
+              (Typedef.File_Name.First .. Typedef.File_Name.Last)));
          Success := True;
          Set (Module_Typedefs.all, Type_Name, Complete);
          return;
@@ -440,8 +447,6 @@ package body Src_Info.Type_Utils is
       --  original type not found, but typedef clause present
       Desc.Kind := Unresolved_Entity_Kind;
       Success := True;
-
-      Free (Typedef);
 
    exception
       when  DB_Error |   -- non-existent table
@@ -479,14 +484,14 @@ package body Src_Info.Type_Utils is
 
       Desc.Parent_Point    := Class_Def.Start_Position;
       Desc.Parent_Filename := Create
-        (Class_Def.Buffer
-           (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+        (String (Class_Def.Key
+           (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Class_Def.Start_Position;
          Desc.Ancestor_Filename := Create
-           (Class_Def.Buffer
-              (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+           (String (Class_Def.Key
+              (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
       end if;
 
       if Is_Template (Class_Def) then
@@ -534,14 +539,14 @@ package body Src_Info.Type_Utils is
 
       Desc.Parent_Point    := Union_Def.Start_Position;
       Desc.Parent_Filename := Create
-        (Union_Def.Buffer
-           (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+        (String (Union_Def.Key
+           (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Union_Def.Start_Position;
          Desc.Ancestor_Filename := Create
-           (Union_Def.Buffer
-              (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+           (String (Union_Def.Key
+              (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
       end if;
 
       if (Union_Def.Attributes and SN_TEMPLATE) /= 0 then
@@ -590,14 +595,14 @@ package body Src_Info.Type_Utils is
 
       Desc.Parent_Point    := Enum_Def.Start_Position;
       Desc.Parent_Filename := Create
-        (Enum_Def.Buffer
-          (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+        (String (Enum_Def.Key
+          (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Enum_Def.Start_Position;
          Desc.Ancestor_Filename := Create
-           (Enum_Def.Buffer
-             (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+           (String (Enum_Def.Key
+             (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
       end if;
 
       Desc.Kind := Enumeration_Kind_Entity;
@@ -643,14 +648,18 @@ package body Src_Info.Type_Utils is
          exit when P = No_Pair;
          Parse_Pair (P, Arg);
 
-         if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
-            and Template_Args
-               = Arg.Buffer (Arg.Template_Parameters.First ..
-                  Arg.Template_Parameters.Last)
-            and ((Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
-               = Class_Name)
-               or ((Arg.Class_Name = Empty_Segment) and Class_Name = "#"))
-            and Arg.Attributes /= SN_TA_VALUE
+         if File_Name =
+           String (Arg.Key (Arg.File_Name.First .. Arg.File_Name.Last))
+           and then Template_Args =
+             String (Arg.Data (Arg.Template_Parameters.First ..
+                                 Arg.Template_Parameters.Last))
+           and then
+             (String (Arg.Data (Arg.Class_Name.First .. Arg.Class_Name.Last)) =
+                Class_Name
+              or else
+                (Arg.Class_Name = Empty_Segment
+                 and then Class_Name = ""))
+           and then Arg.Attributes /= SN_TA_VALUE
          then
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
             Desc.Parent_Point    := Arg.Start_Position;
@@ -663,11 +672,8 @@ package body Src_Info.Type_Utils is
             end if;
 
             Success := True;
-            Free (Arg);
             return;
          end if;
-
-         Free (Arg);
       end loop;
 
       Release_Cursor (SN_Table (TA));
@@ -681,7 +687,7 @@ package body Src_Info.Type_Utils is
    -------------------
 
    function Cmp_Arg_Types
-     (Buffer_A, Buffer_B     : String_Access;
+     (Buffer_A, Buffer_B     : Buffer_String;
       Args_A, Args_B         : Segment;
       Strict                 : Boolean := False)
       return Boolean
@@ -689,21 +695,23 @@ package body Src_Info.Type_Utils is
    begin
       --  ellipsis requires special handling unless Strict is specified
       if not Strict
-         and then Tail (Buffer_A (Args_A.First .. Args_A.Last), 4) = ",..."
+        and then Args_A.Last - 3 >= Args_A.First
+        and then Buffer_A (Args_A.Last - 3 .. Args_A.Last) = ",..."
       then
-         return Buffer_A (Args_A.First .. Args_A.Last - 4)
-            = Head
-              (Buffer_B (Args_B.First .. Args_B.Last),
-               Args_A.Last - Args_A.First - 3);
+         return Args_B.First + Args_A.Last - 3 - Args_A.First <= Args_B.Last
+           and then Buffer_A (Args_A.First .. Args_A.Last - 4) =
+           Buffer_B
+             (Args_B.First ..  Args_B.First + Args_A.Last - 3 - Args_A.First);
       end if;
 
       if not Strict
-         and then Tail (Buffer_B (Args_B.First .. Args_B.Last), 4) = ",..."
+        and then Args_B.Last - 3 >= Args_B.First
+        and then Buffer_B (Args_B.Last - 3 .. Args_B.Last) = ",..."
       then
-         return Buffer_B (Args_B.First .. Args_B.Last - 4)
-            = Head
-              (Buffer_A (Args_A.First .. Args_A.Last),
-               Args_B.Last - Args_B.First - 3);
+         return Args_A.First + Args_B.Last - 3 - Args_B.First <= Args_A.Last
+           and then Buffer_B (Args_B.First .. Args_B.Last - 4) =
+           Buffer_A
+             (Args_A.First ..  Args_A.First + Args_B.Last - 3 - Args_B.First);
       end if;
 
       return Buffer_A (Args_A.First .. Args_A.Last)
@@ -720,7 +728,7 @@ package body Src_Info.Type_Utils is
    --------------------
 
    function Cmp_Prototypes
-     (Buffer_A, Buffer_B     : String_Access;
+     (Buffer_A, Buffer_B     : Buffer_String;
       Args_A, Args_B         : Segment;
       Ret_Type_A, Ret_Type_B : Segment;
       Strict                 : Boolean := False)

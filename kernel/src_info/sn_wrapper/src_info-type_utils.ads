@@ -81,8 +81,8 @@ package Src_Info.Type_Utils is
    --  Attempts to convert string into E_Kind assuming that the string
    --  is a builtin C type. If conversion fails returns False
 
-   Invalid_FU_Table    : constant FU_Table := (
-      Class               => Invalid_Segment,
+   Invalid_FU_Table    : constant FU_Table :=
+     (Class               => Invalid_Segment,
       Name                => Invalid_Segment,
       File_Name           => Invalid_Segment,
       Start_Position      => Invalid_Point,
@@ -92,20 +92,20 @@ package Src_Info.Type_Utils is
       Arg_Types           => Invalid_Segment,
       Comments            => Invalid_Segment,
       Template_Parameters => Invalid_Segment,
-      Buffer              => null,
-      DBI                 => 0
-   );
+      Data                => null,
+      Key                 => null,
+      DBI                 => 0);
 
-   Invalid_CL_Table    : constant CL_Table := (
-      Name                => Invalid_Segment,
+   Invalid_CL_Table    : constant CL_Table :=
+     (Name                => Invalid_Segment,
       File_Name           => Invalid_Segment,
       Start_Position      => Invalid_Point,
       End_Position        => Invalid_Point,
       Attributes          => 0,
       Template_Parameters => Invalid_Segment,
-      Buffer              => null,
-      DBI                 => 0
-   );
+      Data                => null,
+      Key                 => null,
+      DBI                 => 0);
 
    procedure Type_Name_To_Kind
      (Type_Name         : in String;
@@ -183,7 +183,7 @@ package Src_Info.Type_Utils is
    --  Frees memory used by access fields in given Desc structure.
 
    function Cmp_Arg_Types
-     (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
+     (Buffer_A, Buffer_B     : SN.DB_Structures.Buffer_String;
       Args_A, Args_B         : Segment;
       Strict                 : Boolean := False)
       return Boolean;
@@ -197,7 +197,7 @@ package Src_Info.Type_Utils is
    --  with arbitrary types starting from position of ellipsis.
 
    function Cmp_Prototypes
-     (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
+     (Buffer_A, Buffer_B     : SN.DB_Structures.Buffer_String;
       Args_A, Args_B         : Segment;
       Ret_Type_A, Ret_Type_B : Segment;
       Strict                 : Boolean := False)
