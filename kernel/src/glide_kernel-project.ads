@@ -54,10 +54,14 @@ package Glide_Kernel.Project is
    -------------------
 
    procedure Load_Project
-     (Kernel : access Kernel_Handle_Record'Class; Project : String);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : String;
+      No_Save : Boolean := False);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
    --  If the project isn't found, the default project is loaded.
+   --  If No_Save is True, then the current project will not be saved if it was
+   --  modified.
 
    procedure Load_Default_Project
      (Kernel               : access Kernel_Handle_Record'Class;

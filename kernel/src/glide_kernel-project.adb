@@ -179,7 +179,9 @@ package body Glide_Kernel.Project is
    ------------------
 
    procedure Load_Project
-     (Kernel : access Kernel_Handle_Record'class; Project : String)
+     (Kernel  : access Kernel_Handle_Record'class;
+      Project : String;
+      No_Save : Boolean := False)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the glide console.
@@ -200,7 +202,9 @@ package body Glide_Kernel.Project is
       --  Unless we are reloading the same project
 
       if not Same_Project then
-         if not Save_MDI_Children (Kernel, Force => False) then
+         if not No_Save
+           and then not Save_MDI_Children (Kernel, Force => False)
+         then
             return;
          end if;
 
