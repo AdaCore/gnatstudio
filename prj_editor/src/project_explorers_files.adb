@@ -53,7 +53,6 @@ with VFS;                      use VFS;
 with Basic_Types;              use Basic_Types;
 with Generic_List;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Intl;               use Glide_Intl;
@@ -1151,10 +1150,11 @@ package body Project_Explorers_Files is
       if Child = null then
          Gtk_New (Files, Kernel);
          Child := Put
-           (Kernel, Files,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Explorer_Files_Module_Id);
+           (Kernel,
+            Files,
+            Default_Width  => 215,
+            Default_Height => 600,
+            Module         => Explorer_Files_Module_Id);
          Set_Focus_Child (Child);
          Set_Title
            (Child, -"Project Explorer - File View",  -"File View");
@@ -1233,7 +1233,7 @@ package body Project_Explorers_Files is
       Add_Default_Desktop_Item
         (Kernel, N,
          10, 10,
-         300, 600,
+         215, 600,
          "File View", "Project Explorer - File View",
          Docked, Left,
          False);
