@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Item_Factory; use Gtk.Item_Factory;
+with Glide_Kernel;     use Glide_Kernel;
 
 package Glide_Menu is
 
@@ -27,5 +28,10 @@ package Glide_Menu is
    function Glide_Menu_Items return Gtk_Item_Factory_Entry_Access;
    --  Return a pointer to the Factory_Entry_Array needed to create the
    --  Glide menu items.
+
+   procedure Register_Common_Menus
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register some of the common menus that couldn't be created through
+   --  Glide_Menu_Items.
 
 end Glide_Menu;

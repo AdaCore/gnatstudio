@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
+with Gdk.Event;                    use Gdk.Event;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -27,6 +28,7 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Glide_Intl;                   use Glide_Intl;
 
 with Glide_Kernel;                 use Glide_Kernel;
+with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;         use Glide_Kernel.Project;
 with Glide_Main_Window;            use Glide_Main_Window;
@@ -35,26 +37,24 @@ with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with Factory_Data;                 use Factory_Data;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Traces;                       use Traces;
+with Commands.Interactive;         use Commands.Interactive;
 
 package body Glide_Menu is
 
    Me : constant Debug_Handle := Create ("Menu");
 
+   type Close_Command is new Interactive_Command with record
+      Kernel    : Kernel_Handle;
+      Close_All : Boolean;
+   end record;
+   function Execute
+     (Command : access Close_Command; Event : Gdk.Event.Gdk_Event)
+      return Standard.Commands.Command_Return_Type;
+   --  Close the current window (or all windows if Close_All is True.
+
    --------------------
    -- Menu Callbacks --
    --------------------
-
-   procedure On_Close
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Close menu
-
-   procedure On_Close_All
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Close All menu
 
    procedure On_Save_Desktop
      (Object : Data_Type_Access;
@@ -150,47 +150,31 @@ package body Glide_Menu is
       end if;
    end On_Change_Dir;
 
-   --------------
-   -- On_Close --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Close
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
+   function Execute
+     (Command : access Close_Command; Event : Gdk.Event.Gdk_Event)
+      return Standard.Commands.Command_Return_Type
    is
-      pragma Unreferenced (Action, Widget);
-
-      MDI   : constant MDI_Window := Get_MDI (Glide_Window (Object).Kernel);
-      Child : constant MDI_Child := Get_Focus_Child (MDI);
-
+      pragma Unreferenced (Event);
+      MDI   : MDI_Window;
+      Child : MDI_Child;
    begin
-      if Child /= null then
-         Close (MDI, Get_Widget (Child));
+      if Command.Close_All then
+         if Save_All_MDI_Children (Command.Kernel) then
+            Close_All_Children (Command.Kernel);
+         end if;
+      else
+         MDI := Get_MDI (Command.Kernel);
+         Child := Get_Focus_Child (MDI);
+         if Child /= null then
+            Close (MDI, Get_Widget (Child));
+         end if;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Close;
-
-   ------------------
-   -- On_Close_All --
-   ------------------
-
-   procedure On_Close_All
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      pragma Unreferenced (Action, Widget);
-
-      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
-   begin
-      if Save_All_MDI_Children (Kernel) then
-         Close_All_Children (Kernel);
-      end if;
-   end On_Close_All;
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- On_Exit --
@@ -263,6 +247,50 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
 
+   ---------------------------
+   -- Register_Common_Menus --
+   ---------------------------
+
+   procedure Register_Common_Menus
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      File        : constant String := "/_" & (-"File")     & '/';
+      Command     : Interactive_Command_Access;
+   begin
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Close_Command (Command.all).Close_All := False;
+      Register_Action
+        (Kernel, "Close current window", Command,
+           -"Close the currently selected window");
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => File,
+         Text        => -"_Close",
+         Stock_Image => Stock_Close,
+         Callback    => null,
+         Command     => Commands.Command_Access (Command),
+         Ref_Item    => -"Change Directory...",
+         Add_Before  => False);
+
+      Command := new Close_Command;
+      Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Close_Command (Command.all).Close_All := True;
+      Register_Action
+        (Kernel, "Close all windows", Command,
+           -"Close all open windows, asking for confirmation when relevant");
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => File,
+         Text        => -"Close _All",
+         Callback    => null,
+         Command     => Commands.Command_Access (Command),
+         Ref_Item    => -"Close",
+         Add_Before  => False);
+   end Register_Common_Menus;
+
    ----------------------
    -- Glide_Menu_Items --
    ----------------------
@@ -275,7 +303,6 @@ package body Glide_Menu is
       Debug       : constant String := "/_" & (-"Debug")    & '/';
       Data_Sub    : constant String := (-"D_ata")           & '/';
       Window      : constant String := "/_" & (-"Window");
-
    begin
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (File & (-"Sa_ve...") & '/' & (-"Desktop"), "",
@@ -285,8 +312,6 @@ package body Glide_Menu is
          Gtk_New (File & "sep1", Item_Type => Separator),
          Gtk_New (File & (-"Change _Directory..."), "", "",
                   On_Change_Dir'Access),
-         Gtk_New (File & (-"_Close"), "", Stock_Close, On_Close'Access),
-         Gtk_New (File & (-"Close _All"), "", On_Close_All'Access),
          Gtk_New (File & "sep2", Item_Type => Separator),
          Gtk_New (File & (-"_Exit"), "", "", On_Exit'Access),
 
