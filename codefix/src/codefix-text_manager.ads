@@ -721,9 +721,12 @@ package Codefix.Text_Manager is
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted.
 
-   function Get_Files_Names (This : Extract) return String;
+   function Get_Files_Names
+     (This     : Extract;
+      Size_Max : Natural := 0) return String;
    --  Return a string containing all the files names of the extract separate
-   --  by '/'.
+   --  by '/'. If Size_Max /= 0, then the String returned cannot be bigger than
+   --  Size_Max + 3.
 
    function Get_Nb_Files (This : Extract) return Natural;
    --  Return the number of different files names contained in the extract.
@@ -741,6 +744,9 @@ package Codefix.Text_Manager is
       Chronologic_Changes : Boolean);
    --  Merge the two extracts in result. See declartion of Generic_Merge in
    --  Codefix.Merge_Utils for more details.
+
+   procedure Delete_Empty_Lines (This : in out Extract);
+   --  Delete all lines that are composed only by blanks characters.
 
    ----------------------------------------------------------------------------
    --  type Text_Command
