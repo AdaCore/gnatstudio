@@ -11,6 +11,10 @@ sharedir        = $(prefix)/share/make
 default build compile link ada c c++ clean:
 	$(MAKE) -s -C glide -f Makefile.gps $@
 
+clean:
+	$(RM) gnat/*.ad*
+	$(MAKE) -s -C glide -f Makefile.gps $@
+
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
