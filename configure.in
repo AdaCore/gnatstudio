@@ -3,7 +3,7 @@ AC_INIT(glide/src/gps.adb)
 
 AC_CANONICAL_SYSTEM
 
-GPS_VERSION=2.2.0w
+GPS_VERSION=3.0.0w
 GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
@@ -25,15 +25,6 @@ TARGET=$host
 EXEC_PREFIX="$prefix"
 
 ######## Command line options ###
-
-AC_ARG_WITH(ptys,
-[   --without-ptys          don't use ptys to communicate with the debuggers],
-[if test "$withval" = yes; then
-   USE_PTYS=True
- else
-   USE_PTYS=False
- fi],
-USE_PTYS=True)
 
 PYTHON_PATH_WITH=no    # For now, compile without python by default
 AC_ARG_WITH(python,
@@ -208,7 +199,7 @@ case "${host}" in
 	TARGET_LFLAGS="-luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
-	EXEC_COMMAND="cmd /c"
+	EXEC_COMMAND="cmd /c start"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
@@ -243,7 +234,6 @@ AC_SUBST(TARGET)
 AC_SUBST(EXEC_PREFIX)
 
 AC_SUBST(STRIP_CR)
-AC_SUBST(USE_PTYS)
 AC_SUBST(CAN_OUTPUT)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)

@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION GVD_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR USE_PTYS CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION GVD_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT HTML_BROWSER PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -846,7 +846,6 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-   --without-ptys          don't use ptys to communicate with the debuggers
  --with-python=<path>     Specify the full path to the Python installation
 
 Some influential environment variables:
@@ -1373,7 +1372,7 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-GPS_VERSION=2.2.0w
+GPS_VERSION=3.0.0w
 GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
@@ -1395,19 +1394,6 @@ TARGET=$host
 EXEC_PREFIX="$prefix"
 
 ######## Command line options ###
-
-
-# Check whether --with-ptys or --without-ptys was given.
-if test "${with_ptys+set}" = set; then
-  withval="$with_ptys"
-  if test "$withval" = yes; then
-   USE_PTYS=True
- else
-   USE_PTYS=False
- fi
-else
-  USE_PTYS=True
-fi;
 
 PYTHON_PATH_WITH=no    # For now, compile without python by default
 
@@ -4491,7 +4477,7 @@ case "${host}" in
 	TARGET_LFLAGS="-luser32 -lcomdlg32 -mwindows -Wl,--stack=0x10000000"
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
-	EXEC_COMMAND="cmd /c"
+	EXEC_COMMAND="cmd /c start"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
@@ -4746,7 +4732,6 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 
 # Set the version number of GPS/GVD
-
 
 
 
@@ -5489,7 +5474,6 @@ s,@ROOT@,$ROOT,;t t
 s,@TARGET@,$TARGET,;t t
 s,@EXEC_PREFIX@,$EXEC_PREFIX,;t t
 s,@STRIP_CR@,$STRIP_CR,;t t
-s,@USE_PTYS@,$USE_PTYS,;t t
 s,@CAN_OUTPUT@,$CAN_OUTPUT,;t t
 s,@TARGET_CFLAGS@,$TARGET_CFLAGS,;t t
 s,@TARGET_LFLAGS@,$TARGET_LFLAGS,;t t
