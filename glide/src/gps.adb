@@ -711,6 +711,11 @@ begin
    Handlers_Destroy (GPS.Kernel);
 
    Kernel := GPS.Kernel;
+
+   --  Since the call to destroy below will free the animation at some point,
+   --  we no longer want to access/update it past this point.
+
+   GPS.Animation_Image := null;
    Destroy (GPS);
    Destroy (Kernel, Dir.all);
    Projects.Registry.Finalize;
