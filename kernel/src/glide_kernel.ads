@@ -401,7 +401,6 @@ private
       Priority        : Module_Priority;
       Contextual_Menu : Module_Menu_Handler;
       Mime_Handler    : Module_Mime_Handler;
-      Was_Initialized : Boolean := False;
       Default_Factory : Module_Default_Context_Factory;
       Child_Tag       : Ada.Tags.Tag;
    end record;
