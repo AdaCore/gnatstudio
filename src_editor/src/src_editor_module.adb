@@ -648,8 +648,6 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
       File  : constant String := Get_String (Nth (Args, 1));
 
-      L         : List := Id.Stored_Marks;
-
       Node      : List_Node;
       Prev_Node : List_Node := Null_Node;
    begin
@@ -662,21 +660,16 @@ package body Src_Editor_Module is
          if Data (Node).File /= null
            and then Data (Node).File.all = File
          then
-            Remove_Nodes (L, Prev_Node, Node);
-
-            if Prev_Node = Null_Node then
-               Node := First (L);
-            else
-               Node := Prev_Node;
-            end if;
-
-            if Node = Null_Node then
-               return;
-            end if;
+            Prev_Node := Prev (Id.Stored_Marks, Node);
+            Remove_Nodes (Id.Stored_Marks, Prev_Node, Node);
+            Node := Prev_Node;
          end if;
 
-         Prev_Node := Node;
-         Node := Next (Node);
+         if Node = Null_Node then
+            Node := First (Id.Stored_Marks);
+         else
+            Node := Next (Node);
+         end if;
       end loop;
 
    exception
