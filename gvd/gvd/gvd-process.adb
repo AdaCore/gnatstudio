@@ -475,6 +475,9 @@ package body GVD.Process is
       Widget      : Gtk_Widget;
       Pc          : Address_Type;
       Pc_Length   : Natural := 0;
+      Frame_Info  : Frame_Info_Type := Location_Not_Found;
+
+      Call_Stack  : Gtk_Check_Menu_Item;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -540,15 +543,23 @@ package body GVD.Process is
            Get_Widget (Process.Window.Factory, -"/Debug/Data/Call Stack");
       end if;
 
-      if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-         Found_Frame_Info
-           (Process.Debugger, Process.Current_Output.all, First, Last);
+      Call_Stack := Gtk_Check_Menu_Item (Widget);
 
-         if First /= 0 then
+      Found_Frame_Info (Process.Debugger,
+                        Process.Current_Output.all,
+                        First, Last, Frame_Info);
+
+      if Get_Active (Call_Stack) then
+         if Frame_Info = Location_Found then
             Highlight_Stack_Frame
               (Process,
                Integer'Value (Process.Current_Output (First .. Last)));
          end if;
+      end if;
+
+      if Frame_Info = No_Debug_Info then
+         Show_Message (Process.Editor_Text,
+                       "There is no debug information for this frame.");
       end if;
 
       --  Last step is to update the breakpoints once all the rest has been
@@ -995,7 +1006,7 @@ package body GVD.Process is
 
          if Get_Active (Call_Stack) then
             Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
-            Process.Backtrace_Mask := 
+            Process.Backtrace_Mask :=
               Stack_List_Mask (Geometry_Info.Stack_Mask);
             Show_Call_Stack_Columns (Process);
             Set_Column_Width (Process.Stack_List, 0,
