@@ -186,6 +186,7 @@ package body Creation_Wizard is
       if Get_Current_Page (W) = 1 then
          declare
             Project  : constant String := Get_Text (W.Project_Name);
+            Prj_File : constant String := To_File_Name (Project);
             Location : constant String :=
               Dir_Name (Get_Text (W.Project_Location));
 
@@ -193,8 +194,8 @@ package body Creation_Wizard is
             if not Is_Valid_Project_Name (Project) then
                Result := Message_Dialog
                  (Msg =>
-                    -("Invalid name for the project (only lower case letters"
-                      & ", digits and underscores)"),
+                    (-"Invalid name for the project ") &
+                    (-"(only letters, digits and underscores)"),
                   Title => -"Invalid name",
                   Dialog_Type => Error,
                   Buttons => Button_OK);
@@ -204,11 +205,11 @@ package body Creation_Wizard is
             end if;
 
             if Is_Regular_File
-              (Location & Project & Prj.Project_File_Extension)
+              (Location & Prj_File & Prj.Project_File_Extension)
             then
                Result := Message_Dialog
                  (Msg => Location
-                  & Project & Prj.Project_File_Extension
+                  & Prj_File & Prj.Project_File_Extension
                   & (-" already exists. Do you want to overwrite ?"),
                   Title => -"File exists",
                   Dialog_Type => Error,
@@ -378,14 +379,9 @@ package body Creation_Wizard is
       Project        : Project_Node_Id;
 
    begin
-      --  Avoid SE in old versions of Base_Name
-      if Name'Length > Prj.Project_File_Extension'Length then
-         Project := Create_Project
-           (Name => Base_Name (Name, Prj.Project_File_Extension), Path => Dir);
-      else
-         Project := Create_Project (Name => Name, Path => Dir);
-      end if;
+      Push_State (Wiz.Kernel, Processing);
 
+      Project := Create_Project (Name => Name, Path => Dir);
       Set_Project_Uses_Relative_Paths (Wiz.Kernel, Project, Relative_Paths);
 
       Update_Attribute_Value_In_Scenario
@@ -408,18 +404,13 @@ package body Creation_Wizard is
 
       --  Mark the project as modified, otherwise it won't actually be saved
       --  in case we are overwritting an existing file.
+
       Set_Project_Modified (Wiz.Kernel, Project, True);
-
       Save_Single_Project (Wiz.Kernel, Project, Langs => Languages);
-
       Free (Languages);
+      Pop_State (Wiz.Kernel);
 
-      if Name'Length > Prj.Project_File_Extension'Length then
-         return Dir & Base_Name (Name, Prj.Project_File_Extension)
-           & Project_File_Extension;
-      else
-         return Dir & Name & Project_File_Extension;
-      end if;
+      return Dir & To_File_Name (Name) & Project_File_Extension;
    end Generate_Prj;
 
    ---------
