@@ -28,10 +28,8 @@ with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Button; use Gtk.Button;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Scale; use Gtk.Scale;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Object; use Gtk.Object;
 package Odd_Preferences_Pkg is
 
    type Odd_Preferences_Record is new Gtk_Window_Record with record
