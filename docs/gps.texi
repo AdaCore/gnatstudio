@@ -8356,12 +8356,6 @@ The directory containing global configuration files for GPS.
 @cindex gtkrc
 The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}.
 
-   @item @i{prefix}/etc/gps/pangorc
-The pango (generic font handling) configuration file.
-
-   @item @i{prefix}/etc/gps/pangox.aliases
-File defining font aliases to X font set.
-
    @item @i{prefix}/lib
 This directory contains the shared libraries used by GPS.
 
@@ -8378,14 +8372,10 @@ This directory contains the sources used by the GPS tutorial.
 See @url{gps-tutorial.html}.
 @end ifhtml
 
-   @item @i{prefix}/share/gps/aliases
-   @cindex aliases
-Directory containing files with system-wide aliases
-(@pxref{Defining Text Aliases}).
-
    @item @i{prefix}/share/gps/customize
 Directory containing files with system-wide customizations
-(@pxref{Adding Support for New Languages}).
+(see @xref{Adding Support for New Languages} and
+ @xref{Defining Text Aliases}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
