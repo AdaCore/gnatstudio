@@ -36,7 +36,7 @@ begin
    Snames.Initialize;
    Prj.Initialize;
    Prj.Tree.Initialize;
-   Load_Project (Kernel, "src.gpr");
+   Load_Project (Kernel, "../src_editor.gpr");
 
    Gtk_New (My_Box, Kernel);
    Create_Main_Window (Main_Window, My_Box);
