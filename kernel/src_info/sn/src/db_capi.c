@@ -148,12 +148,6 @@ int csf_get_field_length(CSF * csf, int index)
     return (strlen(csf->fields[index - 1]));
 }
 
-int ada_db_is_null(const DB_File * file)
-{
-    return file == 0;
-}
-
-
 DB_File *ada_db_open(const char *file_name)
 {
     DB_File *file;
