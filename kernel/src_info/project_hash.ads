@@ -40,9 +40,6 @@ package Project_Hash is
    procedure Free (X : in out Project_Data_Record);
    --  Free memory associated to X.
 
-   procedure Free_Node_Id (X : in out Prj.Tree.Project_Node_Id);
-   --  Free memory associated to X.
-
    No_Project_Data : constant Project_Data_Record :=
      (Modified => False, Paths_Type => From_Pref);
 
@@ -59,7 +56,6 @@ package Project_Hash is
       Free_Element => Free,
       No_Element   => No_Project_Data,
       Key          => Prj.Tree.Project_Node_Id,
-      Free_Key     => Free_Node_Id,
       Hash         => Hash,
       Equal        => Prj.Tree."=");
 

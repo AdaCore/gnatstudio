@@ -36,16 +36,6 @@ package body Project_Hash is
    end Free;
 
    ----------
-   -- Free --
-   ----------
-
-   procedure Free_Node_Id (X : in out Prj.Tree.Project_Node_Id) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free_Node_Id;
-
-   ----------
    -- Hash --
    ----------
 
