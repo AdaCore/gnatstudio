@@ -19,11 +19,34 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with System; use System;
+with Unchecked_Conversion;
+with System.Address_To_Access_Conversions;
 
 package body Odd.Histories is
 
-   procedure Free is new Unchecked_Deallocation
-     (Data_Type, Data_Access);
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (Value : Data_Access) return System.Address is
+   begin
+      if Value = null then
+         return Null_Address;
+      else
+         return Value.all'Address;
+      end if;
+   end Convert;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (Value : System.Address) return Data_Access is
+      function To_Pointer is new Unchecked_Conversion (Address, Data_Access);
+   begin
+      return To_Pointer (Value);
+   end Convert;
 
    ------------
    -- Append --
@@ -32,39 +55,23 @@ package body Odd.Histories is
    procedure Append (History : in out History_List;
                      Data    : Data_Type)
    is
-      Prev_Last : constant Integer :=
-        (History.Last - 1 + History.Max_Items) mod History.Max_Items;
-      --  Index of the last item entered in the list.
-
+      use Hlist;
    begin
-      if History.Collapse_Duplicates
-        and then History.Last /= -1
-        and then Data = History.Contents (Prev_Last + 1).Data.all
+      if History.List = Null_List then
+          Hlist.Append (History.List,
+                       new Data_Record' (Data => new Data_Type' (Data),
+                                         Num_Repeats => 1));
+      elsif Hlist.Get_Data (Hlist.Last (History.List)).Data.all = Data
       then
-         History.Contents (History.Last).Repeat_Num :=
-           History.Contents (History.Last).Repeat_Num + 1;
-
+         Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats :=
+           Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats + 1;
       else
-         --  Free the previous item, if any
-
-         if History.Last = History.First then
-            Free (History.Contents (History.Last + 1).Data);
-            History.First := (History.First + 1) mod History.Max_Items;
-         end if;
-
-         if History.Last = -1 then
-            History.Last := History.First;
-         end if;
-
-         History.Contents (History.Last + 1) :=
-           History_Entry' (Data       => new Data_Type'(Data),
-                           Repeat_Num => 1);
-         History.Last := (History.Last + 1) mod History.Max_Items;
+         Hlist.Append (History.List,
+                       new Data_Record' (Data => new Data_Type' (Data),
+                                         Num_Repeats => 1));
       end if;
-
-      --  Increment the pointers
-
-      History.Current := -1;
+      History.Current := Hlist.Last (History.List);
+      History.Position := After_End;
    end Append;
 
    -----------------
@@ -72,29 +79,50 @@ package body Odd.Histories is
    -----------------
 
    function Get_Current (History : History_List) return Data_Type is
+      use Hlist;
    begin
-      if History.Current = -1 then
+      if History.Current /= Null_List then
+         return Hlist.Get_Data (History.Current).Data.all;
+      else
          raise No_Such_Item;
       end if;
-      return History.Contents (History.Current + 1).Data.all;
    end Get_Current;
+
+   ----------------------------
+   -- Get_Current_Repeat_Num --
+   ----------------------------
+
+   function Get_Current_Repeat_Num (History : History_List) return Natural is
+      use Hlist;
+   begin
+      if History.Current /= Null_List then
+         return Hlist.Get_Data (History.Current).Num_Repeats;
+      else
+         raise No_Such_Item;
+      end if;
+   end Get_Current_Repeat_Num;
 
    ----------------------
    -- Move_To_Previous --
    ----------------------
 
    procedure Move_To_Previous (History : in out History_List) is
+      use Hlist;
    begin
-      if History.Last = -1
-        or else History.Current = History.First
-      then
-         return;
-      elsif History.Current = -1 then
-         History.Current := History.Last;
+      if History.Position = After_End then
+         History.Position := Inside_History;
+      elsif History.Current /= Null_List then
+         if Prev (History.Current) = Null_List then
+            if History.Position = Inside_History then
+               History.Position := Before_Beginnning;
+            end if;
+            raise No_Such_Item;
+         else
+            History.Current := Hlist.Prev (History.Current);
+         end if;
+      else
+         raise No_Such_Item;
       end if;
-
-      History.Current := (History.Current - 1 + History.Max_Items)
-        mod History.Max_Items;
    end Move_To_Previous;
 
    ------------------
@@ -102,25 +130,39 @@ package body Odd.Histories is
    ------------------
 
    procedure Move_To_Next (History : in out History_List) is
+      use Hlist;
    begin
-      if History.Current = -1
-        or else (History.Current + 1) mod History.Max_Items = History.Last
-      then
-         History.Current := -1;
-         raise No_Such_Item;
+      if History.Position = Before_Beginnning then
+         History.Position := Inside_History;
+      elsif History.Current /= Hlist.Null_List then
+         if Next (History.Current) = Hlist.Null_List then
+            if History.Position = Inside_History then
+               History.Position := After_End;
+            end if;
+            raise No_Such_Item;
+         else
+            History.Current := Next (History.Current);
+         end if;
       else
-         History.Current := (History.Current + 1) mod History.Max_Items;
+         raise No_Such_Item;
       end if;
    end Move_To_Next;
 
-   ------------
-   -- Rewind --
-   ------------
+   ----------
+   -- Wind --
+   ----------
 
-   procedure Rewind  (History : in out History_List) is
+   procedure Wind (History : in out History_List; D : Direction) is
+      use Hlist;
    begin
-      History.Current := History.First;
-   end Rewind;
+      if History.List /= Hlist.Null_List then
+         if D = Backward then
+            History.Current := Hlist.First (History.List);
+         else
+            History.Current := Hlist.Last (History.List);
+         end if;
+      end if;
+   end Wind;
 
    ------------
    -- Length --
@@ -129,26 +171,19 @@ package body Odd.Histories is
    function Length (History : in History_List) return Integer
    is
    begin
-      --  What about Collapse_Duplicates ???
-      if History.Last = -1 then
-         return 0;
-      elsif History.Last > History.First then
-         return History.Last - History.First;
-      else
-         return History.Max_Items + History.Last - History.First;
-      end if;
+      return Integer (Hlist.Length (History.List));
    end Length;
 
-   ----------------------------
-   -- Get_Current_Repeat_Num --
-   ----------------------------
+   ----------
+   -- Free --
+   ----------
 
-   function Get_Current_Repeat_Num (History : History_List) return Natural is
+   procedure Free (History : in out History_List) is
+      --  procedure Free_Data_Pointer is new Unchecked_Deallocation
+      --  (Data_Type, Data_Pointer);
    begin
-      if History.Current = -1 then
-         raise No_Such_Item;
-      end if;
-      return History.Contents (History.Current + 1).Repeat_Num;
-   end Get_Current_Repeat_Num;
+         Hlist.Free (History.List);
+         --  ??? is this enough ?
+   end Free;
 
 end Odd.Histories;

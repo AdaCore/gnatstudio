@@ -33,34 +33,24 @@
 --        when No_Such_Item => null;
 --     end;
 
+with Glib.Glist; use Glib.Glist;
+with System;
+
 generic
    type Data_Type (<>) is private;
 package Odd.Histories is
 
-   type History_List (Max_Items           : Positive;
-                      Collapse_Duplicates : Boolean)
-      is private;
-   --  This acts as a FIFO queue, ie if you are trying to add more items
-   --  than can fit in the list then the first items entered are discarded.
-   --
-   --  If Collapse_Duplicates is True, then two identical entries one after
-   --  the other are collapsed into a single history entry. This way, going
-   --  up or down the history list can be much faster.
+   type History_List is private;
+
+   type Direction is (Forward, Backward);
 
    procedure Append (History : in out History_List;
                      Data    : Data_Type);
    --  Append a new value to the history.
    --  The pointer to the current value now points to this new entry.
-   --  If you are appending more items than
 
    function Get_Current (History : History_List) return Data_Type;
    --  Return the item currently pointed to.
-   --  No_Such_Item is raised if the list is empty.
-
-   function Get_Current_Repeat_Num (History : History_List) return Natural;
-   --  Return the number of times the current item was repeated consequently
-   --  in the history.
-   --  If Collapse_Duplicates is False, this will always be 1.
    --  No_Such_Item is raised if the list is empty.
 
    procedure Move_To_Previous (History : in out History_List);
@@ -74,47 +64,48 @@ package Odd.Histories is
    --  If you are trying to move after the last item, No_Such_Item is
    --  raised.
 
-   procedure Rewind  (History : in out History_List);
-   --  Move to the beginning of the history.
+   function Get_Current_Repeat_Num (History : History_List) return Natural;
+   --  Return the number of times the current item was repeated consequently
+   --  in the history.
+   --  If Collapse_Duplicates is False, this will always be 1.
+   --  No_Such_Item is raised if the list is empty.
+
+   procedure Wind  (History : in out History_List; D : Direction);
+   --  Move forward or backward until end of history.
 
    function Length (History : in History_List) return Integer;
    --  Return the length of the history.
 
+   procedure Free (History : in out History_List);
+   --  Free memory used by the history.
+
    No_Such_Item : exception;
 
 private
-   type Data_Access is access Data_Type;
 
-   type History_Entry is record
-      Data       : Data_Access;
+   type History_Position is (Inside_History, After_End, Before_Beginnning);
 
-      Repeat_Num : Positive := 1;
-      --  Number of times data was repeated sequentially.
+   type Data_Pointer is access Data_Type;
+
+   type Data_Record is record
+      Data        : Data_Pointer;
+      Num_Repeats : Natural;
    end record;
 
-   type Data_Array is array (Positive range <>) of History_Entry;
-   type History_List (Max_Items           : Positive;
-                      Collapse_Duplicates : Boolean)
-   is record
-      Contents : Data_Array (1 .. Max_Items);
-      --  This is in fact a "circular" array, ie the item at position 1
-      --  follows the item at position Max_Items.
+   type Data_Access is access Data_Record;
 
-      --  All indices point to value between 0 and Max_Items, since this is
-      --  much easier to manipulate through the use of 'mod' operations.
+   for Data_Access'Size use Standard'Address_Size;
 
-      First    : Natural := 0;
-      --  Points to the first item in the history.
+   function Convert (Value : Data_Access) return System.Address;
+   function Convert (Value : System.Address) return Data_Access;
 
-      Last     : Integer := -1;
-      --  Points to the position following the last item.
-      --  This is equal to -1 when the history list is empty.
+   package Hlist is new Glib.Glist.Generic_List (Data_Access);
 
-      Current  : Integer := -1;
-      --  Points to the current item.
-      --  This is set to -1 if we are after the last item (Move_To_Previous
-      --  would move to the last item), or -2 if we are before the beginning
-      --  (Move_To_Next would move to the first item).
+   type History_List is record
+      Position : History_Position := Inside_History;
+      Collapse : Boolean;
+      List     : Hlist.Glist;
+      Current  : Hlist.Glist;
    end record;
 
 end Odd.Histories;
