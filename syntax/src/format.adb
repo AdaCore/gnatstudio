@@ -139,6 +139,9 @@ package body Format is
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
       Semicolon       : in out Boolean);
+   --  Starting at Buffer (P), find the location of the next word
+   --  and set P accordingly.
+   --  Formatting of operators is performed by this procedure.
 
    function Prev_Char (P : Word) return Word;
    --  Return the previous char in buffer. P is the current character.
@@ -152,7 +155,7 @@ package body Format is
       First   : Word;
       Last    : Word;
       Replace : String);
-   --  ???
+   --  Replace the slice First .. Last - 1 in Buffer by Replace.
 
    ------------------
    -- Is_Word_Char --
@@ -499,6 +502,7 @@ package body Format is
       Offs          : Word;
       Insert_Spaces : Boolean;
       Char          : Character;
+      PChar         : Character;
   
       procedure Handle_Two_Chars (Second_Char : Character);
       --  Handle a two char operator, whose second char is Second_Char.
@@ -582,7 +586,9 @@ package body Format is
             when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
                  '|' | '.'
             =>
-               if Buffer (Prev_Char (P)) /= ''' then
+               if Buffer (Prev_Char (P)) /= '''
+                 or else Buffer (Next_Char (P)) /= '''
+               then
                   Spaces (2) := Buffer (P);
                   Spaces (3) := ' ';
                   First := P;
@@ -628,18 +634,22 @@ package body Format is
 
                      when '>' =>
                         Char := Buffer (Next_Char (P));
+                        PChar := Buffer (Prev_Char (P));
                         Insert_Spaces :=
                           Char /= '=' and then Char /= '>'
-                            and then Buffer (Prev_Char (P)) /= '='
-                            and then Buffer (Prev_Char (P)) /= '<'
-                            and then Buffer (Prev_Char (P)) /= '>';
+                            and then PChar /= '='
+                            and then PChar /= '<'
+                            and then PChar /= '>';
 
                      when '=' =>
                         Char := Buffer (Prev_Char (P));
                         Insert_Spaces :=
-                          Buffer (Next_Char (P)) /= '>'
-                          and then Char /= '/' and then Char /= ':'
+                          Char /= '/' and then Char /= ':'
                           and then Char /= '>' and then Char /= '<';
+
+                        if Buffer (Next_Char (P)) = '>' then
+                           Handle_Two_Chars ('>');
+                        end if;
 
                      when others =>
                         null;
@@ -721,58 +731,48 @@ package body Format is
       None         : constant := -1;
       Indent_Level : constant := 3;
 
-      type Boolean_Stack_Record;
-      type Boolean_Stack is access Boolean_Stack_Record;
-      type Boolean_Stack_Record is record
-         Val  : Boolean;
-         Next : Boolean_Stack;
+      type Token_Stack_Record;
+      type Token_Stack is access Token_Stack_Record;
+      type Token_Stack_Record is record
+         Val  : Token_Type;
+         Next : Token_Stack;
       end record;
 
       procedure Free is new
-        Ada.Unchecked_Deallocation (Boolean_Stack_Record, Boolean_Stack);
+        Ada.Unchecked_Deallocation (Token_Stack_Record, Token_Stack);
 
       New_Buffer          : Extended_Line_Buffer;
       Index               : Word;
-      Word_Count          : Integer := 0;
-      --  Number of words
-
-      Line_Count          : Integer := 0;
-      --  Number of lines
-
+      Word_Count          : Integer           := 0;
+      Line_Count          : Integer           := 0;
       Str                 : String (1 .. 1024);
-      Str_Len             : Natural := 0;
+      Str_Len             : Natural           := 0;
       Current             : Word;
-      Prec, Prec_Last     : Word    := 1;
-      End_Level           : Word    := 0;
-      Num_Spaces          : Integer := 0;
-      Param_Indent        : Integer := None;
+      Prec, Prec_Last     : Word              := 1;
+      Num_Spaces          : Integer           := 0;
+      Param_Indent        : Integer           := None;
       Spaces              : String (1 .. 150) := (others => ' ');
-      In_Comments         : Boolean := False;
-      Indent_Done         : Boolean := False;
-      Num_Parens          : Integer := 0;
-      Prev_Num_Parens     : Integer := 0;
-      With_Token          : Boolean := False;
-      In_Generic          : Boolean := False;
-      Semicolon           : Boolean := False;
-      Type_Decl           : Boolean := False;
-      Was_Type_Decl       : Boolean := False;
-      End_Token           : Boolean := False;
-      Or_Token            : Boolean := False;
-      And_Token           : Boolean := False;
-      Is_Token            : Boolean := False;
-      Select_Token        : Boolean := False;
-      Case_Token          : Boolean := False;
-      Task_Token          : Boolean := False;
-      Protected_Token     : Boolean := False;
-      Exception_Token     : Boolean := False;
-      Check_Record        : Boolean := False;
-      Subprogram_Decl     : Boolean := False;
-      In_String           : Boolean := False;
-      String_Mismatch     : Boolean := False;
-      Syntax_Error        : Boolean := False;
-      Started             : Boolean := False;
+      In_Comments         : Boolean           := False;
+      Indent_Done         : Boolean           := False;
+      Num_Parens          : Integer           := 0;
+      Prev_Num_Parens     : Integer           := 0;
+      In_Generic          : Boolean           := False;
+      Semicolon           : Boolean           := False;
+      Type_Decl           : Boolean           := False;
+      Was_Type_Decl       : Boolean           := False;
+      Select_Token        : Natural           := 0;
+      End_Token           : Boolean           := False;
+      Or_Token            : Boolean           := False;
+      And_Token           : Boolean           := False;
+      Subprogram_Decl     : Boolean           := False;
+      In_String           : Boolean           := False;
+      String_Mismatch     : Boolean           := False;
+      Syntax_Error        : Boolean           := False;
+      Started             : Boolean           := False;
+      Prev_Reserved       : Token_Type        := Tok_Unknown;
       Token               : Token_Type;
-      Stack               : Boolean_Stack;
+      Stack               : Token_Stack;
+      Val                 : Token_Type;
 
       procedure Do_Indent;
       --  Perform indentation by inserting spaces in the buffer.
@@ -780,40 +780,78 @@ package body Format is
       procedure Handle_Reserved_Word (Word : Token_Type);
       --  Handle reserved words.
 
-      procedure Push (X : Boolean);
+      procedure Push (Token : Token_Type);
+      --  If Token = Tok_Declare, it means that we are entering
+      --  a declaration part.
+      --  If Token = Tok_Unknown, this is the beginning of a subprogram/
+      --  begin block.
+      --  Otherwise, this is the beginning of a constructs (e.g select,
+      --  case, record, ...)
       pragma Inline (Push);
 
-      function Pop return Boolean;
+      function Pop return Token_Type;
       procedure Pop;
       pragma Inline (Pop);
 
-      procedure Push (X : Boolean) is
+      function Top return Token_Type;
+      --  Return the top of the stack without modifying it.
+      pragma Inline (Top);
+
+      ----------
+      -- Push --
+      ----------
+
+      procedure Push (Token : Token_Type) is
       begin
-         Stack := new Boolean_Stack_Record' (X, Stack);
+         Stack := new Token_Stack_Record' (Token, Stack);
+         pragma Debug (Put_Line ("pushed " & Token'Img));
       end;
 
-      function Pop return Boolean is
-         P   : Boolean_Stack;
-         Ret : Boolean;
+      ---------
+      -- Pop --
+      ---------
+
+      function Pop return Token_Type is
+         P   : Token_Stack;
+         Val : Token_Type;
 
       begin
-         if Stack = null then
+         if Stack = null or else Stack.Val = Tok_Unknown then
             Syntax_Error := True;
-            return False;
+            return Tok_Unknown;
          else
-            Ret   := Stack.Val;
+            Val   := Stack.Val;
             P     := Stack;
             Stack := Stack.Next;
             Free (P);
-            return Ret;
+            pragma Debug (Put_Line ("popped " & Val'Img));
+            return Val;
          end if;
       end;
 
       procedure Pop is
-         Ret : Boolean;
+         Val : Token_Type;
       begin
-         Ret := Pop;
+         Val := Pop;
       end Pop;
+
+      ---------
+      -- Top --
+      ---------
+
+      function Top return Token_Type is
+      begin
+         if Stack = null then
+            Syntax_Error := True;
+            return Tok_Unknown;
+         else
+            return Stack.Val;
+         end if;
+      end;
+
+      ---------------
+      -- Do_Indent --
+      ---------------
 
       procedure Do_Indent is
          Start       : Word;
@@ -842,30 +880,22 @@ package body Format is
 
       procedure Handle_Reserved_Word (Word : Token_Type) is
       begin
-         if End_Token and then Semicolon then
-            if End_Level > 0 then
-               End_Level := End_Level - 1;
-            else
-               Pop;
-            end if;
+         --  Note: the order of the following conditions is important
 
-            End_Token := False;
-         end if;
+         if Word = Tok_Body then
+            Subprogram_Decl := False;
+         elsif not End_Token and then Word = Tok_If then
+            Push (Word);
 
-         if Check_Record then
-            Check_Record := False;
-
-            if Word /= Tok_Record then
-               Pop;
-            end if;
-         end if;
-
-         if Is_Token and then not Was_Type_Decl
-           and then (Word = Tok_New or else Word = Tok_Abstract)
+         elsif Prev_Reserved = Tok_Is and then not Was_Type_Decl
+           and then
+             (Word = Tok_New or else Word = Tok_Abstract
+               or else Word = Tok_Separate)
          then
-            --  unindent since this a subprogram declaration, e.g
-            --  function ... is new ...;
+            --  unindent since this is a declaration, e.g:
+            --  package ... is new ...;
             --  function ... is abstract;
+            --  function ... is separate;
 
             Num_Spaces := Num_Spaces - Indent_Level;
 
@@ -876,11 +906,42 @@ package body Format is
 
             Pop;
 
-         elsif Word = Tok_Function or else Word = Tok_Procedure then
-            Subprogram_Decl := True;
-            Num_Parens      := 0;
+         elsif Word = Tok_Function
+           or else Word = Tok_Procedure
+           or else Word = Tok_Package
+           or else Word = Tok_Task
+           or else Word = Tok_Protected
+         then
+            Type_Decl     := False;
+            Was_Type_Decl := False;
 
-            if In_Generic and then not With_Token then
+            if Word /= Tok_Package then
+               Subprogram_Decl := True;
+               Num_Parens      := 0;
+            end if;
+
+            if not In_Generic then
+               Val := Top;
+
+               if Val = Tok_Procedure or else Val = Tok_Function then
+                  --  There was a function declaration, e.g:
+                  --
+                  --  procedure xxx ();
+                  --  procedure ...
+                  Pop;
+               end if;
+
+               Push (Word);
+
+            elsif Prev_Reserved /= Tok_With then
+               --  unindent after a generic declaration, e.g:
+               --
+               --  generic
+               --     with procedure xxx;
+               --     with function xxx;
+               --     with package xxx;
+               --  package xxx is
+
                Num_Spaces := Num_Spaces - Indent_Level;
 
                if Num_Spaces < 0 then
@@ -889,9 +950,41 @@ package body Format is
                end if;
 
                In_Generic := False;
+               Push (Word);
             end if;
 
          elsif Word = Tok_End or else Word = Tok_Elsif then
+            --  unindent after end of elsif, e.g:
+            --
+            --  if xxx then
+            --     xxx
+            --  elsif xxx then
+            --     xxx
+            --  end if;
+
+            if Word = Tok_End then
+               Val := Pop;
+
+               case Val is
+                  when Tok_Select =>
+                     Select_Token := Select_Token - 1;
+                  when Tok_Exception | Tok_Case =>
+                     --  Additional level of indentation, as in:
+                     --     ...
+                     --  exception
+                     --     when =>
+                     --        null;
+                     --  end;
+
+                     Num_Spaces := Num_Spaces - Indent_Level;
+
+                  when others =>
+                     null;
+               end case;
+
+               pragma Debug (Put_Line ("end " & Val'IMG));
+            end if;
+
             Num_Spaces := Num_Spaces - Indent_Level;
 
             if Num_Spaces < 0 then
@@ -899,35 +992,61 @@ package body Format is
                Syntax_Error := True;
             end if;
 
-         elsif Word = Tok_Is or else Word = Tok_Declare
-           or else ((not Or_Token)  and then Word = Tok_Else)
-           or else ((not And_Token) and then Word = Tok_Then)
+         elsif     Word = Tok_Is
+           or else Word = Tok_Declare
            or else Word = Tok_Begin
-           or else ((not End_Token) and then Word = Tok_Select)
-           or else (Select_Token and then Word = Tok_Or)
+           or else Word = Tok_When
            or else Word = Tok_Do
-           or else ((not End_Token)
-                      and then (Word = Tok_Loop or else Word = Tok_Record))
+           or else (not Or_Token  and then Word = Tok_Else)
+           or else (not And_Token and then Word = Tok_Then)
+           or else (not End_Token and then Word = Tok_Select)
+           or else (Top = Tok_Select and then Word = Tok_Or)
+           or else (not End_Token and then Word = Tok_Loop)
+           or else (not End_Token and then Prev_Reserved /= Tok_Null
+                      and then Word = Tok_Record)
+           or else ((Top = Tok_Declare or else Top = Tok_Package)
+                      and then Word = Tok_Private
+                      and then Prev_Reserved /= Tok_Is
+                      and then Prev_Reserved /= Tok_With)
          then
+            --  unindent for this reserved word, and then indent again, e.g:
+            --
+            --  procedure xxx is
+            --     ...
+            --  begin    <--
+            --     ...
+
             if not Type_Decl then
                if Word = Tok_Select then
-                  Select_Token := not End_Token;
+                  --  Start of a select statement
+                  Push (Word);
+                  Select_Token := Select_Token + 1;
                end if;
 
-               if Word = Tok_Else or else (Select_Token and then Word = Tok_Or)
+               if Word = Tok_Else
+                 or else (Top = Tok_Select and then Word = Tok_Then)
                  or else Word = Tok_Begin
-                 or else (Word = Tok_Private
-                          and then not (Is_Token or else With_Token))
+                 or else Word = Tok_Record
+                 or else Word = Tok_When
+                 or else Word = Tok_Or
+                 or else Word = Tok_Private
                then
                   if Word = Tok_Begin then
-                     if Pop then
-                        End_Level := End_Level + 1;
-                     else
+                     Val := Top;
+
+                     if Val = Tok_Declare then
                         Num_Spaces := Num_Spaces - Indent_Level;
+                        Pop;
+                        Push (Word);
+
+                     elsif Val = Tok_Package then
+                        Num_Spaces := Num_Spaces - Indent_Level;
+                     else
+                        Push (Word);
                      end if;
 
-                     Push (True);
-
+                  elsif Word = Tok_Record then
+                     Push (Tok_Record);
                   else
                      Num_Spaces := Num_Spaces - Indent_Level;
                   end if;
@@ -942,73 +1061,78 @@ package body Format is
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
-            if Word = Tok_Do then
-               Push (True);
-            end if;
-
-            if (Word = Tok_Is and then not Case_Token)
+            if Word = Tok_Do
+              or else Word = Tok_Loop
               or else Word = Tok_Declare
             then
-               Push (False);
+               Push (Word);
+            end if;
 
-               if Type_Decl then
-                  Check_Record := True;
+            if Word = Tok_Is then
+               if Prev_Reserved = Tok_Case then
+                  Push (Tok_Case);
+                  Num_Spaces := Num_Spaces + Indent_Level;
+
+               elsif Type_Decl then
+                  Was_Type_Decl := True;
+                  Type_Decl     := False;
+
+               else
+                  Val := Top;
+
+                  --  Should have a more complete case statement here ???
+
+                  if Val /= Tok_Package then
+                     Pop;
+                     Push (Tok_Declare);
+                  end if;
+
+                  Subprogram_Decl := False;
                end if;
-
-               Was_Type_Decl   := Type_Decl;
-               Type_Decl       := False;
-               Subprogram_Decl := False;
             end if;
 
          elsif Word = Tok_Generic then
-            Num_Spaces  := Num_Spaces + Indent_Level;
-            Indent_Done := True;
-            In_Generic  := True;
+            --  Indent before a generic entity, e.g:
+            --
+            --  generic
+            --     type ...;
 
-         elsif In_Generic and then Word = Tok_Package then
-            Num_Spaces := Num_Spaces - Indent_Level;
-
-            if Num_Spaces < 0 then
-               Num_Spaces   := 0;
-               Syntax_Error := True;
-            end if;
-
-            In_Generic := False;
+            Do_Indent;
+            Num_Spaces := Num_Spaces + Indent_Level;
+            In_Generic := True;
 
          elsif (Word = Tok_Type
-                and then not (Task_Token or else Protected_Token))
+                and then Prev_Reserved /= Tok_Task
+                and then Prev_Reserved /= Tok_Protected)
            or else Word = Tok_Subtype
          then
+            --  Entering a type declaration/definition.
+
             Type_Decl := True;
-         elsif Word = Tok_Separate and then Is_Token then
-            Pop;
-            Num_Spaces := Num_Spaces - Indent_Level;
 
-          elsif Word = Tok_Exception then
-             if Pop then
-                Num_Spaces := Num_Spaces - Indent_Level;
-                Push (True);
-             else
-                Push (False);
-             end if;
+         elsif Word = Tok_Exception then
+            Val := Top;
 
-         elsif Word = Tok_When and then Exception_Token then
-            Num_Spaces := Num_Spaces + Indent_Level;
+            if Val /= Tok_Declare then
+               Num_Spaces := Num_Spaces - Indent_Level;
+               Do_Indent;
+               Num_Spaces := Num_Spaces + 2 * Indent_Level;
+               Pop;
+               Push (Tok_Exception);
+            end if;
          end if;
 
-         With_Token      := Word = Tok_With;
-         End_Token       := Word = Tok_End;
-         Or_Token        := Word = Tok_Or;
-         And_Token       := Word = Tok_And;
-         Is_Token        := Word = Tok_Is;
-         Case_Token      := Word = Tok_Case;
-         Task_Token      := Word = Tok_Task;
-         Protected_Token := Word = Tok_Protected;
-         Exception_Token := Word = Tok_Exception;
+         Prev_Reserved := Word;
+         End_Token     := Word = Tok_End;
+         Or_Token      := Word = Tok_Or;
+         And_Token     := Word = Tok_And;
       end Handle_Reserved_Word;
 
    begin  --  Format_Ada
       New_Buffer := To_Line_Buffer (Buffer);
+
+      --  Push a dummy token so that stack will never be empty.
+      Push (Tok_Unknown);
 
       while Prec < Buffer'Last and then not (Is_Word_Char (Buffer (Prec))) loop
          if Buffer (Prec) = '"' then
@@ -1038,6 +1162,12 @@ package body Format is
 
             Token := Get_Token (Str (1 .. Str_Len));
 
+            if End_Token and then
+              (Token = Tok_Unknown or else Semicolon)
+            then
+               End_Token := False;
+            end if;
+
             if Token = Tok_Unknown
               or else
                 ((Token = Tok_Delta or else Token = Tok_Digits
@@ -1051,20 +1181,6 @@ package body Format is
                Or_Token  := False;
                And_Token := False;
 
-               if End_Token then
-                  if End_Level > 0 then
-                     End_Level := End_Level - 1;
-                  else
-                     Pop;
-                  end if;
-               end if;
-
-               End_Token := False;
-
-               if Check_Record then
-                  Check_Record := False;
-                  Pop;
-               end if;
             else
                Handle_Reserved_Word (Token);
             end if;
@@ -1090,11 +1206,11 @@ package body Format is
            Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
 
          if String_Mismatch then
-            Put_Line ("??? String Mismatch");
+            Put_Line (">>> String Mismatch");
          end if;
 
          if Syntax_Error then
-            Put_Line ("??? Syntax Error");
+            Put_Line (">>> Syntax Error");
          end if;
 
          Current := End_Of_Word (Buffer, Prec);
@@ -1103,11 +1219,22 @@ package body Format is
          if Subprogram_Decl then
             if Num_Parens = 1 and then Prev_Num_Parens = 0 then
                Param_Indent := Prec - Line_Start (Buffer, Prec);
-            elsif Num_Parens = 0 and then Prev_Num_Parens = 1 then
-               Subprogram_Decl := False;
-               Param_Indent    := None;
+            elsif Num_Parens = 0 then
+               if Prev_Num_Parens = 1 then
+                  Subprogram_Decl := False;
+                  Param_Indent    := None;
+
+                  if Semicolon then
+                     --  subprogram decl with no following reserved word, e.g:
+                     --  procedure ... ();
+
+                     Pop;
+                  end if;
+               end if;
             end if;
          end if;
+
+         --  A new line, reset flags and update counters.
 
          if Line_Start (Buffer, Prec) /= Line_Start (Buffer, Prec_Last) then
             Indent_Done := False;
