@@ -999,7 +999,7 @@ package body Default_Preferences is
                      Page_Increment => 10.0,
                      Page_Size      => 10.0);
             Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
-            Set_Editable (Spin, False);
+            Set_Editable (Spin, True);
 
             Param_Handlers.Connect
               (Adj, "value_changed",
