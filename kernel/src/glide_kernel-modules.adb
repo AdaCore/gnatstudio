@@ -2109,14 +2109,11 @@ package body Glide_Kernel.Modules is
 
    function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String) return String
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
    is
       use String_List_Utils.String_List;
       use type Command_List.List_Node;
-
-      Args         : Argument_List_Access;
-      The_Command  : GNAT.OS_Lib.String_Access;
-      The_Args     : String_List_Utils.String_List.List;
 
       Command_Node : Command_List.List_Node;
 
@@ -2125,35 +2122,22 @@ package body Glide_Kernel.Modules is
       Command_Found : Boolean := False;
 
    begin
-      if Command = "" then
-         return "";
-      end if;
-
-      Trace (Me, "Launching interactive command: " & Command);
-
       Result := new String'("");
-      Args := Argument_String_To_List (Command);
 
-      The_Command := new String'(Args (Args'First).all);
-
-      for J in Args'First + 1 .. Args'Last loop
-         String_List_Utils.String_List.Append (The_Args, Args (J).all);
-      end loop;
-
-         Command_Node := Command_List.First (Kernel.Commands_List);
+      Command_Node := Command_List.First (Kernel.Commands_List);
 
       while Command_Node /= Command_List.Null_Node loop
          declare
             Data : constant Command_Information :=
               Command_List.Data (Command_Node);
          begin
-            if Data.Command.all = The_Command.all then
+            if Data.Command.all = Command then
                Free (Result);
                Result := new String'
                  (Data.Command_Handler
                     (Kernel,
-                     The_Command.all,
-                     The_Args));
+                     Command,
+                     Args));
                Command_Found := True;
 
                exit;
@@ -2162,10 +2146,6 @@ package body Glide_Kernel.Modules is
 
          Command_Node := Command_List.Next (Command_Node);
       end loop;
-
-      Free (The_Command);
-      Free (The_Args);
-      Free (Args);
 
       declare
          R : constant String := Result.all;
@@ -2180,11 +2160,58 @@ package body Glide_Kernel.Modules is
       end;
    end Interpret_Command;
 
+   function Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String) return String
+   is
+      use String_List_Utils.String_List;
+      use type Command_List.List_Node;
+
+      Args         : Argument_List_Access;
+      The_Command  : GNAT.OS_Lib.String_Access;
+      The_Args     : String_List_Utils.String_List.List;
+
+   begin
+      if Command = "" then
+         return "";
+      end if;
+
+      Trace (Me, "Launching interactive command: " & Command);
+
+      Args := Argument_String_To_List (Command);
+
+      The_Command := new String'(Args (Args'First).all);
+
+      for J in Args'First + 1 .. Args'Last loop
+         String_List_Utils.String_List.Append (The_Args, Args (J).all);
+      end loop;
+
+      declare
+         R : constant String :=
+           Interpret_Command (Kernel, The_Command.all, The_Args);
+      begin
+         Free (The_Command);
+         Free (The_Args);
+         Free (Args);
+
+         return R;
+      end;
+   end Interpret_Command;
+
    procedure Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String) is
    begin
       Insert (Kernel, Interpret_Command (Kernel, Command), False);
+   end Interpret_Command;
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List)
+   is
+   begin
+      Insert (Kernel, Interpret_Command (Kernel, Command, Args), False);
    end Interpret_Command;
 
 end Glide_Kernel.Modules;

@@ -922,11 +922,23 @@ package Glide_Kernel.Modules is
    --    "help"   : brings up the list of currently recognized commands.
    --    "help X" : brings up help concerning command X.
 
+   function Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Same as above, the arguments not included in Command.
+
    procedure Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String);
    --  Same as above, but do not return any result, and display the output
    --  on the console.
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List);
+   --  Same as above, the arguments not included in Command.
 
 private
 
