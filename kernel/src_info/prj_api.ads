@@ -171,6 +171,12 @@ package Prj_API is
    --  Add to Project_View the list of source files for languages other than
    --  Ada.
 
+   function Executables_Directory (Project_View : Prj.Project_Id)
+      return String;
+   --  Return the directory that contains the executables generated for the
+   --  main programs in Project_View. This is either Exec_Dir or Object_Dir.
+   --  The returned string always ends with a directory separator.
+
    --------------------
    -- Creating nodes --
    --------------------
@@ -505,8 +511,9 @@ package Prj_API is
    Compiler_Command_Attribute : constant String := "compiler_command";
    Debugger_Command_Attribute : constant String := "debugger_command";
    Remote_Host_Attribute      : constant String := "remote_host";
-
+   Main_Attribute             : constant String := "main";
    Languages_Attribute        : constant String := "languages";
+   Exec_Dir_Attribute         : constant String := "exec_dir";
 
    function Get_Attribute_Value
      (Project_View   : Project_Id;

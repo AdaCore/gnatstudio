@@ -3964,6 +3964,24 @@ package body Prj_API is
       end case;
    end Get_Attribute_Value;
 
+   ---------------------------
+   -- Executables_Directory --
+   ---------------------------
+
+   function Executables_Directory (Project_View : Prj.Project_Id)
+      return String
+   is
+      Exec : constant String := Get_Attribute_Value
+        (Project_View, Attribute_Name => Exec_Dir_Attribute);
+   begin
+      if Exec /= "" then
+         return Name_As_Directory (Exec);
+      else
+         return Name_As_Directory
+           (Object_Path (Project_View, Recursive => False));
+      end if;
+   end Executables_Directory;
+
 begin
    Namet.Initialize;
    Csets.Initialize;
