@@ -277,7 +277,7 @@ package body Vsearch_Ext is
    procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
       Child : constant MDI_Child := MDI_Child (Search_Child);
    begin
-      Hide_All (Vsearch_Extended (Get_Initial_Window (Child)).Close_Button);
+      Hide_All (Vsearch_Extended (Get_Widget (Child)).Close_Button);
    end Unfloat_Vsearch;
 
    -------------------
@@ -812,9 +812,6 @@ package body Vsearch_Ext is
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
 
-      Set_Position (Vsearch, Win_Pos_Center_On_Parent);
-      Set_Transient_For (Vsearch, Get_Main_Window (Handle));
-
       --  Create the widget
 
       Widget_Callback.Object_Connect
@@ -823,7 +820,7 @@ package body Vsearch_Ext is
          Vsearch);
 
       Widget_Callback.Object_Connect
-        (Vsearch.Vbox_Search, "map",
+        (Vsearch, "map",
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
 
       Gtk_New_From_Stock (Vsearch.Search_Next_Button, Stock_Find);
@@ -879,7 +876,7 @@ package body Vsearch_Ext is
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Spread);
-      Pack_End (Vsearch.Vbox_Search, Bbox, Expand => False, Padding => 5);
+      Pack_End (Vsearch, Bbox, Expand => False, Padding => 5);
 
       Gtk_New_From_Stock (Vsearch.Close_Button, Stock_Close);
       Pack_Start (Bbox, Vsearch.Close_Button, Expand => False);
@@ -971,10 +968,11 @@ package body Vsearch_Ext is
          --  Temporarily remove the options frame, to avoid immediate resizing
          --  of the floating window, whose size_request would include it,
          Ref (Vsearch_Module_Id.Search.Options_Frame);
-         Remove (Vsearch_Module_Id.Search.Vbox_Search,
+         Remove (Vsearch_Module_Id.Search,
                  Vsearch_Module_Id.Search.Options_Frame);
 
-         Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search);
+         Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search,
+                       All_Buttons or Float_As_Transient);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 
@@ -986,7 +984,7 @@ package body Vsearch_Ext is
 
          --  Put back the options frame under control
          Pack_Start
-           (Vsearch_Module_Id.Search.Vbox_Search,
+           (Vsearch_Module_Id.Search,
             Vsearch_Module_Id.Search.Options_Frame, True, True, 0);
          Unref (Vsearch_Module_Id.Search.Options_Frame);
 

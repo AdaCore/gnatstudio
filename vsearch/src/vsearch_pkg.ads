@@ -30,8 +30,9 @@ with Glide_Kernel;
 
 package Vsearch_Pkg is
 
-   type Vsearch_Record is new Gtk_Window_Record with record
-      Vbox_Search : Gtk_Vbox;
+--   type Vsearch_Record is new Gtk_Window_Record with record
+   type Vsearch_Record is new Gtk_Box_Record with record
+      --  Vbox_Search : Gtk_Vbox;
       Table : Gtk_Table;
       Replace_Label : Gtk_Label;
       Search_For_Label : Gtk_Label;

@@ -44,19 +44,21 @@ pragma Suppress (All_Checks);
    Pattern_Combo_Items : String_List.Glist;
 
 begin
-   Gtk.Window.Initialize (Vsearch, Window_Toplevel);
-   Set_Title (Vsearch, -"Search");
-   Set_Policy (Vsearch, False, True, True);
-   Set_Position (Vsearch, Win_Pos_None);
-   Set_Modal (Vsearch, False);
+   --  Gtk.Window.Initialize (Vsearch, Window_Toplevel);
+   --  Set_Title (Vsearch, -"Search");
+   --  Set_Policy (Vsearch, False, True, True);
+   --  Set_Position (Vsearch, Win_Pos_None);
+   --  Set_Modal (Vsearch, False);
 
-   Gtk_New_Vbox (Vsearch.Vbox_Search, False, 0);
-   Add (Vsearch, Vsearch.Vbox_Search);
+   --  Gtk_New_Vbox (Vsearch.Vbox_Search, False, 0);
+   --  Add (Vsearch, Vsearch.Vbox_Search);
+   Initialize_Vbox (Vsearch, False, 0);
 
    Gtk_New (Vsearch.Table, 3, 2, False);
    Set_Row_Spacings (Vsearch.Table, 2);
    Set_Col_Spacings (Vsearch.Table, 3);
-   Pack_Start (Vsearch.Vbox_Search, Vsearch.Table, False, False, 0);
+   --  Pack_Start (Vsearch.Vbox_Search, Vsearch.Table, False, False, 0);
+   Pack_Start (Vsearch, Vsearch.Table, False, False, 0);
 
    Gtk_New (Vsearch.Replace_Label, -("Replace with:"));
    Set_Alignment (Vsearch.Replace_Label, 0.0, 0.5);
@@ -142,11 +144,13 @@ begin
    Set_Tip (Tooltips, Vsearch.Pattern_Entry, -"The searched word or pattern");
 
    Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 0);
-   Pack_Start (Vsearch.Vbox_Search, Vsearch.Buttons_Hbox, False, False, 0);
+   --  Pack_Start (Vsearch.Vbox_Search, Vsearch.Buttons_Hbox, False, False, 0);
+   Pack_Start (Vsearch, Vsearch.Buttons_Hbox, False, False, 0);
 
    Gtk_New (Vsearch.Options_Frame, -"Options");
    Set_Shadow_Type (Vsearch.Options_Frame, Shadow_Etched_In);
-   Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame, False, False, 0);
+   --  Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame, False, False, 0);
+   Pack_Start (Vsearch, Vsearch.Options_Frame, False, False, 0);
 
    Gtk_New_Vbox (Vsearch.Options_Vbox, False, 0);
    Add (Vsearch.Options_Frame, Vsearch.Options_Vbox);
