@@ -817,7 +817,10 @@ package body Project_Viewers is
       Set_Reorderable (Col, True);
       Gtk_New (Render);
       Pack_Start (Col, Render, False);
+      Set_Sort_Column_Id (Col, Base_File_Name_Column);
       Add_Attribute (Col, Render, "text", Base_File_Name_Column);
+
+      Clicked (Col);
 
       Gtk_New (Col);
       Col_Number := Append_Column (Viewer.Tree, Col);
@@ -826,6 +829,7 @@ package body Project_Viewers is
       Set_Reorderable (Col, True);
       Gtk_New (Render);
       Pack_Start (Col, Render, False);
+      Set_Sort_Column_Id (Col, Compiler_Switches_Column);
       Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
       Add_Attribute (Col, Render, "foreground_gdk", Compiler_Color_Column);
 
