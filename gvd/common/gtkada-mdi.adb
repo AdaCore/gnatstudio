@@ -1651,7 +1651,7 @@ package body Gtkada.MDI is
 
       --  A motion_event ? change the cursor if needed
 
-      elsif C.State = Normal then
+      elsif C.State = Normal and then MDI.Docks (None) = null then
          Delta_X := Gint (Get_X (Event));
          Delta_Y := Gint (Get_Y (Event));
          Curs := Side (C, Delta_X, Delta_Y);
