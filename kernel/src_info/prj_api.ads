@@ -181,16 +181,6 @@ package Prj_API is
      return Project_Node_Id;
    --  Return the package whose name is Name, or Empty_Node if there is none
 
-   --  function Find_Attribute_Declaration
-   --    (Prj_Or_Pkg     : Project_Node_Id;
-   --     Attribute_Name : String;
-   --     Index_Name     : Types.String_Id := Types.No_String)
-   --     return Project_Node_Id;
-   --  Find the declaration of Attribute_Name (possibly for a specific index)
-   --  in the project or the package Prj_Or_Pkg. When looking in a project, the
-   --  packages are not searched. Also, this function will not go recursively
-   --  inside the case statements.
-
    ------------------
    -- Node cloning --
    ------------------
