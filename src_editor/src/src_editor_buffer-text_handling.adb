@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,8 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
-with Commands.Editor; use Commands.Editor;
+with Ada.Strings.Maps;  use Ada.Strings.Maps;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Commands.Editor;   use Commands.Editor;
+
+with Language;          use Language;
+with Case_Handling;     use Case_Handling;
+with Casing_Exceptions; use Casing_Exceptions;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -261,5 +266,97 @@ package body Src_Editor_Buffer.Text_Handling is
       Replace_Slice
         (Buffer, Text, Line_Begin, Column_Begin, Line_End, Column_End);
    end Replace_Slice;
+
+   ------------------------
+   -- Autocase_Last_Word --
+   ------------------------
+
+   procedure Autocase_Last_Word
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      procedure Replace_Text
+        (Ln, F, L : Natural;
+         Replace  : String);
+      --  Replace text callback. Note that we do not use Ln, F, L here as
+      --  these are values from the parsed buffer which is a single word here.
+      --  We use insted the Line, First and Last variable below which represent
+      --  the real word position on the line.
+      Lang          : Language_Access;
+      Line          : Editable_Line_Type;
+      Column        : Positive;
+      First         : Natural;
+      W_End         : Gtk_Text_Iter;
+      W_Start       : Gtk_Text_Iter;
+      Indent_Params : Indent_Parameters;
+      Indent_Kind   : Indentation_Kind;
+
+      ------------------
+      -- Replace_Text --
+      ------------------
+
+      procedure Replace_Text
+        (Ln, F, L : Natural;
+         Replace  : String)
+      is
+         pragma Unreferenced (Ln, F, L);
+      begin
+         if Replace'Length > 0 then
+            Replace_Slice
+              (Buffer, Replace, Line, First,
+               Before => 0, After => Replace'Length);
+         end if;
+      end Replace_Text;
+   begin
+      Lang := Get_Language (Buffer);
+
+      Get_Cursor_Position (Buffer, W_End);
+
+      if Lang = null then
+         --  No language information
+         return;
+
+      else
+         Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
+
+         if Indent_Params.Casing_Policy /= On_The_Fly
+           or else Get_Language_Context (Lang).Case_Sensitive
+           or else Is_In_Comment (Source_Buffer (Buffer), W_End)
+         then
+            --  On-the-fly casing not activated, the language is case sensitive
+            --  or we are in a comment.
+            return;
+         end if;
+      end if;
+
+      Get_Cursor_Position (Source_Buffer (Buffer), W_End, Line, Column);
+
+      Copy (W_End, W_Start);
+
+      --  Look for the start of the word
+
+      First := Column;
+
+      declare
+         Result : Boolean;
+      begin
+         loop
+            Backward_Char (W_Start, Result);
+            exit when not Result
+              or else
+                not Is_In (Get_Char (W_Start), Word_Character_Set (Lang));
+            First := First - 1;
+         end loop;
+      end;
+
+      if First /= Column then
+         --  We have a word, set casing
+         Format_Buffer
+           (Lang,
+            Get_Slice (W_Start, W_End),
+            Replace         => Replace_Text'Unrestricted_Access,
+            Indent_Params   => Indent_Params,
+            Case_Exceptions => Get_Case_Exceptions);
+      end if;
+   end Autocase_Last_Word;
 
 end Src_Editor_Buffer.Text_Handling;

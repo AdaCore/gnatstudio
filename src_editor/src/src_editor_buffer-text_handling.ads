@@ -59,4 +59,9 @@ package Src_Editor_Buffer.Text_Handling is
       After  : Integer := -1);
    --  Replace the characters around given position.
 
+   procedure Autocase_Last_Word
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Apply automatic casing to the last word before the cursor,
+   --  if the language preferences allow it. Otherwise, do nothing.
+
 end Src_Editor_Buffer.Text_Handling;
