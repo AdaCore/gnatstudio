@@ -120,10 +120,10 @@ package body Switches_Editors is
    type Switch_Spin_Widget (Sep_Length, Switch_Length : Natural)
      is new Switch_Basic_Widget_Record (Switch_Length)
    with record
-      Separator : String (1 .. Sep_Length);
       Spin  : Gtk.Spin_Button.Gtk_Spin_Button;
       Default : Integer;
       --  Default value, for which no switch is needed on the command line
+      Separator : String (1 .. Sep_Length);
    end record;
    type Switch_Spin_Widget_Access is access all Switch_Spin_Widget'Class;
 
