@@ -109,8 +109,7 @@ package body Glide_Kernel.Project is
       Fd          : TTY_Process_Descriptor;
       Result      : Expect_Match;
       Gnatls      : constant String := Get_Attribute_Value
-        (Get_Project (Handle), Gnatlist_Attribute,
-         Ide_Package, Default => "gnatls");
+        (Get_Project (Handle), Gnatlist_Attribute, Default => "gnatls");
       Gnatls_Args : Argument_List_Access :=
         Argument_String_To_List (Gnatls & " -v");
       Path        : String_Access;

@@ -537,7 +537,7 @@ package body Projects.Registry is
 
       Iter : Imported_Project_Iterator := Start (Registry.Data.Root, True);
       Gnatls : constant String := Get_Attribute_Value
-        (Registry.Data.Root, Gnatlist_Attribute, Ide_Package);
+        (Registry.Data.Root, Gnatlist_Attribute);
       Sources : String_List_Id;
       P       : Project_Type;
 
@@ -548,7 +548,7 @@ package body Projects.Registry is
 
          declare
             Ls : constant String := Get_Attribute_Value
-              (P, Gnatlist_Attribute, Ide_Package);
+              (P, Gnatlist_Attribute);
          begin
             if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
                Errors
