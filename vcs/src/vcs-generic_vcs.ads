@@ -122,6 +122,8 @@ private
       Status_Index         : Natural := 0;
       Local_Rev_Index      : Natural := 0;
       Repository_Rev_Index : Natural := 0;
+
+      Absolute_Names       : Boolean := True;
    end record;
 
 end VCS.Generic_VCS;
