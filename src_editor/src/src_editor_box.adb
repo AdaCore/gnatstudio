@@ -1301,7 +1301,7 @@ package body Src_Editor_Box is
 
          B.Timestamp_Mode := Check_At_Focus;
       end if;
-      
+
       return False;
 
    exception
