@@ -49,6 +49,7 @@ with GNAT.Strings;
 
 with Generic_List;
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;              use Ada.Exceptions;
 
 package body VCS.Generic_VCS is
 
@@ -742,7 +743,20 @@ package body VCS.Generic_VCS is
             Field := Get_Field (N, "regexp");
 
             if Field /= null then
-               Parser.Regexp := new Pattern_Matcher'(Compile (Field.all));
+               declare
+               begin
+                  Parser.Regexp := new Pattern_Matcher'(Compile (Field.all));
+               exception
+                  when E : GNAT.Regpat.Expression_Error =>
+                     Insert
+                       (Kernel,
+                        "Error when registering VCS """ & Name & """:"
+                        & ASCII.LF & "could not parse regular expression: "
+                        & ASCII.LF & Field.all,
+                        Mode => Error);
+
+                     Trace (Me, Exception_Information (E));
+               end;
             end if;
 
             Field := Get_Field (N, "file_index");
