@@ -589,11 +589,12 @@ package body GVD.Process is
       Is_Command   : Boolean := False;
       Set_Position : Boolean := False)
    is
+      pragma Unreferenced (Set_Position);
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
    begin
       if Is_Command then
-         Insert (Process.Debugger_Text, Str, not Set_Position, True);
+         Insert (Process.Debugger_Text, Str, False, True, True);
       else
          while Start <= Str'Last loop
             Match (Highlighting_Pattern (Process.Debugger),
