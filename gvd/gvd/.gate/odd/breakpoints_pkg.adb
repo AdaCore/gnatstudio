@@ -239,7 +239,7 @@ begin
       Widget_Callback.To_Marshaller (On_Update_Location_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Update_Location);
 
-   Gtk_New (Breakpoints.Advanced_Location, -"Advanced...");
+   Gtk_New (Breakpoints.Advanced_Location, -"Advanced >>");
    Set_Flags (Breakpoints.Advanced_Location, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Location, "clicked",
@@ -323,7 +323,7 @@ begin
       Widget_Callback.To_Marshaller (On_Update_Watchpoint_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Update_Watchpoint);
 
-   Gtk_New (Breakpoints.Advanced_Watchpoint, -"Advanced...");
+   Gtk_New (Breakpoints.Advanced_Watchpoint, -"Advanced >>");
    Set_Flags (Breakpoints.Advanced_Watchpoint, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Watchpoint, "clicked",
@@ -422,7 +422,7 @@ begin
       Widget_Callback.To_Marshaller (On_Update_Exception_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Update_Exception);
 
-   Gtk_New (Breakpoints.Advanced_Exception, -"Advanced...");
+   Gtk_New (Breakpoints.Advanced_Exception, -"Advanced >>");
    Set_Flags (Breakpoints.Advanced_Exception, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Exception, "clicked",
