@@ -58,10 +58,22 @@ package Codefix.Errors_Manager is
 
    type Error_Id is private;
 
+   Null_Error_Id : constant Error_Id;
+
+   function Next (This : Error_Id) return Error_Id;
+   --  Return the next error from the error list wich contains Error_Id.
+   --  If Error_Id is the last error of the list, return Null_Error_Id.
+
+   function Get_Solutions (This : Error_Id) return Solution_List;
+   --  Return the solutions found for the error.
+
+   function Get_Error_Message (This : Error_Id) return Error_Message;
+   --  Return the error message associated to the id.
+
    type Error_Callback is access procedure
-     (Message      : Error_Message;
+     (Message      : Error_Message; --  ??? Remove this parameter ?
       Id           : Error_Id;
-      Solutions    : Solution_List;
+      Solutions    : Solution_List; --  ??? Remove this parameter ?
       Current_Text : Text_Navigator_Abstr'Class;
       Corrector    : in out Correction_Manager);
    --  Type of procedure that can be called when a correctible error message
@@ -112,17 +124,32 @@ package Codefix.Errors_Manager is
    procedure Free (This : in out Correction_Manager);
    --  Free the memory associated to a Correction_Manager.
 
+   function Get_First_Error (This : Correction_Manager) return Error_Id;
+   --  Return the first error found in the correction manager.
+
+   function Search_Error (This : Correction_Manager; Message : String)
+     return Error_Id;
+   --  Return the Error_Id contained in the correction manager correspondant to
+   --  the message. If this error does not exist, Null_Error_Id is returned.
+
 private
 
    type Errors_Interface is abstract tagged null record;
 
-   package Memorized_Corrections is new Generic_List (Solution_List);
+   type Error_Id_Record is record
+      Message   : Error_Message := Invalid_Error_Message;
+      Solutions : Solution_List := Extract_List.Null_List;
+   end record;
+
+   procedure Free (This : in out Error_Id_Record);
+
+   package Memorized_Corrections is new Generic_List (Error_Id_Record);
    use Memorized_Corrections;
 
-   type Error_Id is record
-      Ptr_Solutions : Memorized_Corrections.List_Node :=
-         Memorized_Corrections.Null_Node;
-   end record;
+   type Error_Id is new Memorized_Corrections.List_Node;
+
+   Null_Error_Id : constant Error_Id :=
+     Error_Id (Memorized_Corrections.Null_Node);
 
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.List;
@@ -131,6 +158,7 @@ private
 
    procedure Add_Error
      (This      : in out Correction_Manager;
+      Message   : Error_Message;
       Solutions : Solution_List;
       New_Error : out Error_Id);
 

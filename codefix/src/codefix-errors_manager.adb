@@ -37,25 +37,31 @@ package body Codefix.Errors_Manager is
 
    begin
       Get_Direct_Message (This, Current);
+
       if Current.File_Name = null or else Current.File_Name.all = "" then
          Free (Current);
          Current := Invalid_Error_Message;
          return;
       end if;
+
       Cursor_Line := File_Cursor (Current);
       Cursor_Line.Col := 1;
 
       Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
       Logic_Pos := 1;
       File_Pos := 1;
+
       loop
          exit when Logic_Pos = Current.Col;
+
          if Current_Line.all (File_Pos) = ASCII.HT then
             Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
          end if;
+
          Logic_Pos := Logic_Pos + 1;
          File_Pos := File_Pos + 1;
       end loop;
+
       Current.Col := File_Pos;
       Free (Current_Line);
    end Get_Message;
@@ -63,6 +69,43 @@ package body Codefix.Errors_Manager is
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (This : Error_Id) return Error_Id is
+   begin
+      return Error_Id (Next (Memorized_Corrections.List_Node (This)));
+   end Next;
+
+   -------------------
+   -- Get_Solutions --
+   -------------------
+
+   function Get_Solutions (This : Error_Id) return Solution_List is
+   begin
+      return Data (Memorized_Corrections.List_Node (This)).Solutions;
+   end Get_Solutions;
+
+   -----------------------
+   -- Get_Error_Message --
+   -----------------------
+
+   function Get_Error_Message (This : Error_Id) return Error_Message is
+   begin
+      return Data (Memorized_Corrections.List_Node (This)).Message;
+   end Get_Error_Message;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Error_Id_Record) is
+   begin
+      Free (This.Message);
+      Codefix.Formal_Errors.Free (This.Solutions);
+   end Free;
 
    -------------
    -- Analyse --
@@ -81,17 +124,21 @@ package body Codefix.Errors_Manager is
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);
+
          if Current_Message /= Invalid_Error_Message then
             Solutions := Get_Solutions (Source_Text, Current_Message);
 
             if Length (Solutions) > 0 then
-               Add_Error (This, Solutions, New_Error);
-               Callback
-                 (Current_Message,
-                  New_Error,
-                  Solutions,
-                  Source_Text,
-                  This);
+               Add_Error (This, Current_Message, Solutions, New_Error);
+
+               if Callback /= null then
+                  Callback
+                    (Current_Message,
+                     New_Error,
+                     Solutions,
+                     Source_Text,
+                     This);
+               end if;
             end if;
          end if;
 
@@ -112,12 +159,15 @@ package body Codefix.Errors_Manager is
       if Choice /= 0 then
          Append
            (This.Valid_Corrections,
-            Clone (Get_Extract (Data (Error.Ptr_Solutions), Choice)));
+            Clone (Get_Extract (Get_Solutions (Error), Choice)));
       end if;
+
       Remove_Nodes
         (This.Potential_Corrections,
-         Prev (This.Potential_Corrections, Error.Ptr_Solutions),
-         Error.Ptr_Solutions);
+         Prev
+           (This.Potential_Corrections,
+            Memorized_Corrections.List_Node (Error)),
+         Memorized_Corrections.List_Node (Error));
    end Validate;
 
    ------------
@@ -208,8 +258,10 @@ package body Codefix.Errors_Manager is
 
          for I_1 in 1 .. Num_1 loop
             Line_1 := Get_Record (Extract_1, I_1).all;
+
             for I_2 in 1 .. Num_2 loop
                Line_2 := Get_Record (Extract_2, I_2).all;
+
                if Get_Cursor (Line_1).Line = Get_Cursor (Line_2).Line then
                   return True;
                end if;
@@ -317,11 +369,45 @@ package body Codefix.Errors_Manager is
 
    procedure Add_Error
      (This      : in out Correction_Manager;
+      Message   : Error_Message;
       Solutions : Solution_List;
       New_Error : out Error_Id) is
+
+      New_Error_Record : Error_Id_Record;
+
    begin
-      Append (This.Potential_Corrections, Solutions);
-      New_Error.Ptr_Solutions := Last (This.Potential_Corrections);
+      New_Error_Record.Solutions := Solutions;
+      New_Error_Record.Message := Clone (Message);
+      Append (This.Potential_Corrections, New_Error_Record);
+      New_Error := Last (This.Potential_Corrections);
    end Add_Error;
+
+   ---------------------
+   -- Get_First_Error --
+   ---------------------
+
+   function Get_First_Error (This : Correction_Manager) return Error_Id is
+   begin
+      return First (This.Potential_Corrections);
+   end Get_First_Error;
+
+   ------------------
+   -- Search_Error --
+   ------------------
+
+   function Search_Error (This : Correction_Manager; Message : String)
+     return Error_Id is
+
+      Current_Id       : Error_Id := Get_First_Error (This);
+      Message_Expected : Error_Message;
+
+   begin
+      while Current_Id /= Null_Error_Id loop
+         exit when Get_Message (Get_Error_Message (Current_Id)) = Message;
+         Current_Id := Next (Current_Id);
+      end loop;
+
+      return Current_Id;
+   end Search_Error;
 
 end Codefix.Errors_Manager;
