@@ -932,14 +932,16 @@ package body Glide_Kernel.Modules is
       Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True)
    is
-      A : Line_Information_Array (0 .. 0);
+      A_Access : Line_Information_Data;
    begin
+      A_Access := new Line_Information_Array (0 .. 0);
       General_Line_Information (Kernel,
                                 File,
                                 Identifier,
-                                new Line_Information_Array' (A),
+                                A_Access,
                                 Stick_To_Data,
                                 Every_Line);
+      Unchecked_Free (A_Access);
    end Create_Line_Information_Column;
 
 
