@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -94,28 +94,48 @@ package Src_Info.Queries is
       Success);
    --  The status returned by the Find_Declaration_Or_Body routine.
 
-   procedure Find_Declaration_Or_Body
+   procedure Find_Declaration
      (Lib_Info      : LI_File_Ptr;
       File_Name     : String;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
       Entity        : out Entity_Information;
-      Location      : out File_Location;
       Status        : out Find_Decl_Or_Body_Query_Status);
-   --  Find the location of the declaration for the entity referenced in file
-   --  File_Name, at the given location.
-   --  On exit, Entity is set to the declaration of the entity.
-   --  Location is set to the location where the cursor should be moved (the
-   --  next body reference, or the declaration, for instance).
+   --  Find the location of the location of the declaration for the given
+   --  entity.
    --
    --  If no entity could be found, Status is set to a value other than
-   --  Success. In that case, Entity and Location are irrelevant.
+   --  Success. In that case, Entity are irrelevant.
    --
    --  The memory occupied by Entity must be freed by the caller.
+
+   procedure Find_Next_Body
+     (Lib_Info               : LI_File_Ptr;
+      File_Name              : String;
+      Entity_Name            : String;
+      Line                   : Positive;
+      Column                 : Positive;
+      Handler                : access LI_Handler_Record'Class;
+      Source_Info_List       : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      Location               : out File_Location;
+      Status                 : out Find_Decl_Or_Body_Query_Status);
+   --  Find the location of the body for the entity. If the entity has multiple
+   --  bodies (as is the case for instance for separates in Ada), and
+   --  (Line,Column) is already the location of one of the bodies, then this
+   --  procedure returns the location of the next body.
+   --
+   --  If no entity could be found, Status is set to a value other than
+   --  Success. In that case, Location are irrelevant.
    --
    --  Note: Location has a short term life: it can no longer be used once you
    --  reparse Lib_Info, or update its contents.
+   --
+   --  Most of the time, you should use this function through the equivalent
+   --  call in Glide_Kernel.
 
    ---------------------------
    -- Spec <-> Body queries --
@@ -381,7 +401,7 @@ private
 
    function Get_Declaration_Location
      (List : LI_File_List; Entity : Entity_Information) return File_Location;
-   --  Retunr the location of the declaration of Entity
+   --  Return the location of the declaration of Entity
 
    function Get_Declaration
      (List : E_Declaration_Info_List;

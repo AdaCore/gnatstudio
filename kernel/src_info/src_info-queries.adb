@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -81,8 +81,9 @@ package body Src_Info.Queries is
       Entity_Decl     : out E_Declaration_Info;
       Ref             : out E_Reference_List;
       Status          : out Find_Decl_Or_Body_Query_Status);
-   --  Same as Find_Declaration_Or_Body, but for a specific declaration list.
-   --  Entity_Name must be all lower-cases if the language is case insensitive
+   --  Same as Internal_Find_Declaration_Or_Body, but for a specific
+   --  declaration list.  Entity_Name must be all lower-cases if the language
+   --  is case insensitive
 
    procedure Trace_Dump
      (Handler : Debug_Handle;
@@ -112,6 +113,17 @@ package body Src_Info.Queries is
      (Decl : E_Declaration; Entity : Entity_Information) return Boolean;
    --  True if Entity1 and Entity2 represent the same entity. You can not use a
    --  direct equality test
+
+   procedure Internal_Find_Declaration_Or_Body
+     (Lib_Info      : LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Decl          : out E_Declaration_Info;
+      Ref           : out E_Reference_List;
+      Status        : out Find_Decl_Or_Body_Query_Status);
+   --  Internal version of Find_Declaration and Find_Next_Body
 
    -------------------------
    -- Search_Is_Completed --
@@ -165,22 +177,27 @@ package body Src_Info.Queries is
      (Decl : E_Declaration_Info;
       Ref  : E_Reference_List := null) return E_Reference_List
    is
-      Current_Ref   : E_Reference_List;
+      Current_Ref : E_Reference_List;
+      Result      : E_Reference_List;
    begin
       --  Search the body reference immediately placed after the given
       --  Ref. Note that the references are stored in _reverse_ order...
       Current_Ref := Decl.References;
-      while Current_Ref /= Ref and then Current_Ref /= null loop
+
+      while Current_Ref /= null loop
          --  The test against null is just a guard against programing errors,
          --  just in case we are given a ref which is not part of the reference
          --  list of Decl...
          if Current_Ref.Value.Kind = Body_Entity then
-            return Current_Ref;
+            Result := Current_Ref;
          end if;
+
+         exit when Result /= null and then Current_Ref = Ref;
+
          Current_Ref := Current_Ref.Next;
       end loop;
 
-      return null;
+      return Result;
    end Find_Next_Body_Ref;
 
    -----------------------
@@ -246,25 +263,23 @@ package body Src_Info.Queries is
       end loop Decl_Loop;
    end Find_Spec_Or_Body;
 
-   ------------------------------
-   -- Find_Declaration_Or_Body --
-   ------------------------------
+   ---------------------------------------
+   -- Internal_Find_Declaration_Or_Body --
+   ---------------------------------------
 
-   procedure Find_Declaration_Or_Body
+   procedure Internal_Find_Declaration_Or_Body
      (Lib_Info      : LI_File_Ptr;
       File_Name     : String;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
-      Entity        : out Entity_Information;
-      Location      : out File_Location;
+      Decl          : out E_Declaration_Info;
+      Ref           : out E_Reference_List;
       Status        : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
-      Ref         : E_Reference_List;
-      E_Name      : String             := Entity_Name;
-      Decl        : E_Declaration_Info;
+      E_Name      : String := Entity_Name;
 
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
@@ -332,31 +347,39 @@ package body Src_Info.Queries is
             Current_Dep := Current_Dep.Next;
          end loop;
       end if;
+   end Internal_Find_Declaration_Or_Body;
 
-      --  We have now found a reference. Now we must decide whether we want to
-      --  get the reference to the declaration, one of the bodies,...
-      --  Check if the location corresponds to the declaration,
-      --  in which case we need to jump to the first body.
-      --  Otherwise, if this is a body reference, then we try to navigate
-      --  to the next body reference.
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   procedure Find_Declaration
+     (Lib_Info      : LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Entity        : out Entity_Information;
+      Status        : out Find_Decl_Or_Body_Query_Status)
+   is
+      Ref         : E_Reference_List;
+      Decl        : E_Declaration_Info;
+   begin
+      Internal_Find_Declaration_Or_Body
+        (Lib_Info    => Lib_Info,
+         File_Name   => File_Name,
+         Entity_Name => Entity_Name,
+         Line        => Line,
+         Column      => Column,
+         Decl        => Decl,
+         Ref         => Ref,
+         Status      => Status);
 
       if Status = Success then
-         if Ref = null or else Ref.Value.Kind = Body_Entity then
-            Ref := Find_Next_Body_Ref (Decl, Ref);
-         else
-            Ref := null;
-         end if;
-
-         if Ref /= null then
-            Location := Ref.Value.Location;
-         else
-            Location := Decl.Declaration.Location;
-         end if;
-
          Entity := Get_Entity (Decl.Declaration);
       else
          Entity := No_Entity_Information;
-         Trace (Me, "Couldn't find a valid xref for " & E_Name
+         Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
                 & " file=" & File_Name);
       end if;
@@ -366,9 +389,107 @@ package body Src_Info.Queries is
          --  Trap all exceptions for better robustness, and report an
          --  internal error
          Entity := No_Entity_Information;
-         Ref    := null;
          Status := Internal_Error;
-   end Find_Declaration_Or_Body;
+   end Find_Declaration;
+
+   --------------------
+   -- Find_Next_Body --
+   --------------------
+
+   procedure Find_Next_Body
+     (Lib_Info               : LI_File_Ptr;
+      File_Name              : String;
+      Entity_Name            : String;
+      Line                   : Positive;
+      Column                 : Positive;
+      Handler                : access LI_Handler_Record'Class;
+      Source_Info_List       : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      Location               : out File_Location;
+      Status                 : out Find_Decl_Or_Body_Query_Status)
+   is
+      Body_LI : LI_File_Ptr;
+      Ref     : E_Reference_List;
+      Decl    : E_Declaration_Info;
+      Entity  : Entity_Information;
+   begin
+      --  First, find the declaration of the entity, since we need to parse the
+      --  LI file that really defines the entity, or we won't find the body.
+
+      Internal_Find_Declaration_Or_Body
+        (Lib_Info    => Lib_Info,
+         File_Name   => File_Name,
+         Entity_Name => Entity_Name,
+         Line        => Line,
+         Column      => Column,
+         Decl        => Decl,
+         Ref         => Ref,
+         Status      => Status);
+
+      if Status = Success then
+
+         --  If we need to parse the LI File that contains the body
+         --  information. Note that we have to change the line,column
+         --  information, or the entity will not match in the LI file.
+
+         if Decl.Declaration.Location.File.LI /= Lib_Info then
+            Entity := Get_Entity (Decl.Declaration);
+
+            Body_LI := Locate_From_Source
+              (Source_Info_List, Get_Declaration_File_Of (Entity));
+            Create_Or_Complete_LI
+              (Handler                => Handler,
+               File                   => Body_LI,
+               Source_Filename        => Get_Declaration_File_Of (Entity),
+               List                   => Source_Info_List,
+               Project                => Project,
+               Predefined_Source_Path => Predefined_Source_Path,
+               Predefined_Object_Path => Predefined_Object_Path);
+
+            Internal_Find_Declaration_Or_Body
+              (Lib_Info    => Body_LI,
+               File_Name   => Get_Declaration_File_Of (Entity),
+               Entity_Name => Entity_Name,
+               Line        => Get_Declaration_Line_Of (Entity),
+               Column      => Get_Declaration_Column_Of (Entity),
+               Decl        => Decl,
+               Ref         => Ref,
+               Status      => Status);
+            Destroy (Entity);
+         end if;
+      end if;
+
+      --  We have now found a reference. Now we must decide whether we want to
+      --  get the reference to the declaration, one of the bodies,...
+      --  Check if the location corresponds to the declaration,
+      --  in which case we need to jump to the first body.
+      --  Otherwise, if this is a body reference, then we try to navigate
+      --  to the next body reference.
+
+      if Status = Success then
+         Ref := Find_Next_Body_Ref (Decl, Ref);
+
+         if Ref /= null then
+            Location := Ref.Value.Location;
+         else
+            Location := Null_File_Location;
+            Status := No_Body_Entity_Found;
+         end if;
+      else
+         Trace (Me, "Couldn't find a valid xref for " & Entity_Name
+                & " line=" & Line'Img & " Column=" & Column'Img
+                & " file=" & File_Name);
+      end if;
+
+   exception
+      when others =>
+         --  Trap all exceptions for better robustness, and report an
+         --  internal error
+         Status := Internal_Error;
+         Location := Null_File_Location;
+   end Find_Next_Body;
 
    -------------
    -- Destroy --
