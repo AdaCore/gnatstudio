@@ -203,7 +203,7 @@ package Glide_Kernel.Hooks is
    --  Register a new hook in the kernel.
    --  Type_Name described the type of parameters for that hook. This should be
    --  the same value as given to Create_Hook_Type. The default value indicates
-   --  that the hook doesn't have any argument
+   --  that the hook doesn't have any argument.
 
    --------------------------------
    -- Hooks with shell arguments --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -106,15 +106,15 @@ package Switches_Editors is
    --  If Default is selected, then no switch is needed on the command line.
 
    procedure Create_Field
-     (Page              : access Switches_Editor_Page_Record;
-      Box               : access Gtk.Box.Gtk_Box_Record'Class;
-      Label             : String;
-      Switch            : String;
-      Tip               : String := "";
-      As_Directory      : Boolean := False;
-      As_File           : Boolean := False;
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator         : String := " ");
+     (Page             : access Switches_Editor_Page_Record;
+      Box              : access Gtk.Box.Gtk_Box_Record'Class;
+      Label            : String;
+      Switch           : String;
+      Tip              : String := "";
+      As_Directory     : Boolean := False;
+      As_File          : Boolean := False;
+      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator        : String := " ");
    --  Create a new field switch.
    --  If As_Directory is true, the field is expected to contain a directory,
    --  and a browse button is added.
@@ -132,9 +132,9 @@ package Switches_Editors is
    type Radio_Switch_Array is array (Positive range <>) of Radio_Switch;
 
    procedure Create_Radio
-     (Page      : access Switches_Editor_Page_Record;
-      Box       : access Gtk.Box.Gtk_Box_Record'Class;
-      Buttons   : Radio_Switch_Array);
+     (Page    : access Switches_Editor_Page_Record;
+      Box     : access Gtk.Box.Gtk_Box_Record'Class;
+      Buttons : Radio_Switch_Array);
    --  Create a series of radio buttons. Only one of them can be active at any
    --  time. No copy is made of the string accesses in Buttons.
    --  Separator is used between the switch and its argument
@@ -147,15 +147,15 @@ package Switches_Editors is
    type Combo_Switch_Array is array (Positive range <>) of Combo_Switch;
 
    function Create_Combo
-     (Page                 : access Switches_Editor_Page_Record;
-      Label                : String;
-      Switch               : String;
-      Default_No_Switch    : String;
-      Default_No_Digit     : String;
-      Buttons              : Combo_Switch_Array;
-      Tip                  : String := "";
-      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null;
-      Separator            : String := "")
+     (Page              : access Switches_Editor_Page_Record;
+      Label             : String;
+      Switch            : String;
+      Default_No_Switch : String;
+      Default_No_Digit  : String;
+      Buttons           : Combo_Switch_Array;
+      Tip               : String := "";
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator         : String := "")
       return Gtk.Widget.Gtk_Widget;
    --  Create a new combo button. Switch is displayed on the left of the combo
    --  box. The newly created widget is returned, and it includes the label,
@@ -216,7 +216,7 @@ package Switches_Editors is
    --  See also Add_Custom_Expansion below.
 
    procedure Add_Custom_Expansion
-     (Page : access Switches_Editor_Page_Record'Class;
+     (Page    : access Switches_Editor_Page_Record'Class;
       Switch  : String;
       Default : Cst_Argument_List);
    --  Default are the switches used when Switch is found on the command line

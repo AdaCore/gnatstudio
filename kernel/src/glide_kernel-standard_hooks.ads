@@ -158,12 +158,12 @@ package Glide_Kernel.Standard_Hooks is
    type File_Line_Hooks_Args (Identifier_Length : Natural)
      is new Hooks_Data with
    record
-      Identifier     : String (1 .. Identifier_Length);
-      File           : VFS.Virtual_File := VFS.No_File;
-      Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True;
-      Normalize      : Boolean := True;
+      Identifier    : String (1 .. Identifier_Length);
+      File          : VFS.Virtual_File := VFS.No_File;
+      Info          : Line_Information_Data;
+      Stick_To_Data : Boolean := True;
+      Every_Line    : Boolean := True;
+      Normalize     : Boolean := True;
    end record;
    --  Identifier is the identity of the emitted
    --  If Stick_To_Data is set to True, then the line information is relative
@@ -178,29 +178,29 @@ package Glide_Kernel.Standard_Hooks is
    --  Requests dealing with the column on the side of the editors
 
    procedure Create_Line_Information_Column
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File           : VFS.Virtual_File;
-      Identifier     : String;
-      Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True;
-      Normalize      : Boolean := True);
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : VFS.Virtual_File;
+      Identifier    : String;
+      Stick_To_Data : Boolean := True;
+      Every_Line    : Boolean := True;
+      Normalize     : Boolean := True);
    --  Request the creation of a column on the side of some editors.
    --  See File_Line_Action_Hook
 
    procedure Remove_Line_Information_Column
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File           : VFS.Virtual_File;
-      Identifier     : String);
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File;
+      Identifier : String);
    --  Remove the column identified by Identifier for the editors of File.
    --  If File is empty, then the column will be removed for all open files.
    --  See File_Line_Action_Hook
 
    procedure Add_Line_Information
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File           : VFS.Virtual_File;
-      Identifier     : String;
-      Info           : Line_Information_Data;
-      Normalize      : Boolean := True);
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File;
+      Identifier : String;
+      Info       : Line_Information_Data;
+      Normalize  : Boolean := True);
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified.
@@ -243,39 +243,39 @@ package Glide_Kernel.Standard_Hooks is
 
    type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural)
       is new Hooks_Data with record
-         Identifier    : String (1 .. Ident_Length);
-         Category      : String (1 .. Cat_Length);
-         File          : VFS.Virtual_File;
-         Line          : Integer;
-         Column        : Integer;
-         Message       : String (1 .. Mes_Length);
-         Action        : Action_Item;
+         Identifier : String (1 .. Ident_Length);
+         Category   : String (1 .. Cat_Length);
+         File       : VFS.Virtual_File;
+         Line       : Integer;
+         Column     : Integer;
+         Message    : String (1 .. Mes_Length);
+         Action     : Action_Item;
       end record;
    --  Identifier is the identity of the emitted.
 
    Location_Action_Hook : constant String := "location_action_hook";
 
    procedure Add_Location_Action
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Identifier    : String;
-      Category      : String;
-      File          : VFS.Virtual_File;
-      Line          : Integer;
-      Column        : Integer;
-      Message       : String;
-      Action        : Action_Item);
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Identifier : String;
+      Category   : String;
+      File       : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Message    : String;
+      Action     : Action_Item);
    --  Add an action to the location specified. This will show up on the left
    --  side of the result view.
    --  See Location_Action_Hook
 
    procedure Remove_Location_Action
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Identifier    : String;
-      Category      : String;
-      File          : VFS.Virtual_File;
-      Line          : Integer;
-      Column        : Integer;
-      Message       : String);
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Identifier : String;
+      Category   : String;
+      File       : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Message    : String);
    --  Remove action corresponding to Identifier at specified location.
    --  See Location_Action_Hook.
 
@@ -315,10 +315,10 @@ package Glide_Kernel.Standard_Hooks is
    Diff_Action_Hook : constant String := "diff_action_hook";
 
    procedure Display_Differences
-     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Orig_File      : VFS.Virtual_File := VFS.No_File;
-      New_File       : VFS.Virtual_File := VFS.No_File;
-      Diff_File      : VFS.Virtual_File);
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Orig_File : VFS.Virtual_File := VFS.No_File;
+      New_File  : VFS.Virtual_File := VFS.No_File;
+      Diff_File : VFS.Virtual_File);
    --  Display differences between Orig_File and New_File (Mime_Diff_File type)
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the

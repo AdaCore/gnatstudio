@@ -30,7 +30,7 @@ package body Src_Editor_Buffer.Hooks is
 
    procedure Simple_Editor_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handles calls to run_hook from the shell for the simple editor hooks.
+   --  Handles calls to run_hook from the shell for the simple editor hooks
 
    ------------------------------------
    -- Simple_Editor_Run_Hook_Handler --

@@ -26,13 +26,13 @@ package Src_Editor_Buffer.Hooks is
    Word_Added_Hook     : constant String := "word_added";
 
    procedure Cursor_Stopped (Buffer : Source_Buffer);
-   --  Emit the hook Cursor_Stopped_Hook.
+   --  Emit the hook Cursor_Stopped_Hook
 
    procedure Word_Added (Buffer : Source_Buffer);
-   --  Emit the hook Word_Added_Hook.
+   --  Emit the hook Word_Added_Hook
 
    procedure Register_Editor_Hooks
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register the hooks related to the source editors.
+   --  Register the hooks related to the source editors
 
 end Src_Editor_Buffer.Hooks;

@@ -674,7 +674,7 @@ package Src_Editor_Buffer is
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record;
       Line   : File_Line_Type) return Editable_Line_Type;
-   --  Return the editable line corresponding to Line.
+   --  Return the editable line corresponding to Line
 
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record'Class;
@@ -685,7 +685,7 @@ package Src_Editor_Buffer is
    function Get_Buffer_Line
      (Buffer : access Source_Buffer_Record;
       Line   : File_Line_Type) return Buffer_Line_Type;
-   --  Return the buffer line corresponding to file line Line.
+   --  Return the buffer line corresponding to file line Line
 
 private
 
