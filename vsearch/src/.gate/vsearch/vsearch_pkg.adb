@@ -21,7 +21,6 @@ procedure Initialize (Vsearch : access Vsearch_Record'Class) is
    Tooltips : Gtk_Tooltips;
    Context_Combo_Items : String_List.Glist;
    Pattern_Combo_Items : String_List.Glist;
-   Scope_Combo_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Vsearch, Window_Toplevel);
@@ -129,36 +128,6 @@ begin
 
    Gtk_New_Vbox (Vsearch.Options_Vbox, False, 0);
    Add (Vsearch.Options_Frame, Vsearch.Options_Vbox);
-
-   Gtk_New_Hbox (Vsearch.Scope_Hbox, False, 0);
-   Pack_Start (Vsearch.Options_Vbox, Vsearch.Scope_Hbox, True, True, 0);
-
-   Gtk_New (Vsearch.Scope_Label, -("Scope:"));
-   Set_Alignment (Vsearch.Scope_Label, 0.0, 0.5);
-   Set_Padding (Vsearch.Scope_Label, 0, 0);
-   Set_Justify (Vsearch.Scope_Label, Justify_Center);
-   Set_Line_Wrap (Vsearch.Scope_Label, False);
-   Pack_Start (Vsearch.Scope_Hbox, Vsearch.Scope_Label, False, False, 2);
-
-   Gtk_New (Vsearch.Scope_Combo);
-   Set_Case_Sensitive (Vsearch.Scope_Combo, False);
-   Set_Use_Arrows (Vsearch.Scope_Combo, True);
-   Set_Use_Arrows_Always (Vsearch.Scope_Combo, False);
-   String_List.Append (Scope_Combo_Items, -"Whole Text");
-   String_List.Append (Scope_Combo_Items, -"Comments Only");
-   String_List.Append (Scope_Combo_Items, -"Comments + Strings");
-   String_List.Append (Scope_Combo_Items, -"Strings Only");
-   String_List.Append (Scope_Combo_Items, -"All but Comments");
-   Combo.Set_Popdown_Strings (Vsearch.Scope_Combo, Scope_Combo_Items);
-   Free_String_List (Scope_Combo_Items);
-   Pack_Start (Vsearch.Scope_Hbox, Vsearch.Scope_Combo, True, True, 2);
-
-   Vsearch.Scope_Entry := Get_Entry (Vsearch.Scope_Combo);
-   Set_Editable (Vsearch.Scope_Entry, False);
-   Set_Max_Length (Vsearch.Scope_Entry, 0);
-   Set_Text (Vsearch.Scope_Entry, -"Whole Text");
-   Set_Visibility (Vsearch.Scope_Entry, True);
-   Set_Tip (Tooltips, Vsearch.Scope_Entry, -"Restrict the scope of the search");
 
    Gtk_New (Vsearch.Search_All_Check, -"Search All Occurrences");
    Set_Active (Vsearch.Search_All_Check, False);
