@@ -148,11 +148,18 @@ package body GVD.Process is
    -- Local Subprograms --
    -----------------------
 
-   procedure Text_Output_Filter
+   procedure First_Text_Output_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address);
    --  Standard handler to add gdb's output to the debugger window.
+   -- Simply strip CR characters if needed and then call Text_Output_Filter
+
+   procedure Text_Output_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
+      Str        : String;
+      Window     : System.Address);
+   --  Real handler called by First_Text_Output_Filter
 
    function Debugger_Button_Press
      (Process : access Debugger_Process_Tab_Record'Class;
@@ -419,6 +426,22 @@ package body GVD.Process is
       Process.Post_Processing := False;
       Free (Process.Current_Output);
    end Final_Post_Process;
+
+   ------------------------------
+   -- First_Text_Output_Filter --
+   ------------------------------
+
+   procedure First_Text_Output_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
+      Str        : String;
+      Window     : System.Address) is
+   begin
+      if Need_To_Strip_Control_M then
+         Text_Output_Filter (Descriptor, Strip_Control_M (Str), Window);
+      else
+         Text_Output_Filter (Descriptor, Str, Window);
+      end if;
+   end First_Text_Output_Filter;
 
    ------------------------
    -- Text_Output_Filter --
@@ -710,7 +733,7 @@ package body GVD.Process is
 
       Add_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         Text_Output_Filter'Access, Output, Window.all'Address);
+         First_Text_Output_Filter'Access, Output, Window.all'Address);
 
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
