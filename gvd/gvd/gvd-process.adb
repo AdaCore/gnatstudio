@@ -27,7 +27,6 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Event;    use Gdk.Event;
 
 with Gtk;          use Gtk;
-with Gtk.Main;     use Gtk.Main;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Menu;     use Gtk.Menu;
@@ -194,8 +193,8 @@ package body GVD.Process is
 
    function Convert
      (Main_Debug_Window : access Main_Debug_Window_Record'Class;
-      Descriptor : GNAT.Expect.Process_Descriptor'Class)
-     return Debugger_Process_Tab
+      Descriptor        : GNAT.Expect.Process_Descriptor'Class)
+      return Debugger_Process_Tab
    is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
@@ -580,8 +579,15 @@ package body GVD.Process is
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String' (Remote_Host);
-      Process.Descriptor.Remote_Target := new String' (Remote_Target);
-      Process.Descriptor.Protocol := new String' (Remote_Protocol);
+
+      if Remote_Protocol = "" then
+         Process.Descriptor.Remote_Target := new String' ("");
+         Process.Descriptor.Protocol := new String' ("");
+      else
+         Process.Descriptor.Remote_Target := new String' (Remote_Target);
+         Process.Descriptor.Protocol := new String' (Remote_Protocol);
+      end if;
+
       Process.Descriptor.Program := new String' (Executable);
       Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
 
@@ -594,21 +600,20 @@ package body GVD.Process is
          Widget_Callback.To_Marshaller
            (GVD.Code_Editors.On_Executable_Changed'Access),
          Process.Editor_Text);
-
       Widget_Callback.Connect
-        (Gtk_Widget (Process), "process_stopped",
+        (Process, "process_stopped",
          Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
       Widget_Callback.Connect
-        (Gtk_Widget (Process), "context_changed",
+        (Process, "context_changed",
          Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
       Widget_Callback.Connect
-        (Gtk_Widget (Process), "process_stopped",
+        (Process, "process_stopped",
          Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
       Widget_Callback.Connect
-        (Gtk_Widget (Process), "context_changed",
+        (Process, "context_changed",
          Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
       Widget_Callback.Connect
-        (Gtk_Widget (Process), "process_stopped",
+        (Process, "process_stopped",
          Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
@@ -627,14 +632,17 @@ package body GVD.Process is
       --  that time.
 
       Process.Debugger_Text_Highlight_Color :=
-        Parse (Debugger_Highlight_Color);
+        Parse (Current_Preferences.Debugger_Highlight_Color.all);
 
       Alloc (Get_System, Process.Debugger_Text_Highlight_Color);
 
       Process.Debugger_Text_Font :=
-        Get_Gdkfont (Debugger_Font, Debugger_Font_Size);
+        Get_Gdkfont
+          (Current_Preferences.Debugger_Font.all,
+           Current_Preferences.Debugger_Font_Size);
 
-      Align_On_Grid (Process.Data_Canvas, Align_Items_On_Grid);
+      Align_On_Grid
+        (Process.Data_Canvas, Current_Preferences.Align_Items_On_Grid);
 
       --  Add a new page to the notebook
 
@@ -701,11 +709,12 @@ package body GVD.Process is
 
       Configure
         (Process.Editor_Text,
-         Editor_Font, Editor_Font_Size,
+         Current_Preferences.Editor_Font.all,
+         Current_Preferences.Editor_Font_Size,
          dot_xpm, arrow_xpm, stop_xpm,
-         Comments_Color    => Comments_Color,
-         Strings_Color     => Strings_Color,
-         Keywords_Color    => Keywords_Color);
+         Comments_Color => Current_Preferences.Comments_Color.all,
+         Strings_Color  => Current_Preferences.Strings_Color.all,
+         Keywords_Color => Current_Preferences.Keywords_Color.all);
 
       --  Initialize the call stack list
 
@@ -713,13 +722,14 @@ package body GVD.Process is
 
       --  Initialize the canvas
 
-      if Display_Grid then
+      if Current_Preferences.Display_Grid then
          Configure
-           (Process.Data_Canvas, Annotation_Height => Annotation_Font_Size);
+           (Process.Data_Canvas,
+            Annotation_Height => Current_Preferences.Annotation_Font_Size);
       else
          Configure
            (Process.Data_Canvas, Grid_Size => 0,
-            Annotation_Height => Annotation_Font_Size);
+            Annotation_Height => Current_Preferences.Annotation_Font_Size);
       end if;
 
       --  Set the output filter, so that we output everything in the Gtk_Text
@@ -1053,6 +1063,12 @@ package body GVD.Process is
       use String_History;
 
    begin
+      if Debugger.Exiting then
+         return;
+      end if;
+
+      Debugger.Exiting := True;
+
       --  Remove the notebook page.
 
       Close (Debugger.Debugger);
@@ -1125,33 +1141,6 @@ package body GVD.Process is
             Mode => Mode);
       end if;
    end Process_User_Command;
-
-   -----------------------
-   -- Wait_User_Command --
-   -----------------------
-
-   procedure Wait_User_Command
-     (Debugger : Debugger_Process_Tab)
-   is
-      Tmp        : Boolean;
-      Num_Events : Positive;
-      Max_Events : constant := 30;
-      --  Limit the number of events to process in one iteration
-
-   begin
-      --  Wait until the command has been processed
-
-      while Command_In_Process (Get_Process (Debugger.Debugger)) loop
-         Num_Events := 1;
-
-         while Gtk.Main.Events_Pending
-           and then Num_Events <= Max_Events
-         loop
-            Tmp := Gtk.Main.Main_Iteration;
-            Num_Events := Num_Events + 1;
-         end loop;
-      end loop;
-   end Wait_User_Command;
 
    ---------------------
    -- Input_Available --
