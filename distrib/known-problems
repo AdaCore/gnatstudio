@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.1
 
+- Extra dialog displayed during search
+  Problem:    When starting a search from the beginning of a file, GPS will ask
+              to restart from the beginning once the search reaches the end of
+              the file and no occurrence is found.
+  Workaround: Ignore the dialog.
+
 - C428-027 Interactive Replace does not work.
   Problem:    When using the Search dialog to perform Replace operations on the
               current file, clicking the Replace button does not replace the
