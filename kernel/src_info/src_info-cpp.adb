@@ -285,7 +285,6 @@ package body Src_Info.CPP is
       Browse.Browse
         (HI.Source_Files (HI.Current_File).all,
          HI.SN_Dir.all,
-         "cbrowser",
          HI.Xrefs,
          HI.PD);
 
@@ -313,7 +312,6 @@ package body Src_Info.CPP is
          Browse.Browse
            (Iterator.Source_Files (Iterator.Current_File).all,
             Iterator.SN_Dir.all,
-            "cbrowser",
             Iterator.Xrefs,
             Iterator.PD);
       elsif Iterator.Current_File = Iterator.Source_Files'Last then

@@ -19,11 +19,18 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body SN.Browse is
 
-   DBIMP : constant String := "dbimp";
+   DBIMP    : constant String := "dbimp";
    --  SN database engine
 
-   DBIMP_Path : String_Access := null;
-   --  full path to DBIMP (found in PATH) or null, if DBIMP is not in PATH
+   CBrowser : constant String := "cbrowser";
+   --  SN C and C++ parser
+
+   DBIMP_Path     : String_Access := null;
+   --  full path to DBIMP (found in PATH) or null,
+   --  if DBIMP is not in PATH
+   CBrowser_Path  : String_Access := null;
+   --  full path to CBrowser (found in PATH) or null,
+   --  if CBrowser is not in PATH
 
    procedure Free is new Ada.Unchecked_Deallocation
                               (String, String_Access);
@@ -66,13 +73,12 @@ package body SN.Browse is
    ------------
 
    procedure Browse
-     (File_Name, DB_Directory, Browser_Name : in String;
+     (File_Name, DB_Directory : in String;
       Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor)
    is
       Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
-      DBUtil_Path         : String_Access;
    begin
       --  check DB_Directory exists
       if not Is_Directory (DB_Directory) then
@@ -102,6 +108,12 @@ package body SN.Browse is
          Raise_Exception (Spawn_Failure'Identity,
            DBIMP & ": not found in PATH");
       end if;
+
+      if null = CBrowser_Path then
+         Raise_Exception (Spawn_Failure'Identity,
+           CBrowser & ": not found in PATH");
+      end if;
+
       --  Execute browser
       Args := Argument_String_To_List (
           "-n " & Name_As_Directory (DB_Directory) & DB_File_Name
@@ -109,18 +121,10 @@ package body SN.Browse is
           & " -x " & Name_As_Directory (DB_Directory) & Xref_File_Name.all
           & " " & File_Name);
 
-      DBUtil_Path := Locate_Exec_On_Path (Browser_Name);
-      if null = DBUtil_Path then
-         Delete (Args);
-         Raise_Exception (Spawn_Failure'Identity,
-           Browser_Name & ": not found in PATH");
-      end if;
-
-      GNAT.Expect.Non_Blocking_Spawn (PD, DBUtil_Path.all, Args.all,
+      GNAT.Expect.Non_Blocking_Spawn (PD, CBrowser_Path.all, Args.all,
          Err_To_Out => True);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
       Delete (Args);
-      Free (DBUtil_Path);
    end Browse;
 
    --------------------
@@ -266,6 +270,7 @@ package body SN.Browse is
    end Delete_Database;
 
 begin
-   --  locate dbimp utility in PATH
-   DBIMP_Path := Locate_Exec_On_Path (DBIMP);
+   --  locate utilities in PATH
+   DBIMP_Path     := Locate_Exec_On_Path (DBIMP);
+   CBrowser_Path  := Locate_Exec_On_Path (CBrowser);
 end SN.Browse;

@@ -16,9 +16,9 @@ package SN.Browse is
    --  Name of file for persistent xref pool
 
    procedure Browse
-     (File_Name, DB_Directory, Browser_Name : in String;
+     (File_Name, DB_Directory : in String;
       Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor);
-   --  Starts given browser on the file so that all database files
+   --  Starts language browser on the file so that all database files
    --  should be placed in the specified directory.
    --  A number of exceptions may be thrown to signal error during
    --  process spawning, file unlinking...
