@@ -189,6 +189,10 @@ package Prj_API is
    --  Create and return a reference to the variable Var.
    --  Var must be a variable declaration
 
+   function Create_Literal_String (Str : Types.String_Id)
+      return Project_Node_Id;
+   --  Create a literal string whose value is Str.
+
    -------------------
    -- Finding nodes --
    -------------------
@@ -448,6 +452,8 @@ package Prj_API is
       return Types.String_Id;
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
+   --
+   --  ??? Name conflicts with Prj.Tree.Name_Reference
 
    function External_Default (Var : Project_Node_Id)
       return Project_Node_Id;
@@ -482,6 +488,14 @@ package Prj_API is
    --  projects.
    --  Old_Name is given as a string so that we don't need to allocate a new
    --  string_id.
+
+   procedure Delete_Scenario_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Keep_Choice       : Types.String_Id);
+   --  Remove all scenario variables that reference External_Variable_Name.
+   --  All the case constructions where this variable occur are replaced by
+   --  the case item corresponding to Keep_Choice.
 
    Invalid_Value : exception;
 
