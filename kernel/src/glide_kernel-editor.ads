@@ -73,4 +73,12 @@ package Glide_Kernel.Editor is
    procedure Select_All (Kernel : access Kernel_Handle_Record'Class);
    --  Set the selection bounds from the begining to the end of the buffer.
 
+   function Focus_Is_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   --  Return True if the focus window in Glide is an editor.
+
+   function Get_Focus_Title
+     (Kernel : access Kernel_Handle_Record'Class) return String;
+   --  Return the Title of the focus window.
+
 end Glide_Kernel.Editor;

@@ -304,4 +304,29 @@ package body Glide_Kernel.Editor is
       Select_All (Source);
    end Select_All;
 
+   ---------------------
+   -- Focus_Is_Editor --
+   ---------------------
+
+   function Focus_Is_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return Boolean is
+   begin
+      return Get_Current_Editor (Glide_Window (Kernel.Main_Window)) /= null;
+   end Focus_Is_Editor;
+
+   ---------------------
+   -- Get_Focus_Title --
+   ---------------------
+
+   function Get_Focus_Title
+     (Kernel : access Kernel_Handle_Record'Class) return String
+   is
+      Top    : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      MDI    : constant MDI_Window   :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+
+   begin
+      return Get_Title (Get_Focus_Child (MDI));
+   end Get_Focus_Title;
+
 end Glide_Kernel.Editor;
