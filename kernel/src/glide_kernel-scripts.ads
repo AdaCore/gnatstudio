@@ -175,6 +175,8 @@ package Glide_Kernel.Scripts is
    procedure Set_Return_Value
      (Data : in out Callback_Data; Value : String) is abstract;
    procedure Set_Return_Value
+     (Data : in out Callback_Data; Value : Boolean) is abstract;
+   procedure Set_Return_Value
      (Data : in out Callback_Data; Value : System.Address) is abstract;
    procedure Set_Return_Value
      (Data : in out Callback_Data; Value : Class_Instance) is abstract;

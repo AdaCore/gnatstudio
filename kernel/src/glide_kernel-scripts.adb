@@ -27,6 +27,8 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Main_Window;    use Glide_Main_Window;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
 with System;               use System;
@@ -452,6 +454,9 @@ package body Glide_Kernel.Scripts is
             end loop;
          end;
 
+      elsif Command = "exit" then
+         Quit (Glide_Window (Get_Main_Window (Kernel)));
+
       elsif Command = "dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
          declare
@@ -464,6 +469,16 @@ package body Glide_Kernel.Scripts is
                Justification => Justify_Left,
                Parent  => Get_Main_Window (Kernel));
          end;
+
+      elsif Command = "yes_no_dialog" then
+         Name_Parameters (Data, Dialog_Cmd_Parameters);
+         Set_Return_Value
+           (Data, Message_Dialog
+            (Msg           => Nth_Arg (Data, 1),
+             Buttons       => Button_Yes + Button_No,
+             Justification => Justify_Left,
+             Dialog_Type   => Confirmation,
+             Parent        => Get_Main_Window (Kernel)) = Button_Yes);
       end if;
    end Default_Command_Handler;
 
@@ -484,22 +499,26 @@ package body Glide_Kernel.Scripts is
 
          declare
             Name   : constant String  := Nth_Arg (Data, 2);
-            File   : constant String  := Nth_Arg (Data, 3);
+            File   : constant Class_Instance  :=
+              Nth_Arg (Data, 3, Get_File_Class (Kernel));
             L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
             C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
             Status : Find_Decl_Or_Body_Query_Status;
             Lib_Info : LI_File_Ptr;
+            F        : constant File_Info := Get_Data (File);
          begin
-            Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
+            Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_Name (F));
             if Lib_Info = No_LI_File then
-               Set_Error_Msg (Data, -"File not found: """ & File & '"');
+               Set_Error_Msg
+                 (Data, -"Xref information not found for: """
+                  & Get_Name (F) & '"');
                return;
             end if;
 
             Find_Declaration_Or_Overloaded
               (Kernel      => Kernel,
                Lib_Info    => Lib_Info,
-               File_Name   => File,
+               File_Name   => Base_Name (Get_Name (F)),
                Entity_Name => Name,
                Line        => L,
                Column      => C,
@@ -549,13 +568,50 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
-         Info     := (Name => new String'(Nth_Arg (Data, 2)));
-         Set_Data (Instance, Info);
-         Free (Info);
+         declare
+            Name : constant String := Nth_Arg (Data, 2);
+         begin
+            if Is_Absolute_Path (Name) then
+               Info := (Name => new String'(Name));
+            else
+               declare
+                  Full : constant String := Get_Full_Path_From_File
+                    (Registry => Project_Registry (Get_Registry (Kernel)),
+                     Filename => Name,
+                     Use_Source_Path => True,
+                     Use_Object_Path => True);
+               begin
+                  if Full /= "" then
+                     Info := (Name => new String'(Full));
+                  else
+                     Info := (Name => new String'(Name));
+                  end if;
+               end;
+            end if;
+
+            Set_Data (Instance, Info);
+            Free (Info);
+         end;
 
       elsif Command = "name" then
          Info     := Get_Data (Instance);
          Set_Return_Value (Data, Info.Name.all);
+
+      elsif Command = "project" then
+         Info     := Get_Data (Instance);
+         Set_Return_Value
+           (Data, Create_Project
+            (Get_Script (Data),
+             Get_Project_From_File
+             (Registry          => Project_Registry (Get_Registry (Kernel)),
+              Source_Filename   => Info.Name.all,
+              Root_If_Not_Found => True)));
+
+      elsif Command = "other_file" then
+         Info     := Get_Data (Instance);
+         Set_Return_Value
+           (Data, Create_File
+            (Get_Script (Data), Other_File_Name (Kernel, Info.Name.all)));
       end if;
    end Create_File_Command_Handler;
 
@@ -654,11 +710,36 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
+         Command      => "exit",
+         Description  =>
+           -("Exit GPS. If there are unsaved changes, a dialog is first"
+             & " displayed to ask whether these should be saved. If the"
+             & " user cancels the operation through the dialog, GPS will not"
+             & " exit."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command      => "dialog",
          Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
          Description  =>
            -("Display a modal dialog to report information to a user. This"
              & " blocks the interpreter until the dialog is closed."),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "yes_no_dialog",
+         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
+         Return_Value => "boolean",
+         Description  =>
+           -("Display a modal dialog to ask a question to the user. This"
+             & " blocks the interpreter until the dialog is closed. The"
+             & " dialog has two buttons Yes and No, and the selected button"
+             & " is returned to the caller"),
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
@@ -681,14 +762,34 @@ package body Glide_Kernel.Scripts is
          Description  => -"Return the name of the file",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "other_file",
+         Return_Value => "file",
+         Description  =>
+           -("Return the name of the other file semantically associated with"
+             & " this one. In Ada this is the spec or body of the same package"
+             & " depending on the type of this file."),
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "project",
+         Return_Value => "project",
+         Description  =>
+           -("Return the project to which file belongs. If file is not one"
+             & " of the souces of the project, the root project is returned"),
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
 
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Params       => Parameter_Names_To_Usage (Entity_Cmd_Parameters),
+         Params       => Parameter_Names_To_Usage (Entity_Cmd_Parameters, 2),
          Return_Value => "entity",
          Description  =>
-           -"Create a new entity, from any of its references.",
+           -("Create a new entity, from any of its references. File must be"
+             & " an instance of the File method"),
          Minimum_Args => 2,
          Maximum_Args => 4,
          Class        => Get_Entity_Class (Kernel),
