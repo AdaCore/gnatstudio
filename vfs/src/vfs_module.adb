@@ -331,58 +331,37 @@ package body VFS_Module is
          Contextual_Menu_Handler => VFS_Contextual'Access);
 
       Register_Command
-        (Kernel,
-         Command      => "pwd",
-         Description  => -"Print name of current/working directory.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "pwd",
          Handler      => VFS_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "cd",
-         Params       => Parameter_Names_To_Usage (Cd_Cmd_Parameters),
-         Description  => -"Change the current directory to dir.",
+        (Kernel, "cd",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "delete",
-         Params       => Parameter_Names_To_Usage (Delete_Cmd_Parameters),
-         Description  => -"Delete file/directory name from the file system.",
+        (Kernel, "delete",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "dir",
-         Params       => Parameter_Names_To_Usage (Dir_Cmd_Parameters, 1),
-         Description  =>
-           -"list files following pattern (all files by default).",
-         Minimum_Args => 0,
+        (Kernel, "dir",
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "ls",
-         Params       => Parameter_Names_To_Usage (Dir_Cmd_Parameters, 1),
-         Return_Value => "list",
-         Description  =>
-           -"list files following pattern (all files by default).",
-         Minimum_Args => 0,
+        (Kernel, "ls",
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "dump",
-         Params       => "(string)",
-         Return_Value => "string [add_lf]",
-         Description  =>
-         -("Dump string to a temporary file. Return the name of the file."
-             & " If add_lf is TRUE, append a line feed at end of file."),
-         Minimum_Args => 1,
-         Maximum_Args => 2,
-         Handler      => VFS_Command_Handler'Access);
+--        Register_Command
+--          (Kernel,
+--           Command      => "dump",
+--           Params       => "(string)",
+--           Return_Value => "string [add_lf]",
+--           Description  =>
+--           -("Dump string to a temporary file. Return the name of the file."
+--               & " If add_lf is TRUE, append a line feed at end of file."),
+--           Minimum_Args => 1,
+--           Maximum_Args => 2,
+--           Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
 end VFS_Module;

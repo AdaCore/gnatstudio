@@ -402,7 +402,7 @@ package body Help_Module is
 
                elsif Child.Tag.all = "return" then
                   Returns := To_Unbounded_String
-                    ("returns" & ASCII.HT & ASCII.HT & Child.Value.all);
+                    ("returns" & ASCII.HT & Child.Value.all);
 
                elsif Child.Tag.all = "see_also" then
                   if See_Also /= Null_Unbounded_String then
@@ -424,6 +424,12 @@ package body Help_Module is
 
                Child := Child.Next;
             end loop;
+
+            if Params /= Null_Unbounded_String
+              and then Returns /= Null_Unbounded_String
+            then
+               Params := Params & ASCII.LF;
+            end if;
 
             return To_String
               (Params & Returns & ASCII.LF & Descr & See_Also & Example);
@@ -1652,24 +1658,18 @@ package body Help_Module is
 
       --  Register commands
 
-      Help_Module_ID.Html_Class := New_Class
-        (Kernel, "HTML", -"Interface to the help system and html browser");
-      Help_Module_ID.Help_Class := New_Class
-        (Kernel, "Help",
-         -"Interface to the documentation for shell commands");
+      Help_Module_ID.Html_Class := New_Class (Kernel, "HTML");
+      Help_Module_ID.Help_Class := New_Class (Kernel, "Help");
 
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
          Class        => Help_Module_ID.Help_Class,
-         Description  => -"Construct a new instance of Help",
          Handler      => Command_Handler'Access);
       Register_Command
         (Kernel,
          Command       => "getdoc",
          Class         => Help_Module_ID.Help_Class,
-         Params        => "(name)",
-         Description   => -("Return the documentation for the given entity."),
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Command_Handler'Access);
@@ -1677,14 +1677,11 @@ package body Help_Module is
         (Kernel,
          Command       => "reset",
          Class         => Help_Module_ID.Help_Class,
-         Description   => -"Free the memory occupied by this instance",
          Handler       => Command_Handler'Access);
 
       Register_Command
         (Kernel,
          Command      => "browse",
-         Params       => Parameter_Names_To_Usage (Help_Cmd_Parameters, 1),
-         Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
          Class        => Help_Module_ID.Html_Class,
@@ -1693,8 +1690,6 @@ package body Help_Module is
       Register_Command
         (Kernel,
          Command      => "add_doc_directory",
-         Params       => Parameter_Names_To_Usage (Add_Doc_Cmd_Parameters),
-         Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => Add_Doc_Cmd_Parameters'Length,
          Maximum_Args => Add_Doc_Cmd_Parameters'Length,
          Class        => Help_Module_ID.Html_Class,

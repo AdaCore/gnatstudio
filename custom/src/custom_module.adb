@@ -899,10 +899,8 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar_Class       : constant Class_Type := New_Class
-        (Kernel, "Toolbar", "Interface to commands related to the toolbar.");
-      Process_Class       : constant Class_Type := New_Class
-        (Kernel, "Process", "Interface to expect-related commands");
+      Toolbar_Class : constant Class_Type := New_Class (Kernel, "Toolbar");
+      Process_Class : constant Class_Type := New_Class (Kernel, "Process");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -916,150 +914,73 @@ package body Custom_Module is
       Custom_Module_ID.Kernel := Kernel_Handle (Kernel);
 
       Register_Command
-        (Kernel,
-         Command => "spawn",
-         Params  => "(command, regexp, on_match_action, on_exit_action)",
+        (Kernel, "spawn",
          Minimum_Args => 4,
          Maximum_Args => 4,
-         Return_Value => "string",
-         Description  =>
-         -("Spawn specified command. If regexp is not-empty and"
-           & " on_match_action is specified, launch on_match_action when"
-           & " regexp is found in the process output. If on_exit_action is"
-           & " specified, execute it when the process terminates."
-           & " Return the ID of the spawned process."
-           & ASCII.LF & ASCII.LF
-           & "on_match_action is an action with the parameters:" & ASCII.LF
-           & "  $1 = the ID of the process" & ASCII.LF
-           & "  $2 = the string which matched the regexp" & ASCII.LF
-           & "  $3 = the string since the last match" & ASCII.LF
-           & ASCII.LF
-           & "on_exit_action is an action with the parameters" & ASCII.LF
-           & "  $1 = the ID of the process" & ASCII.LF
-           & "  $2 = the exit status" & ASCII.LF
-           & "  $3 = the entire output of the process" & ASCII.LF
-           & "" & ASCII.LF),
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "send",
-         Params        => "(id, command, add_lf[=TRUE])",
+        (Kernel, "send",
          Minimum_Args  => 2,
          Maximum_Args  => 3,
-         Return_Value  => "(null)",
-         Description   =>
-         -("Send a line of text to process controlled by GPS."),
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "interrupt",
-         Params        => "(id)",
+        (Kernel, "interrupt",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
-         Return_Value  => "(null)",
-         Description   =>
-         -("Interrupt a process controlled by GPS."),
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "kill",
-         Params        => "(id)",
+        (Kernel, "kill",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
-         Return_Value  => "(null)",
-         Description   =>
-         -("Terminate a process controlled by GPS."),
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "expect",
-         Params       => "(id, regexp, expect_action)",
+        (Kernel, "expect",
          Minimum_Args => 3,
          Maximum_Args => 3,
-         Return_Value => "(null)",
-         Description  =>
-         -("Listen to the output of specified process for regexp. When the"
-           & " regexp matches the output, execute the associated action, and"
-           & " stop listening for that specific regexp."
-           & ASCII.LF & ASCII.LF
-           & "expect_action is an action with the parameters:" & ASCII.LF
-           & "  $1 = the ID of the process" & ASCII.LF
-           & "  $2 = the string which matched the regexp" & ASCII.LF
-           & "  $3 = the string since the last match" & ASCII.LF),
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
 
       Register_Command
-        (Kernel,
-         Command       => "entry_add",
-         Params        => "(entry_label, choice_label, [action])",
+        (Kernel, "entry_add",
          Minimum_Args  => 2,
          Maximum_Args  => 3,
-         Return_Value  => "(null)",
-         Description   =>
-         -("Add a choice to specified entry, action will be executed whenever"
-           & " this choice is selected"),
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "entry_remove",
-         Params        => "(entry_label, choice_label)",
+        (Kernel, "entry_remove",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
-         Return_Value  => "(null)",
-         Description   => -"Remove a choice from specified entry",
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "entry_clear",
-         Params        => "(entry_label)",
+        (Kernel, "entry_clear",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
-         Return_Value  => "(null)",
-         Description   => -"Remove all choices from specified entry",
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "entry_get_text",
-         Params        => "(entry_label)",
+        (Kernel, "entry_get_text",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
-         Return_Value  => "(string)",
-         Description   => -"Return the current selection in specified entry",
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "entry_set_text",
-         Params        => "(entry_label, text)",
+        (Kernel, "entry_set_text",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
-         Return_Value  => "(null)",
-         Description   => -"Set the current selection in specified entry",
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);

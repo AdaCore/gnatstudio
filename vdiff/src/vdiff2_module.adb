@@ -231,11 +231,7 @@ package body Vdiff2_Module is
          Default_Key => "control-3");
 
       Register_Command
-        (Kernel,
-         Command      => "visual_diff",
-         Params       => "(file1, file2, [file3])",
-         Description  =>
-           -("Open a Visual Diff between file1, file2 and file3"),  --  ???
+        (Kernel, "visual_diff",
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Diff_Command_Handler'Access);

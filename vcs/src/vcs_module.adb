@@ -340,8 +340,7 @@ package body VCS_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      VCS_Class : constant Class_Type := New_Class
-        (Kernel, "VCS", -"General interface to version control systems");
+      VCS_Class : constant Class_Type := New_Class (Kernel, "VCS");
 
       VCS_Root  : constant String := -"VCS";
       Command : Generic_Kernel_Command_Access;
@@ -371,127 +370,75 @@ package body VCS_Module is
       --  Register VCS commands.
 
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "supported_systems",
-         Description  => -"Show the list of supported VCS systems",
-         Return_Value => "list",
+        (Kernel, "supported_systems",
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler_No_Param'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "get_status",
-         Params       => "(file)",
-         Description  => -"Query the status for file",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class         => VCS_Class,
-         Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
-
-      Register_Command
-        (Kernel       => Kernel,
-         Command      => "update",
-         Params       => "(file)",
-         Description  => -"Update file",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class         => VCS_Class,
-         Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
-
-      Register_Command
-        (Kernel       => Kernel,
-         Command      => "commit",
-         Params       => "(file)",
-         Description  => -"Commit file",
+        (Kernel, "get_status",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "diff_head",
-         Params       => "(file)",
-         Description  =>
-           -"Show differences between local file and the head revision",
+        (Kernel, "update",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "diff_working",
-         Params       => "(file)",
-         Description  =>
-           -"Show differences between local file and the working revision",
+        (Kernel, "commit",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "diff_head",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "annotate",
-         Params       => "(file)",
-         Description  => -"Display the annotations for file",
+        (Kernel, "diff_working",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "remove_annotations",
-         Params       => "(file)",
-         Description  => -"Remove the annotations for file",
+        (Kernel, "annotate",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "log",
-         Params       => "(file, [revision])",
-         Description  =>
-           -("Get the revision changelog for file."
-             & " If revision is specified, query the changelog for this "
-             & "specific revision, otherwise query the entire changelog"),
+        (Kernel, "remove_annotations",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler      => VCS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "log",
          Minimum_Args => 1,
          Maximum_Args => 2,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => VCS_Command_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "status_parse",
-         Params       => "(vcs_identifier, string, clear_logs, local, [dir])",
-         Description  =>
-         -("Parses string for vcs status."
-            & " See the GPS documentation for detailed usage description."),
+        (Kernel, "status_parse",
          Minimum_Args => 4,
          Maximum_Args => 5,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => Status_Parse_Handler'Access);
-
       Register_Command
-        (Kernel       => Kernel,
-         Command      => "annotations_parse",
-         Params       => "(vcs_identifier, file, string)",
-         Description  =>
-         -("Parses string for vcs annotations."
-            & " See the GPS documentation for detailed usage description."),
+        (Kernel, "annotations_parse",
          Minimum_Args => 3,
          Maximum_Args => 3,
          Class         => VCS_Class,

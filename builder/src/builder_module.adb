@@ -1923,70 +1923,26 @@ package body Builder_Module is
       Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
 
       Register_Command
-        (Kernel,
-         Command      => "compile",
-         Description  =>
-           -("Compile current file. This call will return only once the"
-             & " compilation is completed"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "compile",
          Class        => Get_File_Class (Kernel),
          Handler      => Compile_Command'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "check_syntax",
-         Description  =>
-           -("Check the syntax for current file. This call will return only"
-             & " once the check is completed"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "check_syntax",
          Class        => Get_File_Class (Kernel),
          Handler      => Compile_Command'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "shadow_check_syntax",
-         Description  =>
-           -("Check the syntax for current file. The current file will not be "
-             & "saved, but a temporary extending project will be created, and "
-             & "deleted when the compilation ends. This call will launch a "
-             & "background process and return immediately."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "shadow_check_syntax",
          Class        => Get_File_Class (Kernel),
          Handler      => Compile_Command'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "make",
-         Description  =>
-           -("Compile and link the file and all its dependencies. This call"
-             & " will return only once the compilation is completed"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "make",
          Class        => Get_File_Class (Kernel),
          Handler      => Compile_Command'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "compute_xref",
-         Description  =>
-           -("Update the cross-reference information stored in GPS. This"
-             & " needs to be called after major changes to the sources"
-             & " only, since GPS itself is able to work with partially"
-             & " up-to-date information"),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "compute_xref",
          Handler      => Compile_Command'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "get_build_output",
-         Return_Value => "list of lines",
-         Description  => -"Return the last compilation results.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "get_build_output",
          Handler      => Compile_Command'Access);
 
       Add_Hook

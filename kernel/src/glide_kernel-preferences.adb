@@ -1030,25 +1030,17 @@ package body Glide_Kernel.Preferences is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Pref_Class : constant Class_Type := New_Class
-        (Kernel, "Preference", "Interface to all preference commands");
+      Pref_Class : constant Class_Type := New_Class (Kernel, "Preference");
    begin
       Register_Command
-        (Kernel,
-         Command       => "get",
-         Params        => Parameter_Names_To_Usage (Get_Cmd_Parameters),
-         Description   => -"Get value for the given preference",
+        (Kernel, "get",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Pref_Class,
          Static_Method => True,
          Handler       => Get_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "set",
-         Params        => Parameter_Names_To_Usage (Set_Cmd_Parameters),
-         Description   => -"Set value for the given preference",
+        (Kernel, "set",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
          Class         => Pref_Class,

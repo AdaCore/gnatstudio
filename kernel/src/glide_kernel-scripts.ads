@@ -58,14 +58,15 @@ package Glide_Kernel.Scripts is
    function New_Class
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name        : String;
-      Description : String     := "";
       Base        : Class_Type := No_Class) return Class_Type;
    --  For some languages, this notion is not supported, and the class will not
    --  be visible by the user in the shell. Methods create for the class will
    --  then simply be made available directly in the shell.
    --  If a class with the same name was created, it is returned, and no class
    --  is created anew.
-   --  Base is the base class, or parent class
+   --  Base is the base class, or parent class.
+   --  Description of the new class must be put in the file shell_commands.xml,
+   --  which is read dynamically when generating the documentation.
 
    function Get_Name (Class : Class_Type) return String;
    --  Return the name of the class
@@ -368,9 +369,6 @@ package Glide_Kernel.Scripts is
    procedure Register_Command
      (Script       : access Scripting_Language_Record;
       Command      : String;
-      Params       : String;
-      Return_Value : String;
-      Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
       Handler      : Module_Command_Function;
@@ -381,7 +379,6 @@ package Glide_Kernel.Scripts is
    procedure Register_Class
      (Script        : access Scripting_Language_Record;
       Name          : String;
-      Description   : String := "";
       Base          : Class_Type := No_Class) is abstract;
    --  Create a new class in the interpreter
 
@@ -502,9 +499,6 @@ package Glide_Kernel.Scripts is
    procedure Register_Command
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command       : String;
-      Params        : String     := "";
-      Return_Value  : String     := "";
-      Description   : String;
       Minimum_Args  : Natural    := 0;
       Maximum_Args  : Natural    := 0;
       Handler       : Module_Command_Function;
@@ -536,19 +530,9 @@ package Glide_Kernel.Scripts is
    --  second, third,... are the parameters passed to the constructor.
    --  The constructor shouldn't return any value through Set_Return_Value.
    --
-   --  Params describes the parameters to the command. Its recommended format
-   --  is the following:
-   --      "(file, [line=1])"
-   --  to indicate a function whose first parameter is a file, the second
-   --  parameter is optional and has a default value of 1.
-   --
-   --  The return value of the command is indicated by Return_Value. Its format
-   --  is the following:
-   --     "list"
-   --  The empty string means that the command doesn't return anything.
-   --  In the example above, "list" indicates that the function returns a list
-   --  (when supported by the language), or a string (when lists are not
-   --  supported).
+   --  Description of the new command must be put in the file
+   --  shell_commands.xml, which is read dynamically when generating the
+   --  documentation.
    --
    --  If the command has some graphical output (dialog,...), it must run in
    --  a separate main loop (Gtk.Main.Gtk_Main or modal dialogs).

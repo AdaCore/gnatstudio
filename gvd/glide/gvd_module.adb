@@ -2554,8 +2554,7 @@ package body GVD_Module is
       Mitem          : Gtk_Menu_Item;
       Menu           : Gtk_Menu;
       Debugger_Class : constant Glide_Kernel.Scripts.Class_Type :=
-        Glide_Kernel.Scripts.New_Class
-          (Kernel, "Debugger", "Interface to debugger related commands");
+        Glide_Kernel.Scripts.New_Class (Kernel, "Debugger");
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
@@ -2678,10 +2677,7 @@ package body GVD_Module is
       --  Commands
 
       Glide_Kernel.Scripts.Register_Command
-        (Kernel,
-         Command       => "send",
-         Params        => "(command)",
-         Description   => -("Send command to the current debugger."),
+        (Kernel, "send",
          Class         => Debugger_Class,
          Static_Method => True,
          Minimum_Args  => 1,

@@ -1853,57 +1853,24 @@ package body Glide_Result_View is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
       Locations_Class : constant Class_Type := New_Class
-        (Kernel, "Locations", -"General interface to the locations window");
+        (Kernel, "Locations");
    begin
       Register_Command
-        (Kernel,
-         Command      => "parse",
-         Params       =>
-           Parameter_Names_To_Usage (Parse_Location_Parameters, 7),
-         Description  =>
-           -("Parse the contents of the string, which is supposedly the"
-             & " output of some tool, and add the errors and warnings to the"
-             & " locations window. A new category is created in the locations"
-             & " window if it doesn't exist. Preexisting contents for that"
-             & " category is not removed, see locations_remove_category."
-             & ASCII.LF
-             & "The regular expression specifies how locations are recognized."
-             & " By default, it matches file:line:column. The various indexes"
-             & " indicate the index of the opening parenthesis that contains"
-             & " the relevant information in the regular expression. Set it"
-             & " to 0 if that information is not available. Style_Index and"
-             & " Warning_Index, if they match, force the error message in a"
-             & " specific category."),
+        (Kernel, "parse",
          Minimum_Args => 2,
          Maximum_Args => 9,
          Class         => Locations_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "add",
-         Params       =>
-           Parameter_Names_To_Usage (Locations_Add_Parameters, 2),
-         Description  =>
-         -("Add a new entry in the location window. Nodes are created as"
-           & " needed for the category or file. If Highlight is specified to"
-           & " a non-empty string, the whole line is highlighted in the file,"
-           & " with a color given by that highlight category (see "
-           & " register_highlighting for more information). Length is the"
-           & " length of the highlighting. The default value of 0 indicates"
-           & " that the whole line should be highlighted"),
+        (Kernel, "add",
          Minimum_Args => Locations_Add_Parameters'Length - 2,
          Maximum_Args => Locations_Add_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "remove_category",
-         Params       => Parameter_Names_To_Usage (Remove_Category_Parameters),
-         Description  =>
-           -("Remove a category from the location window. This removes all"
-             & " associated files"),
+        (Kernel, "remove_category",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class         => Locations_Class,

@@ -3058,98 +3058,42 @@ package body Project_Viewers is
          Title => -"Please select the switches to build the project");
 
       Register_Command
-        (Kernel,
-         Command      => "add_main_unit",
-         Params       => "(main1, [main2 ...])",
-         Description  =>
-           -("Add some main units to the current project, and for the"
-             & " current scenario. The project is not saved automatically."),
+        (Kernel, "add_main_unit",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "remove_dependency",
-         Params       => Parameter_Names_To_Usage (Remove_Dep_Cmd_Parameters),
-         Description  => -("Remove a dependency between two projects."),
+        (Kernel, "remove_dependency",
          Minimum_Args => Remove_Dep_Cmd_Parameters'Length,
          Maximum_Args => Remove_Dep_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "sources",
-         Params       =>
-           Parameter_Names_To_Usage (Sources_Cmd_Parameters, 1),
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of source files for this project."
-             & " If recursive is true, then all sources from imported projects"
-             & " are also returned. Otherwise, only the direct sources are"
-             & " returned. The basenames of the returned files are always"
-             & " unique: not two files with the same basenames are returned,"
-             & " and the one returned is the first one see while traversing"
-             & " the project hierarchy."),
-         Minimum_Args => 0,
+        (Kernel, "sources",
          Maximum_Args => Sources_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "source_dirs",
-         Params       =>
-           Parameter_Names_To_Usage (Source_Dirs_Cmd_Parameters, 1),
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of source directories for this project."
-             & " If Recursive is True, the source directories of imported"
-             & " projects is also returned. There might be duplicate"
-             & " directories in the returned list"),
+        (Kernel, "source_dirs",
          Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
          Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "object_dirs",
-         Params       =>
-           Parameter_Names_To_Usage (Source_Dirs_Cmd_Parameters, 1),
-         Return_Value => "list",
-         Description  =>
-           -("Return the list of object directories for this project."
-             & " If Recursive is True, the source directories of imported"
-             & " projects is also returned. There might be duplicate"
-             & " directories in the returned list"),
+        (Kernel, "object_dirs",
          Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
          Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Params       =>
-           Parameter_Names_To_Usage (Add_Source_Dir_Cmd_Parameters),
-         Command      => "add_source_dir",
-         Description  =>
-            -("Add a new source directory to the project. The new directory"
-              & " is added in front of the source path. You should call"
-              & " recompute() after calling this method, to recompute the list"
-              & " of source files. The directory is added for the current"
-              & " value of the scenario variables only"),
+        (Kernel, "add_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Params       =>
-           Parameter_Names_To_Usage (Add_Source_Dir_Cmd_Parameters),
-         Command      => "remove_source_dir",
-         Description  =>
-            -("Remove a source directory from the project. You should call"
-              & " recompute() after calling this method, to recompute the list"
-              & " of source files. The directory is added for the current"
-              & " value of the scenario variables only"),
+        (Kernel, "remove_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),

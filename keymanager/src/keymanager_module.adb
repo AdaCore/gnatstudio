@@ -2002,26 +2002,14 @@ package body KeyManager_Module is
       end if;
 
       Register_Command
-        (Kernel,
-         Command      => "macro_play",
-         Params       => Parameter_Names_To_Usage (Play_Macro_Cmd_Parameters),
-         Description  => -"Play current set of events.",
-         Minimum_Args => 0,
+        (Kernel, "macro_play",
          Maximum_Args => 1,
          Handler      => Macro_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "macro_record",
-         Description  => -"Start recording set of events.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Kernel, "macro_record",
          Handler      => Macro_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "macro_load",
-         Params       =>
-           Parameter_Names_To_Usage (Load_Macro_Cmd_Parameters, 1),
-         Description  => -"Load file containing a set of recorded events.",
+        (Kernel, "macro_load",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Macro_Command_Handler'Access);

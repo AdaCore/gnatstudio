@@ -274,9 +274,6 @@ package body Glide_Kernel.Scripts is
    procedure Register_Command
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command       : String;
-      Params        : String  := "";
-      Return_Value  : String  := "";
-      Description   : String;
       Minimum_Args  : Natural := 0;
       Maximum_Args  : Natural := 0;
       Handler       : Module_Command_Function;
@@ -291,14 +288,10 @@ package body Glide_Kernel.Scripts is
               "Constructors can only be specified for classes");
       Assert (Me, not Static_Method or else Class /= No_Class,
               "Static method can only be created for classes");
-      Assert (Me,
-              Params = "" or else Params (Params'First) = '(',
-              "Invalid usage string for "
-              & Command & ": must start with '('");
 
       while Tmp /= null loop
          Register_Command
-           (Tmp.Script, Command, Params, Return_Value, Description,
+           (Tmp.Script, Command,
             Minimum_Args, Maximum_Args, Handler, Class, Static_Method);
          Tmp := Tmp.Next;
       end loop;
@@ -311,7 +304,6 @@ package body Glide_Kernel.Scripts is
    function New_Class
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name        : String;
-      Description : String := "";
       Base        : Class_Type := No_Class) return Class_Type
    is
       Tmp   : Scripting_Language_List :=
@@ -323,7 +315,7 @@ package body Glide_Kernel.Scripts is
 
       if Class = No_Class then
          while Tmp /= null loop
-            Register_Class (Tmp.Script, Name, Description, Base);
+            Register_Class (Tmp.Script, Name, Base);
             Tmp := Tmp.Next;
          end loop;
 
@@ -1363,7 +1355,6 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel, Constructor_Method,
-         Params       => Parameter_Names_To_Usage (Location_Cmd_Parameters),
          Minimum_Args => 3,
          Maximum_Args => 3,
          Class        => Get_File_Location_Class (Kernel),
@@ -1443,7 +1434,6 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel, Constructor_Method,
-         Return_Value => "FileContext",
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
@@ -1500,9 +1490,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).Entity_Class = No_Class then
          Scripting_Data (Kernel.Scripts).Entity_Class := New_Class
-           (Kernel,
-            "Entity", "Represents an entity from the source, based on the"
-            & " location of its declaration");
+           (Kernel, "Entity");
       end if;
 
       return Scripting_Data (Kernel.Scripts).Entity_Class;
@@ -1518,8 +1506,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).File_Class = No_Class then
          Scripting_Data (Kernel.Scripts).File_Class := New_Class
-           (Kernel,
-            "File", "Represents a source file of your application");
+           (Kernel, "File");
       end if;
 
       return Scripting_Data (Kernel.Scripts).File_Class;
@@ -1535,7 +1522,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).Project_Class = No_Class then
          Scripting_Data (Kernel.Scripts).Project_Class := New_Class
-           (Kernel, "Project", "Represents a project file");
+           (Kernel, "Project");
       end if;
 
       return Scripting_Data (Kernel.Scripts).Project_Class;
@@ -1551,7 +1538,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).File_Location_Class = No_Class then
          Scripting_Data (Kernel.Scripts).File_Location_Class := New_Class
-           (Kernel, "FileLocation", "Represents a location in a file");
+           (Kernel, "FileLocation");
       end if;
 
       return Scripting_Data (Kernel.Scripts).File_Location_Class;
@@ -1939,9 +1926,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).Context_Class = No_Class then
          Scripting_Data (Kernel.Scripts).Context_Class := New_Class
-           (Kernel,
-            "Context",
-            "Represents a context in GPS");
+           (Kernel, "Context");
       end if;
 
       return Scripting_Data (Kernel.Scripts).Context_Class;
@@ -1957,9 +1942,7 @@ package body Glide_Kernel.Scripts is
    begin
       if Scripting_Data (Kernel.Scripts).Hook_Class = No_Class then
          Scripting_Data (Kernel.Scripts).Hook_Class := New_Class
-           (Kernel,
-            "Hook",
-            "General interface to hooks");
+           (Kernel, "Hook");
       end if;
 
       return Scripting_Data (Kernel.Scripts).Hook_Class;
@@ -1977,8 +1960,6 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).Area_Context_Class := New_Class
            (Kernel,
             "AreaContext",
-            -("Represents an context that contains file information and a"
-              & " range of lines currently selected"),
             Base => Get_File_Context_Class (Kernel));
       end if;
 
@@ -2060,7 +2041,6 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).File_Context_Class := New_Class
            (Kernel,
             "FileContext",
-            "Represents an context that contains file information",
             Base => Get_Context_Class (Kernel));
       end if;
 
@@ -2079,7 +2059,6 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).Entity_Context_Class := New_Class
            (Kernel,
             "EntityContext",
-            "Represents an context that contains entity information",
             Base => Get_File_Context_Class (Kernel));
       end if;
 

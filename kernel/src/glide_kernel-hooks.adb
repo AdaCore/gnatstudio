@@ -536,9 +536,7 @@ package body Glide_Kernel.Hooks is
          Is_Hook_Type    => True);
 
       Register_Command
-        (Kernel,
-         Command      => "__run_hook__" & Type_Name,
-         Description  => "internal function for run_hook",
+        (Kernel, "__run_hook__" & Type_Name,
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Handler      => Run_Hook_Handler);
@@ -597,9 +595,7 @@ package body Glide_Kernel.Hooks is
          Profile => Get_Type_Profile (Kernel, Type_Name));
    begin
       Register_Command
-        (Kernel,
-         Command      => "__run_hook__" & Name,
-         Description  => "internal function for run_hook",
+        (Kernel, "__run_hook__" & Name,
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Handler      => Info.Command_Handler);
@@ -1162,93 +1158,50 @@ package body Glide_Kernel.Hooks is
          Type_Name => "context_hooks");
 
       Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Params       => Parameter_Names_To_Usage (Constructor_Parameters),
-         Description  => -"Create a new hook instance",
+        (Kernel, Constructor_Method,
          Class        => Hook_Class,
          Minimum_Args => Constructor_Parameters'Length,
          Maximum_Args => Constructor_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "run",
-         Description  =>
-           -("Run the hook. This will call all the functions"
-             & " that attached to that hook."),
+        (Kernel, "run",
          Class        => Hook_Class,
          Maximum_Args => Natural'Last,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "add",
-         Params       => Parameter_Names_To_Usage (Add_Hook_Args),
-         Description  =>
-           -("Connect a new function to a specific hook. Any time this hook"
-             & " is run through run_hook, this function will be called with"
-             & " the same parameters passed to run_hook"),
+        (Kernel, "add",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "register",
-         Params       => Parameter_Names_To_Usage (Register_Hook_Args, 1),
-         Description  =>
-         -("Defines a new hook. This hook can take any number of parameters,"
-           & " the default is none. The type and number of parameters is"
-           & " called the type of the hook, and this is described by the"
-           & " optional third parameter. The value of this parameter should be"
-           & " either the empty string for a hook that doesn't take any"
-           & " parameter. Or it could be one of the predefined types exported"
-           & " by GPS itself (see list_hook_types). Finally, it could be the"
-           & " word ""generic"" if this is a new type of hook purely defined"
-           & " for this scripting language."),
+        (Kernel, "register",
          Minimum_Args => 2,
          Maximum_Args => 3,
          Class        => Hook_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "list",
-         Description  =>
-         -("List all defined hooks. See also run_hook, register_hook and"
-           & " add_hook."),
+        (Kernel, "list",
          Class        => Hook_Class,
          Static_Method => True,
          Handler      => Default_Command_Handler'Access);
+
       Register_Command
-        (Kernel,
-         Command      => "describe",
-         Description  =>
-         -("Describe a hook, when it is executed, and what are the expected"
-           & " arguments"),
+        (Kernel, "describe",
          Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "describe_functions",
-         Description  =>
-         -("List all the functions that are executed when the hook is"
-           & " executed"),
+        (Kernel, "describe_functions",
          Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command     => "list_types",
-         Description =>
-         -("List all defined type hooks. See also register_hook."),
+        (Kernel, "list_types",
          Class        => Hook_Class,
          Static_Method => True,
          Handler     => Default_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command     => "describe_type",
-         Params       => Parameter_Names_To_Usage (Name_Args),
-         Description  =>
-         -("Describe a hook type and what are the expected arguments"),
+        (Kernel, "describe_type",
          Class        => Hook_Class,
          Static_Method => True,
          Minimum_Args => 1,

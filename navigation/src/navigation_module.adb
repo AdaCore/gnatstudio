@@ -729,15 +729,7 @@ package body Navigation_Module is
          Add_Before => False);
 
       Register_Command
-        (Kernel,
-         Command      => "add_location_command",
-         Params       => "(command, arg1, [arg2...])",
-         Description  =>
-         -("Add a command to the navigation buttons in the toolbar. When the"
-           & " user presses the back button, this command will be executed,"
-           & " and should put GPS in a previous state. This is for instance"
-           & " used while navigating in the HTML browsers to handle the back"
-           & " button."),
+        (Kernel, "add_location_command",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
