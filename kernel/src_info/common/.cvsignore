@@ -11,3 +11,6 @@ traces.ads
 string_hash.adb
 string_hash.ads
 src_info-*.ad[bs]
+ali_parser.ad?
+dynamic_arrays.ad?
+tries.ad?
