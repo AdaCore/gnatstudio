@@ -985,7 +985,9 @@ package body Interactive_Consoles is
 
             --  Execute only if Command ends with a Line Feed.
 
-            if Console.Handler /= null then
+            if Console.Handler /= null
+              and then Command (Command'Last) = ASCII.LF
+            then
                Execute_Command
                  (Console,
                   Command (Command'First .. Command'Last - 1));
