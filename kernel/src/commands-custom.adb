@@ -647,16 +647,18 @@ package body Commands.Custom is
    -------------
 
    function Execute
-     (Command       : access Custom_Command;
-      Event         : Gdk.Event.Gdk_Event) return Command_Return_Type
+     (Command : access Custom_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Event);
-
       Success  : Boolean := True;
 
       function Substitution (Param : String) return String;
       --  Substitution function for the various '%...' parameters
       --  Index is the number of the current command we are executing
+      --  ??? What is the meaning of the comment about Index ?
+
+      function Dollar_Substitution (Param : String) return String;
+      --  Substitution function for the "$1" .. "$N" and "$*" parameters.
 
       function Execute_Simple_Command
         (Script          : Scripting_Language;
@@ -687,6 +689,68 @@ package body Commands.Custom is
 
       function Get_Nth_Command (Cmd_Index : Integer) return Node_Ptr;
       --  Return the nth command in the list
+
+      -------------------------
+      -- Dollar_Substitution --
+      -------------------------
+
+      function Dollar_Substitution (Param : String) return String is
+         Length : Natural;
+         Is_Num : Boolean;
+         Result : Natural;
+      begin
+         if Context.Args = null then
+            return "";
+         end if;
+
+         if Param = "*" then
+            Length := 0;
+
+            for J in Context.Args'Range loop
+               if Context.Args (J) /= null then
+                  Length := Length + Context.Args (J).all'Length + 1;
+               end if;
+            end loop;
+
+            declare
+               Result : String (1 .. Length);
+               Index  : Natural := 1;
+            begin
+               for J in Context.Args'Range loop
+                  if Context.Args (J) /= null then
+                     Result (Index .. Index + Context.Args (J).all'Length) :=
+                       Context.Args (J).all & ' ';
+
+                     Index := Index + Context.Args (J).all'Length + 1;
+                  end if;
+               end loop;
+
+               return Result (1 .. Length - 1);
+            end;
+
+         else
+            Is_Num := True;
+
+            for J in Param'Range loop
+               if not Is_Decimal_Digit (Param (J)) then
+                  Is_Num := False;
+                  exit;
+               end if;
+            end loop;
+
+            if Is_Num then
+               Result := Natural'Value (Param);
+
+               if Result in Context.Args'Range
+                 and then Context.Args (Result) /= null
+               then
+                  return Context.Args (Result).all;
+               end if;
+            end if;
+         end if;
+
+         return "";
+      end Dollar_Substitution;
 
       ------------------
       -- Substitution --
@@ -892,11 +956,19 @@ package body Commands.Custom is
          Hide_Progress     : Boolean := True) return Boolean
       is
          --  Perform arguments substitutions for the command.
-         Subst_Cmd_Line : constant String := Substitute
+
+         Subst_Percent  : constant String := Substitute
            (Command_Line,
             Substitution_Char => '%',
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
+
+         Subst_Cmd_Line : constant String := Substitute
+           (Subst_Percent,
+            Substitution_Char => '$',
+            Callback          => Dollar_Substitution'Unrestricted_Access,
+            Recursive         => False);
+
          Args           : String_List_Access;
          Errors         : aliased Boolean;
          Console        : Interactive_Console;
@@ -974,7 +1046,7 @@ package body Commands.Custom is
                Success       => Success,
                Show_Command  => Show_Command,
                Callback_Data => Convert (Custom_Command_Access (Command)),
-               Line_By_Line  => True);
+               Line_By_Line  => False);
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
@@ -1152,7 +1224,14 @@ package body Commands.Custom is
             Command.Execution := new Custom_Command_Execution_Record;
             Command.Execution.Outputs     := new Argument_List (1 .. Count);
             Command.Execution.Save_Output := new Boolean_Array (1 .. Count);
-            Command.Execution.Context  := Get_Current_Context (Command.Kernel);
+
+            if Context.Context = null then
+               Command.Execution.Context :=
+                 Get_Current_Context (Command.Kernel);
+            else
+               Command.Execution.Context := Context.Context;
+            end if;
+
             Command.Execution.Cmd_Index   := 1;
             Ref (Command.Execution.Context);
          end;
