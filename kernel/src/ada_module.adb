@@ -48,25 +48,27 @@ package body Ada_Module is
 
       Register_Search_Pattern
         (Kernel,
-         "Ada array types",
-         "\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+(\w+)\s*;");
+         "type NAME is array (...)",
+         "\btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+\w+\s*;");
       Register_Search_Pattern
         (Kernel,
-         "Ada case alternatives and exception handlers",
+         "when CHOICE =>",
          "\bwhen\s+((\w+)\s+:\s+)?[\w\s|]+\s*=>");
       Register_Search_Pattern
         (Kernel,
-         "Ada types and subtypes",
+         "(sub)type NAME is",
          "\b((sub)?type\s+(\w+)|type\s+(\w+)\s+(\(.*?\))?)\s+is\b");
       Register_Search_Pattern
         (Kernel,
-         "Ada discriminated types",
+         "type NAME (...) is",
          "\btype\s+(\w+)\s+\((.*?)\)\s+is\b");
       Register_Search_Pattern
         (Kernel,
-         "Ada for loops",
+         "for VAR in ... loop",
          "\bfor\s+(\w+)\s+in\s+(reverse\s+)?(.+?)(\s+"
          & "range\s+(.*?))?\s+loop\b");
+      Register_Search_Pattern
+        (Kernel, "Ada assignment", "\b(\w+)\s*:=");
    end Register_Module;
 
 end Ada_Module;
