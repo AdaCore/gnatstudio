@@ -51,6 +51,7 @@ with Glide_Main_Window;         use Glide_Main_Window;
 with Basic_Types;
 with GVD.Dialogs;               use GVD.Dialogs;
 with String_Utils;              use String_Utils;
+with String_List_Utils;
 with GUI_Utils;                 use GUI_Utils;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -170,6 +171,12 @@ package body Builder_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
+
+   function Compile_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Command handler for the "compile" command.
 
    -----------------------
    -- Compute_Arguments --
@@ -381,6 +388,9 @@ package body Builder_Module is
 
       Console.Clear (K);
 
+      Push_State (K, Processing);
+      State_Pushed := True;
+
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
@@ -403,8 +413,6 @@ package body Builder_Module is
         (K, " " & Args (Args'Last).all,
          Highlight_Sloc => False, Add_LF => True);
 
-      Push_State (K, Processing);
-      State_Pushed := True;
       Set_Sensitive_Menus (K, False);
 
       Top.Interrupted := False;
@@ -519,6 +527,118 @@ package body Builder_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Check_Syntax;
 
+   ------------------
+   -- Compile_File --
+   ------------------
+
+   procedure Compile_File
+     (Kernel : Kernel_Handle;
+      File   : String);
+
+   procedure Compile_File
+     (Kernel : Kernel_Handle;
+      File   : String)
+   is
+      Top          : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Project      : constant String := Get_Subproject_Name (Kernel, File);
+      Project_View : constant Project_Id := Get_Project_View (Kernel);
+      Cmd          : constant String :=
+        Get_Attribute_Value
+          (Project_View, Compiler_Command_Attribute,
+           Ide_Package, Default => "gnatmake", Index => "Ada") & " -q -u ";
+      Fd           : Process_Descriptor_Access;
+      Args         : Argument_List_Access;
+      Id           : Timeout_Handler_Id;
+      Lang         : String := Get_Language_From_File
+        (Get_Language_Handler (Kernel), File);
+
+   begin
+      if File = "" then
+         Console.Insert
+           (Kernel, -"No file name, cannot compile", Mode => Error);
+      end if;
+
+      To_Lower (Lang);
+
+      if Lang /= "ada" then
+         Console.Insert
+           (Kernel, -"Compilation of non Ada file not yet supported",
+            Mode => Error);
+      end if;
+
+      if Save_All_MDI_Children (Kernel, Force => False) = False then
+         return;
+      end if;
+
+      Push_State (Kernel, Processing);
+      Console.Clear (Kernel);
+      Set_Sensitive_Menus (Kernel, False);
+
+      if Project = "" then
+         declare
+            Full_Cmd : constant String := Cmd & File;
+         begin
+            Args := Argument_String_To_List (Full_Cmd);
+            Console.Insert (Kernel, Full_Cmd, False);
+         end;
+
+      else
+         declare
+            Full_Cmd : constant String :=
+              Cmd & "-P" & Project & " "
+                & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
+            & " " & File;
+
+         begin
+            Trace (Me, "On_Compile: " & Full_Cmd);
+            Args := Argument_String_To_List (Full_Cmd);
+            Console.Insert (Kernel, Full_Cmd, False);
+         end;
+      end if;
+
+      Top.Interrupted := False;
+      Fd := new Process_Descriptor;
+      Non_Blocking_Spawn
+        (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+         Err_To_Out  => True);
+      Free (Args);
+      Id := Process_Timeout.Add
+        (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+
+   exception
+      when Invalid_Process =>
+         Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
+         Pop_State (Kernel);
+         Set_Sensitive_Menus (Kernel, True);
+         Free (Args);
+         Free (Fd);
+   end Compile_File;
+
+   ---------------------
+   -- Compile_Command --
+   ---------------------
+
+   function Compile_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+
+      Node : List_Node := First (Args);
+   begin
+      if Command = "compile" then
+         while Node /= Null_Node loop
+            Compile_File (Kernel_Handle (Kernel), Data (Node));
+
+            Node := Next (Node);
+         end loop;
+      end if;
+
+      return "";
+   end Compile_Command;
+
    ----------------
    -- On_Compile --
    ----------------
@@ -539,84 +659,9 @@ package body Builder_Module is
          return;
       end if;
 
-      declare
-         Top          : constant Glide_Window :=
-           Glide_Window (Get_Main_Window (Kernel));
-         File         : constant String :=
-           File_Information (File_Selection_Context_Access (Context));
-         Project      : constant String := Get_Subproject_Name (Kernel, File);
-         Project_View : constant Project_Id := Get_Project_View (Kernel);
-         Cmd          : constant String :=
-           Get_Attribute_Value
-             (Project_View, Compiler_Command_Attribute,
-              Ide_Package, Default => "gnatmake", Index => "Ada") & " -q -u ";
-         Fd           : Process_Descriptor_Access;
-         Args         : Argument_List_Access;
-         Id           : Timeout_Handler_Id;
-         Lang         : String := Get_Language_From_File
-           (Get_Language_Handler (Kernel), File);
-
-      begin
-         if File = "" then
-            Console.Insert
-              (Kernel, -"No file name, cannot compile", Mode => Error);
-         end if;
-
-         To_Lower (Lang);
-
-         if Lang /= "ada" then
-            Console.Insert
-              (Kernel, -"Compilation of non Ada file not yet supported",
-               Mode => Error);
-         end if;
-
-         if Save_All_MDI_Children (Kernel, Force => False) = False then
-            return;
-         end if;
-
-         Push_State (Kernel, Processing);
-         Console.Clear (Kernel);
-         Set_Sensitive_Menus (Kernel, False);
-
-         if Project = "" then
-            declare
-               Full_Cmd : constant String := Cmd & File;
-            begin
-               Args := Argument_String_To_List (Full_Cmd);
-               Console.Insert (Kernel, Full_Cmd, False);
-            end;
-
-         else
-            declare
-               Full_Cmd : constant String :=
-                 Cmd & "-P" & Project & " "
-                  & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
-                  & " " & File;
-
-            begin
-               Trace (Me, "On_Compile: " & Full_Cmd);
-               Args := Argument_String_To_List (Full_Cmd);
-               Console.Insert (Kernel, Full_Cmd, False);
-            end;
-         end if;
-
-         Top.Interrupted := False;
-         Fd := new Process_Descriptor;
-         Non_Blocking_Spawn
-           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-            Err_To_Out  => True);
-         Free (Args);
-         Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
-
-      exception
-         when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
-            Pop_State (Kernel);
-            Set_Sensitive_Menus (Kernel, True);
-            Free (Args);
-            Free (Fd);
-      end;
+      Compile_File
+        (Kernel,
+         File_Information (File_Selection_Context_Access (Context)));
 
    exception
       when E : others =>
@@ -1193,6 +1238,14 @@ package body Builder_Module is
         (Kernel, "project_view_changed",
          Kernel_Callback.To_Marshaller (On_View_Changed'Access),
          User_Data => Kernel_Handle (Kernel));
+
+      Register_Command
+        (Kernel,
+         "compile",
+         "Usage:  compile file1 [file2] ..." & ASCII.LF
+         & "  compiles a list of files from the project.",
+         Compile_Command'Access);
+
    end Register_Module;
 
 end Builder_Module;
