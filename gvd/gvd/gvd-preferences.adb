@@ -50,7 +50,7 @@ package body GVD.Preferences is
       if Name = Pspec_Name (Param_Spec (Tab_Size)) then
          Manager.Tab_Size := Value;
       end if;
-      Set_Pref (Preferences_Manager (Manager), Name, Value);
+      Set_Pref (Preferences_Manager_Record (Manager.all)'Access, Name, Value);
    end Set_Pref;
 
    ----------------------------------
