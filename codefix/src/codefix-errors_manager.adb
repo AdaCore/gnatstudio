@@ -44,6 +44,20 @@ package body Codefix.Errors_Manager is
    --  type Errors_Interface
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Errors_Interface) is
+      procedure Free_Pool is new Ada.Unchecked_Deallocation
+        (Errors_Interface'Class, Ptr_Errors_Interface);
+   begin
+      if This /= null then
+         Free (This.all);
+         Free_Pool (This);
+      end if;
+   end Free;
+
    -----------------
    -- Get_Message --
    -----------------
@@ -131,6 +145,20 @@ package body Codefix.Errors_Manager is
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Correction_Manager) is
+      procedure Free_Pool is new Ada.Unchecked_Deallocation
+        (Correction_Manager, Ptr_Correction_Manager);
+   begin
+      if This /= null then
+         Free (This.all);
+         Free_Pool (This);
+      end if;
+   end Free;
 
    ----------
    -- Next --
@@ -286,14 +314,13 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Natural)
    is
-      pragma Unreferenced (This);
-
       New_Extract : Extract;
    begin
-      Execute
+      Secured_Execute
         (Get_Command (Get_Solutions (Error), Choice),
          Current_Text,
-         New_Extract);
+         New_Extract,
+         This.Error_Cb);
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
@@ -310,14 +337,14 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Text_Command'Class)
    is
-      pragma Unreferenced (This);
-
       New_Extract : Extract;
    begin
-      Execute
+      Secured_Execute
         (Choice,
          Current_Text,
-         New_Extract);
+         New_Extract,
+         This.Error_Cb);
+
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
@@ -453,123 +480,15 @@ package body Codefix.Errors_Manager is
       return Current_Id;
    end Search_Error;
 
+   ------------------
+   -- Set_Error_Cb --
+   ------------------
 
-   --------------------
-   -- Update_Changes --
-   --------------------
-
---   procedure Update_Changes
---     (This          : Correction_Manager;
---      Current_Text  : Text_Navigator_Abstr'Class;
---      Object        : in out Extract'Class;
---      Success       : out Boolean;
---      Already_Fixed : out Boolean)
---   is
---      Line_Object, Line_This : Ptr_Extract_Line;
---      Merged_Extract         : Extract;
---      Little_Fix_List        : Extract;
---      Old_Cursor             : File_Cursor;
---   begin
---      Success := True;
-
---      Line_This := Get_First_Line (This.Fix_List);
---      Line_Object := Get_First_Line (Object);
-
---      while Line_This /= null and then Line_Object /= null loop
---         if Get_Cursor (Line_This.all) > Get_Cursor (Line_Object.all) then
---            Line_Object := Next (Line_Object.all);
---         elsif Get_Cursor (Line_Object.all) > Get_Cursor (Line_This.all) then
---            Line_This := Next (Line_This.all);
---         elsif Get_Cursor (Line_This.all) = Get_Cursor (Line_Object.all) then
---            Add_Element
---              (Little_Fix_List,
---               new Extract_Line'(Clone (Line_This.all, False)));
---            Old_Cursor := File_Cursor (Get_Cursor (Line_This.all));
---            Line_This := Next (Line_This.all);
-
---            if Line_This /= null
---              and then File_Cursor (Get_Cursor (Line_This.all)) /= Old_Cursor
---            then
---               Old_Cursor := File_Cursor (Get_Cursor (Line_Object.all));
-
---               while Line_Object /= null
---                 and then Old_Cursor =
---                 File_Cursor (Get_Cursor (Line_Object.all))
---               loop
---                  Line_Object := Next (Line_Object.all);
---               end loop;
---            end if;
---         end if;
---      end loop;
-
---      Merge
---        (Merged_Extract,
---         Little_Fix_List,
---         Object,
---         Current_Text,
---         Success);
-
---      if not Success then
---         Free (Little_Fix_List);
---         Free (Merged_Extract);
---         return;
---      end if;
-
---      Set_Caption (Merged_Extract, Get_Caption (Object));
---      Free (Object);
---      Unchecked_Assign (Object, Merged_Extract);
-
---      Line_Object := Get_First_Line (Object);
---      Line_This := Get_First_Line (This.Fix_List);
-
---      Already_Fixed := True;
-
---      while Line_Object /= null loop
---         if Get_Context (Line_Object.all) /= Line_Created then
---            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
-
---            if Line_This = null then
---               Line_This := Get_First_Line (This.Fix_List);
-
---               if Get_Context (Line_Object.all) /= Original_Line
---                 and then Get_Coloration (Line_Object.all)
---               then
---                  Already_Fixed := False;
---               end if;
---            else
---               if Get_Context (Line_Object.all) = Original_Line
---                 or else Line_Object.all = Line_This.all
---               then
---                  Set_Coloration (Line_Object.all, False);
---               else
---                  Already_Fixed := False;
---               end if;
---            end if;
---         else
---            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
-
---            while Line_This /= null
---              and then Get_Cursor (Line_This.all) =
---              Get_Cursor (Line_Object.all)
---            loop
---               if Line_Object.all = Line_This.all then
---                  Set_Coloration (Line_Object.all, False);
---                  exit;
---               end if;
---               Line_This := Next (Line_This.all);
---            end loop;
-
---            if Get_Coloration (Line_Object.all) then
---               Already_Fixed := False;
---            end if;
---         end if;
-
---         Line_Object := Next (Line_Object.all);
---      end loop;
-
---      Free (Little_Fix_List);
-
---   end Update_Changes;
+   procedure Set_Error_Cb
+     (This     : in out Correction_Manager; Error_Cb : Execute_Corrupted) is
+   begin
+      This.Error_Cb := Error_Cb;
+   end Set_Error_Cb;
 
    ----------
    -- Free --
