@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.4.1
 
+- CB18-005 Bad saving of the desktop when quitting from the welcome dialog
+  Problem:    When quitting from the welcome dialog directly, the desktop
+              file (.gps/desktop) is saved with incorrect values, leading
+              to strange behavior such as the main window not shown on the
+              screen, or the project view not restored.
+  Workaround: Do not use the quit button, or edit manually the file
+              .gps/desktop to fix the incorrect values.
+
 - CB18-006 Duplicate entries in Help module
   Problem:    The GNAT documentation appears twice in the Help menu.
   Workaround: Edit the small gps wrapper, and remove the lines containing
