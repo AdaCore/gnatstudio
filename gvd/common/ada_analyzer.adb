@@ -386,11 +386,9 @@ package body Ada_Analyzer is
       Indent_Level    : Natural renames Indent_Params.Indent_Level;
       Indent_Continue : Natural renames Indent_Params.Indent_Continue;
       Indent_Decl     : Natural renames Indent_Params.Indent_Decl;
-      Indent_Return   : Natural renames Indent_Params.Indent_Return;
-      Indent_Renames  : Natural renames Indent_Params.Indent_Renames;
-      Indent_With     : Natural renames Indent_Params.Indent_With;
-      Indent_Use      : Natural renames Indent_Params.Indent_Use;
-      Indent_Record   : Natural renames Indent_Params.Indent_Record;
+      Indent_With     : constant := 5;
+      Indent_Use      : constant := 4;
+      Indent_Record   : Natural renames Indent_Params.Indent_Level;
 
       Buffer_Length   : constant Natural := Buffer'Last;
 
@@ -496,7 +494,22 @@ package body Ada_Analyzer is
             Start := Line_Start (Prec);
             Index := Start;
 
-            while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
+            loop
+               --  Manual unrolling for efficiency
+
+               exit when Buffer (Index) /= ' '
+                 and then Buffer (Index) /= ASCII.HT;
+
+               Index := Index + 1;
+
+               exit when Buffer (Index) /= ' '
+                 and then Buffer (Index) /= ASCII.HT;
+
+               Index := Index + 1;
+
+               exit when Buffer (Index) /= ' '
+                 and then Buffer (Index) /= ASCII.HT;
+
                Index := Index + 1;
             end loop;
 
@@ -527,9 +540,22 @@ package body Ada_Analyzer is
       function End_Of_Word (P : Natural) return Natural is
          Tmp : Natural := P;
       begin
-         while Tmp < Buffer_Length
-           and then Is_Word_Char (Buffer (Next_Char (Tmp)))
          loop
+            --  Manual urolling for efficiency
+
+            exit when Tmp >= Buffer_Length
+              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+
+            Tmp := Next_Char (Tmp);
+
+            exit when Tmp >= Buffer_Length
+              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+
+            Tmp := Next_Char (Tmp);
+
+            exit when Tmp >= Buffer_Length
+              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+
             Tmp := Next_Char (Tmp);
          end loop;
 
@@ -838,6 +864,13 @@ package body Ada_Analyzer is
             Push (Tokens, Temp);
 
          elsif Reserved = Tok_Renames then
+            if Subprogram_Decl then
+               --  function A (....)
+               --      renames B;  <- use Indent_Continue additional spaces
+
+               Do_Indent (Prec, Num_Spaces + Indent_Continue);
+            end if;
+
             if not Top_Token.Declaration
               and then (Top_Token.Token = Tok_Function
                 or else Top_Token.Token = Tok_Procedure
@@ -848,7 +881,6 @@ package body Ada_Analyzer is
 
                Subprogram_Decl := False;
                Pop (Tokens);
-               Do_Indent (Prec, Num_Spaces + Indent_Renames);
             end if;
 
          elsif Prev_Token = Tok_Is
@@ -934,9 +966,9 @@ package body Ada_Analyzer is
            and then Subprogram_Decl
          then
             --  function A (....)
-            --      return B;  <- use Indent_Return additional spaces
+            --      return B;  <- use Indent_Continue additional spaces
 
-            Do_Indent (Prec, Num_Spaces + Indent_Return);
+            Do_Indent (Prec, Num_Spaces + Indent_Continue);
 
          elsif Reserved = Tok_End or else Reserved = Tok_Elsif then
             --  unindent after end of elsif, e.g:
