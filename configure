@@ -2635,7 +2635,7 @@ echo "$as_me: error: $GNATMAKE test failed at run time! Check your configuration
 echo "${ECHO_T}yes" >&6
 
 
-   if test -z ${PYTHON_PATH_WITH}; then
+   if test "$PYTHON_PATH_WITH" = "yes" ; then
       # Extract the first word of "python", so it can be a program name with args.
 set dummy python; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -2677,6 +2677,7 @@ echo "${ECHO_T}no" >&6
 fi
 
 
+      PBASE=${PYTHON_BASE}
       PYTHON_BASE=`dirname ${PYTHON_BASE}`
       PYTHON_BASE=`dirname ${PYTHON_BASE}`
    else
@@ -2704,6 +2705,7 @@ echo "$as_me: error: Incorrect version of python. You need 2.0 at least. Run wit
    else
       echo "checking for python ... not found"
       PYTHON_ADA_SOURCE="src2"
+      PYTHON_BASE=no
    fi
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \${MAKE}" >&5
@@ -3953,7 +3955,7 @@ echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo ""
 
-ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr"
+ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads gvd/tests/Makefile python/Makefile.python python/python.gpr"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -4459,6 +4461,7 @@ do
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
   "gvd/Makefile.gvd_common" ) CONFIG_FILES="$CONFIG_FILES gvd/Makefile.gvd_common" ;;
   "gvd/gvd/gvd.ads" ) CONFIG_FILES="$CONFIG_FILES gvd/gvd/gvd.ads" ;;
+  "gvd/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES gvd/tests/Makefile" ;;
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
