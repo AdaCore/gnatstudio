@@ -22,11 +22,13 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
+with Ada.Text_IO;               use Ada.Text_IO;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -93,6 +95,82 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Check that List corresponds to the output of a ClearCase remove.
+
+   function Diff_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display the visual differences listed in List in the standard diff
+   --  format.
+   --  Head contains the name of the file for which the differences are shown.
+   --  ??? This is a copy of VCS.CVS.Diff_Handler.
+
+   function Display_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display Head and List, and return True.
+
+   ------------------
+   -- Diff_Handler --
+   ------------------
+
+   function Diff_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      use String_List;
+
+      L       : String_List.List := List;
+      L_Temp  : List_Node := First (List);
+      Success : Boolean;
+
+      Current_File : constant String := String_List.Head (Head);
+      Base         : constant String := Base_Name (Current_File);
+      Patch_File   : constant String :=
+        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
+        Base & "_difs";
+      File         : File_Type;
+
+   begin
+      Create (File, Name => Patch_File);
+
+      while L_Temp /= Null_Node loop
+         Put (File, Data (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      String_List.Free (L);
+      Close (File);
+      Insert (Kernel,
+              -"ClearCase: Got comparison for file " & Current_File,
+              Highlight_Sloc => False,
+              Mode => Verbose);
+
+      Display_Differences
+        (Kernel, New_File => Current_File, Diff_File => Patch_File);
+      GNAT.OS_Lib.Delete_File (Patch_File, Success);
+
+      return True;
+   end Diff_Handler;
+
+   ---------------------
+   -- Display_Handler --
+   ---------------------
+
+   function Display_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Insert (Head, Info);
+      Insert (List, Verbose);
+
+      return True;
+   end Display_Handler;
 
    ------------
    -- Insert --
@@ -553,9 +631,55 @@ package body VCS.ClearCase is
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            File     : constant String := Data (File_Node);
+
+            Update_Command  : External_Command_Access;
+            Success_Message : Console_Command_Access;
+
+         begin
+            Insert (Kernel,
+                    -"Clearcase: updating "
+                      & File & " ...",
+                    False, True, Info);
+
+            --  Create the end of the message.
+
+            Create (Success_Message,
+                    Kernel,
+                    -"... done.",
+                    False,
+                    True,
+                    Info);
+
+            Append (Args, "update");
+            Append (Args, File);
+
+            Create (Update_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Null_List,
+                    Display_Handler'Access);
+
+            Free (Args);
+
+            --  Enqueue the actions.
+
+            Enqueue (Rep.Queue, Update_Command);
+            Enqueue (Rep.Queue, Success_Message);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
    end Update;
 
    -----------
@@ -963,9 +1087,40 @@ package body VCS.ClearCase is
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            File     : constant String := Data (File_Node);
+
+            Revert_Command  : External_Command_Access;
+
+         begin
+            Append (Args, "uncheckout");
+            Append (Args, "-keep");
+            Append (Args, File);
+
+            Create (Revert_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Null_List,
+                    Display_Handler'Access);
+
+            Free (Args);
+
+            --  Enqueue the actions.
+
+            Enqueue (Rep.Queue, Revert_Command);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
    end Revert;
 
    ----------
@@ -978,9 +1133,82 @@ package body VCS.ClearCase is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      pragma Unreferenced (Rep, File, Version_1, Version_2);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      Args     : List;
+      Head     : List;
+
+      Diff_File_Command : External_Command_Access;
+
+      Fail_Message      : Console_Command_Access;
+      Success_Message   : Console_Command_Access;
+
    begin
-      null;
+      Insert (Kernel,
+              -"Clearcase: getting differences for "
+                & File & " ...",
+              False, True, Info);
+
+      --  Create the end of the message.
+
+      Create (Fail_Message,
+              Kernel,
+              -("comparison of ") & File & (-" failed."),
+              False,
+              True,
+              Info);
+
+      Create (Success_Message,
+              Kernel,
+              -"... done.",
+              False,
+              True,
+              Info);
+
+      Append (Args, "diff");
+      Append (Args, "-diff_format");
+
+      if Version_1 = ""
+        and then Version_2 = ""
+      then
+         --  ??? If no version is specified, we assume that
+         --  we want differences with the main branch, is that the
+         --  right behaviour ?
+         Append (Args, File & "@@/main/LATEST");
+         Append (Args, File);
+
+      else
+         if Version_2 = "" then
+            Append (Args, File);
+         else
+            Append (Args, File & "@@" & Version_2);
+         end if;
+
+         if Version_1 = "" then
+            Append (Args, File);
+         else
+            Append (Args, File & "@@" & Version_1);
+         end if;
+      end if;
+
+      Append (Head, File);
+
+      Create (Diff_File_Command,
+              Kernel,
+              "cleartool",
+              "",
+              Args,
+              Head,
+              Diff_Handler'Access);
+
+      Free (Args);
+      Free (Head);
+
+      --  Enqueue the action.
+
+      Enqueue (Rep.Queue, Diff_File_Command);
+      Enqueue (Rep.Queue, Success_Message);
    end Diff;
 
    ---------
