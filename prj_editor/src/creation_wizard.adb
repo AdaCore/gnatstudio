@@ -317,7 +317,8 @@ package body Creation_Wizard is
    begin
       Gtk_New (Wiz.Src_Dir_Selection,
                Initial_Directory => Get_Current_Dir,
-               Multiple_Directories => True);
+               Multiple_Directories => True,
+               Busy_Cursor_On => Get_Window (Wiz));
       return Gtk_Widget (Wiz.Src_Dir_Selection);
    end Second_Page;
 
@@ -330,7 +331,8 @@ package body Creation_Wizard is
    begin
       Gtk_New (Wiz.Obj_Dir_Selection,
                Initial_Directory => Get_Current_Dir,
-               Multiple_Directories => False);
+               Multiple_Directories => False,
+               Busy_Cursor_On => Get_Window (Wiz));
       return Gtk_Widget (Wiz.Obj_Dir_Selection);
    end Third_Page;
 
@@ -478,6 +480,8 @@ package body Creation_Wizard is
       end Write_Str;
 
    begin
+      --  ??? Shouldn'T use Hard-Coded Strings in here
+
       Project := Create_Project (Name => Name, Path => Dir);
 
       --  Append the source directories
