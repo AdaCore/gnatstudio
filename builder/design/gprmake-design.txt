@@ -315,25 +315,35 @@ Input needed from gprmake:
   - Ada & C++: use gnatlink --LINK=Compiler_Command ("c++")
 
   Add new attribute Linker'Driver (<language>) which defaults to:
-  - <prefix>gnatlink for Ada
+  - <prefix>gnatlink for Ada (or a wrapper called gnatld, see below)
   - Compiler'Driver (<language>) for other languages
 
   Add new attribute Linker'Default_Driver to specify the name of the tool
-  called to handle linking. Empty by default, meaning that a built-in driver
-  is used, which behaves as follows:
-
-  Add new attribute Linker'Output_Option, which defaults to
-  "-o". This is the switch used to specify the output name.
+  called to handle linking. The linker driver is called in the object
+  directory of the main project. This attribute is empty by default,
+  meaning that a built-in driver is used, which behaves as follows:
 
   - for projects with a single language, call Linker'Driver (<language>)
-  followed by (Linker'Output_Option (<language>)) & (<executable name>) if
-  Linker'Output_Option is not null;
-  followed by the object of the main unit, followed by lib<project>.a,
+  followed by ("-o", <executable name>),
+  followed by the object of the main unit, followed by lib<project>.a if
+  one has been created,
   followed by Linker'Default_Switches (<language>) or
   Linker'Switches (<main>) if defined.
 
   executable name is computed based on the project info and defaults, as
   done by gnatmake for Ada projects.
+
+  Note: for Ada, since gnatlink expects an ali file rather than an object
+  file, we could either:
+  - add a new tool called tentatively gnatld, which
+    is a wrapper around gnatlink that will call gnatlink by replacing the
+    object of the main unit by the corresponding ali file (basically by
+    replacing .o by .ali)
+  - or enhance gnatlink to consider that if no .ali is specified, then the
+    first .o file should be used instead (if a corresponding .ali file exists).
+
+  This last option seems slightly preferrable (avoids having to introduce
+  a new tool, makes it more compatible with other linkers).
 
   - for projects with multiple languages excluding Ada, call
   Linker'Driver (<language of the main unit>) followed by the same arguments
@@ -353,6 +363,8 @@ Input needed from gprmake:
   an archive is built containing the object files of each language
   source for which no Builder'Driver is set, and recreated in the object
   directory of the main project as lib<project>.a.
+  If Builder'Driver is set for all supported languages, no archive is created
+  nor used (rationale: some systems do not support creating empty archives).
 
   Rationale: it is expected that when Builder'Driver is set, the specific
   builder driver will keep track of the object files required itself, and
