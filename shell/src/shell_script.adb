@@ -720,12 +720,12 @@ package body Shell_Script is
       Result       : GNAT.OS_Lib.String_Access := new String'("");
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
 
-      procedure Insert (S : String);
-      --  Appends S & ASCII.LF to Result.
+      procedure Insert (S : String; Separator : Character := ASCII.LF);
+      --  Appends S & Separator to Result.
       --  Result must not be set to Null when calling this subprogram.
 
-      procedure Insert (S : String) is
-         R : constant String := Result.all & S & ASCII.LF;
+      procedure Insert (S : String; Separator : Character := ASCII.LF) is
+         R : constant String := Result.all & S & Separator;
       begin
          Free (Result);
          Result := new String'(R);
@@ -752,7 +752,7 @@ package body Shell_Script is
 
          else
             declare
-               Cmd : constant String := Nth_Arg (Data, 1);
+               Cmd  : constant String := Nth_Arg (Data, 1);
                Info : Command_Information;
             begin
                Command_Node := Command_List.First
@@ -769,6 +769,7 @@ package body Shell_Script is
                end loop;
             end;
          end if;
+
          Set_Return_Value (Data, Result.all);
          Free (Result);
 
@@ -787,9 +788,10 @@ package body Shell_Script is
          end;
 
       elsif Command = "echo" then
-         for A in 2 .. Number_Of_Arguments (Data) loop
-            Insert (Nth_Arg (Data, A));
+         for A in 1 .. Number_Of_Arguments (Data) loop
+            Insert (Nth_Arg (Data, A), ' ');
          end loop;
+
          Set_Return_Value (Data, Result.all);
          Free (Result);
 
