@@ -542,7 +542,6 @@ package body Vsearch_Ext is
 
       if Vsearch.Last_Search_Context /= null then
          Vsearch.Continue := True;
-         Push_State (Vsearch.Kernel, Processing);
 
          if All_Occurences then
             --  Set up the search. Everything is automatically
@@ -559,9 +558,8 @@ package body Vsearch_Ext is
             Launch_Background_Command
               (Vsearch.Kernel, Command_Access (C), True, "Search");
 
-            Pop_State (Vsearch.Kernel);
-
          else
+            Push_State (Vsearch.Kernel, Processing);
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
@@ -622,7 +620,6 @@ package body Vsearch_Ext is
 
       else
          Create_Context (Vsearch);
-         Push_State (Vsearch.Kernel, Processing);
          Set_Sensitive (Vsearch.Stop_Button, True);
 
          Search_Commands.Create

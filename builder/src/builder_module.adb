@@ -496,7 +496,6 @@ package body Builder_Module is
       Langs        : Argument_List := Get_Languages
         (Get_Project (Kernel), Recursive => True);
       Syntax       : Command_Syntax;
-      State_Pushed : Boolean := False;
       Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
 
       C            : Build_Command_Access;
@@ -603,9 +602,6 @@ package body Builder_Module is
 
       Clear_Compilation_Output (Kernel);
 
-      Push_State (Kernel, Processing);
-      State_Pushed := True;
-
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
@@ -649,7 +645,6 @@ package body Builder_Module is
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
-         Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
          Change_Dir (Old_Dir);
          Free (Cmd);
@@ -659,10 +654,6 @@ package body Builder_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Change_Dir (Old_Dir);
-
-         if State_Pushed then
-            Pop_State (Kernel);
-         end if;
    end On_Build;
 
    --------------
@@ -771,7 +762,6 @@ package body Builder_Module is
       end if;
 
       Change_Dir (Dir_Name (Project_Path (Prj)));
-      Push_State (Kernel, Processing);
       Clear_Compilation_Output (Kernel);
       Set_Sensitive_Menus (Kernel, False);
       Top.Interrupted := False;
@@ -826,7 +816,6 @@ package body Builder_Module is
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
-         Pop_State (Kernel);
          Change_Dir (Old_Dir);
          Set_Sensitive_Menus (Kernel, True);
          Free (Fd);
@@ -961,7 +950,6 @@ package body Builder_Module is
             return;
          end if;
 
-         Push_State (Kernel, Processing);
          Clear_Compilation_Output (Kernel);
          Set_Sensitive_Menus (Kernel, False);
 
@@ -985,7 +973,6 @@ package body Builder_Module is
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command", Mode => Error);
-            Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Fd);
       end;
