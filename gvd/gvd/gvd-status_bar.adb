@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -76,6 +76,9 @@ package body GVD.Status_Bar is
    begin
       Initialize_Hbox (Status, Homogeneous => False, Spacing => 4);
       Set_Size_Request (Status, 0, -1);
+
+      --  Avoid resizing the main window whenever a label is changed.
+      Set_Resize_Mode (Status, Resize_Queue);
 
       Gtk_New (Event);
       Gtk_New (Status.Arrow_Button);
