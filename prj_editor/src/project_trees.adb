@@ -41,6 +41,8 @@ with Glib.Object;          use Glib.Object;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
@@ -62,6 +64,7 @@ with String_Utils; use String_Utils;
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with GUI_Utils;    use GUI_Utils;
 
 package body Project_Trees is
 
@@ -314,6 +317,32 @@ package body Project_Trees is
    --  This is used to group subprograms (procedures and functions together),
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
+   function Tree_Contextual_Menu
+     (Tree : access Gtk_Widget_Record'Class) return Gtk_Menu;
+   --  Return the contextual menu to be used for the tree.
+
+   --------------------------
+   -- Tree_Contextual_Menu --
+   --------------------------
+
+   function Tree_Contextual_Menu
+     (Tree : access Gtk_Widget_Record'Class) return Gtk_Menu
+   is
+      pragma Warnings (Off, Tree);
+      Menu : Gtk_Menu;
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Menu);
+
+      Gtk_New (Item, Label => "Add directory");
+      Append (Menu, Item);
+
+      Gtk_New (Item, Label => "Remove directory");
+      Append (Menu, Item);
+
+      return Menu;
+   end Tree_Contextual_Menu;
+
    -------------
    -- Gtk_New --
    -------------
@@ -346,6 +375,8 @@ package body Project_Trees is
       Tree := new Project_Tree_Record;
       Gtk.Ctree.Initialize (Tree, 1, 0);
 
+      Register_Contextual_Menu (Tree, Tree_Contextual_Menu'Access);
+
       Create_Pixmaps (Project_Node, project_xpm, project_closed_xpm);
       Create_Pixmaps
         (Modified_Project_Node, project_modified_xpm, project_closed_xpm);
@@ -377,7 +408,7 @@ package body Project_Trees is
          Object_User_Callback.To_Marshaller (Project_Changed'Access),
          GObject (Tree));
 
-      Return_Callback.Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (Tree, "button_press_event", Button_Press'Access);
 
       --  Update the tree with the current project
