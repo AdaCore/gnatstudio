@@ -49,6 +49,7 @@ with GVD.Code_Editors;      use GVD.Code_Editors;
 with Pixmaps_IDE;           use Pixmaps_IDE;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
+with Process_Proxies;       use Process_Proxies;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with String_Utils;          use String_Utils;
 with Basic_Types;           use Basic_Types;
@@ -951,9 +952,11 @@ package body GVD.Explorer is
       Current : Basic_Types.String_Access;
 
    begin
-      --  ??? Should be protected in case the debugger is currently busy
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         return;
+      end if;
 
-      Set_Busy_Cursor (Process, True);
+      Set_Busy (Process, True);
       Freeze (Explorer);
 
       if Explorer.Current_File_Node /= null then
@@ -972,7 +975,7 @@ package body GVD.Explorer is
       end if;
 
       Thaw (Explorer);
-      Set_Busy_Cursor (Process, False);
+      Set_Busy (Process, False);
    end Display_Shared;
 
    -------------
@@ -1001,7 +1004,7 @@ package body GVD.Explorer is
 
    begin
       Freeze (Explorer);
-      Set_Busy_Cursor (Process, True);
+      Set_Busy (Process, True);
 
       --  Find the extension node for the current file
 
@@ -1031,7 +1034,7 @@ package body GVD.Explorer is
          end loop;
       end if;
 
-      Set_Busy_Cursor (Process, False);
+      Set_Busy (Process, False);
       Thaw (Explorer);
    end Delete_Not_Found;
 
@@ -1090,7 +1093,7 @@ package body GVD.Explorer is
 
    begin
       Freeze (Explorer);
-      Set_Busy_Cursor (Process, True);
+      Set_Busy (Process, True);
 
       --  Find the extension node for the current file
 
@@ -1120,7 +1123,7 @@ package body GVD.Explorer is
          end loop;
       end if;
 
-      Set_Busy_Cursor (Process, False);
+      Set_Busy (Process, False);
       Thaw (Explorer);
    end Show_System_Files;
 
