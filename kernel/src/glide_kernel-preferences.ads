@@ -26,6 +26,11 @@ with Default_Preferences; use Default_Preferences;
 
 package Glide_Kernel.Preferences is
 
+   procedure Free_Preferences
+     (Kernel    : access Kernel_Handle_Record'Class);
+   --  Free the memory used by the preferences tree. Note that you should no
+   --  longer call Get_Pref after calling this subprogram.
+
    procedure Load_Preferences
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String);

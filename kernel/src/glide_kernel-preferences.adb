@@ -37,6 +37,18 @@ package body Glide_Kernel.Preferences is
    --  in the kernel, or be a node in the default_preferences tree.
 
    ----------------------
+   -- Free_Preferences --
+   ----------------------
+
+   procedure Free_Preferences
+     (Kernel    : access Kernel_Handle_Record'Class) is
+   begin
+      if Kernel.Preferences /= null then
+         Free (Kernel.Preferences);
+      end if;
+   end Free_Preferences;
+
+   ----------------------
    -- Load_Preferences --
    ----------------------
 
@@ -44,10 +56,7 @@ package body Glide_Kernel.Preferences is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String) is
    begin
-      if Kernel.Preferences /= null then
-         Free (Kernel.Preferences);
-      end if;
-
+      Free_Preferences (Kernel);
       if Is_Regular_File (File_Name) then
          Kernel.Preferences := Parse (File_Name);
       end if;
