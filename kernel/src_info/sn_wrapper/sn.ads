@@ -43,6 +43,8 @@ package SN is
       end record;
    --  Position between symbols in source
    Invalid_Point : constant Point := (-1, -1);
+   Predefined_Point : constant Point := (Integer'Last, Integer'Last);
+
    Invalid_String  : constant String := "";
 
    function "<" (P1, P2 : Point) return Boolean;
