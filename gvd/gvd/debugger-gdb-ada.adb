@@ -510,6 +510,42 @@ package body Debugger.Gdb.Ada is
          end;
       end loop;
 
+      --  Gdb, in Ada mode, allows one to specify one-dimensional slices for
+      --  arrays, as in 'print U (2..3)'.
+      --  In that case, the bounds for the first dimension should be taken
+      --  from Entity rather than from the result of ptype.
+
+      Tmp_Index := Entity'Last;
+      Skip_Blanks (Entity, Tmp_Index, Step => -1);
+
+      if Tmp_Index >= Entity'First and then Entity (Tmp_Index) = ')' then
+         Tmp_Index := Tmp_Index - 1;
+         while Tmp_Index >= Entity'First
+           and then (Entity (Tmp_Index) in '0' .. '9'
+                     or else Entity (Tmp_Index) = ' ')
+         loop
+            Tmp_Index := Tmp_Index - 1;
+         end loop;
+
+         --  Do we have a slice, or an simple array item ?
+         if Tmp_Index >= Entity'First and then Entity (Tmp_Index) = '.' then
+
+            Skip_To_Char (Entity, Tmp_Index, '(', Step => -1);
+            Tmp_Index := Tmp_Index + 1;
+
+            declare
+               First, Last : Long_Integer;
+            begin
+               Parse_Num (Entity, Tmp_Index, First);
+               while Entity (Tmp_Index) not in '0' .. '9' loop
+                  Tmp_Index := Tmp_Index + 1;
+               end loop;
+               Parse_Num (Entity, Tmp_Index, Last);
+               Set_Dimensions (R.all, 1, (First, Last));
+            end;
+         end if;
+      end if;
+
       --  Skip the type of the items
 
       Index := Index + 3; --  skips 'of '
