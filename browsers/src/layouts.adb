@@ -23,6 +23,8 @@ with Glib.Graphs;   use Glib.Graphs;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Line_Sweep;    use Line_Sweep;
 
+with Text_IO; use Text_IO;
+
 package body Layouts is
 
    Max_Iterations : constant Natural := 21;
@@ -475,10 +477,10 @@ package body Layouts is
          for Column in 0 .. Num_Per_Line (Row) - 1 loop
             if Top_Bottom then
                Weights (Get_Index (Lines (Row, Column))) :=
-                 Barycenter_Weight_P (Lines (Row, Column));
+                 Median_Weight_P (Lines (Row, Column));
             else
                Weights (Get_Index (Lines (Row, Column))) :=
-                 Barycenter_Weight_S (Lines (Row, Column));
+                 Median_Weight_S (Lines (Row, Column));
             end if;
          end loop;
 
@@ -936,6 +938,33 @@ package body Layouts is
          end if;
          Next (Iter);
       end loop;
+
+
+      declare
+         Iter : Edge_Iterator := First (Graph);
+         E    : Edge_Access;
+         File : File_Type;
+      begin
+         Create (File, Out_File, "layout.dot");
+
+         Put_Line (File, "digraph layouts {");
+         Put_Line (File, "   rankdir=LR;");
+         Put_Line (File, "   node [shape=box];");
+
+
+         while not At_End (Iter) loop
+            E := Get (Iter);
+            Put_Line (File, Natural'Image (Get_Index (Get_Src (E)))
+                      & " ->"
+                      & Natural'Image (Get_Index (Get_Dest (E)))
+                      & ";");
+            Next (Iter);
+         end loop;
+
+         Put_Line (File, "}");
+         Close (File);
+      end;
+
    end Layer_Layout;
 
 end Layouts;
