@@ -39,6 +39,7 @@ with Gtk;
 with Gtk.Text_Buffer;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
+with Gtkada.Types;
 
 with Language;
 with Src_Highlighting;
@@ -176,6 +177,15 @@ package Src_Editor_Buffer is
    --  Assertion_Failure when compiled with assertion checks, or an undefined
    --  behavior otherwise.
 
+   function Get_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint) return Gtkada.Types.Chars_Ptr;
+   --  Same as above but return the C pointer directly for efficiency.
+   --  The caller is responsible for freeing the memory (with g_free).
+
    procedure Insert
      (Buffer  : access Source_Buffer_Record;
       Line    : Gint;
@@ -276,14 +286,17 @@ private
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
       HL_Line_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag used when highlighting lines
+
       HL_Region_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag used when highlighting regions
+
       Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  This is a copy of the "insert" mark. This could be easily looked-up
+      --  when needed, but having a copy is helping performance-wise, since a
+      --  lot of subprograms use it.
+
+      Inserting     : Boolean := False;
    end record;
-   --  HL_Line_Tag   : A tag used when highlighting lines
-   --  HL_Region_Tag : A tag used when highlighting regions
-   --  Insert_Mark   : This is a copy of the "insert" mark. This could be
-   --                  easily looked-up when needed, but having a copy is
-   --                  helping performance-wise, since a lot of subprograms
-   --                  use it.
 
 end Src_Editor_Buffer;
