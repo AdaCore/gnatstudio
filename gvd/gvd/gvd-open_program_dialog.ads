@@ -29,6 +29,7 @@ package GVD.Open_Program_Dialog is
    type GVD_Open_Program is access all GVD_Open_Program_Record'Class;
 
    procedure Gtk_New (Open : out GVD_Open_Program);
+   --  Create a new open program dialog.
 
    procedure Open_Program
      (Open       : in out GVD_Open_Program;
