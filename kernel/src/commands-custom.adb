@@ -101,10 +101,13 @@ package body Commands.Custom is
    --  following the '%' sign. No_Project is returned if the context doesn't
    --  contain this information
 
+   pragma Warnings (Off);
+   --  These 2 UCs are safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Custom_Command_Access);
    function Convert is new Ada.Unchecked_Conversion
      (Custom_Command_Access, System.Address);
+   pragma Warnings (On);
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer);
    --  Called when an external process has finished running
