@@ -39,11 +39,11 @@ package GVD.Proc_Utils is
    --  Individual information concerning a process.
 
    procedure Open_Processes (Handle : out Process_Handle);
-   --  Initialize a connexion to the current machine in order to retrieve
+   --  Initialize a connection to the current machine in order to retrieve
    --  process information.
 
    procedure Open_Processes (Handle : out Process_Handle; Host : String);
-   --  Initialize a connexion to a remote host in order to retrieve process
+   --  Initialize a connection to a remote host in order to retrieve process
    --  information.
 
    procedure Next_Process
@@ -54,7 +54,7 @@ package GVD.Proc_Utils is
    --  Success is set to True if there is a remaining process, false otherwise.
 
    procedure Close_Processes (Handle : in out Process_Handle);
-   --  Close the connexion established in handle.
+   --  Close the connection established in handle.
 
 private
 
