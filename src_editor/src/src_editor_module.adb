@@ -291,6 +291,14 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Uncomment Lines menu
 
+   procedure On_Fold_Blocks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Fold all blocks menu
+
+   procedure On_Unfold_Blocks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Unfold all blocks menu
+
    procedure Comment_Uncomment
      (Kernel : Kernel_Handle; Comment : Boolean);
    --  Comment or uncomment the current selection, if any.
@@ -2552,6 +2560,46 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Comment_Lines;
 
+   --------------------
+   -- On_Fold_Blocks --
+   --------------------
+
+   procedure On_Fold_Blocks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Current : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+   begin
+      if Current /= null then
+         Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Fold_Blocks;
+
+   ----------------------
+   -- On_Unfold_Blocks --
+   ----------------------
+
+   procedure On_Unfold_Blocks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Current : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+   begin
+      if Current /= null then
+         Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Unfold_Blocks;
+
    ------------------------
    -- On_Uncomment_Lines --
    ------------------------
@@ -3222,6 +3270,16 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
                      On_Uncomment_Lines'Access, null,
                      GDK_underscore, Control_Mask, Ref_Item => -"Preferences");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+
+      Register_Menu (Kernel, Edit, -"Fold all blocks", "",
+                     On_Fold_Blocks'Access, null,
+                     0, 0, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"Unfold all blocks", "",
+                     On_Unfold_Blocks'Access, null,
+                     0, 0, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
