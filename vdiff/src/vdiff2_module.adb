@@ -269,6 +269,18 @@ package body Vdiff2_Module is
          Default_Key => "control-3");
    end Register_Module;
 
+   ------------------------
+   -- Init_Prev_Diff_Cmd --
+   ------------------------
+
+   procedure Init_Prev_Diff_Cmd (Diff : Diff_Head) is
+   begin
+      VDiff2_Module (Vdiff_Module_ID).Command_Prev.Last_Active_Diff  := Diff;
+      VDiff2_Module (Vdiff_Module_ID).Command_Next.Last_Active_Diff  := Diff;
+      VDiff2_Module (Vdiff_Module_ID).Command_First.Last_Active_Diff := Diff;
+      VDiff2_Module (Vdiff_Module_ID).Command_Last.Last_Active_Diff  := Diff;
+   end Init_Prev_Diff_Cmd;
+
    -------------
    -- Destroy --
    -------------
