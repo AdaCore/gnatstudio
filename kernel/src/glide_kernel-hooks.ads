@@ -111,10 +111,11 @@ package Glide_Kernel.Hooks is
       Hook   : access Hook_No_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Hook   : No_Args_Execute;
-      Watch  : Glib.Object.GObject := null);
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : No_Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "");
    --  Add a callback to be called when the hook is executed. The hook must
    --  have been registered first.
    --  The second version is provided for ease of use, so that users do not
@@ -122,6 +123,7 @@ package Glide_Kernel.Hooks is
    --  can never be removed from the list.
    --  When Watch is destroyed, Hook is automatically cancelled, and
    --  destroyed if it isn't associated with another hook list.
+   --  Func_Name is used when listing the functions associated with the hook
 
    procedure Remove_Hook
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -225,10 +227,11 @@ package Glide_Kernel.Hooks is
       Hook   : access Hook_Shell_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Shell_Args_Execute;
-      Watch    : Glib.Object.GObject := null);
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Shell_Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "");
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
@@ -266,10 +269,11 @@ package Glide_Kernel.Hooks is
       Hook   : access Hook_Args_Record'Class;
       Watch  : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Args_Execute;
-      Watch    : Glib.Object.GObject := null);
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "");
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
@@ -309,10 +313,11 @@ package Glide_Kernel.Hooks is
       Hook     : access Hook_Args_Return_Record'Class;
       Watch    : Glib.Object.GObject := null);
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Args_Return_Execute;
-      Watch    : Glib.Object.GObject := null);
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Args_Return_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "");
    --  See doc for Add_Hook above
 
    procedure Remove_Hook
