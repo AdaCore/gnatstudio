@@ -1754,14 +1754,10 @@ package body Builder_Module is
          Maximum_Args => 0,
          Handler      => Compile_Command'Access);
 
-      --  Create the highlighting category corresponding to the module.
-
       Kernel_Callback.Connect
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          User_Data   => Kernel_Handle (Kernel));
-
-      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
    end Register_Module;
 
    -------------------------
