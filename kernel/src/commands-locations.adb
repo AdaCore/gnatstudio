@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -89,8 +89,7 @@ package body Commands.Locations is
       Filename       : String;
       Line           : Natural := 0;
       Column         : Natural := 0;
-      Column_End     : Natural := 0;
-      Highlight_Line : Boolean := True) is
+      Column_End     : Natural := 0) is
    begin
       Item := new Source_Location_Command_Type;
       Item.Kernel := Kernel;
@@ -98,7 +97,6 @@ package body Commands.Locations is
       Item.Line := Line;
       Item.Column := Column;
       Item.Column_End := Column_End;
-      Item.Highlight_Line := Highlight_Line;
    end Create;
 
    ----------
@@ -180,7 +178,6 @@ package body Commands.Locations is
             Command.Line,
             Command.Column,
             Command.Column_End,
-            Command.Highlight_Line,
             False,
             From_Path => False);
 

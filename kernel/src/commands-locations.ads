@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -47,8 +47,7 @@ package Commands.Locations is
       Filename       : String;
       Line           : Natural := 0;
       Column         : Natural := 0;
-      Column_End     : Natural := 0;
-      Highlight_Line : Boolean := True);
+      Column_End     : Natural := 0);
    --  Create a new Source_Location_Command with the specified
    --  coordinates. Filename must be an absolute file name.
 
@@ -84,7 +83,6 @@ private
       Line           : Natural := 0;
       Column         : Natural := 0;
       Column_End     : Natural := 0;
-      Highlight_Line : Boolean := True;
    end record;
 
    type Html_Location_Command_Type is new Root_Command with record
