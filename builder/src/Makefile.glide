@@ -1,10 +1,66 @@
 # This is the generic part of the support for multi-language
 # in Glide.
 
-vpath %$(C_EXT) $(SRC_DIRS)
-vpath %$(CXX_EXT) $(SRC_DIRS)
+# This Makefile provides a very generic framework of the following
+# functionnalities:
+#
+# Multi-language support (currently any combination of Ada/C/C++ supported)
+# Automatic handling of source dependencies
+# Handling of various C/C++ compilers
+# Handling of Ada sources using the GNAT toolchain
+# Complete build process (compile/bind/link)
+# Individual compilation (on a file, or on a language)
+# Handling of an object directory
+
+# Here are the rules that can be used from the command line:
+#
+# build:         complete compile/bind/link process
+# compile:       compile all files that are not up-to-date
+# link:          bind/link
+# ada:           compile all Ada files that are not up-to-date
+# c:             ditto for C files
+# c++:           ditto for C++ files
+# <ada file>:    recompile the specified file if needed.
+# <object file>: compile the corresponding source file if needed.
+
+# This Makefile expects the following variable to be set by the caller
+# (typically another Makefile):
+#
+# C_EXT        extension of C files (optional)
+# CXX_EXT      extension of C++ files (optional)
+# OBJ_EXT      extension of object files for the target, e.g ".o"
+# SRC_DIRS     blank separated list of source directories
+# C_SRCS       explicit list of C sources (optional)
+# CXX_SRCS     explicit list of C++ sources (optional)
+# OBJ_DIR      a single directory where object files should be put
+# LANGUAGES    a blank separated list of languages supported, e.g "ada c"
+#              the current list of recognized languages is: ada, c, c++
+# CC           name of the C compiler (optional)
+# CXX          name of the C++ compiler (optional)
+# GNATMAKE     name of the GNAT builder, e.g "gnatmake" (optional)
+# CFLAGS       default C compilation switches, e.g "-O2 -g" (optional)
+# CXXFLAGS     default C++ compilation switches (optional)
+# LDFLAGS      linker switches (optional)
+# ADA_SOURCES  list of main Ada sources (optional)
+# EXEC         name of the final executable (optional)
+# MAIN         language of the main program (optional)
+# PROJECT_FILE name of the GNAT project file (optional)
+
+# Set the source search path for C and C++ if needed
+
+ifneq ($(C_EXT),)
+   vpath %$(C_EXT) $(SRC_DIRS)
+endif
+
+ifneq ($(CXX_EXT),)
+   vpath %$(CXX_EXT) $(SRC_DIRS)
+endif
+
+# Set the object search path
+
 vpath %$(OBJ_EXT) $(OBJ_DIR)
 
+# Default target is to build (compile/bind/link)
 all: build
 
 # Set C/C++ linker command & target
@@ -48,30 +104,52 @@ ALL_CXXFLAGS = $(CXXFLAGS) $(C_INCLUDES)
 # Compute list of objects based on languages
 
 ifeq ($(strip $(filter c,$(LANGUAGES))),c)
+   # Compute list of C sources automatically unless already specified
+
    ifndef C_SRCS
       C_SRCS := \
         $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
    endif
 
-   OBJECTS += $(C_SRCS:$(C_EXT)=$(OBJ_EXT))
+   C_OBJECTS := $(C_SRCS:$(C_EXT)=$(OBJ_EXT))
+   OBJECTS += $(C_OBJECTS)
 endif
 
 ifeq ($(strip $(filter c++,$(LANGUAGES))),c++)
+   # Compute list of C++ sources automatically unless already specified
+
    ifndef CXX_SRCS
       CXX_SRCS := \
         $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(CXX_EXT))))
    endif
 
-   OBJECTS += $(CXX_SRCS:$(CXX_EXT)=$(OBJ_EXT))
+   CXX_OBJECTS := $(CXX_SRCS:$(CXX_EXT)=$(OBJ_EXT))
+   OBJECTS += $(CXX_OBJECTS)
 endif
 
 OBJ_FILES := $(foreach name,$(OBJECTS),$(OBJ_DIR)/$(name))
 
+# To handle C/C++ dependencies, we associate a small file for each
+# source that will list the dependencies as a make rule, so that we can then
+# include these rules in this makefile, and recompute them on a file by file
+# basis
+
 DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
+
+# Ada compilations are taken care of automatically, so do not mess with Ada
+# objects, only with main sources.
 
 compile: $(OBJECTS) $(ADA_SOURCES)
 
 # Linking rules
+
+# There are three cases:
+#
+# - C/C++ sources
+#
+# - Ada/C/C++, main program is in Ada
+#
+# - Ada/C/C++, main program is in C/C++
 
 ifeq ($(strip $(filter-out c c++,$(LANGUAGES))),)
 # link with C/C++
@@ -160,20 +238,35 @@ endif
 
 .SUFFIXES: $(C_EXT) $(CXX_EXT)
 
+# File rules
+
+# Compile C files individually
 %$(OBJ_EXT) : %$(C_EXT)
 	$(CC) -c $(ALL_CFLAGS) $< -o $(OBJ_DIR)/$@
 
+# Compile C++ files individually
 %$(OBJ_EXT) : %$(CXX_EXT)
 	$(CXX) -c $(ALL_CXXFLAGS) $< -o $(OBJ_DIR)/$@
 
-ada :
-	$(GNATMAKE) -c -P$(PROJECT_FILE)
-
+# Compile Ada body files individually
 %.adb : force
 	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
 
+# Compile Ada spec files individually
 %.ads : force
 	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
+
+# Languages rules
+
+# Compile all Ada files in the project
+ada :
+	$(GNATMAKE) -c -P$(PROJECT_FILE)
+
+# Compile all C files in the project
+c : $(C_OBJECTS)
+
+# Compile all C++ files in the project
+c++ : $(CXX_OBJECTS)
 
 .PHONY: clean all force ada
 
