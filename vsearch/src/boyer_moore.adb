@@ -273,7 +273,7 @@ package body Boyer_Moore is
       pragma Assert (Motif.Motif'First = 1);
 
       if not Motif.Case_Sensitive then
-         while Shift <= In_String'Length - M loop
+         while Shift <= In_String'Last - M loop
             J := M;
             while J > 0
               and then Motif.Motif (J) = To_Lower (In_String (Shift + J))
@@ -297,7 +297,7 @@ package body Boyer_Moore is
          end loop;
 
       else
-         while Shift <= In_String'Length - M loop
+         while Shift <= In_String'Last - M loop
             J := M;
             while J > 0 and then Motif.Motif (J) = In_String (Shift + J) loop
                J := J - 1;
