@@ -100,7 +100,7 @@ package body Custom_Module is
 
                if Current_Child.Tag.all = "Action" then
                   declare
-                     Args : Argument_List_Access :=
+                     Args : constant Argument_List_Access :=
                        Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
