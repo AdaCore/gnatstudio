@@ -23,8 +23,10 @@ package SN.Browse is
    --  A number of exceptions may be thrown to signal error during
    --  process spawning, file unlinking...
 
-   function Generate_Xrefs (DB_Directory : in String)
-      return GNAT.Expect.Process_Descriptor;
+   procedure Generate_Xrefs
+     (DB_Directory : in String;
+      Tmp_Filename : out GNAT.OS_Lib.Temp_File_Name;
+      PD           : out GNAT.Expect.Process_Descriptor);
    --  Removes .by and .to tables in the DB_Directory and
    --  does the same as  "cat *.xref | dbimp" so that generated cross
    --  reference tables should lie in the DB_Directory.
@@ -32,6 +34,10 @@ package SN.Browse is
 
    procedure Delete_Database (DB_Directory : in String);
    --  Removes all files from SN DB directory except xref pool
+
+   function Is_Alive (PD : GNAT.Expect.Process_Descriptor) return Boolean;
+   --  checks if the process is still running. If the process exited, its
+   --  descriptor is closed and False returned.
 
 end SN.Browse;
 

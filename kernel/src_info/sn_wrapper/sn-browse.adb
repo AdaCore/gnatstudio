@@ -125,8 +125,11 @@ package body SN.Browse is
    -- Generate_Xrefs --
    --------------------
 
-   function Generate_Xrefs (DB_Directory : String)
-      return GNAT.Expect.Process_Descriptor is
+   procedure Generate_Xrefs
+     (DB_Directory : in String;
+      Tmp_Filename : out GNAT.OS_Lib.Temp_File_Name;
+      PD           : out GNAT.Expect.Process_Descriptor)
+   is
       BY_File_Name : String := DB_Directory & Directory_Separator
                       & DB_File_Name & ".by" & ASCII.Nul;
       TO_File_Name : String := DB_Directory & Directory_Separator
@@ -140,6 +143,8 @@ package body SN.Browse is
       Args         : Argument_List_Access;
       Content      : String_Access;
       PD           : GNAT.Expect.Process_Descriptor;
+      Temp_File    : File_Descriptor;
+      Temp_Name    : Temp_File_Name;
    begin
 
       --  remove .to and .by tables
@@ -158,6 +163,11 @@ package body SN.Browse is
       end if;
 
       --  start dbimp
+      Create_Temp_File (Temp_File, Temp_Name);
+      if Temp_File = Invalid_FD then
+         raise Temp_File_Failure;
+      end if;
+
       --  enumerate all .xref files in the target directory
       --  and copy them into the temp file
       Open (Dir, DB_Directory);
@@ -165,8 +175,27 @@ package body SN.Browse is
          raise Directory_Error;
       end if;
 
+      Read (Dir, Dir_Entry, Last); -- read first directory entry
+      while Last /= 0 loop
+         if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
+            Content := OS_Utils.Read_File (DB_Directory
+               & Directory_Separator & Dir_Entry (1 .. Last));
+            if null /= Content then
+               if Content'Length
+                  /= Write (Temp_File, Content.all'Address, Content'Length)
+               then
+                  raise Temp_File_Failure;
+               end if;
+               Free (Content);
+            end if;
+         end if;
+         Read (Dir, Dir_Entry, Last); -- read next directory entry
+      end loop;
+      Close (Dir);
+
       Args := Argument_String_To_List (
           DB_Directory & Directory_Separator & DB_File_Name
+          & " -f " & Temp_Name
       );
 
       if null = DBIMP_Path then
@@ -176,27 +205,26 @@ package body SN.Browse is
 
       GNAT.Expect.Non_Blocking_Spawn (PD, DBIMP_Path.all, Args.all,
          Err_To_Out => True);
-      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
       Delete (Args);
-
-      Read (Dir, Dir_Entry, Last); -- read first directory entry
-      while Last /= 0 loop
-         if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
-            Content := OS_Utils.Read_File (DB_Directory
-               & Directory_Separator & Dir_Entry (1 .. Last));
-            if null /= Content then
-               GNAT.Expect.Send (PD, Content.all);
-               Free (Content);
-            end if;
-         end if;
-         Read (Dir, Dir_Entry, Last); -- read next directory entry
-      end loop;
-      Close (Dir);
-
-      Close (GNAT.Expect.Get_Input_Fd (PD));
+      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
 
       return PD;
    end Generate_Xrefs;
+
+   function Is_Alive (PD : GNAT.Expect.Process_Descriptor) return Boolean is
+      Result       : GNAT.Expect.Expect_Match;
+   begin
+      GNAT.Expect.Expect (PD, Result, "", 1);
+      if Result = GNAT.Expect.Expect_Timeout then
+         return True;
+      end if;
+      GNAT.Expect.Close (PD);
+      return False;
+   exception
+      when GNAT.Expect.Process_Died =>
+         GNAT.Expect.Close (PD);
+         return False;
+   end Is_Alive;
 
    ---------------------
    -- Delete_Database --
