@@ -243,7 +243,7 @@ package body Switches_Editors is
    function Get_Switches
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
-      Language : Name_Id;
+      Language : String;
       Files    : VFS.File_Array) return Argument_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
    --  for a specific language, and for a specific list of switches. The
@@ -1263,6 +1263,7 @@ package body Switches_Editors is
       Editor := new Switches_Edit_Record;
       Gtk.Notebook.Initialize (Editor);
 
+      Editor.Kernel := Kernel_Handle (Kernel);
       Editor.Pages := new Pages_Array (1 .. Switches_Page_Count (Kernel));
 
       for P in Editor.Pages'Range loop
@@ -1390,7 +1391,7 @@ package body Switches_Editors is
             List : Argument_List := Get_Switches
               (S,
                S.Pages (P).Pkg.all,
-               Get_String (S.Pages (P).Attribute_Index.all),
+               S.Pages (P).Attribute_Index.all,
                Files => (1 .. 0 => VFS.No_File));
          begin
             Set_Text (S.Pages (P).Cmd_Line,
@@ -1591,35 +1592,21 @@ package body Switches_Editors is
    function Get_Switches
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
-      Language : Name_Id;
-      Files    : File_Array) return Argument_List
-   is
-      Value      : Prj.Variable_Value;
-      Is_Default : Boolean;
+      Language : String;
+      Files    : File_Array) return Argument_List is
    begin
-      if Switches.Project = No_Project then
-         if Pkg_Name = Builder_Package then
-            return Clone (Default_Builder_Switches);
-         elsif Pkg_Name = Compiler_Package then
-            return Clone (Default_Compiler_Switches);
-         elsif Pkg_Name = Linker_Package then
-            return Clone (Default_Linker_Switches);
-         else
-            return (1 .. 0 => null);
-         end if;
-
+      if Files'Length = 0 then
+         return Get_Switches
+           (Switches.Kernel,
+            Switches.Project, Pkg_Name, VFS.No_File,
+            Language, Use_Initial_Value => True);
       else
-         if Files'Length = 0 then
-            Get_Switches (Switches.Project, Pkg_Name, VFS.No_File,
-                          Language, Value, Is_Default);
-         else
-            --  ??? Should we merge all the switches ?
-            Get_Switches (Switches.Project, Pkg_Name, Files (Files'First),
-                          Language, Value, Is_Default);
-         end if;
+         --  ??? Should we merge all the switches ?
+         return Get_Switches
+           (Switches.Kernel,
+            Switches.Project, Pkg_Name, Files (Files'First),
+            Language, Use_Initial_Value => True);
       end if;
-
-      return To_Argument_List (Value);
    end Get_Switches;
 
    -----------------
@@ -1670,7 +1657,7 @@ package body Switches_Editors is
             List : Argument_List := Get_Switches
               (Switches,
                Switches.Pages (P).Pkg.all,
-               Get_String (Switches.Pages (P).Attribute_Index.all),
+               Switches.Pages (P).Attribute_Index.all,
                Files);
          begin
             --  Force a space, so that at least some text is inserted, and thus
