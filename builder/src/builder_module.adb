@@ -75,6 +75,9 @@ package body Builder_Module is
    --  WARNING: this constant is shared with gvd-menu.adb, since we want to
    --  have the same history for the debugger arguments.
 
+   Run_External_Key : constant History_Key := "run_external_terminal";
+   --  The key in the history for the check button "run in external terminal"
+
    Timeout : constant Guint32 := 50;
    --  Timeout in milliseconds to check the build process
 
@@ -236,7 +239,7 @@ package body Builder_Module is
    function Compile_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : Argument_List) return String;
    --  Command handler for the "compile" command.
 
    procedure Compile_File
@@ -841,18 +844,16 @@ package body Builder_Module is
    function Compile_Command
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String
+      Args    : GNAT.OS_Lib.Argument_List) return String
    is
       use String_List_Utils.String_List;
-
-      Node : List_Node := First (Args);
+      Node : List_Node;
       L    : Integer := 0;
 
    begin
       if Command = "compile" then
-         while Node /= Null_Node loop
-            Compile_File (Kernel_Handle (Kernel), Data (Node));
-            Node := Next (Node);
+         for Index in Args'Range loop
+            Compile_File (Kernel_Handle (Kernel), Args (Index).all);
          end loop;
 
       elsif Command = "get_build_output" then
@@ -1280,7 +1281,8 @@ package body Builder_Module is
                Check_Msg     => -"Use external terminal",
                Key           => Cst_Run_Arguments_History,
                History       => Get_History (K),
-               Button_Active => Active'Unchecked_Access);
+               Button_Active => Active'Unchecked_Access,
+               Key_Check     => Run_External_Key);
 
          begin
             if Command = ""
@@ -1312,6 +1314,7 @@ package body Builder_Module is
                Check_Msg     => -"Use external terminal",
                Key           => Cst_Run_Arguments_History,
                History       => Get_History (K),
+               Key_Check     => Run_External_Key,
                Button_Active => Active'Unchecked_Access);
 
          begin
@@ -1675,18 +1678,21 @@ package body Builder_Module is
 
       Register_Command
         (Kernel,
-         "compile",
-         "Usage:  compile file1 [file2] ..." & ASCII.LF
-         & "  compiles a list of files from the project.",
-         Compile_Command'Access);
+         Command      => "compile",
+         Usage        => "compile file1 [file2] ...",
+         Description  => -"Compile a list of files from the project.",
+         Minimum_Args => 1,
+         Maximum_Args => Natural'Last,
+         Handler      => Compile_Command'Access);
 
       Register_Command
         (Kernel,
-         "get_build_output",
-         "Usage:  get_build_output" & ASCII.LF
-         & "  returns the last compilation results.",
-         Compile_Command'Access);
-
+         Command      => "get_build_output",
+         Usage        => "get_build_output",
+         Description  => -"Return the last compilation results.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Compile_Command'Access);
    end Register_Module;
 
 end Builder_Module;
