@@ -39,6 +39,8 @@ package Codefix.Errors_Manager is
 
    type Ptr_Errors_Interface is access all Errors_Interface'Class;
 
+   procedure Free (This : in out Ptr_Errors_Interface);
+
    procedure Free (This : in out Errors_Interface) is abstract;
 
    procedure Get_Direct_Message
@@ -102,6 +104,8 @@ package Codefix.Errors_Manager is
    type Correction_Manager is private;
    type Ptr_Correction_Manager is access all Correction_Manager;
 
+   procedure Free (This : in out Ptr_Correction_Manager);
+
    type Error_Callback is access procedure
      (Id           : Error_Id;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -162,15 +166,11 @@ package Codefix.Errors_Manager is
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.
 
---   procedure Update_Changes
---     (This          : Correction_Manager;
---      Current_Text  : Text_Navigator_Abstr'Class;
---      Object        : in out Extract'Class;
---      Success       : out Boolean;
---      Already_Fixed : out Boolean);
-   --  Merge Object with all the changes made in the correction manager. If all
-   --  modifications made in Object are already made in the correction manager,
-   --  then Already_Fixed is True, otherwise it is False.
+   procedure Set_Error_Cb
+     (This     : in out Correction_Manager;
+      Error_Cb : Execute_Corrupted);
+   --  Set the function that will be called when the execution of a command \
+   --  doesn't work.
 
    ----------------------------------------------------------------------------
    --  type Error_State
@@ -219,6 +219,7 @@ private
       Potential_Corrections : Memorized_Corrections.List;
       Fix_List              : Solution_List;
       Offset_Line           : Integer := 0;
+      Error_Cb              : Execute_Corrupted;
    end record;
 
    procedure Add_Error
