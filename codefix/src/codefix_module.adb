@@ -26,12 +26,17 @@ with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Gtk.Widget;             use Gtk.Widget;
+with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
 with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
+
+with Traces;                 use Traces;
+with Basic_Types;            use Basic_Types;
+with String_Utils;           use String_Utils;
 
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
@@ -42,9 +47,15 @@ with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
-with Traces;                 use Traces;
+with Commands.Codefix;       use Commands.Codefix;
 
 package body Codefix_Module is
+
+   Codefix_Answer_Xpm : aliased Pixmap_Array;
+   pragma Import (C, Codefix_Answer_Xpm, "codefix_answer_xpm");
+
+   Codefix_Ambiguous_Xpm : aliased Pixmap_Array;
+   pragma Import (C, Codefix_Ambiguous_Xpm, "codefix_ambiguous_xpm");
 
    Me : constant Debug_Handle := Create ("Codefix_Module");
 
@@ -84,11 +95,6 @@ package body Codefix_Module is
    procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
-   --  ???
-
-   function Get_Current_Cursor
-     (Current_Text : GPS_Navigator;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
    --  ???
 
    ------------
@@ -143,6 +149,24 @@ package body Codefix_Module is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Widget, Args);
+
+      Current_Error : Error_Id;
+      New_Action    : Action_Item;
+
+      function Cut_Message (Str : String) return String;
+
+      function Cut_Message (Str : String) return String is
+         Ind : Natural := Str'First;
+      begin
+         Skip_To_Char (Str, Ind, ':');
+         Ind := Ind + 1;
+         Skip_To_Char (Str, Ind, ':');
+         Ind := Ind + 1;
+         Skip_To_Char (Str, Ind, ':');
+
+         return Str (Ind .. Str'Last);
+      end Cut_Message;
+
    begin
       Free (Codefix_Module_ID.Errors_Found.all);
       Free (Codefix_Module_ID.Corrector.all);
@@ -166,6 +190,43 @@ package body Codefix_Module is
          Codefix_Module_ID.Current_Text.all,
          Codefix_Module_ID.Errors_Found.all,
          null);
+
+      Current_Error := Get_First_Error (Codefix_Module_ID.Corrector.all);
+
+      while Current_Error /= Null_Error_Id loop
+         New_Action := new Line_Information_Record;
+         New_Action.Text := new String'("--  ???");
+
+         if Get_Number_Of_Fixes (Current_Error) = 1 then
+            New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Answer_Xpm);
+         else
+            New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Ambiguous_Xpm);
+         end if;
+
+         New_Action.Associated_Command := new Codefix_Command;
+         Codefix_Command (New_Action.Associated_Command.all).Error :=
+           Current_Error;
+         Codefix_Command (New_Action.Associated_Command.all).Current_Text :=
+            Codefix_Module_ID.Current_Text;
+         Codefix_Command (New_Action.Associated_Command.all).Corrector :=
+           Codefix_Module_ID.Corrector;
+         Codefix_Command (New_Action.Associated_Command.all).Kernel :=
+           Codefix_Module_ID.Kernel;
+
+
+         Add_Location_Action
+           (Kernel        => Codefix_Module_ID.Kernel,
+            Identifier    => "--  ???",
+            Category      => "Builder Results",
+            File          => Get_Error_Message (Current_Error).File_Name.all,
+            Line          => Get_Error_Message (Current_Error).Line,
+            Column        => Get_Error_Message (Current_Error).Col,
+            Message       =>
+                Cut_Message (Get_Message (Get_Error_Message (Current_Error))),
+            Action        => New_Action);
+
+         Current_Error := Next (Current_Error);
+      end loop;
 
    exception
       when E : others =>
@@ -354,35 +415,6 @@ package body Codefix_Module is
    begin
       Set_Kernel (Console_Interface (File), This.Kernel);
    end Initialize;
-
-   ------------------------
-   -- Get_Current_Cursor --
-   ------------------------
-
-   function Get_Current_Cursor
-     (Current_Text : GPS_Navigator;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class
-   is
-      New_Cursor : File_Cursor;
-   begin
-      Assign
-        (New_Cursor.File_Name,
-         Interpret_Command
-           (Current_Text.Kernel,
-            "get_file " & Get_Id (GPS_Mark (Mark))));
-
-      New_Cursor.Col := Natural'Value
-        (Interpret_Command
-           (Current_Text.Kernel,
-            "get_column " & Get_Id (GPS_Mark (Mark))));
-
-      New_Cursor.Line := Natural'Value
-        (Interpret_Command
-           (Current_Text.Kernel,
-            "get_line " & Get_Id (GPS_Mark (Mark))));
-
-      return New_Cursor;
-   end Get_Current_Cursor;
 
    -------------
    -- Gtk_New --
