@@ -101,7 +101,8 @@ package body Boyer_Moore is
 
       Motif.Case_Sensitive  := Case_Sensitive;
       Motif.Last_Occurrence := (others => 1);
-      Motif.Motif           := new String'(From_String);
+      Motif.Motif           := new String (Motif_First .. From_String'Length);
+      Motif.Motif.all       := From_String;
       if not Case_Sensitive then
          To_Lower (Motif.Motif.all);
       end if;
