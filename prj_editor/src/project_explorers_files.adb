@@ -1321,18 +1321,10 @@ package body Project_Explorers_Files is
 
             for J in 1 .. Len loop
                if Buffer (J) = ASCII.NUL then
-                  if (Filenames_Are_Case_Sensitive
-                      and then
-                        Buffer (Last .. J - 1) =
-                        Cur_Dir (Cur_Dir'First
-                                   .. Cur_Dir'First + J - Last - 1))
-                    or else
-                      (not Filenames_Are_Case_Sensitive
-                       and then
-                         Case_Insensitive_Equal
-                           (Buffer (Last .. J - 1),
-                            Cur_Dir (Cur_Dir'First
-                                       .. Cur_Dir'First + J - Last - 1)))
+                  if File_Equal
+                    (Buffer (Last .. J - 1),
+                     Cur_Dir (Cur_Dir'First ..
+                              Cur_Dir'First + J - Last - 1))
                   then
                      File_Append_Directory
                        (Explorer, Buffer (Last .. J - 1),
