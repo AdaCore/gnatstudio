@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -490,6 +490,8 @@ package body Src_Editor_Box is
       Source : Source_Editor_Box;
       File_Up_To_Date : Boolean;
       L, C : Natural;
+      Is_Case_Sensitive : Boolean;
+
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
