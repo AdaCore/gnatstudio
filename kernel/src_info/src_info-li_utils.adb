@@ -579,7 +579,7 @@ package body Src_Info.LI_Utils is
          else
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
             if (Tmp_LI_File_Ptr = No_LI_File) then
-               --  ??? What should we do if LI_File for parent does not exists?
+               --  ??? What should we do if LI_File for parent does not exist?
                raise Parent_Not_Available;
             end if;
          end if;
