@@ -233,23 +233,25 @@ package body Scenario_Views is
                Add_Possible_Values
                  (Get_List (Combo), String_Type_Of (Scenar_Var (J)));
 
-               --  Display either the current value of the variable (if set),
-               --  or its default value.
+               --  The variable necessarily has a current value set in
+               --  Prj.Ext, since this is done automatically by the kernel.
+               --  Thus we display this value (no need to look at the default
+               --  value here).
+
                Str := External_Reference_Of (Scenar_Var (J));
-               if Str /= No_String then
-                  String_To_Name_Buffer (Str);
-                  Str := Prj.Ext.Value_Of (Name_Find);
-                  if Str /= No_String then
-                     String_To_Name_Buffer (Str);
-                     Set_Text
-                       (Get_Entry (Combo),
-                        Name_Buffer (Name_Buffer'First .. Name_Len));
-                  else
-                     Set_Text (Get_Entry (Combo), "");
-                     Display_Expr
-                       (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
-                  end if;
-               end if;
+               pragma Assert
+                 (Str /= No_String,
+                  "Scenario variable is not an external reference");
+
+               String_To_Name_Buffer (Str);
+               Str := Prj.Ext.Value_Of (Name_Find);
+               pragma Assert
+                 (Str /= No_String, "Value not defined in Prj.Ext");
+
+               String_To_Name_Buffer (Str);
+               Set_Text
+                 (Get_Entry (Combo),
+                  Name_Buffer (Name_Buffer'First .. Name_Len));
 
                View_Callback.Connect
                  (Get_Entry (Combo),
