@@ -978,7 +978,6 @@ package body Src_Editor_Buffer.Line_Information is
       Command     : Command_Access;
       Image       : Gdk_Pixbuf)
    is
-      Column  : Natural;
       Width   : Integer;
       BL      : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
    begin
@@ -989,37 +988,35 @@ package body Src_Editor_Buffer.Line_Information is
       --  Create the line information column.
       --  ??? This should not occur every time.
 
-      Create_Line_Information_Column (Buffer, Block_Info_Column, True, False);
+      if Buffer.Block_Highlighting_Column = -1 then
+         Create_Line_Information_Column
+           (Buffer, Block_Info_Column, True, False);
+         Buffer.Block_Highlighting_Column := BL.all'Last;
+      end if;
 
-      for J in BL.all'Range loop
-         if BL.all (J).Identifier.all = Block_Info_Column then
+      if Image = null then
+         Width := 0;
+      else
+         Width := Integer (Get_Width (Image));
+      end if;
 
-            if Image = null then
-               Width := 0;
-            else
-               Width := Integer (Get_Width (Image));
-            end if;
+      if Buffer.Line_Data (Buffer_Line).Side_Info_Data /= null then
+         Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column));
+         Buffer.Line_Data (Buffer_Line).Side_Info_Data
+           (Buffer.Block_Highlighting_Column) :=
+           (Info => new Line_Information_Record'
+              (Text               => null,
+               Image              => Image,
+               Associated_Command => Command),
+            Width => Width,
+            Set   => True);
+      end if;
 
-            if Buffer.Line_Data (Buffer_Line).Side_Info_Data /= null then
-               Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data (J));
-               Buffer.Line_Data (Buffer_Line).Side_Info_Data (J) :=
-                 (Info => new Line_Information_Record'
-                    (Text               => null,
-                     Image              => Image,
-                     Associated_Command => Command),
-                  Width => Width,
-                  Set   => True);
-            end if;
+      if Command /= null then
+         BL.all (Buffer.Block_Highlighting_Column).Width := Width;
 
-            Column := J;
-            exit;
-         end if;
-      end loop;
-
-      if Column /= -1 and then Command /= null then
-         BL.all (Column).Width := Width;
-
-         for J in Column + 1 .. BL.all'Last loop
+         for J in Buffer.Block_Highlighting_Column + 1 .. BL.all'Last loop
             BL.all (J).Starting_X :=
               BL.all (J - 1).Starting_X
               + BL.all (J - 1).Width + 1;
@@ -1446,12 +1443,16 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
 
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
 
       Real_Number : Buffer_Line_Type := 0;
       Result      : Boolean := True;
+      Info_Found  : Boolean := False;
       Buffer_Line : Buffer_Line_Type;
    begin
+      if Buffer.Block_Highlighting_Column = -1 then
+         return;
+      end if;
+
       Get_Iter_At_Mark (Buffer, Iter, Mark);
 
       --  Compute the real number of blank lines.
@@ -1490,19 +1491,20 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  If it was the last item in the column, delete the column.
 
-      Delete_Columns :
-      for Col in BL.all'Range loop
-         if BL.all (Col).Identifier.all = Block_Info_Column then
-            for J in Buffer_Lines'Range loop
-               exit Delete_Columns when
-                 Buffer_Lines (J).Side_Info_Data /= null
-                 and then Buffer_Lines (J).Side_Info_Data (Col).Info /= null;
-            end loop;
-
-            Remove_Line_Information_Column (Buffer, Block_Info_Column);
-            exit Delete_Columns;
+      for J in Buffer_Lines'Range loop
+         if  Buffer_Lines (J).Side_Info_Data /= null
+           and then Buffer_Lines (J).Side_Info_Data
+           (Buffer.Block_Highlighting_Column).Info /= null
+         then
+            Info_Found := True;
+            exit;
          end if;
-      end loop Delete_Columns;
+      end loop;
+
+      if Info_Found then
+         Remove_Line_Information_Column (Buffer, Block_Info_Column);
+         Buffer.Block_Highlighting_Column := -1;
+      end if;
 
       --  Redraw the side column.
 
@@ -1557,10 +1559,8 @@ package body Src_Editor_Buffer.Line_Information is
 
             Copy (Start_Iter, End_Iter);
 
-            Forward_To_Line_End (End_Iter);
-
-            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
-               Backward_Char (End_Iter, Result);
+            if not Ends_Line (End_Iter) then
+               Forward_To_Line_End (End_Iter, Result);
             end if;
 
             declare
@@ -1724,40 +1724,34 @@ package body Src_Editor_Buffer.Line_Information is
    --------------
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class) is
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
 
    begin
-      if BL.all = null then
+      if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
-      for Col in BL.all'Range loop
-         if BL.all (Col).Identifier.all = Block_Info_Column then
-            for Line in Buffer_Lines'Range loop
-               if Buffer_Lines (Line).Side_Info_Data /= null
-                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
-               then
-                  Command :=
-                    Buffer_Lines (Line).Side_Info_Data
-                    (Col).Info.Associated_Command;
+      for Line in Buffer_Lines'Range loop
+         if Buffer_Lines (Line).Side_Info_Data /= null
+           and then Buffer_Lines (Line).Side_Info_Data
+           (Buffer.Block_Highlighting_Column).Info /= null
+         then
+            Command :=
+              Buffer_Lines (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
-                  if Command /= null
-                    and then Command.all in Hide_Editable_Lines_Type'Class
-                  then
-                     Buffer.Blocks_Timeout_Registered := False;
+            if Command /= null
+              and then Command.all in Hide_Editable_Lines_Type'Class
+            then
+               Buffer.Blocks_Timeout_Registered := False;
 
-                     if Execute (Command) = Success then
-                        Fold_All (Buffer);
-                     end if;
-
-                     return;
-                  end if;
+               if Execute (Command) = Success then
+                  Fold_All (Buffer);
                end if;
-            end loop;
 
-            exit;
+               return;
+            end if;
          end if;
       end loop;
    end Fold_All;
@@ -1767,39 +1761,34 @@ package body Src_Editor_Buffer.Line_Information is
    ----------------
 
    procedure Unfold_All (Buffer : access Source_Buffer_Record'Class) is
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
    begin
-      if BL.all = null then
+      if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
-      for Col in BL.all'Range loop
-         if BL.all (Col).Identifier.all = Block_Info_Column then
-            for Line in Buffer_Lines'Range loop
-               if Buffer_Lines (Line).Side_Info_Data /= null
-                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
-               then
-                  Command :=
-                    Buffer_Lines (Line).Side_Info_Data
-                    (Col).Info.Associated_Command;
+      for Line in Buffer_Lines'Range loop
+         if Buffer_Lines (Line).Side_Info_Data /= null
+           and then Buffer_Lines
+             (Line).Side_Info_Data
+             (Buffer.Block_Highlighting_Column).Info /= null
+         then
+            Command :=
+              Buffer_Lines (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
-                  if Command /= null
-                    and then Command.all in Unhide_Editable_Lines_Type'Class
-                  then
-                     Buffer.Blocks_Timeout_Registered := False;
+            if Command /= null
+              and then Command.all in Unhide_Editable_Lines_Type'Class
+            then
+               Buffer.Blocks_Timeout_Registered := False;
 
-                     if Execute (Command) = Success then
-                        Unfold_All (Buffer);
-                     end if;
-
-                     return;
-                  end if;
+               if Execute (Command) = Success then
+                  Unfold_All (Buffer);
                end if;
-            end loop;
 
-            exit;
+               return;
+            end if;
          end if;
       end loop;
    end Unfold_All;
@@ -1812,30 +1801,14 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type)
    is
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
 
       Command        : Command_Access;
-      Column         : Integer := -1;
       Buffer_Line    : Buffer_Line_Type;
    begin
-      --  ??? This should be optimized (Column should be cached).
-
-      if BL.all = null then
-         return;
-      end if;
-
-      for Col in BL.all'Range loop
-         if BL.all (Col).Identifier.all = Block_Info_Column then
-
-            Column := Col;
-            exit;
-         end if;
-      end loop;
-
-      if Column = -1 then
+      if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
@@ -1848,11 +1821,12 @@ package body Src_Editor_Buffer.Line_Information is
 
                if Buffer_Lines (Buffer_Line).Side_Info_Data /= null
                  and then Buffer_Lines
-                   (Buffer_Line).Side_Info_Data (Column).Info /= null
+                   (Buffer_Line).Side_Info_Data
+                   (Buffer.Block_Highlighting_Column).Info /= null
                then
                   Command :=
                     Buffer_Lines (Buffer_Line).Side_Info_Data
-                    (Column).Info.Associated_Command;
+                    (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
                   if Command /= null
                     and then Command.all in Unhide_Editable_Lines_Type'Class
@@ -1876,47 +1850,42 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer                 : access Source_Buffer_Record'Class;
       Remove_Unfold_Commands : Boolean := True)
    is
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
       Other_Command_Found : Boolean := False;
 
    begin
-      if BL.all = null then
+      if Buffer.Block_Highlighting_Column = -1 then
          return;
       end if;
 
-      for Col in BL.all'Range loop
-         if BL.all (Col).Identifier.all = Block_Info_Column then
-            for Line in Buffer_Lines'Range loop
-               if Buffer_Lines (Line).Side_Info_Data /= null
-                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
-               then
-                  Command :=
-                    Buffer_Lines (Line).Side_Info_Data
-                    (Col).Info.Associated_Command;
+      for Line in Buffer_Lines'Range loop
+         if Buffer_Lines (Line).Side_Info_Data /= null
+           and then Buffer_Lines (Line).Side_Info_Data
+           (Buffer.Block_Highlighting_Column).Info /= null
+         then
+            Command :=
+              Buffer_Lines (Line).Side_Info_Data
+              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
-                  if Command /= null then
-                     if (Command.all in Hide_Editable_Lines_Type'Class
-                       or else
+            if Command /= null then
+               if (Command.all in Hide_Editable_Lines_Type'Class
+                         or else
                            (Remove_Unfold_Commands
                             and then Command.all in
                               Unhide_Editable_Lines_Type'Class))
-                     then
-                        Add_Block_Command (Buffer, Line, null, null);
-                     else
-                        Other_Command_Found := True;
-                     end if;
-                  end if;
+               then
+                  Add_Block_Command (Buffer, Line, null, null);
+               else
+                  Other_Command_Found := True;
                end if;
-            end loop;
-
-            exit;
+            end if;
          end if;
       end loop;
 
       if not Other_Command_Found then
          Remove_Line_Information_Column (Buffer, Block_Info_Column);
+         Buffer.Block_Highlighting_Column := -1;
       end if;
    end Remove_Block_Folding_Commands;
 
@@ -1943,6 +1912,7 @@ package body Src_Editor_Buffer.Line_Information is
       Remove    : Boolean := False)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result   : Boolean;
       The_Line : Gint;
       Tag      : Gtk_Text_Tag;
    begin
@@ -1986,7 +1956,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          if End_Col <= 0 then
             Copy (Start_Iter, End_Iter);
-            Forward_To_Line_End (End_Iter);
+            Forward_To_Line_End (End_Iter, Result);
          else
             Get_Iter_At_Line_Offset
               (Buffer, End_Iter, The_Line, Gint (End_Col - 1));
