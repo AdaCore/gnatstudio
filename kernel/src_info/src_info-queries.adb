@@ -33,7 +33,7 @@ with Basic_Types;             use Basic_Types;
 
 package body Src_Info.Queries is
 
-   Me : Debug_Handle := Create ("SRC_INFO");
+   Me : constant Debug_Handle := Create ("SRC_INFO");
 
    use Name_Htable.String_Hash_Table;
 
@@ -692,7 +692,7 @@ package body Src_Info.Queries is
    -------------------
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
-      K : E_Kind := Node.Decl.Kind;
+      K : constant E_Kind := Node.Decl.Kind;
    begin
       return (K = Generic_Function_Or_Operator
               or else K = Generic_Procedure
@@ -1530,7 +1530,7 @@ package body Src_Info.Queries is
 
       function Check_Decl_File return E_Reference_List is
          Ref : E_Reference_List;
-         LI : LI_File_Ptr := Get (Iterator.Decl_Iter);
+         LI  : constant LI_File_Ptr := Get (Iterator.Decl_Iter);
       begin
          --  Were we checking the declarations from the spec ?
          if Iterator.Part = Unit_Spec then
@@ -1586,6 +1586,7 @@ package body Src_Info.Queries is
          if Get (Iterator.Decl_Iter) /= null
            and then Get (Iterator.Decl_Iter) = Iterator.Decl_Iter.Decl_LI
          then
+            --  ??? Iterator.Part is uninitialized here
             Iterator.References := Check_Decl_File;
             if Iterator.References /= null then
                return;
@@ -2046,7 +2047,7 @@ package body Src_Info.Queries is
      (Location : File_Location; Entity_Name : String := "")
       return E_Declaration
    is
-      File : File_Info_Ptr := Get_File_Info (Location.File);
+      File : constant File_Info_Ptr := Get_File_Info (Location.File);
       Decl : E_Declaration_Info_List;
    begin
       Decl := Get_Declaration
