@@ -268,6 +268,8 @@ package body GVD_Module is
    procedure Generic_Debug_Command
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
+
       Top     : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
