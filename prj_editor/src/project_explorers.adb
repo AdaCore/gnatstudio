@@ -37,12 +37,12 @@ with Gtk.Widget;          use Gtk.Widget;
 
 package body Project_Explorers is
 
-   function Load_Session
+   function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget;
    --  Save the status of the project explorer to an XML tree
 
-   function Save_Session
+   function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Restore the status of the explorer from a saved XML tree.
@@ -93,10 +93,10 @@ package body Project_Explorers is
    end Get_Tree;
 
    ------------------
-   -- Load_Session --
+   -- Load_Desktop --
    ------------------
 
-   function Load_Session
+   function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget
    is
@@ -108,14 +108,15 @@ package body Project_Explorers is
          Gtk_New (Explorer, User);
          return Gtk_Widget (Explorer);
       end if;
+
       return null;
-   end Load_Session;
+   end Load_Desktop;
 
    ------------------
-   -- Save_Session --
+   -- Save_Desktop --
    ------------------
 
-   function Save_Session
+   function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
      return Node_Ptr
    is
@@ -126,11 +127,12 @@ package body Project_Explorers is
          N.Tag := new String' ("Project_Explorer");
          return N;
       end if;
+
       return null;
-   end Save_Session;
+   end Save_Desktop;
 
 
 begin
-   Glide_Kernel.Kernel_Sessions.Register_Session_Functions
-     (Save_Session'Access, Load_Session'Access);
+   Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+     (Save_Desktop'Access, Load_Desktop'Access);
 end Project_Explorers;
