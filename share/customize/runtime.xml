@@ -13,15 +13,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-chahan.ads"</shell>
-   <descr>Ada.Characters.Handling</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Handling</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "a-charac.ads"</shell>
    <descr>Ada.Characters</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Characters</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-chahan.ads"</shell>
+   <descr>Ada.Characters.Handling</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Handling</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -31,9 +31,39 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-chlat9.ads"</shell>
+   <descr>Ada.Characters.Latin_9</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Latin__9</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-cwila1.ads"</shell>
+   <descr>Ada.Characters.Wide_Latin_1</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Wide__Latin__1</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-cwila9.ads"</shell>
+   <descr>Ada.Characters.Wide_Latin_9</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Wide__Latin__9</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-comlin.ads"</shell>
    <descr>Ada.Command_Line</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Command__Line</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-colien.ads"</shell>
+   <descr>Ada.Command_Line.Environment</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Command__Line.Environment</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-colire.ads"</shell>
+   <descr>Ada.Command_Line.Remove</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Command__Line.Remove</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -43,15 +73,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-direct.ads"</shell>
-   <descr>Ada.Directories</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Directories</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "a-direio.ads"</shell>
    <descr>Ada.Direct_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Direct__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-diocst.ads"</shell>
+   <descr>Ada.Direct_IO.C_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Direct__IO.C__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-direct.ads"</shell>
+   <descr>Ada.Directories</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Directories</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -64,6 +100,18 @@
    <shell>Editor.edit "a-except.ads"</shell>
    <descr>Ada.Exceptions</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Exceptions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-einuoc.ads"</shell>
+   <descr>Ada.Exceptions.Is_Null_Occurrence</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Exceptions.Is__Null__Occurrence</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-exctra.ads"</shell>
+   <descr>Ada.Exceptions.Traceback</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Exceptions.Traceback</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -85,9 +133,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-ioexce.ads"</shell>
+   <descr>Ada.IO_Exceptions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.IO__Exceptions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-inteio.ads"</shell>
    <descr>Ada.Integer_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Integer__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-iwteio.ads"</shell>
+   <descr>Ada.Integer_Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Integer__Wide__Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -103,249 +163,9 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-ioexce.ads"</shell>
-   <descr>Ada.IO_Exceptions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.IO__Exceptions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-iwteio.ads"</shell>
-   <descr>Ada.Integer_Wide_Text_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Integer__Wide__Text__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ncelfu.ads"</shell>
-   <descr>Ada.Numerics.Complex_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Complex__Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ngcefu.ads"</shell>
-   <descr>Ada.Numerics.Generic_Complex_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Complex__Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ngcoty.ads"</shell>
-   <descr>Ada.Numerics.Generic_Complex_Types</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Complex__Types</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ngelfu.ads"</shell>
-   <descr>Ada.Numerics.Generic_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-nucoty.ads"</shell>
-   <descr>Ada.Numerics.Complex_Types</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Complex__Types</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-nudira.ads"</shell>
-   <descr>Ada.Numerics.Discrete_Random</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Discrete__Random</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-nuelfu.ads"</shell>
-   <descr>Ada.Numerics.Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-nuflra.ads"</shell>
-   <descr>Ada.Numerics.Float_Random</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Float__Random</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-numeri.ads"</shell>
-   <descr>Ada.Numerics</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-reatim.ads"</shell>
-   <descr>Ada.Real_Time</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Real__Time</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-sequio.ads"</shell>
-   <descr>Ada.Sequential_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Sequential__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stmaco.ads"</shell>
-   <descr>Ada.Strings.Maps.Constants</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Maps.Constants</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-storio.ads"</shell>
-   <descr>Ada.Storage_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Storage__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-strbou.ads"</shell>
-   <descr>Ada.Strings.Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Bounded</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stream.ads"</shell>
-   <descr>Ada.Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Streams</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-strfix.ads"</shell>
-   <descr>Ada.Strings.Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Fixed</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-string.ads"</shell>
-   <descr>Ada.Strings</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-strmap.ads"</shell>
-   <descr>Ada.Strings.Maps</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Maps</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-strunb.ads"</shell>
-   <descr>Ada.Strings.Unbounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Unbounded</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ststio.ads"</shell>
-   <descr>Ada.Streams.Stream_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Streams.Stream__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stwibo.ads"</shell>
-   <descr>Ada.Strings.Wide_Bounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Bounded</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stwifi.ads"</shell>
-   <descr>Ada.Strings.Wide_Fixed</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Fixed</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stwima.ads"</shell>
-   <descr>Ada.Strings.Wide_Maps</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Maps</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-stwiun.ads"</shell>
-   <descr>Ada.Strings.Wide_Unbounded</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Unbounded</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-swmwco.ads"</shell>
-   <descr>Ada.Strings.Wide_Maps.Wide_Constants</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Maps.Wide__Constants</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-sytaco.ads"</shell>
-   <descr>Ada.Synchronous_Task_Control</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Synchronous__Task__Control</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-tags.ads"</shell>
-   <descr>Ada.Tags</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Tags</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-tasatt.ads"</shell>
-   <descr>Ada.Task_Attributes</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Task__Attributes</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-taside.ads"</shell>
-   <descr>Ada.Task_Identification</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Task__Identification</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-teioed.ads"</shell>
-   <descr>Ada.Text_IO.Editing</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Editing</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-textio.ads"</shell>
-   <descr>Ada.Text_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-ticoio.ads"</shell>
-   <descr>Ada.Text_IO.Complex_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Complex__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-titest.ads"</shell>
-   <descr>Ada.Text_IO.Text_Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Text__Streams</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-unccon.ads"</shell>
-   <descr>Ada.Unchecked_Conversion</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Unchecked__Conversion</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-uncdea.ads"</shell>
-   <descr>Ada.Unchecked_Deallocation</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Unchecked__Deallocation</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-witeio.ads"</shell>
-   <descr>Ada.Wide_Text_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-wtcoio.ads"</shell>
-   <descr>Ada.Wide_Text_IO.Complex_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Complex__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-wtedit.ads"</shell>
-   <descr>Ada.Wide_Text_IO.Editing</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Editing</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-wttest.ads"</shell>
-   <descr>Ada.Wide_Text_IO.Text_Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Text__Streams</menu>
+   <shell>Editor.edit "a-nlcefu.ads"</shell>
+   <descr>Ada.Long_Complex_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Long__Complex__Elementary__Functions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -373,6 +193,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-nllcef.ads"</shell>
+   <descr>Ada.Long_Long_Complex_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Long__Long__Complex__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-llftio.ads"</shell>
    <descr>Ada.Long_Long_Float_Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Long__Long__Float__Text__IO</menu>
@@ -397,9 +223,57 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-nlcefu.ads"</shell>
-   <descr>Ada.Long_Complex_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Long__Complex__Elementary__Functions</menu>
+   <shell>Editor.edit "a-numeri.ads"</shell>
+   <descr>Ada.Numerics</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ncelfu.ads"</shell>
+   <descr>Ada.Numerics.Complex_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Complex__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nucoty.ads"</shell>
+   <descr>Ada.Numerics.Complex_Types</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Complex__Types</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nudira.ads"</shell>
+   <descr>Ada.Numerics.Discrete_Random</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Discrete__Random</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nuelfu.ads"</shell>
+   <descr>Ada.Numerics.Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nuflra.ads"</shell>
+   <descr>Ada.Numerics.Float_Random</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Float__Random</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ngcefu.ads"</shell>
+   <descr>Ada.Numerics.Generic_Complex_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Complex__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ngcoty.ads"</shell>
+   <descr>Ada.Numerics.Generic_Complex_Types</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Complex__Types</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-ngelfu.ads"</shell>
+   <descr>Ada.Numerics.Generic_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Generic__Elementary__Functions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -415,27 +289,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-nllcef.ads"</shell>
-   <descr>Ada.Long_Long_Complex_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Long__Long__Complex__Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-nllefu.ads"</shell>
-   <descr>Ada.Numerics.Long_Long_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Long__Long__Elementary__Functions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "a-nllcty.ads"</shell>
    <descr>Ada.Numerics.Long_Long_Complex_Types</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Long__Long__Complex__Types</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-nscefu.ads"</shell>
-   <descr>Ada.Short_Complex_Elementary_Functions</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Short__Complex__Elementary__Functions</menu>
+   <shell>Editor.edit "a-nllefu.ads"</shell>
+   <descr>Ada.Numerics.Long_Long_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Long__Long__Elementary__Functions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -448,6 +310,30 @@
    <shell>Editor.edit "a-nselfu.ads"</shell>
    <descr>Ada.Numerics.Short_Elementary_Functions</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Numerics.Short__Elementary__Functions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-reatim.ads"</shell>
+   <descr>Ada.Real_Time</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Real__Time</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-sequio.ads"</shell>
+   <descr>Ada.Sequential_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Sequential__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-siocst.ads"</shell>
+   <descr>Ada.Sequential_IO.C_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Sequential__IO.C__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-nscefu.ads"</shell>
+   <descr>Ada.Short_Complex_Elementary_Functions</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Short__Complex__Elementary__Functions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -487,57 +373,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-chlat9.ads"</shell>
-   <descr>Ada.Characters.Latin_9</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Latin__9</menu>
+   <shell>Editor.edit "a-storio.ads"</shell>
+   <descr>Ada.Storage_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Storage__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-colien.ads"</shell>
-   <descr>Ada.Command_Line.Environment</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Command__Line.Environment</menu>
+   <shell>Editor.edit "a-stream.ads"</shell>
+   <descr>Ada.Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Streams</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-colire.ads"</shell>
-   <descr>Ada.Command_Line.Remove</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Command__Line.Remove</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-cwila1.ads"</shell>
-   <descr>Ada.Characters.Wide_Latin_1</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Wide__Latin__1</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-cwila9.ads"</shell>
-   <descr>Ada.Characters.Wide_Latin_9</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Characters.Wide__Latin__9</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-diocst.ads"</shell>
-   <descr>Ada.Direct_IO.C_Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Direct__IO.C__Streams</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-einuoc.ads"</shell>
-   <descr>Ada.Exceptions.Is_Null_Occurrence</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Exceptions.Is__Null__Occurrence</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-exctra.ads"</shell>
-   <descr>Ada.Exceptions.Traceback</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Exceptions.Traceback</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "a-siocst.ads"</shell>
-   <descr>Ada.Sequential_IO.C_Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Sequential__IO.C__Streams</menu>
+   <shell>Editor.edit "a-ststio.ads"</shell>
+   <descr>Ada.Streams.Stream_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Streams.Stream__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -547,9 +397,75 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-string.ads"</shell>
+   <descr>Ada.Strings</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-strbou.ads"</shell>
+   <descr>Ada.Strings.Bounded</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Bounded</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-strfix.ads"</shell>
+   <descr>Ada.Strings.Fixed</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Fixed</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-strmap.ads"</shell>
+   <descr>Ada.Strings.Maps</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Maps</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stmaco.ads"</shell>
+   <descr>Ada.Strings.Maps.Constants</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Maps.Constants</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-strunb.ads"</shell>
+   <descr>Ada.Strings.Unbounded</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Unbounded</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-suteio.ads"</shell>
    <descr>Ada.Strings.Unbounded.Text_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Unbounded.Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stwibo.ads"</shell>
+   <descr>Ada.Strings.Wide_Bounded</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Bounded</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stwifi.ads"</shell>
+   <descr>Ada.Strings.Wide_Fixed</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Fixed</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stwima.ads"</shell>
+   <descr>Ada.Strings.Wide_Maps</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Maps</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-swmwco.ads"</shell>
+   <descr>Ada.Strings.Wide_Maps.Wide_Constants</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Maps.Wide__Constants</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-stwiun.ads"</shell>
+   <descr>Ada.Strings.Wide_Unbounded</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Strings.Wide__Unbounded</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -559,9 +475,39 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-sytaco.ads"</shell>
+   <descr>Ada.Synchronous_Task_Control</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Synchronous__Task__Control</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-tags.ads"</shell>
+   <descr>Ada.Tags</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Tags</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-tasatt.ads"</shell>
+   <descr>Ada.Task_Attributes</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Task__Attributes</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-taside.ads"</shell>
+   <descr>Ada.Task_Identification</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Task__Identification</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-taidim.ads"</shell>
    <descr>Ada.Task_Identification.Image</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Task__Identification.Image</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-textio.ads"</shell>
+   <descr>Ada.Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -571,15 +517,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-wtcstr.ads"</shell>
-   <descr>Ada.Wide_Text_IO.C_Streams</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.C__Streams</menu>
+   <shell>Editor.edit "a-ticoio.ads"</shell>
+   <descr>Ada.Text_IO.Complex_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Complex__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "a-tideio.ads"</shell>
    <descr>Ada.Text_IO.Decimal_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Decimal__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-teioed.ads"</shell>
+   <descr>Ada.Text_IO.Editing</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Editing</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -607,21 +559,57 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "a-tiinio.ads"</shell>
-   <descr>Ada.Text_IO.Integer_IO</descr>
-   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Integer__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "a-timoio.ads"</shell>
    <descr>Ada.Text_IO.Modular_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Modular__IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "a-titest.ads"</shell>
+   <descr>Ada.Text_IO.Text_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Text__IO.Text__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-unccon.ads"</shell>
+   <descr>Ada.Unchecked_Conversion</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Unchecked__Conversion</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-uncdea.ads"</shell>
+   <descr>Ada.Unchecked_Deallocation</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Unchecked__Deallocation</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-witeio.ads"</shell>
+   <descr>Ada.Wide_Text_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-wtcstr.ads"</shell>
+   <descr>Ada.Wide_Text_IO.C_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.C__Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-wtcoio.ads"</shell>
+   <descr>Ada.Wide_Text_IO.Complex_IO</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Complex__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "a-wtdeio.ads"</shell>
    <descr>Ada.Wide_Text_IO.Decimal_IO</descr>
    <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Decimal__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "a-wtedit.ads"</shell>
+   <descr>Ada.Wide_Text_IO.Editing</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Editing</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -655,15 +643,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-arrspl.ads"</shell>
-   <descr>GNAT.Array_Split</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Array__Split</menu>
+   <shell>Editor.edit "a-wttest.ads"</shell>
+   <descr>Ada.Wide_Text_IO.Text_Streams</descr>
+   <menu>/Help/GNAT Runtime/Ada/Ada.Wide__Text__IO.Text__Streams</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "g-awk.ads"</shell>
    <descr>GNAT.AWK</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.AWK</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-arrspl.ads"</shell>
+   <descr>GNAT.Array_Split</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Array__Split</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -697,24 +691,6 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-calend.ads"</shell>
-   <descr>GNAT.Calendar</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Calendar</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "g-casuti.ads"</shell>
-   <descr>GNAT.Case_Util</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Case__Util</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "g-catiio.ads"</shell>
-   <descr>GNAT.Calendar.Time_IO</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Calendar.Time__IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-cgi.ads"</shell>
    <descr>GNAT.CGI</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.CGI</menu>
@@ -733,6 +709,30 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-crc32.ads"</shell>
+   <descr>GNAT.CRC32</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.CRC32</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-calend.ads"</shell>
+   <descr>GNAT.Calendar</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Calendar</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-catiio.ads"</shell>
+   <descr>GNAT.Calendar.Time_IO</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Calendar.Time__IO</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-casuti.ads"</shell>
+   <descr>GNAT.Case_Util</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Case__Util</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-comlin.ads"</shell>
    <descr>GNAT.Command_Line</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Command__Line</menu>
@@ -742,12 +742,6 @@
    <shell>Editor.edit "g-comver.ads"</shell>
    <descr>GNAT.Compiler_Version</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Compiler__Version</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "g-crc32.ads"</shell>
-   <descr>GNAT.CRC32</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.CRC32</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -775,15 +769,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-diopit.ads"</shell>
-   <descr>GNAT.Directory_Operations.Iteration</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Directory__Operations.Iteration</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-dirope.ads"</shell>
    <descr>GNAT.Directory_Operations</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Directory__Operations</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-diopit.ads"</shell>
+   <descr>GNAT.Directory_Operations.Iteration</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Directory__Operations.Iteration</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -805,15 +799,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-except.ads"</shell>
-   <descr>GNAT.Exceptions</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Exceptions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-exctra.ads"</shell>
    <descr>GNAT.Exception_Traces</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Exception__Traces</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-except.ads"</shell>
+   <descr>GNAT.Exceptions</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Exceptions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -895,9 +889,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "g-perhas.ads"</shell>
+   <descr>GNAT.Perfect_Hash</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "g-pehage.ads"</shell>
-   <descr>GNAT.Perfect_Hash_Generators</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash__Generators</menu>
+   <descr>GNAT.Perfect_Hash.Generators</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash.Generators</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -919,15 +919,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-semaph.ads"</shell>
-   <descr>GNAT.Semaphores</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Semaphores</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-sestin.ads"</shell>
    <descr>GNAT.Secondary_Stack_Info</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Secondary__Stack__Info</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-semaph.ads"</shell>
+   <descr>GNAT.Semaphores</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Semaphores</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -955,15 +955,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-spipat.ads"</shell>
-   <descr>GNAT.Spitbol.Patterns</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Spitbol.Patterns</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-spitbo.ads"</shell>
    <descr>GNAT.Spitbol</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.Spitbol</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-spipat.ads"</shell>
+   <descr>GNAT.Spitbol.Patterns</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Spitbol.Patterns</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -985,15 +985,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-string.ads"</shell>
-   <descr>GNAT.Strings</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Strings</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-strspl.ads"</shell>
    <descr>GNAT.String_Split</descr>
    <menu>/Help/GNAT Runtime/GNAT/GNAT.String__Split</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "g-string.ads"</shell>
+   <descr>GNAT.Strings</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Strings</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1039,9 +1039,9 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-cobol.ads"</shell>
-   <descr>Interfaces.Cobol</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Cobol</menu>
+   <shell>Editor.edit "i-cexten.ads"</shell>
+   <descr>Interfaces.C.Extensions</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C.Extensions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1051,21 +1051,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "i-cstrea.ads"</shell>
+   <descr>Interfaces.C.Streams</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C.Streams</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "i-cstrin.ads"</shell>
    <descr>Interfaces.C.Strings</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C.Strings</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-fortra.ads"</shell>
-   <descr>Interfaces.Fortran</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Fortran</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-cexten.ads"</shell>
-   <descr>Interfaces.C.Extensions</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C.Extensions</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1075,9 +1069,27 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-cstrea.ads"</shell>
-   <descr>Interfaces.C.Streams</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C.Streams</menu>
+   <shell>Editor.edit "i-cobol.ads"</shell>
+   <descr>Interfaces.Cobol</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Cobol</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "i-fortra.ads"</shell>
+   <descr>Interfaces.Fortran</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Fortran</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "i-java.ads"</shell>
+   <descr>Interfaces.Java</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Java</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "i-javlan.ads"</shell>
+   <descr>Interfaces.Java.Lang</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Java.Lang</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1099,27 +1111,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-java.ads"</shell>
-   <descr>Interfaces.Java</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Java</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-javlan.ads"</shell>
-   <descr>Interfaces.Java.Lang</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Java.Lang</menu>
+   <shell>Editor.edit "i-os2lib.ads"</shell>
+   <descr>Interfaces.Os2lib</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Os2lib</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
    <shell>Editor.edit "i-os2err.ads"</shell>
    <descr>Interfaces.Os2lib.Errors</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Os2lib.Errors</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "i-os2lib.ads"</shell>
-   <descr>Interfaces.Os2lib</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.Os2lib</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1147,45 +1147,15 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "i-vxwoio.ads"</shell>
-   <descr>Interfaces.VxWorks.IO</descr>
-   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.VxWorks.IO</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "i-vxwork.ads"</shell>
    <descr>Interfaces.VxWorks</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Interfaces.VxWorks</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "s-atacco.ads"</shell>
-   <descr>System.Address_To_Access_Conversions</descr>
-   <menu>/Help/GNAT Runtime/System/System.Address__To__Access__Conversions</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "s-maccod.ads"</shell>
-   <descr>System.Machine_Code</descr>
-   <menu>/Help/GNAT Runtime/System/System.Machine__Code</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "s-rpc.ads"</shell>
-   <descr>System.Rpc</descr>
-   <menu>/Help/GNAT Runtime/System/System.Rpc</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "s-stoele.ads"</shell>
-   <descr>System.Storage_Elements</descr>
-   <menu>/Help/GNAT Runtime/System/System.Storage__Elements</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
-   <shell>Editor.edit "s-stopoo.ads"</shell>
-   <descr>System.Storage_Pools</descr>
-   <menu>/Help/GNAT Runtime/System/System.Storage__Pools</menu>
+   <shell>Editor.edit "i-vxwoio.ads"</shell>
+   <descr>Interfaces.VxWorks.IO</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces.VxWorks.IO</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1195,9 +1165,21 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "s-atacco.ads"</shell>
+   <descr>System.Address_To_Access_Conversions</descr>
+   <menu>/Help/GNAT Runtime/System/System.Address__To__Access__Conversions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "s-assert.ads"</shell>
    <descr>System.Assertions</descr>
    <menu>/Help/GNAT Runtime/System/System.Assertions</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-maccod.ads"</shell>
+   <descr>System.Machine_Code</descr>
+   <menu>/Help/GNAT Runtime/System/System.Machine__Code</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1222,6 +1204,24 @@
    <shell>Editor.edit "s-rident.ads"</shell>
    <descr>System.Rident</descr>
    <menu>/Help/GNAT Runtime/System/System.Rident</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-rpc.ads"</shell>
+   <descr>System.Rpc</descr>
+   <menu>/Help/GNAT Runtime/System/System.Rpc</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-stoele.ads"</shell>
+   <descr>System.Storage_Elements</descr>
+   <menu>/Help/GNAT Runtime/System/System.Storage__Elements</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-stopoo.ads"</shell>
+   <descr>System.Storage_Pools</descr>
+   <menu>/Help/GNAT Runtime/System/System.Storage__Pools</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
