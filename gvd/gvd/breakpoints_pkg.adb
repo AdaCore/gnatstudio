@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,13 +13,14 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
 with Gtk.Adjustment;   use Gtk.Adjustment;
+with Gtk.Stock;        use Gtk.Stock;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Enums;        use Gtk.Enums;
 with Odd_Intl; use Odd_Intl;
@@ -242,7 +243,7 @@ begin
    Set_Child_Ipadding (Breakpoints.Vbuttonbox2, 7, 0);
    Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbuttonbox2, False, False, 0);
 
-   Gtk_New (Breakpoints.Add_Location, -"Add");
+   Gtk_New_From_Stock (Breakpoints.Add_Location, Stock_Add);
    Set_Flags (Breakpoints.Add_Location, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Location, "clicked",
@@ -326,7 +327,7 @@ begin
    Set_Child_Ipadding (Breakpoints.Vbuttonbox3, 7, 0);
    Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbuttonbox3, False, True, 0);
 
-   Gtk_New (Breakpoints.Add_Watchpoint, -"Add");
+   Gtk_New_From_Stock (Breakpoints.Add_Watchpoint, Stock_Add);
    Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Watchpoint, "clicked",
@@ -425,7 +426,7 @@ begin
    Set_Child_Ipadding (Breakpoints.Vbuttonbox4, 7, 0);
    Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbuttonbox4, False, False, 0);
 
-   Gtk_New (Breakpoints.Add_Exception, -"Add");
+   Gtk_New_From_Stock (Breakpoints.Add_Exception, Stock_Add);
    Set_Flags (Breakpoints.Add_Exception, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Exception, "clicked",
@@ -510,7 +511,7 @@ begin
    Set_Child_Ipadding (Breakpoints.Hbuttonbox8, 7, 0);
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
 
-   Gtk_New (Breakpoints.Remove, -"Remove");
+   Gtk_New_From_Stock (Breakpoints.Remove, Stock_Remove);
    Set_Flags (Breakpoints.Remove, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Remove, "clicked",
@@ -531,7 +532,7 @@ begin
    Set_Child_Ipadding (Breakpoints.Hbuttonbox4, 7, 0);
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Hbuttonbox4, False, False, 0);
 
-   Gtk_New (Breakpoints.Ok_Button, -"Close");
+   Gtk_New_From_Stock (Breakpoints.Ok_Button, Stock_Close);
    Set_Flags (Breakpoints.Ok_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Ok_Button, "clicked",

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,12 +13,13 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Callbacks_Odd; use Callbacks_Odd;
@@ -287,14 +288,14 @@ begin
    Set_Child_Ipadding (Open_Program.Hbuttonbox7, 7, 0);
    Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
 
-   Gtk_New (Open_Program.Ok_Button, -"OK");
+   Gtk_New_From_Stock (Open_Program.Ok_Button, Stock_Ok);
    Set_Flags (Open_Program.Ok_Button, Can_Default);
    Button_Callback.Connect
      (Open_Program.Ok_Button, "clicked",
       Button_Callback.To_Marshaller (On_Ok_Open_Clicked'Access));
    Add (Open_Program.Hbuttonbox7, Open_Program.Ok_Button);
 
-   Gtk_New (Open_Program.Cancel_Button, -"Cancel");
+   Gtk_New_From_Stock (Open_Program.Cancel_Button, Stock_Cancel);
    Set_Flags (Open_Program.Cancel_Button, Can_Default);
    Button_Callback.Connect
      (Open_Program.Cancel_Button, "clicked",

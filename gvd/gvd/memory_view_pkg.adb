@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,12 +13,13 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
@@ -268,7 +269,7 @@ begin
       Button_Callback.To_Marshaller (On_Submit_Clicked'Access));
    Add (Memory_View.Hbuttonbox11, Memory_View.Submit);
 
-   Gtk_New (Memory_View.Cancel, -"Close");
+   Gtk_New_From_Stock (Memory_View.Cancel, Stock_Close);
    Set_Flags (Memory_View.Cancel, Can_Default);
    Button_Callback.Connect
      (Memory_View.Cancel, "clicked",
