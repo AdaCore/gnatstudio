@@ -29,6 +29,11 @@ with Entities.Queries; use Entities.Queries;
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
 
+   Debug_Me  : constant Debug_Handle := Create ("Entities.Debug", Off);
+   --  If True, no memory is freed, this makes the structure more robust and
+   --  easier to debug, but will of course use more memory.
+
+
    Manage_Global_Entities_Table : constant Boolean := False;
    --  True if we should try and create a global table for all entities
    --  defined in the project. The same information can be computed by
@@ -75,8 +80,10 @@ package body Entities is
    --  tables. This ensures that the entities that are still referenced
    --  externally will still be usable.
 
-   procedure Free_If_Partial (Entity : in out Entity_Information);
-   --  Free the memory occupied by Entity if it is a partial entity.
+   procedure Free_If_Partial
+     (Entity : in out Entity_Information; Not_In_File : Source_File);
+   --  Free the memory occupied by Entity if it is a partial entity, and if
+   --  it isn't declared in Not_In_File.
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -560,12 +567,16 @@ package body Entities is
    -- Free_If_Partial --
    ---------------------
 
-   procedure Free_If_Partial (Entity : in out Entity_Information) is
+   procedure Free_If_Partial
+     (Entity : in out Entity_Information; Not_In_File : Source_File) is
    begin
-      if Entity /= null and then Is_Partial_Entity (Entity) then
+      if Entity /= null
+        and then Entity.Declaration.File /= Not_In_File
+        and then Is_Partial_Entity (Entity)
+      then
          Unref (Entity);
-         Entity := null;
       end if;
+      Entity := null;
    end Free_If_Partial;
 
    -----------
@@ -576,31 +587,32 @@ package body Entities is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entity_Information_Record'Class, Entity_Information);
       Tmp : String_Access;
+      F   : Source_File;
    begin
       if Entity /= null then
          Assert (Assert_Me, Entity.Ref_Count > 0, "too many calls to unref");
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
+            F := Entity.Declaration.File;
+
             Free (Entity.Parent_Types);
             Free (Entity.Primitive_Subprograms);
             Free (Entity.Child_Types);
             Free (Entity.References);
-            Free_If_Partial (Entity.Pointed_Type);
-            Free_If_Partial (Entity.Returned_Type);
-            Free_If_Partial (Entity.Primitive_Op_Of);
-            Free_If_Partial (Entity.Rename);
+
+            Free_If_Partial (Entity.Pointed_Type, F);
+            Free_If_Partial (Entity.Returned_Type, F);
+            Free_If_Partial (Entity.Primitive_Op_Of, F);
+            Free_If_Partial (Entity.Rename, F);
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure.
-            if Active (Assert_Me) then
+            if Active (Debug_Me) then
                Tmp := Entity.Name;
                Entity.Name := new String'
                  (Entity.Name.all
                   & ':' & Base_Name (Get_Filename (Entity.Declaration.File)));
                Free (Tmp);
-
-               --  For debugging only
-               --  Trace (Assert_Me, "Entity not freed: " & Entity.Name.all);
             else
                Free (Entity.Name);
                Unchecked_Free (Entity);
@@ -944,6 +956,20 @@ package body Entities is
 
       Add_All_Entities (Entity.Declaration.File, Is_Of_Type);
    end Set_Type_Of;
+
+   -----------------
+   -- Get_Type_Of --
+   -----------------
+
+   function Get_Type_Of
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      if Length (Entity.Parent_Types) /= 0 then
+         return Entity.Parent_Types.Table (Entity_Information_Arrays.First);
+      else
+         return null;
+      end if;
+   end Get_Type_Of;
 
    ------------------------------
    -- Add_Primitive_Subprogram --
