@@ -152,7 +152,7 @@ procedure GPS is
    function Clean_Parameter return String is
       P : constant String := Parameter;
    begin
-      if P (P'First) = '=' then
+      if P'Length > 0 and then P (P'First) = '=' then
          return P (P'First + 1 .. P'Last);
       else
          return P;
@@ -319,7 +319,7 @@ procedure GPS is
          Put_Line (-"Options:");
          Put_Line (-"   --help              Show this help message and exit");
          Put_Line (-"   --version           Show the GPS version and exit");
-         Put_Line (-"   --debug [program]   Start a debug session");
+         Put_Line (-"   --debug[=program]   Start a debug session");
          Put_Line
            (-"   --debugger debugger Specify the debugger's command line");
          Put_Line ((-"   --target=TARG:PRO   ") &
@@ -337,7 +337,7 @@ procedure GPS is
             LF & (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
-            (-"   --debug [program]   Start a debug session") & LF &
+            (-"   --debug[=program]   Start a debug session") & LF &
             (-"   --debugger debugger Specify the debugger's command line") &
             LF &
             (-"   --target=TARG:PRO   ") &
@@ -733,8 +733,8 @@ begin
    --  Switch parsing
 
    loop
-      case Getopt ("-version -help P: -log-level: " &
-                   "-debug: -debugger: -target:")
+      case Getopt ("-version -help P! -log-level= " &
+                   "-debug? -debugger= -target=")
       is
          -- long option names --
          when '-' =>
@@ -768,7 +768,7 @@ begin
                      GPS.Log_Level := GVD.Types.Command_Type'Val
                        (GVD.Types.Command_Type'Pos
                           (GVD.Types.Command_Type'Last) + 1 -
-                          Integer'Value (Clean_Parameter));
+                          Integer'Value (Parameter));
 
                   exception
                      when Constraint_Error =>
@@ -789,13 +789,13 @@ begin
                   else
                      --  --debugger
                      Free (Debugger_Name);
-                     Debugger_Name := new String'(Clean_Parameter);
+                     Debugger_Name := new String'(Parameter);
                   end if;
 
                -- --target --
                when 't' =>
                   declare
-                     Param  : constant String := Clean_Parameter;
+                     Param  : constant String := Parameter;
                      Column : constant Natural :=
                        Ada.Strings.Fixed.Index
                          (Param, ":", Ada.Strings.Backward);
