@@ -188,7 +188,9 @@ package Debugger is
    procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
 
-   procedure Display_Prompt (Debugger : access Debugger_Root) is abstract;
+   procedure Display_Prompt
+     (Debugger        : access Debugger_Root;
+      Wait_For_Prompt : Boolean := True) is abstract;
    --  Send a command to the debugger, so that the prompt is displayed
    --  again in the debugger window. This is used after internal commands like
    --  "graph print", to indicate that the command has finished executing.

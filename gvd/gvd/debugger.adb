@@ -26,6 +26,7 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Odd.Types;         use Odd.Types;
 with Odd.Process;       use Odd.Process;
+with Gtk.Window;
 
 package body Debugger is
 
@@ -245,12 +246,13 @@ package body Debugger is
       Wait_For_Prompt  : Boolean := True;
       Is_Internal      : Boolean := False)
    is
+      use type Gtk.Window.Gtk_Window;
    begin
       if Is_Internal then
          Push_Internal_Command_Status (Get_Process (Debugger), Is_Internal);
       end if;
 
-      if Display then
+      if Display and then Debugger.Window /= null then
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger),
             Cmd & ASCII.LF, True);
@@ -263,18 +265,23 @@ package body Debugger is
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
 
-         --  Postprocessing (e.g handling of auto-update).
+         --  Not in text mode (for testing purposes...)
 
-         if Is_Context_Command (Debugger, Cmd) then
-            Context_Changed (Convert (Debugger.Window, Debugger));
-         elsif Is_Execution_Command (Debugger, Cmd) then
-            Process_Stopped (Convert (Debugger.Window, Debugger));
+         if Debugger.Window /= null then
 
-         --  Should we update the list of breakpoints => No if we are in
-         --  an internal command, since that would be too costly
-         elsif Is_Break_Command (Debugger, Cmd)
-           and then not Is_Internal_Command (Get_Process (Debugger)) then
-            Update_Breakpoints (Convert (Debugger.Window, Debugger));
+            --  Postprocessing (e.g handling of auto-update).
+
+            if Is_Context_Command (Debugger, Cmd) then
+               Context_Changed (Convert (Debugger.Window, Debugger));
+            elsif Is_Execution_Command (Debugger, Cmd) then
+               Process_Stopped (Convert (Debugger.Window, Debugger));
+
+               --  Should we update the list of breakpoints => No if we are in
+               --  an internal command, since that would be too costly
+            elsif Is_Break_Command (Debugger, Cmd)
+              and then not Is_Internal_Command (Get_Process (Debugger)) then
+               Update_Breakpoints (Convert (Debugger.Window, Debugger));
+            end if;
          end if;
       end if;
 
