@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C513-008 Untitled files saved in desktop
+  Problem:    When saving a desktop GPS will improperly save untitled files,
+              and generate an error when trying to load the desktop.
+  Workaround: Close or save untitled files before saving the desktop, or
+              manually edit the file ~/.gps/desktop
+
 - C424-007 Cannot copy-paste from the documentation
   Problem:    Copying part of the documentation through the contextual menu
               sometimes results in gtk+ warnings and some incorrect characters
@@ -7,13 +13,6 @@ Known Problems fixed in GPS 1.3.0
   Workaround: Avoid selecting the navigation arrows in the documentation.
               ASCII text is correctly copied. Or read the manuals directly
               from an external browser
-
-- C514-007 The VCS menu items do not work on the visual difference.
-  Problem:    When the selected window in GPS is the visual differences, it is
-              not possible to use the VCS menu, for example to display the
-              revision history of a file.
-  Workaround: Make the editor for this file the current window, or use the
-              contextual menu on the column of the visual difference window.
 
 - C511-002 Project not recomputed after using "save as"
   Problem:    When a file is saved with "save as", the file doesn't appear
