@@ -165,7 +165,8 @@ package body Src_Info.CPP is
       Signed_Integer_Type       => Signed_Integer_Object,
       String_Type               => String_Object,
       Task_Type                 => Task_Object,
-      Private_Type              => Private_Type, -- ??? what kind for object?
+      Private_Type              => Private_Type,      -- ??? what kind
+      Unresolved_Entity         => Unresolved_Entity, -- ??? for object?
       others                    => Overloaded_Entity);
    --  This array establishes relation between E_Kind type entities
    --  and object entities
@@ -193,6 +194,7 @@ package body Src_Info.CPP is
          Ancestor_Point    : Point;
          Ancestor_Filename : SN.String_Access;
          Builtin_Name      : SN.String_Access;
+         Is_Typedef        : Boolean := False;
       end record;
    --  Contains C type description. Used in these procedures:
    --    Type_Name_To_Kind
@@ -206,11 +208,14 @@ package body Src_Info.CPP is
    --  For builtin types this location is empty (invalid)
    --
    --  Ancestor_xxx: location of the closest typedef in the chain of
-   --  typedefs.
+   --  typedefs. Used only for typedefs.
    --
    --  Builtin_Name is set for builtin type occurences. Also it is used
    --  (compared with null) in resolving typedef parent type (see
    --  Sym_T_Handler).
+   --
+   --  Is_Typedef is True if type is declared via typedef clause, False
+   --  otherwise.
 
    procedure Free (Desc : in out CType_Description);
    --  Frees memory used by access fields in given Desc structure.
@@ -340,10 +345,6 @@ package body Src_Info.CPP is
       Close_DB_Files;
    end Create_Or_Complete_LI;
 
-   ----------------------------------
-   -- Case_Insensitive_Identifiers --
-   ----------------------------------
-
    ------------------------------
    -- Parse_All_LI_Information --
    ------------------------------
@@ -365,6 +366,10 @@ package body Src_Info.CPP is
    begin
       null;
    end Parse_All_LI_Information;
+
+   ----------------------------------
+   -- Case_Insensitive_Identifiers --
+   ----------------------------------
 
    function Case_Insensitive_Identifiers
          (Handler : access CPP_LI_Handler_Record) return Boolean
@@ -454,6 +459,9 @@ package body Src_Info.CPP is
    --  Gets E_Kind of original type for specified typedef type.
    --  Sets Success to True if type found and fills Desc structure
    --  with appropriate information.
+   --  Also supports Unresolved_Entity for such situations:
+   --    typedef old_type new_type;
+   --  where old_type is unresolved type.
 
    procedure Find_Class
      (Type_Name : in String;
@@ -640,10 +648,15 @@ package body Src_Info.CPP is
       end if;
 
       Typedef   := Find (SN_Table (T), Type_Name);
+
+      --  typedef found, it is time to set Is_Typedef
+      Desc.Is_Typedef := True;
+
       Type_Name_To_Kind (Typedef.Buffer (
               Typedef.Original.First .. Typedef.Original.Last),
               Desc, Success);
       if Success then
+         --  parent type found (E_Kind is resolved)
          Desc.Parent_Point     := Typedef.Start_Position;
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
@@ -659,10 +672,13 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      Free (Typedef);
-
       --  original type not found
-      return;
+      if Desc.Is_Typedef then
+         --  but typedef clause present
+         Desc.E_Kind := Unresolved_Entity;
+      end if;
+
+      Free (Typedef);
 
    exception
       when  DB_Error |   -- non-existent table
