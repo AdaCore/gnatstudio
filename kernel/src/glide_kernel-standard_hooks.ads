@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
+--                      Copyright (C) 2003-2005                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -161,14 +161,10 @@ package Glide_Kernel.Standard_Hooks is
       Identifier    : String (1 .. Identifier_Length);
       File          : VFS.Virtual_File := VFS.No_File;
       Info          : Line_Information_Data;
-      Stick_To_Data : Boolean := True;
       Every_Line    : Boolean := True;
       Normalize     : Boolean := True;
    end record;
    --  Identifier is the identity of the emitted
-   --  If Stick_To_Data is set to True, then the line information is relative
-   --  to the original data in the file, otherwise it is relative to the lines
-   --  in the view.
    --  If Every_Line is set to True, then the editor will emit a line_revealed
    --  signal until all lines for this column are filled.
    --  If File is No_File, then the column will be created for all open files.
@@ -181,7 +177,6 @@ package Glide_Kernel.Standard_Hooks is
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : VFS.Virtual_File;
       Identifier    : String;
-      Stick_To_Data : Boolean := True;
       Every_Line    : Boolean := True;
       Normalize     : Boolean := True);
    --  Request the creation of a column on the side of some editors.
