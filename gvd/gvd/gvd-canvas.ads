@@ -19,12 +19,14 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Canvas;
-with Gtk.Window;
 with Gdk.GC;
 with Gdk.Font;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with Gtk.Menu;
 with Gtk.Widget;
+with Gtk.Window;
+with Display_Items;
 with Items;
 
 package GVD.Canvas is
@@ -103,6 +105,20 @@ package GVD.Canvas is
    --  Return the drawing context associated with the box around each
    --  item on the canvas.
 
+   function Contextual_Background_Menu
+     (Canvas : access GVD_Canvas_Record) return Gtk.Menu.Gtk_Menu;
+   --  Get the contextual background menu associated with canvas.
+
+   function Item_Contextual_Menu
+     (Canvas         : access GVD.Canvas.GVD_Canvas_Record'Class;
+      Item           : access Display_Items.Display_Item_Record'Class;
+      Component      : Items.Generic_Type_Access;
+      Component_Name : String) return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) and reset the contextual menu used when a specific
+   --  component in an item is selected.
+   --  Note that Component can be null if the user has clicked for instance
+   --  on the title bar.
+
 private
 
    type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
@@ -116,5 +132,8 @@ private
       Item_Context  : Items.Drawing_Context;
       Box_Context   : Box_Drawing_Context;
 
+      Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
+      Item_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
+
 end GVD.Canvas;
