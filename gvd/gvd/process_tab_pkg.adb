@@ -91,7 +91,7 @@ begin
    Add (Process_Tab.Thread_Notebook, Process_Tab.Frame10);
    Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
 
-   Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab, False, 0);
+   Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
    Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Label52, -("Current Thread"));
