@@ -43,12 +43,13 @@ package Language_Handlers.Glide is
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return Language.Language_Access;
-   --  Raises Unsupported_Language if the language is unknowny
+   --  Find the language of a given file.
+   --  Return Unknown_Lang if no other language could be found.
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return String;
-   --  Raises Unsupported_Language if the language is unknown
+   --  Return "" if the language is unknown.
 
    procedure Register_Language
      (Handler : access Glide_Language_Handler_Record;
