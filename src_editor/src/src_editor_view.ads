@@ -163,6 +163,8 @@ private
 
    type Natural_Array is array (Natural range <>) of Natural;
    type Natural_Array_Access is access Natural_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Natural_Array, Natural_Array_Access);
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
