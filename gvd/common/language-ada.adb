@@ -413,8 +413,8 @@ package body Language.Ada is
    is
       New_Buffer : Extended_Line_Buffer;
       Ignore     : Natural;
-   begin 
-      Analyze_Ada_Source  
+   begin
+      Analyze_Ada_Source
         (To_Unchecked_String (Buffer), Buffer_Length,
          New_Buffer, Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
