@@ -41,8 +41,8 @@
     package Linker is
 Index: common/src/stubs.c
 --- /dev/null	2002-08-31 01:31:37 +0200
-+++ common/src/stubs.c	2003-07-15 14:28:25 +0200
-@@ -0,0 +1,68 @@
++++ common/src/stubs.c	2003-10-29 16:24:07 +0100
+@@ -0,0 +1,79 @@
 +#include <sys/stat.h>
 +#include <sys/param.h>
 +#ifdef _WIN32
@@ -111,3 +111,14 @@ Index: common/src/stubs.c
 +  return (!ret && mode);
 +}
 +
++void
++__gnat_set_readonly (char *name)
++{
++  struct stat statbuf;
++
++  if (__gnat_stat (name, &statbuf) == 0)
++  {
++    statbuf.st_mode = statbuf.st_mode & 07577;
++    chmod (name, statbuf.st_mode);
++  }
++}
