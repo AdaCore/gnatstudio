@@ -83,7 +83,6 @@ with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
-with Scenario_Views;            use Scenario_Views;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Entities;
@@ -605,9 +604,6 @@ package body Project_Explorers is
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
       Explorer.Kernel := Kernel_Handle (Kernel);
-
-      Gtk_New (Explorer.Scenario, Kernel);
-      Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@
 --  a previously saved configuration.
 
 with GPS.Kernel;
-with Scenario_Views;
 with Gtk.Handlers;
 with Gtk.Box;
 with Gtkada.Tree_View;
@@ -85,7 +84,6 @@ private
       Draw_Tooltip => Draw_Tooltip);
 
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
-      Scenario  : Scenario_Views.Scenario_View;
       Tree      : Gtkada.Tree_View.Tree_View;
 
       Kernel    : GPS.Kernel.Kernel_Handle;
