@@ -63,6 +63,7 @@ package GVD.Main_Window is
       History_Dialog      : History_Dialog_Access;
       Thread_Dialog       : Thread_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
+      PD_Dialog           : PD_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
       Cont_Button,
       Step_Button,

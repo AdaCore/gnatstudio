@@ -157,6 +157,7 @@ package body GVD.Main_Window is
 
       Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
+      Gtk_New (Main_Window.PD_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
    end Initialize;
