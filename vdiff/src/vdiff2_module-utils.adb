@@ -558,8 +558,8 @@ package body Vdiff2_Module.Utils is
       --  editor. This doesn't lose the user's current setup, and will be
       --  superceded by the use of MDI_Child groups
 
-      Edit (Kernel, Item.File2);
-      Edit (Kernel, Item.File1);
+      Edit (Kernel, Item.File2, Ref = 1);
+      Edit (Kernel, Item.File1, Ref = 2);
 
       --  Synchronize the scrollings.
 
