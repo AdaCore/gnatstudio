@@ -12,7 +12,7 @@ CP = cp -p
 IMAGES = gps_title.jpg *.gif
 
 TEXI2HTML_FLAGS=-split_chapter -menu
-TEXI=gps.texi projects.texi
+TEXI=gps.texi projects.texi ../gvd/docs/gvd_contents.texi
 
 all: cp_gvd doc tutorial clean-temp-files
 non-ps: common clean-temp-files
