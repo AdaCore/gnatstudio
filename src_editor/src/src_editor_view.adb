@@ -609,29 +609,34 @@ package body Src_Editor_View is
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
 
-      Source_Buffer_Callback.Connect
-        (Buffer, "insert_text",
-         Cb        => Insert_Text_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+      Gtk.Handlers.Add_Watch
+        (Source_Buffer_Callback.Connect
+         (Buffer, "insert_text",
+          Cb        => Insert_Text_Handler'Access,
+          User_Data => Source_View (View),
+          After     => True);
+         View);
 
-      Source_Buffer_Callback.Connect
-        (Buffer, "delete_range",
-         Cb        => Delete_Range_Handler'Access,
-         User_Data => Source_View (View),
-         After     => False);
+      Gtk.Handlers.Add_Watch
+        (Source_Buffer_Callback.Connect
+         (Buffer, "delete_range",
+          Cb        => Delete_Range_Handler'Access,
+          User_Data => Source_View (View),
+          After     => False),
+         View);
 
-      Source_Buffer_Callback.Connect
-        (Buffer, "cursor_position_changed",
-         Cb        => Change_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+      Gtk.Handlers.Add_Watch
+        (Source_Buffer_Callback.Connect
+         (Buffer, "cursor_position_changed",
+          Cb        => Change_Handler'Access,
+          User_Data => Source_View (View),
+          After     => True),
+         View);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View,
          "delete_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (On_Delete'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          View,
          After => False);
    end Initialize;

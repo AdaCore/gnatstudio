@@ -764,18 +764,22 @@ package body Src_Editor_Box is
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
 
-      Box_Callback.Connect
-        (Box.Source_Buffer,
-         "cursor_position_changed",
-         Cursor_Position_Changed_Handler'Access,
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
+      Gtk.Handlers.Add_Watch
+        (Box_Callback.Connect
+         (Box.Source_Buffer,
+          "cursor_position_changed",
+          Cursor_Position_Changed_Handler'Access,
+          User_Data => Source_Editor_Box (Box),
+          After     => True),
+         Box);
 
-      Box_Callback.Connect
-        (Box.Source_View,
-         "destroy",
-         On_Box_Destroy'Access,
-         User_Data => Source_Editor_Box (Box));
+      Gtk.Handlers.Add_Watch
+        (Box_Callback.Connect
+         (Box.Source_View,
+          "destroy",
+          On_Box_Destroy'Access,
+          User_Data => Source_Editor_Box (Box)),
+         Box);
 
       --  ??? See the body of Box_Scrolled for an explanation of why this is
       --  commented out.
