@@ -2367,6 +2367,9 @@ package body VCS_View_API is
          Head (Status.File_Name),
          VCS_Module_Name,
          Status_Label.all & Revision_Label.all);
+
+      Free (Status_Label);
+      Free (Revision_Label);
    end Display_Editor_Status;
 
 end VCS_View_API;
