@@ -891,6 +891,7 @@ package body Debugger.Gdb is
       Wait_For_Prompt : Boolean := False) is
    begin
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+      Set_Interrupted (Get_Process (Debugger));
 
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
