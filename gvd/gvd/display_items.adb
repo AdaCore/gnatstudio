@@ -333,7 +333,10 @@ package body Display_Items is
       if Default_Entity = null then
          begin
             Parse_Value
-              (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+              (Debugger.Debugger,
+               Variable_Name,
+               Entity,
+               Value_Found => Value_Found);
 
             if not Value_Found then
                Output_Error
@@ -729,7 +732,7 @@ package body Display_Items is
 
       elsif Item.Name /= null then
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,
-                      Item.Entity, Value_Found);
+                      Item.Entity, Item.Format, Value_Found);
          Set_Valid (Item.Entity, Value_Found);
       end if;
 
@@ -1694,6 +1697,30 @@ package body Display_Items is
    begin
       return Item.Mode;
    end Get_Display_Mode;
+
+   ----------------
+   -- Set_Format --
+   ----------------
+
+   procedure Set_Format
+     (Item   : access Display_Item_Record'Class;
+      Format : Debugger.Value_Format) is
+   begin
+      if Format /= Item.Format then
+         Item.Format := Format;
+         Update (Item.Debugger.Data_Canvas, Item, True);
+      end if;
+   end Set_Format;
+
+   ----------------
+   -- Get_Format --
+   ----------------
+
+   function Get_Format
+     (Item : access Display_Item_Record) return Debugger.Value_Format is
+   begin
+      return Item.Format;
+   end Get_Format;
 
    ----------------------------
    -- Create_Drawing_Context --

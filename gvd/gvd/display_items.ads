@@ -28,6 +28,7 @@ with Basic_Types;
 with Gtkada.Canvas;
 with Language;
 with Gdk.Pixmap;
+with Debugger;
 
 package Display_Items is
 
@@ -155,6 +156,15 @@ package Display_Items is
      (Item : access Display_Item_Record) return Items.Display_Mode;
    --  Get the display mode for item
 
+   procedure Set_Format
+     (Item   : access Display_Item_Record'Class;
+      Format : Debugger.Value_Format);
+   --  Set the display format for the item and all its children
+
+   function Get_Format
+     (Item : access Display_Item_Record) return Debugger.Value_Format;
+   --  Get the display format for item
+
    procedure Update_Resize_Display
      (Item             : access Display_Item_Record'Class;
       Was_Visible      : Boolean := False;
@@ -220,6 +230,9 @@ private
 
       Mode           : Items.Display_Mode := Items.Value;
       --  Whether we should display the mode itself.
+
+      Format         : Standard.Debugger.Value_Format :=
+        Standard.Debugger.Default_Format;
    end record;
 
    type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
