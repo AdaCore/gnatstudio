@@ -201,6 +201,11 @@ package Gtkada.MDI is
    --  Return the MDI_Child that encapsulates Widget.
    --  Widget must be the exact same one you gave in argument to Put.
 
+   function Find_MDI_Child
+     (MDI   : access MDI_Window_Record;
+      Title : String) return MDI_Child;
+   --  Return the first MDI_Child whose titlee matches Title.
+
    -----------------------------------
    -- Floating and docking children --
    -----------------------------------
