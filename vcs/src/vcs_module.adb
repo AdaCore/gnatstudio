@@ -491,7 +491,6 @@ package body VCS_Module is
          Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
-         MDI_Child_Tag           => VCS_View_Record'Tag,
          Contextual_Menu_Handler => VCS_Contextual_Menu'Access,
          Default_Context_Factory => VCS_View_API.Context_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
