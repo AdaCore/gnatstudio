@@ -103,6 +103,10 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
+   Quiet_Opt      : aliased String := "-q";
+   Unique_Compile : aliased String := "-u";
+   Syntax_Check   : aliased String := "-gnats";
+
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
    type Compute_Xref_Data is record
@@ -254,11 +258,13 @@ package body Builder_Module is
    procedure Compile_File
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
-      Synchronous : Boolean := False);
+      Synchronous : Boolean := False;
+      Syntax_Only : Boolean := False);
    --  Launch a compilation command for File.
    --  If Synchronous is true, then this procedure will not return until the
    --  file is fully compiled; all other GPS operations are blocked while the
    --  compilation takes place in this case.
+   --  If Syntax_Only is True, perform only syntax checks.
 
    procedure Clear_Compilation_Output (Kernel : Kernel_Handle);
    --  Clear the compiler output, the console, and the result view.
@@ -679,7 +685,7 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
 
    begin
@@ -692,73 +698,12 @@ package body Builder_Module is
          return;
       end if;
 
-      declare
-         Top  : constant Glide_Window :=
-           Glide_Window (Get_Main_Window (Kernel));
-         File_Context : constant File_Selection_Context_Access :=
-           File_Selection_Context_Access (Context);
-         File : constant VFS.Virtual_File := File_Information (File_Context);
-         Cmd  : constant String :=
-           Get_Attribute_Value
-             (Get_Project (Kernel), Compiler_Command_Attribute,
-              Default => "gnatmake", Index => "ada")
-           & " -q -u -gnats " & Full_Name (File).all;
-         Fd   : Process_Descriptor_Access;
-         Args : Argument_List_Access;
-         Lang : String := Get_Language_From_File
-           (Get_Language_Handler (Kernel), File);
-         C    : Build_Command_Access;
-
-      begin
-         if File = VFS.No_File then
-            Console.Insert
-              (Kernel, -"No file name, cannot check syntax",
-               Mode => Error);
-            return;
-         end if;
-
-         To_Lower (Lang);
-
-         if Lang /= "ada" then
-            Console.Insert
-              (Kernel, -"Syntax check of non Ada file not yet supported",
-               Mode => Error);
-            return;
-         end if;
-
-         if not Save_MDI_Children (Kernel, Force => False) then
-            return;
-         end if;
-
-         Trace (Me, "On_Check_Syntax: " & Cmd);
-         Push_State (Kernel, Processing);
-
-         Clear_Compilation_Output (Kernel);
-
-         Set_Sensitive_Menus (Kernel, False);
-         Args := Argument_String_To_List (Cmd);
-         Console.Insert (Kernel, Cmd);
-         Console.Raise_Console (Kernel);
-
-         Top.Interrupted := False;
-         Fd := new TTY_Process_Descriptor;
-         Non_Blocking_Spawn
-           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-            Err_To_Out  => True);
-         Free (Args);
-
-         Create (C, (Kernel, Fd, null, null, null));
-         Launch_Background_Command
-           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
-
-      exception
-         when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command", Mode => Error);
-            Pop_State (Kernel);
-            Set_Sensitive_Menus (Kernel, True);
-            Free (Args);
-            Free (Fd);
-      end;
+      Ref (Context);
+      Compile_File
+        (Kernel,
+         File_Information (File_Selection_Context_Access (Context)),
+         Syntax_Only => True);
+      Unref (Context);
 
    exception
       when E : others =>
@@ -770,14 +715,14 @@ package body Builder_Module is
    ------------------
 
    procedure Compile_File
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Synchronous : Boolean := False)
+     (Kernel      : Kernel_Handle;
+      File        : Virtual_File;
+      Synchronous : Boolean := False;
+      Syntax_Only : Boolean := False)
    is
-      Arg1         : aliased String := "-u";
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Prj : constant Project_Type :=
+      Prj          : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel), File);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
@@ -785,6 +730,8 @@ package body Builder_Module is
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
       C            : Build_Command_Access;
+      Common_Args  : Argument_List_Access;
+      Args         : Argument_List_Access;
       Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
 
    begin
@@ -830,6 +777,13 @@ package body Builder_Module is
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
+      if Syntax_Only then
+         Common_Args := new Argument_List'
+           (Unique_Compile'Access, Quiet_Opt'Access, Syntax_Check'Access);
+      else
+         Common_Args := new Argument_List'(1 => Unique_Compile'Access);
+      end if;
+
       if Status (Prj) /= From_File then
          Insert_And_Launch
            (Kernel,
@@ -837,29 +791,24 @@ package body Builder_Module is
             Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command         => Cmd.all,
             Arguments       => Default_Builder_Switches &
-              (Arg1'Unchecked_Access, Local_File'Unchecked_Access),
+              Common_Args.all & (1 => Local_File'Unchecked_Access),
             Fd              => Fd);
 
       else
-         declare
-            Args    : Argument_List_Access := Argument_String_To_List
-              ("-u " & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
-            Prj_Arg : aliased String := "-P" & Project_Path (Prj);
-
-         begin
-            Insert_And_Launch
-              (Kernel,
-               Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
-               Remote_Host     =>
-                 Get_Attribute_Value (Prj, Remote_Host_Attribute),
-               Command         => Cmd.all,
-               Arguments       => Args.all &
-                 (Prj_Arg'Unchecked_Access, Local_File'Unchecked_Access),
-               Fd              => Fd);
-            Free (Args);
-         end;
+         Args := Compute_Arguments
+           (Kernel, GNAT_Syntax, Project_Path (Prj), File);
+         Insert_And_Launch
+           (Kernel,
+            Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Host     =>
+              Get_Attribute_Value (Prj, Remote_Host_Attribute),
+            Command         => Cmd.all,
+            Arguments       => Common_Args.all & Args.all,
+            Fd              => Fd);
+         Free (Args);
       end if;
 
+      Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
       Create (C, (Kernel, Fd, null, null, null));
 
