@@ -84,7 +84,8 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Save the current insert cursor position before the Source_View looses
    --  the focus. This will allow us to restore it as soon as the focus is
-   --  gained back.
+   --  gained back. This is used for the handling of multiple views, so that we
+   --  can have a different cursor position in each of the view
 
    function Focus_In_Event_Cb
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
@@ -326,7 +327,7 @@ package body Src_Editor_View is
       --  Saved_Insert_Mark to the location where the "insert" mark
       --  currently is.
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      Move_Mark (Buffer, View.Saved_Insert_Mark, Insert_Iter);
+      View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
       End_Action (Buffer);
       return False;
    end Focus_Out_Event_Cb;
@@ -346,8 +347,12 @@ package body Src_Editor_View is
       --  by moving the Insert Mark to the location where the Saved_Insert_Mark
       --  currently is.
 
-      Get_Iter_At_Mark (Buffer, Saved_Insert_Iter, View.Saved_Insert_Mark);
-      Place_Cursor (Buffer, Saved_Insert_Iter);
+      if View.Saved_Insert_Mark /= null then
+         Get_Iter_At_Mark (Buffer, Saved_Insert_Iter, View.Saved_Insert_Mark);
+         Place_Cursor (Buffer, Saved_Insert_Iter);
+         Delete_Mark (Buffer, View.Saved_Insert_Mark);
+         View.Saved_Insert_Mark := null;
+      end if;
       return False;
    end Focus_In_Event_Cb;
 
@@ -408,10 +413,6 @@ package body Src_Editor_View is
          Border_Size := LNA_Width_In_Pixels (View);
          View.LNA_Width_In_Digits := Max_Number_Of_Digits;
       end if;
-      if Border_Size /= 0 then
-         --  ??? Destroy the window first, or the resize will not be effective
-         Set_Border_Window_Size (View, Enums.Text_Window_Left, 0);
-      end if;
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Border_Size);
    end Reset_Left_Border_Window_Size;
 
@@ -448,7 +449,6 @@ package body Src_Editor_View is
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
 
       View.Pango_Font := Font;
 
@@ -521,6 +521,8 @@ package body Src_Editor_View is
       end if;
 
       Modify_Font (View, Font);
+
+      --  ??? Should recompute the width of the column on the side.
    end Set_Font;
 
    ---------------------------
@@ -904,11 +906,13 @@ package body Src_Editor_View is
       Buffer : Integer;
       Width  : Integer := 0;
       Widths : array (Info.all'Range) of Integer;
+
    begin
       for J in Info.all'Range loop
+         Widths (J) := 0;
          if Info (J).Text /= null then
             Buffer := Integer
-              (String_Width (View.Font, String (Info (J).Text.all)));
+              (String_Width (View.Font, String' (Info (J).Text.all)));
 
             Widths (J) := Buffer;
 
@@ -971,10 +975,10 @@ package body Src_Editor_View is
                  View.Total_Column_Width + Width
                  - View.Line_Info (J).Width;
 
+               View.Line_Info (J).Width := Width;
+
                Set_Border_Window_Size (View, Enums.Text_Window_Left,
                                        Gint (View.Total_Column_Width));
-
-               View.Line_Info (J).Width := Width;
             end if;
 
             return;
@@ -985,9 +989,8 @@ package body Src_Editor_View is
          A : Line_Info_Display_Array
            (View.Line_Info.all'First .. View.Line_Info.all'Last + 1);
       begin
-         A (View.Line_Info.all'First .. View.Line_Info.all'Last)
-           := View.Line_Info.all;
-         A (View.Line_Info.all'Last + 1) :=
+         A (View.Line_Info'First .. View.Line_Info'Last) := View.Line_Info.all;
+         A (A'Last) :=
            (Identifier  => new String' (Identifier),
             Starting_X  => View.Total_Column_Width + 2,
             Width       => Width,

@@ -109,6 +109,8 @@ package Src_Editor_View is
       Info          : Glide_Kernel.Modules.Line_Information_Data;
       Stick_To_Data : Boolean := True);
    --  Add the line information to the view.
+   --
+   --  ??? Who frees Info (the caller or Add_File_Information) ?
 
 private
 
