@@ -21,9 +21,12 @@
 --  This package provides high-level histories management. It should be used
 --  for all combo boxes and the reopen menus, so that when GPS is started again
 --  we can restore the histories.
+--  It also provides a way to save the current value for check buttons from one
+--  session of GPS to the other.
 
 with GNAT.OS_Lib;
 with Gtk.Combo;
+with Gtk.Toggle_Button;
 with String_Hash;
 
 package Histories is
@@ -32,6 +35,20 @@ package Histories is
    type History is access History_Record;
 
    type History_Key is new String;
+
+   procedure Load (Hist : out History_Record; File_Name : String);
+   --  Load Hist from file File_Name
+
+   procedure Save (Hist : in out History_Record; File_Name : String);
+   --  Save Hist to a file
+
+   procedure Free (Hist : in out History_Record);
+   --  Free the memory used by Hist. Get_History will return empty results
+   --  afterwards.
+
+   ---------------------
+   -- List of strings --
+   ---------------------
 
    procedure Set_Max_Length
      (Hist : in out History_Record; Num : Positive; Key : History_Key := "");
@@ -55,16 +72,6 @@ package Histories is
    --  duplicates in Key.
    --  The default is not to allow duplicates (more convenient for combo
    --  boxes).
-
-   procedure Load (Hist : out History_Record; File_Name : String);
-   --  Load Hist from file File_Name
-
-   procedure Save (Hist : in out History_Record; File_Name : String);
-   --  Save Hist to a file
-
-   procedure Free (Hist : in out History_Record);
-   --  Free the memory used by Hist. Get_History will return empty results
-   --  afterwards.
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
@@ -92,25 +99,59 @@ package Histories is
    --  If New_Entry is already in the history, it is not added a second time,
    --  but moved into first position.
 
+   --------------
+   -- Booleans --
+   --------------
+
+   procedure Set_History
+     (Hist      : in out History_Record;
+      Key       : History_Key;
+      Value     : Boolean);
+   --  Set the value of the history key
+
+   function Get_History
+     (Hist      : History_Record;
+      Key       : History_Key) return Boolean;
+   --  Return the current value of Key.
+
+   procedure Associate
+     (Hist      : in out History_Record;
+      Key       : History_Key;
+      Button    : access Gtk.Toggle_Button.Gtk_Toggle_Button_Record'Class);
+   --  Associate Button with Key.
+   --  The status of the button is set to the value of Key.
+   --  Every time the button is toggled, the key's value is changed. Thus, its
+   --  current value will be saved when Hist is saved.
+
 private
 
-   type History_Key_Record is record
-      List : GNAT.OS_Lib.String_List_Access;
-      Max_Length : Integer := -1;
-      --  -1 means unspecified, use the default one for the whole
-      --  History_Record
+   type History_Key_Type is (Strings, Booleans);
 
-      Allow_Duplicates : Boolean := False;
-      Merge_First      : Boolean := True;
+   type History_Key_Record (Typ : History_Key_Type := Strings) is record
+      case Typ is
+         when Strings =>
+            List             : GNAT.OS_Lib.String_List_Access;
+            Max_Length       : Integer := -1;
+            --  -1 means unspecified, use the default one for the whole
+            --  History_Record
+
+            Allow_Duplicates : Boolean := False;
+            Merge_First      : Boolean := True;
+
+         when Booleans =>
+            Value : Boolean;
+      end case;
    end record;
 
-   procedure No_Free (A : in out History_Key_Record);
+   type History_Key_Access is access History_Key_Record;
+
+   procedure No_Free (A : in out History_Key_Access);
    --  Does nothing
 
-   Null_History : constant History_Key_Record := (null, -1, False, False);
+   Null_History : constant History_Key_Access := null;
 
    package History_Hash is new String_Hash
-     (Data_Type    => History_Key_Record,
+     (Data_Type    => History_Key_Access,
       Free_Data    => No_Free,
       Null_Ptr     => Null_History);
 
