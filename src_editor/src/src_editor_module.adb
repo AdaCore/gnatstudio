@@ -4445,7 +4445,7 @@ package body Src_Editor_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
-      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Iter  : Child_Iterator;
       Child : MDI_Child;
       Full  : VFS.Virtual_File;
       Id    : constant Source_Editor_Module :=
@@ -4454,6 +4454,16 @@ package body Src_Editor_Module is
    begin
       if File = VFS.No_File then
          return null;
+      end if;
+
+      --  Check whether the currently selected child corresponds to
+      --  the file (this will be the case in a vast majority of calls to
+      --  this subprogram)
+
+      Child := Get_Focus_Child (Get_MDI (Kernel));
+
+      if Get_Filename (Child) = File then
+         return Child;
       end if;
 
       --  Attempt to find the editor in the cache.
@@ -4481,6 +4491,8 @@ package body Src_Editor_Module is
            (Get_Full_Path_From_File
               (Get_Registry (Kernel), Full_Name (File).all, True, False));
       end if;
+
+      Iter  := First_Child (Get_MDI (Kernel));
 
       loop
          Child := Get (Iter);
