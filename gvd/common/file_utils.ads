@@ -48,16 +48,6 @@ package File_Utils is
    --  Perform a comparison of file, taking into account the case sensitivity
    --  depending on the OS.
 
-   procedure Set_Writable
-     (File     : VFS.Virtual_File;
-      Writable : Boolean);
-   --  If Writable is True, make File writable, otherwise make File unwritable.
-
-   procedure Set_Readable
-     (File     : String;
-      Readable : Boolean);
-   --  If Readable is True, make File readable, otherwise make File unreadable.
-
    function Relative_Path_Name
      (File_Name : String; Base_Name : String) return String;
    --  Modifies File_Name so that it is relative to Base_Name.
@@ -72,6 +62,9 @@ package File_Utils is
    --  This also normalizes the pathname (see
    --  GNAT.Directory_Operations.Format_Pathname).
    --  ??? Should go into GNAT.Directory_Operations
+
+   function Is_Absolute_Path_Or_URL (Name : String) return Boolean;
+   --  Return True if Name is an absolute file name on the host, or a URL
 
    function Suffix_Matches
      (File_Name : String; Suffix : String) return Boolean;

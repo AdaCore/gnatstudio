@@ -161,36 +161,6 @@ package body File_Utils is
    end File_Equal;
 
    ------------------
-   -- Set_Writable --
-   ------------------
-
-   procedure Set_Writable
-     (File     : VFS.Virtual_File;
-      Writable : Boolean)
-   is
-      procedure Internal (File : String; Set : Integer);
-      pragma Import (C, Internal, "__gps_set_writable");
-
-   begin
-      Internal (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
-   end Set_Writable;
-
-   ------------------
-   -- Set_Readable --
-   ------------------
-
-   procedure Set_Readable
-     (File     : String;
-      Readable : Boolean)
-   is
-      procedure Internal (File : String; Set : Integer);
-      pragma Import (C, Internal, "__gps_set_readable");
-
-   begin
-      Internal (File & ASCII.NUL, Boolean'Pos (Readable));
-   end Set_Readable;
-
-   ------------------
    -- To_File_Name --
    ------------------
 
@@ -453,5 +423,27 @@ package body File_Utils is
    begin
       return Iter.First > Path'Last;
    end At_End;
+
+   -----------------------------
+   -- Is_Absolute_Path_Or_URL --
+   -----------------------------
+
+   function Is_Absolute_Path_Or_URL (Name : String) return Boolean is
+      Index : Natural;
+   begin
+      if Is_Absolute_Path (Name) then
+         return True;
+      end if;
+
+      Index := Name'First;
+      while Index <= Name'Last - 3
+        and then Name (Index) /= ':'
+      loop
+         Index := Index + 1;
+      end loop;
+
+      return Index <= Name'Last - 3
+        and then Name (Index .. Index + 2) = "://";
+   end Is_Absolute_Path_Or_URL;
 
 end File_Utils;
