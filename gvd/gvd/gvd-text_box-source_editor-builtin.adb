@@ -94,9 +94,9 @@ package body GVD.Source_Editors is
      (File_Length : Natural;
       Name_Length : Natural) is
    record
-      Process : Debugger_Process_Tab;
-      File    : String (1 .. File_Length);
-      Line    : Integer;
+      Process      : Debugger_Process_Tab;
+      File         : String (1 .. File_Length);
+      Line         : Integer;
       Name         : String (1 .. Name_Length);
       Auto_Refresh : Boolean;
    end record;
