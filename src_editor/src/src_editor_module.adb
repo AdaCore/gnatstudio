@@ -101,16 +101,29 @@ package body Src_Editor_Module is
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
 
-   Filename_Cst : aliased constant String := "filename";
-   Line_Cst     : aliased constant String := "line";
-   Col_Cst      : aliased constant String := "column";
-   Length_Cst   : aliased constant String := "length";
+   Filename_Cst  : aliased constant String := "filename";
+   Line_Cst      : aliased constant String := "line";
+   Col_Cst       : aliased constant String := "column";
+   Length_Cst    : aliased constant String := "length";
+   Pattern_Cst   : aliased constant String := "pattern";
+   Case_Cst      : aliased constant String := "case_sensitive";
+   Regexp_Cst    : aliased constant String := "regexp";
+   Recursive_Cst : aliased constant String := "recursive";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access,
       4 => Length_Cst'Access);
+   File_Search_Parameters : constant Cst_Argument_List :=
+     (1 => Pattern_Cst'Access,
+      2 => Case_Cst'Access,
+      3 => Regexp_Cst'Access);
+   Project_Search_Parameters : constant Cst_Argument_List :=
+     (1 => Pattern_Cst'Access,
+      2 => Case_Cst'Access,
+      3 => Regexp_Cst'Access,
+      4 => Recursive_Cst'Access);
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -358,6 +371,10 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the source editor module.
 
+   procedure File_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Interactive command handler for the source editor module (Search part)
+
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class;
       File   : String);
@@ -466,6 +483,66 @@ package body Src_Editor_Module is
          Length => 0);
    end Find_Mark;
 
+   ---------------------------------
+   -- File_Search_Command_Handler --
+   ---------------------------------
+
+   procedure File_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Inst   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      Info   : constant File_Info := Get_Data (Inst);
+      Context : Files_Project_Context_Access;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Store the result of the match in Data
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Set_Return_Value
+           (Data, Current_File (Context) & ':'
+            & Image (Match.Line) & ':'
+            & Image (Match.Column));
+         return True;
+      end Callback;
+
+   begin
+      Name_Parameters (Data, File_Search_Parameters);
+
+      declare
+         Pattern : constant String  := Nth_Arg (Data, 2);
+         Casing  : constant Boolean := Nth_Arg (Data, 3, False);
+         Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
+      begin
+         Context := Files_From_Project_Factory
+           (Scope           => Whole,
+            All_Occurrences => True);
+         Set_File_List
+           (Context,
+            new String_Array'(1 => new String'(Get_Name (Info))));
+         Set_Context
+           (Context,
+            Look_For => Pattern,
+            Options => (Case_Sensitive => Casing,
+                        Whole_Word     => False,
+                        Regexp         => Regexp));
+
+         Set_Return_Value_As_List (Data);
+
+         while Search
+           (Context => Context,
+            Kernel  => Kernel,
+            Callback => Callback'Unrestricted_Access)
+         loop
+            --  No need to delay, since the search is done in same process.
+            null;
+         end loop;
+      end;
+   end File_Search_Command_Handler;
+
    --------------------------
    -- Edit_Command_Handler --
    --------------------------
@@ -473,7 +550,6 @@ package body Src_Editor_Module is
    procedure Edit_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String)
    is
-      use String_List_Utils.String_List;
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -3185,6 +3261,35 @@ package body Src_Editor_Module is
          Minimum_Args => 0,
          Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "search",
+         Params       =>
+           Parameter_Names_To_Usage (File_Search_Parameters, 2),
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of matches for pattern in the file. Default"
+             & " values are False for case_sensitive and regexp"),
+         Minimum_Args => 1,
+         Maximum_Args => 3,
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Search_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "search",
+         Params       =>
+           Parameter_Names_To_Usage (Project_Search_Parameters, 3),
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of matches for pattern in all the files"
+             & " belonging to the project (and its imported projects if"
+             & " recursive is true (default)."),
+         Minimum_Args => 1,
+         Maximum_Args => 4,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => File_Search_Command_Handler'Access);
+      --  ???????????
 
       --  Register the search functions
 
