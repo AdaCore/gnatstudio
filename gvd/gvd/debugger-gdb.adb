@@ -371,8 +371,22 @@ package body Debugger.Gdb is
       Dialog   : Question_Dialog_Access;
       Debugger : constant Debugger_Access := Process.Debugger;
       Choices  : Question_Array (1 .. 2);
+      Mode     : Command_Type;
 
    begin
+      Mode := Get_Command_Mode (Get_Process (Debugger));
+
+      --  For an invisible command, we also cannot afford to wait, so send an
+      --  answer automatically.
+
+      if Mode in Invisible_Command then
+         Send (Debugger, "y",
+               Mode            => Mode,
+               Empty_Buffer    => False,
+               Wait_For_Prompt => False);
+         return;
+      end if;
+
       Choices (1).Choice := new String'("n");
       Choices (1).Description := new String'("No");
 
