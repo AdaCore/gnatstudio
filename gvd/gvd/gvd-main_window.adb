@@ -302,7 +302,13 @@ package body GVD.Main_Window is
       Widget      : Gtk_Widget;
       WTX_Version : Natural;
 
+      use type Glib.Object.GObject;
+
    begin
+      if Window.Current_Debugger = Debugger then
+         return;
+      end if;
+
       Window.Current_Debugger := Debugger;
 
       if Process.Debugger = null then
