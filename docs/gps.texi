@@ -46,6 +46,7 @@ unmodified in any copy.
 @menu
 * Introduction::
 * Description of the Main Windows::
+* Multiple Document Interface::
 * Editing File::
 * Project Handling::
 * Compilation/Build::
@@ -71,6 +72,12 @@ Description of the main windows
 * The Console::
 * The Status Line::
 
+Multiple Document Interface
+* Closing Windows::
+* Maximized and Iconified Windows::
+* Docked Windows::
+* Floating Windows::
+* Moving Windows::
 
 Editing File
 * General Information::
@@ -80,9 +87,7 @@ Editing File
 * Using an External Editor::
 * A note on the Clipboard::
 
-
 Project Handling
-
 
 Compilation/Build
 * Ada Compilation and Build::
@@ -178,33 +183,339 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Status Line::
 @end menu
 
+@c --------------------------------------------------------------------
 @node The Menu Bar
 @section The Menu Bar
+@c --------------------------------------------------------------------
 @noindent
 
+@c --------------------------------------------------------------------
 @node The Tool Bar
 @section The Tool Bar
+@c --------------------------------------------------------------------
 @noindent
 
+@c --------------------------------------------------------------------
 @node The Work Space
 @section The Work Space
-@noindent
+@c --------------------------------------------------------------------
 
+The whole work space is based on a multiple document interface,
+@xref{Multiple Document Interface}.
+
+@c --------------------------------------------------------------------
 @node The Search Area
 @section The Search Area
+@c --------------------------------------------------------------------
 @noindent
 
+@c --------------------------------------------------------------------
 @node The Project Explorer
 @section The Project Explorer
+@c --------------------------------------------------------------------
 @noindent
 
+@c --------------------------------------------------------------------
 @node The Console
 @section The Console
+@c --------------------------------------------------------------------
 @noindent
 
+@c --------------------------------------------------------------------
 @node The Status Line
 @section The Status Line
+@c --------------------------------------------------------------------
 @noindent
+
+@c --------------------------------------------------------------------
+@node Multiple Document Interface
+@chapter Multiple Document Interface
+@c --------------------------------------------------------------------
+
+@menu
+* Multiple Document Interface::
+* Closing Windows::
+* Maximized and Iconified Windows::
+* Docked Windows::
+* Floating Windows::
+* Moving Windows::
+@end menu
+
+@noindent
+
+All the windows that are part of the GPS environment are under control
+of what is commonly called a multiple document interface (MDI for
+short). This is a common paradigm on windowing systems, where related
+windows are put into a bigger window which is itself under control of
+the system or the windows manager.
+
+This means that, by default, no matter how many editors, browsers,
+explorers,... windows you have opened, your system will still see only
+one window (On Windows systems, the task bar shows only one
+icon). However, you can organize the GPS windows exactly the way you
+want, all inside the GPS main window.
+
+For instance, you can choose to iconify some windows which are
+temporarily useless to you; you can choose to put some windows on top
+of others; you can resize all the windows to the size you want; and so
+on.
+
+This section will show the various capacities that GPS provides to
+help you organize your workspace.
+
+At any time, there is only one selected window in GPS (the @b{active
+window}). You can select a window either by clicking in its title bar,
+which will then get a different color, or by selecting its name in the
+menu @code{Window}.
+
+@c --------------------------------------------------------------------
+@node Closing Windows
+@section Closing Windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+Wherever the windows are displayed, they are always closed in the same
+manner. In the right side of the title bar of the window, three small
+buttons are displayed. The rightmost button is a cross. Clicking on
+this button will close the window
+
+@c ??? Need screeshot of child, with title bar and buttons
+
+Alternatively, you can also select the window by clicking anywhere in
+its title bar, and then select the menu @code{Window->Close}
+
+@c --------------------------------------------------------------------
+@node Maximized and Iconified Windows
+@section Maximized and Iconified Windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+The MDI is initially split into three parts: one window to the left,
+one to the bottom, and a bigger one that occupies the remaining space.
+
+The first two will be discussed in @ref{Docked Windows}.
+The third area is the one that provides the most flexibility:
+
+@table @bullet
+
+@item maximized windows
+The windows in this area are initially maximized. This means that if
+you have several windows, a notebook will be created, and only one
+window is be visible at any given time. You select the window you want
+to see by clicking on the appropriate tab.
+
+Note that if there are a lot of windows, two small arrows will appear
+on the right of the tabs. Clicking on these arrows will show the
+remaining tabs.
+
+@c ??? Would be nice to have a screenshot of the scrolling tab arrows
+
+You can go back to this maximized state in two ways: either select the
+menu @code{Window->Maximize All}, or click on the middle button on the
+right of the title bar of any window (this button shows two small
+squares, and will toggle between maximized and unmaximized states.
+
+
+@item unmaximized windows
+As opposed to putting all the windows inside a notebook, GPS can also
+let you organize them freely when they are unmaximized. Select the
+menu @code{Window->Unmaximize All}, or click again in the middle
+button on the right of the title bar.
+
+In this mode, the windows can be resized freely by clicking on the
+border of any side or in one of their four corners, as usual on
+windowing systems.
+
+They can also of course be moved around. As a result, you can choose
+for instance to display several windows side by side, or one on top of
+the others.
+
+To make it easier to get to these standard organizations, GPS provides
+a few shortcuts through menus:
+
+@table @code
+@item Window->Cascade
+All the windows will be resized to the same size, and be moved one on
+top of the other, so that the top and left sides of all windows are
+visible. This way, you can easily select any window
+
+@c ??? Need screenshot of cascade
+
+@item Window->Tile Horizontally
+All the windows are resized to the same dimensions, and are put side
+by side, from left to right. No window will overlap any other.
+
+@c ??? Need screenshot of tile horizontally
+
+@item Window->Tile Vertically
+All the windows are resized to the same dimensions, and are put side
+by side, from top to bottom. No window will overlap any other.
+
+@c ??? Need screenshot of tile vertically
+
+@end table
+
+
+@item iconified windows
+When the windows are unmaximized, you can also choose to temporarily
+iconify some of them. This is done by clicking on the leftmost button
+in the title bar (the one that shows a single line).
+
+The window will then be resized so that only part of its title bar is
+visible, and none of its actual contents. Icons can still be moved
+around as you want, but they can not be resized. You need to first
+de-iconify the window, by clicking once again on the same button.
+
+When de-iconified, a window will restore the size and position it had
+before it was iconified.
+
+@c ??? Need screenshot of iconified window
+
+@end table
+
+@c --------------------------------------------------------------------
+@node Docked Windows
+@section Docked Windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+As mentionned before, the GPS workspace is initially split into three
+windows. The one on the left and the one at the bottom are called
+@b{docking area}.
+
+They have a different behavior from the central area, since windows in
+these areas are necessarily grouped into a notebook. Thus, only one of
+them is visible at any given time, and you select the one you want to
+see by clicking on its name in the tabs area.
+
+GPS includes four such areas, one on each side of the main area. Some
+widgets will initially be displayed in one of these docking areas
+instead of in the central one, like the project explorer, the message
+window, ... Although you can not control this initial position, it is
+possible to change it later on (@ref{Moving Windows}).
+
+However, you can still choose precisely the dimension you want for
+this docking area (either its width for the left and right areas, or
+its height for the top and bottom ones).
+
+Between each docking area and the central one, there is a small handle
+(on which a series of dots are drawn), that you can move interactively
+with the mouse, to resize the docking areas). By default, when you
+move such a handle, a line will appear on top of all other windows in
+GPS to show you the new position the docking area will have when you
+release the mouse. You can set up a preference (menu
+@code{Edit->Preferences}) to indicate that you want the resizing to be
+opaque, which might give more intuitive results.
+
+Note that when a window is @b{docked} (ie put in a docking area), some
+of the buttons in its title bar are greyed out and inactive.
+
+A simple way to dock a window is to select it, and then select the
+menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
+there is a more intuitive way to do the same thing.
+
+@c --------------------------------------------------------------------
+@node Floating Windows
+@section Floating Windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+Although the MDI, as described so far, is already extremely flexible,
+it is possible that you prefer to have several top-level windows under
+direct control of your system or window manager. This would be the
+case for instance if you want to benefit from some extra possibilities
+that your system might provide (virtual desktops, different window
+decoration depending on the window's type, transparent windows,...).
+
+GPS is fully compatible with this behavior, since windows can also be
+@b{floating windows}. Any window that is currenty embedded in the MDI
+can be made floating at any time, simply by selecting the window and
+then selecting the menu @code{Window->Floating}. The window will then
+be detached, and can be moved anywhere on your screen, even outside of
+GPS's main window.
+
+There are two ways to put a floating window back under control of GPS.
+The more general method is toselect the window through its title in
+the menu @code{Window}, and then select @code{Window->Floatings}.
+
+The second method assumes that the preference @b{Destroy Floats} in
+the menu @code{Edit->Preferences} has been set to false. Then, you can
+simply close the floating window by clicking in the appropriate title
+bar button, and the window will be put back in GPS. If you actually
+want to close it, you need to click once again on the cross button in
+its title bar.
+
+@c --------------------------------------------------------------------
+@node Moving Windows
+@section Moving Windows
+@c --------------------------------------------------------------------
+
+@noindent
+
+As we have seen, the windows' state can be changed at any time, from
+maximized to unmaximized to docked and floating and back, in any
+order.
+
+In all cases, the changes are done either through the buttons in the
+title bar or through the menu @code{Window}.
+
+On some systems, a more intuitive method is also provided, based on
+the drag-and-drop paradigm. The idea is simply to select a window,
+wherever it is, and then, by clicking on it and moving the mouse while
+keeping the left button pressed, drop it anywhere else inside GPS.
+
+Selecting an item so that it can be dragged is done simply by clicking
+with the left mouse button in its title bar, and keep the button
+pressed while moving the mouse. Although this is the general scheme,
+this would work for unmaximized items, since the title bar in then
+used to move them around. In that case, you need to press the
+@key{control} key in addition to the left mouse button.
+
+A third possibily can be used for maximized or docked windows: click
+with the left mouse button in the notebook tab that contains their
+name.
+
+It is important to note that some widgets in GPS have their own
+drag-and-drop support, and will not react when you drop a window on
+them. For instance, editors use drag-and-drop for copy-paste
+operations. Therefore, dropping a window on them will result in a
+failed operation. In that case, it always work to drop the window in
+the title bar of another window to adopt the same state.
+
+
+Here are the various places where a window can be dropped:
+
+@table @bullet
+@item The central area
+The window you are dropping will get the same state as the other
+windows already in this area (maximized or unmaximized).
+
+@item Docking areas
+The window will immediately be adopted by this dropping area, and a
+new notebook will be created as needed. Once again, since the message
+window has its own handling of drag-and-drop, you can not drop items
+on it. Instead, drop windows on its title bar.
+
+In some cases, you might want to create a docking area that is not
+currently visible (for instance, it is often useful to put an editor
+in the right docking area, so that two editors can be seen
+side-by-side, one in this area, and one in the central one).
+
+To execute this, drop the window on the small handle that surrounds
+the whole GPS window (a black rectangle will appear on the screen when
+your mouse is over that area). If you then drop the item, a new
+docking area will be created.
+
+@item System window
+If you drop a window outside of GPS (for instance, on the background
+of your screen), the window will be floated.
+
+@end table
+
 
 @c --------------------------------------------------------------------
 @node Editing File
