@@ -76,8 +76,6 @@ package body GVD.Explorer is
      array (Category_Index range <>) of Internal_Category;
 
    package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
-   package Boolean_Tree_Cb is new
-     Gtk.Handlers.Return_Callback (Explorer_Record, Boolean);
 
    package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
 
@@ -91,7 +89,7 @@ package body GVD.Explorer is
    --  systematically, so as to speed things up.
 
    function Button_Press_Cb
-     (Explorer : access Explorer_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Handle button press events in the Explorer.
 
@@ -148,7 +146,7 @@ package body GVD.Explorer is
 
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
-      Color := Parse (File_Name_Bg_Color);
+      Color := Parse (Current_Preferences.File_Name_Bg_Color.all);
       Alloc (Get_System, Color);
       Explorer.Current_File_Style := Copy (Get_Style (Code_Editor));
       Set_Base (Explorer.Current_File_Style, State_Normal, Color);
@@ -163,9 +161,10 @@ package body GVD.Explorer is
       Tree_Cb.Connect
         (Explorer, "tree_select_row",
          Tree_Cb.To_Marshaller (First_Handler'Access));
-      Boolean_Tree_Cb.Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (Explorer, "button_press_event",
-         Boolean_Tree_Cb.To_Marshaller (Button_Press_Cb'Access));
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Button_Press_Cb'Access));
 
       Create_From_Xpm_D
         (Explorer.Folder_Open_Pixmap,
@@ -186,7 +185,7 @@ package body GVD.Explorer is
         (Explorer,
          Parent        => null,
          Sibling       => null,
-         Text          => Null_Array + "list of files",
+         Text          => Null_Array + (-"list of files"),
          Spacing       => 5,
          Pixmap_Closed => Explorer.Folder_Pixmap,
          Mask_Closed   => Explorer.Folder_Mask,
@@ -196,12 +195,8 @@ package body GVD.Explorer is
          Expanded      => False);
       Show_All (Explorer);
 
-      --  This is a workaround for a horizontal scrollbar problem: When the
-      --  ctree is put in a scrolled window, and if this is not called, the
-      --  scrollbar does not allow us to scroll as far right as possible...
-      Set_Column_Auto_Resize (Explorer, 0, True);
-
-      --  ???
+      --  See Expand_Explorer_Tree for more explanation on the horizontal
+      --  scrolling problem that is not solved by the setting below ???
       --  Set_Indent (Explorer, 20);
       --  Set_Spacing (Explorer, 0);
       --  Set_Expander_Style (Explorer, Ctree_Expander_None);
@@ -222,7 +217,7 @@ package body GVD.Explorer is
         (Explorer,
          Parent        => null,
          Sibling       => null,
-         Text          => Null_Array + "list of files",
+         Text          => Null_Array + (-"list of files"),
          Spacing       => 5,
          Pixmap_Closed => Explorer.Folder_Pixmap,
          Mask_Closed   => Explorer.Folder_Mask,
@@ -506,6 +501,17 @@ package body GVD.Explorer is
 
          Show_All (Explorer);
       end if;
+
+      --  This is a workaround for a horizontal scrollbar problem: When the
+      --  ctree is put in a scrolled window, and if this is not called, the
+      --  scrollbar does not allow us to scroll as far right as possible...
+      --  ??? Note that this is too expensive to call it during tree creating
+      --  when the tree contains lots of items since a complete tree traversal
+      --  is done for each item added. Instead, set the resize attribute
+      --  only after the first expand.
+
+      Set_Column_Auto_Resize (Explorer, 0, True);
+
    exception
 
       --  Raise when the node was not associated with some data (for nodes
@@ -775,9 +781,10 @@ package body GVD.Explorer is
    ---------------------
 
    function Button_Press_Cb
-     (Explorer : access Explorer_Record'Class;
+     (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk.Event.Gdk_Event) return Boolean
    is
+      Explorer : constant Explorer_Access := Explorer_Access (Widget);
       Menu    : Gtk_Menu;
    begin
       if Get_Button (Event) = 3
@@ -875,6 +882,7 @@ package body GVD.Explorer is
       Process : Debugger_Process_Tab := Convert (Explorer);
       Data    : Node_Data_Access := null;
       Current : GVD.Types.String_Access;
+
    begin
       --  ??? Should be protected in case the debugger is currently busy
 
@@ -1061,6 +1069,7 @@ package body GVD.Explorer is
               (Explorer,
                Row_Get_Parent (Node_Get_Row (Explorer.Current_File_Node)));
          end if;
+
          Gtk_Select (Explorer, Explorer.Current_File_Node);
 
          --  Scroll the explorer to make the file visible
