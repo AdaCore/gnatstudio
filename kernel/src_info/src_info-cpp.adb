@@ -46,14 +46,22 @@ package body Src_Info.CPP is
       return False;
    end Case_Insensitive_Identifiers;
 
+   -----------------------------
+   -- LI_Filename_From_Source --
+   -----------------------------
+
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String)
-      return String is
+      return String
+   is
+      pragma Unreferenced (Handler);
+      pragma Unreferenced (Predefined_Source_Path);
+      pragma Unreferenced (Project);
    begin
-      null;
+      return Source_Filename;
    end LI_Filename_From_Source;
 
 end Src_Info.CPP;
