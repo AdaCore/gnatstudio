@@ -803,10 +803,12 @@ package body Src_Editor_Buffer is
       Ignored   : Boolean;
    begin
       --  Does the buffer end with CR & LF?
+
       if Get_Char_Count (Buffer) > 1 then
          Get_End_Iter (Buffer, End_Iter);
          Copy (Source => End_Iter, Dest => Iter);
          Backward_Chars (Iter, Count => 2, Result => Ignored);
+
          if Get_Slice (Iter, End_Iter) = ASCII.CR & ASCII.LF then
             Delete (Buffer, Iter, End_Iter);
             return;
@@ -814,9 +816,11 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Or does it end with a CR or LF?
+
       if Get_Char_Count (Buffer) > 0 then
          Get_End_Iter (Buffer, Iter);
          Backward_Char (Iter, Ignored);
+
          case Character'(Get_Char (Iter)) is
             when ASCII.LF | ASCII.CR =>
                Get_End_Iter (Buffer, End_Iter);
@@ -1326,17 +1330,22 @@ package body Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint) return Gtkada.Types.Chars_Ptr
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
-
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+
+      if End_Line = -1 then
+         Get_End_Iter (Buffer, End_Iter);
+      else
+         pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+         Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      end if;
+
       return Get_Text (Buffer, Start_Iter, End_Iter);
    end Get_Slice;
 
@@ -1344,8 +1353,8 @@ package body Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint) return String
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return String
    is
       Str : Gtkada.Types.Chars_Ptr :=
         Get_Slice (Buffer, Start_Line, Start_Column, End_Line, End_Column);

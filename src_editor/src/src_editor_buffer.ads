@@ -163,10 +163,11 @@ package Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint) return String;
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return String;
    --  Return the text located between (Start_Line, Start_Column) and
    --  (End_Line, End_Column).
+   --  If End_Line = -1, contents are taken until the end of the buffer.
    --
    --  The validity of both start and end positions must be verified before
    --  invoking this function. An incorrect position will cause an
@@ -177,8 +178,8 @@ package Src_Editor_Buffer is
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint) return Gtkada.Types.Chars_Ptr;
+      End_Line     : Gint := -1;
+      End_Column   : Gint := -1) return Gtkada.Types.Chars_Ptr;
    --  Same as above but return the C pointer directly for efficiency.
    --  The caller is responsible for freeing the memory (with g_free).
 
