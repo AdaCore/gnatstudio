@@ -80,9 +80,11 @@ package body Src_Editor_Box is
 
    Me : constant Debug_Handle := Create ("Source_Editor");
 
-   package Box_Callback is new Gtk.Handlers.User_Callback
+   procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
+   package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Widget_Type => Glib.Object.GObject_Record,
-      User_Type   => Source_Editor_Box);
+      User_Type   => Source_Editor_Box,
+      Setup       => Setup);
 
    --------------------------
    -- Forward declarations --
@@ -232,6 +234,15 @@ package body Src_Editor_Box is
       Entity : String);
    --  Find the reference to Entity in Source which is closest to (Line,
    --  Column), and sets Line and Column to this new location
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Source_Editor_Box; Id : Handler_Id) is
+   begin
+      Add_Watch (Id, Data);
+   end Setup;
 
    ------------------------
    -- Find_Closest_Match --
@@ -937,22 +948,17 @@ package body Src_Editor_Box is
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
 
-      Gtk.Handlers.Add_Watch
-        (Box_Callback.Connect
-         (Box.Source_Buffer,
-          "cursor_position_changed",
-          Cursor_Position_Changed_Handler'Access,
-          User_Data => Source_Editor_Box (Box),
-          After     => True),
-         Box);
-
-      Gtk.Handlers.Add_Watch
-        (Box_Callback.Connect
-         (Box.Source_View,
-          "destroy",
-          On_Box_Destroy'Access,
-          User_Data => Source_Editor_Box (Box)),
-         Box);
+      Box_Callback.Connect
+        (Box.Source_Buffer,
+         "cursor_position_changed",
+         Cursor_Position_Changed_Handler'Access,
+         User_Data => Source_Editor_Box (Box),
+         After     => True);
+      Box_Callback.Connect
+        (Box.Source_View,
+         "destroy",
+         On_Box_Destroy'Access,
+         User_Data => Source_Editor_Box (Box));
 
       --  ??? See the body of Box_Scrolled for an explanation of why this is
       --  commented out.
