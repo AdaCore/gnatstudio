@@ -36,6 +36,7 @@ with Ada.Exceptions;       use Ada.Exceptions;
 with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 
+with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
@@ -43,18 +44,19 @@ with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 
 with Gtkada.MDI;           use Gtkada.MDI;
-with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 
 package body Glide_Kernel.Timeout is
 
    Me : constant Debug_Handle := Create ("Glide_Kernel.Timeout");
 
-   type Console_Process_Data is new Glide_Interactive_Console_Record
-   with record
-      D     : Process_Data;
-      Died  : Boolean := False;
+   type Console_Process_Data is new GObject_Record with record
+      Console : Glide_Interactive_Console;
+      D       : Process_Data;
+      Died    : Boolean := False;
       --  Indicates that the process has died.
+
+      Interactive : Boolean := False;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
@@ -64,7 +66,7 @@ package body Glide_Kernel.Timeout is
    --  Generic callback for async spawn of processes.
 
    function Delete_Handler
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" event.
 
@@ -125,14 +127,14 @@ package body Glide_Kernel.Timeout is
       Expect (Fd.all, Result, "\n", Timeout => 1);
 
       if Result /= Expect_Timeout then
-         Insert (Data, Expect_Out (Fd.all), Add_LF => False);
+         Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
       end if;
 
       return True;
 
    exception
       when Process_Died =>
-         Insert (Data, Expect_Out (Fd.all), Add_LF => False);
+         Insert (Data.Console, Expect_Out (Fd.all), Add_LF => False);
 
          if Data.D.Callback /= null then
             Data.D.Callback (Data.D);
@@ -140,10 +142,17 @@ package body Glide_Kernel.Timeout is
 
          Data.Died := True;
          Cleanup (Data.D);
+         Unref (Data);
+
+         if Data.Interactive then
+            Destroy (Data.Console);
+         end if;
+
          return False;
 
       when E : others =>
          Cleanup (Data.D);
+         Unref (Data);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Process_Cb;
@@ -167,6 +176,7 @@ package body Glide_Kernel.Timeout is
    exception
       when E : others =>
          Cleanup (Console.D);
+         Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return "";
    end Data_Handler;
@@ -176,19 +186,21 @@ package body Glide_Kernel.Timeout is
    --------------------
 
    procedure Launch_Process
-     (Kernel    : Kernel_Handle;
-      Command   : String;
-      Arguments : GNAT.OS_Lib.Argument_List;
-      Title     : String := "";
-      Callback  : Process_Callback := null;
-      Exit_Cb   : Exit_Callback := null;
-      Name      : String;
-      Success   : out Boolean)
+     (Kernel      : Kernel_Handle;
+      Command     : String;
+      Arguments   : GNAT.OS_Lib.Argument_List;
+      Title       : String := "";
+      Callback    : Process_Callback := null;
+      Exit_Cb     : Exit_Callback := null;
+      Name        : String;
+      Success     : out Boolean;
+      Interactive : Boolean := False)
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
       Id      : Timeout_Handler_Id;
-      Console : Console_Process;
+      Data    : Console_Process;
+      Console : Glide_Interactive_Console;
       Child   : MDI_Child;
 
       procedure Spawn
@@ -241,29 +253,39 @@ package body Glide_Kernel.Timeout is
       Spawn (Command, Arguments, Success);
 
       if Success then
-         Console := new Console_Process_Data;
+         Data := new Console_Process_Data;
+         Initialize (Data);
 
-         Initialize
-           (Console, "", Data_Handler'Access,
-            GObject (Console), Get_Pref (Kernel, Default_Font));
+         if Interactive then
+            Gtk_New
+              (Console, "", Data_Handler'Access,
+               GObject (Data), Get_Pref (Kernel, Default_Font));
 
-         Console.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
+            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
 
-         Gtkada.Handlers.Return_Callback.Object_Connect
-           (Console, "delete_event",
-            Delete_Handler'Access,
-            Gtk_Widget (Console),
-            After => False);
+            Object_Return_Callback.Object_Connect
+              (Console, "delete_event",
+               Delete_Handler'Access,
+               GObject (Data),
+               After => False);
 
-         Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
-         Set_Title (Child, Command, Title);
+            Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
+            Set_Dock_Side (Child, Bottom);
+            Dock_Child (Child);
+            Set_Title (Child, Command, Title);
+
+         else
+            Console := Get_Interactive_Console (Kernel);
+            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
+         end if;
+
+         Data.Console := Console;
+         Data.Interactive := Interactive;
 
          Id := Console_Process_Timeout.Add
            (Timeout,
             Process_Cb'Access,
-            Console);
+            Data);
 
          if Callback = null then
             Pop_State (Kernel);
@@ -283,15 +305,16 @@ package body Glide_Kernel.Timeout is
    --------------------
 
    function Delete_Handler
-     (Object : access Gtk_Widget_Record'Class;
+     (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues) return Boolean
    is
       pragma Unreferenced (Params);
 
-      Console : Console_Process := Console_Process (Object);
+      Console : constant Console_Process := Console_Process (Object);
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
+         Unref (Console);
          return False;
       end if;
 
@@ -304,7 +327,7 @@ package body Glide_Kernel.Timeout is
 
       if Button = Button_Yes then
          Cleanup (Console.D);
-         Console.Died := True;
+         Unref (Console);
          return False;
 
       else
@@ -314,6 +337,7 @@ package body Glide_Kernel.Timeout is
    exception
       when E : others =>
          Cleanup (Console.D);
+         Unref (Console);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Delete_Handler;
