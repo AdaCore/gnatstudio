@@ -24,6 +24,7 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtkada.Types;        use Gtkada.Types;
 with Odd.Canvas;          use Odd.Canvas;
+with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Widget;          use Gtk.Widget;
@@ -298,34 +299,36 @@ package body Odd.Menus is
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
    begin
-      --  The contextual menu is in fact associated with the canvas itself,
-      --  so that we do not recreate one for each item.
-      Menu := Menu_User_Data.Get (Canvas, Item_Contextual_Menu_Name);
+
+      --  Delete the previous contextual menu if needed.
+      begin
+         Menu := Menu_User_Data.Get (Canvas, Item_Contextual_Menu_Name);
+         Destroy (Menu);
+      exception
+         when Gtkada.Types.Data_Error => null;
+      end;
+
+      Gtk_New (Menu);
+
+      Gtk_New (Mitem, Label => -"Hide all");
+      Set_State (Mitem, State_Insensitive);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Show all");
+      Set_State (Mitem, State_Insensitive);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Update Value");
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Update_Variable'Access),
+         Item_Record'(Canvas => Odd_Canvas (Canvas),
+                      Item   => Display_Item (Item)));
+      Append (Menu, Mitem);
+
+      Show_All (Menu);
+      Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
       return Menu;
-
-   exception
-      when Gtkada.Types.Data_Error =>
-         Gtk_New (Menu);
-
-         Gtk_New (Mitem, Label => -"Hide all");
-         Set_State (Mitem, State_Insensitive);
-         Append (Menu, Mitem);
-
-         Gtk_New (Mitem, Label => -"Show all");
-         Set_State (Mitem, State_Insensitive);
-         Append (Menu, Mitem);
-
-         Gtk_New (Mitem, Label => -"Update Value");
-         Item_Handler.Connect
-           (Mitem, "activate",
-            Item_Handler.To_Marshaller (Update_Variable'Access),
-            Item_Record'(Canvas => Odd_Canvas (Canvas),
-                         Item   => Display_Item (Item)));
-         Append (Menu, Mitem);
-
-         Show_All (Menu);
-         Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
-         return Menu;
    end Item_Contextual_Menu;
 
    ----------------------------
