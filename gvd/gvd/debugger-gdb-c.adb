@@ -105,12 +105,14 @@ package body Debugger.Gdb.C is
             Index := Index + 1;
 
          --  Access to subprogram
-         elsif Type_Str (Index) = '('
-           and then Type_Str (Index + 1) = '*'
-         then
-            --  Skip the field name (if any), as in: "void (*field1[2])();"
-            Index := Index + 1;
+         elsif Type_Str (Index) = '(' then
+
+            if Type_Str (Index + 1) = '*' then
+               Index := Index + 1;
+            end if;
             Save := Index;
+
+            --  Skip the field name (if any), as in: "void (*field1[2])();"
             while Index <= Type_Str'Last
               and then Type_Str (Index) /= ')'
               and then Type_Str (Index) /= '['
@@ -120,7 +122,6 @@ package body Debugger.Gdb.C is
 
          else
             Skip_Word (Type_Str, Index);
-            Skip_Blanks (Type_Str, Index);
          end if;
          Skip_Blanks (Type_Str, Index);
       end loop;
