@@ -30,6 +30,7 @@
 --  into the sources of Gnat and its tools.
 
 with Traces;
+with Unchecked_Deallocation;
 
 package Src_Info.Queries is
 
@@ -110,6 +111,32 @@ package Src_Info.Queries is
    --
    --  The list returned by this procedure should be deallocated after use.
 
+   -------------------------
+   --  Entity information --
+   -------------------------
+   --  This type groups information about entities that allow an exact
+   --  identification of that entity, including handling of overriding
+   --  subprograms,... This information has a life-cycle independent from the
+   --  tree itself, and thus can be kept independently in a browser.
+
+   type Entity_Information is private;
+
+   procedure Destroy (Entity : in out Entity_Information);
+   --  Free the memory associated with the entity;
+
+   function Get_Name (Entity : Entity_Information) return String;
+   --  Return the name of the entity associated with Node.
+
+   function Get_Declaration_Line_Of
+     (Entity : Entity_Information) return Positive;
+   function Get_Declaration_Column_Of
+     (Entity : Entity_Information) return Natural;
+   function Get_Declaration_File_Of
+     (Entity : Entity_Information) return String;
+   --  Return the location of the declaration for Entity. Note that this
+   --  location remains valid only until the source file are changed. It is not
+   --  magically updated when the source file is changed.
+
    ----------------
    -- Scope tree --
    ----------------
@@ -136,47 +163,25 @@ package Src_Info.Queries is
    procedure Trace_Dump
      (Handler              : Traces.Debug_Handle;
       Tree                 : Scope_Tree;
+      Node                 : Scope_Tree_Node := Null_Scope_Tree_Node;
       Subprograms_Pkg_Only : Boolean := True);
    --  Dump the contentns of the tree to standard_output.
 
-   function Find_Entity_Declaration
-     (Tree : Scope_Tree; Name : String; Line, Column : Integer)
-      return Scope_Tree_Node;
+   function Find_Entity_Scope
+     (Tree : Scope_Tree; Entity : Entity_Information) return Scope_Tree_Node;
    --  Return the declaration node for the entity Name that is referenced
    --  at position Line, Column.
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is associated with a subprogram
 
-   -------------------------
-   --  Entity information --
-   -------------------------
-   --  This type groups information about entities that allow an exact
-   --  identification of that entity, including handling of overriding
-   --  subprograms,... This information has a life-cycle independent from the
-   --  tree itself, and thus can be kept independently in a browser.
-
-   type Entity_Information is private;
-
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
 
-   procedure Destroy (Entity : in out Entity_Information);
-   --  Free the memory associated with the entity;
-
-   function Get_Name (Entity : Entity_Information) return String;
-   --  Return the name of the entity associated with Node.
-
-   function Get_Declaration_Line_Of
-     (Entity : Entity_Information) return Positive;
-   function Get_Declaration_Column_Of
-     (Entity : Entity_Information) return Natural;
-   function Get_Declaration_File_Of
-     (Entity : Entity_Information) return String;
-   --  Return the location of the declaration for Entity. Note that this
-   --  location remains valid only until the source file are changed. It is not
-   --  magically updated when the source file is changed.
+   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information;
+   --  Return the information for the entity defined in Node.
+   --  You must cal Destroy on the returned Entity.
 
    --------------------------
    -- Scope tree iterators --
@@ -231,6 +236,11 @@ private
       end case;
    end record;
 
+   type Scope_List_Array is array (Natural range <>) of Scope_List;
+   type Scope_List_Array_Access is access Scope_List_Array;
+   procedure Free is new Unchecked_Deallocation
+     (Scope_List_Array, Scope_List_Array_Access);
+
    type Scope_Tree is record
       Lib_Info    : LI_File_Ptr;
       LI_Filename : String_Access;
@@ -241,7 +251,9 @@ private
       --  longer valid.
 
       Body_Tree : Scope_List;
-      --  The information for the body file.
+      Spec_Tree : Scope_List;
+      Separate_Trees : Scope_List_Array_Access;
+      --  The information for the source files associated with Lib_Info.
    end record;
    --  This tree represents the global scope information for the files
    --  associated with Lib_Info (spec, body and separate).
@@ -252,10 +264,12 @@ private
    Null_Scope_Tree_Node : constant Scope_Tree_Node := null;
 
    Null_Scope_Tree : constant Scope_Tree :=
-     (Lib_Info    => null,
-      LI_Filename => null,
-      Time_Stamp  => 0,
-      Body_Tree   => null);
+     (Lib_Info       => null,
+      LI_Filename    => null,
+      Time_Stamp     => 0,
+      Body_Tree      => null,
+      Spec_Tree      => null,
+      Separate_Trees => null);
 
    pragma Inline (File_Information);
    pragma Inline (Dependency_Information);

@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with System.Assertions; use System.Assertions;
 with Traces; use Traces;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -72,6 +74,7 @@ package body Src_Info.Queries is
       Ref             : out E_Reference_List;
       Status          : out Find_Decl_Or_Body_Query_Status);
    --  Same as Find_Declaration_Or_Body, but for a specific declaration list.
+   --  Entity_Name must be all lower-cases if the language is case insensitive
 
    procedure Destroy (Dep : in out Dependency);
    --  Deallocates the memory associated with the given Dependency record.
@@ -89,10 +92,15 @@ package body Src_Info.Queries is
    procedure Free (Scope : in out Scope_List);
    --  Free the memory occupied by Scope.
 
-   function Find_Entity_Declaration
-     (Scope : Scope_List; Name : String; Line, Column : Integer)
-      return Scope_Tree_Node;
+   function Find_Entity_Scope
+     (Scope : Scope_List; Entity : Entity_Information) return Scope_Tree_Node;
    --  Find the declaration for Name in Scope.
+   --  Name must be all lower-case if the language is case-insensitive
+
+   function Is_Same_Entity
+     (Decl : E_Declaration; Entity : Entity_Information) return Boolean;
+   --  True if Entity1 and Entity2 represent the same entity. You can not use a
+   --  direct equality test
 
    -------------------------
    -- Search_Is_Completed --
@@ -244,17 +252,16 @@ package body Src_Info.Queries is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
       Ref         : E_Reference_List;
+      E_Name      : String := Entity_Name;
+
    begin
+      if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
+         E_Name := To_Lower (E_Name);
+      end if;
+
       Entity_Declaration := No_Declaration_Info;
       Ref                := null;
       Status             := Entity_Not_Found;
-
-      --  Assumption: if the Lib_Info structure is up-to-date, then the casing
-      --  of the entity we are searching (here Entity_Name) is identical
-      --  to the casing inside the Lib_Info, in which case we do not need
-      --  to do case-insensitive string matching. This is important to avoid
-      --  breaking the support for case-sensitive languages such as C for
-      --  instance.
 
       --  Search a matching entity declaration in the Spec
       if Lib_Info.LI.Spec_Info /= null
@@ -262,7 +269,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
-            File_Name, Entity_Name, Line, Column,
+            File_Name, E_Name, Line, Column,
             Entity_Declaration, Ref, Status);
       end if;
 
@@ -273,7 +280,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
-            File_Name, Entity_Name, Line, Column,
+            File_Name, E_Name, Line, Column,
             Entity_Declaration, Ref, Status);
       end if;
 
@@ -284,7 +291,7 @@ package body Src_Info.Queries is
             if Current_Sep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Sep.Value.Declarations,
-                  File_Name, Entity_Name, Line, Column,
+                  File_Name, E_Name, Line, Column,
                   Entity_Declaration, Ref, Status);
 
                if Status = Success then
@@ -303,7 +310,7 @@ package body Src_Info.Queries is
             if Current_Dep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Dep.Value.Declarations,
-                  File_Name, Entity_Name, Line, Column,
+                  File_Name, E_Name, Line, Column,
                   Entity_Declaration, Ref, Status);
                if Status = Success then
                   exit;
@@ -334,7 +341,7 @@ package body Src_Info.Queries is
             Location := Entity_Declaration.Declaration.Location;
          end if;
       else
-         Trace (Me, "Couldn't find a valid xref for " & Entity_Name
+         Trace (Me, "Couldn't find a valid xref for " & E_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
                 & " file=" & File_Name);
       end if;
@@ -457,14 +464,27 @@ package body Src_Info.Queries is
             if L.Decl.End_Of_Scope /= No_Reference then
                return "Decl:""" & L.Decl.Name.all
                  & L.Start_Of_Scope.Line'Img
-                 & L.Decl.End_Of_Scope.Location.Line'Img & """";
+                 & L.Start_Of_Scope.Column'Img
+                 & " ->"
+                 & L.Decl.End_Of_Scope.Location.Line'Img
+                 & L.Decl.End_Of_Scope.Location.Column'Img
+                 & ", decl at"
+                 & L.Decl.Location.Line'Img
+                 & L.Decl.Location.Column'Img
+                 & """";
             else
                return "Decl:""" & L.Decl.Name.all
-                 & L.Start_Of_Scope.Line'Img & """";
+                 & L.Start_Of_Scope.Line'Img
+                 & L.Start_Of_Scope.Column'Img
+                 & ", decl at"
+                 & L.Decl.Location.Line'Img
+                 & L.Decl.Location.Column'Img
+                 & """";
             end if;
          when Reference =>
             return "Ref:""" & L.Decl.Name.all
-              & L.Ref.Location.Line'Img & """";
+              & L.Ref.Location.Line'Img
+              & L.Ref.Location.Column'Img & """";
       end case;
    end Dump;
 
@@ -501,13 +521,28 @@ package body Src_Info.Queries is
    ----------------
 
    procedure Trace_Dump
-     (Handler : Traces.Debug_Handle;
-      Tree : Scope_Tree;
+     (Handler              : Traces.Debug_Handle;
+      Tree                 : Scope_Tree;
+      Node                 : Scope_Tree_Node := Null_Scope_Tree_Node;
       Subprograms_Pkg_Only : Boolean := True) is
    begin
       if Tree /= Null_Scope_Tree then
          Trace (Handler, "Scope tree for " & Tree.LI_Filename.all);
-         Trace_Dump (Handler, Tree.Body_Tree, "", Subprograms_Pkg_Only);
+         if Node = Null_Scope_Tree_Node then
+            Trace (Handler, "Part= BODY");
+            Trace_Dump (Handler, Tree.Body_Tree, "",
+                        Subprograms_Pkg_Only);
+            Trace (Handler, "Part= SPEC");
+            Trace_Dump (Handler, Tree.Spec_Tree, "",
+                        Subprograms_Pkg_Only);
+            for P in Tree.Separate_Trees'Range loop
+               Trace (Handler, "Part=" & P'Img);
+               Trace_Dump (Handler, Tree.Separate_Trees (P), "",
+                           Subprograms_Pkg_Only);
+            end loop;
+         else
+            Trace_Dump (Handler, Scope_List (Node), "", Subprograms_Pkg_Only);
+         end if;
       else
          Trace (Handler, "Null scope tree");
       end if;
@@ -553,6 +588,11 @@ package body Src_Info.Queries is
    begin
       Free (Tree.LI_Filename);
       Free (Tree.Body_Tree);
+      Free (Tree.Spec_Tree);
+      for P in Tree.Separate_Trees'Range loop
+         Free (Tree.Separate_Trees (P));
+      end loop;
+      Free (Tree.Separate_Trees);
    end Free;
 
    -----------------
@@ -562,16 +602,19 @@ package body Src_Info.Queries is
    function Create_Tree (Lib_Info : LI_File_Ptr) return Scope_Tree is
 
       procedure Add_Declarations
-        (Decl : E_Declaration_Info_List; L : in out Scope_List);
+        (Decl : E_Declaration_Info_List; T : in out Scope_Tree);
       --  Add the declarations from Decl into L.
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List; L : in out Scope_List);
-      --  Add a single reference in the tree
+        (Decl : in out Scope_List; Node : in out Scope_List);
+      procedure Add_Single_Entity
+        (Decl : in out Scope_List; T : in out Scope_Tree);
+      --  Add a single reference in the tree (either starting at the top-level
+      --  of the tree if Node is null, or at Node otherwise).
 
       procedure Add_References
         (Decl : E_Declaration_Info;
-         L : in out Scope_List;
+         T : in out Scope_Tree;
          Decl_Start : File_Location);
       --  Add all the references to the entity declared in Decl.
       --  Decl_Start is the starting location of the scope for the entity.
@@ -583,8 +626,8 @@ package body Src_Info.Queries is
       --  True if Loc is in the range of Decl.
       --  -1 is returned if Decl is before Loc, 0 if within, 1 if after, or
       --  2 if Loc is contained in the scope of Decl.
-      --  It returns -2 if the positions could not be compared (invalid file,
-      --  Decl is not a range,...)
+      --  Both Decl and Loc must reference the same source file, or no
+      --  comparison can be done.
 
       procedure Add_In_List
         (L        : in out Scope_List;
@@ -642,12 +685,6 @@ package body Src_Info.Queries is
 
          case Decl.Typ is
             when Declaration =>
-               if Decl.Start_Of_Scope.File.LI /= Lib_Info
-                 or else Decl.Start_Of_Scope.File.Part /= Unit_Body
-               then
-                  return -2;
-               end if;
-
                case Loc.Typ is
                   when Declaration =>
                      if Decl.Decl.End_Of_Scope /= No_Reference then
@@ -698,12 +735,6 @@ package body Src_Info.Queries is
                end case;
 
             when Reference =>
-               if Decl.Ref.Location.File.LI /= Lib_Info
-                 or else Decl.Ref.Location.File.Part /= Unit_Body
-               then
-                  return -2;
-               end if;
-
                case Loc.Typ is
                   when Declaration =>
                      if Decl.Ref.Location < L then
@@ -752,29 +783,19 @@ package body Src_Info.Queries is
       -----------------------
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List; L : in out Scope_List)
+        (Decl : in out Scope_List;
+         Node : in out Scope_List)
       is
-         Pos : Integer;
-         List : Scope_List := L;
+         Pos      : Integer;
+         List     : Scope_List := Node;
          Previous : Scope_List := null;
-         Save : Scope_List;
+         Save     : Scope_List;
       begin
          while List /= null loop
             Pos := In_Range (Decl, List);
-            --  if Is_Subprogram (Scope_Tree_Node (Decl))
-            --    and then Is_Subprogram (Scope_Tree_Node (List))
-            --  then
-            --     Trace
-            --      (Me, Dump (Decl) & " / " & Dump (List) & " => " & Pos'Img);
-            --  end if;
-
             case In_Range (Decl, List) is
-               when -2 =>
-                  Free (Decl);
-                  return;
-
                when -1 =>
-                  Add_In_List (L, Previous, Decl);
+                  Add_In_List (Node, Previous, Decl);
                   return;
 
                when 0 =>
@@ -785,7 +806,7 @@ package body Src_Info.Queries is
                   null;
 
                when 2 =>
-                  Add_In_List (L, Previous, Decl);
+                  Add_In_List (Node, Previous, Decl);
                   loop
                      Save := List.Sibling;
                      List.Sibling := null;
@@ -804,7 +825,59 @@ package body Src_Info.Queries is
             List := List.Sibling;
          end loop;
 
-         Add_In_List (L, Previous, Decl);
+         Add_In_List (Node, Previous, Decl);
+      end Add_Single_Entity;
+
+      -----------------------
+      -- Add_Single_Entity --
+      -----------------------
+
+      procedure Add_Single_Entity
+        (Decl : in out Scope_List;
+         T : in out Scope_Tree)
+      is
+         P : Unit_Part;
+         File_List : File_Info_Ptr_List;
+         Num : Positive := 1;
+         Unit_Name : String_Access;
+      begin
+         if Decl.Typ = Declaration then
+            if Decl.Start_Of_Scope.File.LI /= Lib_Info then
+               Free (Decl);
+               return;
+            end if;
+
+            P := Decl.Start_Of_Scope.File.Part;
+            Unit_Name := Decl.Start_Of_Scope.File.Unit_Name;
+         else
+            if Decl.Ref.Location.File.LI /= Lib_Info then
+               Free (Decl);
+               return;
+            end if;
+
+            P := Decl.Ref.Location.File.Part;
+            Unit_Name := Decl.Ref.Location.File.Unit_Name;
+         end if;
+
+         case P is
+            when Unit_Body =>
+               Add_Single_Entity (Decl, T.Body_Tree);
+
+            when Unit_Spec =>
+               Add_Single_Entity (Decl, T.Spec_Tree);
+
+            when Unit_Separate =>
+               File_List := Lib_Info.LI.Separate_Info;
+               while File_List /= null loop
+                  exit when File_List.Value.Unit_Name.all = Unit_Name.all;
+                  Num := Num + 1;
+                  File_List := File_List.Next;
+               end loop;
+
+               if Num <= T.Separate_Trees'Last then
+                  Add_Single_Entity (Decl, T.Separate_Trees (Num));
+               end if;
+         end case;
       end Add_Single_Entity;
 
       --------------------
@@ -813,7 +886,7 @@ package body Src_Info.Queries is
 
       procedure Add_References
         (Decl : E_Declaration_Info;
-         L : in out Scope_List;
+         T : in out Scope_Tree;
          Decl_Start : File_Location)
       is
          R : E_Reference_List := Decl.References;
@@ -833,7 +906,7 @@ package body Src_Info.Queries is
                   Sibling     => null,
                   Decl        => Decl.Declaration'Unrestricted_Access,
                   Ref         => R.Value'Unrestricted_Access);
-               Add_Single_Entity (New_Item, L);
+               Add_Single_Entity (New_Item, T);
             end if;
             R := R.Next;
          end loop;
@@ -844,7 +917,7 @@ package body Src_Info.Queries is
       ----------------------
 
       procedure Add_Declarations
-        (Decl : E_Declaration_Info_List; L : in out Scope_List)
+        (Decl : E_Declaration_Info_List; T : in out Scope_Tree)
       is
          List : E_Declaration_Info_List := Decl;
          New_Item : Scope_List;
@@ -864,75 +937,81 @@ package body Src_Info.Queries is
             --  actually delete New_Item if the declaration doesn't fit in the
             --  tree.
 
-            Add_Single_Entity (New_Item, L);
-
-            Add_References (List.Value, L, Start_Of_Scope);
+            Add_Single_Entity (New_Item, T);
+            Add_References (List.Value, T, Start_Of_Scope);
             List := List.Next;
          end loop;
       end Add_Declarations;
 
       T         : Scope_Tree;
-      L         : Scope_List;
       File_List : File_Info_Ptr_List;
       Dep       : Dependency_File_Info_List;
+      Num_Separates : Natural := 0;
 
    begin
       Assert
         (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file hasn't been parsed");
 
-      if Lib_Info.LI.Spec_Info /= null then
-         Add_Declarations (Lib_Info.LI.Spec_Info.Declarations, L);
-      end if;
-
-      if Lib_Info.LI.Body_Info /= null then
-         Add_Declarations (Lib_Info.LI.Body_Info.Declarations, L);
-      end if;
-
       File_List := Lib_Info.LI.Separate_Info;
       while File_List /= null loop
-         Add_Declarations (File_List.Value.Declarations, L);
+         Num_Separates := Num_Separates + 1;
          File_List := File_List.Next;
-      end loop;
-
-      Dep := Lib_Info.LI.Dependencies_Info;
-      while Dep /= null loop
-         Add_Declarations (Dep.Value.Declarations, L);
-         Dep := Dep.Next;
       end loop;
 
       T := (Lib_Info    => Lib_Info,
             LI_Filename => new String' (Lib_Info.LI.LI_Filename.all),
             Time_Stamp  => 0,
-            Body_Tree   => L);
+            Body_Tree   => null,
+            Spec_Tree   => null,
+            Separate_Trees => new Scope_List_Array (1 .. Num_Separates));
+
+      if Lib_Info.LI.Spec_Info /= null then
+         Add_Declarations (Lib_Info.LI.Spec_Info.Declarations, T);
+      end if;
+
+      if Lib_Info.LI.Body_Info /= null then
+         Add_Declarations (Lib_Info.LI.Body_Info.Declarations, T);
+      end if;
+
+      File_List := Lib_Info.LI.Separate_Info;
+      while File_List /= null loop
+         Add_Declarations (File_List.Value.Declarations, T);
+         File_List := File_List.Next;
+      end loop;
+
+      Dep := Lib_Info.LI.Dependencies_Info;
+      while Dep /= null loop
+         Add_Declarations (Dep.Value.Declarations, T);
+         Dep := Dep.Next;
+      end loop;
+
       return T;
 
    exception
-      when Constraint_Error | Assert_Failure =>
+      when E : Constraint_Error | Assert_Failure =>
+         Assert (Me, False, "Unexpected exception in Create_Tree: "
+                & Exception_Information (E));
+         Free (T);
          return Null_Scope_Tree;
    end Create_Tree;
 
-   -----------------------------
-   -- Find_Entity_Declaration --
-   -----------------------------
+   -----------------------
+   -- Find_Entity_Scope --
+   -----------------------
 
-   function Find_Entity_Declaration
-     (Scope : Scope_List; Name : String; Line, Column : Integer)
-      return Scope_Tree_Node
+   function Find_Entity_Scope
+     (Scope : Scope_List; Entity : Entity_Information) return Scope_Tree_Node
    is
       L : Scope_List := Scope;
       Result : Scope_Tree_Node;
    begin
       while L /= null loop
          if L.Typ = Declaration then
-            if L.Decl.Name.all = Name
-              and then L.Decl.Location.Line = Line
-              and then L.Decl.Location.Column = Column
-            then
+            if Is_Same_Entity (L.Decl.all, Entity) then
                return Scope_Tree_Node (L);
             end if;
 
-            Result := Find_Entity_Declaration
-              (L.Contents, Name, Line, Column);
+            Result := Find_Entity_Scope (L.Contents, Entity);
             if Result /= null then
                return Result;
             end if;
@@ -941,19 +1020,33 @@ package body Src_Info.Queries is
          L := L.Sibling;
       end loop;
       return null;
-   end Find_Entity_Declaration;
+   end Find_Entity_Scope;
 
-   -----------------------------
-   -- Find_Entity_Declaration --
-   -----------------------------
+   -----------------------
+   -- Find_Entity_Scope --
+   -----------------------
 
-   function Find_Entity_Declaration
-     (Tree : Scope_Tree; Name : String; Line, Column : Integer)
-      return Scope_Tree_Node is
+   function Find_Entity_Scope
+     (Tree : Scope_Tree; Entity : Entity_Information)
+      return Scope_Tree_Node
+   is
+      Result : Scope_Tree_Node;
    begin
-      return Find_Entity_Declaration
-        (Tree.Body_Tree, Name, Line, Column);
-   end Find_Entity_Declaration;
+      Result := Find_Entity_Scope (Tree.Body_Tree, Entity);
+      if Result = null then
+         Result := Find_Entity_Scope (Tree.Spec_Tree, Entity);
+
+         if Result = null then
+            for P in Tree.Separate_Trees'Range loop
+               Result := Find_Entity_Scope
+                 (Tree.Separate_Trees (P), Entity);
+               exit when Result /= null;
+            end loop;
+         end if;
+      end if;
+
+      return Result;
+   end Find_Entity_Scope;
 
    -----------
    -- Start --
@@ -1007,6 +1100,20 @@ package body Src_Info.Queries is
            (Get_Source_Filename (Node.Decl.Location.File)));
    end Get_Entity;
 
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity (Decl : E_Declaration_Info) return Entity_Information is
+   begin
+      return Entity_Information'
+        (Name        => new String' (Decl.Declaration.Name.all),
+         Decl_Line   => Decl.Declaration.Location.Line,
+         Decl_Column => Decl.Declaration.Location.Column,
+         Decl_File   => new String'
+           (Get_Source_Filename (Decl.Declaration.Location.File)));
+   end Get_Entity;
+
    -------------
    -- Destroy --
    -------------
@@ -1046,5 +1153,21 @@ package body Src_Info.Queries is
    begin
       return Entity.Decl_File.all;
    end Get_Declaration_File_Of;
+
+   --------------------
+   -- Is_Same_Entity --
+   --------------------
+
+   function Is_Same_Entity
+     (Decl : E_Declaration; Entity : Entity_Information)
+      return Boolean is
+   begin
+      return Decl.Location.Line         = Entity.Decl_Line
+        and then Decl.Location.Column   = Entity.Decl_Column
+        and then Decl.Name.all          = Entity.Name.all
+        and then Get_Source_Filename (Decl.Location.File) =
+           Entity.Decl_File.all;
+   end Is_Same_Entity;
+
 
 end Src_Info.Queries;
