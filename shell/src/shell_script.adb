@@ -161,7 +161,7 @@ package body Shell_Script is
    function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+      Display_In_Console : Boolean := True) return String;
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
@@ -941,7 +941,8 @@ package body Shell_Script is
       Display_In_Console : Boolean := True)
    is
       Args : Argument_List := (1 => new String'(Filename));
-      S    : constant String := Execute_Command (Script, "load", Args);
+      S    : constant String := Execute_GPS_Shell_Command
+        (Script.Kernel, "load", Args);
    begin
       if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, S);
@@ -976,10 +977,16 @@ package body Shell_Script is
    function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String is
+      Display_In_Console : Boolean := True) return String
+   is
+      Result : constant String := Execute_GPS_Shell_Command
+        (Script.Kernel, Command);
    begin
-      return Execute_GPS_Shell_Command
-        (Script.Kernel, Command, Args);
+      if Display_In_Console and then Script.Console /= null then
+         Insert (Script.Console, Result);
+      end if;
+
+      return Result;
    end Execute_Command;
 
    -------------------------------
@@ -1135,6 +1142,7 @@ package body Shell_Script is
    is
       Args         : Argument_List_Access;
       First, Last  : Integer;
+      Tmp          : GNAT.OS_Lib.String_Access;
    begin
       if Command /= "" then
          First := Command'First;
@@ -1163,6 +1171,17 @@ package body Shell_Script is
             end loop;
 
             Args := Argument_String_To_List (Command (First .. Last - 1));
+
+            --  Cleanup the arguments to remove unnecessary quoting
+            for J in Args'Range loop
+               if Args (J) (Args (J)'First) = '"'
+                 and then Args (J) (Args (J)'Last) = '"'
+               then
+                  Tmp := Args (J);
+                  Args (J) := new String'(Tmp (Tmp'First + 1 .. Tmp'Last - 1));
+                  Free (Tmp);
+               end if;
+            end loop;
 
             declare
                R : constant String := Execute_GPS_Shell_Command
