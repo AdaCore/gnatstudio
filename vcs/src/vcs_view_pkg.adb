@@ -1252,7 +1252,9 @@ package body VCS_View_Pkg is
             Open_File_Editor
               (Kernel,
                Create
-                (Full_Filename => Get_String (Page.Model, Iter, Name_Column)));
+                 (Full_Filename =>
+                    Get_String (Page.Model, Iter, Name_Column)));
+            Emit_Stop_By_Name (Page.Tree, "button_press_event");
          end if;
       end if;
 
