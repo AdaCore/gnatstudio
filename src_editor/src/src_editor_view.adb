@@ -786,8 +786,6 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      --  Set the title of the main window.
-
       View.Has_Focus := False;
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
