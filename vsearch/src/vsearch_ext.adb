@@ -442,7 +442,8 @@ package body Vsearch_Ext is
       if Get_Selection (Get_List (Vsearch.Pattern_Combo)) =
         Widget_List.Null_List
       then
-         Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
+         Add_Unique_Combo_Entry
+           (Vsearch.Pattern_Combo, Pattern, Prepend => True);
          Add_To_History
            (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, Pattern);
 
@@ -458,10 +459,10 @@ package body Vsearch_Ext is
       declare
          Replace_Text : constant String := Get_Text (Vsearch.Replace_Entry);
       begin
-         Add_Unique_Combo_Entry (Vsearch.Replace_Combo, Replace_Text);
+         Add_Unique_Combo_Entry
+           (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
          Add_To_History
-           (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
-            Replace_Text);
+           (Get_History (Vsearch.Kernel).all, Replace_Hist_Key, Replace_Text);
          Set_Text (Vsearch.Replace_Entry, Replace_Text);
       end;
    end Create_Context;
@@ -1083,10 +1084,10 @@ package body Vsearch_Ext is
       --  the pattern combo
       Get_History
         (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo,
-         Clear_Combo => False);
+         Clear_Combo => False, Prepend => True);
       Get_History
         (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo,
-         Clear_Combo => False);
+         Clear_Combo => False, Prepend => True);
 
       Associate
         (Get_History (Handle).all,
