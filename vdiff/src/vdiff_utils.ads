@@ -68,10 +68,18 @@ package Vdiff_Utils is
 
    procedure Value1_Changed (Object : access Gtk_Widget_Record'Class);
    --  Callback for the value_changed signal on the first
-   --  scrolled window of a Vdiff_Access.
+   --  scrolled window (vertical scrollbar) of a Vdiff_Access.
 
    procedure Value2_Changed (Object : access Gtk_Widget_Record'Class);
    --  Callback for the value_changed signal on the second
-   --  scrolled window of a Vdiff_Access.
+   --  scrolled window (vertical scrollbar) of a Vdiff_Access.
+
+   procedure H_Value1_Changed (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the value_changed signal on the first
+   --  scrolled window (horizontal scrollbar) of a Vdiff_Access.
+
+   procedure H_Value2_Changed (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the value_changed signal on the second
+   --  scrolled window (horizontal scrollbar) of a Vdiff_Access.
 
 end Vdiff_Utils;

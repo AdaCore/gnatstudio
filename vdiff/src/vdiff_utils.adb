@@ -697,4 +697,44 @@ package body Vdiff_Utils is
       Vdiff.Ignore_Value_Changed := False;
    end Value2_Changed;
 
+   ----------------------
+   -- H_Value1_Changed --
+   ----------------------
+
+   procedure H_Value1_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Vdiff : constant Vdiff_Access := Vdiff_Access (Object);
+   begin
+      if Vdiff.Ignore_Value_Changed then
+         return;
+      end if;
+
+      Vdiff.Ignore_Value_Changed := True;
+      Set_Value
+        (Get_Hadjustment (Vdiff.Clist2),
+         Get_Value (Get_Hadjustment (Vdiff.Clist1)));
+      Vdiff.Ignore_Value_Changed := False;
+   end H_Value1_Changed;
+
+   ----------------------
+   -- H_Value2_Changed --
+   ----------------------
+
+   procedure H_Value2_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Vdiff : constant Vdiff_Access := Vdiff_Access (Object);
+   begin
+      if Vdiff.Ignore_Value_Changed then
+         return;
+      end if;
+
+      Vdiff.Ignore_Value_Changed := True;
+      Set_Value
+        (Get_Hadjustment (Vdiff.Clist1),
+         Get_Value (Get_Hadjustment (Vdiff.Clist2)));
+      Vdiff.Ignore_Value_Changed := False;
+   end H_Value2_Changed;
+
 end Vdiff_Utils;
