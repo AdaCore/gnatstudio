@@ -954,7 +954,12 @@ private
       --  This must always be a valid text mark.
 
       Inserting     : Boolean := False;
-      --  Used to avoid recursion, when
+      --  Used to avoid recursion, when using commands.
+
+      Do_Not_Move_Cursor : Boolean := False;
+      --  Used to disable functions moving the cursor or emit the
+      --  "cursor_position_changed" signal when we know we are going to
+      --  move the cursor a lot.
 
       Queue         : Command_Queue;
       --  Contains the queue of editor commands for this editor.
