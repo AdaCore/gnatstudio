@@ -37,7 +37,6 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtkada.File_Selector;     use Gtkada.File_Selector;
 with Gtkada.MDI;               use Gtkada.MDI;
-with OS_Utils;                 use OS_Utils;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -45,6 +44,7 @@ with Glide_Result_View;        use Glide_Result_View;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Histories;                use Histories;
 with Gtk.Widget;               use Gtk.Widget;
+with VFS;                      use VFS;
 
 package body Glide_Kernel.Console is
 
@@ -385,7 +385,7 @@ package body Glide_Kernel.Console is
 
    begin
       declare
-         File : constant String :=
+         File : constant Virtual_File :=
            Select_File
              (Title             => -"Save messages window as",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
@@ -393,14 +393,14 @@ package body Glide_Kernel.Console is
               Parent            => Get_Main_Window (Kernel),
               History           => Get_History (Kernel));
       begin
-         if File = "" then
+         if File = VFS.No_File then
             return;
          end if;
 
          declare
             Contents : constant String := Get_Chars (Console);
          begin
-            FD := Create_File (File, Binary);
+            FD := Create_File (Locale_Full_Name (File), Binary);
             Len := Write (FD, Contents'Address, Contents'Length);
             Close (FD);
          end;
@@ -424,16 +424,15 @@ package body Glide_Kernel.Console is
 
    begin
       declare
-         File : constant String :=
+         File : constant Virtual_File :=
            Select_File
              (Title => -"Select file to load in the messages window",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               Parent            => Get_Main_Window (Kernel),
               History           => Get_History (Kernel));
-
       begin
-         if File = "" then
+         if File = VFS.No_File then
             return;
          end if;
 
