@@ -1009,7 +1009,7 @@ package body Help_Module is
       end if;
 
       Button := Message_Dialog
-        ("GPS " & GVD.Version & " (" & GVD.Source_Date &
+        (GPS_Name (Top) & " " & GVD.Version & " (" & GVD.Source_Date &
            (-") hosted on ") & GVD.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
          (-"the GNAT Programming System") & LF & Contents.all & LF &
