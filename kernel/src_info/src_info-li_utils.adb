@@ -13,15 +13,24 @@ package body Src_Info.LI_Utils is
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point);
+   --  Inserts declaration into specified E_Declaration_Info_List
+
 
    function Find_Declaration_Internal (
       Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
       Location                : in Point) return E_Declaration_Info_List;
+   --  Finds declaration with given attributes in
+   --  specified E_Declaration_Info_List
 
    function eq (str1 : String; str2 : String) return Boolean;
+   --  Checks two strings for equality
 
    -------------------------------------------------------------------------
+
+   --------------------------
+   --  Insert_declaration  --
+   --------------------------
 
    procedure Insert_Declaration (
       Handler                 : in LI_Handler;
@@ -88,6 +97,10 @@ package body Src_Info.LI_Utils is
             End_Of_Scope_Location, Rename_Filename, Rename_Location);
       Declaration_Info := D_Ptr;
    end Insert_Declaration;
+
+   -------------------------------------
+   --  Insert_Dependency_Declaration  --
+   -------------------------------------
 
    procedure Insert_Dependency_Declaration (
       Handler                 : in LI_Handler;
@@ -177,6 +190,10 @@ package body Src_Info.LI_Utils is
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
+   ------------------------
+   --  Insert_Reference  --
+   ------------------------
+
    procedure Insert_Reference (
       Declaration_Info        : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
@@ -225,6 +242,10 @@ package body Src_Info.LI_Utils is
                                         Location);
    end Find_Declaration;
 
+   -----------------------------------
+   --  Find_Dependency_Declaration  --
+   -----------------------------------
+
    function Find_Dependency_Declaration (
       File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
@@ -254,6 +275,11 @@ package body Src_Info.LI_Utils is
    end Find_Dependency_Declaration;
 
    -------------------------------------------------------------------------
+
+   -----------------------------------
+   --  Insert_Declaration_Internal  --
+   -----------------------------------
+
    procedure Insert_Declaration_Internal (
       D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
@@ -313,6 +339,10 @@ package body Src_Info.LI_Utils is
       end if;
    end Insert_Declaration_Internal;
 
+   -----------------------------------
+   --  Find_Declaration_Internal  --
+   -----------------------------------
+
    function Find_Declaration_Internal (
       Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
@@ -333,6 +363,10 @@ package body Src_Info.LI_Utils is
       end loop;
       raise Declaration_Not_Found;
    end Find_Declaration_Internal;
+
+   ----------
+   --  eq  --
+   ----------
 
    function eq (str1 : String; str2 : String) return Boolean is
    begin

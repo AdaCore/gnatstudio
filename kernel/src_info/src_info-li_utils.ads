@@ -41,7 +41,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration (
       Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
-      Symbol_Name                    : in String;
+      Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
@@ -76,14 +76,6 @@ private package Src_Info.LI_Utils is
       Filename                : in String;
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
-
-   --  Invalid_Source_Filename : exception;
-   --  Thrown if specified Source_Filename differs from that found in
-   --  File.Body_Info.Source_Filename
-
-   --  Invalid_Handler : exception;
-   --  Thrown if specified handler differs from that found in
-   --  File.Handler
 
    Declaration_Not_Found : exception;
    --  Thrown by Find_Declaration functions if declaration is not found
