@@ -62,9 +62,12 @@ package body Src_Editor_Buffer is
      To_Font_Attributes;
    --  ??? Just as for the colors, these will eventually move away.
 
-   Default_Highlight_Color : constant String := "green";
+   Default_HL_Line_Color : constant String := "green";
    --  ??? As soon as a uniform GLIDE handling of defaults/preferences
    --  ??? is put in place, move this constant there.
+
+   Default_HL_Region_Color : constant String := "cyan";
+   --  ??? Move to GLIDE defaults/preferences area.
 
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
@@ -643,9 +646,14 @@ package body Src_Editor_Buffer is
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
 
-      --  Create a Highlight Tag and save it into the source buffer tag table.
-      Create_Highlight_Tag (Buffer.Highlight_Tag, Default_Highlight_Color);
-      Text_Tag_Table.Add (Tags, Buffer.Highlight_Tag);
+      --  Create HL_Line_Tag and save it into the source buffer tag table.
+      Create_Highlight_Line_Tag (Buffer.HL_Line_Tag, Default_HL_Line_Color);
+      Text_Tag_Table.Add (Tags, Buffer.HL_Line_Tag);
+
+      --  Create HL_Region_Tag and save it into the source buffer tag table.
+      Create_Highlight_Region_Tag
+        (Buffer.HL_Region_Tag, Default_HL_Region_Color);
+      Text_Tag_Table.Add (Tags, Buffer.HL_Region_Tag);
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
@@ -814,24 +822,28 @@ package body Src_Editor_Buffer is
       return Buffer.Lang;
    end Get_Language;
 
-   -------------------------
-   -- Set_Cursor_Position --
-   -------------------------
+   -----------------------
+   -- Is_Valid_Position --
+   -----------------------
 
-   procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint;
-      Success : out Boolean)
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Gint;
+      Column : Gint := 0) return Boolean
    is
-      Iter          : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
    begin
-
       --  First check that Line does not exceed the number of lines
       --  in the buffer.
       if Line >= Get_Line_Count (Buffer) then
-         Success := False;
-         return;
+         return False;
+      end if;
+
+      --  At this point, we know that the line number is valid. If the column
+      --  number is 0, then no need to verify the column number as well.
+      --  Column 0 always exists and this speeds up the query.
+      if Column = 0 then
+         return True;
       end if;
 
       --  Get a text iterator at the begining of the line number Line.
@@ -843,15 +855,30 @@ package body Src_Editor_Buffer is
       --  Check that Column does not exceed the number of character in
       --  in the current line.
       if Column > Get_Line_Offset (Iter) then
-         Success := False;
-         return;
+         return False;
       end if;
+
+      --  At this point, we passed all the checks, so the position is licit.
+      return True;
+   end Is_Valid_Position;
+
+   -------------------------
+   -- Set_Cursor_Position --
+   -------------------------
+
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
       Place_Cursor (Buffer, Iter);
-      Success := True;
    end Set_Cursor_Position;
 
    -------------------------
@@ -870,44 +897,214 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Insert_Iter);
    end Get_Cursor_Position;
 
+   --------------------------
+   -- Get_Selection_Bounds --
+   --------------------------
+
+   procedure Get_Selection_Bounds
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : out Gint;
+      Start_Column : out Gint;
+      End_Line     : out Gint;
+      End_Column   : out Gint;
+      Found        : out Boolean)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
+      if Found then
+         Start_Line   := Get_Line (Start_Iter);
+         Start_Column := Get_Line_Offset (Start_Iter);
+         End_Line     := Get_Line (End_Iter);
+         End_Column   := Get_Line_Offset (End_Iter);
+      else
+         Start_Line   := 0;
+         Start_Column := 0;
+         End_Line     := 0;
+         End_Column   := 0;
+      end if;
+   end Get_Selection_Bounds;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection (Buffer : access Source_Buffer_Record) return String
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Found      : Boolean;
+   begin
+      Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
+      if Found then
+         return Get_Slice (Buffer, Start_Iter, End_Iter);
+      else
+         return "";
+      end if;
+   end Get_Selection;
+
+   ------------
+   -- Search --
+   ------------
+
+   procedure Search
+     (Buffer             : access Source_Buffer_Record;
+      Pattern            : String;
+      Case_Sensitive     : Boolean := True;
+      Whole_Word         : Boolean := False;
+      Search_Forward     : Boolean := True;
+      From_Line          : Gint := 0;
+      From_Column        : Gint := 0;
+      Found              : out Boolean;
+      Match_Start_Line   : out Gint;
+      Match_Start_Column : out Gint;
+      Match_End_Line     : out Gint;
+      Match_End_Column   : out Gint)
+   is
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, From_Line, From_Column));
+
+      Found := False;
+      Match_Start_Line   := 0;
+      Match_Start_column := 0;
+      Match_End_Line     := 0;
+      Match_End_Column   := 0;
+      --  ??? This function is not implemented yet. Always return false
+      --  ??? for the moment.
+   end Search;
+
+   ---------------
+   -- Get_Slice --
+   ---------------
+
+   function Get_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint) return String
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      return Get_Text (Buffer, Start_Iter, End_Iter);
+   end Get_Slice;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint;
+      Text    : String)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Line, Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+      Insert (Buffer, Iter, Text);
+   end Insert;
+
+   -------------------
+   -- Replace_Slice --
+   -------------------
+
+   procedure Replace_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint;
+      Text         : String)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+
+      --  Currently, Gtk_Text_Buffer does not export a service to replace
+      --  some text, so we delete the slice first, then insert the text...
+      Delete (Buffer, Start_Iter, End_Iter);
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Insert (Buffer, Start_Iter, Text);
+   end Replace_Slice;
+
+   ------------------
+   -- Delete_Slice --
+   ------------------
+
+   procedure Delete_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+
+      Delete (Buffer, Start_Iter, End_Iter);
+   end Delete_Slice;
+
+   ----------------
+   -- Select_All --
+   ----------------
+
+   procedure Select_All (Buffer : access Source_Buffer_Record) is
+      Insert_Mark    : constant Gtk_Text_Mark := Get_Insert (Buffer);
+      Selection_Mark : constant Gtk_Text_Mark := Get_Selection_Bound (Buffer);
+      Start_Iter     : Gtk_Text_Iter;
+      End_Iter       : Gtk_Text_Iter;
+   begin
+      Get_Start_Iter (Buffer, Start_Iter);
+      Get_End_Iter (Buffer, End_Iter);
+      --  Move the selection_bound mark to the begining of the buffer, and
+      --  the insert mark at the end, thus creating the selection on the
+      --  entire buffer
+      Move_Mark (Buffer, Selection_Mark, Start_Iter);
+      Move_Mark (Buffer, Insert_Mark, End_Iter);
+   end Select_All;
+
    --------------------
    -- Highlight_Line --
    --------------------
 
    procedure Highlight_Line
      (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Success : out Boolean)
+      Line    : Gint)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
-      Found      : Boolean := True;
    begin
-      if Line >= Get_Line_Count (Buffer) then
-         Success := False;
-         return;
-      end if;
+      pragma Assert (Line < Get_Line_Count (Buffer));
 
       --  Search for a highlighte line, if any, and unhighlight it.
-
-      Get_Start_Iter (Buffer, Start_Iter);
-      if not Begins_Tag (Start_Iter, Buffer.Highlight_Tag) then
-         Forward_To_Tag_Toggle (Start_Iter, Buffer.Highlight_Tag, Found);
-      end if;
-      if Found then
-         Copy (Source => Start_Iter, Dest => End_Iter);
-         Forward_To_Line_End (End_Iter);
-         Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
-      end if;
+      Cancel_Highlight_Line (Buffer);
 
       --  And finally highlight the given line
-
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
       Copy (Source => Start_Iter, Dest => End_Iter);
       Forward_To_Line_End (End_Iter);
-      Apply_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
-
-      Success := True;
+      Apply_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
    end Highlight_Line;
 
    ----------------------
@@ -916,23 +1113,17 @@ package body Src_Editor_Buffer is
 
    procedure Unhighlight_Line
      (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Success : out Boolean)
+      Line    : Gint)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      if Line >= Get_Line_Count (Buffer) then
-         Success := False;
-         return;
-      end if;
+      pragma Assert (Line < Get_Line_Count (Buffer));
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
       Copy (Source => Start_Iter, Dest => End_Iter);
       Forward_To_Line_End (End_Iter);
-      Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
-
-      Success := True;
+      Remove_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
    end Unhighlight_Line;
 
    ---------------------------
@@ -947,14 +1138,72 @@ package body Src_Editor_Buffer is
       Found      : Boolean := True;
    begin
       Get_Start_Iter (Buffer, Start_Iter);
-      if not Begins_Tag (Start_Iter, Buffer.Highlight_Tag) then
-         Forward_To_Tag_Toggle (Start_Iter, Buffer.Highlight_Tag, Found);
+      if not Begins_Tag (Start_Iter, Buffer.HL_Line_Tag) then
+         Forward_To_Tag_Toggle (Start_Iter, Buffer.HL_Line_Tag, Found);
       end if;
       if Found then
          Copy (Source => Start_Iter, Dest => End_Iter);
          Forward_To_Line_End (End_Iter);
-         Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
+         Remove_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
       end if;
    end Cancel_Highlight_Line;
+
+   ----------------------
+   -- Highlight_Region --
+   ----------------------
+
+   procedure Highlight_Region
+     (Buffer : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      Apply_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
+   end Highlight_Region;
+
+   ------------------------
+   -- Unhighlight_Region --
+   ------------------------
+
+   procedure Unhighlight_Region
+     (Buffer : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
+   end Unhighlight_Region;
+
+   ---------------------
+   -- Unhighlight_All --
+   ---------------------
+
+   procedure Unhighlight_All (Buffer : access Source_Buffer_Record)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      Get_Start_Iter (Buffer, Start_Iter);
+      Get_End_Iter (Buffer, End_Iter);
+      Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
+   end Unhighlight_All;
 
 end Src_Editor_Buffer;
