@@ -22,8 +22,9 @@ with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
+with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body Commands.External is
@@ -36,10 +37,11 @@ package body Commands.External is
    --  ???
    pragma Warnings (Off, Destroy);
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (External_Command, External_Command_Access);
 
    function Atomic_Command (D : External_Command_Access) return Boolean;
+   --  ???
 
    -------------
    -- Destroy --
@@ -80,7 +82,7 @@ package body Commands.External is
    function Atomic_Command
      (D : External_Command_Access) return Boolean
    is
-      Match  : Expect_Match := 1;
+      Match : Expect_Match := 1;
    begin
       loop
          Expect (D.Fd, Match, "\n", 1);
@@ -106,7 +108,7 @@ package body Commands.External is
             Close (D.Fd);
             Success := D.Handler (D.Kernel, D.Head, D.Output);
             Pop_State (D.Kernel);
-            Command_Finished (D.Queue, D, Success);
+            Command_Finished (D, Success);
          end;
 
          return False;
@@ -116,15 +118,16 @@ package body Commands.External is
    -- Execute --
    -------------
 
-   function Execute (Command : access External_Command)
-                    return Boolean
-   is
+   function Execute (Command : access External_Command) return Boolean is
+      use String_List;
+
       Id        : Timeout_Handler_Id;
       Args      : GNAT.OS_Lib.Argument_List
         (1 .. String_List.Length (Command.Args));
-      Temp_Args : String_List.List := Command.Args;
+      Temp_Args : List_Node := First (Command.Args);
 
       Old_Dir   : Dir_Name_Str := Get_Current_Dir;
+
    begin
       --  ??? Must add many checks for empty lists, etc.
 
@@ -133,30 +136,29 @@ package body Commands.External is
       end if;
 
       for J in Args'Range loop
-         Args (J) := new String' (String_List.Head (Temp_Args));
-         Temp_Args := String_List.Next (Temp_Args);
+         Args (J) := new String' (Data (Temp_Args));
+         Temp_Args := Next (Temp_Args);
       end loop;
 
-      Non_Blocking_Spawn (Command.Fd,
-                          String_List.Head (Command.Command),
-                          Args,
-                          Err_To_Out => True,
-                          Buffer_Size => 0);
+      Non_Blocking_Spawn
+        (Command.Fd,
+         Data (First (Command.Command)),
+         Args,
+         Err_To_Out => True,
+         Buffer_Size => 0);
 
       for J in Args'Range loop
          GNAT.OS_Lib.Free (Args (J));
       end loop;
 
-      Temp_Args := Command.Args;
-      String_List.Free (Temp_Args);
+      String_List.Free (Command.Args);
 
       if not String_List.Is_Empty (Command.Dir) then
          Change_Dir (Old_Dir);
       end if;
 
-      Id := String_List_Idle.Add (50,
-                                  Atomic_Command'Access,
-                                  External_Command_Access (Command));
+      Id := String_List_Idle.Add
+        (50, Atomic_Command'Access, External_Command_Access (Command));
 
       Push_State (Command.Kernel, Processing);
       return True;
@@ -164,7 +166,7 @@ package body Commands.External is
    exception
       when Directory_Error =>
          Insert (Command.Kernel,
-                 "Directory error : cannot access "
+                 -"Directory error: cannot access "
                  & String_List.Head (Command.Dir),
                  False, True, Error);
          return False;
