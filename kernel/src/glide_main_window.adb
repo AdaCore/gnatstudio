@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,7 +113,6 @@ package body Glide_Main_Window is
    Pref_Tabs_Policy     : Param_Spec_Enum;
    Pref_Tabs_Position   : Param_Spec_Enum;
    Pref_Toolbar_Style   : Param_Spec_Enum;
-   Animated_Image_Small : Param_Spec_String;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -155,11 +154,8 @@ package body Glide_Main_Window is
       return Command_Return_Type;
    --  Act on the layout of windows
 
-   procedure Put_Animation
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Main_Window    : access Glide_Window_Record'Class;
-      File_From_Pref : String);
-   --  Add the animated icon to the right of the toolbar
+   procedure Put_Animation (Main_Window : access Glide_Window_Record'Class);
+   --  Add the animated icon in the main window.
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project is changed.
@@ -214,7 +210,7 @@ package body Glide_Main_Window is
       Window : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
    begin
-      if Window.Animation_Image = null then
+      if Window.Animation_Iter = null then
          return False;
 
       elsif Advance (Window.Animation_Iter) then
@@ -232,8 +228,8 @@ package body Glide_Main_Window is
       Window : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
    begin
-      if Window.Animation /= null and then Window.Animation_Image /= null then
-         Set (Window.Animation_Image, Get_Static_Image (Window.Animation));
+      if Window.Static_Image /= null then
+         Set (Window.Animation_Image, Window.Static_Image);
       end if;
    end Display_Default_Image;
 
@@ -295,34 +291,38 @@ package body Glide_Main_Window is
    -- Put_Animation --
    -------------------
 
-   procedure Put_Animation
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Main_Window    : access Glide_Window_Record'Class;
-      File_From_Pref : String)
-   is
-      File : constant String := Normalize_Pathname
-        (File_From_Pref, Get_System_Dir (Kernel) & "/share/gps/");
+   procedure Put_Animation (Main_Window : access Glide_Window_Record'Class) is
+      Throbber : constant String := Normalize_Pathname
+        ("gps-animation.gif",
+         Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
+      Image : constant String := Normalize_Pathname
+        ("gps-animation.png",
+         Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
       Error  : GError;
       Pixbuf : Gdk_Pixbuf;
+
    begin
-      if Main_Window.Animation_Image /= null then
-         Destroy (Main_Window.Animation_Image);
-         Main_Window.Animation_Image := null;
+      if Is_Regular_File (Image) then
+         Trace (Me, "loading gps-animation.png");
+         Gdk_New_From_File (Main_Window.Static_Image, Image, Error);
+         Gtk_New (Main_Window.Animation_Image, Main_Window.Static_Image);
+         Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
+      else
+         Trace (Me, "gps-animation.png not found");
+         return;
       end if;
 
-      Trace (Me, "Loading animation " & File);
-
-      if Is_Regular_File (File) then
-         Gdk_New_From_File (Main_Window.Animation, File, Error);
-         Gtk_New (Main_Window.Animation_Image, Main_Window.Animation);
+      if Is_Regular_File (Throbber) then
+         Trace (Me, "loading gps-animation.png");
+         Gdk_New_From_File (Main_Window.Animation, Throbber, Error);
          Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
          Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
          Set (Main_Window.Animation_Image, Pixbuf);
-         Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
-         Show_All (Main_Window.Animation_Image);
       else
-         Trace (Me, "Animation not found");
+         Trace (Me, "gps-animation.gif not found");
       end if;
+
+      Show_All (Main_Window.Animation_Image);
    end Put_Animation;
 
    -------------------------
@@ -350,20 +350,18 @@ package body Glide_Main_Window is
          when Hide_Toolbar =>
             Set_Child_Visible (Win.Toolbar_Box, False);
             Hide_All (Win.Toolbar_Box);
+
          when Small_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
             Set_Icon_Size (Win.Toolbar, Icon_Size_Small_Toolbar);
-            Put_Animation
-              (Kernel, Win, Get_Pref (Kernel, Animated_Image_Small));
+
          when Large_Icons  =>
             Set_Size_Request (Win.Toolbar_Box, -1, -1);
             Set_Child_Visible (Win.Toolbar_Box, True);
             Show_All (Win.Toolbar_Box);
             Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
-            Put_Animation
-              (Kernel, Win, Get_Pref (Kernel, Animated_Image));
       end case;
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
@@ -458,16 +456,6 @@ package body Glide_Main_Window is
       Register_Property
         (Main_Window.Kernel, Param_Spec (Pref_Toolbar_Style), -"General");
 
-      Animated_Image_Small := Param_Spec_String (Gnew_String
-        (Name    => "General-Animated-Image-Small",
-         Nick    => -"Animated image (small)",
-         Blurb   => -("Animated image used to inform the user about"
-                      & " a command in process"),
-         Default => "gps-animation-small.gif",
-         Flags   => Param_Readable));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Animated_Image_Small), -"General");
-
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
 
       Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
@@ -482,8 +470,10 @@ package body Glide_Main_Window is
       Pack_Start (Box1, Main_Window.Toolbar, True, True);
 
       Gtk_New (Main_Window.Animation_Frame);
-      Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_In);
-      Pack_End (Box1, Main_Window.Animation_Frame, False, False);
+      Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_None);
+      Pack_End
+        (Main_Window.Menu_Box, Main_Window.Animation_Frame, False, False);
+      Put_Animation (Main_Window);
 
       Widget_Callback.Connect (Main_Window, "destroy", On_Destroy'Access);
 
@@ -994,8 +984,18 @@ package body Glide_Main_Window is
    begin
       Free (Win.Home_Dir);
       Free (Win.Prefix_Directory);
-      Unref (Win.Animation);
-      Unref (Win.Animation_Iter);
+
+      if Win.Animation /= null then
+         Unref (Win.Animation);
+      end if;
+
+      if Win.Animation_Iter /= null then
+         Unref (Win.Animation_Iter);
+      end if;
+
+      if Win.Static_Image /= null then
+         Unref (Win.Static_Image);
+      end if;
 
       if Main_Level > 0 then
          Main_Quit;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,7 @@ package Glide_Main_Window is
       Kernel          : Glide_Kernel.Kernel_Handle;
       Toolbar         : Gtk_Toolbar;
       Animation_Frame : Gtk_Frame;
+      Static_Image    : Gdk_Pixbuf;
       Animation       : Gdk_Pixbuf_Animation;
       Animation_Iter  : Gdk_Pixbuf_Animation_Iter;
       Animation_Image : Gtk_Image;
