@@ -384,7 +384,7 @@ package body Codefix.Text_Manager is
       Searched     : String;
       Step         : Step_Way := Normal_Step;
       Jump_String  : Boolean := True)
-   return File_Cursor'Class is
+     return File_Cursor'Class is
    begin
       return Search_String
         (Get_File (This, Cursor.File_Name.all).all,
@@ -398,7 +398,7 @@ package body Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : String;
       Category  : Language_Category;
-      Name      : String) return Construct_Information is
+      Name      : String := "") return Construct_Information is
    begin
       return Search_Unit (Get_File (This, File_Name).all, Category, Name);
    end Search_Unit;
@@ -435,7 +435,7 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Ptr_Text) is
       procedure Delete is new
-         Ada.Unchecked_Deallocation (Text_Interface'Class, Ptr_Text);
+        Ada.Unchecked_Deallocation (Text_Interface'Class, Ptr_Text);
    begin
       Free (This.all);
       Delete (This);
@@ -474,8 +474,8 @@ package body Codefix.Text_Manager is
                   return False;
                end if;
             when After =>
-               if D_Current_Line > 0
-                 or else (D_Current_Line = 0 and then D_Current_Col > 0)
+               if D_Current_Line < 0
+                 or else (D_Current_Line = 0 and then D_Current_Col < 0)
                then
                   return False;
                end if;
@@ -483,14 +483,16 @@ package body Codefix.Text_Manager is
                return False;
          end case;
 
-         if Info_Saved = null then return True; end if;
+         if Info_Saved = null then
+            return True;
+         end if;
 
          D_Old_Line := Info_Saved.Sloc_Start.Line - Cursor.Line;
          D_Old_Col := Info_Saved.Sloc_Start.Column - Cursor.Col;
 
-         return (abs D_Old_Line) >  (abs D_Current_Line) or else
+         return (abs D_Old_Line) > (abs D_Current_Line) or else
            (D_Old_Line = D_Current_Line and then
-            (abs D_Old_Col) > (abs D_Current_Col));
+              (abs D_Old_Col) > (abs D_Current_Col));
 
       end Nearer;
 
@@ -506,9 +508,9 @@ package body Codefix.Text_Manager is
            or else Current_Info.Category = Category_2
          then
             if (Current_Info.Sloc_Start.Line = Cursor.Line
-             and then Current_Info.Sloc_Start.Column = Cursor.Col)
+                and then Current_Info.Sloc_Start.Column = Cursor.Col)
               or else (Current_Info.Sloc_Entity.Line = Cursor.Line
-                    and then Current_Info.Sloc_Entity.Column = Cursor.Col)
+                       and then Current_Info.Sloc_Entity.Column = Cursor.Col)
             then
                return Current_Info.all;
             elsif Position /= Specified and then Nearer then
@@ -577,15 +579,15 @@ package body Codefix.Text_Manager is
                --  Is it the end of the scope ?
                if Current_Info.Sloc_End.Line < Stop.Line
                  or else (Current_Info.Sloc_End.Line = Stop.Line
-                       and then Current_Info.Sloc_End.Column < Stop.Column)
+                          and then Current_Info.Sloc_End.Column < Stop.Column)
                then
                   return;
                end if;
 
                --  Does this body have the rigth profile ?
                if not Current_Info.Is_Declaration and then
-               Current_Info.Name.all = Spec.Name.all and then
-               Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+                 Current_Info.Name.all = Spec.Name.all and then
+                 Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
                then
                   Result := Current_Info;
                end if;
@@ -593,7 +595,7 @@ package body Codefix.Text_Manager is
 
                --  Is it the beginnig of a scope ?
                if not Current_Info.Is_Declaration and then
-               Current_Info.Category in Enclosing_Entity_Category
+                 Current_Info.Category in Enclosing_Entity_Category
                then
                   Current_Result := Result;
                   New_Sloc := Current_Info.Sloc_Start;
@@ -609,9 +611,9 @@ package body Codefix.Text_Manager is
 
                   --  Is this spec the rigth one ?
                elsif Current_Info.Is_Declaration and then
-                 Current_Info.Name.all = Spec.Name.all and then
-                 Current_Info.Sloc_Start = Spec.Sloc_Start and then
-                 Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+               Current_Info.Name.all = Spec.Name.all and then
+               Current_Info.Sloc_Start = Spec.Sloc_Start and then
+               Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
                then
                   Found := True;
                   return;
@@ -727,7 +729,7 @@ package body Codefix.Text_Manager is
    function Search_Unit
      (This     : Text_Interface'Class;
       Category : Language_Category;
-      Name     : String) return Construct_Information is
+      Name     : String := "") return Construct_Information is
 
       Current_Info : Construct_Access;
 
@@ -737,7 +739,8 @@ package body Codefix.Text_Manager is
 
       while Current_Info /= null loop
          if Current_Info.Category = Category
-           and then Compare_Pkg (Current_Info.Name.all, Name)
+           and then
+             (Name = "" or else Compare_Pkg (Current_Info.Name.all, Name))
          then
             return Current_Info.all;
          end if;
@@ -891,10 +894,10 @@ package body Codefix.Text_Manager is
                This.Cursor);
          when others =>
             Replace
-             (Current_Text,
-              This.Cursor,
-              This.Original_Length,
-              This.Content.all);
+              (Current_Text,
+               This.Cursor,
+               This.Original_Length,
+               This.Content.all);
       end case;
    end Commit;
 
@@ -930,17 +933,17 @@ package body Codefix.Text_Manager is
       Col    : Natural;
       Format : String) return Natural
    is
-      Matches    : Match_Array (1 .. 1);
+      Matches    : Match_Array (0 .. 1);
       Matcher    : constant Pattern_Matcher := Compile (Format);
       Str_Parsed : constant String := This.Content.all;
 
    begin
       Match (Matcher, Str_Parsed (Col .. Str_Parsed'Last), Matches);
 
-      if Matches (1) = No_Match then
-         Raise_Exception (Text_Manager_Error'Identity, "pattern '" & Format &
+      if Matches (0) = No_Match then
+         Raise_Exception (Codefix_Panic'Identity, "pattern '" & Format &
                           "' from col" & Integer'Image (Col) & " in '" &
-                          Str_Parsed & "' can't be found");
+                            Str_Parsed & "' can't be found");
 
       else
          return Matches (1).Last - Col + 1;
@@ -1253,9 +1256,9 @@ package body Codefix.Text_Manager is
             exit when Current_Line.Cursor.File_Name.all =
               Current_Line.Next.Cursor.File_Name.all
               and then (Current_Line.Cursor.Line + 1 =
-                Current_Line.Next.Cursor.Line
-                or else Current_Line.Next.Cursor.Line =
-                  Current_Line.Cursor.Line);
+                          Current_Line.Next.Cursor.Line
+                        or else Current_Line.Next.Cursor.Line =
+                          Current_Line.Cursor.Line);
             Line_Cursor.Line := Line_Cursor.Line + 1;
             exit when Line_Cursor.Line > End_Of_File;
             Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
@@ -1597,10 +1600,10 @@ package body Codefix.Text_Manager is
          while Current_Extract /= null loop
             Current_Length := Get_Old_Text_Length
               (Current_Extract.all,
-            Current_Text);
+               Current_Text);
             Buffer (Current_Col ..
-                   Current_Col + Current_Length - 1) :=
-              Get_Old_Text (Current_Extract.all, Current_Text);
+                      Current_Col + Current_Length - 1) :=
+                Get_Old_Text (Current_Extract.all, Current_Text);
             Current_Col := Current_Col + Current_Length;
             Current_Extract := Current_Extract.Next;
          end loop;
@@ -1776,8 +1779,8 @@ package body Codefix.Text_Manager is
    begin
       Assign (Old_String, Current_Line.Content);
       Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
-              Word &
-                Old_String (Cursor.Col .. Old_String.all'Last));
+                Word &
+                  Old_String (Cursor.Col .. Old_String.all'Last));
 
       Current_Line.Context := Line_Modified;
 
@@ -1859,7 +1862,7 @@ package body Codefix.Text_Manager is
       if This = null then
          Previous.Next := Element;
       else
-         if This.Cursor.Line > Element.Cursor.Line then
+         if This.Cursor > Element.Cursor then
             Element.Next := This;
             if Previous /= null then
                Previous.Next := Element;
@@ -2167,9 +2170,65 @@ package body Codefix.Text_Manager is
       end if;
    end Erase;
 
+   ---------------------
+   -- Get_Files_Names --
+   ---------------------
+
+   function Get_Files_Names (This : Extract) return String is
+      Previous     : Dynamic_String;
+      Current_Line : Ptr_Extract_Line := Get_First_Line (This);
+      Result       : Dynamic_String;
+   begin
+      if Current_Line = null then
+         return "";
+      end if;
+
+      Previous := Current_Line.Cursor.File_Name;
+      Assign (Result, Previous);
+
+      while Current_Line /= null loop
+         if Previous.all /= Current_Line.Cursor.File_Name.all then
+            Assign
+              (Result, Result.all & " / " & Current_Line.Cursor.File_Name.all);
+            Previous := Current_Line.Cursor.File_Name;
+         end if;
+         Current_Line := Current_Line.Next;
+      end loop;
+
+      --  Where can I free Result ??
+
+      return Result.all;
+   end Get_Files_Names;
+
+   ------------------
+   -- Get_Nb_Files --
+   ------------------
+
+   function Get_Nb_Files (This : Extract) return Natural is
+      Previous     : Dynamic_String;
+      Current_Line : Ptr_Extract_Line := Get_First_Line (This);
+      Total        : Natural := 1;
+   begin
+      if Current_Line = null then
+         return 0;
+      end if;
+
+      Previous := Current_Line.Cursor.File_Name;
+
+      while Current_Line /= null loop
+         if Previous.all /= Current_Line.Cursor.File_Name.all then
+            Total := Total + 1;
+            Previous := Current_Line.Cursor.File_Name;
+         end if;
+         Current_Line := Current_Line.Next;
+      end loop;
+
+      return Total;
+   end Get_Nb_Files;
+
 
    ----------------------------------------------------------------------------
-   --  Merge functions and uilities
+   --  Merge functions and utilities
    ----------------------------------------------------------------------------
 
    type Char_Context is (Original, Added, Modified, Removed);
@@ -2357,7 +2416,7 @@ package body Codefix.Text_Manager is
       begin
          case Merge_2 (It_Merge_2) is
             when Original =>
-               Result := Result & Str_2 (It_Str_2);
+               Result := Result & Str_1 (It_Str_1);
                It_Str_1 := It_Str_1 + 1;
                It_Str_2 := It_Str_2 + 1;
                It_Merge_1 := It_Merge_1 + 1;
@@ -2508,6 +2567,7 @@ package body Codefix.Text_Manager is
                Line_1 := Next (Line_1.all);
                Line_2 := Next (Line_2.all);
             when Line_Modified =>
+               Put_Line ("Line_2 mod");
                Add_Element (This, new Extract_Line'(Clone
                                                       (Line_2.all, False)));
                Line_1 := Next (Line_1.all);
@@ -2535,6 +2595,7 @@ package body Codefix.Text_Manager is
             when Line_Modified =>
                if Merge_Characters then
                   New_Line := new Extract_Line'(Clone (Line_1.all, False));
+
                   Merge
                     (New_Line.Content,
                      Get_Old_Text (Line_1.all, Current_Text),
@@ -2625,7 +2686,6 @@ package body Codefix.Text_Manager is
             Add_Element (This, new Extract_Line'(Clone (Line_2.all, False)));
             Line_2 := Next (Line_2.all);
          else
-
             case Line_1.Context is
                when Original_Line =>
                   Line_1_Original;
@@ -2646,13 +2706,13 @@ package body Codefix.Text_Manager is
       if Line_1 /= null then
          while Line_1 /= null loop
             Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_1.all, False)));
+                                                   (Line_1.all, False)));
             Line_1 := Next (Line_1.all);
          end loop;
       elsif Line_2 /= null then
          while Line_2 /= null loop
             Add_Element (This, new Extract_Line'(Clone
-                                                      (Line_2.all, False)));
+                                                   (Line_2.all, False)));
             Line_2 := Next (Line_2.all);
          end loop;
       end if;
