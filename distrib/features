@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- C428-005 Search: Ctrl-N/Ctrl-P still work even if one chose not to restart
+  at the beginning of the file
+
 - C522-007 Pressing <enter> in replacement field of search dialog starts replace
 
 - C922-007 A space can now be put on the command line between "-P project"
