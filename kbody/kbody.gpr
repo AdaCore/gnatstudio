@@ -1,4 +1,7 @@
+with "../gtkada/gtkada";
 with "../kernel/kernel";
+with "../gvd/gvd";
+with "../common/common";
 
 project Kbody is
 
