@@ -81,7 +81,7 @@ package body Browsers.Dependency_Items is
    --  The browser is not cleared first.
 
    procedure Open_File
-     (Browser : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Browser : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Open the file described in Context for analysis in the browser.
 
@@ -121,7 +121,7 @@ package body Browsers.Dependency_Items is
    --  Tools->Dependency Browser
 
    procedure Edit_Dependencies_From_Contextual
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Examine the dependencies of a specific file
 
@@ -484,7 +484,7 @@ package body Browsers.Dependency_Items is
    ---------------------------------------
 
    procedure Edit_Dependencies_From_Contextual
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       Browser : MDI_Child;
@@ -524,7 +524,7 @@ package body Browsers.Dependency_Items is
    ---------------
 
    procedure Open_File
-     (Browser  : access Gtk_Widget_Record'Class;
+     (Browser  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : constant String := Select_File (Base_Directory => "");
@@ -814,11 +814,13 @@ package body Browsers.Dependency_Items is
          Get_Predefined_Source_Path (Get_Kernel (Browser)));
    begin
       Src := Get_Source (Item);
-      Set_File_Information
-        (File_Selection_Context_Access (Context),
-         Project_View => Project_Of (Get_Kernel (Browser), Item),
+      Set_File_Name_Information
+        (File_Name_Selection_Context_Access (Context),
          Directory    => Dir_Name (Filename),
          File_Name    => Base_Name (Filename));
+      Set_File_Information
+        (File_Selection_Context_Access (Context),
+         Project_View => Project_Of (Get_Kernel (Browser), Item));
       return Context;
    end Contextual_Factory;
 
