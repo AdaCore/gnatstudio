@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Basic_Types;               use Basic_Types;
 with Language;                  use Language;
 with Line_Buffers;              use Line_Buffers;
+with Case_Handling;             use Case_Handling;
 
 procedure Gnatpp is
    subtype String_Access is Basic_Types.String_Access;
