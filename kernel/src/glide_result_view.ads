@@ -44,8 +44,8 @@ package Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Source_File   : String;
-      Source_Line   : Natural;
-      Source_Column : Natural;
+      Source_Line   : Positive;
+      Source_Column : Positive;
       Message       : String;
       Length        : Natural);
    --  Insert a new location item for the category corresponding to
