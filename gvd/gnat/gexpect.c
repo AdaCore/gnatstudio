@@ -3,6 +3,13 @@
 #include <windows.h>
 #include "system/windows.h"
 
+/* ??? Provide a no-op for now */
+
+void
+kill ()
+{
+}
+
 int
 __gnat_expect_fork () {
   return 0;
