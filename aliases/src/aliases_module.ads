@@ -29,19 +29,23 @@ package Aliases_Module is
    Invalid_Expansion : constant String := "!@#$%";
 
    type Alias_Expansion_Function is access
-     function (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-               Special : Character) return String;
+     function (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+               Expansion : String;
+               Special   : Character) return String;
    --  Function called to test alias expansion.
-   --  It is passed the current context in which the expansion takes module,
-   --  and modules are encouraged to do nothing if the context is not thr right
-   --  one. For instance, the "current file" special entity only makes sense in
-   --  the source editor, and the src_editor module should do nothing if it is
-   --  called but Get_Widget (Data) is not a source editor.
+   --  The context in which the expansion takes place can be found by calling
+   --  Glide_Kernel.Get_Current_Focus_Widget.
    --  Special is the special entity seen in the alias expansion, without the
    --  leading '%'.
-   --  This function should return the replacement text for Special, and should
-   --  return the Invalid_Expansion if it couldn't expand Special because the
-   --  context is incorrect.
+   --  The expansion of the alias, as computed up to the encounter with the
+   --  special character, is given in Expansion. For instance, if the alias is
+   --  defined as "foo%o bar", Expansion will be set to "foo" when the
+   --  expansion function for 'o' is called.
+   --  This function should return the new expansion of the alias (ie Expansion
+   --  & the expansion for Special). If Special needs to replace some text in
+   --  the alias, it doesn't need to return the whole of Expansion.
+   --  If Invalid_Expansion is returned, then this special character will
+   --  simply be ignored.
 
    procedure Register_Special_Alias_Entity
      (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;

@@ -140,9 +140,13 @@ package body Aliases_Module is
    type Expansion_Function_Array is array (Character) of
      Expansion_Function_List;
 
+   procedure Do_Nothing (Var : in out Boolean);
+   package Boolean_Hash is new String_Hash (Boolean, Do_Nothing, False);
+
    type Aliases_Module_Id_Record is new Module_ID_Record with record
-      Aliases : Aliases_Hash.String_Hash_Table.HTable;
+      Aliases      : Aliases_Hash.String_Hash_Table.HTable;
       Module_Funcs : Expansion_Function_Array;
+      Expanded     : Boolean_Hash.String_Hash_Table.HTable;
    end record;
    type Aliases_Module_Id_Access is access all Aliases_Module_Id_Record'Class;
 
@@ -332,12 +336,24 @@ package body Aliases_Module is
    --  Insert the special entity associated with Item
 
    function Special_Entities
-     (Kernel : access Kernel_Handle_Record'Class; Special : Character)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Expansion : String;
+      Special   : Character)
       return String;
    --  Provide expansion for some of the special entities
 
    procedure Show_Read_Only_Toggled (Editor : access Gtk_Widget_Record'Class);
    --  Called when the "show read-only" toggle is changed
+
+   ----------------
+   -- Do_Nothing --
+   ----------------
+
+   procedure Do_Nothing (Var : in out Boolean) is
+      pragma Unreferenced (Var);
+   begin
+      null;
+   end Do_Nothing;
 
    ------------------
    -- Set_Variable --
@@ -761,6 +777,16 @@ package body Aliases_Module is
          First  : Natural := Str'First;
          S      : Natural := Str'First;
       begin
+         --  Prevent recursion in aliases expansion
+         if Boolean_Hash.String_Hash_Table.Get
+           (Aliases_Module_Id.Expanded, Name)
+         then
+            return Str;
+         end if;
+
+         Boolean_Hash.String_Hash_Table.Set
+           (Aliases_Module_Id.Expanded, Name, True);
+
          Cursor.all := Str'Length;
 
          while S <= Str'Last - 1 loop
@@ -776,11 +802,14 @@ package body Aliases_Module is
 
                   while Tmp /= null loop
                      declare
-                        Replace : constant String :=
-                          Tmp.Func (Kernel, Str (S + 1));
+                        Replace : constant String := Tmp.Func
+                          (Kernel,
+                           Ada.Strings.Unbounded.To_String (Result),
+                           Str (S + 1));
                      begin
                         if Replace /= Invalid_Expansion then
-                           Result := Result & Replace;
+                           Result := Ada.Strings.Unbounded.To_Unbounded_String
+                             (Replace);
                            exit;
                         end if;
                      end;
@@ -806,6 +835,9 @@ package body Aliases_Module is
          if First <= Str'Last then
             Result := Result & Str (First .. Str'Last);
          end if;
+
+         Boolean_Hash.String_Hash_Table.Set
+           (Aliases_Module_Id.Expanded, Name, False);
 
          return Ada.Strings.Unbounded.To_String (Result);
       end Find_And_Replace_Cursor;
@@ -845,6 +877,19 @@ package body Aliases_Module is
                W := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
                Grab_Default (W);
                W := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+               Gtk_New_Hbox (Box, Homogeneous => False);
+               Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+               Gtk_New (Label, -"Alias name: ");
+               Add_Widget (S, Label);
+               Set_Alignment (Label, 0.0, 0.5);
+               Pack_Start (Box, Label, Expand => False);
+
+               Gtk_New (Label, Name);
+               Add_Widget (S, Label);
+               Set_Alignment (Label, 0.0, 0.5);
+               Pack_Start (Box, Label, Expand => False);
             end if;
 
             Gtk_New_Hbox (Box, Homogeneous => False);
@@ -904,6 +949,8 @@ package body Aliases_Module is
       W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
       Had_Focus : Boolean;
    begin
+      Boolean_Hash.String_Hash_Table.Reset (Aliases_Module_Id.Expanded);
+
       if W /= null and then W.all in Gtk_Editable_Record'Class then
          if Get_Editable (Gtk_Editable (W)) then
             declare
@@ -1948,14 +1995,36 @@ package body Aliases_Module is
    ----------------------
 
    function Special_Entities
-     (Kernel : access Kernel_Handle_Record'Class; Special : Character)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Expansion : String;
+      Special   : Character)
       return String
    is
-      pragma Unreferenced (Kernel);
+      First, Last : Integer;
    begin
       case Special is
-         when 'D'    => return Image (Ada.Calendar.Clock, ISO_Date);
-         when 'H'    => return Image (Ada.Calendar.Clock, "%T");
+         when 'D'   => return Expansion & Image (Ada.Calendar.Clock, ISO_Date);
+         when 'H'   => return Expansion & Image (Ada.Calendar.Clock, "%T");
+         when 'O'    =>
+            Find_Current_Entity (Expansion, Expansion'Last, First, Last);
+
+            if First > Last then
+               return Invalid_Expansion;
+            end if;
+
+            declare
+               Cursor : aliased Integer;
+               Replace : constant String := Expand_Alias
+                 (Kernel, Expansion (First .. Last - 1),
+                  Cursor'Unchecked_Access, 0);
+            begin
+               if Replace /= "" then
+                  return Expansion (Expansion'First .. First - 1) & Replace;
+               else
+                  return Expansion;
+               end if;
+            end;
+
          when others => return Invalid_Expansion;
       end case;
 
@@ -2002,6 +2071,8 @@ package body Aliases_Module is
          Action      => "Expand alias",
          Default_Key => "control-o");
 
+      Register_Special_Alias_Entity
+        (Kernel, "Expand previous alias", 'O', Special_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, "Current Date", 'D', Special_Entities'Access);
       Register_Special_Alias_Entity
