@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.4.0
 
+- Cross-reference fail with Ada units overriden in extending projects (C825-005)
+  Problem:    If you have a unit overriden in an extending project with a
+              different file name, cross-references will fail for all files
+              that reference that Unit
+  Workaround: If possible, remove overriden units in extended projects. If not
+              possible, rename them so as to use the same name as in extending
+              projects
+
 - Goto Other File fails for C files
   Problem:    If you are editing a C file and select "Goto file spec/body" in
               the contextual menu, a .ads file is generated, ie an Ada file
