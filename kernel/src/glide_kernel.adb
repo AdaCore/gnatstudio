@@ -754,8 +754,8 @@ package body Glide_Kernel is
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record)
    is
-      MDI  : constant MDI_Window := Glide_Page.Glide_Page
-        (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
+      MDI  : constant MDI_Window :=
+        Get_Current_Process (Handle.Main_Window).Process_Mdi;
       File : File_Type;
 
    begin
