@@ -77,14 +77,15 @@ package Docgen is
    --  sort the list by name
 
 
-   type Entity_Type is (Subprogram_Entity,
-                        Exception_Entity,
-                        Type_Entity,
-                        Var_Entity,
-                        Package_Entity,
-                        Entry_Entity,
-                        Other_Entity);
-   --  a simplfied list of possible entity types
+   type Entity_Type is
+     (Subprogram_Entity,
+      Exception_Entity,
+      Type_Entity,
+      Var_Entity,
+      Package_Entity,
+      Entry_Entity,
+      Other_Entity);
+   --  a simplified list of possible entity types
 
    type Entity_List_Information is record
       Kind            : Entity_Type;
@@ -306,8 +307,7 @@ package Docgen is
    --  be the only procedure to be defined
    --  when a new output format should be added
 
-   function Count_Lines
-     (Line    : String) return Natural;
+   function Count_Lines (Line : String) return Natural;
    --  returns the number of lines in the String
 
    function Get_String_Index

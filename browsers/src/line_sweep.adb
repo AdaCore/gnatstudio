@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G P S                                    --
+--                             G P S                                 --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -51,7 +51,7 @@ package body Line_Sweep is
       Next  : Event_Queue_Item_Access;
    end record;
    --  ??? Temporary: the priority queue Event_Queue is simply handled
-   --  ??? as a double-linked list for now
+   --  as a double-linked list for now
 
    type Event_Queue is record
       Head : Event_Queue_Item_Access;

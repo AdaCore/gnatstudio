@@ -306,19 +306,19 @@ package body Docgen is
       --  not using File_Extension, because don't want the point
       if not Is_Spec_File (Name_Of_File) then
          return Name_Of_File
-           (Get_String_Index (File_Name (Name_Of_File),
-                              File_Name (Name_Of_File)'First,
-                              ".") + 1
-              ..  Name_Of_File'Last);
+           (Get_String_Index
+              (File_Name (Name_Of_File),
+               File_Name (Name_Of_File)'First,
+               ".") + 1 .. Name_Of_File'Last);
       else
          declare
             Spec_File_Name : constant String :=
               Other_File_Name (Name_Of_File);
             Suffix : constant String := Spec_File_Name
-              (Get_String_Index (File_Name (Spec_File_Name),
-                                 File_Name (Spec_File_Name)'First,
-                                 ".") + 1
-                 ..  Spec_File_Name'Last);
+              (Get_String_Index
+                 (File_Name (Spec_File_Name),
+                  File_Name (Spec_File_Name)'First,
+                  ".") + 1 .. Spec_File_Name'Last);
          begin
             return Suffix;
          end;
@@ -344,11 +344,9 @@ package body Docgen is
       --  ??? replace this later by the the call of the real Other_File_Name
 
       if Is_Spec_File (Name_Of_File) then
-         return File_Name_Without_Suffix (Name_Of_File)
-         & ".adb";
+         return File_Name_Without_Suffix (Name_Of_File) & ".adb";
       else
-         return File_Name_Without_Suffix (Name_Of_File)
-         & ".ads";
+         return File_Name_Without_Suffix (Name_Of_File) & ".ads";
       end if;
    end Other_File_Name;
 
