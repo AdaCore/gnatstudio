@@ -24,6 +24,8 @@ with GVD.Types;
 with GVD.Main_Window;
 with Gtk.Widget;
 
+with String_List_Utils;
+
 --  This package provides an implementation of Source_Editor based on
 --  the Glide Editor.
 
@@ -108,6 +110,9 @@ private
       --  Entries in this array may be set to 0, in order to avoid
       --  necessity to reallocate it every time the set of breakpoints
       --  is updated.
+
+      Highlighted_Files : String_List_Utils.String_List.List;
+      --  The list of files for which a location is currently highlighted.
    end record;
 
 end GVD.Text_Box.Source_Editor.Glide;
