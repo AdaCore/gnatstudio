@@ -856,8 +856,8 @@ package body Src_Info.Queries is
       --  Add the declarations from Decl into L.
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List;
-         Node : in out Scope_List;
+        (Decl   : in out Scope_List;
+         Node   : in out Scope_List;
          Parent : Scope_List);
       procedure Add_Single_Entity
         (Decl : in out Scope_List; T : in out Scope_Tree);
@@ -865,13 +865,14 @@ package body Src_Info.Queries is
       --  of the tree if Node is null, or at Node otherwise).
 
       procedure Add_References
-        (Decl : E_Declaration_Info;
-         T : in out Scope_Tree;
+        (Decl       : E_Declaration_Info;
+         T          : in out Scope_Tree;
          Decl_Start : File_Location);
       --  Add all the references to the entity declared in Decl.
       --  Decl_Start is the starting location of the scope for the entity.
 
       function "<" (L1, L2 : File_Location) return Boolean;
+      pragma Inline ("<");
       --  True if L1 is before L2 (line and column)
 
       function In_Range (Decl : Scope_List; Loc : Scope_List) return Integer;
@@ -891,6 +892,16 @@ package body Src_Info.Queries is
 
       procedure Compute_Scope (L : in out Scope_List; Ref : E_Reference_List);
       --  Compute the beginning and end of scope for the declaration in L.
+
+      -------
+      -- < --
+      -------
+
+      function "<" (L1, L2 : File_Location) return Boolean is
+      begin
+         return L1.Line < L2.Line
+           or else (L1.Line = L2.Line and then L1.Column < L2.Column);
+      end "<";
 
       -------------------
       -- Compute_Scope --
@@ -921,41 +932,27 @@ package body Src_Info.Queries is
          end loop;
       end Compute_Scope;
 
-      -------
-      -- < --
-      -------
-
-      function "<" (L1, L2 : File_Location) return Boolean is
-      begin
-         return L1.Line < L2.Line
-           or else (L1.Line = L2.Line and then L1.Column < L2.Column);
-      end "<";
-
       --------------
       -- In_Range --
       --------------
 
-      function In_Range
-        (Decl : Scope_List; Loc : Scope_List) return Integer
-      is
-         L : File_Location;
+      function In_Range (Decl : Scope_List; Loc : Scope_List) return Integer is
       begin
-         case Loc.Typ is
-            when Declaration => L := Loc.Start_Of_Scope; --  Decl.Location;
-            when Reference   => L := Loc.Ref.Location;
-         end case;
-
          case Decl.Typ is
             when Declaration =>
                case Loc.Typ is
                   when Declaration =>
                      if Decl.Decl.End_Of_Scope /= No_Reference then
-                        if Decl.Decl.End_Of_Scope.Location < L then
+                        if Decl.Decl.End_Of_Scope.Location <
+                          Loc.Start_Of_Scope
+                        then
                            return -1;
-                        elsif Decl.Start_Of_Scope < L then
+                        elsif Decl.Start_Of_Scope < Loc.Start_Of_Scope then
                            --  Entities are necessarily comprised within one
                            --  another
+
                            return 2;
+
                         elsif Loc.Decl.End_Of_Scope /= No_Reference
                           and then Decl.Start_Of_Scope <
                             Loc.Decl.End_Of_Scope.Location
@@ -964,8 +961,9 @@ package body Src_Info.Queries is
                         else
                            return 1;
                         end if;
+
                      elsif Loc.Decl.End_Of_Scope /= No_Reference then
-                        if Decl.Start_Of_Scope < L then
+                        if Decl.Start_Of_Scope < Loc.Start_Of_Scope then
                            return -1;
                         elsif Decl.Start_Of_Scope <
                           Loc.Decl.End_Of_Scope.Location
@@ -974,7 +972,8 @@ package body Src_Info.Queries is
                         else
                            return 1;
                         end if;
-                     elsif Decl.Start_Of_Scope < L then
+
+                     elsif Decl.Start_Of_Scope < Loc.Start_Of_Scope then
                         return -1;
                      else
                         return 1;
@@ -982,14 +981,17 @@ package body Src_Info.Queries is
 
                   when Reference =>
                      if Decl.Decl.End_Of_Scope /= No_Reference then
-                        if Decl.Decl.End_Of_Scope.Location < L then
+                        if Decl.Decl.End_Of_Scope.Location <
+                          Loc.Ref.Location
+                        then
                            return -1;
-                        elsif Decl.Start_Of_Scope < L then
+                        elsif Decl.Start_Of_Scope < Loc.Ref.Location then
                            return 2;
                         else
                            return 1;
                         end if;
-                     elsif Decl.Start_Of_Scope < L then
+
+                     elsif Decl.Start_Of_Scope < Loc.Ref.Location then
                         return -1;
                      else
                         return 1;
@@ -999,7 +1001,7 @@ package body Src_Info.Queries is
             when Reference =>
                case Loc.Typ is
                   when Declaration =>
-                     if Decl.Ref.Location < L then
+                     if Decl.Ref.Location < Loc.Start_Of_Scope then
                         return -1;
                      elsif Loc.Decl.End_Of_Scope /= No_Reference
                        and then Decl.Ref.Location <
@@ -1011,7 +1013,7 @@ package body Src_Info.Queries is
                      end if;
 
                   when Reference =>
-                     if Decl.Ref.Location < L then
+                     if Decl.Ref.Location < Loc.Ref.Location then
                         return -1;
                      else
                         return 1;
@@ -1047,17 +1049,16 @@ package body Src_Info.Queries is
       -----------------------
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List;
-         Node : in out Scope_List;
+        (Decl   : in out Scope_List;
+         Node   : in out Scope_List;
          Parent : Scope_List)
       is
-         Pos      : Integer;
          List     : Scope_List := Node;
          Previous : Scope_List := null;
          Save     : Scope_List;
+
       begin
          while List /= null loop
-            Pos := In_Range (Decl, List);
             case In_Range (Decl, List) is
                when -1 =>
                   Add_In_List (Node, Previous, Parent, Decl);
@@ -1072,6 +1073,7 @@ package body Src_Info.Queries is
 
                when 2 =>
                   Add_In_List (Node, Previous, Parent, Decl);
+
                   loop
                      Save := List.Sibling;
                      List.Sibling := null;
@@ -1081,11 +1083,13 @@ package body Src_Info.Queries is
 
                      exit when List = null or else In_Range (Decl, List) /= 2;
                   end loop;
+
                   return;
 
                when others =>
                   null;
             end case;
+
             Previous := List;
             List := List.Sibling;
          end loop;
@@ -1093,18 +1097,15 @@ package body Src_Info.Queries is
          Add_In_List (Node, Previous, Parent, Decl);
       end Add_Single_Entity;
 
-      -----------------------
-      -- Add_Single_Entity --
-      -----------------------
-
       procedure Add_Single_Entity
         (Decl   : in out Scope_List;
          T      : in out Scope_Tree)
       is
-         P : Unit_Part;
-         File_List : File_Info_Ptr_List;
-         Num : Positive := 1;
+         P               : Unit_Part;
+         File_List       : File_Info_Ptr_List;
+         Num             : Positive := 1;
          Source_Filename : GNAT.OS_Lib.String_Access;
+
       begin
          if Decl.Typ = Declaration then
             if Decl.Start_Of_Scope.File.LI /= Lib_Info then
@@ -1114,6 +1115,7 @@ package body Src_Info.Queries is
 
             P := Decl.Start_Of_Scope.File.Part;
             Source_Filename := Decl.Start_Of_Scope.File.Source_Filename;
+
          else
             if Decl.Ref.Location.File.LI /= Lib_Info then
                Free (Decl);
@@ -1133,9 +1135,11 @@ package body Src_Info.Queries is
 
             when Unit_Separate =>
                File_List := Lib_Info.LI.Separate_Info;
+
                while File_List /= null loop
                   exit when File_List.Value.Source_Filename.all =
                     Source_Filename.all;
+
                   Num := Num + 1;
                   File_List := File_List.Next;
                end loop;
@@ -1186,9 +1190,9 @@ package body Src_Info.Queries is
       procedure Add_Declarations
         (Decl : E_Declaration_Info_List; T : in out Scope_Tree)
       is
-         List : E_Declaration_Info_List := Decl;
+         List     : E_Declaration_Info_List := Decl;
          New_Item : Scope_List;
-         Start_Of_Scope : File_Location;
+
       begin
          while List /= null loop
             New_Item := new Scope_Node'
@@ -1200,21 +1204,26 @@ package body Src_Info.Queries is
                Sibling        => null);
 
             Compute_Scope (New_Item, List.Value.References);
-            Start_Of_Scope := New_Item.Start_Of_Scope;
 
-            --  Try to insert the declaration in the tree. Note that this might
-            --  actually delete New_Item if the declaration doesn't fit in the
-            --  tree.
+            declare
+               Start_Of_Scope : constant File_Location :=
+                 New_Item.Start_Of_Scope;
+            begin
+               --  Try to insert the declaration in the tree. Note that this
+               --  might actually delete New_Item if the declaration doesn't
+               --  fit in the tree.
 
-            Add_Single_Entity (New_Item, T);
-            Add_References (List.Value, T, Start_Of_Scope);
+               Add_Single_Entity (New_Item, T);
+               Add_References (List.Value, T, Start_Of_Scope);
+            end;
+
             List := List.Next;
          end loop;
       end Add_Declarations;
 
-      T         : Scope_Tree;
-      File_List : File_Info_Ptr_List;
-      Dep       : Dependency_File_Info_List;
+      T             : Scope_Tree;
+      File_List     : File_Info_Ptr_List;
+      Dep           : Dependency_File_Info_List;
       Num_Separates : Natural := 0;
 
    begin
@@ -1223,6 +1232,7 @@ package body Src_Info.Queries is
          "Create_Tree: LI file hasn't been parsed");
 
       File_List := Lib_Info.LI.Separate_Info;
+
       while File_List /= null loop
          Num_Separates := Num_Separates + 1;
          File_List := File_List.Next;
