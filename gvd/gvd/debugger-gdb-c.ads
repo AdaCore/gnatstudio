@@ -61,12 +61,12 @@ package Debugger.Gdb.C is
       Output : String) return Language.Thread_Information_Array;
 
    procedure Parse_Array_Type
-     (Lang      : access Gdb_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
+     (Lang         : access Gdb_C_Language;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Items.Generic_Type_Access);
+      Result       : out Items.Generic_Type_Access);
 
    procedure Parse_Record_Type
      (Lang      : access Gdb_C_Language;
@@ -87,12 +87,13 @@ package Debugger.Gdb.C is
    function Set_Variable
      (Lang     : access Gdb_C_Language;
       Var_Name : String;
-      Value    : String)
-     return String;
+      Value    : String) return String;
+
+   function Start (Debugger : access Gdb_C_Language) return String;
 
    function Get_Language_Debugger_Context
      (Lang : access Gdb_C_Language)
-     return Language.Debugger.Language_Debugger_Context;
+      return Language.Debugger.Language_Debugger_Context;
 
 private
 

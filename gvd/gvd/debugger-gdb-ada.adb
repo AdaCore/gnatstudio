@@ -308,20 +308,20 @@ package body Debugger.Gdb.Ada is
    ----------------------
 
    procedure Parse_Array_Type
-     (Lang      : access Gdb_Ada_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
+     (Lang         : access Gdb_Ada_Language;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access)
+      Result       : out Generic_Type_Access)
    is
       Item_Separator : constant Character := ',';
       Dimension_End  : constant Character := ')';
-      Num_Dim   : Integer := 1;
-      Tmp_Index : Natural := Index;
-      R         : Array_Type_Access;
-      Index_Str : Unbounded_String;
-      G         : Generic_Type_Access;
+      Num_Dim        : Integer := 1;
+      Tmp_Index      : Natural := Index;
+      R              : Array_Type_Access;
+      Index_Str      : Unbounded_String;
+      G              : Generic_Type_Access;
 
    begin
       --  As a special case, if we have (<>) for the dimensions (ie an
@@ -899,19 +899,26 @@ package body Debugger.Gdb.Ada is
    function Set_Variable
      (Lang     : access Gdb_Ada_Language;
       Var_Name : String;
-      Value    : String)
-     return String
-   is
+      Value    : String) return String is
    begin
       return "set variable " & Var_Name & " := " & Value;
    end Set_Variable;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Debugger : access Gdb_Ada_Language) return String is
+   begin
+      return "begin";
+   end Start;
 
    ---------------------------
    -- Can_Tooltip_On_Entity --
    ---------------------------
 
    function Can_Tooltip_On_Entity
-     (Lang : access Gdb_Ada_Language;
+     (Lang   : access Gdb_Ada_Language;
       Entity : String) return Boolean
    is
       --  Note: It is not possible to directly get the result of "ptype"

@@ -627,11 +627,18 @@ package body Debugger.Gdb.C is
    function Set_Variable
      (Lang     : access Gdb_C_Language;
       Var_Name : String;
-      Value    : String)
-     return String
-   is
+      Value    : String) return String is
    begin
       return "set variable " & Var_Name & " = " & Value;
    end Set_Variable;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Debugger : access Gdb_C_Language) return String is
+   begin
+      return "tbreak main" & ASCII.LF & "run";
+   end Start;
 
 end Debugger.Gdb.C;

@@ -63,21 +63,21 @@ package Debugger.Gdb.Ada is
       Output : String) return Language.Thread_Information_Array;
 
    procedure Parse_Array_Type
-     (Lang      : access Gdb_Ada_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
+     (Lang         : access Gdb_Ada_Language;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Items.Generic_Type_Access);
+      Result       : out Items.Generic_Type_Access);
 
    procedure Parse_Record_Type
-     (Lang      : access Gdb_Ada_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out Items.Generic_Type_Access;
-      End_On    : String);
+     (Lang     : access Gdb_Ada_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out Items.Generic_Type_Access;
+      End_On   : String);
 
    procedure Parse_Array_Value
      (Lang     : access Gdb_Ada_Language;
@@ -88,15 +88,16 @@ package Debugger.Gdb.Ada is
    function Set_Variable
      (Lang     : access Gdb_Ada_Language;
       Var_Name : String;
-      Value    : String)
-     return String;
+      Value    : String) return String;
+
+   function Start (Debugger : access Gdb_Ada_Language) return String;
 
    function Get_Language_Debugger_Context
      (Lang : access Gdb_Ada_Language)
-     return Language.Debugger.Language_Debugger_Context;
+      return Language.Debugger.Language_Debugger_Context;
 
    function Can_Tooltip_On_Entity
-     (Lang : access Gdb_Ada_Language;
+     (Lang   : access Gdb_Ada_Language;
       Entity : String) return Boolean;
 
 private
