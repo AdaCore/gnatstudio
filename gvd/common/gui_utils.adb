@@ -27,6 +27,8 @@ pragma Warnings (On);
 with Gdk.Event;     use Gdk.Event;
 with Gdk.Window;    use Gdk.Window;
 with Gtk.Combo;     use Gtk.Combo;
+with Gtk.Container; use Gtk.Container;
+with Gtk.GEntry;    use Gtk.GEntry;
 with Gtk.Label;     use Gtk.Label;
 with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
@@ -99,6 +101,60 @@ package body GUI_Utils is
    begin
       Add_Unique_List_Entry (Get_List (Combo), Text);
    end Add_Unique_Combo_Entry;
+
+   -----------------------
+   -- Get_Index_In_List --
+   -----------------------
+
+   function Get_Index_In_List
+     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer
+   is
+      use type Widget_List.Glist;
+      Entry_Text : constant String := Get_Text (Get_Entry (Combo));
+      Children  : Widget_List.Glist := Get_Children (Get_List (Combo));
+      Item      : Gtk_List_Item;
+      Label     : Gtk_Label;
+      Index     : Integer := -1;
+   begin
+      --  We have to search explicitely in the list, since the selection might
+      --  be different from what is actually displayed in the list, for
+      --  instance if the text in the entry was modified programmatically.
+
+      while Children /= Widget_List.Null_List loop
+         Item := Gtk_List_Item (Widget_List.Get_Data (Children));
+         Label := Gtk_Label (Get_Child (Item));
+         Index := Index + 1;
+
+         if Get_Text (Label) = Entry_Text then
+            return Index;
+         end if;
+
+         Children := Widget_List.Next (Children);
+      end loop;
+
+      return -1;
+   end Get_Index_In_List;
+
+   ----------------------------
+   -- Propagate_Expose_Event --
+   ----------------------------
+
+   procedure Propagate_Expose_Event
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Event     : Gdk.Event.Gdk_Event_Expose)
+   is
+      use Widget_List;
+      Children, Tmp : Widget_List.Glist;
+   begin
+      Children := Get_Children (Container);
+      Tmp := Children;
+      while Tmp /= Null_List loop
+         Propagate_Expose (Container, Get_Data (Tmp), Event);
+         Tmp := Next (Tmp);
+      end loop;
+
+      Free (Children);
+   end Propagate_Expose_Event;
 
    ---------------------
    -- Set_Busy_Cursor --

@@ -24,6 +24,7 @@
 with Gdk.Event;
 with Gdk.Window;
 with Gtk.Combo;
+with Gtk.Container;
 with Gtk.List;
 with Gtk.Menu;
 with Gtk.Handlers;
@@ -43,6 +44,12 @@ package GUI_Utils is
    --  Add Text to the popdown list of Combo, if it is not already there.
    --  If the Text is already in the combo box, nothing is done.
 
+   function Get_Index_In_List
+     (Combo : access Gtk.Combo.Gtk_Combo_Record'Class) return Integer;
+   --  Return the index of the selected item in the list of Combo.
+   --  This is will return -1 if the current value of the combo is not in the
+   --  list, which can not happen if Combo is read-only.
+
    procedure Set_Busy_Cursor
      (Window        : Gdk.Window.Gdk_Window;
       Busy          : Boolean := True;
@@ -50,6 +57,17 @@ package GUI_Utils is
    --  Enable or disable the "busy" cursor for a specific top-level window.
    --  If Force_Refresh is True, then all X11 events are processed so that the
    --  new cursor is immediately visible for the user.
+
+   procedure Propagate_Expose_Event
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Event     : Gdk.Event.Gdk_Event_Expose);
+   --  Propagate the expose event Event to all the NO_WINDOW children of
+   --  Container. You must call this when Container has a specific expose
+   --  callback.
+
+   ----------------------
+   -- Contextual menus --
+   ----------------------
 
    type Contextual_Menu_Create is access function
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
