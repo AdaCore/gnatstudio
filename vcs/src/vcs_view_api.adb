@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -623,6 +623,7 @@ package body VCS_View_API is
       Submenu   : Gtk_Menu;
       File_Name : File_Selection_Context_Access;
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+
    begin
       if Context.all in File_Selection_Context'Class then
          File_Name := File_Selection_Context_Access (Context);
@@ -678,6 +679,22 @@ package body VCS_View_API is
                     (On_Menu_Update'Access),
                   Selection_Context_Access (Context));
 
+               if Get_Log_From_File (Kernel, File_S, False) = "" then
+                  Gtk_New (Item, Label => -"Commit via revision log");
+               else
+                  Gtk_New (Item, Label => -"Commit");
+               end if;
+
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Commit'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item);
+               Append (Menu, Item);
+
                Gtk_New (Item, Label => -"Start editing");
                Append (Menu, Item);
                Context_Callback.Connect
@@ -694,21 +711,19 @@ package body VCS_View_API is
                     (On_Menu_View_Log'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Menu_Item, Label => -"Compare");
-               Append (Menu, Menu_Item);
-               Gtk_New (Submenu);
-               Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+               Gtk_New (Item);
+               Append (Menu, Item);
 
-               Gtk_New (Item, Label => -"Against head revision");
-               Append (Submenu, Item);
+               Gtk_New (Item, Label => -"Compare against head rev.");
+               Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Diff'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Against working revision");
-               Append (Submenu, Item);
+               Gtk_New (Item, Label => -"Compare against working rev.");
+               Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
@@ -716,13 +731,16 @@ package body VCS_View_API is
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label =>
-                        -"Working revision against head revision");
-               Append (Submenu, Item);
+                        -"Compare working against head rev.");
+               Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Diff_Working_Head'Access),
                   Selection_Context_Access (Context));
+
+               Gtk_New (Item);
+               Append (Menu, Item);
 
                Gtk_New (Item, Label => -"Annotate");
                Append (Menu, Item);
@@ -747,22 +765,6 @@ package body VCS_View_API is
                   Context_Callback.To_Marshaller
                     (On_Menu_Edit_Log'Access),
                   Selection_Context_Access (Context));
-
-               if Get_Log_From_File (Kernel, File_S, False) = "" then
-                  Gtk_New (Item, Label => -"Commit via revision log");
-               else
-                  Gtk_New (Item, Label => -"Commit");
-               end if;
-
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Commit'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Item);
-               Append (Menu, Item);
 
                Gtk_New (Item, Label => -"Remove revision log");
                Append (Menu, Item);
