@@ -4614,6 +4614,11 @@ GPS and gdb.
 Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
 loaded automatically if found.
 
+   @item $HOME/.gps/history
+@cindex history
+Contains the state and history of combo boxes (e.g. the
+@code{Run->Custom...} dialog).
+
    @item $HOME/.gps/preferences
 @cindex preferences
 Contains all the preferences in XML format, as specified in the
