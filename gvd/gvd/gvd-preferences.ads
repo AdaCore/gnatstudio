@@ -32,6 +32,9 @@ package GVD.Preferences is
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
+   Remote_Copy : constant String := "rcp";
+   --  Program used to copy a file from a remote host.
+
    ---------------------
    -- Explorer Window --
    ---------------------
