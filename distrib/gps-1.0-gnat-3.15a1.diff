@@ -49,24 +49,19 @@ Index: common/src/stubs.c
   
      for Source_Dirs use ();
   
-*** gps-1.0.2/glide/gps.gpr	Tue Sep  3 11:08:17 2002
---- glide/gps.gpr	18 Nov 2002 10:06:51 -0000
---- 28,33 ----
---- gps.gpr	16 Jan 2003 10:55:24 -0000	1.48
-+++ gps.gpr	10 Feb 2003 17:26:14 -0000
-@@ -30,14 +30,7 @@
-    for Object_Dir use "obj";
- 
-    package Builder is
--      for Default_Switches ("Ada") use ("-m", "-a", "-g");
--      case Shared.Build is
--         when "Debug" =>
--           for Global_Configuration_Pragmas use "gnat_debug.adc";
--
--         when "Production" =>
--           for Global_Configuration_Pragmas use "gnat.adc";
--      end case;
-+      for Default_Switches ("Ada") use ("-a", "-g");
-    end Builder;
- 
-    package Compiler renames Shared.Compiler;
+*** gps-1.2.0/glide/gps.gpr	10 Feb 2003 17:29:25
+--- glide/gps.gpr	10 Feb 2003 17:30:55 -0000
+***************
+*** 33,43 ****
+        case Shared.Build is
+           when "Debug" =>
+             for Default_Switches ("Ada") use ("-m", "-a", "-g");
+-            for Global_Configuration_Pragmas use "gnat_debug.adc";
+  
+           when "Production" =>
+             for Default_Switches ("Ada") use ("-a", "-g");
+-            for Global_Configuration_Pragmas use "gnat.adc";
+        end case;
+     end Builder;
+  
+--- 33,41 ----
