@@ -40,7 +40,7 @@ package Commands.Locations is
    procedure Create
      (Item    : out Generic_Location_Command;
       Kernel  : Kernel_Handle;
-      Command : String);
+      Args    : GNAT.OS_Lib.Argument_List);
    --  Create a new generic command corresponding to command-line Command.
 
    procedure Create
@@ -92,7 +92,7 @@ private
 
    type Generic_Location_Command_Type is new Root_Command with record
       Kernel  : Kernel_Handle;
-      Command : String_Access;
+      Args    : String_List_Access;
    end record;
 
    type Source_Location_Command_Type is new Root_Command with record

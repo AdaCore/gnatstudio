@@ -20,7 +20,6 @@
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Shell;                use Shell;
-with String_Utils;         use String_Utils;
 
 package body Commands.Locations is
 
@@ -78,17 +77,22 @@ package body Commands.Locations is
    procedure Create
      (Item    : out Generic_Location_Command;
       Kernel  : Kernel_Handle;
-      Command : String)
+      Args    : GNAT.OS_Lib.Argument_List)
    is
+      A : String_List (Args'Range);
    begin
       Item := new Generic_Location_Command_Type;
       Item.Kernel := Kernel;
 
-      if Item.Command /= null then
-         Free (Item.Command);
+      if Item.Args /= null then
+         Free (Item.Args);
       end if;
 
-      Item.Command := new String'(Command);
+      for J in Args'Range loop
+         A (J) := new String'(Args (J).all);
+      end loop;
+
+      Item.Args := new String_List'(A);
    end Create;
 
    procedure Create
@@ -123,7 +127,7 @@ package body Commands.Locations is
 
    procedure Free (X : in out Generic_Location_Command_Type) is
    begin
-      Free (X.Command);
+      Free (X.Args);
    end Free;
 
    procedure Free (X : in out Source_Location_Command_Type) is
@@ -143,9 +147,17 @@ package body Commands.Locations is
    function Execute
      (Command : access Generic_Location_Command_Type) return Boolean is
    begin
-      if Command.Command /= null then
-         Interpret_Command
-           (Command.Kernel, Strip_Quotes (Command.Command.all));
+      if Command.Args /= null then
+         if Command.Args'Length > 1 then
+            Interpret_Command
+              (Command.Kernel,
+               Command.Args (Command.Args'First).all,
+               Command.Args (Command.Args'First + 1 .. Command.Args'Last));
+         else
+            Interpret_Command
+              (Command.Kernel, Command.Args (Command.Args'First).all);
+         end if;
+
          return True;
       else
          return False;
