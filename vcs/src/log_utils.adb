@@ -178,11 +178,14 @@ package body Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String)
    is
-      Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
+      --  Need to call Name_As_Directory below, to properly handle windows
+      --  directories.
+      Logs_Dir : constant String :=
+        Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
       Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       Remove_Entry (Mapper, File_Name);
-      Save_Mapper (Mapper, Logs_Dir & "/mapping");
+      Save_Mapper (Mapper, Logs_Dir & "mapping");
    end Remove_File_From_Mapping;
 
 end Log_Utils;
