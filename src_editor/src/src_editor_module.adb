@@ -76,7 +76,7 @@ package body Src_Editor_Module is
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       Location_Open_Id         : Idle_Handler_Id := 0;
-      Display_Line_Numbers     : Boolean;
+      Display_Line_Numbers     : Boolean    := False;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
