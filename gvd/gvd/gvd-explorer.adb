@@ -930,6 +930,7 @@ package body Odd.Explorer is
                Next := Row_Get_Sibling (Node_Get_Row (Node));
                Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
 
+               --  ??? Should handle remote files as well
                if not Is_Regular_File
                  (Find_File (Process.Debugger, Data.Extension))
                then
