@@ -884,6 +884,7 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+--  why is this code commented out ???
 --      Menu_Class : constant Class_Type := New_Instance (Kernel, "Menu");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
@@ -900,6 +901,7 @@ package body Custom_Module is
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
 
+--  why is this code commented out ???
 --        Register_Command
 --          (Kernel, Constructor_Method,
 --           Minimum_Args => 1,
