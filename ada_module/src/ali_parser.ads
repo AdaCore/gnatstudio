@@ -29,12 +29,4 @@ package ALI_Parser is
       return Entities.LI_Handler;
    --  Create a new ALI handler
 
-
-
-   function Update_ALI (LI : Entities.LI_File) return Boolean;
-   --  Re-parse the contents of the ALI file, and return True in case of
-   --  success.
-   --  This program is made public for testing purposes only.
-   --  Do not use directly.
-
 end ALI_Parser;
