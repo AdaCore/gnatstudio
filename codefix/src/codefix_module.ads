@@ -44,6 +44,8 @@ package Codefix_Module is
    Codefix_Module_ID   : Codefix_Module_ID_Access;
    Codefix_Module_Name : constant String := "Code_Fixing";
 
+   procedure Destroy (Id : in out Codefix_Module_ID_Record);
+
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
@@ -62,6 +64,8 @@ package Codefix_Module is
       Label     : String);
 
    function Create_Submenu (Error : Error_Id) return Gtk_Menu;
+
+   procedure Execute_Corrupted_Cb (Error_Message : String);
 
    Compilation_Category : constant String := "Builder Results";
 
