@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
@@ -549,12 +549,12 @@ package body Vsearch_Ext is
    begin
       Gtk_New (Extra);
 
-      --  Register_Search_Function
-      --    (Kernel            => Kernel,
-      --     Label             => -"Current File",
-      --     Factory           => Current_File_Factory'Access,
-      --     Extra_Information => null,
-      --     Mask              => All_Options and not Search_Backward);
+      Register_Search_Function
+        (Kernel            => Kernel,
+         Label             => -"Current File",
+         Factory           => Current_File_Factory'Access,
+         Extra_Information => null,
+         Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Project",
