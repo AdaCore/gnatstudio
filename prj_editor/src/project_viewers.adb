@@ -1219,7 +1219,8 @@ package body Project_Viewers is
       end if;
 
       if V.Project_Filter /= No_Project then
-         Gtk_New (Item, -"Edit default switches");
+         Gtk_New (Item, -"Edit default switches for "
+                  & Project_Name (V.Project_Filter));
          Add (Menu, Item);
          Context_Callback.Connect
            (Item, "activate",
