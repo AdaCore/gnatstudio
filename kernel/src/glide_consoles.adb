@@ -223,7 +223,7 @@ package body Glide_Consoles is
             Column := 1;
          else
             Column := Positive'Value
-                        (Contents (Matched (3).First .. Matched (3).Last - 1));
+                        (Contents (Matched (3).First .. Matched (3).Last));
          end if;
 
          if Matched (1).First < Matched (1).Last then
