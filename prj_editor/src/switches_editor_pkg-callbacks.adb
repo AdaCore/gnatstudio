@@ -21,18 +21,30 @@ package body Switches_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Editor : Switches_Edit := Switches_Edit (Object);
---        Arg1 : Address := To_Address (Params, 1);
---        Arg2 : Guint := To_Guint (Params, 2);
+      Editor : constant Switches_Edit := Switches_Edit (Object);
    begin
       if Editor.Make_Switches /= null then
          Refresh_Make_Switches (Object);
       end if;
-      if Editor.Compiler_Switches /= null then
-         Refresh_Comp_Switches (Object);
+
+      if Editor.Ada_Switches /= null then
+         Refresh_Ada_Switches (Object);
       end if;
+
+      if Editor.C_Switches /= null then
+         Refresh_C_Switches (Object);
+      end if;
+
+      if Editor.Cpp_Switches /= null then
+         Refresh_Cpp_Switches (Object);
+      end if;
+
       if Editor.Binder_Switches /= null then
          Refresh_Bind_Switches (Object);
+      end if;
+
+      if Editor.Linker_Switches /= null then
+         Refresh_Linker_Switches (Object);
       end if;
    end Refresh_All_Switches;
 
@@ -58,27 +70,71 @@ package body Switches_Editor_Pkg.Callbacks is
       Update_Gui_From_Cmdline (Switches_Edit (Object), Gnatmake);
    end On_Make_Switches_Entry_Changed;
 
-   ---------------------------
-   -- Refresh_Comp_Switches --
-   ---------------------------
+   --------------------------
+   -- Refresh_Ada_Switches --
+   --------------------------
 
-   procedure Refresh_Comp_Switches
+   procedure Refresh_Ada_Switches
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      Update_Cmdline (Switches_Edit (Object), Compiler);
-   end Refresh_Comp_Switches;
+      Update_Cmdline (Switches_Edit (Object), Ada_Compiler);
+   end Refresh_Ada_Switches;
 
-   ----------------------------------------
-   -- On_Compiler_Switches_Entry_Changed --
-   ----------------------------------------
+   -----------------------------------
+   -- On_Ada_Switches_Entry_Changed --
+   -----------------------------------
 
-   procedure On_Compiler_Switches_Entry_Changed
+   procedure On_Ada_Switches_Entry_Changed
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      Update_Gui_From_Cmdline (Switches_Edit (Object), Compiler);
-   end On_Compiler_Switches_Entry_Changed;
+      Update_Gui_From_Cmdline (Switches_Edit (Object), Ada_Compiler);
+   end On_Ada_Switches_Entry_Changed;
+
+   ------------------------
+   -- Refresh_C_Switches --
+   ------------------------
+
+   procedure Refresh_C_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Cmdline (Switches_Edit (Object), C_Compiler);
+   end Refresh_C_Switches;
+
+   ---------------------------------
+   -- On_C_Switches_Entry_Changed --
+   ---------------------------------
+
+   procedure On_C_Switches_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Gui_From_Cmdline (Switches_Edit (Object), C_Compiler);
+   end On_C_Switches_Entry_Changed;
+
+   --------------------------
+   -- Refresh_Cpp_Switches --
+   --------------------------
+
+   procedure Refresh_Cpp_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Cmdline (Switches_Edit (Object), Cpp_Compiler);
+   end Refresh_Cpp_Switches;
+
+   -----------------------------------
+   -- On_Cpp_Switches_Entry_Changed --
+   -----------------------------------
+
+   procedure On_Cpp_Switches_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Gui_From_Cmdline (Switches_Edit (Object), Cpp_Compiler);
+   end On_Cpp_Switches_Entry_Changed;
 
    --------------------------------------
    -- On_Binder_Switches_Entry_Changed --
