@@ -9,7 +9,6 @@ in this directory and then follow the instructions.
 USE
 
 Using GPS is documented in the GPS user's guide available in HTML format using
-the help menu under GPS itself, or as text and info files in the directory
-$base/doc/gps, where $base is the base directory chosen when installing GVD
-(using doinstall).
+the help menu under GPS itself, or directly in the directory $base/doc/gps/html,
+where $base is the base directory chosen when installing GPS (using doinstall).
 
