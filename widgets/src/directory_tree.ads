@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -168,6 +168,8 @@ private
       Scroll_To_Directory : Boolean := False;
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;
       Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
+
+      Current_Dir         : GNAT.OS_Lib.String_Access;
 
       Fill_Timeout_Ids : Timeout_Id_List.List;
    end record;
