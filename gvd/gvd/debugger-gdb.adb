@@ -28,8 +28,6 @@ with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Debugger.Gdb is
 
    ---------------

@@ -159,7 +159,7 @@ package body Display_Items is
       Destroy (GC);
 
       if Item.Entity /= null then
-         Paint (Item.Entity.all, Black_Gc, Font,
+         Paint (Item.Entity.all, Black_GC, Font,
                 Pixmap (Item),
                 X => 4,
                 Y => Height + 8);

@@ -22,8 +22,7 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
-with Gtk.Window;  use Gtk.Window;
-with GNAT.Os_Lib; use GNAT.Os_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Process; use Odd.Process;
 with Ada.Command_Line; use Ada.Command_Line;
 

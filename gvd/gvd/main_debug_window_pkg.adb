@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
@@ -28,7 +27,6 @@ with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Odd.Process; use Odd.Process;
 with Odd.Pixmaps; use Odd.Pixmaps;
 
 package body Main_Debug_Window_Pkg is
@@ -46,7 +44,6 @@ end Gtk_New;
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    The_Accel_Group : Gtk_Accel_Group;
    Combo6_Items : String_List.Glist;
-   List : Argument_List (1 .. 0);
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);

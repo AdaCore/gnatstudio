@@ -354,7 +354,8 @@ package body Generic_Values is
    is
    begin
       for J in Item.Fields (Field).Variant_Part'Range loop
-         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all = Contains
+         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all
+           = Contains
          then
             return Generic_Type_Access (Item.Fields (Field).Variant_Part (J));
          end if;
@@ -964,7 +965,6 @@ package body Generic_Values is
       W, H : Gint;
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
-      Total_Field_Width : Gint := 0;
       Lbearing,
       Rbearing,
       Ascent,

@@ -165,8 +165,8 @@ package body Odd.Strings is
       begin
 
          --  Special characters are represented as ["00"] or ["""]
-         --  Note that we can have '[" ' that represents the character [ followed by
-         --  the end of the string
+         --  Note that we can have '[" ' that represents the character
+         --  '[' followed by the end of the string
 
          if Index + 4 <= Type_Str'Last
            and then Type_Str (Index) = '['
@@ -217,10 +217,10 @@ package body Odd.Strings is
    begin
       Index := Index + 1;
 
-      --  Note: this is a slightly complex loop, since a string might not appear
-      --  as a single string in gdb, but can be made of multiple elements, including
-      --  characters repeated a number of times, as in:
-      --     "["af"]["c7"]", '["00"]' <repeats 12 times>, "BA"
+      --  Note: this is a slightly complex loop, since a string might not
+      --  appear as a single string in gdb, but can be made of multiple
+      --  elements, including characters repeated a number of times, as in:
+      --  "["af"]["c7"]", '["00"]' <repeats 12 times>, "BA"
 
       while S_Index <= Str'Last loop
 
@@ -243,7 +243,8 @@ package body Odd.Strings is
                   if Looking_At (Type_Str, Index, "<repeats ") then
                      Index := Index + 9;
                      Parse_Num (Type_Str, Index, Num);
-                     Str (S_Index .. S_Index + Integer (Num) - 1) := (others => Char);
+                     Str (S_Index .. S_Index + Integer (Num) - 1) :=
+                       (others => Char);
                      S_Index := S_Index + Integer (Num);
                      Index := Index + 7; --  skips " times>"
                   else
@@ -269,7 +270,7 @@ package body Odd.Strings is
    -----------------------
    -- Skip_Simple_Value --
    -----------------------
- 
+
    procedure Skip_Simple_Value
      (Type_Str             : in String;
       Index                : in out Natural;

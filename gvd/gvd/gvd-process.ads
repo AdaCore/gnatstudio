@@ -18,17 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
 with Glib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 
-with Gtk.Window; use Gtk.Window;
 with Gtk.Object; use Gtk.Object;
 
 with Debugger; use Debugger;
-with Language; use Language;
 with Process_Tab_Pkg;
 
 package Odd.Process is
@@ -48,11 +45,11 @@ package Odd.Process is
    type Debugger_Process_Tab_Record is new Process_Tab_Pkg.Process_Tab_Record
      with record
         Debugger : Debugger_Access;
-        --  The underlying debugger process.
+         --  The underlying debugger process.
 
         Edit_Pos : Glib.Guint;
-        --  The last position in the text window of the debugger where text
-        --  was inserted. This is used to find what was typed by the user.
+         --  The last position in the text window of the debugger where text
+         --  was inserted. This is used to find what was typed by the user.
 
      end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;

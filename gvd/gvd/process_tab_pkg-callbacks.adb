@@ -22,9 +22,7 @@ with System; use System;
 with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
-with Debugger; use Debugger;
 with Unchecked_Conversion;
-with GNAT.IO; use GNAT.IO;
 with Odd.Process; use Odd.Process;
 
 package body Process_Tab_Pkg.Callbacks is

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
 with Unchecked_Deallocation;
 with Glib;
 with Gdk.Pixmap;

@@ -60,7 +60,6 @@ package Gtkada.Toolbar is
       return Gtk.Handle_Box.Gtk_Handle_Box;
 
 private
-   --  type Gtkada_Toolbar_Record is new Gtk.Handle_Box.Gtk_Handle_Box_Record with
    type Gtkada_Toolbar_Record is new Gtk.Toolbar.Gtk_Toolbar_Record with
    record
       Box           : Gtk.Box.Gtk_Hbox;
