@@ -879,16 +879,18 @@ package body Projects is
       Arr  : Array_Element_Id;
       Len  : Natural;
    begin
-      Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
-      Check_Suffix_List (Filename, Arr, Len);
-      if Arr /= No_Array_Element then
-         return Filename'Last - Len;
-      end if;
+      if View /= Prj.No_Project then
+         Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
+         Check_Suffix_List (Filename, Arr, Len);
+         if Arr /= No_Array_Element then
+            return Filename'Last - Len;
+         end if;
 
-      Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
-      Check_Suffix_List (Filename, Arr, Len);
-      if Arr /= No_Array_Element then
-         return Filename'Last - Len;
+         Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
+         Check_Suffix_List (Filename, Arr, Len);
+         if Arr /= No_Array_Element then
+            return Filename'Last - Len;
+         end if;
       end if;
 
       --  Check the default naming scheme as well ? Otherwise, it might happen
