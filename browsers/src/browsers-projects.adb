@@ -221,7 +221,7 @@ package body Browsers.Projects is
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Browser, Event, Menu);
-      Context : Selection_Context_Access :=
+      Context : constant Selection_Context_Access :=
         new File_Selection_Context;
    begin
       Set_File_Information
