@@ -4,8 +4,8 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Viewport; use Gtk.Viewport;
-with Gtk.Frame; use Gtk.Frame;
 with Gtk.Box; use Gtk.Box;
+with Gtk.Separator; use Gtk.Separator;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Button; use Gtk.Button;
 package Process_Tab_Pkg is
@@ -23,7 +23,11 @@ package Process_Tab_Pkg is
       Label204 : Gtk_Label;
       Data_Scrolledwindow : Gtk_Scrolled_Window;
       Data_Canvas : Gtk_Viewport;
-      Editor_Frame : Gtk_Frame;
+      Editor_Vbox : Gtk_Vbox;
+      Label_Hbox : Gtk_Hbox;
+      Explorer_Separator : Gtk_Hseparator;
+      Editor_Label : Gtk_Label;
+      Editor_Separator : Gtk_Hseparator;
       Editor_Text : Gtk_Hbox;
       Command_Scrolledwindow : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;

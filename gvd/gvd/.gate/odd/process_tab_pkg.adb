@@ -111,12 +111,27 @@ begin
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
-   Gtk_New (Process_Tab.Editor_Frame);
-   Set_Shadow_Type (Process_Tab.Editor_Frame, Shadow_Etched_In);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Frame);
+   Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
+   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
+
+   Gtk_New_Hbox (Process_Tab.Label_Hbox, False, 0);
+   Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Label_Hbox, False, True, 0);
+
+   Gtk_New_Hseparator (Process_Tab.Explorer_Separator);
+   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Explorer_Separator, False, True, 0);
+
+   Gtk_New (Process_Tab.Editor_Label, -("(no file)"));
+   Set_Alignment (Process_Tab.Editor_Label, 0.5, 0.5);
+   Set_Padding (Process_Tab.Editor_Label, 0, 0);
+   Set_Justify (Process_Tab.Editor_Label, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Editor_Label, False);
+   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Label, False, False, 0);
+
+   Gtk_New_Hseparator (Process_Tab.Editor_Separator);
+   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Separator, True, True, 0);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
-   Add (Process_Tab.Editor_Frame, Process_Tab.Editor_Text);
+   Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Editor_Text, True, True, 0);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
