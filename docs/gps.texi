@@ -5817,10 +5817,10 @@ Files in the system directory are loaded before the files in the local
 directory, so that you can override locally any definition from the system
 directory.
 
-The format of these files have changed after GPS 1.2.0. A conversion program
+The format of these files have changed in GPS 1.3.0. A conversion program
 is provided that will automatically convert all files in the customization
 directory to the new format. This conversion tool is called
-@file{gps_convert_custom}, and must be run manually.
+@file{gps2custom-1.3}, and must be run manually.
 
 These files must be utf8-encoded by default. However, you can specify any
 encoding you wish through the standard @code{<?xml encoding="..." ?>}
