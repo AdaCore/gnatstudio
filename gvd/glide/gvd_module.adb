@@ -1015,7 +1015,8 @@ package body GVD_Module is
       Selection := Entity_Selection_Context_Access (Sel_Context);
       Debugger  := Get_Current_Process (Get_Main_Window (Kernel));
 
-      if Debugger.Debugger = null
+      if Debugger = null
+        or else Debugger.Debugger = null
         or else not Has_Entity_Name_Information (Selection)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
