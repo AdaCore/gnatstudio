@@ -337,7 +337,6 @@ package body Src_Editor_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_saved" signal.
-   pragma Unreferenced (File_Saved_Cb);
 
    procedure Preferences_Changed
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -348,6 +347,11 @@ package body Src_Editor_Module is
       Command : String;
       Args    : String_List_Utils.String_List.List) return String;
    --  Interactive command handler for the source editor module.
+
+   procedure Add_To_Reopen_Menu
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String);
+   --  Add an entry for File to the Reopen menu, if needed.
 
    ----------
    -- Free --
@@ -684,10 +688,17 @@ package body Src_Editor_Module is
    procedure File_Saved_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
-      Kernel  : Kernel_Handle) is
-      pragma Unreferenced (Widget, Args, Kernel);
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      File  : constant String := Get_String (Nth (Args, 1));
    begin
-      null;
+      --  Insert the saved file in the reopen menu.
+
+      if File /= "" then
+         Add_To_Reopen_Menu (Kernel, File);
+      end if;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1010,6 +1021,65 @@ package body Src_Editor_Module is
       return Editor;
    end Create_File_Editor;
 
+   ------------------------
+   -- Add_To_Reopen_Menu --
+   ------------------------
+
+   procedure Add_To_Reopen_Menu
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String)
+   is
+      use String_List_Utils.String_List;
+
+      Reopen_File_Name : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
+      Reopen_File      : File_Type;
+      Counter          : Integer := 0;
+      Node             : List_Node;
+      The_Data         : Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+
+   begin
+      Node := First (The_Data.List);
+
+      while Node /= Null_Node loop
+         Counter := Counter + 1;
+
+         if Data (Node) = File then
+            Counter := -1;
+            exit;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      if Counter >= 0
+        and then Node = Null_Node
+      then
+         Prepend (The_Data.List, File);
+
+         if Counter >= Max_Number_Of_Reopens then
+            Node := Last (The_Data.List);
+            Node := Prev (The_Data.List, Node);
+            Remove_Nodes (The_Data.List, Node);
+         end if;
+
+         Open (Reopen_File, Out_File, Reopen_File_Name);
+         Node := First (The_Data.List);
+
+         while Node /= Null_Node loop
+            if Data (Node) /= "" then
+               Put_Line (Reopen_File, Data (Node));
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         Close (Reopen_File);
+         Refresh_Reopen_Menu (Kernel);
+      end if;
+   end Add_To_Reopen_Menu;
+
    ---------------
    -- Open_File --
    ---------------
@@ -1124,58 +1194,9 @@ package body Src_Editor_Module is
             Gtk_Widget (Box),
             After => False);
 
-         --  Update and save the "Reopen" menu state.
-         declare
-            use String_List_Utils.String_List;
-
-            Reopen_File_Name : constant String :=
-              Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
-            Reopen_File      : File_Type;
-            Counter          : Integer := 0;
-            Node             : List_Node;
-            The_Data         : Source_Editor_Module :=
-              Source_Editor_Module (Src_Editor_Module_Id);
-
-         begin
-            Node := First (The_Data.List);
-
-            while Node /= Null_Node loop
-               Counter := Counter + 1;
-
-               if Data (Node) = File then
-                  Counter := -1;
-                  exit;
-               end if;
-
-               Node := Next (Node);
-            end loop;
-
-            if Counter >= 0
-              and then Node = Null_Node
-            then
-               Prepend (The_Data.List, File);
-
-               if Counter >= Max_Number_Of_Reopens then
-                  Node := Last (The_Data.List);
-                  Node := Prev (The_Data.List, Node);
-                  Remove_Nodes (The_Data.List, Node);
-               end if;
-
-               Open (Reopen_File, Out_File, Reopen_File_Name);
-               Node := First (The_Data.List);
-
-               while Node /= Null_Node loop
-                  if Data (Node) /= "" then
-                     Put_Line (Reopen_File, Data (Node));
-                  end if;
-
-                  Node := Next (Node);
-               end loop;
-
-               Close (Reopen_File);
-               Refresh_Reopen_Menu (Kernel);
-            end if;
-         end;
+         if File /= "" then
+            Add_To_Reopen_Menu (Kernel, File);
+         end if;
 
       else
          Console.Insert
@@ -2345,6 +2366,10 @@ package body Src_Editor_Module is
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Paste'Access),
+         Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Kernel, File_Saved_Signal,
+         File_Saved_Cb'Access,
          Kernel_Handle (Kernel));
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
