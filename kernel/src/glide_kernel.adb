@@ -1121,6 +1121,8 @@ package body Glide_Kernel is
          --  children stored in the desktop have something to hide.
          Show_All (Main_Window);
 
+         Present_On_Child_Focus (MDI, False);
+
          if Desktop_Node /= null then
             Trace (Me, "loading desktop for " & Project_Name);
             Kernel_Desktop.Restore_Desktop
@@ -1136,14 +1138,22 @@ package body Glide_Kernel is
          end if;
 
          Free (Node);
+
+         Present_On_Child_Focus (MDI, True);
+
          return Desktop_Node /= null
            or else Default_Desktop_Node /= null;
 
       else
          Trace (Me, "loading default desktop");
          Show_All (Main_Window);
+
+         Present_On_Child_Focus (MDI, False);
+
          Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
+
+         Present_On_Child_Focus (MDI, True);
 
          return False;
       end if;
