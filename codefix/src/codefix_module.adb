@@ -74,9 +74,6 @@ package body Codefix_Module is
    --  Check is the current location is a fixable error, and propose the fix
    --  if possible.
 
-   procedure Graphic_Fix (Error : Error_Id);
-   --  Remove from the location box the pixmap of the error.
-
    procedure Compilation_Finished_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
@@ -119,7 +116,7 @@ package body Codefix_Module is
 
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
-         Identifier    => "--  ???",
+         Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
          File          => Get_Error_Message (Mitem.Error).File_Name.all,
          Line          => Get_Error_Message (Mitem.Error).Line,
@@ -144,7 +141,6 @@ package body Codefix_Module is
       pragma Unreferenced (Widget, Args);
 
       Current_Error : Error_Id;
-      New_Action    : Action_Item;
 
    begin
       Free (Codefix_Module_ID.Errors_Found);
@@ -172,36 +168,7 @@ package body Codefix_Module is
       Current_Error := Get_First_Error (Codefix_Module_ID.Corrector.all);
 
       while Current_Error /= Null_Error_Id loop
-         New_Action := new Line_Information_Record;
-         New_Action.Text := new String'("--  ???");
-
-         if Get_Number_Of_Fixes (Current_Error) = 1 then
-            New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Answer_Xpm);
-         else
-            New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Ambiguous_Xpm);
-         end if;
-
-         New_Action.Associated_Command := new Codefix_Command;
-         Codefix_Command (New_Action.Associated_Command.all).Error :=
-           Current_Error;
-         Codefix_Command (New_Action.Associated_Command.all).Current_Text :=
-            Codefix_Module_ID.Current_Text;
-         Codefix_Command (New_Action.Associated_Command.all).Corrector :=
-           Codefix_Module_ID.Corrector;
-         Codefix_Command (New_Action.Associated_Command.all).Kernel :=
-           Codefix_Module_ID.Kernel;
-
-         Add_Location_Action
-           (Kernel        => Codefix_Module_ID.Kernel,
-            Identifier    => "--  ???",
-            Category      => "Builder Results",
-            File          => Get_Error_Message (Current_Error).File_Name.all,
-            Line          => Get_Error_Message (Current_Error).Line,
-            Column        => Get_Error_Message (Current_Error).Col,
-            Message       =>
-                Cut_Message (Get_Message (Get_Error_Message (Current_Error))),
-            Action        => New_Action);
-
+         Create_Pixmap (Current_Error);
          Current_Error := Next (Current_Error);
       end loop;
 
@@ -230,7 +197,8 @@ package body Codefix_Module is
          Kernel,
          Codefix_Module_ID.Current_Text,
          Codefix_Module_ID.Corrector,
-         Graphic_Fix'Access);
+         Remove_Pixmap'Access,
+         Create_Pixmap'Access);
 
       Window := Get_MDI (Kernel);
       Child := Put (Window, Graphic_Codefix);
@@ -295,11 +263,11 @@ package body Codefix_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Codefix_Contextual_Menu;
 
-   -----------------
-   -- Graphic_Fix --
-   -----------------
+   -------------------
+   -- Remove_Pixmap --
+   -------------------
 
-   procedure Graphic_Fix (Error : Error_Id) is
+   procedure Remove_Pixmap (Error : Error_Id) is
    begin
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
@@ -310,8 +278,45 @@ package body Codefix_Module is
          Column        => Get_Error_Message (Error).Col,
          Message       =>
            Cut_Message (Get_Message (Get_Error_Message (Error))));
-   end Graphic_Fix;
+   end Remove_Pixmap;
 
+   -------------------
+   -- Create_Pixmap --
+   -------------------
+
+   procedure Create_Pixmap (Error : Error_Id) is
+      New_Action    : Action_Item;
+   begin
+      New_Action := new Line_Information_Record;
+      New_Action.Text := new String'(-"Fix error");
+
+      if Get_Number_Of_Fixes (Error) = 1 then
+         New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Answer_Xpm);
+      else
+         New_Action.Image := Gdk_New_From_Xpm_Data (Codefix_Ambiguous_Xpm);
+      end if;
+
+      New_Action.Associated_Command := new Codefix_Command;
+      Codefix_Command (New_Action.Associated_Command.all).Error :=
+        Error;
+      Codefix_Command (New_Action.Associated_Command.all).Current_Text :=
+        Codefix_Module_ID.Current_Text;
+      Codefix_Command (New_Action.Associated_Command.all).Corrector :=
+        Codefix_Module_ID.Corrector;
+      Codefix_Command (New_Action.Associated_Command.all).Kernel :=
+        Codefix_Module_ID.Kernel;
+
+      Add_Location_Action
+        (Kernel        => Codefix_Module_ID.Kernel,
+         Identifier    => Location_Button_Name,
+         Category      => "Builder Results",
+         File          => Get_Error_Message (Error).File_Name.all,
+         Line          => Get_Error_Message (Error).Line,
+         Column        => Get_Error_Message (Error).Col,
+         Message       =>
+           Cut_Message (Get_Message (Get_Error_Message (Error))),
+         Action        => New_Action);
+   end Create_Pixmap;
 
    ---------------------
    -- Register_Module --
