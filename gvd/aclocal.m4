@@ -124,7 +124,7 @@ main ()
     {
       printf("\n*** An old version of GtkAda (%d.%d.%d) was found.\n",
              $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
-        printf("*** You need a version of GtkAda newer than %d.%d.%d. The latest version of\n",
+        printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
                major, minor, micro);
       printf("*** GtkAda is always available from http://gtkada.eu.org.\n");
       printf("***\n");

@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.21 
+# From configure.in Revision: 1.1 
 #############################################################
 #
 #  Checking for Gnat
@@ -1062,7 +1062,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-  min_gtk_version=1.2.7
+  min_gtk_version=1.2.8
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
 echo "configure:1068: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
@@ -1111,7 +1111,7 @@ main ()
     {
       printf("\n*** An old version of GtkAda (%d.%d.%d) was found.\n",
              $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
-        printf("*** You need a version of GtkAda newer than %d.%d.%d. The latest version of\n",
+        printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
                major, minor, micro);
       printf("*** GtkAda is always available from http://gtkada.eu.org.\n");
       printf("***\n");
