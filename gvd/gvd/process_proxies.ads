@@ -112,6 +112,14 @@ package Process_Proxies is
    procedure Wait
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Matched : out GNAT.Regpat.Match_Array;
+      Timeout : Integer := 20);
+   --  Same but Matched is also filled.
+
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
       Pattern : String;
       Timeout : Integer := 20);
    --  Same, but the regular expression is given a string.

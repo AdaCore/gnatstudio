@@ -94,10 +94,11 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : access Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Timeout : Integer := 20) is
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Timeout : Integer := 20) is
    begin
       Proxy.Command_In_Process.all := True;
 
@@ -114,14 +115,29 @@ package body Process_Proxies is
       Proxy.Command_In_Process.all := False;
    end Wait;
 
-   ----------
-   -- Wait --
-   ----------
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Matched : out GNAT.Regpat.Match_Array;
+      Timeout : Integer := 20) is
+   begin
+      Proxy.Command_In_Process.all := True;
 
-   procedure Wait (Proxy   : access Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : String;
-                   Timeout : Integer := 20) is
+      if Timeout = -1 then
+         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, -1);
+      else
+         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout * 50);
+      end if;
+
+      Proxy.Command_In_Process.all := False;
+   end Wait;
+
+   procedure Wait
+     (Proxy   : access Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : String;
+      Timeout : Integer := 20) is
    begin
       Wait (Proxy, Result, Compile (Pattern), Timeout);
    end Wait;
