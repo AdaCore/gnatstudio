@@ -1155,7 +1155,6 @@ package body Project_Explorers is
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Dir     : constant String :=
         Get_Directory_From_Node (Explorer.Tree.Model, Node);
-      Files     : String_List_Utils.String_List.List;
       Src       : constant Name_Id_Array :=
         Get_Source_Files (Project, Recursive => False);
       File_Node : File_Array (Src'Range);
@@ -1168,27 +1167,22 @@ package body Project_Explorers is
          --  projects, and Get_Full_Path_From_File would only return the first
          --  instance of the file
 
-         File_Node (File_Node_Index) := Create
-           (Full_Filename => Dir & Get_String (Src (S)));
+         File_Node (File_Node_Index) :=
+           Create (Full_Filename => Dir & Get_String (Src (S)));
+
          if Is_Regular_File (File_Node (File_Node_Index)) then
             File_Node_Index := File_Node_Index + 1;
          end if;
       end loop;
 
-      if Filenames_Are_Case_Sensitive then
-         String_List_Utils.Sort (Files);
-      else
-         String_List_Utils.Sort_Case_Insensitive (Files);
-      end if;
+      Sort (File_Node);
 
-      File_Node_Index := File_Node_Index - 1;
-      while File_Node_Index >= File_Node'First loop
+      for J in File_Node'First .. File_Node_Index - 1 loop
          Append_File
            (Kernel => Explorer.Kernel,
             Model  => Explorer.Tree.Model,
-            File   => File_Node (File_Node_Index),
+            File   => File_Node (J),
             Base   => Node);
-         File_Node_Index := File_Node_Index - 1;
       end loop;
    end Expand_Directory_Node;
 
