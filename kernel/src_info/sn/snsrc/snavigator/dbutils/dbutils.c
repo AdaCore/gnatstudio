@@ -50,9 +50,6 @@ MA 02111-1307, USA.
 #define MY_DEBUG(x)
 #endif
 
-/* Disable mesages: GPS does not like too talkative utils */
-#define QUIET
-
 #if !defined (__MSVC__) && ! defined (HAVE_STRTOUL)
 #define strtoul(s,p,b) (unsigned long)strtol(s,p,b)
 #endif
@@ -1029,10 +1026,8 @@ db_remove_file_def(int softdel,char *file)
 	int     del;
 	int     del_fil;
 
-#ifndef QUIET
 	printf("Deleting %s\n",file);	/* Informs SN which files is being deleted. */
 	fflush(stdout);
-#endif
 
 	if (!dbp)
 	{
@@ -1252,10 +1247,8 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 		fn = file_del_key.field_value[3];
 		if (strcmp(last_del_fname, fn) != 0)
 		{
-#ifndef QUIET
 			printf("Deleting %s\n", fn);
 			fflush(stdout);
-#endif
 			strcpy(last_del_fname, fn);
 		}
 
