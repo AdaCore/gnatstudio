@@ -382,9 +382,11 @@ package body Find_Utils is
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean
    is
-      pragma Unreferenced (Context, Kernel, Replace_String, Search_Backward);
+      pragma Unreferenced
+        (Context, Kernel, Replace_String, Search_Backward, Interactive);
    begin
       return False;
    end Replace;
