@@ -78,6 +78,7 @@ Editing File
 * Indentation::
 * Cross References::
 * Using an External Editor::
+* A note on the Clipboard::
 
 
 Project Handling
@@ -214,6 +215,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * Navigation in the Source Editor::
 * Indentation::
 * Using an External Editor::
+* A note on the Clipboard::
 @end menu
 
 @node General Information
@@ -339,6 +341,26 @@ automatically select the first editor available on your system) and
 whether this editor should always be used every time you double-click
 on a file, or whether you need to explicitely select the contextual
 menu to open the external editor.
+
+@c --------------------------------------------------------------------------
+@node A note on the Clipboard
+@section A note on the Clipboard
+@c --------------------------------------------------------------------------
+
+This section concern X-window users who are used to cutting and
+pasting with the middle mouse button. In the GPS text editor, as in
+many recent X applications, the @i{GPS clipboard} is set by explicit
+cut/copy/paste actions, either through menu items or keyboard
+shorcuts, and the @i{primary clipboard} (ie the ``middle button''
+clipboard) is set by the current selection.
+
+Therefore, copy/paste between GPS and other X applications using the 
+@i{primary clipboard} will still work, provided that there is some
+text currently selected. The @i{GPS clipboard}, when set, will
+override the @i{primary clipboard}.
+
+See @url{http://www.freedesktop.org/standards/clipboards.txt} for more
+information.
 
 @c --------------------------------------------------------------------
 @node Source Navigation
