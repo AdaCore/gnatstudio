@@ -1535,26 +1535,26 @@ package body Gtkada.File_Selector is
                end if;
 
             else
-               --  The best match is a directory.
+               --  The best match is a directory, or no match at all.
 
                if Suffix_Length > 0 then
                   Set_Text (Win.Selection_Entry,
                             Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
-               end if;
 
-               if Is_Directory (Win.Current_Directory.all
-                                  & Best_Match (1 .. Suffix_Length))
-                 and then Win.Current_Directory.all
-                   /= Normalize_Pathname
-                     (Win.Current_Directory.all
-                      & Best_Match (1 .. Suffix_Length),
-                      Resolve_Links => False)
-               then
-                  Set_Text (Win.Selection_Entry, "");
-                  Change_Directory (Win,
-                                    Win.Current_Directory.all
-                                      & Best_Match (1 .. Suffix_Length));
+                  if Is_Directory (Win.Current_Directory.all
+                                   & Best_Match (1 .. Suffix_Length))
+                    and then Win.Current_Directory.all
+                      /= Normalize_Pathname
+                        (Win.Current_Directory.all
+                         & Best_Match (1 .. Suffix_Length),
+                         Resolve_Links => False)
+                  then
+                     Set_Text (Win.Selection_Entry, "");
+                     Change_Directory (Win,
+                                       Win.Current_Directory.all
+                                       & Best_Match (1 .. Suffix_Length));
+                  end if;
                end if;
             end if;
 
