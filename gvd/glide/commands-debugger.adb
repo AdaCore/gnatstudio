@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Debugger;             use Debugger;
 with GVD.Types;            use GVD.Types;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Intl;           use Glide_Intl;
@@ -30,21 +31,19 @@ package body Commands.Debugger is
    ------------
 
    procedure Create
-     (Item           : out Set_Breakpoint_Command_Access;
-      Kernel         : Kernel_Handle;
-      Debugger       : Debugger_Access;
-      Mode           : Breakpoint_Command_Mode;
-      File           : String;
-      Line           : Positive;
-      Identifier     : Breakpoint_Identifier := 0) is
+     (Item       : out Set_Breakpoint_Command_Access;
+      Kernel     : Kernel_Handle;
+      Debugger   : Visual_Debugger;
+      Mode       : Breakpoint_Command_Mode;
+      File       : String;
+      Line       : Positive) is
    begin
-      Item := new Set_Breakpoint_Command;
-      Item.Kernel := Kernel;
-      Item.BMode := Mode;
-      Item.File := new String'(File);
-      Item.Line := Line;
+      Item          := new Set_Breakpoint_Command;
+      Item.Kernel   := Kernel;
+      Item.BMode    := Mode;
+      Item.File     := new String'(File);
+      Item.Line     := Line;
       Item.Debugger := Debugger;
-      Item.BP := Identifier;
    end Create;
 
    -------------
@@ -52,14 +51,17 @@ package body Commands.Debugger is
    -------------
 
    function Execute
-     (Command : access Set_Breakpoint_Command) return Command_Return_Type is
+     (Command : access Set_Breakpoint_Command) return Command_Return_Type
+   is
+      C : Command_Access;
    begin
-      if Command_In_Process (Get_Process (Command.Debugger)) then
-         Insert (Command.Kernel,
-                 -"The debugger is busy processing a command",
-                 Mode => Error);
-
+      if Command_In_Process (Get_Process (Command.Debugger.Debugger)) then
+         Insert
+           (Command.Kernel,
+            -"The debugger is busy processing a command",
+            Mode => Error);
          Command_Finished (Command, False);
+
          return Failure;
       end if;
 
@@ -67,29 +69,37 @@ package body Commands.Debugger is
 
       case Command.BMode is
          when Set =>
-            Command.BP := Break_Source
-              (Command.Debugger,
+            Break_Source
+              (Command.Debugger.Debugger,
                Command.File.all,
                Command.Line,
                Mode => Visible);
 
          when Unset =>
-            Remove_Breakpoint
-              (Command.Debugger,
-               Command.BP,
-               Mode => Visible);
+            if Command.Debugger.Breakpoints /= null then
+               for J in Command.Debugger.Breakpoints'Range loop
+                  if Command.Debugger.Breakpoints (J).Line = Command.Line
+                    and then Command.Debugger.Breakpoints (J).File /= null
+                    and then Command.Debugger.Breakpoints (J).File.all =
+                      Command.File.all
+                  then
+                     Remove_Breakpoint
+                       (Command.Debugger.Debugger,
+                        Command.Debugger.Breakpoints (J).Num,
+                        Mode => Visible);
+                  end if;
+               end loop;
+            end if;
       end case;
 
       Command.Do_Not_Free := False;
 
       if Command.To_Be_Freed then
-         declare
-            C : Command_Access := Command_Access (Command);
-         begin
-            Destroy (C);
-         end;
+         C := Command_Access (Command);
+         Destroy (C);
 
          return Failure;
+
       else
          Command_Finished (Command, True);
       end if;
