@@ -45,6 +45,7 @@ with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Project_Viewers;           use Project_Viewers;
 with Creation_Wizard;           use Creation_Wizard;
+with VFS;                       use VFS;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -405,7 +406,7 @@ package body Welcome is
       end if;
 
       declare
-         File : constant String := Select_File
+         File : constant Virtual_File := Select_File
            (Title             => -"Select project file",
             Base_Directory    => Dir.all,
             File_Pattern      => "*.gpr",
@@ -416,8 +417,8 @@ package body Welcome is
             History           => Get_History (S.Kernel));
 
       begin
-         if File /= "" then
-            Set_Text (Get_Entry (S.Open_Project), File);
+         if File /= VFS.No_File then
+            Set_Text (Get_Entry (S.Open_Project), Full_Name (File));
          end if;
       end;
 

@@ -40,6 +40,7 @@ with Factory_Data;                 use Factory_Data;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Traces;                       use Traces;
 with Commands.Interactive;         use Commands.Interactive;
+with VFS;                          use VFS;
 
 package body Glide_Menu is
 
@@ -108,7 +109,7 @@ package body Glide_Menu is
       Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
    begin
       declare
-         Filename : constant String :=
+         Filename : constant Virtual_File :=
            Select_File
              (-"Open Project",
               File_Pattern      => "*.gpr",
@@ -118,9 +119,9 @@ package body Glide_Menu is
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
-         if Filename /= "" then
+         if Filename /= VFS.No_File then
             Change_Dir (Dir_Name (Filename));
-            Load_Project (Kernel, Filename);
+            Load_Project (Kernel, Full_Name (Filename));
          end if;
       end;
 
