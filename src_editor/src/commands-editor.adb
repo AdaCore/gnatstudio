@@ -131,6 +131,36 @@ package body Commands.Editor is
    end Create;
 
    --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text (Item : Editor_Command) return String is
+   begin
+      return Item.Current_Text (1 .. Item.Current_Text_Size);
+   end Get_Text;
+
+   --------------
+   -- Set_Text --
+   --------------
+
+   procedure Set_Text (Item : Editor_Command; Text : String) is
+   begin
+      while Text'Length > Item.Current_Text_Total_Length loop
+         Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
+      end loop;
+
+      Item.Current_Text_Size := Text'Length;
+
+      declare
+         New_Current_Text : String (1 .. Item.Current_Text_Total_Length);
+      begin
+         New_Current_Text (1 .. Item.Current_Text_Size) := Text;
+         Free (Item.Current_Text);
+         Item.Current_Text := new String'(New_Current_Text);
+      end;
+   end Set_Text;
+
+   --------------
    -- Add_Text --
    --------------
 
@@ -164,7 +194,7 @@ package body Commands.Editor is
       if Item.Edition_Mode = Insertion then
          Item.Current_Text
            (First + Item.Current_Text_Size
-            .. First + Item.Current_Text_Size + Text_Length - 1) := Text;
+              .. First + Item.Current_Text_Size + Text_Length - 1) := Text;
 
       else
          if Item.Current_Text_Size > 0 then

@@ -97,6 +97,12 @@ package Commands.Editor is
    --  If values other than -1 are specified, they override the
    --  current values in Item.
 
+   function Get_Text (Item : Editor_Command) return String;
+   --  Return the text associated with Item.
+
+   procedure Set_Text (Item : Editor_Command; Text : String);
+   --  Set the text associated with Item.
+
    function Execute (Command : access Editor_Command_Type) return Boolean;
 
    function Undo (Command : access Editor_Command_Type) return Boolean;
