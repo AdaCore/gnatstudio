@@ -87,6 +87,9 @@ package body Odd.Menus is
                              Br     : Breakpoint_Record);
    --  Set a breakpoint on a specific line.
 
+   procedure Till_Breakpoint (Widget : access Gtk_Widget_Record'Class;
+                              Br     : Breakpoint_Record);
+   --  Set a temporary breakpoint on a line, and continue execution.
 
    --------------------------
    -- Change_Align_On_Grid --
@@ -134,6 +137,18 @@ package body Odd.Menus is
    begin
       Break_Source (Br.Process.Debugger, Br.File, Br.Line);
    end Set_Breakpoint;
+
+   ---------------------
+   -- Till_Breakpoint --
+   ---------------------
+
+   procedure Till_Breakpoint (Widget : access Gtk_Widget_Record'Class;
+                              Br     : Breakpoint_Record)
+   is
+   begin
+      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
+      Continue (Br.Process.Debugger, Display => True);
+   end Till_Breakpoint;
 
    ---------------------
    -- Update_Variable --
@@ -307,6 +322,16 @@ package body Odd.Menus is
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
+         Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
+                            Process      => Convert (Editor),
+                            File         => Get_Current_File (Editor),
+                            Line         => Integer (Line)));
+
+      Gtk_New (Mitem, Label => -"Continue Until Line" & Gint'Image (Line));
+      Append (Menu, Mitem);
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
          Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
                             Process      => Convert (Editor),
                             File         => Get_Current_File (Editor),
