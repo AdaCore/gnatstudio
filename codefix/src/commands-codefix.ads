@@ -35,6 +35,9 @@ package Commands.Codefix is
    function Execute (Command : access Codefix_Command) return Boolean;
    --  Fix the error recorded in the Codefix_Command.
 
+   function Undo (Command : access Codefix_Command) return Boolean;
+   --  Unfix the error recored.
+
    procedure Free (Command : in out Codefix_Command);
    --  Do not do anyting, as far as nothing has to be freed in Codefix_Command.
 
