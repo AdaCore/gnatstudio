@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -190,6 +190,8 @@ package body Builder_Module is
       end if;
 
       --  Ask for saving sources/projects before building
+      --  ??? This should probably be interactive
+
       Tmp := Save_All_MDI_Children (K, Force => False);
       Console.Clear (K);
       Console.Insert (K, "gnatmake " & Cmd.all, False);
@@ -617,7 +619,7 @@ package body Builder_Module is
 
       --  No main program ?
       if Current (Iter) = No_Project then
-         Gtk_New (Mitem, "<none>");
+         Gtk_New (Mitem, -"<none>");
          Append (Menu1, Mitem);
          Set_Sensitive (Mitem, False);
 
@@ -665,7 +667,7 @@ package body Builder_Module is
       end if;
 
       --  Should be able to run any program
-      Gtk_New (Mitem, "any...");
+      Gtk_New (Mitem, -"any...");
       Append (Menu2, Mitem);
       Set_Sensitive (Mitem, False);
 
@@ -674,8 +676,7 @@ package body Builder_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
    ---------------------
