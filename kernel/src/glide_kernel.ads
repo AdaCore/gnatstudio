@@ -127,6 +127,14 @@ package Glide_Kernel is
       return Gtkada.MDI.MDI_Child;
    --  Return the first child matching Tag
 
+   procedure Insert_In_Console
+     (Handle         : access Kernel_Handle_Record;
+      Text           : String;
+      Highlight_Sloc : Boolean := True;
+      Add_LF         : Boolean := True);
+   --  Insert a new message in the console.
+   --  See the description of parameters in the package Glide_Consoles
+
    --------------
    -- Contexts --
    --------------

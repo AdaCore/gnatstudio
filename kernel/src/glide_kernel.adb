@@ -30,6 +30,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Unchecked_Deallocation;
 with Gint_Xml;                  use Gint_Xml;
+with Glide_Consoles;            use Glide_Consoles;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -523,6 +524,23 @@ package body Glide_Kernel is
    begin
       return Page.Process_Mdi;
    end Get_MDI;
+
+   -----------------------
+   -- Insert_In_Console --
+   -----------------------
+
+   procedure Insert_In_Console
+     (Handle         : access Kernel_Handle_Record;
+      Text           : String;
+      Highlight_Sloc : Boolean := True;
+      Add_LF         : Boolean := True)
+   is
+      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Page       : Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+   begin
+      Insert (Page.Console, Text, Highlight_Sloc, Add_Lf);
+   end Insert_In_Console;
 
    ---------------------------
    -- Find_MDI_Child_By_Tag --
