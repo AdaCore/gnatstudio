@@ -889,7 +889,6 @@ append_selection_string (HTMLObject *self,
 	if (! self->selected)
 		return;
 
-	putchar ('\n');
 	g_string_append_c (buffer, '\n');
 }
 
