@@ -143,12 +143,7 @@ package body VCS.CVS is
             when Expect_Timeout =>
                return True;
             when others =>
-               declare
-                  S : String := Expect_Out (D.Rep.Fd);
-               begin
-                  String_List.Prepend
-                    (D.List, S (S'First .. S'Last - 1));
-               end;
+               String_List.Append (D.List, Expect_Out (D.Rep.Fd));
          end case;
       end loop;
 
@@ -158,12 +153,11 @@ package body VCS.CVS is
             S : String := Expect_Out (D.Rep.Fd);
          begin
             if S /= "" then
-               String_List.Prepend (D.List, S);
+               String_List.Append (D.List, S);
             end if;
          end;
 
          Close (D.Rep.Fd);
-         String_List.Rev (D.List);
          D.Handler (D.Rep.Kernel, D.Head, D.List);
 
          D.Rep.Command_In_Progress := False;
@@ -281,7 +275,8 @@ package body VCS.CVS is
             Insert (Kernel,
                     String_List.Head (L_Temp),
                     Highlight_Sloc => False,
-                    Mode => Info);
+                    Mode => Info,
+                    Add_LF => False);
             L_Temp := String_List.Next (L_Temp);
          end loop;
       end if;
@@ -908,7 +903,7 @@ package body VCS.CVS is
       Create (File, Name => Patch_File);
 
       while not String_List.Is_Empty (L_Temp) loop
-         Put_Line (File, String_List.Head (L_Temp));
+         Put (File, String_List.Head (L_Temp));
          L_Temp := String_List.Next (L_Temp);
       end loop;
 
