@@ -48,6 +48,7 @@ with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 
+with GVD;
 with Commands.Editor;             use Commands.Editor;
 with Language;                    use Language;
 with Interfaces.C.Strings;        use Interfaces.C.Strings;
@@ -975,17 +976,19 @@ package body Src_Editor_View is
          View,
          After => False);
 
-      --  ??? Under Windows, a click does not refresh the entire area as it
-      --  does under X. We need it to properly redraw current line and
-      --  current block, therefore we do it manually.
+      if GVD.Gtk_Extra_Refresh then
+         --  ??? Under Windows, a click does not refresh the entire area as it
+         --  does under X. We need it to properly redraw current line and
+         --  current block, therefore we do it manually.
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (View,
-         "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (On_Button_Press'Access),
-         View,
-         After => False);
+         Gtkada.Handlers.Return_Callback.Object_Connect
+           (View,
+            "button_press_event",
+            Gtkada.Handlers.Return_Callback.To_Marshaller
+              (On_Button_Press'Access),
+            View,
+            After => False);
+      end if;
 
       Kernel_Callback.Object_Connect
         (Kernel, Preferences_Changed_Signal,
@@ -1001,6 +1004,7 @@ package body Src_Editor_View is
 
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).
+
       View.Connect_Expose_Id := Source_View_Idle.Add
         (Connect_Expose'Access,
          Source_View (View));
