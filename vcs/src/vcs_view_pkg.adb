@@ -59,7 +59,6 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
 with Basic_Types;               use Basic_Types;
@@ -68,16 +67,7 @@ with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
 with Prj.Tree;                  use Prj.Tree;
 
-with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
-with Commands.External;         use Commands.External;
-
-with Ada.Text_IO;               use Ada.Text_IO;
-
 package body VCS_View_Pkg is
-
-   Tmp_Dir : constant String := "/tmp/";
-   --  <preferences>
 
    -----------------
    -- Local types --
@@ -96,16 +86,6 @@ package body VCS_View_Pkg is
      procedure (Explorer : access VCS_View_Record'Class;
                 Iter     : Gtk_Tree_Iter);
    --  Any action that occurs on one row in the tree view.
-
-   ----------------------
-   -- Local procedures --
-   ----------------------
-
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-   --  ???
 
    --------------------
    -- Local packages --
@@ -211,11 +191,6 @@ package body VCS_View_Pkg is
       Parameter   : Log_Parameter);
    --  ???
 
-   procedure Log_Editor_Ok_Clicked
-     (Object      : access Gtk_Widget_Record'Class;
-      Parameter   : Log_Parameter);
-   --  ???
-
    procedure Log_Editor_Close
      (Object      : access Gtk_Widget_Record'Class;
       Parameter   : Log_Parameter);
@@ -289,7 +264,8 @@ package body VCS_View_Pkg is
    procedure Display_File_Status
      (Kernel         : Kernel_Handle;
       Status         : File_Status_List.List;
-      Override_Cache : Boolean)
+      Override_Cache : Boolean;
+      Force_Display  : Boolean := False)
    is
       use File_Status_List;
 
@@ -375,7 +351,9 @@ package body VCS_View_Pkg is
                Temp_Stored_Status := Next (Temp_Stored_Status);
             end loop;
 
-            if not Found then
+            if not Found
+              and then Force_Display
+            then
                Prepend (Explorer.Stored_Status, New_Status);
             end if;
 
@@ -383,11 +361,15 @@ package body VCS_View_Pkg is
                     and then (New_Status.Status = Up_To_Date
                               or else New_Status.Status = Unknown))
             then
-               if Iter = Null_Iter then
+               if Iter = Null_Iter
+                 and then Force_Display
+               then
                   Append (Explorer.Model, Iter, Null_Iter);
                end if;
 
-               Fill_Info (Explorer, Iter, New_Status, Success);
+               if Iter /= Null_Iter then
+                  Fill_Info (Explorer, Iter, New_Status, Success);
+               end if;
             else
                if Iter /= Null_Iter then
                   Remove (Explorer.Model, Iter);
@@ -626,174 +608,6 @@ package body VCS_View_Pkg is
       end loop;
    end Log_Editor_Text_Changed;
 
-   -------------------
-   -- Check_Handler --
-   -------------------
-
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean
-   is
-      use String_List;
-
-      List_Temp : String_List.List_Node := First (List);
-      Head_Temp : String_List.List_Node := First (Head);
-
-   begin
-      if not String_List.Is_Empty (List) then
-         while Head_Temp /= Null_Node loop
-            Push_Message (Kernel, Error, Data (Head_Temp));
-            Head_Temp := Next (Head_Temp);
-         end loop;
-      end if;
-
-      while List_Temp /= Null_Node loop
-         Push_Message (Kernel, Error, Data (List_Temp));
-         List_Temp := Next (List_Temp);
-      end loop;
-
-      return String_List.Is_Empty (List);
-   end Check_Handler;
-
-   ---------------------------
-   -- Log_Editor_Ok_Clicked --
-   ---------------------------
-
-   procedure Log_Editor_Ok_Clicked
-     (Object    : access Gtk_Widget_Record'Class;
-      Parameter : Log_Parameter)
-   is
-      pragma Unreferenced (Object);
-      use String_List;
-
-      Logs               : String_List.List;
-      Files_Temp         : List_Node := First (Parameter.Log_Editor.Files);
-
-      Commit_Command     : Commit_Command_Access;
-      Get_Status_Command : Get_Status_Command_Access;
-
-      Check_File         : External_Command_Access;
-      Check_Log          : External_Command_Access;
-
-      Command            : String_List.List;
-      Args               : String_List.List;
-
-      File_Check_Script  : constant String :=
-        Get_Pref (Parameter.Kernel, VCS_Commit_File_Check);
-
-      Log_Check_Script   : constant String :=
-        Get_Pref (Parameter.Kernel, VCS_Commit_Log_Check);
-
-   begin
-      while Files_Temp /= Null_Node loop
-         String_List.Append (Logs, Get_Text (Parameter.Log_Editor));
-         Files_Temp := Next (Files_Temp);
-      end loop;
-
-      Create
-        (Commit_Command,
-         Parameter.VCS_Ref,
-         Parameter.Log_Editor.Files,
-         Logs);
-
-      Create
-        (Get_Status_Command,
-         Parameter.VCS_Ref,
-         Parameter.Log_Editor.Files);
-
-      --  ??? Must deal with multiple files log ?
-
-      if File_Check_Script /= "" then
-         String_List.Append (Command, File_Check_Script);
-         String_List.Append
-           (Args, String_List.Head (Parameter.Log_Editor.Files));
-
-         Create
-           (Check_File,
-            Parameter.Kernel,
-            Command,
-            String_List.Null_List,
-            Args,
-            String_List.Null_List,
-            Check_Handler'Access);
-      end if;
-
-      if Log_Check_Script /= "" then
-         declare
-            Log_File : constant String :=
-              Tmp_Dir & Base_Name
-                (String_List.Head (Parameter.Log_Editor.Files)) & "_log";
-            File     : File_Type;
-
-            Head     : String_List.List;
-         begin
-            String_List.Free (Command);
-            String_List.Append (Command, Log_Check_Script);
-
-            String_List.Free (Args);
-            String_List.Append (Args, Log_File);
-
-            String_List.Append
-              (Head,
-               -"File: " & String_List.Head (Parameter.Log_Editor.Files));
-            String_List.Append
-              (Head, -"The changelog provided does not pass the checks.");
-            Create (File, Name => Log_File);
-            Put_Line (File, Get_Text (Parameter.Log_Editor));
-            Close (File);
-
-            Create
-              (Check_Log,
-               Parameter.Kernel,
-               Command,
-               String_List.Null_List,
-               Args,
-               Head,
-               Check_Handler'Access);
-         end;
-      end if;
-
-      if File_Check_Script = ""
-        and then Log_Check_Script = ""
-      then
-         --  No log check, no file check.
-
-         Enqueue (Get_Queue (Parameter.VCS_Ref), Commit_Command);
-      else
-         if Log_Check_Script /= "" then
-            Add_Consequence_Action
-              (Command_Access (Check_Log), Command_Access (Commit_Command));
-            if File_Check_Script /= "" then
-               --  Log check and file check.
-
-               Add_Consequence_Action
-                 (Command_Access (Check_File), Command_Access (Check_Log));
-               Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
-            else
-               --  Log check, no file check.
-
-               Enqueue (Get_Queue (Parameter.VCS_Ref), Check_Log);
-            end if;
-         else
-            --  No log check, file check.
-
-            Add_Consequence_Action
-              (Command_Access (Check_File), Command_Access (Commit_Command));
-
-            Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
-         end if;
-      end if;
-
-      Enqueue (Get_Queue (Parameter.VCS_Ref), Get_Status_Command);
-
-      String_List.Free (Logs);
-      String_List.Free (Command);
-      String_List.Free (Args);
-
-      Close (Parameter.Log_Editor);
-   end Log_Editor_Ok_Clicked;
-
    ----------------------
    -- Log_Editor_Close --
    ----------------------
@@ -876,12 +690,6 @@ package body VCS_View_Pkg is
                       Get_String (Explorer.Model, Iter, Log_Column));
 
             Explorer_Callback.Connect
-              (Log_Editor.Ok_Button,
-               "clicked",
-               Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
-               Parameter_Object);
-
-            Explorer_Callback.Connect
               (Log_Editor.Log_Text,
                "insert_text",
                Explorer_Callback.To_Marshaller
@@ -927,12 +735,6 @@ package body VCS_View_Pkg is
                & Base_Name (Data (Temp_Files)));
             Add_File_Name (Log_Editor, Data (Temp_Files));
             Set_Text (Log_Editor, "");
-
-            Explorer_Callback.Connect
-              (Log_Editor.Ok_Button,
-               "clicked",
-               Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
-               Parameter_Object);
 
             if Kernel = null then
                Show_All (Log_Editor);
@@ -1112,7 +914,7 @@ package body VCS_View_Pkg is
             Set_File_Name_Information
               (Context,
                Dir_Name (First_File),
-               First_File);
+               Base_Name (First_File));
             Set_File_Information
               (Context,
                Get_Project_From_File (Get_Project_View (Kernel), First_File));
