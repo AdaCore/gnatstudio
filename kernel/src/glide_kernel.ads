@@ -407,6 +407,10 @@ private
       --  The path for the object files associated the sources in the
       --  Source Path above.
 
+      Gnatls_Cache : GNAT.OS_Lib.String_Access;
+      --  The name of the gnatls command used to get the predefined source
+      --  path.
+
       Source_Info_List : Src_Info.LI_File_List;
       --  The semantic information associated to the files for the current
       --  project.

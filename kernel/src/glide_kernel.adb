@@ -110,11 +110,13 @@ package body Glide_Kernel is
 
       Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
       Handle.Project_Is_Default := True;
+      Handle.Predefined_Source_Path := null;
+      Handle.Predefined_Object_Path := null;
+      Handle.Gnatls_Cache := null;
       Recompute_View (Handle);
       Reset_Source_Info_List (Handle);
 
       Gtk_New (Handle.Tooltips);
-      Compute_Predefined_Paths (Handle);
       Load_Preferences
         (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
 
@@ -216,22 +218,31 @@ package body Glide_Kernel is
       Fd     : Process_Descriptor;
       Result : Expect_Match;
       Args   : Argument_List (1 .. 1);
+      Gnatls : constant String := Get_Attribute_Value
+        (Get_Project_View (Handle), Gnatlist_Attribute,
+         Ide_Package, Default => "gnatls");
 
    begin
-      --  ???
-      --  Should get name of gnatls from Handle.Project_View, and only call
-      --  gnatls if its name has changed.
+      --  If the gnatls commands hasn't changed, no need to recompute the
+      --  predefined paths.
 
-      if Handle.Predefined_Source_Path /= null then
+      if Handle.Gnatls_Cache /= null
+        and then Handle.Gnatls_Cache.all = Gnatls
+      then
          return;
       end if;
 
+      Free (Handle.Gnatls_Cache);
+      Handle.Gnatls_Cache := new String' (Gnatls);
+
+      Free (Handle.Predefined_Source_Path);
+      Free (Handle.Predefined_Object_Path);
       Handle.Predefined_Source_Path := new String' ("");
       Handle.Predefined_Object_Path := new String' ("");
 
       Args (1) := new String' ("-v");
       Non_Blocking_Spawn
-        (Fd, "gnatls", Args, Buffer_Size => 0, Err_To_Out => True);
+        (Fd, Gnatls, Args, Buffer_Size => 0, Err_To_Out => True);
       Free (Args (1));
       Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
 
