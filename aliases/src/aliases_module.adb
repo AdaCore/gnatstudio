@@ -1482,7 +1482,7 @@ package body Aliases_Module is
       Pack1 (Pane, Frame);
 
       Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Add (Frame, Scrolled);
 
       Gtk_New (Editor.Aliases_Model,
