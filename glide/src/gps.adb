@@ -406,13 +406,10 @@ procedure GPS is
       --  Temporarily disable unimplemented menu items
 
       declare
-         File     : constant String := '/' & (-"File") & '/';
          Navigate : constant String := '/' & (-"Navigate") & '/';
          Tools    : constant String := '/' & (-"Tools") & '/';
 
       begin
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, File & (-"Close All")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
          Set_Sensitive (Find_Menu_Item
