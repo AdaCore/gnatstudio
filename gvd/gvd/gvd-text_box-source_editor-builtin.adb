@@ -1384,17 +1384,49 @@ package body Odd.Source_Editors is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access Source_Editor_Record) is
-      Index : Natural;
-      Index_End : Natural;
+      Buffer : constant Odd.Types.String_Access := Get_Buffer (Editor);
+      Index : Natural := 0;
+      Current_Line : Natural := 1;
+      Col : Natural := 1;
+      Text_Pos : Natural;
+      Text_Pos_End : Natural;
+      Line : constant Natural := Get_Line (Editor);
+
    begin
       if Editor_Highlight_Current_Line
-        and then Get_Buffer (Editor) /= null
+        and then Buffer /= null
       then
-         Index := Index_From_Line (Editor, Get_Line (Editor));
-         Index_End := Index;
-         Skip_To_Char (Get_Buffer (Editor).all, Index_End, ASCII.LF);
+
+         Text_Pos := Buffer'First;
+
+         --  Convert from line to visual buffer position (i.e include handling
+         --  of ASCII.HT characters).
+
+         while Current_Line < Line loop
+            if Buffer (Text_Pos) = ASCII.LF then
+               Col := 1;
+               Index := Index + 1;
+               Current_Line := Current_Line + 1;
+
+            elsif Buffer (Text_Pos) = ASCII.HT
+              and then Col mod Tab_Size /= 0
+            then
+               Index := Index +
+                 ((1 + Col / Tab_Size) * Tab_Size - Col + 1);
+               Col := (1 + Col / Tab_Size) * Tab_Size + 1;
+
+            else
+               Col := Col + 1;
+               Index := Index + 1;
+            end if;
+            Text_Pos := Text_Pos + 1;
+         end loop;
+
+         Index := Index + Line * Natural (Invisible_Column_Width (Editor));
+         Text_Pos_End := Text_Pos;
+         Skip_To_Char (Buffer.all, Text_Pos_End, ASCII.LF);
          Highlight_Range
-           (Editor, Gint (Index), Gint (Index_End), Get_Line (Editor),
+           (Editor, Gint (Text_Pos), Gint (Text_Pos_End), Gint (Index), Line,
             Back => Editor.Highlight_Color);
       end if;
    end Highlight_Current_Line;
