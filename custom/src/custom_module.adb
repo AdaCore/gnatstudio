@@ -252,12 +252,13 @@ package body Custom_Module is
       -----------------------
 
       procedure Parse_Button_Node (Node : Node_Ptr) is
-         Action : constant String := Get_Attribute (Node, "action");
-         Child  : Node_Ptr;
-         Title  : String_Access := new String'("");
-         Pixmap : String_Access := new String'("");
-         Image  : Gtk_Image;
+         Action  : constant String := Get_Attribute (Node, "action");
+         Child   : Node_Ptr;
+         Title   : String_Access := new String'("");
+         Pixmap  : String_Access := new String'("");
+         Image   : Gtk_Image;
          Command : Action_Record;
+
       begin
          if Action = "" then
             Insert (Kernel, -"<button> nodes must have an action attribute",
@@ -266,6 +267,7 @@ package body Custom_Module is
          end if;
 
          Child := Node.Child;
+
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
                Free (Title);
@@ -283,7 +285,7 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         if Title.all = "" then
+         if Title.all /= "" then
             if Pixmap.all /= ""
               and then Is_Regular_File (Pixmap.all)
             then
@@ -291,6 +293,7 @@ package body Custom_Module is
             end if;
 
             Command := Lookup_Action (Kernel, Action);
+
             if Command.Command /= null then
                Register_Button
                  (Kernel,
@@ -298,9 +301,11 @@ package body Custom_Module is
                   Command_Access (Command.Command),
                   Image);
             end if;
+
          else
             Append_Space (Get_Toolbar (Kernel));
          end if;
+
          Free (Title);
          Free (Pixmap);
       end Parse_Button_Node;
