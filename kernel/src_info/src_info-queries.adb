@@ -373,9 +373,7 @@ package body Src_Info.Queries is
                   File_Name, E_Name, Line, Column,
                   Proximity, Decl, Ref, Status);
 
-               if Search_Is_Completed (Status) then
-                  exit;
-               end if;
+               exit when Search_Is_Completed (Status);
             end if;
 
             Current_Sep := Current_Sep.Next;
@@ -1123,7 +1121,8 @@ package body Src_Info.Queries is
             end if;
 
             P := Decl.Ref.Location.File.Part;
-            Source_Filename := Decl.Ref.Location.File.Source_Filename;
+            Source_Filename := GNAT.OS_Lib.String_Access
+              (Decl.Ref.Location.File.Source_Filename);
          end if;
 
          case P is
@@ -1227,9 +1226,8 @@ package body Src_Info.Queries is
       Num_Separates : Natural := 0;
 
    begin
-      Assert
-        (Me, Lib_Info /= null and then Lib_Info.LI.Parsed,
-         "Create_Tree: LI file hasn't been parsed");
+      Assert (Me, Lib_Info /= null, "Create_Tree: LI file is null");
+      Assert (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file wasn't parsed");
 
       File_List := Lib_Info.LI.Separate_Info;
 
@@ -1560,6 +1558,10 @@ package body Src_Info.Queries is
       Depth  : Natural := 0;
       Length : Natural := 0;
    begin
+      if Decl_File = null then
+         return Get_Name (Entity);
+      end if;
+
       Tree := Create_Tree (Decl_File);
 
       if Tree = Null_Scope_Tree then
