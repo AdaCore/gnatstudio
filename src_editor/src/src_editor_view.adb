@@ -131,6 +131,12 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "changed" signal.
 
+   procedure Buffer_Information_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "buffer_information_changed" signal.
+
    procedure Side_Columns_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
@@ -387,6 +393,20 @@ package body Src_Editor_View is
       Clear_Text_Window (User);
    end Line_Highlight_Change_Handler;
 
+   ---------------------------------------
+   -- Buffer_Information_Change_Handler --
+   ---------------------------------------
+
+   procedure Buffer_Information_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Params);
+   begin
+      User.Highlight_Blocks := Has_Block_Information (Buffer);
+   end Buffer_Information_Change_Handler;
+
    ---------------------------------
    -- Side_Columns_Change_Handler --
    ---------------------------------
@@ -600,6 +620,12 @@ package body Src_Editor_View is
                Last          : constant Gint := Gint (B.Last_Line - 1);
 
             begin
+               --  Do not draw blocks that are on the first column.
+
+               if B.Offset <= 1 then
+                  return;
+               end if;
+
                Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
                Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
 
@@ -899,6 +925,12 @@ package body Src_Editor_View is
       Source_Buffer_Callback.Connect
         (Buffer, "side_column_changed",
          Cb        => Side_Columns_Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "buffer_information_changed",
+         Cb        => Buffer_Information_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
