@@ -166,7 +166,7 @@ package body Vsearch_Ext is
    --  for the predefined patterns
 
    ----------
-   -- Free6 --
+   -- Free --
    ----------
 
    procedure Free (Data : in out Search_Module_Data) is
@@ -198,6 +198,10 @@ package body Vsearch_Ext is
    begin
       Search_Modules_List.Free (Search_Modules);
       Unref (Vsearch_Extended (Object).Next_Menu_Item);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
    ------------------------------
@@ -453,6 +457,10 @@ package body Vsearch_Ext is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
    begin
       Vsearch.Continue := False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Stop_Search;
 
    ------------------------
@@ -467,6 +475,10 @@ package body Vsearch_Ext is
       else
          Hide_All (Vsearch.Options_Frame);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Options_Toggled;
 
    ------------------------------
@@ -586,6 +598,10 @@ package body Vsearch_Ext is
            (Vsearch_Extended (Get_Search_Module (Kernel)),
             Find_Next => False);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Set_First_Next_Mode_Cb;
 
    ---------------
@@ -858,6 +874,10 @@ package body Vsearch_Ext is
       pragma Unreferenced (Widget);
    begin
       Grab_Focus (Vsearch_Extended (Get_Search_Module (Kernel)).Pattern_Entry);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Search_Menu_Cb;
 
    --------------------
@@ -870,6 +890,10 @@ package body Vsearch_Ext is
       pragma Unreferenced (Widget);
    begin
       On_Search (Get_Search_Module (Kernel));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Search_Next_Cb;
 
    -----------------------------
