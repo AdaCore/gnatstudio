@@ -30,6 +30,7 @@ with Gtk.Combo;             use Gtk.Combo;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Notebook;          use Gtk.Notebook;
+with Gtk.Rc;                use Gtk.Rc;
 with Gtkada.Intl;           use Gtkada.Intl;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
@@ -282,6 +283,15 @@ begin
 
    Main_Debug_Window.Gvd_Home_Dir := Dir;
    Main_Debug_Window.Prefix_Directory := Prefix;
+
+   declare
+      Rc : constant String := Prefix.all & Directory_Separator & "bin" &
+        Directory_Separator & "gtkrc";
+   begin
+      if Is_Regular_File (Rc) then
+         Gtk.Rc.Parse (Rc);
+      end if;
+   end;
 
    --  ??? Should have a cleaner way of initializing Log_File
 
