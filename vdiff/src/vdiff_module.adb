@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -73,6 +73,7 @@ package body Vdiff_Module is
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
       File1  : constant String := Select_File (-"Select First File");
@@ -118,6 +119,7 @@ package body Vdiff_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
+      pragma Unreferenced (Mode);
       Vdiff   : Vdiff_Access;
       Result  : Diff_Occurrence_Link;
       Child   : MDI_Child;
