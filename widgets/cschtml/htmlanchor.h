@@ -36,7 +36,8 @@ typedef struct _HTMLAnchorClass HTMLAnchorClass;
 struct _HTMLAnchor {
 	HTMLObject object;
 
-	GString *name;
+	/* GString *name; */
+	gchar *name;
 };
 
 struct _HTMLAnchorClass {

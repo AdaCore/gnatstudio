@@ -37,7 +37,8 @@ destroy (HTMLObject *object)
 
 	anchor = HTML_ANCHOR (object);
 
-	g_string_free (anchor->name, TRUE);
+	/* g_string_free (anchor->name, TRUE); */
+        free (anchor->name);
 
 	HTML_OBJECT_CLASS (parent_class)->destroy (object);
 }
@@ -48,7 +49,10 @@ copy (HTMLObject *self,
 {
 	(* HTML_OBJECT_CLASS (parent_class)->copy) (self, dest);
 
+	/*
 	HTML_ANCHOR (dest)->name = g_string_new (HTML_ANCHOR (self)->name->str);
+	*/
+	HTML_ANCHOR (dest)->name = (char*)strdup (HTML_ANCHOR (self)->name);
 }
 
 static void
@@ -62,7 +66,7 @@ set_max_ascent (HTMLObject *object,
 static HTMLAnchor *
 find_anchor (HTMLObject *o, const char *name, gint *x, gint *y)
 {
-	if (strcmp (name, HTML_ANCHOR(o)->name->str) == 0) {
+	if (strcmp (name, HTML_ANCHOR(o)->name) == 0) {
 		*x += o->x;
 		*y += o->y;
 
@@ -104,7 +108,8 @@ html_anchor_init (HTMLAnchor *anchor,
 {
 	html_object_init (HTML_OBJECT (anchor), HTML_OBJECT_CLASS (klass));
 
-	anchor->name = g_string_new (name);
+	/* anchor->name = g_string_new (name); */
+	anchor->name = (char*) strdup (name);
 }
 
 HTMLObject *
@@ -122,5 +127,6 @@ html_anchor_new (const gchar *name)
 const gchar *
 html_anchor_get_name (HTMLAnchor *anchor)
 {
-	return anchor->name->str;
+/*	return anchor->name->str; */
+	return anchor->name;
 }
