@@ -1,5 +1,4 @@
-C_FILES=${GVDCOMMON_SRC}/pixmaps/pixmaps.c
-MAIN=hypergrep_main
-MODULES=kernel common debugger_common gtkada widgets browsers
+MAIN=make_vsearch
+MODULES=gtkada common debugger_common
 
 include ../../Makefile.common
