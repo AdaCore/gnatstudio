@@ -25,7 +25,7 @@
 #define _HTMLOBJECT_H_
 
 #include <glib.h>
-#include <libart_lgpl/art_rect.h>
+#include "art_rect.h"
 
 typedef struct _HTMLObjectClass HTMLObjectClass;
 typedef struct _HTMLAnchor HTMLAnchor;
