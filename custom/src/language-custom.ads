@@ -34,7 +34,7 @@ package Language.Custom is
 
    procedure Initialize
      (Lang     : access Custom_Language'Class;
-      Handler : access
+      Handler  : access
         Language_Handlers.Glide.Glide_Language_Handler_Record'Class;
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr);
