@@ -1928,7 +1928,7 @@ package body Project_Viewers is
          declare
             Str : constant String := Get_String (Initial_Dirs_Id (J));
          begin
-            --  Initial_Dirs will always contained an unnormalized,
+            --  Initial_Dirs will always containe an unnormalized,
             --  absolute path, therefore we need to trim it first before
             --  comparing the old and new values.
 
@@ -2148,10 +2148,10 @@ package body Project_Viewers is
 
       if (Get_Active (Obj_Dir.Same)
           and then Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
-          (Normalize_Pathname (Executables_Directory (Project))))
+            (Normalize_Pathname (Executables_Directory (Project))))
         or else (not Get_Active (Obj_Dir.Same)
                  and then Get_Text (Obj_Dir.Exec_Dir) /= Name_As_Directory
-                 (Normalize_Pathname (Executables_Directory (Project))))
+                   (Normalize_Pathname (Executables_Directory (Project))))
       then
          if Exec_Dir.all = "" then
             Delete_Attribute
