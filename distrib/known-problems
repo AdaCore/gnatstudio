@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- Words containing underscores not selected entirely when double-clicking
+  Problem:    If you double-click on a word that contains an underscore, only
+              part of the word is selected.
+  Workaround: Select the word using a click-and-drag motion.
+
 - Messages window not raised when initial project has errors
   Problem:    If you load from the command line a project file that contains
               errors, the Messages window is not raised to make them visible.
