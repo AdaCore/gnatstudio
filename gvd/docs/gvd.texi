@@ -157,8 +157,10 @@ or the @ref{open source menu}.
 
    @item New Debugger...
 @anchor{new debugger menu}
-Open a dialog to create a new debugger window. The new debugger window will be
-added in the main window.
+Open a dialog to create a new debugger window. The new debugger window will by
+default (when the @i{Replace Current Debugger} check button is active) replace
+the current debugger. Otherwise, it will be added in the main window as an
+additional debugger.
 This dialog allows you to specify the name of the executable to debug by
 entering its name in the @i{Program File entry}, or by clicking on the
 @dots{} button to open a file selection dialog. You can also select
@@ -168,9 +170,9 @@ running), so you only need to specify a value for remote debugging.
 For more information, see @ref{Debugging a program remotely}.
 
 @b{Limitation}: under Windows systems, you can only have one debugger window
-at a time, so use this menu only after having closed the current debugger, and
-launch several GVDs to debug multiple processes.
-See also the @ref{close menu}, to close a debugger window.
+at a time, so you have to replace the current debugger with a new one,
+and launch several GVDs to debug multiple processes.
+See also the @ref{close menu}, to close a debugger window explicitely.
 
    @item Open Core Dump...
 @anchor{core files}
