@@ -21,6 +21,7 @@
 --  This is the implementation of Debugger for the GNU Debugger (Gdb).
 --  See debugger.ads for complete documentation on this package.
 
+with GNAT.OS_Lib;
 with Debugger;
 with Generic_Values;
 
@@ -29,6 +30,7 @@ package Debugger.Gdb is
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
    procedure Spawn (Debugger       : access Gdb_Debugger;
+                    Arguments      : GNAT.OS_Lib.Argument_List;
                     Remote_Machine : String := "");
    procedure Initialize (Debugger : access Gdb_Debugger);
 

@@ -22,6 +22,7 @@ with Language;
 with Generic_Values;
 with GNAT.Expect;
 with Unchecked_Deallocation;
+with GNAT.OS_Lib;
 
 package Debugger is
 
@@ -32,6 +33,7 @@ package Debugger is
    type Debugger_Access is access all Debugger_Root'Class;
 
    procedure Spawn (Debugger       : access Debugger_Root;
+                    Arguments      : GNAT.OS_Lib.Argument_List;
                     Remote_Machine : String := "") is abstract;
    --  Spawn the external process.
    --  Initialize should be called afterwards, but this is done in two
@@ -39,6 +41,16 @@ package Debugger is
    --
    --  If Remote_Machine is different from the empty string, the debugger
    --  is spawned on the remote machine.
+
+   procedure General_Spawn (Debugger       : access Debugger_Root'Class;
+                            Arguments      : GNAT.OS_Lib.Argument_List;
+                            Debugger_Name  : String;
+                            Remote_Machine : String := "");
+   --  Convenience function to start a debugger.
+   --  This command modifies the argument list so that the debugger can also
+   --  be run on a remote machine.
+   --  This is provided as a support for the implementation of the primitive
+   --  subprogram Spawn, and should work with most debuggers.
 
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.

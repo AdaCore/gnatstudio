@@ -18,7 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Expect;  use GNAT.Expect;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+
 package body Debugger is
+
+   Remote_Protocol : constant String := "rsh";
+   --  How to run a process on a remote machine ?
+
 
    ------------------
    -- Set_Language --
@@ -50,5 +57,43 @@ package body Debugger is
    begin
       return Debugger.Process;
    end Get_Process;
+
+   -------------------
+   -- General_Spawn --
+   -------------------
+
+   procedure General_Spawn (Debugger       : access Debugger_Root'Class;
+                            Arguments      : GNAT.OS_Lib.Argument_List;
+                            Debugger_Name  : String;
+                            Remote_Machine : String := "")
+   is
+   begin
+      --  Start the external debugger.
+      --  Note that there is no limitation on the buffer size, since we can
+      --  not control the length of what gdb will return...
+
+      if Remote_Machine = "" then
+         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
+                                           (Debugger_Name, Arguments,
+                                            Buffer_Size => 0,
+                                            Err_To_Out => True));
+      else
+         declare
+            Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
+         begin
+            Real_Arguments (1) := new String'(Remote_Machine);
+            Real_Arguments (2) := new String'(Debugger_Name);
+            Real_Arguments (3 .. Real_Arguments'Last) := Arguments;
+
+            Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
+                                              (Remote_Protocol,
+                                               Real_Arguments,
+                                               Buffer_Size => 0,
+                                               Err_To_Out => True));
+            Free (Real_Arguments (1));
+            Free (Real_Arguments (2));
+         end;
+      end if;
+   end General_Spawn;
 
 end Debugger;

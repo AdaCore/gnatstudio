@@ -190,7 +190,7 @@ package body Odd.Process is
 
       Process.Debugger := new Gdb_Debugger;
 
-      Spawn (Process.Debugger, Remote_Machine => "");
+      Spawn (Process.Debugger, Params, Remote_Machine => "");
       Add_Output_Filter (Get_Process (Process.Debugger.all).all,
                          Text_Output_Handler'Access);
 --        Add_Input_Filter (Get_Process (Process.Debugger.all).all,

@@ -145,26 +145,11 @@ package body Debugger.Gdb is
    -----------
 
    procedure Spawn (Debugger       : access Gdb_Debugger;
+                    Arguments      : Argument_List;
                     Remote_Machine : String := "")
    is
    begin
-      --  Start the external debugger.
-      --  Note that there is no limitation on the buffer size, since we can
-      --  not control the length of what gdb will return...
-
-      if Remote_Machine = "" then
-         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
-            ("sh", (new String' ("-c"), new String' ("gdb")),
-             Buffer_Size => 0,
-             Err_To_Out => True));
-      else
-         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
-            ("sh", (new String' ("-c"),
-                    new String' ("rsh " & Remote_Machine & " gdb")),
-             Buffer_Size => 0,
-             Err_To_Out => True));
-      end if;
-
+      General_Spawn (Debugger, Arguments, "gdb", Remote_Machine);
       --  Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
       --  Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
    end Spawn;

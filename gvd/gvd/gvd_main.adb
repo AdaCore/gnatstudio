@@ -25,16 +25,22 @@ with Gtkada.Intl; use Gtkada.Intl;
 with Gtk.Window;  use Gtk.Window;
 with GNAT.Os_Lib; use GNAT.Os_Lib;
 with Odd.Process; use Odd.Process;
+with Ada.Command_Line; use Ada.Command_Line;
 
 procedure Odd_Main is
    Process_Tab : Debugger_Process_Tab;
-   List : Argument_List (1 .. 0);
+   List : Argument_List (1 .. Argument_Count);
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
    Bind_Text_Domain ("Odd", "/usr/local/share/locale");
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
    Gtk_New (Main_Debug_Window);
+
+   for J in 1 .. Argument_Count loop
+      List (J) := new String'(Argument (J));
+   end loop;
+
    Process_Tab := Create_Debugger (List, "");
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
