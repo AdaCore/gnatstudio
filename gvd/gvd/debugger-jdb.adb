@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -19,7 +19,11 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;       use GNAT.Regpat;
+
+pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
+pragma Warnings (On);
+
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
@@ -211,7 +215,7 @@ package body Debugger.Jdb is
    procedure Set_Executable
      (Debugger : access Jdb_Debugger;
       Executable : String;
-      Mode       : Command_Type := Internal)is
+      Mode       : Invisible_Command := Internal) is
    begin
       Set_Is_Started (Debugger, False);
       Send (Debugger, "load " & Executable, Mode => Mode);
@@ -248,33 +252,49 @@ package body Debugger.Jdb is
    In_Wait : Boolean := False;
    --  ??? Temporary kludge to suppress when this unit is correctly implemented
 
-   procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
+   function Wait_Prompt
+     (Debugger : access Jdb_Debugger;
+      Timeout  : Integer) return Boolean
+   is
       Num     : Expect_Match;
       Matches : Match_Array (0 .. 4);
 
    begin
       if In_Wait then
-         return;
+         return False;
       end if;
 
       In_Wait := True;
 
-      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
-      Send (Debugger, "where", Wait_For_Prompt => False);
-      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
+      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, Timeout);
 
-      --  ??? Shouldn't be using Expect_Out here, but the functional version
-      --  of Send.
-      if Matches (2) /= No_Match then
-         declare
-            S : String := Expect_Out (Get_Process (Debugger));
-         begin
-            Debugger.Frame :=
-              Natural'Value (S (Matches (2).First .. Matches (2).Last));
-         end;
+      if Matches (0) /= No_Match then
+         Send (Debugger, "where", Wait_For_Prompt => False, Mode => Internal);
+         Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
+
+         --  ??? Shouldn't be using Expect_Out here, but the functional version
+         --  of Send.
+         if Matches (2) /= No_Match then
+            declare
+               S : String := Expect_Out (Get_Process (Debugger));
+            begin
+               Debugger.Frame :=
+                 Natural'Value (S (Matches (2).First .. Matches (2).Last));
+            end;
+         end if;
+
+         In_Wait := False;
+         return True;
       end if;
 
       In_Wait := False;
+      return False;
+   end Wait_Prompt;
+
+   procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
+      Result : Boolean;
+   begin
+      Result := Wait_Prompt (Debugger, -1);
    end Wait_Prompt;
 
    ---------
@@ -760,18 +780,6 @@ package body Debugger.Jdb is
       return Br;
    end List_Breakpoints;
 
-   --------------------
-   -- Send_Completed --
-   --------------------
-
-   procedure Send_Completed
-     (Debugger : access Jdb_Debugger;
-      Cmd      : String) is
-   begin
-      Send_Signal (Get_Descriptor (Get_Process (Debugger)).all, 29);
-      --  ??? SIGIO under linux
-   end Send_Completed;
-
    -----------------------
    -- Enable_Breakpoint --
    -----------------------
@@ -807,7 +815,7 @@ package body Debugger.Jdb is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String
+      Mode            : Invisible_Command := Hidden) return String
    is
       S : constant String :=
         Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
@@ -821,6 +829,7 @@ package body Debugger.Jdb is
          loop
             Index := Index - 1;
          end loop;
+
          return S (S'First .. Index - 1);
       end if;
    end Send;

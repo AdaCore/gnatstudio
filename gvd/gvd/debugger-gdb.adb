@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -22,7 +22,11 @@ with System;            use System;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Tags;          use Ada.Tags;
 with GNAT.Regpat;       use GNAT.Regpat;
+
+pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
+pragma Warnings (On);
+
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
 with Gtk.Window;        use Gtk.Window;
@@ -323,7 +327,7 @@ package body Debugger.Gdb is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String
+      Mode            : Invisible_Command := Hidden) return String
    is
       S : constant String :=
         Send_Full (Debugger, Cmd, Empty_Buffer, Wait_For_Prompt, Mode);
@@ -641,10 +645,12 @@ package body Debugger.Gdb is
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : String;
-      Mode       : Command_Type := Internal)
+      Mode       : Invisible_Command := Internal)
    is
       No_Such_File_Regexp : Pattern_Matcher :=
         Compile ("No such file or directory");
+      --  ??? Note that this pattern won't work for locales other than english.
+
    begin
       Set_Is_Started (Debugger, False);
 
@@ -668,6 +674,7 @@ package body Debugger.Gdb is
       --  look for the current file and line, so that the explorer can be
       --  correctly updated.
       --  No need to do anything in text-only mode
+
       if Debugger.Window /= null then
          Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
       end if;
@@ -749,6 +756,16 @@ package body Debugger.Gdb is
       Num : Expect_Match;
    begin
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
+   end Wait_Prompt;
+
+   function Wait_Prompt
+     (Debugger : access Gdb_Debugger;
+      Timeout  : Integer) return Boolean
+   is
+      Num : Expect_Match;
+   begin
+      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => Timeout);
+      return Num /= Expect_Timeout;
    end Wait_Prompt;
 
    ---------
@@ -1664,7 +1681,6 @@ package body Debugger.Gdb is
       Tmp   : Natural;
 
    begin
-
       --  Skip the first line (that indicates there is no breakpoints,
       --  or that gives the title of each column).
       --  A breakpoint exists for each line that starts with a number.
@@ -1761,6 +1777,7 @@ package body Debugger.Gdb is
                Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
 
                if Matched (0) /= No_Match then
+                  --  When is this memory freed ???
                   Br (Num).Subprogram := new String'
                     (Br (Num).Info (Matched (1).First .. Matched (1).Last));
                end if;

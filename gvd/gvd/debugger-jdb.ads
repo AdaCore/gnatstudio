@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -48,6 +48,10 @@ package Debugger.Jdb is
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger);
 
+   function Wait_Prompt
+     (Debugger : access Jdb_Debugger;
+      Timeout  : Integer) return Boolean;
+
    function Highlighting_Pattern
      (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
@@ -73,7 +77,7 @@ package Debugger.Jdb is
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Internal);
+      Mode       : Odd.Types.Invisible_Command := Odd.Types.Internal);
 
    procedure Run
      (Debugger  : access Jdb_Debugger;
@@ -223,10 +227,6 @@ package Debugger.Jdb is
      (Debugger  : access Jdb_Debugger)
      return Odd.Types.Breakpoint_Array;
 
-   procedure Send_Completed
-     (Debugger : access Jdb_Debugger;
-      Cmd      : String);
-
    procedure Get_Machine_Code
      (Debugger        : access Jdb_Debugger;
       Range_Start     : out Address_Type;
@@ -266,8 +266,8 @@ private
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Command_Type := Odd.Types.Hidden)
-     return String;
+      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      return String;
 
    type Jdb_Debugger is new Debugger.Debugger_Root with record
       Main_Class : GNAT.OS_Lib.String_Access;
