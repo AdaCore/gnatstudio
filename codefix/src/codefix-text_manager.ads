@@ -602,12 +602,6 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class) return Natural;
    --  Return the length of the current text before modifications.
 
-   procedure Set_Caption (This : in out Extract; Caption : String);
-   --  Set the caption associated to an extract.
-
-   function Get_Caption (This : Extract) return String;
-   --  Return the caption associated to an extract.
-
    function Get_First_Line (This : Extract) return Ptr_Extract_Line;
    --  Return the first line recored in an extract.
 
@@ -666,6 +660,147 @@ package Codefix.Text_Manager is
 
    function Get_Nb_Files (This : Extract) return Natural;
    --  Return the number of different files names contained in the extract.
+
+   ----------------------------------------------------------------------------
+   --  type Text_Command
+   ----------------------------------------------------------------------------
+
+   type Word_Cursor is new File_Cursor with record
+      String_Match : Dynamic_String;
+      Mode         : String_Mode := Text_Ascii;
+   end record;
+   --  Word_cursor is an object that descibes a specific word in the text. In
+   --  case where it is used to match a word in the text, the mode can be
+   --  'Regular_Expression'. Otherwise, this field is ignored.
+
+   type Word_Mark is record
+      Mark_Id      : Dynamic_String;
+      String_Match : Dynamic_String;
+      Mode         : String_Mode := Text_Ascii;
+--      Flags        : Regexp_Flags := No_Flags;
+   end record;
+
+   procedure Free (This : in out Word_Mark);
+   --  Free the memory associated to a Word_Mark.
+
+   procedure Free (This : in out Word_Cursor);
+   --  Free the memory associated to a Word_Cursor.
+
+   procedure Make_Word_Mark
+     (Word         : Word_Cursor;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Mark         : out Word_Mark);
+   --  Create a Word_Mark from information given by the cursor.
+
+   procedure Make_Word_Cursor
+     (Word         : Word_Mark;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : out Word_Cursor);
+   --  Create a Word_Cursor from information given by the mark.
+
+   function Clone (This : Word_Cursor) return Word_Cursor;
+   --  Duplicate all informations of a Word_Cursor, specially informations
+   --  memorized in dynamic memory.
+
+   --  Text_Command --
+
+   type Text_Command is abstract tagged private;
+   --  A Text_Command is a modification in the text that can be defined one
+   --  time, and made later, with taking into account others possible changes.
+
+   procedure Execute
+     (This         : Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class) is abstract;
+   --  Execute a command, and create an extract to preview the changes.
+
+   procedure Free (This : in out Text_Command) is abstract;
+   --  Free the memory associated to a Text_Command.
+
+   procedure Free_Data (This : in out Text_Command'Class);
+   --  Free the memory associated to a Text_Command.
+
+   procedure Set_Caption
+     (This : in out Text_Command'Class;
+      Caption : String);
+   --  Define the caption that describes the action of a Text_Command.
+
+   function Get_Caption (This : Text_Command'Class) return String;
+   --  Return the caption associated to a Text_Command.
+
+   --  Remove_Word_Cmd  --
+
+   type Remove_Word_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Remove_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class);
+   procedure Free (This : in out Remove_Word_Cmd);
+   procedure Execute
+     (This         : Remove_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   --  Insert_Word_Cmd  --
+
+   type Insert_Word_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Insert_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      Add_Spaces   : Boolean := True;
+      Position     : Relative_Position := Specified);
+   procedure Free (This : in out Insert_Word_Cmd);
+   procedure Execute
+     (This         : Insert_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   --  Move_Word_Cmd  --
+
+   type Move_Word_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Move_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      New_Position : File_Cursor'Class);
+   procedure Free (This : in out Move_Word_Cmd);
+   procedure Execute
+     (This         : Move_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   --  Replace_Word_Cmd  --
+
+   type Replace_Word_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word         : Word_Cursor'Class;
+      New_Word     : String);
+   procedure Free (This : in out Replace_Word_Cmd);
+   procedure Execute
+     (This         : Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   --  Invert_Words_Cmd  --
+
+   type Invert_Words_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Invert_Words_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Word1, Word2 : Word_Cursor'Class);
+   procedure Free (This : in out Invert_Words_Cmd);
+   procedure Execute
+     (This         : Invert_Words_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
 
 private
 
@@ -752,7 +887,6 @@ private
 
    type Extract is tagged record
       First   : Ptr_Extract_Line;
-      Caption : Dynamic_String;
    end record;
 
    function Get_Word_Length
@@ -765,6 +899,39 @@ private
 
    function Previous (Container : Extract; Node : Ptr_Extract_Line)
      return Ptr_Extract_Line;
+
+   ----------------------------------------------------------------------------
+   --  type Text_Command
+   ----------------------------------------------------------------------------
+
+   type Text_Command is abstract tagged record
+      Caption : Dynamic_String;
+   end record;
+
+   type Remove_Word_Cmd is new Text_Command with record
+      Word : Word_Mark;
+   end record;
+
+   type Insert_Word_Cmd is new Text_Command with record
+      Word       : Word_Mark;
+      Add_Spaces : Boolean := True;
+      Position   : Relative_Position := Specified;
+   end record;
+
+   type Move_Word_Cmd is new Text_Command with record
+      Step_Remove : Remove_Word_Cmd;
+      Step_Insert : Insert_Word_Cmd;
+   end record;
+
+   type Replace_Word_Cmd is new Text_Command with record
+      Step_Remove : Remove_Word_Cmd;
+      Step_Insert : Insert_Word_Cmd;
+   end record;
+
+   type Invert_Words_Cmd is new Text_Command with record
+      Step_Word1 : Replace_Word_Cmd;
+      Step_Word2 : Replace_Word_Cmd;
+   end record;
 
    ----------------------------------------------------------------------------
    --  Others
