@@ -29,6 +29,7 @@ with Glide_Kernel;                      use Glide_Kernel;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with VFS;                               use VFS;
+with Traces;                            use Traces;
 
 package body Codefix.Formal_Errors is
 
@@ -101,7 +102,9 @@ package body Codefix.Formal_Errors is
       end;
 
    exception
-      when Constraint_Error =>
+      when E : Constraint_Error =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
          Free (This);
          This := Invalid_Error_Message;
    end Initialize;
