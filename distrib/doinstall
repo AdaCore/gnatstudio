@@ -23,7 +23,7 @@ ask_basedir() {
    default_dir=`(type gnatmake | cut -d' ' -f3) 2>/dev/null`
    default_dir=`dirname $default_dir`
 
-   if [ "$default_dir " != "." -a "$default_dir " != "/usr/bin" ]; then
+   if [ "$default_dir" != "." -a "$default_dir" != "/usr/bin" ]; then
       default_dir=`cd $default_dir/..; pwd`
       cat <<EOF
 
@@ -33,6 +33,7 @@ ask_basedir() {
 
 EOF
    else
+     default_dir=/opt/gps
      cat <<EOF
   Enter the name of the directory in which you would like to install GPS
 
