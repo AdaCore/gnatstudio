@@ -339,7 +339,7 @@ package body Glide_Kernel is
       --  against that of the source editor module. The ID for that module
       --  needs to be moved to glide_kernel.ads.
 
-      return Find_MDI_Child_By_Name (MDI, Full_Name (File));
+      return Find_MDI_Child_By_Name (MDI, Full_Name (File).all);
    end Get_File_Editor;
 
    ---------------------------
@@ -455,7 +455,7 @@ package body Glide_Kernel is
       if Handler = null then
          Trace (Me,
                 "Locate_From_Source_And_Complete: Unsupported_Language for "
-                & Base_Name (Source_Filename));
+                & Base_Name (Source_Filename).all);
          return No_LI_File;
 
       else
@@ -572,11 +572,11 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Edited_Signal & ASCII.NUL,
-         Full_Name (File) & ASCII.NUL);
+         Full_Name (File).all & ASCII.NUL);
 
       if not Is_Open (Handle, File) then
          String_List_Utils.String_List.Append
-           (Handle.Open_Files, Full_Name (File));
+           (Handle.Open_Files, Full_Name (File).all);
       end if;
    end File_Edited;
 
@@ -598,7 +598,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Saved_Signal & ASCII.NUL,
-         Full_Name (File) & ASCII.NUL);
+         Full_Name (File).all & ASCII.NUL);
    end File_Saved;
 
    -----------------
@@ -621,9 +621,9 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Closed_Signal & ASCII.NUL,
-         Full_Name (File) & ASCII.NUL);
+         Full_Name (File).all & ASCII.NUL);
 
-      Remove_From_List (Handle.Open_Files, Full_Name (File));
+      Remove_From_List (Handle.Open_Files, Full_Name (File).all);
    end File_Closed;
 
    --------------------------
@@ -643,7 +643,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Changed_On_Disk_Signal & ASCII.NUL,
-         Full_Name (File) & ASCII.NUL);
+         Full_Name (File).all & ASCII.NUL);
    end File_Changed_On_Disk;
 
    --------------------------
@@ -664,7 +664,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          Compilation_Finished_Signal & ASCII.NUL,
-         Full_Name (File) & ASCII.NUL);
+         Full_Name (File).all & ASCII.NUL);
    end Compilation_Finished;
 
    -------------
@@ -678,7 +678,7 @@ package body Glide_Kernel is
       use String_List_Utils.String_List;
 
       Node : List_Node;
-      Full : constant String := Full_Name (Filename);
+      Full : constant String := Full_Name (Filename).all;
    begin
       Node := First (Kernel.Open_Files);
 
@@ -1486,7 +1486,8 @@ package body Glide_Kernel is
 
          Append (Model, It, Null_Iter);
          Set (Get_Object (Model), It'Address,
-              0, Full_Name (Get_Declaration_File_Of (Candidate)) & ASCII.NUL,
+              0, Full_Name (Get_Declaration_File_Of (Candidate)).all
+              & ASCII.NUL,
               1, Gint (Get_Declaration_Line_Of (Candidate)),
               2, Gint (Get_Declaration_Column_Of (Candidate)),
               3, Entity_Name & ASCII.NUL,
@@ -1691,7 +1692,7 @@ package body Glide_Kernel is
       if Lib_Info = No_LI_File then
          Insert (Kernel,
                  -"LI file not found for "
-                 & Full_Name (Get_Declaration_File_Of (Entity)));
+                 & Full_Name (Get_Declaration_File_Of (Entity)).all);
          Tree := Null_Scope_Tree;
          Node := Null_Scope_Tree_Node;
          return;
@@ -1701,7 +1702,7 @@ package body Glide_Kernel is
 
       if Tree = Null_Scope_Tree then
          Trace (Me, "Couldn't create scope tree for "
-                & Base_Name (Get_LI_Filename (Lib_Info)));
+                & Base_Name (Get_LI_Filename (Lib_Info)).all);
          Node := Null_Scope_Tree_Node;
          return;
       end if;
@@ -1713,7 +1714,7 @@ package body Glide_Kernel is
                  -"Couldn't find the scope tree for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
-                & Base_Name (Get_LI_Filename (Lib_Info))
+                & Base_Name (Get_LI_Filename (Lib_Info)).all
                 & " at line" & Get_Declaration_Line_Of (Entity)'Img
                 & " column"  & Get_Declaration_Column_Of (Entity)'Img);
          Free (Tree);
@@ -1731,8 +1732,15 @@ package body Glide_Kernel is
    is
       Project : constant Project_Type := Get_Project_From_File
         (Kernel.Registry.all, Source_Filename);
+      Other : constant String :=
+        Other_File_Base_Name (Project, Source_Filename);
+      F : constant Virtual_File := Create (Other, Project);
    begin
-      return Other_File_Name (Project, Source_Filename);
+      if F = VFS.No_File then
+         return Create_From_Base (Other);
+      end if;
+
+      return F;
    end Other_File_Name;
 
    ----------------------
