@@ -4124,10 +4124,6 @@ Whether the menu key bindings can be changed interactively.
 @cindex splash screen
 Whether a splash screen should be displayed when starting GPS.
 
-@item Start maximized
-@cindex maximized
-Whether the GPS window should start in maximized state.
-
 @item Display welcome window
 @cindex welcome dialog
 Whether GPS should display the welcome window for the selection of the project
@@ -4136,6 +4132,11 @@ to use.
 @item Show text in tool bar
 @cindex tool bar
 Whether the tool bar should show both text and icons, or only icons.
+
+@item Auto save
+@cindex auto save
+Whether unsaved files and projects should be saved automatically before
+calling external tools (e.g. before a build).
 
 @item Save desktop on exit
 @cindex desktop
@@ -4211,6 +4212,11 @@ Whether the line numbers should be displayed in file editors.
 @cindex tooltip
 Whether tool tips should be displayed automatically.
 
+@item Highlight delimiters
+@cindex highlight delimiter
+Whether matching delimiters should be highlighting. The list of delimiters
+include: @code{@{@}[]()}
+
 @item Autosave delay
 @cindex autosave delay
 The period (in seconds) after which a source editor is automatically saved.
@@ -4218,6 +4224,10 @@ The period (in seconds) after which a source editor is automatically saved.
 
 Each modified file is saved under a file called @code{.#filename}, which is
 removed on the next explicit save operation.
+
+@item Column highlight
+@cindex column highlight
+The column number to highlight and draw in the editors. 0 if none.
 
 @item External editor
 @cindex external editor
@@ -4241,7 +4251,7 @@ Color for highlighting keywords.
 
 @item Current line color
 @cindex color
-Color for highlighting the current line.
+Color for highlighting the current line. Leave it to blank for no highlighting.
 
 @item Comment color
 @cindex color
@@ -5028,7 +5038,7 @@ Here is the syntax for defining styles:
 @smallexample
 
 sequence-of-style ::=
-   @{ style @}
+   @{ style | property @}
 
 style ::=
    style-name[state] = string_literal
@@ -5038,6 +5048,12 @@ style-name ::=
 
 state ::=
    @i{NORMAL | ACTIVE | PRELIGHT | SELECTED | INSENSITIVE}
+
+property ::=
+   widget-name::widget-property = value
+
+widget-property ::=
+   @i{cursor-aspect-ratio | cursor-color }
 
 @end smallexample
 
@@ -5069,6 +5085,14 @@ used to indicate no background pixmap.
 Sets the font for a visual object.
 Font is a font name as listed in the font selector in the preferences dialog,
 e.g. @i{"Sans Italic 10"}.
+
+@item GtkTextView::cursor-aspect-ratio = @i{value}
+Aspect ratio with which to draw insertion cursor. @i{Value} is a float value
+between 0.0 and 1.0. The default value is 0.04.
+
+@item GtkTextView::cursor-color = @i{color}
+Color with which to draw insertion cursor
+
 @end table
 
 @noindent
