@@ -36,7 +36,7 @@ with Gtkada.MDI;           use Gtkada.MDI;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Main_Window;    use Glide_Main_Window;
+with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
@@ -202,8 +202,6 @@ package body Glide_Kernel.Scripts is
      (1 => Action_Cst'Access);
    Scenar_Var_Parameters : constant Cst_Argument_List :=
      (1 => Prefix_Cst'Access);
-   Exit_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Force_Cst'Access);
 
    ----------
    -- Free --
@@ -612,11 +610,6 @@ package body Glide_Kernel.Scripts is
                Current := Module_List.Next (Current);
             end loop;
          end;
-
-      elsif Command = "exit" then
-         Name_Parameters (Data, Exit_Cmd_Parameters);
-         Quit (Glide_Window (Get_Main_Window (Kernel)),
-               Force => Nth_Arg (Data, 1, False));
 
       elsif Command = "set_busy" then
          Push_State (Kernel, Processing);
@@ -1339,20 +1332,6 @@ package body Glide_Kernel.Scripts is
          Description  => -"List modules currently loaded.",
          Minimum_Args => 0,
          Maximum_Args => 0,
-         Handler      => Default_Command_Handler'Access);
-
-      Register_Command
-        (Kernel,
-         Command      => "exit",
-         Params       => Parameter_Names_To_Usage (Exit_Cmd_Parameters, 1),
-         Description  =>
-           -("Exit GPS. If there are unsaved changes, a dialog is first"
-             & " displayed to ask whether these should be saved. If the"
-             & " user cancels the operation through the dialog, GPS will not"
-             & " exit. If force is true, then no dialog is open, and nothing"
-             & " is saved"),
-         Minimum_Args => Exit_Cmd_Parameters'Length - 1,
-         Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
 
       Register_Command
@@ -2287,7 +2266,7 @@ package body Glide_Kernel.Scripts is
 
    function Get_Data
      (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.File_Selection_Context_Access
+      return Glide_Kernel.Contexts.File_Selection_Context_Access
    is
       Script : constant Scripting_Language := Get_Script (Instance);
    begin
@@ -2308,7 +2287,7 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.Entity_Selection_Context_Access
+      return Glide_Kernel.Contexts.Entity_Selection_Context_Access
    is
       Script : constant Scripting_Language := Get_Script (Instance);
    begin
@@ -2330,7 +2309,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.File_Selection_Context_Access)
+      Context : Glide_Kernel.Contexts.File_Selection_Context_Access)
       return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
@@ -2346,7 +2325,7 @@ package body Glide_Kernel.Scripts is
 
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.Entity_Selection_Context_Access)
+      Context : Glide_Kernel.Contexts.Entity_Selection_Context_Access)
       return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
