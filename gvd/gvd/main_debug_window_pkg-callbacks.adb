@@ -219,140 +219,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      File         : File_Type;
-      S            : Types.String_Access;
-      Program      : Program_Descriptor;
-      Buffer       : String (1 .. 256);
-      Last         : Natural;
-      Tab          : Debugger_Process_Tab := Get_Current_Process (Object);
-      List         : Argument_List (1 .. 0);
-      Process      : Debugger_Process_Tab;
-      Top          : constant Main_Debug_Window_Access :=
+      Top         : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
-      Num_Pages    : Gint;
-      Page         : Gtk_Widget;
-      Page_Num     : Gint;
-      Mode         : Command_Type;
-
    begin
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      Open_Session (Top.Open_Session, Top.Sessions_Dir.all, S);
-
-      if S /= null
-        and then S.all /= ""
-      then
-         Open (File, In_File, Top.Sessions_Dir.all
-               & Directory_Separator & S.all);
-
-         Get_Line (File, Buffer, Last);
-
-         if Buffer (1 .. Last) /= "[Session_File Header]" then
-            Close (File);
-            return;
-         end if;
-
-         --  Remove all the pages in the notebook before opening session.
-
-         Page_Num :=
-           Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
-         Free (Top.Command_History);
-         while Page_Num /= -1 loop
-            Page := Get_Nth_Page
-              (Top.Process_Notebook, Page_Num);
-
-            if Page /= null then
-               Tab := Process_User_Data.Get (Page);
-               Close (Tab.Debugger);
-            end if;
-
-            Remove_Page (Top.Process_Notebook, Page_Num);
-            Page_Num := Page_Num - 1;
-         end loop;
-
-         --  Get the number of processes.
-
-         Get_Line (File, Buffer, Last);
-         Num_Pages := Gint'Value (Buffer (1 ..  Last));
-         Get_Line (File, Buffer, Last);
-
-         --  Read the descriptors and create the debuggers.
-
-         for J in 1 .. Num_Pages loop
-            Get_Line (File, Buffer, Last);
-            Program.Program := new String' (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-            Program.Debugger := Debugger_Type'Value (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-            Program.Remote_Host := new String' (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-            Program.Remote_Target := new String' (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-            Program.Protocol := new String' (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-            Program.Debugger_Name := new String' (Buffer (1 .. Last));
-            Get_Line (File, Buffer, Last);
-
-            Process :=
-              Create_Debugger
-                (Main_Debug_Window_Access (Object),
-                 Program.Debugger,
-                 Program.Program.all,
-                 List,
-                 Program.Remote_Host.all,
-                 Program.Remote_Target.all,
-                 Program.Protocol.all);
-
-            Tab := Get_Current_Process (Object);
-         end loop;
-
-         --  Read and compute the commands history.
-
-         Get_Line (File, Buffer, Last);
-
-         loop
-            Get_Line (File, Buffer, Last);
-            exit when Last > 4 and then Buffer (1 .. 4) = "----";
-            Page := Get_Nth_Page
-              (Top.Process_Notebook, Gint'Value (Buffer (1 .. Last)));
-            Tab := Process_User_Data.Get (Page);
-
-            Get_Line (File, Buffer, Last);
-            Mode := Command_Type'Value (Buffer (1 .. Last));
-
-            Get_Line (File, Buffer, Last);
-
-            Set_Busy_Cursor (Tab, True);
-
-            if Mode = Hidden then
-
-               Send (Tab.Debugger,
-                     Buffer (1 .. Last),
-                     Wait_For_Prompt => True,
-                     Mode => Hidden);
-
-            elsif Mode = User then
-               Process_User_Command (Tab, Buffer (1 .. Last));
-            end if;
-
-            Set_Busy_Cursor (Tab, False);
-         end loop;
-         Close (File);
-      end if;
-
-      if S /= null then
-         Free (S);
-      end if;
-
-   exception
-      when Name_Error =>
-         null;
-      when Device_Error =>
-         null;
+      Open_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
    end On_Open_Session1_Activate;
 
    ----------------------------------
@@ -362,86 +232,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Save_Session_As1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      File        : File_Type;
-      S           : Types.String_Access;
-      Page        : Gtk_Widget;
       Top         : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
-      Num_Pages   : Gint;
-      Tab         : Debugger_Process_Tab;
-      Hist_Length : Integer;
    begin
-      Num_Pages := Gint
-        (Page_List.Length (Get_Children (Top.Process_Notebook)));
-
-      Open_Session (Top.Open_Session, Top.Sessions_Dir.all, S);
-
-      if S /= null
-        and then S.all /= ""
-      then
-         Create (File, Out_File,
-                 Top.Sessions_Dir.all
-                 & Directory_Separator & S.all);
-         Put_Line (File, "[Session_File Header]");
-         Put_Line (File, Gint'Image (Num_Pages));
-         Put_Line (File, "---------------------");
-
-         for Page_Num in 0 ..
-           Gint ((Page_List.Length (Get_Children (Top.Process_Notebook))) - 1)
-         loop
-            Page := Get_Nth_Page
-              (Top.Process_Notebook, Page_Num);
-
-            if Page /= null then
-               Tab := Process_User_Data.Get (Page);
-               Hist_Length := Length (Top.Command_History);
-               Put_Line (File, Tab.Descriptor.Program.all);
-               Put_Line (File, Debugger_Type'Image (Tab.Descriptor.Debugger));
-               Put_Line (File, Tab.Descriptor.Remote_Host.all);
-               Put_Line (File, Tab.Descriptor.Remote_Target.all);
-               Put_Line (File, Tab.Descriptor.Protocol.all);
-               Put_Line (File, Tab.Descriptor.Debugger_Name.all);
-               Put_Line (File, "------------------------");
-            end if;
-
-         end loop;
-         Put_Line (File, "[History]");
-         Wind (Top.Command_History, Backward);
-
-         for J in reverse 1 .. Length (Top.Command_History) loop
-            for Count in 1 ..
-              Get_Current_Repeat_Num (Top.Command_History)
-            loop
-               declare Data : History_Data :=
-                 Get_Current (Top.Command_History);
-               begin
-                  Put_Line (File,
-                            Natural'Image (Data.Debugger_Num));
-
-                  Put_Line (File,
-                            Command_Type'Image (Data.Mode));
-
-                  Put_Line (File, Data.Command.all);
-               end;
-            end loop;
-            if J /= 1 then
-               Move_To_Next (Top.Command_History);
-            end if;
-         end loop;
-         Put_Line (File, "---------------------");
-         Close (File);
-      end if;
-
-      if S /= null then
-         Free (S);
-      end if;
-
-   exception
-      when No_Such_Item =>
-         Put_Line (File, "---------------------");
-         Close (File);
-      when Use_Error =>
-         null;
+      Save_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
    end On_Save_Session_As1_Activate;
 
    ------------------------------------
@@ -515,7 +309,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Dir_Only    => True,
             Must_Exist  => True);
 
-      begin 
+      begin
          if Dir /= "" then
             Set_Busy_Cursor (Tab, True);
             Change_Directory (Tab.Debugger, Dir, Mode => User);

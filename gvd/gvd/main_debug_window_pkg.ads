@@ -23,6 +23,10 @@ with Gtk.Box; use Gtk.Box;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Menu; use Gtk.Menu;
+with Gtk.Accel_Group; use Gtk.Accel_Group;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk.Toolbar; use Gtk.Toolbar;
+with Gtk.Pixmap; use Gtk.Pixmap;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -43,6 +47,14 @@ package Main_Debug_Window_Pkg is
       Mode         : Debugger.Command_Type;
       Debugger_Num : Natural;
       Command      : String_Access;
+   end record;
+
+   type Debugger_List_Node;
+   type Debugger_List_Link is access Debugger_List_Node;
+
+   type Debugger_List_Node is record
+      Debugger : Gtk_Widget;
+      Next     : Debugger_List_Link;
    end record;
 
    package String_History is new Odd.Histories (History_Data);
@@ -74,6 +86,10 @@ package Main_Debug_Window_Pkg is
       --  The history of commands for the current session.
 
       Sessions_Dir        : String_Access;
+      --  The directory containing session files.
+
+      First_Debugger      : Debugger_List_Link;
+      --  The pointer to the list of debuggers.
 
       -------------------------
 
