@@ -19,9 +19,11 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
+with Glide_Intl;           use Glide_Intl;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
@@ -296,7 +298,10 @@ package body Commands.Custom is
 
    exception
       when E : others =>
-         --  ??? Would be nice to display an error dialog here
+         Insert (Command.Kernel,
+                 -("An unexpect error occured while executing the customer"
+                   & " command. See the log file for more information."),
+                 Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Execute;
