@@ -275,10 +275,17 @@ package body VCS.CVS is
             Line       : String := Data (Output);
             Index      : Natural;
             Next_Index : Natural;
-
+            First      : Integer := Line'First;
+            Last       : Integer := Line'Last;
+            Length     : Integer := Line'Length;
          begin
-            if Line'Length > 4
-              and then Line (Line'First .. Line'First + 3) = "===="
+            if Length /= 0 and then Line (Last) = ASCII.LF then
+               Last := Last - 1;
+               Length := Length - 1;
+            end if;
+
+            if Length > 4
+              and then Line (First .. First + 3) = "===="
             then
                --  Upon encounter of "====", append the status to the result.
 
@@ -288,30 +295,30 @@ package body VCS.CVS is
 
                Current_Status := Blank_Status;
 
-            elsif Line'Length > 5
-              and then Line (Line'First .. Line'First + 4) = "File:"
+            elsif Length > 5
+              and then Line (First .. First + 4) = "File:"
             then
                --  Upon encounter of "File:", parse the status of the file.
 
-               Index := Line'First + 6;
+               Index := First + 6;
                Skip_To_Char (Line, Index, ASCII.HT);
                Append (Current_Status.File_Name,
                        New_Dir & Strip_Quotes (Line (7 .. Index - 1)));
                --  ??? Maybe we should use Strip_Blanks.
 
-               Index := Line'First;
+               Index := First;
                Skip_To_String (Line, Index, "Status:");
                Index := Index + 8;
 
-               if Line'Last >= Index + 6
+               if Last >= Index + 6
                  and then Line (Index .. Index + 6) = "Unknown"
                then
                   Current_Status.Status := Not_Registered;
-               elsif Line'Last >= Index + 15
+               elsif Last >= Index + 15
                  and then Line (Index .. Index + 15) = "Locally Modified"
                then
                   Current_Status.Status := Modified;
-               elsif Line'Last >= Index + 14
+               elsif Last >= Index + 14
                  and then Line (Index .. Index + 14) = "Locally Removed"
                then
                   Current_Status.Status := Not_Registered;
@@ -329,63 +336,63 @@ package body VCS.CVS is
                      end if;
                   end;
 
-               elsif Line'Last >= Index + 10
+               elsif Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Merge"
                then
                   Current_Status.Status := Needs_Merge;
-               elsif Line'Last >= Index + 10
+               elsif Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Patch"
                then
                   Current_Status.Status := Needs_Update;
-               elsif Line'Last >= Index + 9
+               elsif Last >= Index + 9
                  and then Line (Index .. Index + 9) =  "Up-to-date"
                then
                   Current_Status.Status := Up_To_Date;
-               elsif Line'Last >= Index + 13
+               elsif Last >= Index + 13
                  and then Line (Index .. Index + 13) = "Needs Checkout"
                then
                   Current_Status.Status := Needs_Update;
-               elsif Line'Last > Index + 13
+               elsif Last > Index + 13
                  and then Line (Index .. Index + 13) = "File had confl"
                then
                   Current_Status.Status := Modified;
                end if;
 
-            elsif Line'Length > 14
-              and then Line (Line'First .. Line'First + 13) = "   Working rev"
+            elsif Length > 14
+              and then Line (First .. First + 13) = "   Working rev"
             then
-               Index := Line'First + 10;
+               Index := First + 10;
                Skip_To_Char (Line, Index, ASCII.HT);
 
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
-                  Skip_Blanks (Line (Index .. Line'Last), Index);
+                  Skip_Blanks (Line (Index .. Last), Index);
                   Next_Index := Index + 1;
-                  Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
+                  Skip_To_Blank (Line (Index .. Last), Next_Index);
 
-                  if Next_Index > Line'Last then
-                     Next_Index := Line'Last;
+                  if Next_Index > Last then
+                     Next_Index := Last;
                   end if;
 
                   Append (Current_Status.Working_Revision,
                           Line (Index .. Next_Index));
                end if;
-            elsif Line'Length > 15
-              and then Line (Line'First .. Line'First + 14) = "   Repository r"
+            elsif Length > 15
+              and then Line (First .. First + 14) = "   Repository r"
             then
-               Index := Line'First + 10;
+               Index := First + 10;
                Skip_To_Char (Line, Index, ASCII.HT);
 
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
-                  Skip_Blanks (Line (Index .. Line'Last), Index);
+                  Skip_Blanks (Line (Index .. Last), Index);
                   Next_Index := Index + 1;
-                  Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
+                  Skip_To_Blank (Line (Index .. Last), Next_Index);
 
-                  if Next_Index > Line'Last then
-                     Next_Index := Line'Last;
+                  if Next_Index > Last then
+                     Next_Index := Last;
                   end if;
 
                   Append (Current_Status.Repository_Revision,
@@ -471,6 +478,8 @@ package body VCS.CVS is
      (Rep         : access CVS_Record;
       Filenames   : String_List.List) return File_Status_List.List
    is
+      pragma Unreferenced (Rep);
+
       use String_List;
       use File_Status_List;
 
@@ -576,17 +585,13 @@ package body VCS.CVS is
 
    exception
       when End_Error =>
-         Set_Error (Rep, "CVS: End_Error while reading " & New_Dir);
          Close (File);
          return Result;
       when Use_Error =>
-         Set_Error (Rep, "CVS: Use_Error while reading " & New_Dir);
          return Result;
       when Name_Error =>
-         Set_Error (Rep, "CVS: Name_Error while reading " & New_Dir);
          return Result;
       when Directory_Error =>
-         Set_Error (Rep, "CVS: Could not open directory: " & New_Dir);
          return Result;
    end Real_Local_Get_Status;
 
