@@ -403,10 +403,11 @@ package body Glide_Kernel.Project is
       while Current (Iter) /= No_Project loop
          Modified := Modified or else Project_Modified (Current (Iter));
          Save_Single_Project (Kernel, Current (Iter), Langs);
-         Basic_Types.Free (Langs);
 
          Next (Iter);
       end loop;
+
+      Basic_Types.Free (Langs);
 
       --  Force a change in the icons in the explorer.
       --  ??? Probably not very efficient, however.
@@ -551,7 +552,7 @@ package body Glide_Kernel.Project is
                      Value := Prj.Variable_Value'
                        (Kind     => Prj.List,
                         Location => No_Location,
-                        Project  => Prj.No_Project,
+--                        Project  => Prj.No_Project,
                         Default  => True,
                         Values   => L);
                      Free (Cmd);
