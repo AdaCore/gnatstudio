@@ -19,6 +19,9 @@ with GNAT.OS_Lib;
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - When items are maximized, they should be put in a notebook.
+--  - Icons should be placed correctly when there are also docked items
+--  - Multiple items docked at the same location should be put in a notebook
+--  - Add a set_title for children.
 --
 --  From GNOME MDI documentation:
 --  - GnomeMDI also provides means to create global menus and toolbar that
@@ -40,9 +43,12 @@ package Gtkada.MDI is
    --  You can easily convert from this to the initial widget using the
    --  functions Find_MDI_Child and Get_Widget.
 
-   type Dock_Side is (None, Left, Top, Right, Bottom);
+   type Dock_Side is (None, Left, Right, Top, Bottom);
    --  Side on which a child will be docked. If None, the child cannot be
    --  docked.
+   --  Order is important, since items docked on the left or right will
+   --  occupy the whole height of MDI, whereas the ones on top or bottom will
+   --  occupy the full width minus the left and right docks.
 
    procedure Gtk_New (MDI : out MDI_Window);
    --  Create a new MDI window.
@@ -54,9 +60,12 @@ package Gtkada.MDI is
    --  See the section "Creating your own widgets" in the documentation.
 
    procedure Put (MDI : access MDI_Window_Record;
-                  Child : access Gtk.Widget.Gtk_Widget_Record'Class;
-                  Name : String);
-   --  Add a new child to the MDI window.
+                  Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+   function Put
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return MDI_Child;
+   --  Add a new child to the MDI window, and return its embedding widget.
    --  Note that there is a small difference between adding a toplevel
    --  Gtk_Window and a standard widget.
    --  In the former case, only the child of the window is inserted into MDI.
@@ -72,6 +81,15 @@ package Gtkada.MDI is
    --
    --  On the other hand, if you insert any other widget, toplevel windows
    --  are created on the fly when needed, and destroyed automatically.
+
+   procedure Set_Title (Child : access MDI_Child_Record; Title : String);
+   --  Set the title for a child.
+   --  If you have put a Gtk_Window in the MDI, then the default title is the
+   --  same as for the Gtk_Window. Likewise, if you modify the title with this
+   --  subprogram, it changes the title of the Gtk_Window.
+   --  For any other widget, the default is the empty string.
+   --  In every case, this title will be the one used for the window when the
+   --  child is set to floating state.
 
    procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
@@ -170,7 +188,22 @@ package Gtkada.MDI is
    --  </signals>
 
 private
-   type State_Type is (Normal, Iconified, Floating, Docked);
+   type State_Type is (Normal, Iconified, Floating, Docked, Embedded);
+   --  This type indicates the state of an item in the MDI:
+   --  - Normal: the item can be manipulated (moved and resized) by the user.
+   --  - Iconified: the item has been minimized, and can only be moved by the
+   --      user. No resized is taken into account
+   --  - Floating: the item has its own toplevel window, and is thus managed
+   --      by the window manager. It is not really part of the MDI
+   --  - Docked: This only apply to Gtk_Notebook items that are found on each
+   --      side of the MDI. These items can contain any other number of
+   --      embedded items, but can not be moved. They can be resized only
+   --      on one of their side (depending on their location)
+   --  - Embedded: the item is invisible. The widget it normally contains has
+   --      been put into one of the dock items, and is completely managed by
+   --      them. The item itself can not be mainpulated, nor even seen, by the
+   --      user. However, it is kept alive so that its docked contents can
+   --      easily be undocked.
 
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with record
       Initial : Gtk.Widget.Gtk_Widget;
@@ -181,9 +214,13 @@ private
 
       X, Y : Glib.Gint;
       State : State_Type := Normal;
-      Name : GNAT.OS_Lib.String_Access;
+
+      Title : GNAT.OS_Lib.String_Access;
+      --  Title of the item, as it appears in the title bar
 
       Dock : Dock_Side := None;
+      --  The size on which the item should be docked. If None, then the item
+      --  can not be docked, and nothing will happen when calling Dock_Child.
 
       Uniconified_Width, Uniconified_Height : Glib.Gint;
       --  The size of the window, when not iconified. When in normal state,
@@ -192,6 +229,8 @@ private
       --  we just resized the widget but didn't go back to the main gtk loop)
 
       Uniconified_X, Uniconified_Y : Glib.Gint;
+      --  Initial coordinates of the item when it is not iconified. These
+      --  fields are only relevant while the item is iconified.
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;
@@ -202,6 +241,8 @@ private
                          Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
+
+   type Notebook_Array is array (Dock_Side) of MDI_Child;
 
    type MDI_Window_Record is new Gtk.Layout.Gtk_Layout_Record with record
       X_Root, Y_Root : Glib.Gint;
@@ -226,6 +267,8 @@ private
       Focus_GC : Gdk.GC.Gdk_GC;
       Title_GC : Gdk.GC.Gdk_GC;
       --  The graphic contexts to draw the children.
+
+      Docks : Notebook_Array;
    end record;
 
    pragma Inline (Get_Window);
