@@ -321,7 +321,14 @@ package body GVD.Main_Window is
       end if;
 
       --  ??? Replace by a signal "debugger_switch" on the main window
-      Executable_Changed (Process, "");
+      --  Do not call Executable_Changed if the debugger is busy, since
+      --  this would generate an assert failure, trying to send commands to
+      --  the gdb while the debugger is already handling a command.
+      --  This test should also go when we use a debugger_switch signal.
+
+      if not Command_In_Process (Get_Process (Process.Debugger)) then
+         Executable_Changed (Process, "");
+      end if;
 
       --  Update the sensitivity of the Data/Protection Domains menu
       --  item
