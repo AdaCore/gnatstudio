@@ -153,6 +153,8 @@ package body Debugger.Gdb is
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
+   Continuation_Line_Pattern : constant Pattern_Matcher := Compile ("^>");
+
    Address_Range_Pattern : constant Pattern_Matcher := Compile
      ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
    --  How to get the range of addresses for a given line
@@ -183,6 +185,12 @@ package body Debugger.Gdb is
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect y/n questions from gdb.
+
+   procedure Continuation_Line_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
+   --  Filter used to detect commands handled on multiple lines.
 
    procedure Parse_Backtrace_Info
      (S     : String;
@@ -305,6 +313,16 @@ package body Debugger.Gdb is
                Empty_Buffer    => False,
                Wait_For_Prompt => False);
          return;
+
+      --  For a hidden command, we also cannot afford to wait, so send an
+      --  answer. 1 will typically map to "all".
+
+      elsif Get_Command_Mode (Get_Process (Debugger)) = Hidden then
+         Send (Debugger, "1",
+               Mode            => Hidden,
+               Empty_Buffer    => False,
+               Wait_For_Prompt => False);
+         return;
       end if;
 
       --  Index is positioned to the last LF character: "[0] ...\n> "
@@ -377,6 +395,20 @@ package body Debugger.Gdb is
          Free (Choices (J).Description);
       end loop;
    end Question_Filter2;
+
+   ------------------------------
+   -- Continuation_Line_Filter --
+   ------------------------------
+
+   procedure Continuation_Line_Filter
+     (Process : access Visual_Debugger_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
+   is
+      pragma Unreferenced (Str, Matched);
+   begin
+      Process.Continuation_Line := True;
+   end Continuation_Line_Filter;
 
    ----------
    -- Send --
@@ -620,6 +652,10 @@ package body Debugger.Gdb is
          Add_Regexp_Filter
            (Convert (Window, Debugger),
             Question_Filter2'Access, Question_Filter_Pattern2);
+
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Continuation_Line_Filter'Access, Continuation_Line_Pattern);
 
          --  ??? Should avoid the duplication of this code between debugger-*
 
