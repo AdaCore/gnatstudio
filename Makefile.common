@@ -216,13 +216,12 @@ ifneq (,$(findstring aunit,$(MODULES)))
 # information on how to setup the required links
 AUNIT_SRC=../../aunit
 
-MODULE_INCLUDE+=-I${AUNIT_SRC}/make_harness -I${AUNIT_SRC}/make_suite \
-  -I${AUNIT_SRC}/make_test
+MODULE_INCLUDE+=-I${AUNIT_SRC}/src
 endif
 
 .PHONY: check_aunit
 check_aunit: force
-	@[ -f ${AUNIT_SRC}/aunit_make_test.glade ] || \
+	@[ -f ${AUNIT_SRC}/src/aunit_make_harness.adb ] || \
 	   (echo "AUnit sources not found in ${AUNIT_SRC}, see README"; false)
 
 ###################
