@@ -1430,7 +1430,7 @@ package body GVD.Source_Editors is
       Text_Pos     : Natural;
       Text_Pos_End : Natural;
       Line         : constant Natural := Get_Line (Editor);
-      Tab_Size     : Integer := Integer (Get_Tab_Size);
+      Tab_Size     : constant Integer := Integer (Get_Tab_Size);
       Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
