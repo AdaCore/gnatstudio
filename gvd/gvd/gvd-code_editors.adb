@@ -65,10 +65,29 @@ package body GVD.Code_Editors is
    package Editor_Mode_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Radio_Menu_Item_Record, Editor_Mode_Data);
 
+   package Editor_Cb is new Gtk.Handlers.Callback
+     (Code_Editor_Record);
+
    procedure Change_Mode
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data);
    --  Change the display mode for the editor
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Update_Editor_Frame (Editor : access Code_Editor_Record'Class);
+   --  Updates the label on top of the source editor.
+
+   -------------------------
+   -- Update_Editor_Frame --
+   -------------------------
+
+   procedure Update_Editor_Frame (Editor : access Code_Editor_Record'Class) is
+   begin
+      Update_Editor_Frame (Debugger_Process_Tab (Editor.Process));
+   end Update_Editor_Frame;
 
    ------------------
    -- Gtk_New_Hbox --
@@ -120,6 +139,16 @@ package body GVD.Code_Editors is
       Ref (Editor.Source);
       Ref (Editor.Asm);
       Ref (Editor.Pane);
+
+      Editor_Cb.Object_Connect
+        (Editor.Source, "size_allocate",
+         Editor_Cb.To_Marshaller (Update_Editor_Frame'Access),
+         Editor, After => True);
+
+      Editor_Cb.Object_Connect
+        (Editor.Asm, "size_allocate",
+         Editor_Cb.To_Marshaller (Update_Editor_Frame'Access),
+         Editor, After => True);
 
       Show_All (Editor);
    end Initialize;
@@ -213,6 +242,9 @@ package body GVD.Code_Editors is
       if not Get_Pref (Display_Explorer) then
          Hide (Editor.Explorer_Scroll);
       end if;
+
+      --  Update the name of the source file in the frame.
+      Update_Editor_Frame (Debugger_Process_Tab (Editor.Process));
    end Load_File;
 
    ------------------------
@@ -473,5 +505,20 @@ package body GVD.Code_Editors is
       end if;
 
    end Preferences_Changed;
+
+   ---------------------
+   -- Get_Window_Size --
+   ---------------------
+
+   function Get_Window_Size
+     (Editor : access Code_Editor_Record'Class) return Gint
+   is
+   begin
+      if Editor.Mode = Asm_Only then
+         return Gint (Get_Allocation_Width (Editor.Asm)) - Layout_Width;
+      else
+         return Gint (Get_Allocation_Width (Editor.Source)) - Layout_Width;
+      end if;
+   end Get_Window_Size;
 
 end GVD.Code_Editors;
