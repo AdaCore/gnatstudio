@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;  use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -273,11 +272,13 @@ package body Tries is
       begin
          if not Size_Only then
             if Cell.Index = null then
-               Put_Line (Tab & "Index=<null>  "  & Image (Cell.Data));
+               Put ("(''");
             else
-               Put_Line (Tab & "Index=" & Cell.Index.all
-                         & "  " & Image (Cell.Data));
+               Put ("('" & Cell.Index.all & "'");
             end if;
+
+            Put (Cell.Data);
+            Put (" ");
          end if;
 
          if Cell.Index /= null then
@@ -290,10 +291,14 @@ package body Tries is
                Dump (Cell.Children (C), Tab & "  ");
             end loop;
          end if;
+
+         if not Size_Only then
+            Put (")");
+         end if;
       end Dump;
    begin
       Dump (Tree.Child, "");
-      Put_Line ("Total length=" & Length'Img);
+      Put (" length=" & Length'Img);
    end Dump;
 
    ------------

@@ -73,7 +73,8 @@ package Tries is
    --  Free the memory occupied by the iterator
 
    generic
-      with function Image (Data : Data_Type) return String;
+      with procedure Put (Str : String) is <>;
+      with procedure Put (Data : Data_Type) is <>;
    procedure Dump (Tree : Trie_Tree; Size_Only : Boolean := False);
    --  Dump function for debugging purposes.
    --  If Size_Only is true, only the size occupied by the table is displayed.
