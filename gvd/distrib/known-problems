@@ -1,6 +1,12 @@
 
 Known Problems fixed in GVD 2.0.0
 
+- [9326-006] GVD fails to start if previous session failed on exit
+  Problem:    On exit, GVD tries to save the window settings. However, if it
+              crashes at that time, the save file is incorrect, and GVD can't
+              be started again
+  Workaround: Remove the file ~/.gvd/window_settings or c:\gvd\window_settings
+
 - [9325-007] Incorrect refresh of variables when typing commands in the console
   Problem:    When commands are typed in the debugger console with arguments,
               for instance "cont 99", gvd doesn't properly refresh the variables
