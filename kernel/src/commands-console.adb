@@ -72,7 +72,6 @@ package body Commands.Console is
       if Command.Text /= null then
          Insert (Command.Kernel,
                  Command.Text.all,
-                 Command.Highlight_Sloc,
                  Command.Add_LF,
                  Command.Insert_Mode);
       end if;

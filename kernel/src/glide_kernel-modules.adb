@@ -1973,7 +1973,7 @@ package body Glide_Kernel.Modules is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String) is
    begin
-      Insert (Kernel, Interpret_Command (Kernel, Command), False, False);
+      Insert (Kernel, Interpret_Command (Kernel, Command), False);
    end Interpret_Command;
 
 end Glide_Kernel.Modules;

@@ -56,9 +56,7 @@ package body Commands.Debugger is
       if Command_In_Process (Get_Process (Command.Debugger)) then
          Insert (Command.Kernel,
                  -"The debugger is busy processing a command",
-                 Highlight_Sloc => False,
-                 Add_LF         => True,
-                 Mode           => Error);
+                 Mode => Error);
 
          Command_Finished (Command, False);
          return False;

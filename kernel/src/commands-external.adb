@@ -181,15 +181,13 @@ package body Commands.External is
       when Directory_Error =>
          Insert (Command.Kernel,
                  -"Directory error: cannot access "
-                   & Command.Dir.all,
-                 False, True, Error);
+                   & Command.Dir.all, Mode => Error);
          return False;
 
       when Invalid_Process =>
          Insert (Command.Kernel,
                  -"Could not launch command "
-                   & Command.Command.all,
-                 False, True, Error);
+                   & Command.Command.all, Mode => Error);
          return False;
 
    end Execute;
