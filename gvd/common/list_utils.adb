@@ -56,6 +56,7 @@ package body List_Utils is
             Target_Is_L1 := not Target_Is_L1;
             Ln := Next (Ln);
          end loop;
+         Free (L, Free_Data => False);
       end Split;
 
       ----------
@@ -87,7 +88,6 @@ package body List_Utils is
                L2 := Next (L2);
             end if;
          end loop;
-
          return L;
       end Fuse;
 
@@ -105,6 +105,8 @@ package body List_Utils is
       Sort (L1);
       Sort (L2);
       L := Fuse (L1, L2);
+      Free (L1, Free_Data => False);
+      Free (L2, Free_Data => False);
    end Sort;
 
 end List_Utils;
