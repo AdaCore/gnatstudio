@@ -119,16 +119,6 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator3);
    Set_Right_Justify (Main_Debug_Window.Separator3, False);
 
-   Gtk_New (Main_Debug_Window.Print_Graph1, -"Print Graph...");
-   Set_Sensitive (Main_Debug_Window.Print_Graph1, False);
-   Add_Accelerator (Main_Debug_Window.Print_Graph1, "activate",
-     The_Accel_Group, GDK_P, Gdk.Types.Control_Mask, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Print_Graph1, "activate",
-      Widget_Callback.To_Marshaller (On_Print_Graph1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Print_Graph1);
-   Set_Right_Justify (Main_Debug_Window.Print_Graph1, False);
-
    Gtk_New (Main_Debug_Window.Change_Directory1, -"Change Directory...");
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Change_Directory1, "activate",
@@ -769,30 +759,6 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator27);
    Set_Right_Justify (Main_Debug_Window.Separator27, False);
 
-   Gtk_New (Main_Debug_Window.Rotate_Graph1, -"Rotate Graph");
-   Set_Sensitive (Main_Debug_Window.Rotate_Graph1, False);
-   Add_Accelerator (Main_Debug_Window.Rotate_Graph1, "activate",
-     The_Accel_Group, GDK_R, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Rotate_Graph1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Rotate_Graph1_Activate'Access));
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Rotate_Graph1);
-   Set_Right_Justify (Main_Debug_Window.Rotate_Graph1, False);
-
-   Gtk_New (Main_Debug_Window.Layout_Graph1, -"Layout Graph");
-   Set_Sensitive (Main_Debug_Window.Layout_Graph1, False);
-   Add_Accelerator (Main_Debug_Window.Layout_Graph1, "activate",
-     The_Accel_Group, GDK_Y, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Layout_Graph1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Layout_Graph1_Activate'Access));
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Layout_Graph1);
-   Set_Right_Justify (Main_Debug_Window.Layout_Graph1, False);
-
-   Gtk_New (Main_Debug_Window.Separator28);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator28);
-   Set_Right_Justify (Main_Debug_Window.Separator28, False);
-
    Gtk_New (Main_Debug_Window.Refresh1, -"Refresh");
    Set_Sensitive (Main_Debug_Window.Refresh1, False);
    Add_Accelerator (Main_Debug_Window.Refresh1, "activate",
@@ -963,12 +929,6 @@ begin
       Text => -"",
       Tooltip_Text => -"Plot selection",
       Icon => Gtk_Widget (Create_Pixmap (plot_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button71 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Set the value of selection",
-      Icon => Gtk_Widget (Create_Pixmap (set_xpm, Main_Debug_Window)));
 
    Gtk_New (Main_Debug_Window.Toolbar_Combo);
    Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Toolbar_Combo);

@@ -96,7 +96,6 @@ package Main_Debug_Window_Pkg is
       Attach_To_Process1 : Gtk_Menu_Item;
       Detach_Process1 : Gtk_Menu_Item;
       Separator3 : Gtk_Menu_Item;
-      Print_Graph1 : Gtk_Menu_Item;
       Change_Directory1 : Gtk_Menu_Item;
       Separator4 : Gtk_Menu_Item;
       Restart1 : Gtk_Menu_Item;
@@ -184,9 +183,6 @@ package Main_Debug_Window_Pkg is
       Display_Registers1 : Gtk_Menu_Item;
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
-      Rotate_Graph1 : Gtk_Menu_Item;
-      Layout_Graph1 : Gtk_Menu_Item;
-      Separator28 : Gtk_Menu_Item;
       Refresh1 : Gtk_Menu_Item;
       Help1 : Gtk_Menu_Item;
       Help1_Menu : Gtk_Menu;
@@ -214,7 +210,6 @@ package Main_Debug_Window_Pkg is
       Button66 : Gtk_Widget;
       Button67 : Gtk_Widget;
       Button68 : Gtk_Widget;
-      Button71 : Gtk_Widget;
       Toolbar2 : Gtkada_Toolbar;
       Button49 : Gtk_Widget;
       Button50 : Gtk_Widget;

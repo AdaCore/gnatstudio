@@ -27,9 +27,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Detach_Process1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Print_Graph1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Change_Directory1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -202,12 +199,6 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_More_Status_Display1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Rotate_Graph1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Layout_Graph1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Refresh1_Activate

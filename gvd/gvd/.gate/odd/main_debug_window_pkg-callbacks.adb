@@ -102,17 +102,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Detach_Process1_Activate;
 
-   ------------------------------
-   -- On_Print_Graph1_Activate --
-   ------------------------------
-
-   procedure On_Print_Graph1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Print_Graph1_Activate;
-
    -----------------------------------
    -- On_Change_Directory1_Activate --
    -----------------------------------
@@ -750,28 +739,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_More_Status_Display1_Activate;
-
-   -------------------------------
-   -- On_Rotate_Graph1_Activate --
-   -------------------------------
-
-   procedure On_Rotate_Graph1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Rotate_Graph1_Activate;
-
-   -------------------------------
-   -- On_Layout_Graph1_Activate --
-   -------------------------------
-
-   procedure On_Layout_Graph1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Layout_Graph1_Activate;
 
    --------------------------
    -- On_Refresh1_Activate --

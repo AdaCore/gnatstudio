@@ -192,25 +192,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>print_graph1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_P</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_print_graph1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:16:45 GMT</last_modification_time>
-	    </signal>
-	    <label>Print Graph...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>change_directory1</name>
 	    <signal>
 	      <name>activate</name>
@@ -1350,48 +1331,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>rotate_graph1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_R</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_rotate_graph1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:45:08 GMT</last_modification_time>
-	    </signal>
-	    <label>Rotate Graph</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>layout_graph1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_Y</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_layout_graph1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:45:41 GMT</last_modification_time>
-	    </signal>
-	    <label>Layout Graph</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator28</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>refresh1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
@@ -1704,16 +1643,6 @@
 	<tooltip>Plot selection</tooltip>
 	<label></label>
 	<icon>plot_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button71</name>
-	<sensitive>False</sensitive>
-	<tooltip>Set the value of selection</tooltip>
-	<label></label>
-	<icon>set_xpm</icon>
       </widget>
     </widget>
 
