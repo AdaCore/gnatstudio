@@ -20,57 +20,11 @@
 
 with Gtkada.Canvas;  use Gtkada.Canvas;
 with Gtk.Handlers;   use Gtk.Handlers;
-with Gtk.Arguments;  use Gtk.Arguments;
-with Ada.Text_IO;    use Ada.Text_IO;
-with Unchecked_Conversion;
-with System;
-with Display_Items;  use Display_Items;
 
 package body Odd.Canvas is
 
    package Canvas_Handler is new Gtk.Handlers.Callback
      (Odd_Canvas_Record);
-
-   procedure Item_Selected_Cb
-     (Canvas : access Odd_Canvas_Record'Class;
-      Args   : Gtk_Args);
-   --  Called whenever the user has selected an item before starting a drag
-   --  operation;
-
-   ----------------------
-   -- Item_Selected_Cb --
-   ----------------------
-
-   procedure Item_Selected_Cb
-     (Canvas : access Odd_Canvas_Record'Class;
-      Args   : Gtk_Args)
-   is
-      function To_Display_Item is new Unchecked_Conversion
-        (System.Address, Display_Item);
-
-      Selection : Display_Item := To_Display_Item (To_Address (Args, 1));
-
-      function Add_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Check if Item should be added to the current selection in the canvas.
-      --  This is the case if Item is an alias of Selection, so that both are
-      --  moved at the same time.
-
-      function Add_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         if Is_Alias_Of (Display_Item (Item)) = Selection then
-            Add_To_Selection (Canvas, Item);
-         end if;
-
-         return True;
-      end Add_Item;
-
-   begin
-      For_Each_Item (Canvas, Add_Item'Unrestricted_Access);
-   end Item_Selected_Cb;
 
    ------------------------
    -- Get_Detect_Aliases --
@@ -104,9 +58,6 @@ package body Odd.Canvas is
    begin
       Canvas := new Odd_Canvas_Record;
       Initialize (Canvas);
-
-      Canvas_Handler.Connect
-        (Canvas, "item_selected", Item_Selected_Cb'Access);
    end Gtk_New;
 
 end Odd.Canvas;
