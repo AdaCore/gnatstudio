@@ -46,7 +46,6 @@ with GUI_Utils;       use GUI_Utils;
 
 with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.Intl;     use Gtkada.Intl;
 
 with GUI_Utils; use GUI_Utils;
 
@@ -198,7 +197,7 @@ package body Gtkada.File_Selector is
    -----------------
 
    function Select_File
-     (Title          : String := "Select a file";
+     (Title          : String := -"Select a file";
       Base_Directory : String := "") return String
    is
       File_Selector_Window : File_Selector_Window_Access;
@@ -212,7 +211,7 @@ package body Gtkada.File_Selector is
    ----------------------
 
    function Select_Directory
-     (Title          : String := "Select a file";
+     (Title          : String := -"Select a directory";
       Base_Directory : String := "") return String
    is
       File_Selector_Window : File_Selector_Window_Access;
@@ -1119,8 +1118,9 @@ package body Gtkada.File_Selector is
       Set_Icon_Size (Toolbar1, Icon_Size_Button);
       Set_Style (Toolbar1,  Toolbar_Icons);
       File_Selector_Window.Back_Button := Insert_Stock
-        (Toolbar => Toolbar1,
-         Stock_Id => Stock_Go_Back,
+        (Toolbar1,
+         Stock_Go_Back,
+         -"Go To Previous Location",
          Position => -1);
       Set_Sensitive (File_Selector_Window.Back_Button, False);
       Widget_Callback.Connect
@@ -1128,8 +1128,9 @@ package body Gtkada.File_Selector is
          Widget_Callback.To_Marshaller (On_Back_Button_Clicked'Access));
 
       File_Selector_Window.Forward_Button := Insert_Stock
-        (Toolbar => Toolbar1,
-         Stock_Id => Stock_Go_Forward,
+        (Toolbar1,
+         Stock_Go_Forward,
+         -"Go To Next Location",
          Position => -1);
       Set_Sensitive (File_Selector_Window.Forward_Button, False);
       Widget_Callback.Connect
@@ -1140,6 +1141,7 @@ package body Gtkada.File_Selector is
       File_Selector_Window.Up_Button := Append_Element
         (Toolbar => Toolbar1,
          The_Type => Toolbar_Child_Button,
+         Tooltip_Text => -"Go To Parent Directory",
          Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
       Widget_Callback.Connect
         (File_Selector_Window.Up_Button, "clicked",
@@ -1150,14 +1152,16 @@ package body Gtkada.File_Selector is
       File_Selector_Window.Refresh_Button := Append_Element
         (Toolbar => Toolbar1,
          The_Type => Toolbar_Child_Button,
+         Tooltip_Text => -"Refresh",
          Icon => Gtk_Widget (File_Selector_Window.Refresh_Icon));
       Widget_Callback.Connect
         (File_Selector_Window.Refresh_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Refresh_Button_Clicked'Access));
 
       File_Selector_Window.Home_Button := Insert_Stock
-        (Toolbar => Toolbar1,
-         Stock_Id => Stock_Home,
+        (Toolbar1,
+         Stock_Home,
+         -"Go To Home Directory",
          Position => -1);
       Set_Sensitive (File_Selector_Window.Home_Button, True);
       Widget_Callback.Connect
