@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;    use Ada.Text_IO;
 
-with GNAT.Regpat; use GNAT.Regpat;
-with Basic_Types; use Basic_Types;
-with String_Utils; use String_Utils;
+with GNAT.Regpat;    use GNAT.Regpat;
+with Basic_Types;    use Basic_Types;
+with String_Utils;   use String_Utils;
 
 package body Codefix.Text_Manager is
 
@@ -696,7 +696,6 @@ package body Codefix.Text_Manager is
 
    end Search_Unit;
 
-
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -861,7 +860,7 @@ package body Codefix.Text_Manager is
       Str_Parsed : String :=  This.Content.all;
 
    begin
-      Match (Matcher, Str_Parsed (Col .. Str_Parsed'Length), Matches);
+      Match (Matcher, Str_Parsed (Col .. Str_Parsed'Last), Matches);
 
       if Matches (1) = No_Match then
          Raise_Exception (Text_Manager_Error'Identity, "pattern '" & Format &
@@ -888,14 +887,14 @@ package body Codefix.Text_Manager is
       Result : File_Cursor := File_Cursor (Cursor);
 
    begin
-      if Result.Col = 0 then Result.Col := This.Content.all'Length; end if;
+      if Result.Col = 0 then Result.Col := This.Content.all'Last; end if;
 
       case Step is
          when Normal_Step =>
             for J in Result.Col .. This.Content.all'Last -
-              Searched'Length + 1
+              Searched'Last + 1
             loop
-               if This.Content.all (J .. J + Searched'Length - 1) =
+               if This.Content.all (J .. J + Searched'Last - 1) =
                  Searched
                then
                   Result.Col := J;
@@ -904,8 +903,8 @@ package body Codefix.Text_Manager is
             end loop;
          when Reverse_Step =>
             for J in reverse This.Content.all'First ..
-              Result.Col - Searched'Length + 1 loop
-               if This.Content.all (J .. J + Searched'Length - 1) =
+              Result.Col - Searched'Last + 1 loop
+               if This.Content.all (J .. J + Searched'Last - 1) =
                  Searched
                then
                   Result.Col := J;
@@ -945,7 +944,7 @@ package body Codefix.Text_Manager is
 
    begin
       Str := new String'(Get_Line (This, Cursor));
-      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Length,
+      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Last,
         Str, null);
    end Get_Line;
 
@@ -962,7 +961,7 @@ package body Codefix.Text_Manager is
 
    begin
       Str := new String'(Get_Line (This, Cursor));
-      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Length,
+      Destination := (Original_Line, File_Cursor (Cursor), Str.all'Last,
         Str, null);
    end Get_Line;
 
@@ -973,23 +972,9 @@ package body Codefix.Text_Manager is
    function Get_New_Text (This : Extract_Line; Detail : Boolean := True)
      return String is
 
-      Buffer : String := "   " & Natural'Image (This.Cursor.Line) & ":" &
-        Natural'Image (This.Cursor.Col) & ": " &
-        This.Content.all & EOL_Str;
+      Buffer : String := This.Content.all;
 
    begin
-      if Detail then
-         case This.Context is
-            when Original_Line =>
-               Buffer (1 .. 3) := ("   ");
-            when Line_Modified =>
-               Buffer (1 .. 3) := ("(M)");
-            when Line_Created =>
-               Buffer (1 .. 3) := ("(C)");
-            when Line_Deleted =>
-               Buffer (1 .. 3) := ("(D)");
-         end case;
-      end if;
 
       return Buffer;
 
@@ -1196,6 +1181,8 @@ package body Codefix.Text_Manager is
          end loop;
 
       end if;
+
+      Free (New_Line);
 
       Extend_After (Current_Line.Next, Current_Text, Size);
 
@@ -1518,7 +1505,7 @@ package body Codefix.Text_Manager is
 
       Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
                 New_String &
-                Old_String (Cursor.Col + Word_Length .. Old_String'Length));
+                Old_String (Cursor.Col + Word_Length .. Old_String'Last));
 
       Current_Line.Context := Line_Modified;
 
@@ -1540,7 +1527,7 @@ package body Codefix.Text_Manager is
       Assign (Old_String, Current_Line.Content);
       Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
               Word &
-                Old_String (Cursor.Col .. Old_String.all'Length));
+                Old_String (Cursor.Col .. Old_String.all'Last));
 
       Current_Line.Context := Line_Modified;
 
@@ -1605,18 +1592,18 @@ package body Codefix.Text_Manager is
    -- Add_Element --
    -----------------
 
-   --  Assertion : This and Precedent are not null together
+   --  Assertion : This and Previous are not null together
    procedure Add_Element
-     (This, Precedent, Element : Ptr_Extract_Line;
+     (This, Previous, Element : Ptr_Extract_Line;
       Container : in out Extract) is
    begin
       if This = null then
-         Precedent.Next := Element;
+         Previous.Next := Element;
       else
          if This.Cursor.Line > Element.Cursor.Line then
             Element.Next := This;
-            if Precedent /= null then
-               Precedent.Next := Element;
+            if Previous /= null then
+               Previous.Next := Element;
             else
                Container.First := Element;
             end if;
