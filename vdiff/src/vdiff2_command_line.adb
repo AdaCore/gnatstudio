@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Diff_Utils2;          use Diff_Utils2;
-with Vdiff2_Module.Utils;  use Vdiff2_Module.Utils;
-with Text_IO;              use Text_IO;
+with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
+with Diff_Utils2;                       use Diff_Utils2;
+with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
+with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Text_IO;                           use Text_IO;
 
 package body Vdiff2_Command_Line is
 
@@ -161,12 +163,15 @@ package body Vdiff2_Command_Line is
       Line   : Natural := 0;
       File   : Virtual_File := VFS.No_File)
    is
+      Diff1     : Diff_Chunk_Access;
       VFile    : T_VFile;
       VRange   : T_VRange;
       Num_File : T_Loc := 0;
       pragma Unreferenced (Line);
 
    begin
+      Diff1 := Data (Diff.Current_Node);
+
       VRange (1) := Data (Diff.Current_Node).Range1;
       VRange (2) := Data (Diff.Current_Node).Range2;
       VRange (3) := Data (Diff.Current_Node).Range3;
@@ -191,7 +196,7 @@ package body Vdiff2_Command_Line is
       declare
          Info           : Line_Information_Data :=
            new Line_Information_Array
-             (VRange (Num_File).First .. VRange (Num_File).First);
+             (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
 
       begin
@@ -199,7 +204,100 @@ package body Vdiff2_Command_Line is
          Add_Line_Information
            (Kernel, File, "Vdiff2_Col_Merge",
             Info);
+         Unhighlight_Block
+           (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
+         Unhighlight_Block
+           (Kernel, VFile (Num_File), VRange (Num_File), "Append_diff");
       end;
+
+      Diff1.Range1 := VRange (1);
+      Diff1.Range2 := VRange (2);
+      Diff1.Range3 := VRange (3);
    end Move_On_Ref_File;
 
+   --------------------------
+   -- Delete_From_Ref_File --
+   --------------------------
+
+   procedure Delete_From_Ref_File
+     (Kernel : Kernel_Handle;
+      Diff   : Diff_Head_Access;
+      Line   : Natural := 0;
+      File   : Virtual_File := VFS.No_File)
+   is
+      Diff1     : Diff_Chunk_Access;
+      VFile    : T_VFile;
+      VRange   : T_VRange;
+      Num_File : T_Loc := 0;
+      Other    : T_Loc := 0;
+      pragma Unreferenced (Line);
+
+   begin
+      Diff1 := Data (Diff.Current_Node);
+
+      VRange (1) := Data (Diff.Current_Node).Range1;
+      VRange (2) := Data (Diff.Current_Node).Range2;
+      VRange (3) := Data (Diff.Current_Node).Range3;
+      VFile (1) := Diff.File1;
+      VFile (2) := Diff.File2;
+      VFile (3) := Diff.File3;
+
+      for J in VFile'Range loop
+         if File = VFile (J) then
+            Num_File := J;
+            exit;
+         end if;
+      end loop;
+
+      for J in VFile'Range loop
+         if J /= Diff.Ref_File and J /= Num_File then
+            Other := J;
+            exit;
+         end if;
+      end loop;
+
+      if Num_File = Diff.Ref_File or Num_File = 0 then
+         return;
+      end if;
+
+      Delete_Block (Kernel, VFile (Diff.Ref_File),
+                  VRange (Num_File), VRange (Diff.Ref_File));
+
+      declare
+         Info           : Line_Information_Data :=
+           new Line_Information_Array
+             (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
+         Null_Line_Info : Line_Information_Record;
+
+      begin
+         Info (Info'First) := Null_Line_Info;
+         Add_Line_Information
+           (Kernel, File, "Vdiff2_Col_Merge",
+            Info);
+         Unhighlight_Block
+           (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
+         Unhighlight_Block
+           (Kernel, VFile (Num_File), VRange (Num_File), "Append_diff");
+      end;
+
+      VRange (Num_File).Blank_Lines :=
+        new String'(Add_Line
+                      (Kernel, VFile (Num_File),
+                       Get_Line_Number (Kernel, VRange (Num_File).Mark.all),
+                       "Default_diff",
+                       (VRange (Other).Last - VRange (Other).First)));
+
+      VRange (Diff.Ref_File).Blank_Lines :=
+        new String'(Add_Line
+                      (Kernel, VFile (Diff.Ref_File),
+                       Get_Line_Number
+                         (Kernel, VRange (Diff.Ref_File).Mark.all),
+                       "Default_diff",
+                       (VRange (Other).Last - VRange (Other).First)));
+
+      Diff1.Range1 := VRange (1);
+      Diff1.Range2 := VRange (2);
+      Diff1.Range3 := VRange (3);
+
+   end Delete_From_Ref_File;
 end Vdiff2_Command_Line;
