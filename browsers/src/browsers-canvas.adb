@@ -1375,17 +1375,34 @@ package body Browsers.Canvas is
       procedure Free (Area : in out Active_Area_Tree) is
          Should_Free : Boolean := True;
          In_Title : Boolean;
+         Count : Natural := 0;
+         Tmp_Children : Active_Area_Tree_Array_Access;
       begin
          if Area.Children /= null then
             for C in Area.Children'Range loop
                Free (Area.Children (C));
                if Area.Children (C) /= null then
                   Should_Free := False;
+                  Count := Count + 1;
                end if;
             end loop;
 
             if Should_Free then
                Unchecked_Free (Area.Children);
+            elsif Count /= Area.Children'Length then
+               --  Make sure there are no null values in Children, to keep the
+               --  tree simple.
+               Tmp_Children := Area.Children;
+               Area.Children := new Active_Area_Tree_Array (1 .. Count);
+
+               Count := Area.Children'First;
+               for C in Tmp_Children'Range loop
+                  if Tmp_Children (C) /= null then
+                     Area.Children (Count) := Tmp_Children (C);
+                     Count := Count + 1;
+                  end if;
+               end loop;
+               Unchecked_Free (Tmp_Children);
             end if;
          end if;
 
