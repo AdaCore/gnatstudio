@@ -1463,7 +1463,6 @@ package body Src_Editor_Box is
 
                if Success then
                   Save_To_File (Editor.Source_Buffer, Name, Success);
-                  Set_Filename (Editor.Source_Buffer, Name);
                end if;
 
                Success := True;
@@ -1480,8 +1479,7 @@ package body Src_Editor_Box is
             then
                Success := False;
             else
-               Save_To_File
-                 (Editor.Source_Buffer, File, Success);
+               Save_To_File (Editor.Source_Buffer, File, Success);
             end if;
          end if;
 
@@ -1501,7 +1499,6 @@ package body Src_Editor_Box is
 
          if Success then
             Save_To_File (Editor.Source_Buffer, Filename, Success);
-            Set_Filename (Editor.Source_Buffer, Filename);
          end if;
       end if;
 
