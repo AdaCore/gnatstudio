@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,7 +32,8 @@ package Commands.Codefix is
       Kernel       : Kernel_Handle;
    end record;
 
-   function Execute (Command : access Codefix_Command) return Boolean;
+   function Execute
+     (Command : access Codefix_Command) return Command_Return_Type;
    --  Fix the error recorded in the Codefix_Command.
 
    function Undo (Command : access Codefix_Command) return Boolean;
