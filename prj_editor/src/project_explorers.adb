@@ -1321,11 +1321,10 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
       E         : constant Project_Explorer := Project_Explorer (Explorer);
-      N, N2     : Gtk_Tree_Iter;
       Path      : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node      : constant Gtk_Tree_Iter := Get_Iter (E.Tree.Model, Path);
-      Node_Type : constant Node_Types := Get_Node_Type (E.Tree.Model, Node);
+
    begin
       --  Redraw the pixmap.
 
@@ -1334,28 +1333,6 @@ package body Project_Explorers is
          Node,
          Get_Node_Type (E.Tree.Model, Node),
          False);
-
-      --  We need to reset the contents of files (Entities,...), so that the
-      --  next time the node is open, the entities are recomputed.
-      --  No need to do so for the contents of projects or directories, since
-      --  this will only happen when the project is changed, and the
-      --  "project_view_changed" signal will already trigger a refresh
-
-      if Node_Type = File_Node
-        or else Node_Type = Category_Node
-      then
-         N := Children (E.Tree.Model, Node);
-
-         while N /= Null_Iter loop
-            N2 := N;
-            Next (E.Tree.Model, N);
-            Remove (E.Tree.Model, N2);
-         end loop;
-
-         Append_Dummy_Iter (E.Tree.Model, Node);
-
-         Set (E.Tree.Model, Node, Up_To_Date_Column, False);
-      end if;
    end Collapse_Tree_Cb;
 
    ---------------------------
