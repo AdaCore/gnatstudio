@@ -1122,15 +1122,21 @@ package body Debugger.Gdb is
    function Is_Execution_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean is
+   is
+      Index : Natural := Command'First;
    begin
-      return    Command = "step"
-        or else Command = "stepi"
-        or else Command = "s"
-        or else Command = "next"
-        or else Command = "n"
-        or else Command = "nexti"
-        or else Command = "cont"
-        or else Command = "c"
+      --  Note: some of commands below can have a numeric parameter, that needs
+      --  to be ignored (e.g/ cont 99)
+
+      Skip_Word (Command, Index);
+      return    Command (Command'First .. Index - 1) = "step"
+        or else Command (Command'First .. Index - 1) = "stepi"
+        or else Command (Command'First .. Index - 1) = "s"
+        or else Command (Command'First .. Index - 1) = "next"
+        or else Command (Command'First .. Index - 1) = "n"
+        or else Command (Command'First .. Index - 1) = "nexti"
+        or else Command (Command'First .. Index - 1) = "cont"
+        or else Command (Command'First .. Index - 1) = "c"
         or else Command = "finish"
         or else (Command'Length >= 3
           and then Command (Command'First .. Command'First + 2) = "run")
