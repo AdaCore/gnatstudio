@@ -119,11 +119,11 @@ package body Glide_Kernel.Help is
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
+      Free (Html.Current_Help_File);
       Buffer := Read_File (File);
 
       if Buffer /= null then
          Trace (Me, "loading file: " & File);
-         Free (Html.Current_Help_File);
          Html.Current_Help_File := new String' (File);
          Stream := HTML_Begin (Html.Csc);
          HTML_Write (Html.Csc, Stream, Buffer.all);
@@ -314,7 +314,9 @@ package body Glide_Kernel.Help is
       else
          Scrolled := Help_Browser (Get_Widget (Child));
 
-         if Help_File /= Scrolled.Current_Help_File.all then
+         if Scrolled.Current_Help_File /= null
+           and then Help_File /= Scrolled.Current_Help_File.all
+         then
             Result := Load_File (Kernel, Scrolled, Help_File);
          end if;
 
