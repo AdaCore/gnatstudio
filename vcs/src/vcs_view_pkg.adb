@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1335,9 +1335,7 @@ package body VCS_View_Pkg is
       New_Tooltip (Page.Tree, Page, Page.Tooltip);
 
       --  Emit a "clicked" signal on the file column to sort it.
-      Object_Callback.Emit_By_Name
-        (Page.File_Column,
-         "clicked");
+      Object_Callback.Emit_By_Name (Page.File_Column, "clicked");
 
       return Page;
    end Get_Page_For_Identifier;
