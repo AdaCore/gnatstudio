@@ -773,7 +773,8 @@ package body Glide_Kernel.Modules is
       Title       : String := "";
       State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
       Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
-      Focus       : Boolean := False)
+      Focus       : Boolean := False;
+      Raised      : Boolean := False)
    is
    begin
       Add_To_Tree
@@ -782,7 +783,7 @@ package body Glide_Kernel.Modules is
          Node,
          X, Y, Width, Height,
          Short_Title, Title,
-         State, Dock, Focus);
+         State, Dock, Focus, Raised);
    end Add_Default_Desktop_Item;
 
    --------------------

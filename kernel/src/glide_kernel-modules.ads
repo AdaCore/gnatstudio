@@ -249,10 +249,16 @@ package Glide_Kernel.Modules is
       Title       : String := "";
       State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
       Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
-      Focus       : Boolean := False);
+      Focus       : Boolean := False;
+      Raised      : Boolean := False);
    --  Add an item to the default desktop.
    --  Node is a node that will generate the desired widget when
    --  passed to the Kernel.Desktop.Load_Desktop_Function.
+   --  If Focus is True, then the widget will be given the focus, unless
+   --  another widget is also registered later on with Focus set to True.
+   --  If Raised is True and the child is docked, then this widget will appear
+   --  on top unless another widget is also registered later on with Raised set
+   --  to True and in the same Dock.
 
    ----------------------
    -- Contextual menus --
