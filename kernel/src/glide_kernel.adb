@@ -439,23 +439,26 @@ package body Glide_Kernel is
       File : LI_File_Ptr;
       Project : constant Project_Type := Get_Project_From_File
         (Handle.Registry.all, Base_Name (Source_Filename));
-   begin
-      Create_Or_Complete_LI
-        (Handler                => Get_LI_Handler_From_File
-           (Glide_Language_Handler (Handle.Lang_Handler),
-            Source_Filename),
-         File                   => File,
-         Source_Filename        => Source_Filename,
-         List                   => Handle.Source_Info_List,
-         Project                => Project);
-      return File;
+      Handler : constant LI_Handler := Get_LI_Handler_From_File
+        (Glide_Language_Handler (Handle.Lang_Handler),
+         Source_Filename);
 
-   exception
-      when Unsupported_Language =>
+   begin
+      if Handler = null then
          Trace (Me,
                 "Locate_From_Source_And_Complete: Unsupported_Language for "
                 & Source_Filename);
          return No_LI_File;
+
+      else
+         Create_Or_Complete_LI
+           (Handler                => Handler,
+            File                   => File,
+            Source_Filename        => Source_Filename,
+            List                   => Handle.Source_Info_List,
+            Project                => Project);
+         return File;
+      end if;
    end Locate_From_Source_And_Complete;
 
    ---------------------
