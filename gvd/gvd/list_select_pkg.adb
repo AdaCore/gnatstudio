@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -190,6 +190,10 @@ package body List_Select_Pkg is
          Set_Column_Title (List_Select.List, 0, Item_Label);
          Set_Column_Title (List_Select.List, 1, Comment_Label);
       end if;
+
+      Return_Callback.Connect
+        (List_Select.List, "button_press_event",
+         Return_Callback.To_Marshaller (On_Clist_Button_Press'Access));
 
       Set_Title (List_Select, Title);
    end Initialize;
