@@ -181,6 +181,7 @@ procedure GVD_Main is
       Add_File_Extension (Lang, "\.h$");
       Lang := new Cpp_Language;
       Add_File_Extension (Lang, "\.cc$");
+      Add_File_Extension (Lang, "\.cpp$");
       Add_File_Extension (Lang, "\.C$");
       Add_File_Extension (Lang, "\.hh$");
       Add_File_Extension (Lang, "\.H$");
