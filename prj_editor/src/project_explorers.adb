@@ -401,7 +401,7 @@ package body Project_Explorers is
    --  It provides the standard behavior when an entity is selected (open the
    --  appropriate source editor).
 
-   function Button_Press
+   function Button_Release
      (Explorer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
       return Boolean;
    --  Callback for the "button_press" event
@@ -1029,7 +1029,8 @@ package body Project_Explorers is
          GObject (Explorer));
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.Tree, "button_press_event", Button_Press'Access, Explorer);
+        (Explorer.Tree, "button_release_event",
+         Button_Release'Access, Explorer);
 
       --  Update the tree with the current project
       Refresh (Kernel, GObject (Explorer));
@@ -2717,11 +2718,11 @@ package body Project_Explorers is
       return False;
    end File_Button_Press;
 
-   ------------------
-   -- Button_Press --
-   ------------------
+   --------------------
+   -- Button_Release --
+   --------------------
 
-   function Button_Press
+   function Button_Release
      (Explorer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
       return Boolean
    is
@@ -2770,7 +2771,7 @@ package body Project_Explorers is
       end if;
 
       return False;
-   end Button_Press;
+   end Button_Release;
 
    ----------------------
    -- On_Open_Explorer --
