@@ -51,19 +51,21 @@ with Language_Handlers.Glide;     use Language_Handlers.Glide;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
-with Traces;                      use Traces;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+--  with Traces;                      use Traces;
 with Default_Preferences;         use Default_Preferences;
 with Entities;                    use Entities;
 
 package body Outline_View is
 
-   Me : constant Debug_Handle := Create ("Outline_View");
+--   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
 
    Outline_View_Font                : Param_Spec_Font;
    Outline_View_Profiles            : Param_Spec_Boolean;
    Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
+   Outline_View_Link_Editor         : Param_Spec_Boolean;
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -95,10 +97,15 @@ package body Outline_View is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Create a new outline view
 
-   procedure Refresh
-     (Outline : access Outline_View_Record'Class;
-      File    : VFS.Virtual_File);
-   --  Display the information for File in the outline view
+   type Refresh_Outline_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Refresh_Outline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See inherited documentation
+
+   procedure Refresh (View : access Gtk_Widget_Record'Class);
+   --  Recompute the information for Outline.File, and redisplay it.
+   --  Change Outline.File first if needed
 
    function Button_Press
      (Outline : access Gtk_Widget_Record'Class;
@@ -155,14 +162,14 @@ package body Outline_View is
       Model   : Gtk_Tree_Store;
       Path    : Gtk_Tree_Path;
    begin
-      if Child /= null then
-         Trace (Me, "Location_Changed");
+      if Get_Pref (Kernel, Outline_View_Link_Editor)
+        and then Child /= null
+      then
          declare
             Subprogram : constant Entity_Information := Compute_Parent_Entity
               (File_Location_Hooks_Args_Access (Data));
             Subprogram_Name : constant String := Get_Name (Subprogram).all;
          begin
-            Trace (Me, "Subprogram name is " & Subprogram_Name);
             Outline := Outline_View_Access (Get_Widget (Child));
             Model   := Gtk_Tree_Store (Get_Model (Outline.Tree));
             Unselect_All (Get_Selection (Outline.Tree));
@@ -172,13 +179,6 @@ package body Outline_View is
                if Get_String (Model, Iter, 1) = Subprogram_Name then
                   Path := Get_Path (Model, Iter);
                   Set_Cursor (Outline.Tree, Path, null, False);
-                  Select_Iter (Get_Selection (Outline.Tree), Iter);
---                    Scroll_To_Cell (Outline.Tree,
---                                    Path => Path,
---                                    Column => 0,
---                                    Use_Align => False,
---                                    Row_Align => 0.0,
---                                    Col_Align => 0.0);
                   Path_Free (Path);
                   exit;
                end if;
@@ -214,7 +214,7 @@ package body Outline_View is
               Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
          end if;
 
-         Refresh (Outline, Outline.File);
+         Refresh (Outline);
       end if;
    end Preferences_Changed;
 
@@ -274,7 +274,6 @@ package body Outline_View is
             Project => Projects.No_Project,
             File    => Outline.File,
             Line    => Integer (Get_Int (Model, Iter, 1)));
-
          return Selection_Context_Access (Context);
       else
          return null;
@@ -441,13 +440,32 @@ package body Outline_View is
    end Gtk_New;
 
    -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Refresh_Outline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Get_Kernel (Context.Context)), Outline_View_Record'Tag);
+      Outline : Outline_View_Access;
+   begin
+      if Child /= null then
+         Outline := Outline_View_Access (Get_Widget (Child));
+         Refresh (Outline);
+         return Success;
+      end if;
+      return Failure;
+   end Execute;
+
+   -------------
    -- Refresh --
    -------------
 
-   procedure Refresh
-     (Outline : access Outline_View_Record'Class;
-      File    : VFS.Virtual_File)
-   is
+   procedure Refresh (View : access Gtk_Widget_Record'Class) is
+      Outline : constant Outline_View_Access := Outline_View_Access (View);
       Model      : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Outline.Tree));
       Iter, Root : Gtk_Tree_Iter := Null_Iter;
@@ -463,14 +481,12 @@ package body Outline_View is
       Push_State (Outline.Kernel, Busy);
       Clear (Model);
 
-      Outline.File := File;
-
       if Outline.File /= VFS.No_File then
-         Handler := Get_LI_Handler_From_File (Languages, File);
-         Lang := Get_Language_From_File (Languages, File);
+         Handler := Get_LI_Handler_From_File (Languages, Outline.File);
+         Lang := Get_Language_From_File (Languages, Outline.File);
          Append (Model, Root, Null_Iter);
          Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
-         Set (Model, Root, 1, "File: " & Base_Name (File));
+         Set (Model, Root, 1, "File: " & Base_Name (Outline.File));
          Set (Model, Root, 2, -1);
       end if;
 
@@ -483,7 +499,7 @@ package body Outline_View is
          Set (Model, Iter, 3, -1);
       else
          Parse_File_Constructs
-           (Handler, Languages, File, Constructs);
+           (Handler, Languages, Outline.File, Constructs);
          Constructs.Current := Constructs.First;
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
@@ -592,10 +608,12 @@ package body Outline_View is
             File := File_Information
               (File_Selection_Context_Access (D.Context));
             if File /= Outline.File then
-               Refresh (Outline, File);
+               Outline.File := File;
+               Refresh (Outline);
             end if;
          else
-            Refresh (Outline, VFS.No_File);
+            Outline.File := VFS.No_File;
+            Refresh (Outline);
          end if;
       end if;
    end On_Context_Changed;
@@ -607,18 +625,27 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Outline_View_Module_Name : constant String := "Outline_View";
       Project : constant String := '/' & (-"Project");
       N       : Node_Ptr;
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module      => Outline_View_Module,
-         Module_Name => "Outline_View",
+         Module_Name => Outline_View_Module_Name,
          Default_Context_Factory => Default_Factory'Access,
          Kernel      => Kernel);
 
       Register_Menu
         (Kernel, Project, -"Outline View", "", On_Open_Outline'Access);
-      Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access);
+
+      Command := new Refresh_Outline_Command;
+      Register_Contextual_Menu
+        (Kernel, "Outline View Refresh",
+         Action => Command,
+         Filter => Action_Filter (Create (Module => Outline_View_Module_Name)),
+         Label  => -"Refresh");
+
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -662,6 +689,17 @@ package body Outline_View is
       Register_Property
         (Kernel, Param_Spec (Outline_View_Sort_Alphabetically), -"Outline");
 
+      Outline_View_Link_Editor := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Outline-View-Link-Editor",
+            Default => True,
+            Blurb   => -("If true, the current subprogram in the editor is"
+                         & " automatically highlighted in the outline view"),
+            Nick    => -"Link with editor"));
+      Register_Property
+        (Kernel, Param_Spec (Outline_View_Link_Editor), -"Outline");
+
+      Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access);
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
       Add_Hook (Kernel, Location_Changed_Hook, Location_Changed'Access);
    end Register_Module;
