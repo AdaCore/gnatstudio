@@ -32,6 +32,7 @@ with Gtk.Tooltips;          use Gtk.Tooltips;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Glide_Intl;            use Glide_Intl;
+with Glide_Kernel;          use Glide_Kernel;
 
 with Find_Utils;            use Find_Utils;
 
@@ -365,7 +366,6 @@ package body Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
-      Tooltips : Gtk_Tooltips;
 
    begin
       Vsearch_Pkg.Initialize (Vsearch);
@@ -381,8 +381,6 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (On_Scope_Entry_Changed'Access),
          Vsearch);
 
-      Gtk_New (Tooltips);
-
       Ref (Vsearch.Files_Frame);
       Remove (Vsearch.Table, Vsearch.Files_Frame);
       Ref (Vsearch.Options_Frame);
@@ -392,7 +390,7 @@ package body Vsearch_Ext is
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Search_Next_Button, False, False, 0);
       Set_Tip
-        (Tooltips, Vsearch.Search_Next_Button,
+        (Get_Tooltips (Handle), Vsearch.Search_Next_Button,
          -"Search next/all occurrence(s)");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, "clicked",
@@ -402,7 +400,7 @@ package body Vsearch_Ext is
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Search_Replace_Button, False, False, 0);
       Set_Tip
-        (Tooltips, Vsearch.Search_Replace_Button,
+        (Get_Tooltips (Handle), Vsearch.Search_Replace_Button,
          -"Replace next/all occurrence(s)");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Replace_Button, "clicked",
@@ -413,7 +411,7 @@ package body Vsearch_Ext is
         (Vsearch.Buttons_Hbox, Vsearch.Search_Previous_Button,
          False, False, 0);
       Set_Tip
-        (Tooltips, Vsearch.Search_Previous_Button,
+        (Get_Tooltips (Handle), Vsearch.Search_Previous_Button,
          -"Search previous occurrence");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Previous_Button, "clicked",
@@ -422,7 +420,8 @@ package body Vsearch_Ext is
       Gtk_New (Vsearch.Stop_Button, -"Stop");
       Set_Sensitive (Vsearch.Stop_Button, False);
       Pack_Start (Vsearch.Buttons_Hbox, Vsearch.Stop_Button, False, False, 0);
-      Set_Tip (Tooltips, Vsearch.Stop_Button, -"Stop current search");
+      Set_Tip
+        (Get_Tooltips (Handle), Vsearch.Stop_Button, -"Stop current search");
       Widget_Callback.Object_Connect
         (Vsearch.Stop_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Stop_Search'Access), Vsearch);
@@ -431,7 +430,8 @@ package body Vsearch_Ext is
       Set_Active (Vsearch.Options_Toggle, False);
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Options_Toggle, False, False, 0);
-      Set_Tip (Tooltips, Vsearch.Options_Toggle, -"Display extended options");
+      Set_Tip (Get_Tooltips (Handle), Vsearch.Options_Toggle, -
+               "Display extended options");
       Widget_Callback.Object_Connect
         (Vsearch.Options_Toggle, "toggled",
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
