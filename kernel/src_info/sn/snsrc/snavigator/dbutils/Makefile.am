@@ -33,7 +33,7 @@ CFLAGS += -Wall
 LINK = $(PURIFY) $(CC) $(CFLAGS) $(LDFLAGS) -o $@
 endif
 
-sdkdir = @SN_SDK_EXEC_PREFIX@/lib
+sdkdir = $(exec_prefix)/lib
 
 sdk_LIBRARIES = libdbutils.a
 

@@ -21,7 +21,7 @@ AUTOMAKE_OPTIONS = cygnus
 
 ## Process this file with automake to create Makefile.in.
 
-sdkdir = @SN_SDK_EXEC_PREFIX@/lib
+sdkdir = $(exec_prefix)/lib
 sdk_LIBRARIES = libutils.a
 
 INCLUDES = $(WINFLAGS) -I$(top_srcdir)/db $(TCLHDIR)

@@ -206,7 +206,7 @@ ac_cv_c_itclsh = @ac_cv_c_itclsh@
 
 AUTOMAKE_OPTIONS = cygnus
 
-sdkdir = @SN_SDK_EXEC_PREFIX@/lib
+sdkdir = $(exec_prefix)/lib
 sdk_LIBRARIES = libutils.a
 
 INCLUDES = $(WINFLAGS) -I$(top_srcdir)/db $(TCLHDIR)

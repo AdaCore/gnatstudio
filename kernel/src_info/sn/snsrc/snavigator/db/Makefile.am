@@ -33,7 +33,7 @@ CFLAGS += -Wall
 LINK = $(PURIFY) $(CC) $(CFLAGS) $(LDFLAGS) -L../dbutils -o $@
 endif
 
-sdkdir = @SN_SDK_EXEC_PREFIX@/lib
+sdkdir = $(exec_prefix)/lib
 
 bin_PROGRAMS = dbcp dbdump dbimp
 

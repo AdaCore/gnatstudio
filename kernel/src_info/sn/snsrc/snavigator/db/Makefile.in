@@ -214,7 +214,7 @@ INCLUDES = $(WINFLAGS) -I$(top_srcdir)/misc/libutils -I$(top_srcdir)/hyper 		-I$
 @MSVC_FALSE@LINK = $(PURIFY) $(CC) $(CFLAGS) $(LDFLAGS) -L../dbutils -o $@
 @MSVC_FALSE@CFLAGS =  -Wall
 
-sdkdir = @SN_SDK_EXEC_PREFIX@/lib
+sdkdir = $(exec_prefix)/lib
 
 bin_PROGRAMS = dbcp dbdump dbimp
 
