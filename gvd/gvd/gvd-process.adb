@@ -92,7 +92,8 @@ package body Odd.Process is
    Class_Record : System.Address := System.Null_Address;
 
    --  Array of the signals created for this widget
-   Signals : Chars_Ptr_Array := "process_stopped" + "context_changed";
+   Signals : Chars_Ptr_Array :=
+     "process_stopped" + "context_changed";
 
 
    Graph_Cmd_Format : Pattern_Matcher := Compile
@@ -406,7 +407,7 @@ package body Odd.Process is
       Title           : String := "") return Debugger_Process_Tab
    is
       Process : Debugger_Process_Tab;
-      Id      : Gint;
+      --  Id      : Gint;
       Label   : Gtk_Label;
 
    begin
@@ -542,6 +543,18 @@ package body Odd.Process is
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "context_changed");
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
    end Context_Changed;
+
+   ------------------------
+   -- Executable_Changed --
+   ------------------------
+
+   procedure Executable_Changed
+     (Debugger : access Debugger_Process_Tab_Record'Class)
+   is
+   begin
+      Widget_Callback.Emit_By_Name
+        (Gtk_Widget (Debugger), "executable_changed");
+   end Executable_Changed;
 
    ---------------------
    -- Process_Stopped --

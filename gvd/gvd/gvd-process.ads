@@ -97,6 +97,14 @@ package Odd.Process is
    --
    --    Generated each time the context of the debuggee is changed (this
    --    includes process_stopped and also thread switching, ...).
+   --
+   --  - "executable_changed"
+   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --
+   --    Emitted every time the executable associated with the debugger is
+   --    changed (via for instance the menu Files->Open Program).
+   --    This is also called initially when the executable is given on the
+   --    command line.
 
    type Debugger_Process_Tab_Record is new
      Process_Tab_Pkg.Process_Tab_Record with
@@ -215,6 +223,10 @@ package Odd.Process is
    procedure Context_Changed
      (Debugger : access Debugger_Process_Tab_Record'Class);
    --  Emit the "context_changed" and "process_stopped" signal.
+
+   procedure Executable_Changed
+     (Debugger : access Debugger_Process_Tab_Record'Class);
+   --  Emit the "executable_changed" signal.
 
    procedure Process_User_Command
      (Debugger       : Debugger_Process_Tab;
