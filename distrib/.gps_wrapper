@@ -11,7 +11,6 @@ root=`dirname $0`
 root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
-MAKE_ROOT=$root
 
 if [ x"$GPS_DOC_PATH" = x ]; then
    GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gps/html
@@ -20,6 +19,6 @@ else
 fi
 export GPS_DOC_PATH
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX MAKE_ROOT
+export LD_LIBRARY_PATH GTK_DATA_PREFIX
 GDK_USE_XFT=False
 exec $root/bin/${prog}_exe "$@"
