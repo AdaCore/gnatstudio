@@ -45,6 +45,12 @@ BASE_DIR=$(GLIDE_BASE_DIR)/../vfs
 include $(BASE_DIR)/Makefile.vfs
 BASE_DIR=$(GLIDE_BASE_DIR)/../codefix
 include $(BASE_DIR)/Makefile.codefix
+BASE_DIR=$(GLIDE_BASE_DIR)/../ada_module
+include $(BASE_DIR)/Makefile.ada_module
+BASE_DIR=$(GLIDE_BASE_DIR)/../cpp_module
+include $(BASE_DIR)/Makefile.cpp_module
+BASE_DIR=$(GLIDE_BASE_DIR)/../aliases
+include $(BASE_DIR)/Makefile.aliases
 
 GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)
