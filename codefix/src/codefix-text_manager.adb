@@ -2854,7 +2854,7 @@ package body Codefix.Text_Manager is
       Line_Cursor.Col := 1;
       Indent          := 0;
 
-      --  ??? Consider using the "indent_line" command instead.
+      --  ??? Consider using the "Format selection" command instead.
 
       for J in Previous_Line'Range loop
          case Previous_Line (J) is
