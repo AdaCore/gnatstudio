@@ -65,9 +65,11 @@ package body Glide_Main_Window is
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
 
+   type Navigation_Mode is (All_Windows, Notebook_Windows);
    type MDI_Child_Selection_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Move_To_Next : Boolean;
+      Mode   : Navigation_Mode;
    end record;
    type MDI_Child_Selection_Command_Access is access all
      MDI_Child_Selection_Command'Class;
@@ -283,6 +285,7 @@ package body Glide_Main_Window is
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := True;
+      Command.Mode         := All_Windows;
       Register_Action
         (Main_Window.Kernel,
          Name        => "Move to next window",
@@ -298,6 +301,7 @@ package body Glide_Main_Window is
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
       Command.Move_To_Next := False;
+      Command.Mode         := All_Windows;
       Register_Action
         (Main_Window.Kernel,
          Name        => "Move to previous window",
@@ -309,6 +313,17 @@ package body Glide_Main_Window is
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Action         => "Move to previous window",
          Default_Key    => "alt-shift-ISO_Left_Tab");
+
+      Command              := new MDI_Child_Selection_Command;
+      Command.Kernel       := Main_Window.Kernel;
+      Command.Mode         := Notebook_Windows;
+      Command.Move_To_Next := True;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Select other window",
+         Command     => Command,
+         Description =>
+           -("Select the next splitted window in the central area of GPS."));
    end Register_Keys;
 
    -------------
@@ -319,9 +334,17 @@ package body Glide_Main_Window is
      (Command : access MDI_Child_Selection_Command;
       Event   : Gdk_Event) return Command_Return_Type is
    begin
-      Check_Interactive_Selection_Dialog
-        (Get_MDI (Command.Kernel), Event,
-         Move_To_Next => Command.Move_To_Next);
+      if Command.Mode = Notebook_Windows then
+         Check_Interactive_Selection_Dialog
+           (Get_MDI (Command.Kernel), null,
+            Move_To_Next => Command.Move_To_Next,
+            Visible_In_Central_Only => Command.Mode = Notebook_Windows);
+      else
+         Check_Interactive_Selection_Dialog
+           (Get_MDI (Command.Kernel), Event,
+            Move_To_Next => Command.Move_To_Next,
+            Visible_In_Central_Only => Command.Mode = Notebook_Windows);
+      end if;
       return Success;
    end Execute;
 
