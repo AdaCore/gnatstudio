@@ -62,7 +62,7 @@ package body Debugger.Gdb is
    ---------------
 
    Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^>?\(gdb\) ", Multiple_Lines);
+     Compile ("^>*\(gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -208,12 +208,6 @@ package body Debugger.Gdb is
       Arguments : String;
       Mode      : Command_Type := Hidden);
    --  Set the debuggee arguments to Arguments.
-
-   function Get_Last_Breakpoint_Id
-     (Debugger : access Gdb_Debugger'Class) return Breakpoint_Identifier;
-   --  Get the Id of the last breakpoint created by Debugger.
-   --  Call this function only when no command is being processed by the
-   --  debugger (in particular user commands sent asynchronousely).
 
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
@@ -899,10 +893,9 @@ package body Debugger.Gdb is
       Executable : String;
       Mode       : Command_Type := Hidden)
    is
-      Exec                : constant String := To_Unix_Pathname (Executable);
-      Num                 : Breakpoint_Identifier;
-      pragma Unreferenced (Mode, Num);
+      pragma Unreferenced (Mode);
 
+      Exec                : constant String := To_Unix_Pathname (Executable);
       No_Such_File_Regexp : constant Pattern_Matcher :=
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
@@ -967,7 +960,7 @@ package body Debugger.Gdb is
       end if;
 
       if Get_Pref (GVD_Prefs, Break_On_Exception) then
-         Num := Break_Exception (Debugger);
+         Break_Exception (Debugger);
       end if;
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
@@ -1507,219 +1500,97 @@ package body Debugger.Gdb is
         (Send (Debugger, "where", Mode => Internal), Value, Len);
    end Backtrace;
 
-   ----------------------------
-   -- Get_Last_Breakpoint_Id --
-   ----------------------------
-
-   function Get_Last_Breakpoint_Id
-     (Debugger : access Gdb_Debugger'Class) return Breakpoint_Identifier
-   is
-      S            : constant String :=
-        Send (Debugger, "print $bpnum", Mode => Internal);
-      Index        : Integer := S'First;
-      Error_String : constant String := "void";
-   begin
-      Skip_To_String (S, Index, Error_String);
-
-      if Index <= S'Last - Error_String'Length + 1 then
-         return 0;
-      end if;
-
-      Index := S'First;
-      Skip_To_Char (S, Index, '=');
-
-      return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
-
-   exception
-      when Constraint_Error =>
-         return 0;
-   end Get_Last_Breakpoint_Id;
-
    ----------------------
    -- Break_Subprogram --
    ----------------------
 
-   function Break_Subprogram
+   procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-      return GVD.Types.Breakpoint_Identifier is
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       if Temporary then
          Send (Debugger, "tbreak " & Name, Mode => Mode);
       else
          Send (Debugger, "break " & Name, Mode => Mode);
       end if;
-
-      --  ??? Cannot compute the breakpoint id now, since the command is sent
-      --  asynchronously.
-      --  Need to send the command asynchronousely, since gdb may pop up a
-      --  question if there are multiple possible choices.
-      return 0;
    end Break_Subprogram;
 
    ------------------
    -- Break_Source --
    ------------------
 
-   function Break_Source
+   procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
-   is
-      Cmd         : Basic_Types.String_Access;
-      Actual_Mode : Command_Type := Mode;
-
+      Mode      : Command_Type := Hidden) is
    begin
       if Temporary then
-         Cmd := new String'("tbreak ");
+         Send (Debugger,
+               "tbreak " & Base_Name (File) & ":" & Image (Line),
+               Mode => Mode);
+
       else
-         Cmd := new String'("break ");
+         Send (Debugger,
+               "break " & Base_Name (File) & ':' & Image (Line),
+               Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Actual_Mode := Hidden;
-      end if;
-
-      declare
-         Full_Cmd : constant String :=
-           Cmd.all & Base_Name (File) & ":" & Image (Line);
-         S        : constant String :=
-           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
-
-      begin
-         if Mode in Visible_Command then
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Full_Cmd & ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-            Display_Prompt (Debugger);
-         end if;
-      end;
-
-      Free (Cmd);
-      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Source;
 
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   function Break_Exception
+   procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
-   is
-      Actual_Mode : Command_Type := Mode;
+      Mode      : Command_Type := Hidden) is
    begin
-      if Mode in Visible_Command then
-         Actual_Mode := Hidden;
-      end if;
-
-      declare
-         Full_Cmd : constant String :=
-           Break_Exception
-             (Language_Debugger_Access (Get_Language (Debugger)),
-              Name, Temporary, Unhandled);
-         S        : constant String :=
-           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
-
-      begin
-         if Mode in Visible_Command then
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Full_Cmd & ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-            Display_Prompt (Debugger);
-         end if;
-      end;
-
-      return Get_Last_Breakpoint_Id (Debugger);
+      Send (Debugger,
+            Break_Exception
+              (Language_Debugger_Access (Get_Language (Debugger)),
+               Name, Temporary, Unhandled),
+            Mode => Mode);
    end Break_Exception;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   function Break_Address
+   procedure Break_Address
      (Debugger  : access Gdb_Debugger;
       Address   : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
-   is
-      Cmd         : Basic_Types.String_Access;
-      Actual_Mode : Command_Type := Mode;
-
+      Mode      : Command_Type := Hidden) is
    begin
       if Temporary then
-         Cmd := new String'("tbreak *");
+         Send (Debugger, "tbreak *" & Address, Mode => Mode);
       else
-         Cmd := new String'("break *");
+         Send (Debugger, "break *" & Address, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Actual_Mode := Hidden;
-      end if;
-
-      declare
-         Full_Cmd : constant String := Cmd.all & Address;
-         S        : constant String :=
-           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
-      begin
-         if Mode in Visible_Command then
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Full_Cmd & ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-            Display_Prompt (Debugger);
-         end if;
-      end;
-
-      Free (Cmd);
-      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Address;
 
    ------------------
    -- Break_Regexp --
    ------------------
 
-   function Break_Regexp
+   procedure Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
-   is
-      Actual_Mode : Command_Type := Mode;
+      Mode       : Command_Type := Hidden) is
    begin
       if Temporary then
          raise Unknown_Command;
          --  Error ("Temporary regexp breakpoints not supported");
+      else
+         Send (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
-
-      if Mode in Visible_Command then
-         Actual_Mode := Hidden;
-      end if;
-
-      declare
-         Full_Cmd : constant String := "rbreak " & Regexp;
-         S        : constant String :=
-           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
-      begin
-         if Mode in Visible_Command then
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Full_Cmd & ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-            Display_Prompt (Debugger);
-         end if;
-      end;
-
-      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Regexp;
 
    ------------------------------
@@ -1732,7 +1603,7 @@ package body Debugger.Gdb is
       Condition : String;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Send (Debugger, "condition " & Breakpoint_Identifier'Image (Num)
+      Send (Debugger, "condition" & Breakpoint_Identifier'Image (Num)
             & " " & Condition, Mode => Mode);
    end Set_Breakpoint_Condition;
 
@@ -1746,11 +1617,11 @@ package body Debugger.Gdb is
       Commands : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      if Commands (Commands'Last) = ASCII.LF then
-         Send (Debugger, "command " & Breakpoint_Identifier'Image (Num)
+      if Commands = "" or else Commands (Commands'Last) = ASCII.LF then
+         Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
                & ASCII.LF & Commands & "end", Mode => Mode);
       else
-         Send (Debugger, "command " & Breakpoint_Identifier'Image (Num)
+         Send (Debugger, "command" & Breakpoint_Identifier'Image (Num)
                & ASCII.LF & Commands & ASCII.LF & "end", Mode => Mode);
       end if;
    end Set_Breakpoint_Command;
@@ -1765,13 +1636,18 @@ package body Debugger.Gdb is
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Send (Debugger, "ignore " & Breakpoint_Identifier'Image (Num)
-            & " " & Integer'Image (Count), Mode => Mode);
+      Send (Debugger, "ignore" & Breakpoint_Identifier'Image (Num)
+            & Integer'Image (Count), Mode => Mode);
    end Set_Breakpoint_Ignore_Count;
 
    ----------------------
    -- Set_Scope_Action --
    ----------------------
+
+   Task_String : aliased String := "task";
+   PD_String   : aliased String := "pd";
+   Any_String  : aliased String := "any";
+   All_String  : aliased String := "all";
 
    procedure Set_Scope_Action
      (Debugger : access Gdb_Debugger;
@@ -1780,41 +1656,42 @@ package body Debugger.Gdb is
       Num      : GVD.Types.Breakpoint_Identifier := 0;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      Scope_String : Basic_Types.String_Access;
+      Scope_String  : Basic_Types.String_Access;
       Action_String : Basic_Types.String_Access;
    begin
       if Scope /= No_Scope then
          if Scope = Current_Task then
-            Scope_String := new String'("task");
+            Scope_String := Task_String'Access;
          elsif Scope = Tasks_In_PD then
-            Scope_String := new String'("pd");
+            Scope_String := PD_String'Access;
          elsif Scope = Any_Task then
-            Scope_String := new String'("any");
+            Scope_String := Any_String'Access;
          end if;
 
          --  If the breakpoint identifier is 0, then set the
          --  session-wide default scope, otherwise change only the
          --  scope of the breakpoint indicated by Num
 
-         --  ??? These commands are sent as Internal to avoid the call
+         --  These commands are sent as Internal to avoid the call
          --  to Update_Breakpoints in Send_Internal_Post, which causes
          --  the Action radio button to jump to its previous setting
+
          if Num = 0 then
             Send (Debugger, "set break-command-scope "
                   & Scope_String.all, Mode => GVD.Types.Internal);
          else
-            Send (Debugger, "change-breakpoint-scope " & Num'Img
+            Send (Debugger, "change-breakpoint-scope" & Num'Img
                   & " " & Scope_String.all, Mode => GVD.Types.Internal);
          end if;
       end if;
 
       if Action /= No_Action then
          if Action = Current_Task then
-            Action_String := new String'("task");
+            Action_String := Task_String'Access;
          elsif Action = Tasks_In_PD then
-            Action_String := new String'("pd");
+            Action_String := PD_String'Access;
          elsif Action = All_Tasks then
-            Action_String := new String'("all");
+            Action_String := All_String'Access;
          end if;
 
          --  If the breakpoint identifier is 0, then set the
@@ -1825,7 +1702,7 @@ package body Debugger.Gdb is
             Send (Debugger, "set break-command-action "
                   & Action_String.all, Mode => Mode);
          else
-            Send (Debugger, "change-breakpoint-action " & Num'Img
+            Send (Debugger, "change-breakpoint-action" & Num'Img
                   & " " & Action_String.all, Mode => Mode);
          end if;
       end if;
