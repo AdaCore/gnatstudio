@@ -755,11 +755,12 @@ package body Docgen.Work_On_File is
       end Is_Tagged_Type;
 
    begin
-      LI_Unit := Locate_From_Source_And_Complete (Kernel, Source_Filename);
+      Trace (Me, "File name: " & Base_Name (Source_Filename));
+      LI_Unit := Locate_From_Source_And_Complete
+        (Kernel, Source_Filename, Check_Timestamp => False);
       LI_List := Get_LI_File_List (Kernel);
       Level := 1;
 
-      Trace (Me, "File name: " & Base_Name (Source_Filename));
       --  All references of the current file are put in a list.
       --  In the case of a spec file, we used references which are also
       --  declarations. Before those changes, declarations were found by
@@ -817,7 +818,7 @@ package body Docgen.Work_On_File is
                       Get_Name (Get (Entity_Iter)) /= "or"
                   then
                      --  ??? Temporary solution: operators are not added.
-                     --  In fact, it seems that Parse_Entity don't return
+                     --  In fact, it seems that Parse_Entity doesn't return
                      --  them as identifiers. So, if we add them in the
                      --  references list, they won't be matched and as a
                      --  concequence all the following references also.
