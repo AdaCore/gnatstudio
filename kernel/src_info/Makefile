@@ -14,6 +14,8 @@ distrib:
 	cp ../../gvd/common/basic_types.ad? gvd
 	cp ../../gvd/common/os_utils.ad? gvd
 	cp ../../gvd/common/string_utils.ad? gvd
+	cp ../../gvd/common/language_handlers.ad? gvd
+	cp ../../gvd/common/language.ad? gvd
 	cp ../../gnat/*.ad? gnat
 
 clean:
