@@ -49,6 +49,12 @@ msgstr "Arguments Selection"
 msgid  "ASCII"
 msgstr "ASCII"
 
+msgid  "Asm and Source"
+msgstr "Asm and Source"
+
+msgid  "Asm Code"
+msgstr "Asm Code"
+
 msgid  "Assembly"
 msgstr "Assembly"
 
@@ -718,6 +724,9 @@ msgstr "Set Value"
 msgid  "Set Value of "
 msgstr "Set Value of "
 
+msgid  "Show..."
+msgstr "Show..."
+
 msgid  "Show"
 msgstr "Show"
 
@@ -726,12 +735,6 @@ msgstr "Show all "
 
 msgid  "Show ASCII"
 msgstr "Show ASCII"
-
-msgid  "Show Asm and Source"
-msgstr "Show Asm and Source"
-
-msgid  "Show Asm Code"
-msgstr "Show Asm Code"
 
 msgid  "Show Call Stack"
 msgstr "Show Call Stack"
@@ -754,9 +757,6 @@ msgstr "Show Next Page"
 msgid  "Show Previous Page"
 msgstr "Show Previous Page"
 
-msgid  "Show Source Code"
-msgstr "Show Source Code"
-
 msgid  "Show Type"
 msgstr "Show Type"
 
@@ -771,6 +771,9 @@ msgstr "Signals..."
 
 msgid  "Source"
 msgstr "Source"
+
+msgid  "Source Code"
+msgstr "Source Code"
 
 msgid  "Source location"
 msgstr "Source location"
@@ -954,4 +957,13 @@ msgstr "XDB"
 
 msgid  "You must select at least one of the choices"
 msgstr "You must select at least one of the choices"
+
+msgid  "Zoom"
+msgstr "Zoom"
+
+msgid  "Zoom in"
+msgstr "Zoom in"
+
+msgid  "Zoom out"
+msgstr "Zoom out"
 
