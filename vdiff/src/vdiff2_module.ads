@@ -24,7 +24,7 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
-with Vdiff2_Command;           use Vdiff2_Command;
+with Vdiff2_Command_Block;     use Vdiff2_Command_Block;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Glib;                     use Glib;
 

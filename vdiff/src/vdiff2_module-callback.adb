@@ -35,7 +35,7 @@ with Traces;                            use Traces;
 with Commands;                          use Commands;
 
 with Diff_Utils2;                       use Diff_Utils2;
-with Vdiff2_Command;                    use Vdiff2_Command;
+with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;

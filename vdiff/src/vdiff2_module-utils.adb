@@ -26,7 +26,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
-with Vdiff2_Command;                    use Vdiff2_Command;
+with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 
