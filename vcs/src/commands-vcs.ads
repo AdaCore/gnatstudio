@@ -50,6 +50,10 @@ package Commands.VCS is
 
    function Execute (Command : access Get_Status_Command_Type) return Boolean;
 
+   procedure Free (X : in out Commit_Command_Type);
+   procedure Free (X : in out Get_Status_Command_Type);
+   --  Free memory associated to X.
+
 private
    type Get_Status_Command_Type is new Root_Command with record
       Rep       : VCS_Access;

@@ -20,6 +20,21 @@
 
 package body Commands.VCS is
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Commit_Command_Type) is
+   begin
+      String_List.Free (X.Filenames);
+      String_List.Free (X.Logs);
+   end Free;
+
+   procedure Free (X : in out Get_Status_Command_Type) is
+   begin
+      String_List.Free (X.Filenames);
+   end Free;
+
    ------------
    -- Create --
    ------------

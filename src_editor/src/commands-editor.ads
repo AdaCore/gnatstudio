@@ -86,6 +86,10 @@ package Commands.Editor is
 
    function Undo (Command : access Editor_Command_Type) return Boolean;
 
+   procedure Free (X : in out Editor_Command_Type);
+   procedure Free (X : in out Editor_Replace_Slice_Type);
+   --  Free memory associated to X.
+
 private
 
    type Editor_Command_Type is new Root_Command with record

@@ -29,6 +29,21 @@ package body Commands.Editor is
 
    Me : constant Debug_Handle := Create ("Commands.Editor");
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Editor_Command_Type) is
+   begin
+      Free (X.Current_Text);
+   end Free;
+
+   procedure Free (X : in out Editor_Replace_Slice_Type) is
+   begin
+      Free (X.Text_Before);
+      Free (X.Text_After);
+   end Free;
+
    ---------------------
    -- Is_Null_Command --
    ---------------------
