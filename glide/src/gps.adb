@@ -1005,7 +1005,7 @@ procedure GPS is
          if Debugger_Name /= null then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Scenario_Variables => (1 .. 0 => No_Variable),
+               Scenario_Variables => No_Scenario,
                Attribute          => Debugger_Command_Attribute,
                Value              => Debugger_Name.all);
          end if;
@@ -1013,7 +1013,7 @@ procedure GPS is
          if Target /= null then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Scenario_Variables => (1 .. 0 => No_Variable),
+               Scenario_Variables => No_Scenario,
                Attribute          => Program_Host_Attribute,
                Value              => Target.all);
          end if;
@@ -1021,14 +1021,14 @@ procedure GPS is
          if Protocol /= null then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Scenario_Variables => (1 .. 0 => No_Variable),
+               Scenario_Variables => No_Scenario,
                Attribute          => Protocol_Attribute,
                Value              => Protocol.all);
          end if;
 
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
-            Scenario_Variables => (1 .. 0 => No_Variable),
+            Scenario_Variables => No_Scenario,
             Attribute          => Languages_Attribute,
             Values             =>
               (new String'("ada"), new String'("c"), new String'("c++")));
