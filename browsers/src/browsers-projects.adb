@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Browsers.Canvas;      use Browsers.Canvas;
+with Gint_Xml;             use Gint_Xml;
 with GUI_Utils;            use GUI_Utils;
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
@@ -62,10 +63,23 @@ package body Browsers.Projects is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the appropriate contextual menus
 
+   function Create_Project_Browser
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Project_Browser;
+   --  Create a new project browser
+
    function Open_Project_Browser
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Find, or create, a project browser
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
 
    ---------------------
    -- On_Button_Click --
@@ -207,6 +221,29 @@ package body Browsers.Projects is
       return Context;
    end Contextual_Factory;
 
+   ----------------------------
+   -- Create_Project_Browser --
+   ----------------------------
+
+   function Create_Project_Browser
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Project_Browser
+   is
+      Browser : Project_Browser;
+   begin
+      Browser := new Project_Browser_Record;
+      Initialize (Browser, Kernel);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Browser,
+         Object          => Browser,
+         ID              => Project_Browser_Module_ID,
+         Context_Func    => Default_Browser_Context_Factory'Access);
+      Set_Size_Request
+        (Browser, Default_Browser_Width, Default_Browser_Height);
+      return Browser;
+   end Create_Project_Browser;
+
    --------------------------
    -- Open_Project_Browser --
    --------------------------
@@ -216,7 +253,6 @@ package body Browsers.Projects is
       return Gtkada.MDI.MDI_Child
    is
       Child   : MDI_Child;
-      Browser : Project_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Browser_Record'Tag);
@@ -224,17 +260,7 @@ package body Browsers.Projects is
       if Child /= null then
          Raise_Child (Child);
       else
-         Browser := new Project_Browser_Record;
-         Initialize (Browser, Kernel);
-         Register_Contextual_Menu
-           (Kernel          => Kernel,
-            Event_On_Widget => Browser,
-            Object          => Browser,
-            ID              => Project_Browser_Module_ID,
-            Context_Func    => Default_Browser_Context_Factory'Access);
-         Set_Size_Request
-           (Browser, Default_Browser_Width, Default_Browser_Height);
-         Child := Put (Get_MDI (Kernel), Browser);
+         Child := Put (Get_MDI (Kernel), Create_Project_Browser (Kernel));
          Set_Title (Child, "<project browser>");
       end if;
 
@@ -270,6 +296,40 @@ package body Browsers.Projects is
       end if;
    end Browser_Contextual_Menu;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget is
+   begin
+      if Node.Tag.all = "Project_Browser" then
+         return Gtk_Widget (Create_Project_Browser (User));
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Project_Browser_Record'Class then
+         N := new Node;
+         N.Tag := new String' ("Project_Browser");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -281,6 +341,8 @@ package body Browsers.Projects is
          Priority                => Default_Priority,
          Initializer             => null,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
 end Browsers.Projects;

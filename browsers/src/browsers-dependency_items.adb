@@ -32,6 +32,7 @@ with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.MDI;           use Gtkada.MDI;
 
+with Gint_Xml;                  use Gint_Xml;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Intl;                use Glide_Intl;
@@ -149,6 +150,19 @@ package body Browsers.Dependency_Items is
    --  This is cached for efficiency.
    --  ??? Needs to be reset when the project or its view changes
 
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
+
+   function Create_Dependency_Browser
+     (Kernel       : access Kernel_Handle_Record'Class)
+      return Dependency_Browser;
+   --  Create a new dependency browser
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -194,6 +208,29 @@ package body Browsers.Dependency_Items is
       return Context;
    end Browser_Context_Factory;
 
+   -------------------------------
+   -- Create_Dependency_Browser --
+   -------------------------------
+
+   function Create_Dependency_Browser
+     (Kernel       : access Kernel_Handle_Record'Class)
+      return Dependency_Browser
+   is
+      Browser : Dependency_Browser;
+   begin
+      Browser := new Dependency_Browser_Record;
+      Initialize (Browser, Kernel);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Browser,
+         Object          => Browser,
+         ID              => Dependency_Browser_Module_ID,
+         Context_Func    => Browser_Context_Factory'Access);
+      Set_Size_Request
+        (Browser, Default_Browser_Width, Default_Browser_Height);
+      return Browser;
+   end Create_Dependency_Browser;
+
    -----------------------------
    -- Open_Dependency_Browser --
    -----------------------------
@@ -202,36 +239,14 @@ package body Browsers.Dependency_Items is
      (Kernel       : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
-      --  Mask    : Browser_Type_Mask;
       Child   : MDI_Child;
-      Browser : Glide_Browser;
    begin
       Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
                                       Glide_Browser_Record'Tag);
-
-      --  ??? Should handle masks as well -- perhaps we need a more general
-      --  find function in the kernel.
-
-      --  Mask := Get_Mask (Glide_Browser (Get_Widget (Child)));
-      --  if (Mask and Browser_Type) = Browser_Type then
-      --         return Child;
-      --  end if;
-
       if Child /= null then
          Raise_Child (Child);
       else
-         Browser := new Dependency_Browser_Record;
-         Initialize (Browser, Kernel);
-         Register_Contextual_Menu
-           (Kernel          => Kernel,
-            Event_On_Widget => Browser,
-            Object          => Browser,
-            ID              => Dependency_Browser_Module_ID,
-            Context_Func    => Browser_Context_Factory'Access);
-
-         Set_Size_Request
-           (Browser, Default_Browser_Width, Default_Browser_Height);
-         Child := Put (Get_MDI (Kernel), Browser);
+         Child := Put (Get_MDI (Kernel), Create_Dependency_Browser (Kernel));
          Set_Title (Child, "<dependency browser>");
       end if;
 
@@ -567,6 +582,8 @@ package body Browsers.Dependency_Items is
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
    -------------
@@ -805,5 +822,39 @@ package body Browsers.Dependency_Items is
          File_Name    => Get_Source_Filename (Src));
       return Context;
    end Contextual_Factory;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget is
+   begin
+      if Node.Tag.all = "Dependency_Browser" then
+         return Gtk_Widget (Create_Dependency_Browser (User));
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Dependency_Browser_Record'Class then
+         N := new Node;
+         N.Tag := new String' ("Dependency_Browser");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
 
 end Browsers.Dependency_Items;
