@@ -81,7 +81,7 @@ package body Gtkada.File_Selector is
    Text_Color_Column : constant := 2;
    Icon_Column       : constant := 3;
 
-   Last_Directory : String_Access := new String'("");
+   Last_Directory : String_Access := new String'(".");
    --  It would be nice to use a user data instead of this global variable,
    --  but this is in any case better than changing the current directory
    --  as we did before.
