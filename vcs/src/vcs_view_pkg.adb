@@ -267,7 +267,6 @@ package body VCS_View_Pkg is
 
       Get_Cell_Area (Data.Tree, Path, Column, Area);
       Iter := Get_Iter (Data.Model, Path);
-
       Path_Free (Path);
 
       if Column = Data.Status_Column then
