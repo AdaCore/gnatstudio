@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -77,7 +77,6 @@ package body Entities is
 
    procedure Free_If_Partial (Entity : in out Entity_Information);
    --  Free the memory occupied by Entity if it is a partial entity.
-
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
