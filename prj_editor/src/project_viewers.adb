@@ -22,11 +22,13 @@ with Gdk.Color;       use Gdk.Color;
 with Gdk.Event;       use Gdk.Event;
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
+with Gtk.Alignment;   use Gtk.Alignment;
 with Gtk.Arguments;   use Gtk.Arguments;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Frame;       use Gtk.Frame;
 with Gtk.Label;       use Gtk.Label;
-with Gtk.Main;        use Gtk.Main;
 with Gtk.Menu;        use Gtk.Menu;
 with Gtk.Menu_Item;   use Gtk.Menu_Item;
 with Gtk.Notebook;    use Gtk.Notebook;
@@ -909,11 +911,36 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       Wiz : Creation_Wizard.Prj_Wizard;
+      Load_Project_Page : Gtk_Alignment;
+      Frame : Gtk_Frame;
+      Load_Project : Gtk_Check_Button;
    begin
+      Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
+      Set_Border_Width (Load_Project_Page, 5);
+
+      Gtk_New (Frame);
+      Set_Border_Width (Frame, 5);
+      Add (Load_Project_Page, Frame);
+
+      Gtk_New (Load_Project, -"Automatically load the project");
+      Set_Active (Load_Project, True);
+      Add (Frame, Load_Project);
+
       Gtk_New (Wiz, Kernel);
-      Set_Current_Page (Wiz, 1);
-      Show_All (Wiz);
-      Main;
+      Add_Page (Wiz, Load_Project_Page, "Loading the project", "Load project");
+
+      declare
+         Name : constant String := Run (Wiz);
+      begin
+         --  Load the project if needed
+         if Name /= ""
+           and then Get_Active (Load_Project)
+         then
+            Glide_Kernel.Project.Load_Project (Kernel, Name);
+         end if;
+      end;
+
+      Destroy (Wiz);
    end On_New_Project;
 
    -------------------------
@@ -989,6 +1016,7 @@ package body Project_Viewers is
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Item : Gtk_Menu_Item;
+      Submenu : Gtk_Menu;
       File_Context : File_Selection_Context_Access;
    begin
       --  We insert entries whatever the sender_id is, as long as the context
@@ -1003,6 +1031,7 @@ package body Project_Viewers is
 
             Gtk_New (Item, Label => -"Add Directory to "
                      & Project_Name (Project_Information (File_Context)));
+            Set_Sensitive (Item, False);
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -1036,6 +1065,24 @@ package body Project_Viewers is
                Context_Callback.To_Marshaller
                (On_Edit_Naming_Scheme'Access),
                Selection_Context_Access (Context));
+
+            Gtk_New (Item, -"Add dependency");
+            Add (Menu, Item);
+
+            Gtk_New (Submenu);
+            Set_Submenu (Item, Submenu);
+
+            Gtk_New (Item, -"From wizard...");
+            Set_Sensitive (Item, False);
+            Add (Submenu, Item);
+
+            Gtk_New (Item, -"default project");
+            Set_Sensitive (Item, False);
+            Add (Submenu, Item);
+
+            Gtk_New (Item, -"Existing project");
+            Set_Sensitive (Item, False);
+            Add (Submenu, Item);
          end if;
 
          if Has_Directory_Information (File_Context) then
@@ -1050,7 +1097,9 @@ package body Project_Viewers is
          if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
+
             Gtk_New (Item, Label => -"Add Variable");
+            Set_Sensitive (Item, False);
             Append (Menu, Item);
             --  Context_Callback.Connect
             --    (Item, "activate",
@@ -1171,6 +1220,7 @@ package body Project_Viewers is
          Kernel_Handle (Kernel));
 
       Gtk_New (Menu_Item, -"Add Directory...");
+      Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
                      Add_Before => False);
 
