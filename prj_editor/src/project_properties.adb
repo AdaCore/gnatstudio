@@ -246,7 +246,7 @@ package body Project_Properties is
          Widget_Callback.To_Marshaller (Browse_Location'Access),
          Slot_Object => Editor);
 
-      Gtk_New (Editor.Convert, "Convert paths to absolute");
+      Gtk_New (Editor.Convert, -"Convert paths to absolute");
       Attach (Table, Editor.Convert, 1, 2, 2, 3, Yoptions => 0);
 
       Set_Active (Editor.Convert, True);
