@@ -71,6 +71,9 @@ private
       Uneditable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag indicating uneditable text.
 
+      Prompt_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag used to distinguish the prompt from the rest of the text.
+
       Button_Press : Boolean := False;
       --  Whether a mouse button is currently pressed.
       --  Used to enable selection in places where the cursor is not allowed.
