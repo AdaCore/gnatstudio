@@ -1000,7 +1000,7 @@ package body Glide_Kernel.Modules is
       Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True)
    is
-      Value : GValue_Array (1 .. 5);
+      Value         : GValue_Array (1 .. 5);
       Norm_Filename : constant String := Normalize_Pathname (File);
    begin
       Init (Value (1),  Glib.GType_String);
