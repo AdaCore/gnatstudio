@@ -103,7 +103,6 @@ package body VCS.Generic_VCS is
       Files      : String_List.List;
       First_Args : GNAT.OS_Lib.String_List_Access;
       Action     : VCS_Action;
-      Dir_Action : VCS_Action;
       Show_Bar   : Boolean := True);
    --  Launch a generic command corresponding to Action.
    --  User must free Files.
@@ -111,6 +110,14 @@ package body VCS.Generic_VCS is
    --  Action is the action that must be executed for every file,
    --  Dir_Action is the action that must be executed for every directory.
    --  Dir_Action only takes the name of the directory as parameter.
+
+   procedure Generic_Dir_Command
+     (Ref        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      First_Args : GNAT.OS_Lib.String_List_Access;
+      Dir_Action : VCS_Action;
+      Show_Bar   : Boolean := True);
+   --  Same as above, but work on dirs.
 
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
@@ -251,6 +258,80 @@ package body VCS.Generic_VCS is
       null;
    end Free;
 
+   -------------------------
+   -- Generic_Dir_Command --
+   -------------------------
+
+   procedure Generic_Dir_Command
+     (Ref        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      First_Args : GNAT.OS_Lib.String_List_Access;
+      Dir_Action : VCS_Action;
+      Show_Bar   : Boolean := True)
+   is
+      Kernel     : Kernel_Handle renames Ref.Kernel;
+      The_Action : constant Action_Record :=
+        Lookup_Action (Kernel, Ref.Commands (Dir_Action));
+
+      Node   : List_Node;
+      Custom : Command_Access;
+      Index  : Natural := 1;
+
+      use type GNAT.OS_Lib.String_List_Access;
+   begin
+      if The_Action = No_Action then
+         return;
+      end if;
+
+      Node := First (Dirs);
+
+      while Node /= Null_Node loop
+         declare
+            Args      : GNAT.OS_Lib.String_List_Access;
+            Dir       : GNAT.Strings.String_Access;
+
+         begin
+            --  Args and Dir freed when the command proxy is destroyed.
+
+            if First_Args = null then
+               Args := new GNAT.OS_Lib.String_List
+                 (1 .. 1);
+            else
+               Args := new GNAT.OS_Lib.String_List
+                 (1 .. 1 + First_Args'Length);
+            end if;
+
+            Index := 1;
+
+            if First_Args /= null then
+               for J in First_Args'Range loop
+                  Args (Index) := new String'(First_Args (J).all);
+                  Index := Index + 1;
+               end loop;
+            end if;
+
+            Dir := new String'(Locale_From_UTF8 (Data (Node)));
+
+            Custom := Create_Proxy
+              (The_Action.Command,
+               (null,
+                null,
+                Dir,
+                Args));
+
+            Launch_Background_Command
+              (Kernel,
+               Custom,
+               True,
+               Show_Bar,
+               Ref.Id.all,
+               True);
+         end;
+
+         Node := Next (Node);
+      end loop;
+   end Generic_Dir_Command;
+
    ---------------------
    -- Generic_Command --
    ---------------------
@@ -260,7 +341,6 @@ package body VCS.Generic_VCS is
       Files      : String_List.List;
       First_Args : GNAT.OS_Lib.String_List_Access;
       Action     : VCS_Action;
-      Dir_Action : VCS_Action;
       Show_Bar   : Boolean := True)
    is
       Kernel : Kernel_Handle renames Ref.Kernel;
@@ -268,51 +348,37 @@ package body VCS.Generic_VCS is
       The_Action : constant Action_Record :=
         Lookup_Action (Kernel, Ref.Commands (Action));
 
-      The_Dir_Action : constant Action_Record :=
-        Lookup_Action (Kernel, Ref.Commands (Dir_Action));
-
-      Sorted_Files : String_List.List;
       Node   : List_Node;
       Custom : Command_Access;
       Index  : Natural := 1;
-      Dir_Operation : Boolean;
+      Length : constant Natural := String_List.Length (Files);
+      First_Args_Length : Natural := 0;
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
-      if (The_Action = No_Action
-          and then The_Dir_Action = No_Action)
+      if The_Action = No_Action
         or else Is_Empty (Files)
       then
          return;
       end if;
 
-      if Ref.Absolute_Names then
-         Node := First (Files);
-      else
-         Sorted_Files := Copy_String_List (Files);
-         Sort (Sorted_Files);
-         Node := First (Sorted_Files);
+      if First_Args /= null then
+         First_Args_Length := First_Args'Length;
       end if;
 
-      Dir_Operation := GNAT.OS_Lib.Is_Directory (Data (Node));
+      Node := First (Files);
 
       while Node /= Null_Node loop
          declare
             Args      : GNAT.OS_Lib.String_List_Access;
-            Dir_Args  : GNAT.OS_Lib.String_List_Access;
             Dir       : GNAT.Strings.String_Access;
 
          begin
             --  Args, Dir and Dir_Args are freed when the command proxy is
             --  destroyed.
 
-            if First_Args = null then
-               Args := new GNAT.OS_Lib.String_List
-                 (1 .. Length (Files));
-            else
-               Args := new GNAT.OS_Lib.String_List
-                 (1 .. Length (Files) + First_Args'Length);
-            end if;
+            Args := new GNAT.OS_Lib.String_List
+              (1 .. Length + First_Args_Length);
 
             Index := 1;
 
@@ -330,9 +396,10 @@ package body VCS.Generic_VCS is
             end if;
 
             while Node /= Null_Node loop
-               if not Ref.Absolute_Names
-                 and then GNAT.Directory_Operations.Dir_Name
-                   (Locale_From_UTF8 (Data (Node))) /= Dir.all
+               if (not Ref.Absolute_Names
+                   and then GNAT.Directory_Operations.Dir_Name
+                     (Locale_From_UTF8 (Data (Node))) /= Dir.all)
+                 or else Index - First_Args_Length >= Command_Line_Limit
                then
                   exit;
                end if;
@@ -348,62 +415,22 @@ package body VCS.Generic_VCS is
                Node := Next (Node);
             end loop;
 
-            if Dir_Operation then
-               if The_Dir_Action /= No_Action then
-                  Dir_Args := new GNAT.OS_Lib.String_List
-                    (1 .. First_Args'Length + 1);
+            Custom := Create_Proxy
+              (The_Action.Command,
+               (null,
+                null,
+                Dir,
+                Args));
 
-                  for J in Dir_Args'Range loop
-                     Dir_Args (J) := new String'
-                       (Args (Args'First + J - 1).all);
-                  end loop;
-
-                  Dir_Args (Dir_Args'Last) := new String'(Dir.all);
-
-                  Custom := Create_Proxy
-                    (The_Dir_Action.Command,
-                     (null,
-                      null,
-                      new String'(Dir.all),
-                      Dir_Args));
-
-                  Launch_Background_Command
-                    (Kernel,
-                     Custom,
-                     True,
-                     Show_Bar,
-                     Ref.Id.all,
-                     True);
-               else
-                  GNAT.OS_Lib.Free (Dir);
-               end if;
-            else
-               if The_Action /= No_Action then
-                  Custom := Create_Proxy
-                    (The_Action.Command,
-                     (null,
-                      null,
-                      Dir,
-                      Args));
-
-                  Launch_Background_Command
-                    (Kernel,
-                     Custom,
-                     True,
-                     Show_Bar,
-                     Ref.Id.all,
-                     True);
-               else
-                  GNAT.OS_Lib.Free (Dir);
-                  GNAT.Strings.Free (Args);
-               end if;
-            end if;
+            Launch_Background_Command
+              (Kernel,
+               Custom,
+               True,
+               Show_Bar,
+               Ref.Id.all,
+               True);
          end;
       end loop;
-
-      if not Ref.Absolute_Names then
-         String_List.Free (Sorted_Files);
-      end if;
    end Generic_Command;
 
    procedure Generic_Command
@@ -477,20 +504,62 @@ package body VCS.Generic_VCS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False)
    is
+      Args   : GNAT.OS_Lib.String_List_Access;
+      Sorted : String_List.List := Copy_String_List (Filenames);
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Clear_Logs'Img);
+
+      if Rep.Current_Query_Files /= Null_List then
+         Free (Rep.Current_Query_Files);
+      end if;
+
+      Sort (Sorted);
+
+
+      if Local then
+         if Rep.Status_Parser.File_Index = 0 then
+            Rep.Current_Query_Files := Copy_String_List (Sorted);
+         end if;
+
+         Generic_Command (Rep, Sorted, Args, Local_Status_Files, False);
+      else
+         if Rep.Local_Status_Parser.File_Index = 0 then
+            Rep.Current_Query_Files := Copy_String_List (Sorted);
+         end if;
+
+         Generic_Command (Rep, Sorted, Args, Status_Files);
+      end if;
+
+      String_List.Free (Sorted);
+      GNAT.Strings.Free (Args);
+   end Get_Status;
+
+   ---------------------
+   -- Get_Status_Dirs --
+   ---------------------
+
+   procedure Get_Status_Dirs
+     (Rep         : access Generic_VCS_Record;
+      Dirs        : String_List.List;
+      Clear_Logs  : Boolean := False;
+      Local       : Boolean := False)
+   is
       Args : GNAT.OS_Lib.String_List_Access;
    begin
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Clear_Logs'Img);
 
-      if Local then
-         Generic_Command
-           (Rep, Filenames, Args, Local_Status_Files, Local_Status_Dir, False);
-      else
-         Generic_Command (Rep, Filenames, Args, Status_Files, Status_Dir);
+      if Rep.Current_Query_Files /= Null_List then
+         Free (Rep.Current_Query_Files);
       end if;
 
-      GNAT.Strings.Free (Args);
-   end Get_Status;
+      if Local then
+         Generic_Dir_Command (Rep, Dirs, Args, Local_Status_Dir, False);
+      else
+         Generic_Dir_Command (Rep, Dirs, Args, Status_Dir);
+      end if;
+   end Get_Status_Dirs;
 
    ----------------------
    -- Local_Get_Status --
@@ -531,7 +600,7 @@ package body VCS.Generic_VCS is
    is
       pragma Unreferenced (User_Name);
    begin
-      Generic_Command (Rep, Filenames, null, Open, None);
+      Generic_Command (Rep, Filenames, null, Open);
    end Open;
 
    ------------
@@ -549,7 +618,7 @@ package body VCS.Generic_VCS is
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
-      Generic_Command (Rep, Filenames, Args, Commit, None);
+      Generic_Command (Rep, Filenames, Args, Commit);
 
       GNAT.Strings.Free (Args);
    end Commit;
@@ -562,7 +631,7 @@ package body VCS.Generic_VCS is
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) is
    begin
-      Generic_Command (Rep, Filenames, null, Update, None);
+      Generic_Command (Rep, Filenames, null, Update);
    end Update;
 
    -----------
@@ -593,7 +662,7 @@ package body VCS.Generic_VCS is
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
-      Generic_Command (Rep, Filenames, Args, Add, None);
+      Generic_Command (Rep, Filenames, Args, Add);
 
       GNAT.Strings.Free (Args);
    end Add;
@@ -613,7 +682,7 @@ package body VCS.Generic_VCS is
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
-      Generic_Command (Rep, Filenames, Args, Remove, None);
+      Generic_Command (Rep, Filenames, Args, Remove);
 
       GNAT.Strings.Free (Args);
    end Remove;
@@ -626,7 +695,7 @@ package body VCS.Generic_VCS is
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) is
    begin
-      Generic_Command (Rep, Filenames, null, Revert, None);
+      Generic_Command (Rep, Filenames, null, Revert);
    end Revert;
 
    ----------
@@ -835,24 +904,32 @@ package body VCS.Generic_VCS is
 
             if Field /= null then
                Parser.File_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.File_Index);
             end if;
 
             Field := Get_Field (N, "status_index");
 
             if Field /= null then
                Parser.Status_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.Status_Index);
             end if;
 
             Field := Get_Field (N, "local_revision_index");
 
             if Field /= null then
                Parser.Local_Rev_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.Local_Rev_Index);
             end if;
 
             Field := Get_Field (N, "repository_revision_index");
 
             if Field /= null then
                Parser.Repository_Rev_Index := To_Natural (Field.all);
+               Parser.Matches_Num := Natural'Max
+                 (Parser.Matches_Num, Parser.Repository_Rev_Index);
             end if;
 
             return Parser;
@@ -975,13 +1052,11 @@ package body VCS.Generic_VCS is
    is
       Status  : File_Status_List.List;
       S       : String renames Text;
-      Matches : Match_Array (0 .. 4);
+      Matches : Match_Array (0 .. Parser.Matches_Num);
       Start   : Integer := S'First;
 
    begin
-      if Parser.Regexp = null
-        or else Parser.File_Index = 0
-      then
+      if Parser.Regexp = null then
          Insert (Rep.Kernel,
                  -"Error: no status parser defined for " & Rep.Id.all);
          return Status;
@@ -995,11 +1070,25 @@ package body VCS.Generic_VCS is
          declare
             St : File_Status_Record;
          begin
-            St.File := Glide_Kernel.Create
-              (S (Matches (Parser.File_Index).First
-                  .. Matches (Parser.File_Index).Last),
-               Rep.Kernel,
-               True, False);
+            if Parser.File_Index /= 0 then
+               St.File := Glide_Kernel.Create
+                 (S (Matches (Parser.File_Index).First
+                     .. Matches (Parser.File_Index).Last),
+                  Rep.Kernel,
+                  True, False);
+
+            elsif not Is_Empty (Rep.Current_Query_Files) then
+               St.File := Glide_Kernel.Create
+                 (String_List.Head (Rep.Current_Query_Files),
+                  Rep.Kernel,
+                  True, False);
+
+               String_List.Next (Rep.Current_Query_Files);
+            else
+               --  ??? There should be an error message here
+               return Status;
+            end if;
+
 
             Start := Integer'Max (Matches (Parser.File_Index).Last + 1, Start);
 
@@ -1035,6 +1124,7 @@ package body VCS.Generic_VCS is
                   Node : Status_Parser.List_Node :=
                            First (Parser.Status_Identifiers);
                begin
+                  Trace (Me, "Status found: #" & Status_String & "#");
                   while Node /= Status_Parser.Null_Node loop
                      Match (Data (Node).Regexp.all, Status_String, Matches);
 
