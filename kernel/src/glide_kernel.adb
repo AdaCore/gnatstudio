@@ -1282,50 +1282,26 @@ package body Glide_Kernel is
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
 
-   -----------------------
-   -- Get_Other_File_Of --
-   -----------------------
+   ---------------------
+   -- Other_File_Name --
+   ---------------------
 
-   function Get_Other_File_Of
+   function Other_File_Name
      (Kernel          : access Kernel_Handle_Record;
       Source_Filename : String;
       Full_Name       : Boolean := True) return String
    is
-      Lib_Info : LI_File_Ptr;
+      Project : constant Project_Id := Get_Project_From_File
+        (Get_Project_View (Kernel), Source_Filename);
+      Other : constant String := Other_File_Name (Project, Source_Filename);
    begin
-      Lib_Info := Locate_From_Source_And_Complete (Kernel, Source_Filename);
-
-      if Lib_Info /= No_LI_File then
-         declare
-            Other_File : constant String := Get_Other_File_Of
-              (Lib_Info, Source_Filename);
-         begin
-            if Other_File /= "" then
-               if Full_Name then
-                  declare
-                     Full_Name : constant String :=
-                       Find_Source_File (Kernel, Other_File, True);
-                  begin
-                     if Full_Name /= "" then
-                        return Full_Name;
-                     else
-                        Console.Insert
-                          (Kernel,
-                           (-"Path not found for ") & Other_File,
-                           Mode => Error);
-                     end if;
-                  end;
-               else
-                  return Other_File;
-               end if;
-            else
-               Console.Insert (Kernel, -"No other file found", Mode => Error);
-            end if;
-         end;
+      if Full_Name then
+         return Find_On_Path
+           (Get_Project_From_View (Project), Project, Other, False);
+      else
+         return Other;
       end if;
-
-      return "";
-   end Get_Other_File_Of;
+   end Other_File_Name;
 
    ------------------------------
    -- Parse_All_LI_Information --

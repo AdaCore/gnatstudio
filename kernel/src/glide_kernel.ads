@@ -192,7 +192,7 @@ package Glide_Kernel is
    --  null is returned if the LI file couldn't be parsed. It is guaranteed
    --  that the returned LI file has been fully parsed.
 
-   function Get_Other_File_Of
+   function Other_File_Name
      (Kernel          : access Kernel_Handle_Record;
       Source_Filename : String;
       Full_Name       : Boolean := True) return String;
