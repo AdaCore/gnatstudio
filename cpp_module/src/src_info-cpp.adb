@@ -1133,8 +1133,8 @@ package body Src_Info.CPP is
       --  is newer than its Xref
 
       if not Is_Xref_Valid (Full_Filename, Pool)
-        or else To_Timestamp (File_Time_Stamp (Full_Name (Full_Filename))) >
-                To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name)))
+        or else To_Timestamp (File_Time_Stamp (Full_Filename)) >
+                To_Timestamp (File_Time_Stamp (Xref_File_Name))
       then
          Set_Valid (Full_Filename, True, Pool);
 
@@ -1247,8 +1247,8 @@ package body Src_Info.CPP is
             Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
 
             if not Is_Xref_Valid (File, Pool)
-              or else To_Timestamp (File_Time_Stamp (Full_Name (File))) >
-                To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name)))
+              or else To_Timestamp (File_Time_Stamp (File)) >
+                To_Timestamp (File_Time_Stamp (Xref_File_Name))
             then
                Num_Source_Files := Num_Source_Files + 1;
 
@@ -1264,7 +1264,7 @@ package body Src_Info.CPP is
                Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name));
                Put_Line (Tmp_File, Full_Name (File));
 
-            elsif To_Timestamp (File_Time_Stamp (Full_Name (Xref_File_Name))) >
+            elsif To_Timestamp (File_Time_Stamp (Xref_File_Name)) >
               To_Timestamp (File_Time_Stamp (TO_File_Name))
             then
                Recompute_TO := True;
@@ -1816,7 +1816,7 @@ package body Src_Info.CPP is
       if File /= No_LI_File and then File.LI.Parsed then
          if not Is_Incomplete (File)
            and then To_Timestamp
-             (File_Time_Stamp (Full_Name (File.LI.LI_Filename))) <=
+             (File_Time_Stamp (File.LI.LI_Filename)) <=
              File.LI.LI_Timestamp
          then
             return;
