@@ -141,6 +141,9 @@ package body Debugger.Gdb is
      ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
    --  How to get the range of addresses for a given line
 
+   GNAT_Binder_File_Pattern : constant Pattern_Matcher := Compile
+     ("b(~|_).*\.(adb|c)");
+
    procedure Language_Filter
      (Process : access Debugger_Process_Tab_Record'Class;
       Str     : String;
@@ -733,7 +736,47 @@ package body Debugger.Gdb is
 
       Send (Debugger, "show lang", Mode => Internal);
       Send (Debugger, "list", Mode => Internal);
-      Send (Debugger, "info line", Mode => Internal);
+
+      Set_Parse_File_Name (Get_Process (Debugger), False);
+
+      declare
+         Str         : constant String :=
+           Send (Debugger, "info line", Mode => Internal);
+         Matched     : Match_Array (0 .. 2);
+         File_First  : Natural := 0;
+         File_Last   : Positive;
+         Line        : Natural := 0;
+         First, Last : Natural;
+         Addr_First,
+         Addr_Last   : Natural;
+
+      begin
+         Set_Parse_File_Name (Get_Process (Debugger), True);
+         Found_File_Name
+           (Debugger,
+            Str, File_First, File_Last, First, Last, Line,
+            Addr_First, Addr_Last);
+
+         if First /= 0 then
+            Match
+              (GNAT_Binder_File_Pattern,
+               Str (File_First .. File_Last), Matched);
+
+            --  If we find a file that looks like a GNAT binder file, load
+            --  the corresponding main file.
+
+            if Matched (0) /= No_Match then
+               Send
+                 (Debugger,
+                  "info line " &
+                    Str (Matched (0).First + 2 .. Matched (0).Last) & ":1",
+                  Mode => Internal);
+               return;
+            end if;
+         end if;
+
+         Send (Debugger, "info line", Mode => Internal);
+      end;
    end Set_Executable;
 
    --------------------
@@ -1107,19 +1150,16 @@ package body Debugger.Gdb is
    -- Get_Last_Breakpoint_Id --
    ----------------------------
 
-   function Get_Last_Breakpoint_Id (Debugger : access Gdb_Debugger'Class)
-      return Breakpoint_Identifier
+   function Get_Last_Breakpoint_Id
+     (Debugger : access Gdb_Debugger'Class) return Breakpoint_Identifier
    is
+      S     : constant String :=
+        Send (Debugger, "print $bpnum", Mode => Internal);
+      Index : Integer := S'First;
+
    begin
-      Wait_User_Command (Debugger);  --  ??? Should not be needed
-      declare
-         S : constant String :=
-           Send (Debugger, "print $bpnum", Mode => Internal);
-         Index : Integer := S'First;
-      begin
-         Skip_To_Char (S, Index, '=');
-         return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
-      end;
+      Skip_To_Char (S, Index, '=');
+      return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
    end Get_Last_Breakpoint_Id;
 
    ----------------------
