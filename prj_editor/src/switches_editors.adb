@@ -99,6 +99,11 @@ package body Switches_Editors is
    --  Revert to the default switches in the editor
    --  ??? Should this be specific to a page
 
+   procedure Internal_Free is new Ada.Unchecked_Deallocation
+     (Argument_List, Argument_List_Access);
+   --  Free the memory occupied by the parameter array, but not the strings
+   --  themselves.
+
    -------------
    -- Gtk_New --
    -------------
@@ -185,9 +190,6 @@ package body Switches_Editors is
       Null_Argument_List : Argument_List (1 .. 0);
       List               : Argument_List_Access;
 
-      procedure Simple_Free is new
-        Ada.Unchecked_Deallocation (Argument_List, Argument_List_Access);
-
    begin
       case Tool is
          when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
@@ -207,7 +209,7 @@ package body Switches_Editors is
             declare
                Ret : Argument_List := List.all;
             begin
-               Simple_Free (List);
+               Internal_Free (List);
                return Ret;
             end;
          end if;
@@ -916,11 +918,9 @@ package body Switches_Editors is
    ----------
 
    procedure Free (Switches : in out GNAT.OS_Lib.Argument_List_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
    begin
       Free (Switches.all);
-      Internal (Switches);
+      Internal_Free (Switches);
    end Free;
 
    --------------
@@ -1059,7 +1059,6 @@ package body Switches_Editors is
 
       --  Normalize the subproject we are currently working on, since we only
       --  know how to modify normalized subprojects.
-      --  ??? Should check whether the project is already normalized.
 
       Normalize (Project);
 
