@@ -739,9 +739,14 @@ package body Entities.Queries is
       Update_Xref (File, File_Has_No_LI_Report);
 
       Project := Get_Project_From_File
-        (File.Db.Registry.all, Get_Filename (File), Root_If_Not_Found => True);
+        (File.Db.Registry.all, Get_Filename (File),
+         Root_If_Not_Found => False);
 
       if Single_Source_File then
+         if Project = No_Project then
+            Project := Get_Root_Project (File.Db.Registry.all);
+         end if;
+
          Iter := (Importing             => Start (Project, Recursive => False),
                   Db                    => File.Db,
                   Include_Self          => Include_Self,
@@ -753,8 +758,16 @@ package body Entities.Queries is
                   Dep_Index             => Dependency_Arrays.First,
                   File                  => File);
       else
-         Importing := Find_All_Projects_Importing
-           (Project, Include_Self => True);
+         if Project = No_Project then
+            --  Project not found ? We'll have to parse all projects, since
+            --  it might be from the GNAT runtime
+            Importing := Start
+              (Get_Root_Project (File.Db.Registry.all), Recursive => True);
+         else
+            Importing := Find_All_Projects_Importing
+              (Project, Include_Self => True);
+         end if;
+
          Iter := (Importing             => Importing,
                   Db                    => File.Db,
                   Include_Self          => Include_Self,
