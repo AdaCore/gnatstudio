@@ -158,6 +158,7 @@ package body Project_Viewers is
    Full_Path_Cst : aliased constant String := "full_path";
    Recursive_Cst : aliased constant String := "recursive";
    Directory_Cst : aliased constant String := "directory";
+   Imported_Cst  : aliased constant String := "imported";
    Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Full_Path_Cst'Access,
       2 => Recursive_Cst'Access);
@@ -166,6 +167,8 @@ package body Project_Viewers is
    Add_Source_Dir_Cmd_Parameters :
      constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Directory_Cst'Access);
+   Remove_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+     := (1 => Imported_Cst'Access);
 
    File_Name_Column         : constant := 0;
    Compiler_Switches_Column : constant := 1;
@@ -2549,6 +2552,17 @@ package body Project_Viewers is
             Free (Args);
          end;
 
+      elsif Command = "remove_dependency" then
+         Name_Parameters (Data, Remove_Dep_Cmd_Parameters);
+         declare
+            Instance2 : constant Class_Instance :=
+              Nth_Arg (Data, 2, Get_Project_Class (Kernel));
+            Project2  : constant Project_Type := Get_Data (Instance2);
+         begin
+            Remove_Imported_Project (Project, Project2);
+            Recompute_View (Kernel);
+         end;
+
       elsif Command = "sources" then
          Name_Parameters (Data, Sources_Cmd_Parameters);
          declare
@@ -3695,6 +3709,15 @@ package body Project_Viewers is
              & " current scenario. The project is not saved automatically."),
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "remove_dependency",
+         Params       => Parameter_Names_To_Usage (Remove_Dep_Cmd_Parameters),
+         Description  => -("Remove a dependency between two projects."),
+         Minimum_Args => Remove_Dep_Cmd_Parameters'Length,
+         Maximum_Args => Remove_Dep_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
