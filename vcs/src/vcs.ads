@@ -110,7 +110,7 @@ package VCS is
       Users : String_List.List := String_List.Null_List;
       --  A list of users currently working on the file.
 
-      --  ???  We need to put additional info here : date, etc.
+      --  ???  We need to put additional info here: date, etc.
    end record;
 
    function Copy_File_Status
