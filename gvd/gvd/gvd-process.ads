@@ -42,18 +42,18 @@ package Odd.Process is
    --  Debugger_Process_Tab_Record itself, but rather its Process_Paned
    --  field.
 
-   type Debugger_Process_Tab_Record is new Process_Tab_Pkg.Process_Tab_Record
-     with record
-        Debugger : Debugger_Access;
-         --  The underlying debugger process.
+   type Debugger_Process_Tab_Record is new
+     Process_Tab_Pkg.Process_Tab_Record with
+   record
+      Debugger : Debugger_Access;
+       --  The underlying debugger process.
 
-        Edit_Pos : Glib.Guint;
-         --  The last position in the text window of the debugger where text
-         --  was inserted. This is used to find what was typed by the user.
+      Edit_Pos : Glib.Guint;
+       --  The last position in the text window of the debugger where text
+       --  was inserted. This is used to find what was typed by the user.
 
-     end record;
+   end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
-
 
    package Process_User_Data is new User_Data (Debugger_Process_Tab);
    --  This is used to convert from the notebook page associated with the
