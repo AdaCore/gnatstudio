@@ -799,7 +799,7 @@ package body Glide_Kernel.Preferences is
 
       File_Pattern := Param_Spec_String
         (Gnew_String
-           (Name  => "Messages-File-Pattern",
+           (Name  => "Messages-File-Regpat",
             Nick  => -"File pattern",
             Blurb =>
               -"Pattern used to detect file locations (e.g error messages)",
