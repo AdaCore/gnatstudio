@@ -123,6 +123,10 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all context-related commands
 
+   procedure Entity_Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for all entity_context-related commands
+
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class; File : File_Info);
    procedure Set_Data
@@ -619,6 +623,7 @@ package body Glide_Kernel.Scripts is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
+      Location : File_Location_Info;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Location_Cmd_Parameters);
@@ -631,6 +636,18 @@ package body Glide_Kernel.Scripts is
          begin
             Set_Data (Instance, File_Location_Info'(File, L, C));
          end;
+
+      elsif Command = "line" then
+         Location := Get_Data (Instance);
+         Set_Return_Value (Data, Get_Line (Location));
+
+      elsif Command = "column" then
+         Location := Get_Data (Instance);
+         Set_Return_Value (Data, Get_Column (Location));
+
+      elsif Command = "file" then
+         Location := Get_Data (Instance);
+         Set_Return_Value (Data, Get_File (Location));
       end if;
    end Create_Location_Command_Handler;
 
@@ -821,6 +838,48 @@ package body Glide_Kernel.Scripts is
       end if;
    end Create_Project_Command_Handler;
 
+   ------------------------------------
+   -- Entity_Context_Command_Handler --
+   ------------------------------------
+
+   procedure Entity_Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Instance : constant Class_Instance := Nth_Arg
+        (Data, 1, Get_Entity_Context_Class (Kernel));
+      Entity   : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access'(Get_Data (Instance));
+      L, C     : Integer := -1;
+   begin
+      if Command = "location" then
+         if Has_Line_Information (Entity) then
+            L := Line_Information (Entity);
+         end if;
+
+         if Has_Column_Information (Entity) then
+            C := Column_Information (Entity);
+         end if;
+
+         if Has_File_Information (Entity) then
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Get_Script (Data),
+                  (Create_File (Get_Script (Data), File_Information (Entity))),
+                  L,
+                  C));
+         else
+            Set_Error_Msg
+              (Data, -"No file information stored in the context");
+         end if;
+
+      elsif Command = "entity" then
+         Set_Return_Value
+           (Data, Create_Entity (Get_Script (Data), Get_Entity (Entity)));
+      end if;
+   end Entity_Context_Command_Handler;
+
    -----------------------------
    -- Context_Command_Handler --
    -----------------------------
@@ -832,7 +891,6 @@ package body Glide_Kernel.Scripts is
       Instance : Class_Instance;
       File     : File_Selection_Context_Access;
       Loc      : File_Location_Context_Access;
-      Entity   : Entity_Selection_Context_Access;
       Context  : Selection_Context_Access;
       L, C     : Integer := -1;
    begin
@@ -878,19 +936,13 @@ package body Glide_Kernel.Scripts is
               (Data,
                Create_File_Location
                  (Get_Script (Data),
-                   (Create_File (Get_Script (Data), File_Information (Loc))),
+                  (Create_File (Get_Script (Data), File_Information (Loc))),
                   L,
                   C));
          else
-            Set_Error_Msg (Data, -"No file information stored in the context");
+            Set_Error_Msg
+              (Data, -"No file information stored in the context");
          end if;
-
-      elsif Command = "entity" then
-         Instance := Nth_Arg
-           (Data, 1, Get_Entity_Context_Class (Kernel));
-         Entity := Entity_Selection_Context_Access'(Get_Data (Instance));
-         Set_Return_Value
-           (Data, Create_Entity (Get_Script (Data), Get_Entity (Entity)));
 
       elsif Command = "current_context" then
          Context := Get_Current_Context (Kernel);
@@ -1083,6 +1135,27 @@ package body Glide_Kernel.Scripts is
          Maximum_Args => 3,
          Class        => Get_File_Location_Class (Kernel),
          Handler      => Create_Location_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "line",
+         Return_Value  => "integer",
+         Description   => -"Return the line of the location",
+         Class         => Get_File_Location_Class (Kernel),
+         Handler       => Create_Location_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "column",
+         Return_Value  => "integer",
+         Description   => -"Return the column of the location",
+         Class         => Get_File_Location_Class (Kernel),
+         Handler       => Create_Location_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "file",
+         Return_Value  => "File",
+         Description   => -"Return the file of the location",
+         Class         => Get_File_Location_Class (Kernel),
+         Handler       => Create_Location_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -1191,7 +1264,14 @@ package body Glide_Kernel.Scripts is
          Return_Value => "Entity",
          Description  => -"Return the entity stored in the context",
          Class        => Get_Entity_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
+         Handler      => Entity_Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "location",
+         Return_Value => "FileLocation",
+         Description  => -"Return the file location stored in the context",
+         Class        => Get_Entity_Context_Class (Kernel),
+         Handler      => Entity_Context_Command_Handler'Access);
 
       Register_Command
         (Kernel,
