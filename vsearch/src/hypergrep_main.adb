@@ -28,7 +28,7 @@
 
 with Gtk; use Gtk;
 with Gtk.Main;
-with Gtk.Widget; use Gtk.Widget;
+--  with Gtk.Widget; use Gtk.Widget;
 
 with Hyper_Grep_Base_Pkg; use Hyper_Grep_Base_Pkg;
 
