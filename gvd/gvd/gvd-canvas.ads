@@ -78,7 +78,7 @@ package GVD.Canvas is
       Black_GC          : Gdk.GC.Gdk_GC;
       Refresh_Button_GC : Gdk.GC.Gdk_GC;
       Thaw_Bg_GC        : Gdk.GC.Gdk_GC;
-      Freeze_Bg_Gc      : Gdk.GC.Gdk_GC;
+      Freeze_Bg_GC      : Gdk.GC.Gdk_GC;
 
       Title_Font        : Gdk.Font.Gdk_Font;
 

@@ -32,6 +32,7 @@ with Items;           use Items;
 with GVD.Pixmaps;      use GVD.Pixmaps;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Display_Items;   use Display_Items;
+with Gdk;             use Gdk;
 
 package body GVD.Canvas is
 
@@ -78,8 +79,7 @@ package body GVD.Canvas is
    -------------------
 
    procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class) is
-      use type Gdk_Window;
-      Win : constant Gdk_Window := Get_Window (Canvas);
+      Win : constant Gdk.Window.Gdk_Window := Get_Window (Canvas);
    begin
       pragma Assert (Win /= null);
       Create_From_Xpm_D
@@ -161,7 +161,7 @@ package body GVD.Canvas is
       end Refresh_Item;
 
       C             : Gvd_Canvas := Gvd_Canvas (Canvas);
-      Win           : Gdk_Window := Get_Window (C);
+      Win           : Gdk.Window.Gdk_Window := Get_Window (C);
    begin
 
       Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
@@ -174,40 +174,76 @@ package body GVD.Canvas is
 
       --  The drawing context for the items
 
+      if C.Item_Context.GC /= null then
+         Destroy (C.Item_Context.GC);
+      end if;
       Gdk_New (C.Item_Context.GC, Win);
       Set_Foreground (C.Item_Context.GC, Black (Get_Default_Colormap));
 
+      if C.Item_Context.Xref_GC /= null then
+         Destroy (C.Item_Context.Xref_GC);
+      end if;
       Gdk_New (C.Item_Context.Xref_GC, Win);
       Set_Foreground (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
 
+      if C.Item_Context.Modified_GC /= null then
+         Destroy (C.Item_Context.Modified_GC);
+      end if;
       Gdk_New (C.Item_Context.Modified_GC, Win);
       Set_Foreground (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
 
+      if C.Item_Context.Font /= null then
+         Unref (C.Item_Context.Font);
+      end if;
       C.Item_Context.Font :=
         Get_Gdkfont (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
 
+      if C.Item_Context.Type_Font /= null then
+         Unref (C.Item_Context.Type_Font);
+      end if;
       C.Item_Context.Type_Font :=
         Get_Gdkfont (Get_Pref (Type_Font), Get_Pref (Type_Font_Size));
 
+      if C.Item_Context.Command_Font /= null then
+         Unref (C.Item_Context.Command_Font);
+      end if;
       C.Item_Context.Command_Font := Get_Gdkfont
         (Get_Pref (Command_Font), Get_Pref (Value_Font_Size));
 
       --  The drawing context for the boxes
 
+      if C.Box_Context.Grey_GC /= null then
+         Destroy (C.Box_Context.Grey_GC);
+      end if;
       Gdk_New (C.Box_Context.Grey_GC, Win);
       Set_Foreground (C.Box_Context.Grey_GC, Get_Pref (Title_Color));
 
-      Gdk_New (C.Box_Context.Black_Gc, Win);
-      Set_Foreground (C.Box_Context.Black_Gc, Black (Get_Default_Colormap));
+      if C.Box_Context.Black_GC /= null then
+         Destroy (C.Box_Context.Black_GC);
+      end if;
+      Gdk_New (C.Box_Context.Black_GC, Win);
+      Set_Foreground (C.Box_Context.Black_GC, Black (Get_Default_Colormap));
 
+      if C.Box_Context.Refresh_Button_GC /= null then
+         Destroy (C.Box_Context.Refresh_Button_GC);
+      end if;
       Gdk_New (C.Box_Context.Refresh_Button_GC, Win);
 
-      Gdk_New (C.Box_Context.Thaw_Bg_Gc, Win);
-      Set_Foreground (C.Box_Context.Thaw_Bg_Gc, Get_Pref (Thaw_Bg_Color));
+      if C.Box_Context.Thaw_Bg_GC /= null then
+         Destroy (C.Box_Context.Thaw_Bg_GC);
+      end if;
+      Gdk_New (C.Box_Context.Thaw_Bg_GC, Win);
+      Set_Foreground (C.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
 
-      Gdk_New (C.Box_Context.Freeze_Bg_Gc, Win);
-      Set_Foreground (C.Box_Context.Freeze_Bg_Gc, Get_Pref (Freeze_Bg_Color));
+      if C.Box_Context.Freeze_Bg_GC /= null then
+         Destroy (C.Box_Context.Freeze_Bg_GC);
+      end if;
+      Gdk_New (C.Box_Context.Freeze_Bg_GC, Win);
+      Set_Foreground (C.Box_Context.Freeze_Bg_GC, Get_Pref (Freeze_Bg_Color));
 
+      if C.Box_Context.Title_Font /= null then
+         Unref (C.Box_Context.Title_Font);
+      end if;
       C.Box_Context.Title_Font := Get_Gdkfont
         (Get_Pref (Title_Font), Get_Pref (Title_Font_Size));
 
