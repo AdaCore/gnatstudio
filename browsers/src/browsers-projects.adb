@@ -21,7 +21,6 @@
 with Browsers.Canvas;          use Browsers.Canvas;
 with Gdk.Event;                use Gdk.Event;
 with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
@@ -29,12 +28,7 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Image;                use Gtk.Image;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Image_Menu_Item;      use Gtk.Image_Menu_Item;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -45,7 +39,7 @@ with Types;                    use Types;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
-with String_Utils;             use String_Utils;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 
 package body Browsers.Projects is
 
@@ -63,6 +57,18 @@ package body Browsers.Projects is
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
      with null record;
    type Project_Browser is access all Project_Browser_Record'Class;
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Imported_By_Command is new Interactive_Command with record
+      Recursive      : Boolean := False;
+      Show_Ancestors : Boolean := False;
+   end record;
+   function Execute
+     (Command : access Imported_By_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    ----------------------------
    -- Browser_Project_Vertex --
@@ -106,27 +112,6 @@ package body Browsers.Projects is
    --  Display the project hierarchy for Project in the canvas.
    --  If Recursive is True, then the projects imported indirectly are also
    --  displayed.
-
-   procedure On_Examine_Prj_Hierarchy
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Open the project hierarchy browser for a specific project
-
-   procedure On_Examine_Full_Prj_Hierarchy
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Same as above, but also display the projects imported indirectly
-
-   procedure On_Examine_Ancestor_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Add to the browser all the projects that import the specific project
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the appropriate contextual menus
 
    function Create_Project_Browser
      (Kernel : access Kernel_Handle_Record'Class) return Project_Browser;
@@ -471,24 +456,6 @@ package body Browsers.Projects is
    ------------------------------
 
    procedure On_Examine_Prj_Hierarchy
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Browser : constant MDI_Child :=
-        Open_Project_Browser (Get_Kernel (Context));
-   begin
-      Examine_Project_Hierarchy
-        (Project_Browser (Get_Widget (Browser)),
-         Project_Information (File_Selection_Context_Access (Context)),
-         Recursive        => False);
-   end On_Examine_Prj_Hierarchy;
-
-   ------------------------------
-   -- On_Examine_Prj_Hierarchy --
-   ------------------------------
-
-   procedure On_Examine_Prj_Hierarchy
      (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Project_Hierarchy
@@ -511,41 +478,6 @@ package body Browsers.Projects is
          Project      => Project_Of (Browser_Project_Vertex_Access (Item)));
    end On_Examine_Ancestor_Hierarchy;
 
-   -----------------------------------
-   -- On_Examine_Full_Prj_Hierarchy --
-   -----------------------------------
-
-   procedure On_Examine_Full_Prj_Hierarchy
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Browser : constant MDI_Child :=
-        Open_Project_Browser (Get_Kernel (Context));
-   begin
-      Examine_Project_Hierarchy
-        (Project_Browser (Get_Widget (Browser)),
-         Project_Information (File_Selection_Context_Access (Context)),
-         Recursive        => True);
-   end On_Examine_Full_Prj_Hierarchy;
-
-   -----------------------------------------
-   -- On_Examine_Ancestor_From_Contextual --
-   -----------------------------------------
-
-   procedure On_Examine_Ancestor_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Browser : constant MDI_Child :=
-        Open_Project_Browser (Get_Kernel (Context));
-      B : constant Project_Browser := Project_Browser (Get_Widget (Browser));
-   begin
-      Examine_Ancestor_Project_Hierarchy
-        (B, Project_Information (File_Selection_Context_Access (Context)));
-   end On_Examine_Ancestor_From_Contextual;
-
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -556,50 +488,13 @@ package body Browsers.Projects is
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Browser, Event);
+      pragma Unreferenced (Browser, Event, Menu);
       Context : constant Selection_Context_Access :=
         new File_Selection_Context;
-      Name : constant String := Krunch (Get_String (Item.Name));
-      Mitem : Gtk_Image_Menu_Item;
-      Pix   : Gtk_Image;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
          Project => Project_Of (Item));
-
-      if Menu /= null then
-         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Name);
-         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller (On_Examine_Prj_Hierarchy'Access),
-            Context);
-         Set_Sensitive (Mitem, not Children_Shown (Item));
-
-         Gtk_New (Mitem, Label => (-"Show recursive dependencies for ")
-                  & Name);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (On_Examine_Full_Prj_Hierarchy'Access),
-            Context);
-
-         Gtk_New
-           (Mitem, Label => (-"Examining projects depending on ") & Name);
-         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (On_Examine_Ancestor_From_Contextual'Access),
-            Context);
-         Set_Sensitive (Mitem, not Parents_Shown (Item));
-      end if;
-
       return Context;
    end Contextual_Factory;
 
@@ -654,39 +549,6 @@ package body Browsers.Projects is
 
       return Child;
    end Open_Project_Browser;
-
-   -----------------------------
-   -- Browser_Contextual_Menu --
-   -----------------------------
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Item         : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
-   begin
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-
-         if Has_Project_Information (File_Context)
-           and then not Has_Directory_Information (File_Context)
-           and then not Has_File_Information (File_Context)
-         then
-            Gtk_New (Item, Label =>
-                     -"Show projects imported by " &
-                       Project_Name (Project_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (On_Examine_Prj_Hierarchy'Access),
-               Selection_Context_Access (Context));
-         end if;
-      end if;
-   end Browser_Contextual_Menu;
 
    ------------------
    -- Load_Desktop --
@@ -840,6 +702,32 @@ package body Browsers.Projects is
       end if;
    end Search;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Imported_By_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Browser : constant MDI_Child :=
+        Open_Project_Browser (Get_Kernel (Context.Context));
+   begin
+      if Command.Show_Ancestors then
+         Examine_Ancestor_Project_Hierarchy
+           (Project_Browser (Get_Widget (Browser)),
+            Project_Information (C));
+      else
+         Examine_Project_Hierarchy
+           (Project_Browser (Get_Widget (Browser)),
+            Project_Information (C),
+            Recursive        => Command.Recursive);
+      end if;
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -848,16 +736,46 @@ package body Browsers.Projects is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Name : constant String := "Project Browser";
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module                  => Project_Browser_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      --  ??? not handled yet  Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+      --  ??? will be done in hook
+      --     Set_Sensitive (Mitem, not Children_Shown (Item));
+      Command := new Imported_By_Command;
+      Register_Contextual_Menu
+        (Kernel, "Show projects imported",
+         Label  => -"Show projects imported by %p",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Command := new Imported_By_Command;
+      Imported_By_Command (Command.all).Recursive := True;
+      Register_Contextual_Menu
+        (Kernel, "Show recursive projects imported",
+         Label  => -"Show all projects imported by %p",
+         Action => Command,
+         Filter => Action_Filter
+           (Create (Module => Project_Browser_Module_Name)));
+
+      --  ??? Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+      --  ??? Set_Sensitive (Mitem, not Parents_Shown (Item));
+      Command := new Imported_By_Command;
+      Imported_By_Command (Command.all).Show_Ancestors := True;
+      Register_Contextual_Menu
+        (Kernel, "Show projects importing",
+         Label => -"Show projects dependening on %p",
+         Action => Command,
+         Filter => Action_Filter
+           (Create (Module => Project_Browser_Module_Name)));
 
       Find_Utils.Register_Search_Function
         (Kernel => Kernel,

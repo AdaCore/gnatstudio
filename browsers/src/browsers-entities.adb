@@ -54,8 +54,7 @@ with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.MDI;    use Gtkada.MDI;
 with Pango.Layout;  use Pango.Layout;
 with Gtkada.Types;
-
-with String_Utils;  use String_Utils;
+with Commands.Interactive; use Commands, Commands.Interactive;
 
 package body Browsers.Entities is
 
@@ -211,11 +210,6 @@ package body Browsers.Entities is
    --  Create (or return an existing) item displaying the information for
    --  Entity.
 
-   procedure Add_Or_Select_Item
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Same as above, but adapted for contextual menus
-
    procedure Add_Item_And_Link
      (Item         : access Type_Item_Record'Class;
       Entity       : Entity_Information;
@@ -226,12 +220,6 @@ package body Browsers.Entities is
    --  with Item. If Reverse_Link is False, link goes from Item to Entity,
    --  otherwise it goes in the opposite direction.
    --  If Parent_Link is true, then the link used is a Parent_Link_Record.
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries in the contextual menus of other modules
 
    type Show_Entity_Callback is new Active_Area_Callback with record
       Item    : Browser_Item;
@@ -362,6 +350,15 @@ package body Browsers.Entities is
      (Data : Find_Children_Types_Data) return Boolean;
    --  Subprograms used for the lazy computation of children entities
 
+   --------------
+   -- Commands --
+   --------------
+
+   type Examine_Entity_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Examine_Entity_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    ----------
    -- Call --
    ----------
@@ -408,6 +405,26 @@ package body Browsers.Entities is
          Entity => Entity);
    end Build;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Examine_Entity_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Child : constant MDI_Child :=
+        Open_Type_Browser_Child (Get_Kernel (Context.Context));
+      Item : Type_Item;
+   begin
+      Item := Add_Or_Select_Item
+        (Browser => Type_Browser (Get_Widget (Child)),
+         Entity  =>
+           Get_Entity (Entity_Selection_Context_Access (Context.Context)));
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -415,15 +432,20 @@ package body Browsers.Entities is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module                  => Entity_Browser_Module,
          Kernel                  => Kernel,
          Module_Name             => "Entity_Browser",
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+      Command := new Examine_Entity_Command;
+      Register_Contextual_Menu
+        (Kernel, "Examine entity",
+         Label  => -"Examine entity %e",
+         Action => Command);
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools"),
@@ -560,43 +582,6 @@ package body Browsers.Entities is
                 "Unexpected exception: " & Exception_Information (E));
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
-
-   -----------------------------
-   -- Browser_Contextual_Menu --
-   -----------------------------
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Item           : Gtk_Menu_Item;
-      Entity_Context : Entity_Selection_Context_Access;
-
-   begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity_Context := Entity_Selection_Context_Access (Context);
-
-         if Has_Entity_Name_Information (Entity_Context) then
-            Push_State (Get_Kernel (Context), Busy);
-
-            if Get_Entity (Entity_Context) /= null then
-               Gtk_New
-                 (Item, Label => (-"Examine entity ")
-                  & Krunch (Entity_Name_Information (Entity_Context)));
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (Add_Or_Select_Item'Access),
-                  Selection_Context_Access (Context));
-            end if;
-
-            Pop_State (Get_Kernel (Context));
-         end if;
-      end if;
-   end Browser_Contextual_Menu;
 
    -----------------------
    -- Open_Type_Browser --
@@ -1546,29 +1531,6 @@ package body Browsers.Entities is
       Refresh_Canvas (Get_Canvas (Browser));
 
       return Found;
-   end Add_Or_Select_Item;
-
-   ------------------------
-   -- Add_Or_Select_Item --
-   ------------------------
-
-   procedure Add_Or_Select_Item
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      Child : constant MDI_Child :=
-        Open_Type_Browser_Child (Get_Kernel (Context));
-      Item : Type_Item;
-      pragma Unreferenced (Item, Widget);
-   begin
-      Item := Add_Or_Select_Item
-        (Browser => Type_Browser (Get_Widget (Child)),
-         Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
    end Add_Or_Select_Item;
 
    ------------------

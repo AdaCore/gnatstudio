@@ -23,8 +23,6 @@ with Glib.Xml_Int;         use Glib.Xml_Int;
 with Glib.Object;          use Glib.Object;
 with Gdk.GC;               use Gdk.GC;
 with Gdk.Event;            use Gdk.Event;
-with Gtk.Image;            use Gtk.Image;
-with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
@@ -51,6 +49,7 @@ with String_Utils;                  use String_Utils;
 with Browsers.Canvas;               use Browsers.Canvas;
 with Glide_Kernel.Scripts;          use Glide_Kernel.Scripts;
 with VFS;                           use VFS;
+with Commands.Interactive;          use Commands, Commands.Interactive;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
@@ -81,18 +80,6 @@ package body Browsers.Call_Graph is
    function All_Refs_Category (Entity : Entity_Information) return String;
    --  Return the category title when doing a find all refs on a given entity.
 
-   -----------------------
-   -- All_Refs_Category --
-   -----------------------
-
-   function All_Refs_Category (Entity : Entity_Information) return String is
-      Decl  : constant File_Location := Get_Declaration_Of (Entity);
-   begin
-      return -"References for " & Get_Name (Entity).all
-        & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
-        & ":" & Image (Decl.Line) & ")";
-   end All_Refs_Category;
-
    ------------------------
    -- Call graph browser --
    ------------------------
@@ -103,6 +90,45 @@ package body Browsers.Call_Graph is
       Idle_Id : Gtk.Main.Idle_Handler_Id;
    end record;
    type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Container_Entity_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Container_Entity_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   type Entity_Calls_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Entity_Calls_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Entity_Called_By_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Entity_Called_By_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Find_All_Refs_Command is new Interactive_Command with record
+      Locals_Only : Boolean := False;
+      Writes_Only : Boolean := False;
+      Reads_Only  : Boolean := False;
+   end record;
+   function Execute
+     (Command : access Find_All_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Edit_Body_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_Body_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Edit_Spec_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_Spec_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    ------------------
    -- Entity items --
@@ -222,12 +248,6 @@ package body Browsers.Call_Graph is
    end record;
    type Examine_Ancestors_Data_Access is access Examine_Ancestors_Idle_Data;
 
-   procedure Call_Graph_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries into contextual menus
-
    procedure Examine_Entity_Call_Graph
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information);
@@ -270,16 +290,6 @@ package body Browsers.Call_Graph is
       Result  : out Command_Return_Type);
    --  Main idle loop for Examine_Ancestors_Call_Graph
 
-   procedure Edit_Entity_Call_Graph_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Show the whole call graph for the Entity described in Context.
-
-   procedure Edit_Ancestors_Call_Graph_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Show the list of subprograms that call the one described in Context.
-
    function Find_Entity
      (In_Browser : access General_Browser_Record'Class;
       Entity     : Entity_Information)
@@ -296,36 +306,6 @@ package body Browsers.Call_Graph is
    function Create_Call_Graph_Browser
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Create a new call graph browser.
-
-   procedure Edit_Spec_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Open an editor for the entity described in Context.
-
-   procedure Edit_Body_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Open an editor for the entity described in Context.
-
-   procedure Find_All_References_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  List all the references to the entity
-
-   procedure Find_All_Writes_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  List all the "write to" references to the entity
-
-   procedure Find_All_Reads_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  List all the "reads to" references to the entity
-
-   procedure Find_All_Local_References_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  List all the references to the entity in the local file (or ALI file).
 
    procedure Find_All_References_Internal
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -415,6 +395,18 @@ package body Browsers.Call_Graph is
    procedure Examine_Entity_Call_Graph
      (Item : access Arrow_Item_Record'Class);
    --  Callbacks for the title bar buttons
+
+   -----------------------
+   -- All_Refs_Category --
+   -----------------------
+
+   function All_Refs_Category (Entity : Entity_Information) return String is
+      Decl  : constant File_Location := Get_Declaration_Of (Entity);
+   begin
+      return -"References for " & Get_Name (Entity).all
+        & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+        & ":" & Image (Decl.Line) & ")";
+   end All_Refs_Category;
 
    -------------
    -- Gtk_New --
@@ -1070,19 +1062,18 @@ package body Browsers.Call_Graph is
                 "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
-   -------------------------------
-   -- Edit_Body_From_Contextual --
-   -------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Body_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Edit_Body_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       C : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
+        Entity_Selection_Context_Access (Context.Context);
       Location : Entities.File_Location;
-
    begin
       Find_Next_Body
         (Entity   => Get_Entity (C),
@@ -1090,139 +1081,47 @@ package body Browsers.Call_Graph is
 
       if Location /= Entities.No_File_Location then
          Open_File_Editor
-           (Get_Kernel (Context),
+           (Get_Kernel (C),
             Filename => Get_Filename (Get_File (Location)),
             Line     => Get_Line (Location),
             Column   => Get_Column (Location));
       else
          --  If the body wasn't found then display the specs
          Open_File_Editor
-           (Get_Kernel (Context),
+           (Get_Kernel (C),
             File_Information (C),
             Line   => Line_Information (C),
             Column => Entity_Column_Information (C));
       end if;
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Edit_Body_From_Contextual;
+   -------------
+   -- Execute --
+   -------------
 
-   -------------------------------
-   -- Edit_Spec_From_Contextual --
-   -------------------------------
-
-   procedure Edit_Spec_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Edit_Spec_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-
+      pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
+        Entity_Selection_Context_Access (Context.Context);
       Entity : constant Entity_Information := Get_Entity (C);
-
    begin
       if Entity = null then
-         Insert (Get_Kernel (Context),
+         Insert (Get_Kernel (Context.Context),
                  (-"Couldn't find cross-reference information for ")
                  & '"' & Entity_Name_Information (C) & '"');
       else
          Open_File_Editor
-           (Get_Kernel (Context),
+           (Get_Kernel (Context.Context),
             Get_Filename (Get_File (Get_Declaration_Of (Entity))),
             Line   => Get_Line (Get_Declaration_Of (Entity)),
             Column => Get_Column (Get_Declaration_Of (Entity)));
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Edit_Spec_From_Contextual;
-
-   --------------------------------------------
-   -- Edit_Entity_Call_Graph_From_Contextual --
-   --------------------------------------------
-
-   procedure Edit_Entity_Call_Graph_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Entity      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Node_Entity : Entity_Information;
-
-   begin
-      Push_State (Get_Kernel (Entity), Busy);
-      Node_Entity := Get_Entity (Entity);
-
-      if Node_Entity /= null then
-         --  ??? Should check that Decl.Kind is a subprogram
-
-         Examine_Entity_Call_Graph (Get_Kernel (Entity), Node_Entity);
-
-      else
-         Insert (Get_Kernel (Entity),
-                 -"No call graph available for "
-                 & Entity_Name_Information (Entity));
-      end if;
-
-      Pop_State (Get_Kernel (Entity));
-
-   exception
-      when E : others =>
-         Insert (Get_Kernel (Entity),
-                 -"Internal error when creating the call graph for "
-                 & Entity_Name_Information (Entity),
-                 Mode => Error);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (Entity));
-   end Edit_Entity_Call_Graph_From_Contextual;
-
-   -----------------------------------------------
-   -- Edit_Ancestors_Call_Graph_From_Contextual --
-   -----------------------------------------------
-
-   procedure Edit_Ancestors_Call_Graph_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Info : Entity_Information;
-
-   begin
-      Push_State (Get_Kernel (Entity), Busy);
-      Info := Get_Entity (Entity);
-
-      if Info /= null then
-         Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
-      else
-         Insert (Get_Kernel (Entity),
-                 -"No information found for the file "
-                   & Full_Name (File_Information (Entity)).all,
-                 Mode => Error);
-      end if;
-
-      Pop_State (Get_Kernel (Entity));
-
-   exception
-      when E : others =>
-         Insert (Get_Kernel (Entity),
-                 -"Internal error when creating the call graph for "
-                 & Entity_Name_Information (Entity),
-                 Mode => Error);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Pop_State (Get_Kernel (Entity));
-   end Edit_Ancestors_Call_Graph_From_Contextual;
+      return Commands.Success;
+   end Execute;
 
    ------------------
    -- Destroy_Idle --
@@ -1382,123 +1281,6 @@ package body Browsers.Call_Graph is
                 "Unexpected exception " & Exception_Information (E));
    end Find_All_References_Internal;
 
-   -----------------------------------------
-   -- Find_All_References_From_Contextual --
-   -----------------------------------------
-
-   procedure Find_All_References_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Entity : Entity_Information;
-   begin
-      Entity := Get_Entity (Entity_Selection_Context_Access (Context));
-      Find_All_References_Internal
-        (Get_Kernel (Context),
-         Entity,
-         Category_Title => All_Refs_Category (Entity),
-         Include_Writes => True,
-         Include_Reads  => True);
-   end Find_All_References_From_Contextual;
-
-   -------------------------------------
-   -- Find_All_Writes_From_Contextual --
-   -------------------------------------
-
-   procedure Find_All_Writes_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Find_All_References_Internal
-        (Get_Kernel (Context),
-         Get_Entity (Entity_Selection_Context_Access (Context)),
-         Category_Title => -"Modifications of: ",
-         Include_Writes => True,
-         Include_Reads  => False);
-   end Find_All_Writes_From_Contextual;
-
-   ------------------------------------
-   -- Find_All_Reads_From_Contextual --
-   ------------------------------------
-
-   procedure Find_All_Reads_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Find_All_References_Internal
-        (Get_Kernel (Context),
-         Get_Entity (Entity_Selection_Context_Access (Context)),
-         Category_Title => -"Read-Only references for: ",
-         Include_Writes => False,
-         Include_Reads  => True);
-   end Find_All_Reads_From_Contextual;
-
-   -----------------------------------------------
-   -- Find_All_Local_References_From_Contextual --
-   -----------------------------------------------
-
-   procedure Find_All_Local_References_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Info     : Entity_Information;
-      Iter     : Entity_Reference_Iterator;
-      Location : File_Location;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Entity);
-
-   begin
-      Push_State (Kernel, Busy);
-      Info := Get_Entity (Entity);
-
-      if Info /= null then
-         declare
-            Title : constant String := All_Refs_Category (Info);
-         begin
-            --  Print the declaration of the entity, but only if it is in the
-            --  current file, as expected by users.
-
-            Remove_Result_Category (Kernel, Title);
-
-            Find_All_References
-              (Iter    => Iter,
-               Entity  => Info,
-               In_File => Get_Or_Create
-                 (Get_Database (Kernel), File_Information (Entity)));
-
-            while not At_End (Iter) loop
-               if Get (Iter) /= No_Entity_Reference then
-                  Location := Get_Location (Get (Iter));
-                  Print_Ref (Kernel, Location, Get_Name (Info).all, Title);
-               end if;
-
-               Next (Iter);
-            end loop;
-
-            Recount_Category (Kernel, Title);
-            Destroy (Iter);
-         end;
-      end if;
-
-      Pop_State (Kernel);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         Destroy (Iter);
-         Pop_State (Get_Kernel (Entity));
-   end Find_All_Local_References_From_Contextual;
-
    ----------------------------------
    -- Examine_Ancestors_Call_Graph --
    ----------------------------------
@@ -1521,109 +1303,6 @@ package body Browsers.Call_Graph is
         (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity);
    end Examine_Entity_Call_Graph;
 
-   --------------------------------
-   -- Call_Graph_Contextual_Menu --
-   --------------------------------
-
-   procedure Call_Graph_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-
-      Submenu        : Gtk_Menu;
-      Item           : Gtk_Menu_Item;
-      Entity_Context : Entity_Selection_Context_Access;
-
-   begin
-      if Context.all in Entity_Selection_Context'Class then
-         Entity_Context := Entity_Selection_Context_Access (Context);
-
-         if Has_Entity_Name_Information (Entity_Context) then
-            Push_State (Get_Kernel (Context), Busy);
-
-            --  Check the entity right away. This will return False if either
-            --  the entity isn't a subprogram, or we couldn't find the
-            --  declaration. In both cases, we wouldn't be able to draw the
-            --  call graph anyway.
-
-            declare
-               Name   : constant String :=
-                 Krunch (Entity_Name_Information (Entity_Context));
-               Entity : constant Entities.Entity_Information :=
-                 Get_Entity (Entity_Context);
-
-            begin
-               if Entity /= null then
-                  Gtk_New (Item, Label => -"References");
-                  Gtk_New (Submenu);
-                  Set_Submenu (Item, Gtk_Widget (Submenu));
-                  Append (Menu, Item);
-
-                  if Is_Container (Get_Kind (Entity).Kind) then
-                     Gtk_New (Item, Label => Name & (-" calls"));
-                     Append (Submenu, Item);
-                     Context_Callback.Connect
-                       (Item, "activate",
-                        Context_Callback.To_Marshaller
-                          (Edit_Entity_Call_Graph_From_Contextual'Access),
-                        Selection_Context_Access (Context));
-
-                     Gtk_New (Item, Label => Name & (-" is called by"));
-                     Append (Submenu, Item);
-                     Context_Callback.Connect
-                       (Item, "activate",
-                        Context_Callback.To_Marshaller
-                          (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-                        Selection_Context_Access (Context));
-                  end if;
-
-                  Gtk_New (Item, Label => (-"Find all references to ") & Name);
-                  Append (Submenu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (Find_All_References_From_Contextual'Access),
-                     Selection_Context_Access (Context));
-
-                  Gtk_New
-                    (Item, Label => (-"Find all local references to ") & Name);
-                  Append (Submenu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (Find_All_Local_References_From_Contextual'Access),
-                     Selection_Context_Access (Context));
-
-                  Gtk_New (Item, Label => (-"Find all writes to ") & Name);
-                  Append (Submenu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (Find_All_Writes_From_Contextual'Access),
-                     Selection_Context_Access (Context));
-
-                  Gtk_New (Item, Label => (-"Find all reads of ") & Name);
-                  Append (Submenu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (Find_All_Reads_From_Contextual'Access),
-                     Selection_Context_Access (Context));
-               end if;
-            end;
-
-            Pop_State (Get_Kernel (Context));
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end Call_Graph_Contextual_Menu;
-
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -1634,11 +1313,9 @@ package body Browsers.Call_Graph is
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
-      pragma Unreferenced (Event, Browser);
+      pragma Unreferenced (Event, Browser, Menu);
       Context : constant Selection_Context_Access :=
         new Entity_Selection_Context;
-      Mitem   : Gtk_Image_Menu_Item;
-      Pix     : Gtk_Image;
 
    begin
       if not Is_Predefined_Entity (Item.Entity) then
@@ -1652,51 +1329,6 @@ package body Browsers.Call_Graph is
         (Entity_Selection_Context_Access (Context),
          Entity_Name   => Get_Name (Item.Entity).all,
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
-
-      if Menu /= null then
-         declare
-            Name : constant String := Get_Name (Item.Entity).all;
-         begin
-            Gtk_New (Mitem, Name & (-" calls..."));
-            Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
-            Set_Image (Mitem, Pix);
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Entity_Call_Graph_From_Contextual'Access),
-               Context);
-            Set_Sensitive (Mitem, not Children_Shown (Item));
-
-            Gtk_New (Mitem, Name & (-" is called by..."));
-            Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
-            Set_Image (Mitem, Pix);
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-               Context);
-            Set_Sensitive (Mitem, not Parents_Shown (Item));
-
-            Gtk_New (Mitem, -"Go to spec");
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Spec_From_Contextual'Access),
-               Context);
-
-            Gtk_New (Mitem, -"Go to body");
-            Append (Menu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller
-               (Edit_Body_From_Contextual'Access),
-               Context);
-         end;
-      end if;
-
       return Context;
 
    exception
@@ -1956,6 +1588,180 @@ package body Browsers.Call_Graph is
       Close (Output);
    end Xref_Command_Handler;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Container_Entity_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+      Entity : Entity_Information;
+   begin
+      if Context.all in Entity_Selection_Context'Class
+        and then Has_Entity_Name_Information
+          (Entity_Selection_Context_Access (Context))
+      then
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         return Entity /= null
+           and then Is_Container (Get_Kind (Entity).Kind);
+      else
+         return False;
+      end if;
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Entity_Calls_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Entity      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Node_Entity : Entity_Information;
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+      Node_Entity := Get_Entity (Entity);
+
+      if Node_Entity /= null then
+         --  ??? Should check that Decl.Kind is a subprogram
+         Examine_Entity_Call_Graph (Get_Kernel (Entity), Node_Entity);
+      else
+         Insert (Get_Kernel (Entity),
+                 -"No call graph available for "
+                 & Entity_Name_Information (Entity));
+      end if;
+
+      Pop_State (Get_Kernel (Entity));
+      return Commands.Success;
+
+   exception
+      when E : others =>
+         Insert (Get_Kernel (Entity),
+                 -"Internal error when creating the call graph for "
+                 & Entity_Name_Information (Entity),
+                 Mode => Error);
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Get_Kernel (Entity));
+      return Commands.Failure;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Entity_Called_By_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Entity   : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Info : Entity_Information;
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+      Info := Get_Entity (Entity);
+
+      if Info /= null then
+         Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+      else
+         Insert (Get_Kernel (Entity),
+                 -"No information found for the file "
+                   & Full_Name (File_Information (Entity)).all,
+                 Mode => Error);
+      end if;
+
+      Pop_State (Get_Kernel (Entity));
+      return Commands.Success;
+
+   exception
+      when E : others =>
+         Insert (Get_Kernel (Entity),
+                 -"Internal error when creating the call graph for "
+                 & Entity_Name_Information (Entity),
+                 Mode => Error);
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Get_Kernel (Entity));
+      return Commands.Failure;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Find_All_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Entity   : constant Entity_Information := Get_Entity
+        (Entity_Selection_Context_Access (Context.Context));
+      File     : constant Virtual_File := File_Information
+        (Entity_Selection_Context_Access (Context.Context));
+      Iter     : Entity_Reference_Iterator;
+      Location : File_Location;
+   begin
+      if Command.Locals_Only then
+         Push_State (Kernel, Busy);
+         declare
+            Title : constant String := All_Refs_Category (Entity);
+         begin
+            --  Print the declaration of the entity, but only if it is in the
+            --  current file, as expected by users.
+
+            Remove_Result_Category (Kernel, Title);
+            Find_All_References
+              (Iter    => Iter,
+               Entity  => Entity,
+               In_File => Get_Or_Create (Get_Database (Kernel), File));
+            while not At_End (Iter) loop
+               if Get (Iter) /= No_Entity_Reference then
+                  Location := Get_Location (Get (Iter));
+                  Print_Ref (Kernel, Location, Get_Name (Entity).all, Title);
+               end if;
+               Next (Iter);
+            end loop;
+
+            Recount_Category (Kernel, Title);
+            Destroy (Iter);
+         end;
+
+         Pop_State (Kernel);
+
+      elsif Command.Writes_Only then
+         Find_All_References_Internal
+           (Kernel,
+            Entity,
+            Category_Title => -"Modifications of: ",
+            Include_Writes => True,
+            Include_Reads  => False);
+
+      elsif Command.Reads_Only then
+         Find_All_References_Internal
+           (Kernel,
+            Entity,
+            Category_Title => -"Read-Only references for: ",
+            Include_Writes => False,
+            Include_Reads  => True);
+
+      else
+         Find_All_References_Internal
+           (Kernel,
+            Entity,
+            Category_Title => All_Refs_Category (Entity),
+            Include_Writes => True,
+            Include_Reads  => True);
+      end if;
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1967,17 +1773,71 @@ package body Browsers.Call_Graph is
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
       Mitem    : Gtk_Menu_Item;
-
+      Command  : Interactive_Command_Access;
+      Filter   : Action_Filter;
    begin
       Register_Module
         (Module                  => Call_Graph_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
          Priority                => Glide_Kernel.Default_Priority,
-         Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Filter  := new Container_Entity_Filter;
+      Command := new Entity_Calls_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity calls",
+         Label  => "References/%e calls",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Entity_Called_By_Command;
+      Register_Contextual_Menu
+        (Kernel, "Entity called by",
+         Label  => "References/%e is called by",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Find_All_Refs_Command;
+      Register_Contextual_Menu
+        (Kernel, "Find all references",
+         Label  => "References/Find all references to %e",
+         Action => Command);
+
+      Command := new Find_All_Refs_Command;
+      Find_All_Refs_Command (Command.all).Locals_Only := True;
+      Register_Contextual_Menu
+        (Kernel, "Find all local references",
+         Label  => "References/Find all local references to %e",
+         Action => Command);
+
+      Command := new Find_All_Refs_Command;
+      Find_All_Refs_Command (Command.all).Writes_Only := True;
+      Register_Contextual_Menu
+        (Kernel, "Find all writes",
+         Label  => "References/Find all writes to %e",
+         Action => Command);
+
+      Command := new Find_All_Refs_Command;
+      Find_All_Refs_Command (Command.all).Reads_Only := True;
+      Register_Contextual_Menu
+        (Kernel, "Find all reads",
+         Label  => "References/Find all reads to %e",
+         Action => Command);
+
+      Command := new Edit_Spec_Command;
+      Register_Contextual_Menu
+        (Kernel, "Go to spec",
+         Action => Command,
+         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name)));
+
+      Command := new Edit_Body_Command;
+      Register_Contextual_Menu
+        (Kernel, "Go to body",
+         Action => Command,
+         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name)));
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
       Register_Menu

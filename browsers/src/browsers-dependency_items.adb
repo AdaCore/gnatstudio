@@ -25,8 +25,6 @@ with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Event;            use Gdk.Event;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
-with Gtk.Image;            use Gtk.Image;
-with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
@@ -56,10 +54,9 @@ with Namet;                     use Namet;
 with Histories;                 use Histories;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with VFS;                       use VFS;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Ada.Exceptions;            use Ada.Exceptions;
-
-with String_Utils;              use String_Utils;
 
 package body Browsers.Dependency_Items is
 
@@ -69,6 +66,25 @@ package body Browsers.Dependency_Items is
 
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
+
+   --------------
+   -- Commands --
+   --------------
+
+   type Show_Dep_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Show_Dep_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Show_Depending_On_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Show_Depending_On_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Examine_Other_File_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Examine_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    ------------------------
    -- Dependency browser --
@@ -222,27 +238,6 @@ package body Browsers.Dependency_Items is
    procedure On_Dependency_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Dependency Browser
-
-   procedure Edit_Dependencies_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Examine the dependencies of a specific file
-
-   procedure Edit_Ancestor_Dependencies_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Edit the ancestor dependencies for a specific file.
-
-   procedure On_Examine_Other_File
-     (Browser : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Insert a new item for the file described in Context.
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Add entries to the appropriate contextual menus
 
    function Browser_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -895,47 +890,37 @@ package body Browsers.Dependency_Items is
          Unref (Context);
    end On_Dependency_Browser;
 
-   ---------------------------------------
-   -- Edit_Dependencies_From_Contextual --
-   ---------------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Dependencies_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Show_Dep_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
    begin
       Examine_Dependencies
-        (Get_Kernel (Context),
-         File_Information (File_Selection_Context_Access (Context)));
+        (Get_Kernel (Context.Context),
+         File_Information (File_Selection_Context_Access (Context.Context)));
+      return Commands.Success;
+   end Execute;
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception in Edit_Dependencies_From_Contextual "
-                & Exception_Information (E));
-   end Edit_Dependencies_From_Contextual;
+   -------------
+   -- Execute --
+   -------------
 
-   ------------------------------------------------
-   -- Edit_Ancestor_Dependencies_From_Contextual --
-   ------------------------------------------------
-
-   procedure Edit_Ancestor_Dependencies_From_Contextual
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Show_Depending_On_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
    begin
       Examine_From_Dependencies
-        (Get_Kernel (Context),
-         File_Information (File_Selection_Context_Access (Context)));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception in Edit_Dependencies_From_Contextual "
-                & Exception_Information (E));
-   end Edit_Ancestor_Dependencies_From_Contextual;
+        (Get_Kernel (Context.Context),
+         File_Information (File_Selection_Context_Access (Context.Context)));
+      return Commands.Success;
+   end Execute;
 
    ---------------
    -- Open_File --
@@ -961,50 +946,6 @@ package body Browsers.Dependency_Items is
          Examine_Dependencies (Get_Kernel (Context), File);
       end if;
    end Open_File;
-
-   -----------------------------
-   -- Browser_Contextual_Menu --
-   -----------------------------
-
-   procedure Browser_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Item         : Gtk_Menu_Item;
-      File_Context : File_Selection_Context_Access;
-   begin
-      --  File selection (for instance from the explorer)
-
-      if Context.all in File_Selection_Context'Class then
-         File_Context := File_Selection_Context_Access (Context);
-         if Has_File_Information (File_Context) then
-            declare
-               Name : constant String :=
-                 Krunch (Base_Name (File_Information (File_Context)));
-            begin
-               Gtk_New
-                 (Item, Label => (-"Show dependencies for ") & Name);
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Edit_Dependencies_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New
-                 (Item, Label => (-"Show files depending on ") & Name);
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                  (Edit_Ancestor_Dependencies_From_Contextual'Access),
-                  Selection_Context_Access (Context));
-            end;
-         end if;
-      end if;
-   end Browser_Contextual_Menu;
 
    ---------------------
    -- Default_Factory --
@@ -1060,16 +1001,43 @@ package body Browsers.Dependency_Items is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := '/' & (-"Tools");
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module                  => Dependency_Browser_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      --  ??? Sensitivity will be handled in the hook "contextual_menu"
+      --  ??? Images not yet handled
+
+      Command := new Show_Dep_Command;
+      --  Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
+--           Set_Sensitive (Mitem, not Children_Shown (Item));
+      Register_Contextual_Menu
+        (Kernel, "File dependencies",
+         Action => Command,
+         Label  => -"Show dependencies for %f");
+
+      Command := new Show_Depending_On_Command;
+      --  Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
+--           Set_Sensitive (Mitem, not Parents_Shown (Item));
+      Register_Contextual_Menu
+        (Kernel, "File depending on",
+         Action => Command,
+         Label  => -"Show files depending on %f");
+
+      Command := new Examine_Other_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Analyze deps for other file",
+         Label  => -"Analyze other file (spec or body)",
+         Action => Command,
+         Filter => Action_Filter
+           (Create (Module => Dependency_Browser_Module_Name)));
 
       Register_Menu (Kernel, Tools, -"Dependency Browser", "",
                      On_Dependency_Browser'Access);
@@ -1203,17 +1171,19 @@ package body Browsers.Dependency_Items is
       return P;
    end Project_Of;
 
-   ---------------------------
-   -- On_Examine_Other_File --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Examine_Other_File
-     (Browser : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Examine_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      B : constant Dependency_Browser := Dependency_Browser (Browser);
+      pragma Unreferenced (Command);
       C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
+      B : constant Dependency_Browser := Dependency_Browser
+        (Get_Widget (Open_Dependency_Browser (Get_Kernel (C))));
       Item : File_Item;
       Other_File : constant Virtual_File := Create
         (Other_File_Base_Name
@@ -1223,7 +1193,7 @@ package body Browsers.Dependency_Items is
       if Other_File /= VFS.No_File then
          Item := File_Item (Find_File (B, Other_File));
          if Item = null then
-            Gtk_New (Item, B,  Get_Kernel (Context), Other_File);
+            Gtk_New (Item, B,  Get_Kernel (C), Other_File);
             Put (Get_Canvas (B), Item);
             Refresh (Item);
 
@@ -1233,12 +1203,10 @@ package body Browsers.Dependency_Items is
          end if;
          Clear_Selection (Get_Canvas (B));
          Add_To_Selection (Get_Canvas (B), Item);
+         return Commands.Success;
       end if;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Examine_Other_File;
+      return Commands.Failure;
+   end Execute;
 
    ------------------------
    -- Contextual_Factory --
@@ -1250,53 +1218,16 @@ package body Browsers.Dependency_Items is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Event);
+      pragma Unreferenced (Browser, Menu, Event);
       Context : constant Selection_Context_Access :=
          new File_Selection_Context;
       Src     : constant Source_File := Get_Source (Item);
       Filename : constant Virtual_File := Get_Filename (Src);
-      Base  : constant String := Krunch (Base_Name (Filename));
-      Mitem : Gtk_Image_Menu_Item;
-      Pix   : Gtk_Image;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
          File         => Filename,
          Project      => Project_Of (Item));
-
-      if Menu /= null then
-         Gtk_New (Mitem, -"Analyze other file (spec or body)");
-         Add (Menu, Mitem);
-         Context_Callback.Object_Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller (On_Examine_Other_File'Access),
-            User_Data   => Context,
-            Slot_Object => Browser);
-
-         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Base);
-         Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Dependencies_From_Contextual'Access),
-            Context);
-         Set_Sensitive (Mitem, not Children_Shown (Item));
-
-         Gtk_New
-           (Mitem, Label => (-"Show files depending on ") & Base);
-         Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
-         Set_Image (Mitem, Pix);
-         Append (Menu, Mitem);
-         Context_Callback.Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller
-              (Edit_Ancestor_Dependencies_From_Contextual'Access),
-            Context);
-         Set_Sensitive (Mitem, not Parents_Shown (Item));
-      end if;
-
       return Context;
    end Contextual_Factory;
 
