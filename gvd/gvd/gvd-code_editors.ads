@@ -38,7 +38,6 @@
 with Glib;
 with Glib.Object;
 with Gdk.Color;
-with Gtk.Menu;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Widget;
@@ -192,13 +191,6 @@ package GVD.Code_Editors is
    --  new language, this only influences future addition to the editor.
    --
    --  If Lang is null, then no color highlighting will be performed.
-
-   procedure Append_To_Contextual_Menu
-     (Editor : access Code_Editor_Record;
-      Menu   : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Append some general items to the contextual Menu.
-   --  These items do not depend on whether the source code or the assembly
-   --  code is currently displayed, and are not specific to either.
 
    procedure On_Executable_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
