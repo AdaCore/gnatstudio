@@ -86,6 +86,7 @@ with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
 with Prj;
+with Language;
 
 package Glide_Kernel.Modules is
 
@@ -347,7 +348,8 @@ package Glide_Kernel.Modules is
      (Context     : access Entity_Selection_Context;
       Entity_Name : String := "";
       Line        : Integer := 0;
-      Column      : Integer := 0);
+      Column      : Integer := 0;
+      Category    : Language.Language_Category := Language.Cat_Unknown);
    --  Set the information in the context
 
    function Has_Entity_Name_Information
@@ -368,6 +370,12 @@ package Glide_Kernel.Modules is
      (Context : access Entity_Selection_Context) return Integer;
    --  Check whether there is some column information, and return it.
 
+   function Has_Category_Information
+     (Context : access Entity_Selection_Context) return Boolean;
+   function Category_Information
+     (Context : access Entity_Selection_Context)
+      return Language.Language_Category;
+   --  Return the category for the entity
 
 private
 
@@ -382,6 +390,7 @@ private
    end record;
 
    type Entity_Selection_Context is new File_Name_Selection_Context with record
+      Category    : Language.Language_Category := Language.Cat_Unknown;
       Entity_Name : GNAT.OS_Lib.String_Access := null;
       Line, Column : Integer := 0;
    end record;

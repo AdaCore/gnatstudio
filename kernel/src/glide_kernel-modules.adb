@@ -39,7 +39,7 @@ with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Widget;        use Gtk.Widget;
-with Gtk.Window;        use Gtk.Window;
+with Language;          use Language;
 with Prj;               use Prj;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
@@ -257,13 +257,15 @@ package body Glide_Kernel.Modules is
      (Context     : access Entity_Selection_Context;
       Entity_Name : String := "";
       Line        : Integer := 0;
-      Column      : Integer := 0) is
+      Column      : Integer := 0;
+      Category    : Language.Language_Category := Language.Cat_Unknown) is
    begin
       Free (Context.Entity_Name);
       if Entity_Name /= "" then
          Context.Entity_Name := new String' (Entity_Name);
       end if;
 
+      Context.Category := Category;
       Context.Line := Line;
       Context.Column := Column;
    end Set_Entity_Information;
@@ -331,6 +333,27 @@ package body Glide_Kernel.Modules is
    begin
       return Context.Column;
    end Column_Information;
+
+   ------------------------------
+   -- Has_Category_Information --
+   ------------------------------
+
+   function Has_Category_Information
+     (Context : access Entity_Selection_Context) return Boolean is
+   begin
+      return Context.Category /= Cat_Unknown;
+   end Has_Category_Information;
+
+   --------------------------
+   -- Category_Information --
+   --------------------------
+
+   function Category_Information
+     (Context : access Entity_Selection_Context)
+      return Language.Language_Category is
+   begin
+      return Context.Category;
+   end Category_Information;
 
    -------------
    -- Destroy --
