@@ -101,6 +101,19 @@ package body Src_Editor_Module is
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
 
+   Filename_Cst : aliased constant String := "filename";
+   Line_Cst     : aliased constant String := "line";
+   Col_Cst      : aliased constant String := "column";
+   Length_Cst   : aliased constant String := "length";
+
+
+   Edit_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access,
+      2 => Line_Cst'Access,
+      3 => Col_Cst'Access,
+      4 => Length_Cst'Access);
+
+
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
 
@@ -473,6 +486,7 @@ package body Src_Editor_Module is
 
    begin
       if Command = "edit" or else Command = "create_mark" then
+         Name_Parameters (Data, Edit_Cmd_Parameters);
          declare
             File     : constant String := Nth_Arg (Data, 1);
          begin
@@ -2964,8 +2978,8 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "edit",
-         Usage        => "(filename, [line=1], [column=1], [length=0])"
-           & " -> None",
+         Usage        =>
+           Parameter_Names_To_Usage (Edit_Cmd_Parameters, "None", 3),
          Description  => -"Open a file editor for file_name." & ASCII.LF
          & (-"Length is the number of characters to select after the"
             & " cursor."),
@@ -2977,7 +2991,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command => "create_mark",
          Usage   =>
-           "(filename, [line=1], [column=1], [length=0]) -> String",
+           Parameter_Names_To_Usage (Edit_Cmd_Parameters, "identifier", 3),
          Description =>
            -("Create a mark for file_name, at position given by line and"
              & " column."
