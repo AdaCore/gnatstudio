@@ -32,6 +32,10 @@ int ada_pytuple_check (PyObject* obj) {
   return PyTuple_Check (obj);
 }
 
+int ada_pylist_check (PyObject* obj) {
+  return PyList_Check (obj);
+}
+
 int ada_pyinstance_check (PyObject* obj) {
   return PyInstance_Check (obj);
 }

@@ -173,6 +173,17 @@ package body Python is
       return Internal (Obj) = 1;
    end PyString_Check;
 
+   ------------------
+   -- PyList_Check --
+   ------------------
+
+   function PyList_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pylist_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyList_Check;
+
    -----------------
    -- PyInt_Check --
    -----------------

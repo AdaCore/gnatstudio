@@ -200,6 +200,15 @@ package Python is
    --  Append Obj at the end of List, and return the index of the newly
    --  inserted item
 
+   function PyList_GetItem (List : PyObject; Index : Integer) return PyObject;
+   --  Get the item at a specific location in the list, starting at index 0.
+
+   function PyList_Size (List : PyObject) return Integer;
+   --  Return the number of items in the list
+
+   function PyList_Check (Obj : PyObject) return Boolean;
+   --  True if Obj is a python list
+
    -------------
    -- Strings --
    -------------
@@ -526,4 +535,6 @@ private
    pragma Import (C, PyObject_Repr, "PyObject_Repr");
    pragma Import (C, PyErr_Restore, "PyErr_Restore");
    pragma Import (C, PyDict_Size, "PyDict_Size");
+   pragma Import (C, PyList_GetItem, "PyList_GetItem");
+   pragma Import (C, PyList_Size, "PyList_Size");
 end Python;
