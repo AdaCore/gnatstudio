@@ -1,5 +1,13 @@
 Known Problems fixed in GVD 1.0.3
 
+- Support for CR characters on Unix systems
+  Problem:    GVD can not correctly detect whether a file contains CR
+              characters unless it is on a Windows system. This result in the
+              current line being incorrectly highlighted in the source
+              editor.
+  Workaround: Set the preference "Strip CR" to True (or create the preferences
+              file manually on older versions)
+
 - [8531-006] --no-explorer option generates a bug box
   Problem:    When using the --no-explorer command line option, GVD generates
               an assert failure.
