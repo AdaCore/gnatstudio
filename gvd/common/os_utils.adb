@@ -18,16 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Case_Util;       use GNAT.Case_Util;
-with GNAT.Expect;          use GNAT.Expect;
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with String_Utils;         use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Glib.Convert;         use Glib.Convert;
-with Traces;               use Traces;
+with Glib.Convert;              use Glib.Convert;
+with Traces;                    use Traces;
 
 package body OS_Utils is
 
@@ -53,7 +52,7 @@ package body OS_Utils is
 
       if S.all /= "" then
          declare
-            Val : constant String := Name_As_Directory (S.all);
+            Val : constant String := Normalize_Pathname (S.all & "/");
          begin
             Free (S);
             return Val;
@@ -65,7 +64,7 @@ package body OS_Utils is
 
       if S.all /= "" then
          declare
-            Val : constant String := Name_As_Directory (S.all);
+            Val : constant String := Normalize_Pathname (S.all & "/");
          begin
             Free (S);
             return Val;
