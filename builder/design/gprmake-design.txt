@@ -359,9 +359,14 @@ Input needed from gprmake:
   be a wrapper doing some tests and computation based on the language list.
 
   At link time, when some sources or executable are not up-to-date,
-  an archive is built containing the object files of each non Ada language
-  source and recreated in the object directory of the main project as
-  lib<project>.a.
+  an archive is built containing the object files of each language
+  source for which no Builder'Driver is set, and recreated in the object
+  directory of the main project as lib<project>.a.
+
+  Rationale: it is expected that when Builder'Driver is set, the specific
+  builder driver will keep track of the object files required itself, and
+  that they will be handled either by Linker'Driver, or via
+  Linker'Default_Switches.
 
   If a previous archive exists, it is removed before creating a new one, so
   as to avoid picking obsolete object files coming from deleted or moved source
