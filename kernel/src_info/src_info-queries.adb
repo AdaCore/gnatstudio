@@ -230,6 +230,17 @@ package body Src_Info.Queries is
    --  Same as above, but search in all the source files associated with
    --  Lib_Info.
 
+   function Find_Declaration_In_LI_Or_Dependencies
+     (Lib_Info : LI_File_Ptr; Location : File_Location)
+      return Entity_Information;
+   --  Create an entity information by looking first in the direct source files
+   --  of Lib_Info or in the list of their dependencies.
+   --  In some cases, this should be used instead of Find_Declaration_In_LI,
+   --  since the actual LI file where the entity is
+   --  defined might not have been parsed yet, although we have reference to
+   --  entities defined in it. For instance, the type of a parameter should be
+   --  search through this subprogram.
+
    function Create
      (Lib_Info : LI_File_Ptr; Ref : E_Reference) return Entity_Information;
    --  Create an entity information from Ref.
@@ -237,6 +248,17 @@ package body Src_Info.Queries is
    --  is found. Most of the time, this will be the LI file that used to
    --  compute Ref in the first place.
    --  The returned entity must be freed by the user.
+
+   function Create (Decl : E_Declaration) return Entity_Information;
+   --  Create an entity from a declaration.
+   --  The returned entity must be freed by the user.
+
+   function Process_Parents
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information;
+      Kind     : Parent_Kind) return Entity_Information;
+   --  Process the list of parent locations for a given entity. Only the first
+   --  parent location whose kind matches is processed.
 
    -------------------------
    -- Search_Is_Completed --
@@ -1618,6 +1640,9 @@ package body Src_Info.Queries is
 
    function Get_Name (Entity : Entity_Information) return String is
    begin
+      if Entity.Name = null then
+         return "";
+      end if;
       return Entity.Name.all;
    end Get_Name;
 
@@ -1663,6 +1688,14 @@ package body Src_Info.Queries is
    begin
       if Entity = No_Entity_Information then
          return No_Entity_Information;
+      elsif Is_Predefined_Entity (Entity) then
+         return Create
+           (Name   => Entity.Name.all,
+            Line   => Entity.Decl_Line,
+            Column => Entity.Decl_Column,
+            File   => "",
+            Scope  => Entity.Scope,
+            Kind   => Entity.Kind);
       else
          return Create
            (Name   => Entity.Name.all,
@@ -1712,7 +1745,11 @@ package body Src_Info.Queries is
    function Get_Declaration_File_Of
      (Entity : Entity_Information) return String is
    begin
-      return Entity.Decl_File.all;
+      if Is_Predefined_Entity (Entity) then
+         return "";
+      else
+         return Entity.Decl_File.all;
+      end if;
    end Get_Declaration_File_Of;
 
    --------------
@@ -1744,8 +1781,11 @@ package body Src_Info.Queries is
       return Decl.Location.Line         = Entity.Decl_Line
         and then Decl.Location.Column   = Entity.Decl_Column
         and then Decl.Name.all          = Entity.Name.all
-        and then Get_Source_Filename (Decl.Location.File) =
-           Entity.Decl_File.all;
+        and then
+        ((Decl.Location = Predefined_Entity_Location
+          and then Entity.Decl_File = null)
+         or else (Get_Source_Filename (Decl.Location.File) =
+                  Entity.Decl_File.all));
    end Is_Same_Entity;
 
    -------------------
@@ -1884,18 +1924,10 @@ package body Src_Info.Queries is
 
    function Find_Declaration
      (List   : E_Declaration_Info_List;
-      Entity : Entity_Information) return E_Declaration_Info_List
-   is
-      D : E_Declaration_Info_List := List;
+      Entity : Entity_Information) return E_Declaration_Info_List is
    begin
-      while D /= null loop
-         if Is_Same_Entity (D.Value.Declaration, Entity) then
-            return D;
-         end if;
-
-         D := D.Next;
-      end loop;
-      return null;
+      return Get_Declaration
+        (List, Entity.Decl_Line, Entity.Decl_Column, Get_Name (Entity));
    end Find_Declaration;
 
    ----------------------------
@@ -1906,34 +1938,63 @@ package body Src_Info.Queries is
      (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
       return E_Declaration_Info_List
    is
-      D : E_Declaration_Info_List;
-      S : File_Info_Ptr_List;
+      D : constant E_Declaration_Info_List := Get_Declarations_From_File
+        (Lib_Info, Get_Declaration_File_Of (Entity));
    begin
-      if Lib_Info.LI.Spec_Info /= null then
-         D := Find_Declaration (Lib_Info.LI.Spec_Info.Declarations, Entity);
-         if D /= null then
-            return D;
-         end if;
+      if D = null then
+         return null;
+      else
+         return Find_Declaration (D, Entity);
       end if;
-
-      if Lib_Info.LI.Body_Info /= null then
-         D := Find_Declaration (Lib_Info.LI.Body_Info.Declarations, Entity);
-         if D /= null then
-            return D;
-         end if;
-      end if;
-
-      S := Lib_Info.LI.Separate_Info;
-      while S /= null loop
-         D := Find_Declaration (S.Value.Declarations, Entity);
-         if D /= null then
-            return D;
-         end if;
-         S := S.Next;
-      end loop;
-
-      return null;
    end Find_Declaration_In_LI;
+
+   --------------------------------------------
+   -- Find_Declaration_In_LI_Or_Dependencies --
+   --------------------------------------------
+
+   function Find_Declaration_In_LI_Or_Dependencies
+     (Lib_Info : LI_File_Ptr; Location : File_Location)
+      return Entity_Information
+   is
+      Dep : Dependency_File_Info_List := Lib_Info.LI.Dependencies_Info;
+      Typ : E_Declaration_Info_List;
+   begin
+      Typ := Get_Declarations_From_File (Lib_Info, Get_File (Location));
+      if Typ /= null then
+         Typ := Get_Declaration (Typ,
+                                 Location.Line,
+                                 Location.Column,
+                                 "");
+         if Typ = null then
+            return No_Entity_Information;
+         else
+            return Create (Typ.Value.Declaration);
+         end if;
+      end if;
+
+      while Dep /= null loop
+         if Dep.Value.File = Location.File then
+            Typ := Get_Declaration
+              (List        => Dep.Value.Declarations,
+               Decl_Line   => Location.Line,
+               Decl_Column => Location.Column,
+               Entity_Name => "");
+            if Typ /= null then
+               return Create (Typ.Value.Declaration);
+            else
+               return Create
+                 (File   => Get_File (Location),
+                  Line   => Location.Line,
+                  Column => Location.Column,
+                  Name   => "???",
+                  Scope  => Global_Scope,
+                  Kind   => (Procedure_Kind, False, False));
+            end if;
+         end if;
+         Dep := Dep.Next;
+      end loop;
+      return No_Entity_Information;
+   end Find_Declaration_In_LI_Or_Dependencies;
 
    ----------
    -- Next --
@@ -2653,6 +2714,7 @@ package body Src_Info.Queries is
      (Entity : Entity_Information; Node : Scope_Tree_Node) return Boolean is
    begin
       return Node.Decl.Rename /= Null_File_Location
+        and then not Is_Predefined_Entity (Entity)
         and then Location_Matches
         (Node.Decl.Rename, Entity.Decl_File.all,
          Entity.Decl_Line, Entity.Decl_Column) = 0;
@@ -2983,13 +3045,19 @@ package body Src_Info.Queries is
       Column : Natural;
       Name   : String;
       Scope  : E_Scope;
-      Kind   : E_Kind) return Entity_Information is
+      Kind   : E_Kind) return Entity_Information
+   is
+      F : GNAT.OS_Lib.String_Access;
    begin
+      if File /= "" then
+         F := new String'(File);
+      end if;
+
       return Entity_Information'
         (Name        => new String'(Name),
          Decl_Line   => Line,
          Decl_Column => Column,
-         Decl_File   => new String'(File),
+         Decl_File   => F,
          Scope       => Scope,
          Kind        => Kind);
    end Create;
@@ -3107,6 +3175,58 @@ package body Src_Info.Queries is
       end if;
    end Get;
 
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type is
+   begin
+      if Iterator.Current = null then
+         return In_Parameter;
+      else
+         case Iterator.Current.Value.Kind is
+            when Subprogram_In_Parameter     => return In_Parameter;
+            when Subprogram_Out_Parameter    => return Out_Parameter;
+            when Subprogram_In_Out_Parameter => return In_Out_Parameter;
+            when Subprogram_Access_Parameter => return Access_Parameter;
+            when others                      => return In_Parameter;
+         end case;
+      end if;
+   end Get_Type;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Param : Parameter_Type) return String is
+   begin
+      case Param is
+         when In_Parameter     => return "in";
+         when Out_Parameter    => return "out";
+         when In_Out_Parameter => return "in out";
+         when Access_Parameter => return "access";
+      end case;
+   end Image;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create  (Decl : E_Declaration) return Entity_Information is
+   begin
+      if Decl.Name = null then
+         Trace (Me, "Decl.Name = null");
+      end if;
+
+      return Create
+        (File   => Get_File (Decl.Location),
+         Line   => Get_Line (Decl.Location),
+         Column => Get_Column (Decl.Location),
+         Name   => Decl.Name.all,
+         Scope  => Decl.Scope,
+         Kind   => Decl.Kind);
+   end Create;
+
    ------------
    -- Create --
    ------------
@@ -3134,13 +3254,7 @@ package body Src_Info.Queries is
          return No_Entity_Information;
 
       else
-         return Create
-           (File   => Get_File (Decl.Declaration.Location),
-            Line   => Get_Line (Decl.Declaration.Location),
-            Column => Get_Column (Decl.Declaration.Location),
-            Name   => Decl.Declaration.Name.all,
-            Scope  => Decl.Declaration.Scope,
-            Kind   => Decl.Declaration.Kind);
+         return Create (Decl.Declaration);
       end if;
    end Create;
 
@@ -3168,12 +3282,236 @@ package body Src_Info.Queries is
    begin
       return Entity1.Decl_Line = Entity2.Decl_Line
         and then Entity1.Decl_Column = Entity2.Decl_Column
-        and then Entity1.Decl_File.all = Entity2.Decl_File.all
+        and then ((Entity1.Decl_File = null
+                   and then Entity2.Decl_File = null)
+                  or else
+                  (Entity1.Decl_File.all = Entity2.Decl_File.all))
         and then Entity1.Name.all = Entity2.Name.all;
       --  In fact, we don't really need to test the names, since there is only
       --  one possible entity at any given location. However, the source files
       --  might have changed between the creation of Entity1 and Entity2, so we
       --  do this as an extra check.
    end Is_Equal;
+
+   --------------------------
+   -- Is_Predefined_Entity --
+   --------------------------
+
+   function Is_Predefined_Entity
+     (Entity : Entity_Information) return Boolean is
+   begin
+      return Entity.Decl_File = null;
+   end Is_Predefined_Entity;
+
+   ---------------------
+   -- Process_Parents --
+   ---------------------
+
+   function Process_Parents
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information;
+      Kind     : Parent_Kind) return Entity_Information
+   is
+      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+        (Lib_Info, Entity);
+      Parent : File_Location_List;
+   begin
+      if Decl /= null then
+         Trace (Me, "Process_Parents decl="
+                & Get_LI_Filename (Lib_Info) & ' '
+                & Decl.Value.Declaration.Name.all & ' '
+                & Get_Source_Filename (Decl.Value.Declaration.Location.File)
+                & Decl.Value.Declaration.Location.Line'Img
+                & Decl.Value.Declaration.Location.Column'Img
+               );
+      end if;
+
+      if Decl /= null then
+         Parent := Decl.Value.Declaration.Parent_Location;
+         while Parent /= null
+           and then Parent.Kind /= Kind
+         loop
+            Parent := Parent.Next;
+         end loop;
+
+         if Parent /= null then
+            if Parent.Value = Predefined_Entity_Location then
+               Trace
+                 (Me, "Process_Parents: Found a predefined entity: "
+                  & Get_String (Parent.Predefined_Entity_Name));
+               return Create
+                 (File   => "",
+                  Line   => 1,
+                  Column => 1,
+                  Name => Get_String (Parent.Predefined_Entity_Name),
+                  Scope  => Global_Scope,
+                  Kind   => Unresolved_Entity_Kind);
+            else
+               Trace (Me, "Process_Parents: location line="
+                      & Get_Source_Filename
+                      (Parent.Value.File)
+                      & Parent.Value.Line'Img
+                      & Parent.Value.Column'Img);
+               --  The type of the variable might be either directly in the
+               --  source files of Lib_Info or in one of the imported source
+               --  files.
+               return Find_Declaration_In_LI_Or_Dependencies
+                 (Lib_Info, Parent.Value);
+            end if;
+         end if;
+      end if;
+
+      Trace (Me, "Process_Parents: Declaration not found for "
+             & Get_Name (Entity) & ' '
+             & Get_Declaration_File_Of (Entity)
+             & Get_Declaration_Line_Of (Entity)'Img
+             & Get_Declaration_Column_Of (Entity)'Img
+             & ' ' & Get_LI_Filename (Lib_Info));
+      return No_Entity_Information;
+   end Process_Parents;
+
+   -----------------------
+   -- Get_Variable_Type --
+   -----------------------
+
+   function Get_Variable_Type
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Entity_Information is
+   begin
+      return Process_Parents (Lib_Info, Entity, Parent_Type);
+   end Get_Variable_Type;
+
+   ------------------
+   -- Pointed_Type --
+   ------------------
+
+   function Pointed_Type
+     (Lib_Info   : LI_File_Ptr;
+      Access_Type : Entity_Information) return Entity_Information is
+   begin
+      return Process_Parents (Lib_Info, Access_Type, Pointed_Type);
+   end Pointed_Type;
+
+   ----------------------
+   -- Get_Parent_Types --
+   ----------------------
+
+   function Get_Parent_Types
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Parent_Iterator
+   is
+      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+        (Lib_Info, Entity);
+      Parent : File_Location_List;
+   begin
+      if Decl = null then
+         return (Lib_Info => Lib_Info, Current => null);
+      else
+         Parent := Decl.Value.Declaration.Parent_Location;
+         while Parent /= null and then Parent.Kind /= Parent_Type loop
+            Parent := Parent.Next;
+         end loop;
+
+         return (Lib_Info => Lib_Info, Current => Parent);
+      end if;
+   end Get_Parent_Types;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Parent_Iterator) is
+   begin
+      if Iter.Current /= null then
+         Iter.Current := Iter.Current.Next;
+         while Iter.Current /= null
+           and then Iter.Current.Kind /= Parent_Type
+         loop
+            Iter.Current := Iter.Current.Next;
+         end loop;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Parent_Iterator) return Entity_Information is
+   begin
+      if Iter.Current = null then
+         return No_Entity_Information;
+      else
+         return Find_Declaration_In_LI_Or_Dependencies
+           (Iter.Lib_Info, Iter.Current.Value);
+      end if;
+   end Get;
+
+   ------------------------------
+   -- Get_Primitive_Operations --
+   ------------------------------
+
+   function Get_Primitive_Operations
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Primitive_Iterator
+   is
+      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+        (Lib_Info, Entity);
+   begin
+      if Decl = null then
+         return (Lib_Info => Lib_Info, Current => null);
+      else
+         return (Lib_Info => Lib_Info,
+                 Current => Decl.Value.Declaration.Primitive_Subprograms);
+      end if;
+   end Get_Primitive_Operations;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Primitive_Iterator) is
+   begin
+      if Iter.Current /= null then
+         Iter.Current := Iter.Current.Next;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Primitive_Iterator) return Entity_Information is
+   begin
+      if Iter.Current = null then
+         return No_Entity_Information;
+      else
+         return Find_Declaration_In_LI_Or_Dependencies
+           (Iter.Lib_Info, Iter.Current.Value.Location);
+      end if;
+   end Get;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (Iter : Primitive_Iterator) return Natural is
+      L : Natural := 0;
+      C : E_Reference_List := Iter.Current;
+   begin
+      while C /= null loop
+         L := L + 1;
+         C := C.Next;
+      end loop;
+      return L;
+   end Length;
+
+   --------------------
+   -- Is_Declaration --
+   --------------------
+
+   function Is_Declaration (Node : Scope_Tree_Node) return Boolean is
+   begin
+      return Node.Typ = Declaration;
+   end Is_Declaration;
 
 end Src_Info.Queries;

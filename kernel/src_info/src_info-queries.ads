@@ -65,6 +65,9 @@ package Src_Info.Queries is
    type Entity_Information is private;
    No_Entity_Information         : constant Entity_Information;
 
+   type Entity_Information_Array is array (Natural range <>)
+     of Entity_Information;
+
    procedure Destroy (Entity : in out Entity_Information);
    --  Free the memory associated with the entity;
 
@@ -81,11 +84,17 @@ package Src_Info.Queries is
    --  location remains valid only until the source file are changed. It is not
    --  magically updated when the source file is changed.
    --  The declaration file might be the empty string if the exact location for
-   --  the declaration could not be resolved (case of overloaded entities).
+   --  the declaration could not be resolved (case of overloaded entities, or
+   --  predefined entities)
 
    function Get_Kind (Entity : Entity_Information) return E_Kind;
    --  Return the kind of the entity. See glide_kernel.ads on how to convert
    --  this to a string.
+
+   function Is_Predefined_Entity (Entity : Entity_Information) return Boolean;
+   --  Return True if the entity is one of the predefined entities for the
+   --  language, ie there are no declaration for it in the user's code (Like
+   --  Integer in Ada, or int in C).
 
    function Get_Scope (Entity : Entity_Information) return E_Scope;
    --  Return the scope of the entity.  See glide_kernel.ads on how to convert
@@ -114,6 +123,8 @@ package Src_Info.Queries is
       Kind   : E_Kind) return Entity_Information;
    --  Return a new entity information structure. It is the responsability of
    --  the user to free the allocated memory.
+   --  If File is the empty string, the entity will be considered as a
+   --  predefined entity.
 
    procedure Renaming_Of
      (List           : LI_File_List;
@@ -312,9 +323,9 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
    --  Free the memory occupied by the iterator.
 
-   --------------
-   -- Packages --
-   --------------
+   -------------
+   -- Parents --
+   -------------
 
    function Get_Parent_Package
      (Lib_Info : LI_File_Ptr;
@@ -329,6 +340,72 @@ package Src_Info.Queries is
    --  Lib_Info must already have been parsed.
    --
    --  The returned entity must be freed by the user.
+
+   type Parent_Iterator is private;
+
+   function Get_Parent_Types
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Parent_Iterator;
+   --  Return a pointer to the first parent type for the type Entity. In
+   --  Object-oriented languages, this would be the classes Entity derives
+   --  from. In Ada, this includes the parent type of a type or subtype
+
+   procedure Next (Iter : in out Parent_Iterator);
+   --  Move to the next parent of the entity
+
+   function Get (Iter : Parent_Iterator) return Entity_Information;
+   --  Return the current parent of the entity. No_Entity_Information is
+   --  returned if there are no more parents
+
+   --------------------------------------
+   -- Methods and primitive operations --
+   --------------------------------------
+
+   type Primitive_Iterator is private;
+
+   function Get_Primitive_Operations
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Primitive_Iterator;
+   --  Return the first primitive operation for the type Entity. This will not
+   --  return anything if Entity is a variable.
+
+   function Get (Iter : Primitive_Iterator) return Entity_Information;
+   --  Return the current primitive operation, or No_Entity_Information if
+   --  there are no more.
+   --  The returned entity must be freed by the user.
+
+   procedure Next (Iter : in out Primitive_Iterator);
+   --  Move the next primitive operation.
+
+   function Length (Iter : Primitive_Iterator) return Natural;
+   --  Return the number of primitive operations that remain to be returned by
+   --  Iter, including the current one. If Iter is the direct result of
+   --  Get_Primitive_Operations, this is the total number of primitive
+   --  operations for the entity.
+
+   ---------------
+   -- Variables --
+   ---------------
+
+   function Get_Variable_Type
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Entity_Information;
+   --  Return a pointer to the variable's type. Lib_Info is the LI file that
+   --  contains the declaration of the variable.
+   --  If the type of the entity is one of the predefined types for the
+   --  language (Integer for Ada for instance), the returned entity will have
+   --  Is_Predefined_Entity returning true.
+
+   function Array_Contents_Type
+     (Lib_Info   : LI_File_Ptr;
+      Array_Type : Entity_Information) return Entity_Information
+      renames Get_Variable_Type;
+   --  Return the type of data contained in an array type.
+
+   function Pointed_Type
+     (Lib_Info   : LI_File_Ptr;
+      Access_Type : Entity_Information) return Entity_Information;
+   --  Return the type of data pointed to by a pointer type.
 
    ---------------------------
    -- Dependencies requests --
@@ -454,9 +531,9 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Dependency_Iterator_Access);
    --  Free the memory occupied by the iterator.
 
-   -----------------
-   -- Subprograms --
-   -----------------
+   ----------------------------
+   -- Subprograms parameters --
+   ----------------------------
 
    type Subprogram_Iterator is private;
 
@@ -479,6 +556,16 @@ package Src_Info.Queries is
    --  The returned value must be freed by the user
    --  No_Entity_Information is returned if there are no more parameters
 
+   type Parameter_Type is (In_Parameter,
+                           Out_Parameter,
+                           In_Out_Parameter,
+                           Access_Parameter);
+   function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type;
+   --  Return information on how the parameter is passed to the subprogram.
+
+   function Image (Param : Parameter_Type) return String;
+   --  Return a string suitable for display for the parameter type.
+
    ----------------
    -- Scope tree --
    ----------------
@@ -490,6 +577,9 @@ package Src_Info.Queries is
    --  Create a new scope tree from an already parsed Library information.
    --  Note that the resulting tree needs to be freed whenever Lib_Info
    --  changes, since the tree points to internal nodes of Lib_Info.
+   --
+   --  Consider using Glide_Kernel.Get_Scope_Tree instead, since it will parse
+   --  the right source file for an entity.
 
    procedure Free (Tree : in out Scope_Tree);
    --  Free the memory occupied by Tree.
@@ -539,6 +629,9 @@ package Src_Info.Queries is
    --  A would be inside a Scope_Tree_Node for "loop", which we don't want to
    --  show in full names).
 
+   function Is_Declaration (Node : Scope_Tree_Node) return Boolean;
+   --  Return True if the node is a declaration (as opposed to a reference).
+
    function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
@@ -576,7 +669,8 @@ private
    function Get_Declaration
      (List : LI_File_List; Entity : Entity_Information) return E_Declaration;
    --  Return the declaration matching Entity, from the LI file and source file
-   --  that contains that declaration
+   --  that contains that declaration.
+   --  No_Declaration is returned if it wasn't found.
 
    function Get_Declaration
      (Location : File_Location; Entity_Name : String := "")
@@ -623,6 +717,8 @@ private
       Scope       : E_Scope;
       Kind        : E_Kind;
    end record;
+   --  If Decl_File is null, this is one of the predefined entities for its
+   --  language.
 
    No_Entity_Information : constant Entity_Information :=
      (null, 1, 0, null, Global_Scope, Unresolved_Entity_Kind);
@@ -774,6 +870,16 @@ private
    end record;
 
    type Subprogram_Iterator is record
+      Lib_Info    : LI_File_Ptr;
+      Current     : E_Reference_List;
+   end record;
+
+   type Parent_Iterator is record
+      Lib_Info    : LI_File_Ptr;
+      Current     : File_Location_List;
+   end record;
+
+   type Primitive_Iterator is record
       Lib_Info    : LI_File_Ptr;
       Current     : E_Reference_List;
    end record;
