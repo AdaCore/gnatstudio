@@ -123,6 +123,9 @@ package body Prj_Normalize is
 
       --  ??? Should check that case items have only one choice
 
+      --  ??? Should check that all the scenario variables point to different
+      --  ??? types, so that they can be modified at will.
+
       if Kind_Of (Node) = N_Project then
          Decl_List := First_Declarative_Item_Of
            (Project_Declaration_Of (Node));
