@@ -610,6 +610,25 @@ package body Project_Properties is
       Append_Page
         (Main_Note, Create_General_Page (Editor, Project_View, Kernel), Label);
 
+      Editor.Project_View := Project_View;
+      Editor.Kernel       := Kernel_Handle (Kernel);
+      Editor.Pages        := new Widget_Array
+        (1 .. Project_Editor_Pages_Count (Kernel));
+
+      --  We used to create the pages dynamically, in Switch_Page. However,
+      --  this means that the pages that haven't been visited by the user will
+      --  not generate a project on exit, which is a problem when copying a
+      --  scenario to another one for instance
+      for E in Editor.Pages'Range loop
+         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+
+         Gtk_New (Label, Get_Label (Page));
+         Editor.Pages (E) := Widget_Factory
+           (Page, Project_View, Editor.Kernel);
+         Append_Page (Main_Note, Editor.Pages (E), Label);
+      end loop;
+
+      --  Connect this only once we have created the pages
       Gtk.Handlers.Add_Watch
         (Object_User_Callback.Connect
          (Main_Note, "switch_page",
@@ -618,21 +637,7 @@ package body Project_Properties is
           After => True),
          Editor);
 
-      Editor.Project_View := Project_View;
-      Editor.Kernel       := Kernel_Handle (Kernel);
-      Editor.Pages        := new Widget_Array
-        (1 .. Project_Editor_Pages_Count (Kernel));
-
-      for E in Editor.Pages'Range loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E);
-
-         --  Pages' widgets are created dynamically, when the user switches to
-         --  the page.
-         Gtk_New_Vbox (Box, Homogeneous => False);
-
-         Gtk_New (Label, Get_Label (Page));
-         Append_Page (Main_Note, Box, Label);
-      end loop;
+      Set_Current_Page (Main_Note, 0);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack_Start (Main_Box, Box, Expand => True, Fill => True);
@@ -668,14 +673,6 @@ package body Project_Properties is
       if Page >= 1
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
       then
-         if Ed.Pages (Page) = null then
-            Ed.Pages (Page) := Widget_Factory
-              (Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
-               Ed.Project_View, Ed.Kernel);
-            Pack_Start
-              (Gtk_Box (Get_Nth_Page (Note, Gint (Page))), Ed.Pages (Page));
-         end if;
-
          declare
             Languages : Argument_List := Get_Languages (Ed);
          begin
@@ -1095,12 +1092,10 @@ package body Project_Properties is
                      for P in Editor.Pages'Range loop
                         Ed := Get_Nth_Project_Editor_Page (Kernel, P);
 
-                        --  If the page was visited at least once, and if the
-                        --  project is either the one the user clicked on or
-                        --  the page might apply to multiple projects
-                        if Editor.Pages (P) /= null
-                          and then ((Get_Flags (Ed) and Multiple_Projects) /= 0
-                                    or else Current (Prj_Iter) = Project)
+                        --  If the project is either the one the user clicked
+                        --  on or the page might apply to multiple projects
+                        if ((Get_Flags (Ed) and Multiple_Projects) /= 0
+                            or else Current (Prj_Iter) = Project)
                         then
                            declare
                               Result : constant Project_Node_Array :=
