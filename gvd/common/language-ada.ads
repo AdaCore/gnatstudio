@@ -98,6 +98,12 @@ package Language.Ada is
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
+   procedure Parse_Entities
+     (Lang          : access Ada_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Callback      : Entity_Callback);
+
 private
    type Ada_Language is new Language_Root with null record;
 

@@ -401,6 +401,31 @@ package body Language.Ada is
       Result := Constructs;
    end Parse_Constructs;
 
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang          : access Ada_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Callback      : Entity_Callback)
+   is
+      New_Buffer : Extended_Line_Buffer;
+      Ignore     : Natural;
+   begin 
+      Analyze_Ada_Source  
+        (To_Unchecked_String (Buffer), Buffer_Length,
+         New_Buffer, Default_Indent_Parameters,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Current_Indent   => Ignore,
+         Prev_Indent      => Ignore,
+         Callback         => Callback);
+   end Parse_Entities;
+
    ----------------------
    -- Next_Indentation --
    ----------------------

@@ -348,7 +348,17 @@ package Language is
       Cat_Accept_Statement,
       Cat_Declare_Block,
       Cat_Simple_Block,
-      Cat_Exception_Handler);
+      Cat_Exception_Handler,
+
+      -----------------
+      -- Token Types --
+      -----------------
+
+      Cat_Reserved_Word,
+      Cat_Identifier,
+      Cat_String,
+      Cat_Character,
+      Cat_Comment);
 
    subtype Enclosing_Entity_Category is Language_Category
      range Cat_Package .. Cat_Method;
@@ -367,6 +377,13 @@ package Language is
 
    subtype Construct_Category is Language_Category
      range Cat_Loop_Statement .. Cat_Exception_Handler;
+
+   type Source_Entity_Kind is
+     (Ent_Reserved_Word,
+      Ent_Identifier,
+      Ent_String,
+      Ent_Character,
+      Ent_Comment);
 
    type Construct_Information;
    type Construct_Access is access Construct_Information;
@@ -438,6 +455,20 @@ package Language is
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
+
+   type Entity_Callback is access procedure
+     (Entity     : Source_Entity_Kind;
+      Sloc_Start : Source_Location;
+      Sloc_End   : Source_Location);
+   --  Callback during parsing of entities.
+
+   procedure Parse_Entities
+     (Lang          : access Language_Root;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Callback      : Entity_Callback);
+   --  Parse entities (as defined by Source_Entity_Kind) contained in buffer.
+   --  For each match, call Callback. Stops at the end of Buffer.
 
 private
    type Language_Root is abstract tagged null record;

@@ -454,6 +454,19 @@ package body Language is
       Result := (null, null, null);
    end Parse_Constructs;
 
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang          : access Language_Root;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Callback      : Entity_Callback) is
+   begin
+      null;
+   end Parse_Entities;
+
    ----------------------
    -- Next_Indentation --
    ----------------------
