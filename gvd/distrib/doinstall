@@ -97,6 +97,7 @@ install_binaries() {
   # We also explicitly work on specific directories to avoid
   # copying junk files
 
+  rm -f bin/gvd
   (cd $current_dir; tar cf - bin) | tar xf -
   (cd $current_dir; tar cf - doc) | tar xf -
 
