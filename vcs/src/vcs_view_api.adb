@@ -647,7 +647,8 @@ package body VCS_View_API is
             Status :=  Local_Get_Status (Ref, Dirs);
             String_List.Free (Dirs);
             Clear (Explorer);
-            Display_File_Status (Get_Kernel (Context), Status, False, True);
+            Display_File_Status
+              (Get_Kernel (Context), Status, Ref, False, True);
             File_Status_List.Free (Status);
             String_List.Free (Dirs);
 
@@ -902,10 +903,33 @@ package body VCS_View_API is
      (Kernel : access Kernel_Handle_Record'Class)
      return VCS_Access
    is
-      pragma Unreferenced (Kernel);
+      Context  : constant Selection_Context_Access
+        := Get_Current_Context (Kernel);
+      File     : File_Selection_Context_Access;
+      Explorer : VCS_View_Access;
+
    begin
-      return Get_VCS_From_Id ("CVS");
-      --  ??? should get this information from the project !!
+      if Context /= null
+        and then Get_Creator (Context) = VCS_Module_ID
+      then
+         Explorer := Get_Explorer (Kernel_Handle (Kernel));
+
+         return Get_Current_Ref (Explorer);
+      else
+         if Context /= null
+           and then Context.all in File_Selection_Context
+         then
+            File := File_Selection_Context_Access (Context);
+
+            if Has_Project_Information (File) then
+               return Get_VCS_From_Id
+                 (Get_Vcs_Kind (Project_Information (File)));
+            end if;
+         end if;
+      end if;
+
+      return Get_VCS_From_Id ("cvs");
+      --   ??? this should be "" and not "cvs".
    end Get_Current_Ref;
 
    --------------------
@@ -1268,6 +1292,7 @@ package body VCS_View_API is
       Status         : File_Status_List.List;
       Files          : String_List.List;
       Files_Temp     : String_List.List_Node;
+      Ref            : VCS_Access := Get_Current_Ref (Kernel);
 
       use String_List;
    begin
@@ -1283,11 +1308,11 @@ package body VCS_View_API is
       end loop;
 
       Clear (Explorer);
-      Display_File_Status (Kernel, Status, False, True);
+      Display_File_Status (Kernel, Status, Ref, False, True);
       File_Status_List.Free (Status);
 
       if Real_Query then
-         Get_Status (Get_Current_Ref (Kernel), Files);
+         Get_Status (Ref, Files);
       end if;
 
       String_List.Free (Files);
