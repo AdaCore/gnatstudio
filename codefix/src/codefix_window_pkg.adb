@@ -42,20 +42,21 @@ procedure Initialize (Codefix_Window : access Codefix_Window_Record'Class) is
    Fix_Caption_List_Items : String_List.Glist;
 
 begin
-   Gtk.Window.Initialize (Codefix_Window, Window_Toplevel);
-   Set_Title (Codefix_Window, -"Codefix");
-   Set_Policy (Codefix_Window, False, True, False);
-   Set_Position (Codefix_Window, Win_Pos_None);
-   Set_Modal (Codefix_Window, False);
-   Set_USize (Codefix_Window, 640, 480);
-   Return_Callback.Connect
-     (Codefix_Window, "delete_event", On_Codefix_Window_Delete_Event'Access);
+      --   Gtk.Window.Initialize (Codefix_Window, Window_Toplevel);
+   Gtk.Box.Initialize_Hbox (Codefix_Window);
+--   Set_Title (Codefix_Window, -"Codefix");
+--   Set_Policy (Codefix_Window, False, True, False);
+--   Set_Position (Codefix_Window, Win_Pos_None);
+--   Set_Modal (Codefix_Window, False);
+--   Set_USize (Codefix_Window, 640, 480);
+--   Return_Callback.Connect
+--     (Codefix_Window, "delete_event", On_Codefix_Window_Delete_Event'Access);
 
-   Gtk_New_Hbox (Codefix_Window.Hbox1, False, 0);
-   Add (Codefix_Window, Codefix_Window.Hbox1);
+--   Gtk_New_Hbox (Codefix_Window.Hbox1, False, 0);
+--   Add (Codefix_Window, Codefix_Window.Hbox1);
 
    Gtk_New_Vbox (Codefix_Window.Vbox6, False, 0);
-   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox6, True, True, 0);
+   Pack_Start (Codefix_Window, Codefix_Window.Vbox6, True, True, 0);
 
    Gtk_New (Codefix_Window.Error_Caption, -("Error_Caption"));
    Set_Alignment (Codefix_Window.Error_Caption, 0.5, 0.5);
@@ -102,7 +103,8 @@ begin
       Widget_Callback.To_Marshaller (On_Fix_Entry_Changed'Access), Codefix_Window);
 
    Gtk_New_Vbox (Codefix_Window.Vbox5, False, 0);
-   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox5, False, True, 0);
+--   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox5, False, True, 0);
+   Pack_Start (Codefix_Window, Codefix_Window.Vbox5, False, True, 0);
 
    Gtk_New (Codefix_Window.Vbuttonbox1);
    Set_Spacing (Codefix_Window.Vbuttonbox1, 10);
