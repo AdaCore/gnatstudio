@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -1610,47 +1610,43 @@ package body GVD_Module is
       Timeout_Id : Timeout_Handler_Id;
       pragma Unreferenced (Timeout_Id);
 
+      Id         : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Tab        : constant Visual_Debugger :=
-        Get_Current_Process
-          (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel));
+        Get_Current_Process (Get_Main_Window (Id.Kernel));
       Debugger   : constant Debugger_Access := Tab.Debugger;
       --  ??? Should attach the right debugger.
-      Id         : constant GVD_Module  := GVD_Module (GVD_Module_ID);
    begin
-      if File_Line_List.Is_Empty
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
+      if File_Line_List.Is_Empty (Id.Unexplored_Lines)
         or else Debugger = null
         or else Get_Process (Debugger) = null
       then
          return False;
 
-      elsif Id.Show_Lines_With_Code
-        and then Command_In_Process (Get_Process (Debugger))
-      then
-         GVD_Module (GVD_Module_ID).Slow_Query := True;
-         Timeout_Id := Timeout_Add
-           (100, Idle_Reveal_Lines'Access);
-         return False;
+      elsif Id.Show_Lines_With_Code then
+         if Command_In_Process (Get_Process (Debugger)) then
+            Id.Slow_Query := True;
+            Timeout_Id := Timeout_Add (100, Idle_Reveal_Lines'Access);
+            return False;
 
-      elsif GVD_Module (GVD_Module_ID).Slow_Query then
-         GVD_Module (GVD_Module_ID).Slow_Query := False;
-         Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
-         return False;
+         elsif Id.Slow_Query then
+            Id.Slow_Query := False;
+            Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+            return False;
+         end if;
       end if;
 
-      File_Line := File_Line_List.Head
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+      if Id.List_Modified then
+         Id.List_Modified := False;
+         return True;
+      end if;
+
+      File_Line := File_Line_List.Head (Id.Unexplored_Lines);
 
       if Id.Show_Lines_With_Code then
          Kind := Line_Contains_Code
            (Debugger, File_Line.File.all, File_Line.Line);
       else
          Kind := Have_Code;
-      end if;
-
-      if GVD_Module (GVD_Module_ID).List_Modified then
-         GVD_Module (GVD_Module_ID).List_Modified := False;
-         return True;
       end if;
 
       declare
@@ -1661,7 +1657,7 @@ package body GVD_Module is
 
          use File_Line_List;
 
-         Node : List_Node;
+         Node      : List_Node;
          Prev_Node : List_Node;
 
       begin
@@ -1691,13 +1687,8 @@ package body GVD_Module is
             end if;
 
             Create
-              (C,
-               GVD_Module (GVD_Module_ID).Kernel,
-               Debugger,
-               Mode,
-               File_Line.File.all,
-               File_Line.Line,
-               Identifier);
+              (C, Id.Kernel, Debugger, Mode, File_Line.File.all,
+               File_Line.Line, Identifier);
 
             A (L).Associated_Command := Command_Access (C);
 
@@ -1707,22 +1698,17 @@ package body GVD_Module is
             --  unexplored lines, and clean it of all lines after the
             --  current line in the current file.
 
-            Node := First (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+            Node := First (Id.Unexplored_Lines);
 
             while Node /= Null_Node loop
                if Data (Node).File.all = File_Line.File.all
                  and then Data (Node).Line > File_Line.Line
                then
-                  Prev_Node :=
-                    Prev (GVD_Module (GVD_Module_ID).Unexplored_Lines, Node);
-                  Remove_Nodes
-                    (GVD_Module (GVD_Module_ID).Unexplored_Lines,
-                     Prev_Node,
-                     Node);
+                  Prev_Node := Prev (Id.Unexplored_Lines, Node);
+                  Remove_Nodes (Id.Unexplored_Lines, Prev_Node, Node);
 
                   if Prev_Node = Null_Node then
-                     Node :=
-                       First (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+                     Node := First (Id.Unexplored_Lines);
 
                      if Node = Null_Node then
                         return False;
@@ -1735,26 +1721,21 @@ package body GVD_Module is
                Node := Next (Node);
             end loop;
 
-            if File_Line_List.Is_Empty
-              (GVD_Module (GVD_Module_ID).Unexplored_Lines)
-            then
+            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
                return False;
             end if;
          end if;
 
          Add_Line_Information
-           (GVD_Module (GVD_Module_ID).Kernel,
+           (Id.Kernel,
             File_Line.File.all,
             Breakpoints_Column_Id,
             new Line_Information_Array'(A));
       end;
 
-      File_Line_List.Next
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+      File_Line_List.Next (Id.Unexplored_Lines);
 
-      if File_Line_List.Is_Empty
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
-      then
+      if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
          return False;
       end if;
 
@@ -1762,13 +1743,13 @@ package body GVD_Module is
 
    exception
       when E : GNAT.Expect.Process_Died =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Debug_Terminate (Id.Kernel);
          Trace (Me, "Debugger died unexpectedly: "
                   & Exception_Information (E));
          return False;
 
       when E : others =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Debug_Terminate (Id.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Idle_Reveal_Lines;
@@ -1809,7 +1790,7 @@ package body GVD_Module is
 
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-
+      Id           : constant GVD_Module := GVD_Module (GVD_Module_ID);
    begin
       if Process = null or else Process.Debugger = null then
          return;
@@ -1826,32 +1807,31 @@ package body GVD_Module is
          begin
             Get_Area (Area_Context, Line1, Line2);
 
-            if File_Line_List.Is_Empty
-              (GVD_Module (GVD_Module_ID).Unexplored_Lines)
-            then
-               Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
-            else
-               GVD_Module (GVD_Module_ID).List_Modified := True;
-               File_Line_List.Free
-                 (GVD_Module (GVD_Module_ID).Unexplored_Lines);
-               GVD_Module (GVD_Module_ID).Unexplored_Lines
-                 := File_Line_List.Null_List;
+            if not File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+               Id.List_Modified := True;
+               File_Line_List.Free (Id.Unexplored_Lines);
+               Id.Unexplored_Lines := File_Line_List.Null_List;
             end if;
 
             for J in Line1 .. Line2 loop
                File_Line_List.Append
-                 (GVD_Module (GVD_Module_ID).Unexplored_Lines,
-                  (new String'(File), J));
+                 (Id.Unexplored_Lines, (new String'(File), J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
+
+               --  If we have set Id.List_Modified to True, then necessarily
+               --  a timeout function was already registered.
+               if Id.List_Modified then
+                  Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+               end if;
             end loop;
          end;
       end if;
 
    exception
       when E : others =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Debug_Terminate (Id.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Lines_Revealed_Cb;
 
@@ -1943,10 +1923,20 @@ package body GVD_Module is
       Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
       Top    : constant Glide_Window := Glide_Window (Window);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+
+      Prev   : Boolean;
    begin
       GVD.Main_Window.Preferences_Changed (Top);
+
+      Prev   := Id.Show_Lines_With_Code;
+
       Id.Show_Lines_With_Code :=
         Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
+
+      if Prev /= Id.Show_Lines_With_Code then
+         Remove_Debugger_Columns (Kernel_Handle (Kernel), "");
+         Create_Debugger_Columns (Kernel_Handle (Kernel), "");
+      end if;
    end Preferences_Changed;
 
    ---------------------
