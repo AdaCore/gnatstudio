@@ -2256,6 +2256,8 @@ package body Project_Properties is
                Set_Text (Editor.Ent, Current);
             elsif Description.Base_Name_Only then
                Set_Text (Editor.Ent, Base_Name (Current));
+            elsif Current (Current'First) = '(' then
+               Set_Text (Editor.Ent, Current);
             else
                Set_Text (Editor.Ent,
                          Normalize_Pathname
