@@ -675,48 +675,55 @@ procedure GPS is
          Close (Directory);
 
          --  If only one project file was found in the current directory, do
-         --  not open the welcome dialog.
+         --  not open the welcome dialog. Likewise if we are loading a script,
+         --  since we consider that the script is responsible for loading the
+         --  appropriate project.
 
          if not Auto_Load_Project then
-            Load_Sources;
+            if Batch_File /= null then
+               Load_Default_Project (GPS.Kernel, Get_Current_Dir);
 
-            if not File_Opened then
-               --  Load the project selected by the user
+            else
+               Load_Sources;
 
-               if Project_Name = null then
-                  Gtk_New (Screen, GPS.Kernel, "");
-               else
-                  Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+               if not File_Opened then
+                  --  Load the project selected by the user
+
+                  if Project_Name = null then
+                     Gtk_New (Screen, GPS.Kernel, "");
+                  else
+                     Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+                  end if;
+
+                  --  Remove the splash screen, since it conflicts with the
+                  --  welcome dialog.
+
+                  if Splash /= null then
+                     Destroy (Splash);
+                     Splash := null;
+                  end if;
+
+                  --  If the user wants to quit immediately, so be it.
+
+                  case Run_Welcome (Screen) is
+                     when Quit_GPS =>
+                        Destroy (Screen);
+                        Gtk.Main.Main_Quit;
+                        return False;
+
+                     when Project_Loaded =>
+                        --  Desktop was already loaded when the project itself
+                        --  was loaded.
+                        null;
+                  end case;
+
+                  Destroy (Screen);
                end if;
-
-               --  Remove the splash screen, since it conflicts with the
-               --  welcome dialog.
-
-               if Splash /= null then
-                  Destroy (Splash);
-                  Splash := null;
-               end if;
-
-               --  If the user wants to quit immediately, so be it.
-
-               case Run_Welcome (Screen) is
-                  when Quit_GPS =>
-                     Destroy (Screen);
-                     Gtk.Main.Main_Quit;
-                     return False;
-
-                  when Project_Loaded =>
-                     --  Desktop was already loaded when the project itself was
-                     --  loaded.
-                     null;
-               end case;
-
-               Destroy (Screen);
             end if;
          end if;
       end if;
 
-      if Auto_Load_Project then
+      if Auto_Load_Project and then Project_Name /= null then
          if not Is_Regular_File (Project_Name.all)
            and then Is_Regular_File (Project_Name.all & Project_File_Extension)
          then
