@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.2
 
+- VCS "List all files in projects [and subprojects]" does not work
+  Problem:    When using CVS, Native ClearCase or any custom VCS, the menu
+              operations to list files from projects do not list any file.
+  Workaround: Use the "list files in directory" capabilities.
+
 - D715-005 Regular expression search fails sometimes
   Problem:    When you search for a regular expression in a source editor,
               it happens that GPS highlights the first line of the editor
