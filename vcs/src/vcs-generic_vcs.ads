@@ -109,7 +109,8 @@ package VCS.Generic_VCS is
      (Rep        : access Generic_VCS_Record;
       Text       : String;
       Local      : Boolean;
-      Clear_Logs : Boolean);
+      Clear_Logs : Boolean;
+      Dir        : String);
 
    procedure Parse_Annotations
      (Rep   : access Generic_VCS_Record;

@@ -319,9 +319,11 @@ package VCS is
      (Rep        : access VCS_Record;
       Text       : String;
       Local      : Boolean;
-      Clear_Logs : Boolean);
+      Clear_Logs : Boolean;
+      Dir        : String);
    --  Parse Text and return the list of status obtained.
    --  Local indicates whether we are parsing local status.
+   --  Dir is the directory which contains the status, if relevant.
 
    procedure Parse_Annotations
      (Rep   : access VCS_Record;

@@ -202,9 +202,10 @@ package body VCS is
      (Rep        : access VCS_Record;
       Text       : String;
       Local      : Boolean;
-      Clear_Logs : Boolean)
+      Clear_Logs : Boolean;
+      Dir        : String)
    is
-      pragma Unreferenced (Rep, Text, Local, Clear_Logs);
+      pragma Unreferenced (Rep, Text, Local, Clear_Logs, Dir);
    begin
       null;
    end Parse_Status;
