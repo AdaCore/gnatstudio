@@ -1,7 +1,8 @@
 New features in GPS 1.0.1
 
-- The font "tahoma" is used under Windows by default
+- Files will be searched in the object directory as well when clicking on
+  error message or selecting File->Open From Path. This allows automatically
+  generated files such as b~* or *.dg files to be found
 - Matching parenthesis are now highlighted in the editor
-- Files will be search in the object directory as well when clicking on
-  error message or selecting File->Open From Path
+- The font "tahoma" is used under Windows by default
 
