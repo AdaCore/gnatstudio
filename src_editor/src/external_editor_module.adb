@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,6 +43,7 @@ with Unchecked_Deallocation;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
 with Projects;                 use Projects;
+with String_Utils;             use String_Utils;
 
 package body External_Editor_Module is
 
@@ -372,64 +373,21 @@ package body External_Editor_Module is
    procedure Substitute
      (Args : Argument_List_Access; F, C, L, E, P  : String := "")
    is
-      function Str_Substitute (Str : String) return String;
-      --  Substitute the parameters in Str (%f, %l,...).
-      --  The returned array must be freed by the caller
-
-      --------------------
-      -- Str_Substitute --
-      --------------------
-
-      function Str_Substitute (Str : String) return String is
-         Index : Natural := Str'First;
-      begin
-         while Index < Str'Last loop
-            if Str (Index) = '%' then
-               case Str (Index + 1) is
-                  when 'f' =>
-                     return Str (Str'First .. Index - 1)
-                       & Str_Substitute (F)
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when 'c' =>
-                     return Str (Str'First .. Index - 1)
-                       & Str_Substitute (C)
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when 'l' =>
-                     return Str (Str'First .. Index - 1)
-                       & Str_Substitute (L)
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when 'e' =>
-                     return Str (Str'First .. Index - 1)
-                       & Str_Substitute (E)
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when 'p' =>
-                     return Str (Str'First .. Index - 1)
-                       & Str_Substitute (P)
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when '%' =>
-                     return Str (Str'First .. Index - 1) & '%'
-                       & Str_Substitute (Str (Index + 2 .. Str'Last));
-
-                  when others =>
-                     null;
-               end case;
-            end if;
-
-            Index := Index + 1;
-         end loop;
-
-         return Str;
-      end Str_Substitute;
-
+      Substrings : Substitution_Array :=
+        (1 => (Name => new String'("f"), Value => new String'(F)),
+         2 => (Name => new String'("c"), Value => new String'(C)),
+         3 => (Name => new String'("l"), Value => new String'(L)),
+         4 => (Name => new String'("e"), Value => new String'(E)),
+         5 => (Name => new String'("p"), Value => new String'(P)),
+         6 => (Name => new String'("%"), Value => new String'("%")));
    begin
       for A in Args'Range loop
          declare
-            S : constant String := Str_Substitute (Args (A).all);
+            S : constant String := Substitute
+              (Str               => Args (A).all,
+               Substitution_Char => '%',
+               Substrings        => Substrings,
+               Recursive         => True);
          begin
             if S /= Args (A).all then
                Free (Args (A));
@@ -437,6 +395,8 @@ package body External_Editor_Module is
             end if;
          end;
       end loop;
+
+      Free (Substrings);
    end Substitute;
 
    ----------------------
