@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -53,7 +53,8 @@ generic
      (Widget : access Widget_Type'Class;
       Data   : in out User_Type;
       Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width, Height : out Glib.Gint;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle) is <>;
    --  Subprogram called every time a tooltip needs to be drawn.
    --  Width and Height should either contain the size of the pixmap on exit,
@@ -81,9 +82,9 @@ package GVD.Tooltips is
    --  Set a new delay for the tooltips.
 
    procedure New_Tooltip
-     (Widget        : access Widget_Type'Class;
-      Data          : in User_Type;
-      Tooltip       : out Tooltips);
+     (Widget  : access Widget_Type'Class;
+      Data    : in User_Type;
+      Tooltip : out Tooltips);
    --  Create tooltips information for the widget.
    --  The widget must have a window.
 
@@ -96,7 +97,7 @@ package GVD.Tooltips is
    --  Return the data associated with the tooltip.
 
    procedure Destroy_Tooltip (Tooltip : in out Tooltips);
-      --  Free memory allocated to the tooltip.
+   --  Free memory allocated to the tooltip.
 
 private
 
