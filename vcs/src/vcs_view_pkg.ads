@@ -66,12 +66,16 @@ package VCS_View_Pkg is
    procedure Display_File_Status
      (Kernel         : Kernel_Handle;
       Status         : File_Status_List.List;
-      Override_Cache : Boolean);
+      Override_Cache : Boolean;
+      Force_Display  : Boolean := False);
    --  Display Status in the explorer.
    --  Status must be freed by the user after calling this function.
    --  If Override_Cache is set to True, then the cache will be updated
    --  with the new status information, if needed. Otherwise, the values from
    --  the cache will be used for displaying the files.
+   --  If Force_Display is True, then files that are not already visible
+   --  will be added to the list. Otherwise this function only updates
+   --  status for files that are currently visible in the view.
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
