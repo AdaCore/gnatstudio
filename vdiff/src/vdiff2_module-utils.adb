@@ -584,9 +584,9 @@ package body Vdiff2_Module.Utils is
          Ref := 1;
       end if;
 
-      --  Make sure there is only one maximized window in the MDI, and split
-      --  it so that all editors are displayed side by side
-      Single_Window (Get_MDI (Kernel));
+      --  Keep the current window configuration, except we split the current
+      --  editor. This doesn't lose the user's current setup, and will be
+      --  superceded by the use of MDI_Child groups
       Edit (Kernel, Item.File1);
       Edit (Kernel, Item.File2);
       Split (Get_MDI (Kernel), Orientation_Horizontal);
@@ -713,9 +713,9 @@ package body Vdiff2_Module.Utils is
 
       Trace (Me, "Show_Differences3");
 
-      --  Make sure there is only one maximized window in the MDI, and split
-      --  it so that all editors are displayed side by side
-      Single_Window (Get_MDI (Kernel));
+      --  Keep the current window configuration, except we split the current
+      --  editor. This doesn't lose the user's current setup, and will be
+      --  superceded by the use of MDI_Child groups
       Edit (Kernel, Item.File2);
       Edit (Kernel, Item.File1);
       Split (Get_MDI (Kernel), Orientation_Horizontal);
