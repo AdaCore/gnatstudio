@@ -211,6 +211,18 @@ private
       Next_Commands      : Command_Queues.List;
       Alternate_Commands : Command_Queues.List;
       Mode               : Command_Mode := Normal;
+
+      --  The following booleans are used to avoid cases when execution of
+      --  a command might cause this command to be destroyed in the process.
+
+      Do_Not_Free : Boolean := False;
+      --  Used to indicate that the command is currently being used
+      --  and should not be freed.
+
+      To_Be_Freed : Boolean := False;
+      --  Indicates that an attempt to free the command was made
+      --  when Do_Not_Free was set, and that the command should be freed
+      --  as soon as possible.
    end record;
 
    pragma Inline (Undo_Queue_Empty);
