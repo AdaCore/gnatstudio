@@ -29,8 +29,11 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Glide_Main_Window;         use Glide_Main_Window;
+with GVD.Status_Bar;            use GVD.Status_Bar;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -41,14 +44,15 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with OS_Utils;                  use OS_Utils;
 with Src_Editor_Box;            use Src_Editor_Box;
+with GNAT.Expect;               use GNAT.Expect;
 with Traces;                    use Traces;
 
 package body Src_Editor_Module is
 
    Default_Editor_Width  : constant := 400;
    Default_Editor_Height : constant := 400;
+   Timeout               : constant Guint32 := 50;
    --  <preferences>
 
    Me : Debug_Handle := Create ("Src_Editor_Module");
@@ -57,6 +61,9 @@ package body Src_Editor_Module is
       Editor : Source_Editor_Box;
    end record;
    type Source_Box is access all Source_Box_Record'Class;
+
+   function Generate_Body_Timeout (Data : Process_Data) return Boolean;
+   --  Callback for Process_Timeout, to handle gnatstub execution
 
    procedure Gtk_New
      (Box : out Source_Box; Editor : Source_Editor_Box);
@@ -399,7 +406,7 @@ package body Src_Editor_Module is
          if File /= "" then
             Set_Title (Child, File, Short_File);
          else
-            Set_Title (Child, "No Name");
+            Set_Title (Child, -"No Name");
          end if;
 
       else
@@ -679,6 +686,53 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration_Or_Body;
 
+   ---------------------------
+   -- Generate_Body_Timeout --
+   ---------------------------
+
+   function Generate_Body_Timeout (Data : Process_Data) return Boolean is
+      function Body_Name (Name : String) return String;
+      --  Return the name of the body corresponding to a spec file.
+
+      function Body_Name (Name : String) return String is
+      begin
+         --  ??? Should ask the project module instead
+         return Name (Name'First .. Name'Last - 1) & 'b';
+      end Body_Name;
+
+      Fd     : Process_Descriptor_Access := Data.Descriptor;
+      Result : Expect_Match;
+      Title  : String_Access := Data.Name;
+
+   begin
+      Expect (Fd.all, Result, "\n", Timeout => 1);
+
+      if Result /= Expect_Timeout then
+         Console.Insert (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
+      end if;
+
+      return True;
+
+   exception
+      when Process_Died =>
+         Console.Insert
+           (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
+         Close (Fd.all);
+         Free (Fd);
+         Open_File_Editor (Data.Kernel, Body_Name (Title.all));
+         Free (Title);
+         Pop_State (Data.Kernel);
+         return False;
+
+      when E : others =>
+         Close (Fd.all);
+         Free (Fd);
+         Free (Title);
+         Pop_State (Data.Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Generate_Body_Timeout;
+
    ----------------------
    -- On_Generate_Body --
    ----------------------
@@ -687,44 +741,22 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+
       Success : Boolean;
       Title   : constant String := Get_Editor_Filename (Kernel);
-
-      function Body_Name (Name : String) return String;
-      --  Return the name of the body corresponding to a spec file.
+      Id      : Timeout_Handler_Id;
+      Fd      : Process_Descriptor_Access;
 
       procedure Gnatstub (Name : String; Success : out Boolean);
       --  Launch gnatstub process and wait for it.
-
-      function Body_Name (Name : String) return String is
-      begin
-         return Name (Name'First .. Name'Last - 1) & 'b';
-      end Body_Name;
-
-      procedure Refresh;
-      --  Handle pending graphical events.
-
-      -------------
-      -- Refresh --
-      -------------
-
-      procedure Refresh is
-         Dead  : Boolean;
-         Count : Integer := 0;
-      begin
-         while Gtk.Main.Events_Pending and then Count <= 30 loop
-            Dead := Main_Iteration;
-            Count := Count + 1;
-         end loop;
-      end Refresh;
 
       --------------
       -- Gnatstub --
       --------------
 
       procedure Gnatstub (Name : String; Success : out Boolean) is
-         Args : Argument_List (1 .. 1);
-         Exec : String_Access := Locate_Exec_On_Path ("gnatstub");
+         Args   : Argument_List (1 .. 1);
+         Exec   : String_Access := Locate_Exec_On_Path ("gnatstub");
 
       begin
          if Exec = null then
@@ -732,22 +764,34 @@ package body Src_Editor_Module is
             return;
          end if;
 
+         Fd := new Process_Descriptor;
          Args (1) := new String' (Name);
-         Spawn (Exec.all, Args, Refresh'Unrestricted_Access, Success);
+         Non_Blocking_Spawn (Fd.all, Exec.all, Args, Err_To_Out => True);
+         Success := True;
+
          Free (Exec);
          Free (Args (1));
+
+      exception
+         when Invalid_Process =>
+            Success := False;
       end Gnatstub;
 
    begin
       if Title /= "" then
          Push_State (Kernel, Processing);
+
+         --  ??? Should check language first
          Gnatstub (Title, Success);
 
          if Success then
-            Open_File_Editor (Kernel, Body_Name (Title));
+            Print_Message
+              (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
+               Help, -"Generating body...");
+            Id := Process_Timeout.Add
+              (Timeout, Generate_Body_Timeout'Access,
+               (Kernel, Fd, new String' (Title)));
          end if;
-
-         Pop_State (Kernel);
       end if;
 
    exception
@@ -769,6 +813,11 @@ package body Src_Editor_Module is
       Push_State (Kernel, Processing);
       Trace (Me, "pretty printing " & Title);
       Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Pretty_Print;
 
    -----------------
@@ -787,13 +836,14 @@ package body Src_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File   : constant String := Get_String (Data (Data'First));
-            Line   : constant Gint := Get_Int (Data (Data'First + 1));
-            Column : constant Gint := Get_Int (Data (Data'First + 2));
+            File      : constant String  := Get_String (Data (Data'First));
+            Line      : constant Gint    := Get_Int (Data (Data'First + 1));
+            Column    : constant Gint    := Get_Int (Data (Data'First + 2));
             Highlight : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
          begin
             Edit := Open_File (Kernel, File, Create_New => False);
+
             if Edit /= null
               and then (Line /= 0 or else Column /= 0)
             then
@@ -803,6 +853,7 @@ package body Src_Editor_Module is
                --  this in an idle callback ensures that all the proper
                --  events and initializations have taken place before we try
                --  to scroll the editor.
+
                Id := Location_Idle.Add
                  (Location_Callback'Access,
                   (Edit, Natural (Line), Natural (Column)));
@@ -811,9 +862,11 @@ package body Src_Editor_Module is
                   Highlight_Line (Edit, Natural (Line));
                end if;
             end if;
+
             return Edit /= null;
          end;
       end if;
+
       return False;
    end Mime_Action;
 
