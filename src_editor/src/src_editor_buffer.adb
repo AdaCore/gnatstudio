@@ -854,18 +854,22 @@ package body Src_Editor_Buffer is
       Success := True;
 
       FD := Create_File (Filename & ASCII.NUL, Fmode => Text);
+
       if FD = Invalid_FD then
          Success := False;
          return;
       end if;
 
       Get_Bounds (Buffer, Start_Iter, End_Iter);
+
       declare
          File_Buffer : constant String :=
            Get_Text (Buffer, Start_Iter, End_Iter);
          Bytes_Written : Integer;
+
       begin
          Bytes_Written := Write (FD, File_Buffer'Address, File_Buffer'Length);
+
          if Bytes_Written /= File_Buffer'Length then
             --  Means that there is not enough space to save the file. Return
             --  a failure.
@@ -880,9 +884,11 @@ package body Src_Editor_Buffer is
          --  To avoid consuming up all File Descriptors, we catch all
          --  exceptions here, and close the current file descriptor before
          --  reraising the exception.
+
          if FD /= Invalid_FD then
             Close (FD);
          end if;
+
          raise;
    end Save_To_File;
 
@@ -890,8 +896,7 @@ package body Src_Editor_Buffer is
    -- Clear --
    -----------
 
-   procedure Clear (Buffer : access Source_Buffer_Record)
-   is
+   procedure Clear (Buffer : access Source_Buffer_Record) is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
@@ -1041,13 +1046,16 @@ package body Src_Editor_Buffer is
    -- Get_Selection --
    -------------------
 
-   function Get_Selection (Buffer : access Source_Buffer_Record) return String
+   function Get_Selection
+     (Buffer : access Source_Buffer_Record) return String
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Found      : Boolean;
+
    begin
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
+
       if Found then
          return Get_Slice (Buffer, Start_Iter, End_Iter);
       else
@@ -1071,8 +1079,7 @@ package body Src_Editor_Buffer is
       Match_Start_Line   : out Gint;
       Match_Start_Column : out Gint;
       Match_End_Line     : out Gint;
-      Match_End_Column   : out Gint)
-   is
+      Match_End_Column   : out Gint) is
    begin
       pragma Assert (Is_Valid_Position (Buffer, From_Line, From_Column));
 
@@ -1117,6 +1124,7 @@ package body Src_Editor_Buffer is
       Str : Gtkada.Types.Chars_Ptr :=
         Get_Slice (Buffer, Start_Line, Start_Column, End_Line, End_Column);
       S   : constant String := Value (Str);
+
    begin
       g_free (Str);
       return S;
