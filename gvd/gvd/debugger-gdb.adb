@@ -38,6 +38,7 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;    use Debugger.Gdb.C;
+with Debugger.Gdb.Cpp;  use Debugger.Gdb.Cpp;
 with Process_Proxies;   use Process_Proxies;
 with GVD.Process;       use GVD.Process;
 with GVD.Strings;       use GVD.Strings;
@@ -187,10 +188,12 @@ package body Debugger.Gdb is
             Language := new Gdb_Ada_Language;
          elsif Lang = "c" then
             Language := new Gdb_C_Language;
+         elsif Lang = "c++" then
+            Language := new Gdb_Cpp_Language;
          else
             Print_Message
               (Process.Window.Statusbar1,
-               Error, (-"Language currently not supported: ") & Lang);
+               Error, (-"Language currently not supported by gdb: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 
