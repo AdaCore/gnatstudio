@@ -44,6 +44,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -556,7 +557,7 @@ procedure GPS is
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
       Codefix_Module.Register_Module (GPS.Kernel);
-
+      Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
