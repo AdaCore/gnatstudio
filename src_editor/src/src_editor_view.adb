@@ -212,8 +212,7 @@ package body Src_Editor_View is
    is
       Y, Height   : Gint;
       Rect        : Gdk_Rectangle;
-      Insert_Mark : constant Gtk_Text_Mark := Get_Insert
-        (Get_Buffer (Source_View (View)));
+      Insert_Mark : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
       Iter        : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Get_Buffer (Source_View (View)), Iter, Insert_Mark);
