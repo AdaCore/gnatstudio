@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Debugger; use Debugger;
+with Generic_Values; use Generic_Values;
 
 package Language.Debugger is
 
@@ -33,6 +34,26 @@ package Language.Debugger is
    function Get_Debugger
      (The_Language : access Language_Debugger) return Debugger_Access;
    --  Return the debugger associate with a language.
+
+   procedure Parse_Type
+     (Lang     : access Language_Debugger;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Generic_Type_Access) is abstract;
+   --  Parse the type of Entity.
+   --  Type_Str should contain the type as returned by the debugger.
+   --  Entity is used to get the type of the fields or array items.
+
+   procedure Parse_Value
+     (Lang       : access Language_Debugger;
+      Type_Str   : String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive) is abstract;
+   --  Parse the value of an entity, for the Ada language.
+   --  Type_Str should contain the value, as returned by the debugger itself.
+   --  Repeat_Num is the number of times the item is repeated in the output.
 
 private
    type Language_Debugger is abstract new Language_Root with record

@@ -52,7 +52,9 @@ package body Language is
 
    function Dereference
      (Lang     : access Language_Root;
-      Variable : String) return String is
+      Variable : String) return String
+   is
+      pragma Warnings (Off, Lang);
    begin
       return Variable;
    end Dereference;

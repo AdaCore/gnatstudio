@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_Values; use Generic_Values;
-
 package Language is
 
    type Language_Root is abstract tagged private;
@@ -30,58 +28,12 @@ package Language is
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null.
 
-   procedure Parse_Type
-     (Lang     : access Language_Root;
-      Type_Str : String;
-      Entity   : String;
-      Index    : in out Natural;
-      Result   : out Generic_Type_Access) is abstract;
-   --  Parse the type of Entity.
-   --  Type_Str should contain the type as returned by the debugger.
-   --  Entity is used to get the type of the fields or array items.
-
-   procedure Parse_Value
-     (Lang       : access Language_Root;
-      Type_Str   : String;
-      Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
-      Repeat_Num : out Positive) is abstract;
-   --  Parse the value of an entity, for the Ada language.
-   --  Type_Str should contain the value, as returned by the debugger itself.
-   --  Repeat_Num is the number of times the item is repeated in the output.
-
-   procedure Parse_Array_Type
-     (Lang      : access Language_Root;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access) is abstract;
-   --  Parse the description of an array type.
-   --  Index should point at the opening character of the array in Type_Str
-   --  (ie "array " in gdb).
-
-   procedure Parse_Record_Type
-     (Lang      : access Language_Root;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access;
-      End_On    : String) is abstract;
-   --  Parse the type describing a record.
-   --  Index should pointer after the initial "record ", and the record is
-   --  assumed to end on a string like End_On.
-   --  This function is also used to parse the variant part of a record.
-
    function Is_Simple_Type
      (Lang : access Language_Root; Str : String) return Boolean is abstract;
    --  Return True if Str is a simple type, like integer, ...
-
-   procedure Parse_Array_Value
-     (Lang     : access Language_Root;
-      Type_Str : String;
-      Index    : in out Natural;
-      Result   : in out Array_Type_Access) is abstract;
-   --  Parse the value of an array.
+   --  These are the types that don't need information from the debugger to
+   --  be known, ie we can save a call to the debugger when parsing the value
+   --  of a variable.
 
    type Language_Entity is (Normal_Text,
                             Keyword_Text,
@@ -99,13 +51,32 @@ package Language is
    --  Next_Char should be set to the index of the first character after the
    --  entity.
 
-   function Dereference
-     (Lang     : access Language_Root;
-      Variable : String) return String;
-   --  Return a string corresponding to a dereference of Variable.
-   --  For example in Ada, Dereference ("var") would return "var.all".
-   --  The default implementation is a noop, for languages that do not
-   --  support dereferencing.
+   ------------------------
+   -- Types manipulation --
+   ------------------------
+   --  The following functions are provided to manipulate types and variables
+   --  for each language.
+
+   function Dereference_Name (Lang : access Language_Root;
+                              Name : String)
+                             return String is abstract;
+   --  Return the name to use to dereference Name (ie in Ada "Name.all", in
+   --  C "*Name", ...). Note that Name can be a composite name (Name.Field),
+   --  and thus might have to be protected with parentheses.
+
+   function Array_Item_Name (Lang  : access Language_Root;
+                             Name  : String;
+                             Index : String)
+                            return String is abstract;
+   --  Return the name to use to access a specific element of an array.
+   --  Index is a comma-separated list of the indexes for all the dimensions,
+   --  as in "1,2".
+
+   function Record_Field_Name (Lang  : access Language_Root;
+                               Name  : String;
+                               Field : String)
+                              return String is abstract;
+   --  Return the name to use for a specific field of a record.
 
 private
    type Language_Root is abstract tagged null record;
