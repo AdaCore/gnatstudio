@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C711-002 C714-001 Find in current file switches editor
+  Problem:    If you select Control-F to open the search window while in an
+              editor, GPS switches the selected window, and thus makes it hard
+              to search in the current file
+  Workaround: Dock the search window in one of the sides of GPS
+
 - C129-010 Editing switches might result in duplicated lines in project
   Problem:    If you have edited a project manually, and specified upper-cased
               indexes for attributes like Default_Switches, GPS incorrectly
