@@ -46,6 +46,7 @@ with Src_Info;                  use Src_Info;
 
 with Glide_Kernel.Timeout;
 with Prj_API;                  use Prj_API;
+with Namet;                    use Namet;
 with Generic_List;
 
 with Language;                 use Language;
@@ -229,17 +230,17 @@ package body Glide_Kernel is
       use type Prj.Project_Id;
       File : LI_File_Ptr := Locate_From_Source
         (Handle.Source_Info_List, Source_Filename);
-
-      --  ??? Should we use the project the file actually belongs to
-      --  Project : Prj.Project_Id := Get_Project_From_File
-      --    (Get_Project_View (Handle), Source_Filename);
-      Project : Prj.Project_Id := Get_Project_View (Handle);
+      Project : Prj.Project_Id := Get_Project_From_File
+        (Get_Project_View (Handle), Base_Name (Source_Filename));
    begin
-      --  pragma Assert (Project /= Prj.No_Project);
-      --  Trace (Me, "Locate_From_Source_And_Complete: "
-      --         & Source_Filename
-      --         & " "
-      --         & Get_Name_String (Prj.Projects.Table (Project).Name));
+      pragma Assert (Project /= Prj.No_Project);
+      Trace (Me, "Locate_From_Source_And_Complete: "
+             & Source_Filename
+             & " "
+             & Get_Name_String (Prj.Projects.Table (Project).Name));
+
+      --  ??? Optimization: we could use only the direct object path from
+      --  ??? Project, since we now for sure that the file belongs to it.
       Create_Or_Complete_LI
         (Handler           => Handler_From_Filename (Project, Source_Filename),
          File                   => File,
