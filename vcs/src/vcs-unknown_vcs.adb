@@ -18,12 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+
 package body VCS.Unknown_VCS is
 
-   Unknown_VCS_Reference : VCS_Access;
    Unknown_VCS_Name      : constant String := "Unknown VCS";
 
+   use String_List;
+
    function Identify_VCS (S : String) return VCS_Access;
+   --  Utility function to identify the Unknown VCS from a given string.
+
+   procedure Error (File : String);
+   --  Convenience function to display an error message in the console.
+
+   -----------
+   -- Error --
+   -----------
+
+   procedure Error (File : String) is
+   begin
+      Insert
+        (Unknown_VCS_Reference.Kernel,
+         -"Warning: could not determine a proper VCS system for file "
+           & File);
+   end Error;
 
    ------------------
    -- Identify_VCS --
@@ -69,9 +89,11 @@ package body VCS.Unknown_VCS is
      (Rep         : access Unknown_VCS_Record;
       Filenames   : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Get_Status;
 
    ----------------------
@@ -111,9 +133,11 @@ package body VCS.Unknown_VCS is
       Filenames : String_List.List;
       User_Name : String := "")
    is
-      pragma Unreferenced (Rep, Filenames, User_Name);
+      pragma Unreferenced (Rep, User_Name);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Open;
 
    ------------
@@ -125,9 +149,11 @@ package body VCS.Unknown_VCS is
       Filenames : String_List.List;
       Logs      : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames, Logs);
+      pragma Unreferenced (Rep, Logs);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Commit;
 
    ------------
@@ -138,9 +164,11 @@ package body VCS.Unknown_VCS is
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Update;
 
    -----------
@@ -151,9 +179,11 @@ package body VCS.Unknown_VCS is
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Merge;
 
    ---------
@@ -164,9 +194,11 @@ package body VCS.Unknown_VCS is
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
    end Add;
 
    ------------
@@ -177,8 +209,11 @@ package body VCS.Unknown_VCS is
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
       null;
    end Remove;
 
@@ -190,8 +225,11 @@ package body VCS.Unknown_VCS is
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      pragma Unreferenced (Rep);
    begin
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
       null;
    end Revert;
 
@@ -218,9 +256,9 @@ package body VCS.Unknown_VCS is
      (Rep  : access Unknown_VCS_Record;
       File : String)
    is
-      pragma Unreferenced (Rep, File);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      Error (File);
    end Log;
 
    --------------
@@ -231,9 +269,9 @@ package body VCS.Unknown_VCS is
      (Rep  : access Unknown_VCS_Record;
       File : String)
    is
-      pragma Unreferenced (Rep, File);
+      pragma Unreferenced (Rep);
    begin
-      null;
+      Error (File);
    end Annotate;
 
    ---------------------
@@ -245,8 +283,8 @@ package body VCS.Unknown_VCS is
    begin
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_VCS (Kernel, Unknown_VCS_Name);
-
       Unknown_VCS_Reference := new Unknown_VCS_Record;
+      Unknown_VCS_Reference.Kernel := Kernel_Handle (Kernel);
    end Register_Module;
 
 end VCS.Unknown_VCS;
