@@ -118,9 +118,8 @@ package body Histories is
       Key      : History_Key;
       Key_Type : History_Key_Type) return History_Key_Access
    is
-      Value    : History_Key_Access;
+      Value : History_Key_Access := Get (Hist.Table.all, String (Key));
    begin
-      Value := Get (Hist.Table.all, String (Key));
       if Value = Null_History then
          Value := new History_Key_Record (Key_Type);
          Set (Hist.Table.all, String (Key), Value);
@@ -130,6 +129,24 @@ package body Histories is
       end if;
       return Value;
    end Create_New_Key_If_Necessary;
+
+   -----------------------------------------
+   -- Create_New_Boolean_Key_If_Necessary --
+   -----------------------------------------
+
+   procedure Create_New_Boolean_Key_If_Necessary
+     (Hist     : in out History_Record;
+      Key      : History_Key;
+      Default_Value : Boolean)
+   is
+      Value : History_Key_Access := Get (Hist.Table.all, String (Key));
+   begin
+      if Value = Null_History then
+         Value := new History_Key_Record (Booleans);
+         Set (Hist.Table.all, String (Key), Value);
+         Value.Value := Default_Value;
+      end if;
+   end Create_New_Boolean_Key_If_Necessary;
 
    --------------------
    -- Set_Max_Length --

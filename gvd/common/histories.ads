@@ -141,6 +141,13 @@ package Histories is
    -- Booleans --
    --------------
 
+   procedure Create_New_Boolean_Key_If_Necessary
+     (Hist     : in out History_Record;
+      Key      : History_Key;
+      Default_Value : Boolean);
+   --  Create a new key, if no such one already exists in the internal tables.
+   --  In that case, the default_value is assigned to it
+
    procedure Set_History
      (Hist      : in out History_Record;
       Key       : History_Key;
