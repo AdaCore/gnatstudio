@@ -281,7 +281,7 @@ msgid  "Display Registers"
 msgstr "Afficher les registres"
 
 msgid  "Edit"
-msgstr "Éditer"
+msgstr "Édition"
 
 msgid  "Edit Breakpoints..."
 msgstr "Éditer les point d'arrêts..."
