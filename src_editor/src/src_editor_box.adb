@@ -1285,7 +1285,8 @@ package body Src_Editor_Box is
    ---------------------
 
    procedure Check_Timestamp
-     (Editor : access Source_Editor_Box_Record)
+     (Editor : access Source_Editor_Box_Record;
+      Force  : Boolean := False)
    is
       B : Boolean;
       pragma Unreferenced (B);
@@ -1297,7 +1298,8 @@ package body Src_Editor_Box is
          B := Check_Timestamp
            (Editor.Source_Buffer, Ask_User => False, Force => True);
       else
-         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True);
+         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => not Force,
+                               Force => Force);
       end if;
    end Check_Timestamp;
 

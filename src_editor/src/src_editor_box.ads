@@ -373,13 +373,15 @@ package Src_Editor_Box is
    --  Return the contents of the entire buffer.
 
    procedure Check_Timestamp
-     (Editor : access Source_Editor_Box_Record);
+     (Editor : access Source_Editor_Box_Record;
+      Force  : Boolean := False);
    --  Check whether the timestamp corresponds on the file on disk.
    --  If the timestamp is not up to date, then
    --     - if the file was never modified, modify the buffer to match
    --       the contents of the disk
    --     - if the file was modified, bring up a dialog asking
-   --       confirmation.
+   --       confirmation, unless Force is True in which case the modification
+   --       is done automatically.
 
    function Get_Ref_Count
      (Editor : access Source_Editor_Box_Record)
