@@ -68,7 +68,6 @@ Description of the main windows
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
-* The Search Area::
 * The Project Explorer::
 * The Console::
 * The Status Line::
@@ -178,7 +177,6 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
-* The Search Area::
 * The Project Explorer::
 * The Console::
 * The Status Line::
@@ -203,12 +201,6 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 
 The whole work space is based on a multiple document interface,
 @xref{Multiple Document Interface}.
-
-@c --------------------------------------------------------------------
-@node The Search Area
-@section The Search Area
-@c --------------------------------------------------------------------
-@noindent
 
 @c --------------------------------------------------------------------
 @node The Project Explorer
@@ -1085,7 +1077,7 @@ To force this behavior, open the menu @code{Window}, select
 @code{Search} in the list at the bottom of the menu, and then select
 either @code{Floating} or @code{Docked}.
 
-If you save the desktop (@code{Files->Save->Desktop}, GPS will
+If you save the desktop (@code{File->Save->Desktop}, GPS will
 automatically reopen the search dialog in its new place when it is
 started next time.
 
