@@ -265,19 +265,21 @@ package body Odd.Text_Boxes is
          end if;
       end if;
 
-      Show_All (Box.Buttons);
-      Thaw (Box.Buttons);
-
       --  Scroll the code editor to make sure the line is visible on screen.
 
+      Freeze (Box.Child);
       Clamp_Page
         (Get_Vadj (Box.Child),
          Lower => Gfloat (Y - Box.Line_Height),
-         Upper => Gfloat (Y + 4 * Box.Line_Height));
+         Upper => Gfloat (Y + 2 * Box.Line_Height));
+      Thaw (Box.Child);
 
       if Set_Current then
          Box.Current_Line := Line;
       end if;
+
+      Show_All (Box.Buttons);
+      Thaw (Box.Buttons);
 
       --  Make sure the arrow that indicated the previous line is no longer
       --  visible.
