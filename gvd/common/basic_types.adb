@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,7 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
 
 package body Basic_Types is
 
@@ -116,5 +117,35 @@ package body Basic_Types is
 
       return False;
    end Contains;
+
+   ------------------
+   -- Add_And_Grow --
+   ------------------
+
+   procedure Add_And_Grow (List         : in out Arr_Access;
+                           Last_In_List : in out Index;
+                           Item         : Data;
+                           Minimal_Inc  : Index := 1)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Arr, Arr_Access);
+      Inc : Index;
+      Tmp : Arr_Access;
+   begin
+      if List = null then
+         List := new Arr
+           (Index'First .. Index'First + Index'Max (Minimal_Inc, 20));
+         Last_In_List := List'First;
+      elsif Last_In_List > List'Last then
+         Inc := Index'Max (Minimal_Inc, List'Length);
+         Tmp := new Arr (List'First .. List'Last + Inc);
+         Tmp (List'Range) := List.all;
+         Unchecked_Free (List);
+         List := Tmp;
+      end if;
+
+      List (Last_In_List) := Item;
+      Last_In_List := Index'Succ (Last_In_List);
+   end Add_And_Grow;
 
 end Basic_Types;
