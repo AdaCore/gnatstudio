@@ -230,6 +230,10 @@ left, the @code{Project View}, and on the right the @code{Files View}.
 @image{explorer-views, 12.7cm}
 @end iftex
 
+@ifhtml
+@image{explorer-views, 12.7cm}
+@end ifhtml
+
 The various components that are displayed in these explorers are the
 following:
 
@@ -405,6 +409,10 @@ this button will close the window
 @image{mdi-title-bar, 12.7cm}
 @end iftex
 
+@ifhtml
+@image{mdi-title-bar, 12.7cm}
+@end ifhtml
+
 Alternatively, you can also select the window by clicking anywhere in
 its title bar, and then select the menu @code{Window->Close}
 
@@ -436,6 +444,10 @@ remaining tabs.
 @iftex
 @image{mdi-scroll-tabs, 12.7cm}
 @end iftex
+
+@ifhtml
+@image{mdi-scroll-tabs, 12.7cm}
+@end ifhtml
 
 You can go back to this maximized state in two ways: either select the
 menu @code{Window->Maximize All}, or click on the middle button on the
@@ -470,6 +482,10 @@ visible. This way, you can easily select any window
 @image{mdi-cascade, 12.7cm}
 @end iftex
 
+@ifhtml
+@image{mdi-cascade, 12.7cm}
+@end ifhtml
+
 @item Window->Tile Horizontally
 All the windows are resized to the same dimensions, and are put side
 by side, from left to right. No window will overlap any other.
@@ -478,6 +494,10 @@ by side, from left to right. No window will overlap any other.
 @image{mdi-tile-horizontal, 12.7cm}
 @end iftex
 
+@ifhtml
+@image{mdi-tile-horizontal, 12.7cm}
+@end ifhtml
+
 @item Window->Tile Vertically
 All the windows are resized to the same dimensions, and are put side
 by side, from top to bottom. No window will overlap any other.
@@ -485,6 +505,10 @@ by side, from top to bottom. No window will overlap any other.
 @iftex
 @image{mdi-tile-vertical, 12.7cm}
 @end iftex
+
+@ifhtml
+@image{mdi-tile-vertical, 12.7cm}
+@end ifhtml
 
 @end table
 
@@ -505,6 +529,10 @@ before it was iconified.
 @iftex
 @image{mdi-icons, 12.7cm}
 @end iftex
+
+@ifhtml
+@image{mdi-icons, 12.7cm}
+@end ifhtml
 
 @end table
 
@@ -957,6 +985,10 @@ screen, similar to the following:
 @image{search-hide, 12.7cm}
 @end iftex
 
+@ifhtml
+@image{search-hide, 12.7cm}
+@end ifhtml
+
 On this screenshot, you can see three entry fields:
 
 @table @b
@@ -1010,6 +1042,10 @@ it is taking too long, or to display the options.
 @iftex
 @image{search-options, 12.7cm}
 @end iftex
+
+@ifhtml
+@image{search-options, 12.7cm}
+@end ifhtml
 
 There are four check boxes in this options box.
 
