@@ -257,8 +257,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       -- Copy_Bp --
       -------------
 
-      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data
-      is
+      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data is
          Result : Breakpoint_Data;
       begin
          if D.File /= null then

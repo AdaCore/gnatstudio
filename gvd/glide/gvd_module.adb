@@ -1003,8 +1003,7 @@ package body GVD_Module is
       Free_Debug_Info
         (GEdit
            (Get_Source
-              (Debugger_Process_Tab
-                 (Get_Current_Process ((Top))).Editor_Text)));
+              (Debugger_Process_Tab (Get_Current_Process (Top)).Editor_Text)));
 
    exception
       when E : others =>
