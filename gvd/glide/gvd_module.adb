@@ -794,8 +794,6 @@ package body GVD_Module is
             Full : constant String := Executables_Directory (Data.Project);
          begin
             Set_Executable (Page.Debugger, Full & Data.File, Mode => Hidden);
-            Change_Dir (Full);
-
          exception
             when Executable_Not_Found =>
                Insert (K, "File not found: " & Full & Data.File);
@@ -1167,12 +1165,13 @@ package body GVD_Module is
       Menu : Gtk_Menu renames
         GVD_Module_User_Data (GVD_Module_ID.all).Initialize_Menu;
       Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+
    begin
       --  Remove all existing menus
       Remove_All_Children (Menu);
 
       --  Specific entry to start the debugger without any main program
-      Gtk_New (Mitem, "<none>");
+      Gtk_New (Mitem, -"<none>");
       Append (Menu, Mitem);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
@@ -1216,8 +1215,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
    ---------------------
