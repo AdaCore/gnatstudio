@@ -969,7 +969,7 @@ package body Browsers.Dependency_Items is
                  Locale_To_UTF8 (Krunch (File_Information (File_Context)));
             begin
                Gtk_New
-                 (Item, Label => (-"Examine dependencies for ") & Name);
+                 (Item, Label => (-"Show dependencies for ") & Name);
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -978,7 +978,7 @@ package body Browsers.Dependency_Items is
                   Selection_Context_Access (Context));
 
                Gtk_New
-                 (Item, Label => (-"Examining files depending on ") & Name);
+                 (Item, Label => (-"Show files depending on ") & Name);
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -1284,7 +1284,7 @@ package body Browsers.Dependency_Items is
             User_Data   => Context,
             Slot_Object => Browser);
 
-         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Utf8_File);
+         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Utf8_File);
          Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
@@ -1296,7 +1296,7 @@ package body Browsers.Dependency_Items is
          Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New
-           (Mitem, Label => (-"Examining files depending on ") & Utf8_File);
+           (Mitem, Label => (-"Show files depending on ") & Utf8_File);
          Gtk_New (Pix, Get_Parents_Arrow (Get_Browser (Item)));
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);

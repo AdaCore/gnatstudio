@@ -572,7 +572,7 @@ package body Browsers.Projects is
          Project => Project_Of (Item));
 
       if Menu /= null then
-         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Name);
+         Gtk_New (Mitem, Label => (-"Show dependencies for ") & Name);
          Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
          Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
@@ -582,7 +582,7 @@ package body Browsers.Projects is
             Context);
          Set_Sensitive (Mitem, not Children_Shown (Item));
 
-         Gtk_New (Mitem, Label => (-"Examine recursive dependencies for ")
+         Gtk_New (Mitem, Label => (-"Show recursive dependencies for ")
                   & Name);
          Append (Menu, Mitem);
          Context_Callback.Connect
@@ -679,7 +679,7 @@ package body Browsers.Projects is
            and then not Has_File_Information (File_Context)
          then
             Gtk_New (Item, Label =>
-                     -"Examine projects imported by " & Locale_To_UTF8
+                     -"Show projects imported by " & Locale_To_UTF8
                        (Project_Name (Project_Information (File_Context))));
             Append (Menu, Item);
             Context_Callback.Connect
