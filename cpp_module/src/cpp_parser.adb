@@ -321,7 +321,8 @@ package body CPP_Parser is
       Check_Predefined               : Boolean := True;
       Check_Template_Arguments       : Boolean := True;
       Check_Class_Template_Arguments : Boolean := True;
-      Class_Or_Function              : String := Invalid_String)
+      Class_Or_Function              : String := Invalid_String;
+      Args                           : String := Invalid_String)
       return Entity_Information;
    --  Search the declaration of the entity in some of the SN tables
    --  (as indicated by Tables), or in the list of predefined entities.
@@ -352,6 +353,7 @@ package body CPP_Parser is
      (Handler  : access CPP_Handler_Record'Class;
       Name     : String;
       Filename : String;
+      Args     : String;
       Source   : Source_File) return Entity_Information;
    --  Return the first possible forward declaration for the subprogram Name.
    --  Returns null if there is no matching forward declaration.
@@ -726,7 +728,8 @@ package body CPP_Parser is
       Check_Predefined               : Boolean := True;
       Check_Template_Arguments       : Boolean := True;
       Check_Class_Template_Arguments : Boolean := True;
-      Class_Or_Function              : String := Invalid_String)
+      Class_Or_Function              : String := Invalid_String;
+      Args                           : String := Invalid_String)
      return Entity_Information
    is
       Source  : Source_File;
@@ -736,6 +739,8 @@ package body CPP_Parser is
       Key3    : Entity_Function_Key;
       Success : Boolean;
       Last    : Natural := Name'Last;
+      P       : Pair;
+      F       : FU_Table;
    begin
       --  Handling of pointers, arrays,... => create anonymous types
 
@@ -763,7 +768,43 @@ package body CPP_Parser is
               and then Is_Open (Handler.SN_Table (Table_Type))
             then
                case Table_Type is
-                  when CL | CON | E | EC | FD | FR | GV | FU | MA | T | UN =>
+                  when FU | FD =>
+                     --  Handling of overloaded entities: check the arguments
+                     --  of the entities, especially in the FU table
+
+                     Set_Cursor_At
+                       (Handler.SN_Table (Table_Type),
+                        Name => Name (Name'First .. Last));
+                     loop
+                        Get_Pair (Handler.SN_Table (Table_Type),
+                                  Next_By_Key, Result => P);
+                        exit when P = No_Pair;
+
+                        Parse_Pair (P, F);
+                        exit when Args = Invalid_String
+                          or else F.Data
+                            (F.Arg_Types.First .. F.Arg_Types.Last) = Args;
+                     end loop;
+
+                     Release_Cursor (Handler.SN_Table (Table_Type));
+
+                     if P /= No_Pair then
+                        Source := Get_Or_Create
+                          (Handler,
+                           F.Key (F.File_Name.First .. F.File_Name.Last));
+                        Entity := Get_Or_Create
+                          (Db     => Handler.Db,
+                           Name   => Name (Name'First .. Last),
+                           File   => Source,
+                           Line   => F.Start_Position.Line,
+                           Column => F.Start_Position.Column);
+                        Set_Kind_From_Table_If_Not_Set (Entity, Table_Type);
+
+                        exit when Entity /= null;
+                     end if;
+
+                  when CL | CON | E | EC | FR | GV | MA | T | UN =>
+
                      Find_Key (Handler.SN_Table (Table_Type),
                                Name           => Name (Name'First .. Last),
                                Key            => Key,
@@ -861,6 +902,8 @@ package body CPP_Parser is
                Skip_Brackets (Name, Last, '<', '>');
                Last := Last + 1;
                exit when Last > Name'Last;
+            elsif Name (Last) = '[' then
+               Last := Last + 1;
             end if;
 
             if Name (Last) /= ' ' then
@@ -879,7 +922,7 @@ package body CPP_Parser is
                   Set_Kind (Real_Entity, Reference_Entity);
                   Set_Pointed_Type (Real_Entity, Entity);
 
-               elsif Name (Last) = '[' then
+               elsif Name (Last) = ']' then
                   Set_Kind (Real_Entity, Array_Entity);
                   Set_Pointed_Type (Real_Entity, Entity);
 
@@ -1510,8 +1553,10 @@ package body CPP_Parser is
      (Handler  : access CPP_Handler_Record'Class;
       Name     : String;
       Filename : String;
+      Args     : String;
       Source   : Source_File) return Entity_Information
    is
+      pragma Unreferenced (Args);
       P      : Pair;
       FD_Tab : FD_Table;
    begin
@@ -1526,6 +1571,9 @@ package body CPP_Parser is
             exit when Filename =
               FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last);
 
+
+--                and then Args =
+--               FD_Tab.Data (FD_Tab.Arg_Types.First .. FD_Tab.Arg_Types.Last);
             --  ??? Should compare prototypes. However, we have no garantee
             --  that the forward declaration includes the full prototype
          end loop;
@@ -1588,12 +1636,22 @@ package body CPP_Parser is
       Success : Boolean;
       Entity  : Entity_Information;
    begin
-      --  Find forward declaration if any
-      Entity := Find_Forward_Declaration
-        (Handler,
-         Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-         Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-         Source   => Source);
+      Find (DB       => Handler.SN_Table (FU),
+            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Start_Position => Sym.Start_Position,
+            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+            Tab      => C,
+            Success  => Success);
+
+      if Success then
+         --  Find forward declaration if any
+         Entity := Find_Forward_Declaration
+           (Handler,
+            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+            Args     => C.Data  (C.Arg_Types.First .. C.Arg_Types.Last),
+            Source   => Source);
+      end if;
 
       if Entity = null then
          Entity := Entity_From_FIL (Handler, Sym, Source);
@@ -1607,13 +1665,6 @@ package body CPP_Parser is
                Column => Sym.Start_Position.Column),
             Kind     => Body_Entity);
       end if;
-
-      Find (DB       => Handler.SN_Table (FU),
-            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            Start_Position => Sym.Start_Position,
-            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-            Tab      => C,
-            Success  => Success);
 
       if Success then
          Set_End_Of_Scope
@@ -1739,6 +1790,9 @@ package body CPP_Parser is
                      Class_Or_Function => R.Key
                        (R.Referred_Class.First .. R.Referred_Class.Last),
                      Tables                         => Arr,
+                     Args                           => R.Data
+                       (R.Referred_Argument_Types.First
+                        .. R.Referred_Argument_Types.Last),
                      Check_Predefined               => False,
                      Check_Template_Arguments       => False,
                      Check_Class_Template_Arguments => False);
@@ -2053,6 +2107,8 @@ package body CPP_Parser is
                Parse_TA_Table (Handler, Entity, Sym);
 
             when FD    => null; --  Parsed when handling FU
+               --  Do something for cpp_ellipsis1 (we have one warning in FD)
+
             when SN_IN => null; --  Parsed when handling CL
 
             when E | EC | UN | Undef | COM | COV | FR | LV | SU | UD =>
