@@ -80,7 +80,7 @@ package body Rbtrees is
    -----------------
 
    procedure Left_Rotate (Tree : in out Rbtree; X : Rbtree_Iterator) is
-      Y : Rbtree_Iterator := X.Right;
+      Y : constant Rbtree_Iterator := X.Right;
    begin
       Y.Size := X.Size;
 
@@ -115,7 +115,7 @@ package body Rbtrees is
    ------------------
 
    procedure Right_Rotate (Tree : in out Rbtree; X : Rbtree_Iterator) is
-      Y : Rbtree_Iterator := X.Left;
+      Y : constant Rbtree_Iterator := X.Left;
    begin
       Y.Size := X.Size;
 
@@ -238,7 +238,7 @@ package body Rbtrees is
    ------------
 
    procedure Remove (Tree : in out Rbtree; Iter : Rbtree_Iterator) is
-      Z : Rbtree_Iterator := Iter;
+      Z : constant Rbtree_Iterator := Iter;
       Y, X : Rbtree_Iterator;
       Nil : aliased Node;
    begin
