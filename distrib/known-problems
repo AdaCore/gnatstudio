@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.0.1
 
+- Editing switches for a specific file from an open editor doesn't work
+  Problem:    From an editor, if you display the contextual menu and select
+              the edit switches item, GPS doesn't display the dialog.
+  Workaround: Edit the switches by selecting the file in the project explorer
+
 - Deleting scenario variables sometimes generates an incorrect project
   Problem:    When clicking on the trash button next to a scenario variable
               (at the top of the project explorer), this will sometimes
@@ -9,3 +14,9 @@ Known Problems fixed in GPS 1.0.1
               around, but always modify all the possible values in the project
               properties editor.
 
+- Incorrect language detection for files in the Ada naming scheme exceptions
+  Problem:    If you create a project with some naming exceptions for some Ada
+              files, these files will be incorrectly open in the editor (no
+              highlighting, cross-references,...). Same thing in the explorer
+  Workaround: Create a link to this special files, whose name should respect
+              the standard naming scheme you have defined
