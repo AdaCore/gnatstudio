@@ -46,16 +46,16 @@ unmodified in any copy.
 @menu
 * Introduction::
 * Description of the Main Windows::
+* Integrated Help::
 * Multiple Document Interface::
 * Editing File::
+* Source Navigation::
 * Project Handling::
 * Searching and Replacing::
 * Compilation/Build::
-* Source Navigation::
 * Source Browsing::
 * Debugging::
 * Version Control System::
-* Preferences/Settings::
 * Working in a cross environment::
 * Customization::
 * Environment::
@@ -65,13 +65,17 @@ unmodified in any copy.
  --- The Detailed Node Listing ---
 
 Description of the main windows
+* The Welcome Dialog::
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
 * The Project Explorer::
-* The Console::
+* The Messages Window::
+* The Shell Window::
 * The Locations Tree::
 * The Status Line::
+
+Integrated Help
 
 Multiple Document Interface
 * Closing Windows::
@@ -84,22 +88,23 @@ Editing File
 * General Information::
 * Navigation in the Source Editor::
 * Indentation::
-* Cross References::
 * Using an External Editor::
-* A note on the Clipboard::
+* Using the Clipboard::
+
+Source Navigation
+* Support for Cross References::
+* Spec/Body::
+
 
 Project Handling
+
+Searching and Replacing
 
 Compilation/Build
 * Ada Compilation and Build::
 * C/C++ Compilation and Build::
 * Multi-language Build::
 * Integrating existing build procedures with the GPS build system::
-
-Source Navigation
-* Spec/Body::
-* Cross References::
-
 
 Source Browsing
 * General Issues::
@@ -111,15 +116,13 @@ Debugging
 Version Control System
 
 
-Preferences/Settings
-
-
 Working in a cross environment
 * Customizing your projects::
 * Debugger issues::
 
 
 Customization
+* The Preferences Dialog::
 * Customizing the Menu Bar::
 * Customizing the Tool Bar::
 * Changing Colors Fonts and Key Bindings::
@@ -161,7 +164,7 @@ such as a visual comparison, automatic generation of files, source reformatting.
 
 GPS is fully customizable, providing several levels of customizations:
 a first level, available through the preferences dialog (see
-@ref{Preferences/Settings}); a second level, which allows you to
+@ref{Customization}); a second level, which allows you to
 customize your menu items, tool bar and key bindings (see @ref{Customization}),
 and a third level, which allows any kind of very specific or tight
 integration, due to the open nature of GPS, and to its architecture.
@@ -175,14 +178,75 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 @c --------------------------------------------------------------------
 
 @menu
+* The Welcome Dialog::
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
 * The Project Explorer::
-* The Console::
+* The Messages Window::
+* The Shell Window::
 * The Locations Tree::
+* The Execution Window::
 * The Status Line::
 @end menu
+
+@c --------------------------------------------------------------------
+@node The Welcome Dialog
+@section The Welcome Dialog
+@c --------------------------------------------------------------------
+@noindent
+
+When starting GPS, a welcome dialog is displayed by default, giving the
+following choices:
+
+@table @b
+@item Start with default project
+If you choose this option by clicking on the @code{Start} button, GPS
+will create a default internal project with the following properties:
+
+  The project supports Ada files only, using the default GNAT
+  naming scheme: @code{.ads} for spec files, @code{.adb} for body files.
+
+  A single source directory corresponding to the current directory.
+  The current directory can be set by modifying the text entry on clicking
+  on the @code{Browse} button. All the Ada files found in this directory
+  will be considered as part of the default project.
+
+  The object directory where the object and executable files will
+  be put, corresponding also to the current directory.
+
+@item Create new project with wizard
+By clicking on the @code{Create} button, you will start a wizard allowing
+you to specify most of the properties for a new project. Once the project
+is created, GPS will save it and load it automatically.
+See ??? for more details on the project wizard.
+
+@item Open existing project
+You can select an existing project by clicking on the @code{Browse} button,
+or by using a previousely loaded project listed in the combo box. When a
+project is selected, clicking on the @code{Open} button will load this
+project and open the main window.
+
+@item Always show this dialog when GPS starts
+If unset, the welcome dialog won't be shown in future sessions.
+In this case, GPS will behave as follows: it will first look for a
+-P switch on the command line, and load the coresponding project if present.
+Then, it will look for a project file in the current directory and will
+load the first project file found.
+
+If no project file can be found in the current directory, GPS will start
+with the default project.
+
+To reset this properties, you can go to the menu @code{Edit->Preferences}.
+See ???.
+
+@item Quit
+If you click on this button, GPS will terminate immediately.
+@end table
+
+When you specify a -P switch on the command line, or if there is only one
+project file in the current directory, GPS will start immediately with
+the project file specified, instead of displaying the welcome dialog.
 
 @c --------------------------------------------------------------------
 @node The Menu Bar
@@ -190,11 +254,25 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 @c --------------------------------------------------------------------
 @noindent
 
+This is a standard menu bar that gives access to all the global
+functionalities of GPS. It is usually easier to access a given functionality
+using the various contextual menus provided throughout GPS: these menus
+give direct access to the most relevant actions given the current context
+(e.g. a project, a directory, a file, an entity, @dots{})
+
 @c --------------------------------------------------------------------
 @node The Tool Bar
 @section The Tool Bar
 @c --------------------------------------------------------------------
 @noindent
+
+The toolbar provides shortcuts via buttons to some typical actions:
+creating a new file, opening a file, saving the current file;
+undo/redo last editing;
+cut to clipboard, copy to clipboard, paste from clipboard;
+go to previous/next location;
+start/continue the debugging session, step/next execution, finish
+current procedure.
 
 @c --------------------------------------------------------------------
 @node The Work Space
@@ -210,9 +288,13 @@ The whole work space is based on a multiple document interface,
 @c --------------------------------------------------------------------
 @noindent
 
+The project explorer is composed of multiple views which can be accessed
+by default by clicking on the corresponding pages, or if they are not shown
+by using the @code{Project} menu items.
+
 @subsection The explorer views
 
-The project explorer is composed of multiple windows, which are
+The explorer views are
 initially displayed on the left side of the GPS window. Its goal is to
 show a full view of the various components of your projects. These
 various components are presented below.
@@ -256,7 +338,7 @@ View}, if it is imported by several other projects.
 A special icon with an exclamation mark is displayed if the project
 was modified, but not saved yet. You can choose to save it at any time
 by right-clicking on it. GPS will remind you to save it before any
-compilation. 
+compilation.
 
 @item directories
 The files inside a project can be organized into several physical
@@ -332,12 +414,44 @@ project. Starting a new compilation at that point will use the new
 switches, and all the aspects of GPS are immediately affected
 according to the new setup.
 
-
 @c --------------------------------------------------------------------
-@node The Console
-@section The Console
+@node The Messages Window
+@section The Messages Window
 @c --------------------------------------------------------------------
 @noindent
+
+The Messages window is used by GPS to display information and feedback
+about operations, such as build output, information about processes
+launched, error messages.
+
+This is a read-only window, which means that only output is available,
+no input is possible.
+
+For an input/output window, see @ref{The Execution Window} and also
+@ref{The Shell Window}.
+
+@c --------------------------------------------------------------------
+@node The Shell Window
+@section The Shell Window
+@c --------------------------------------------------------------------
+@noindent
+
+This window gives access to a shell specific to GPS, that allows you to
+type commands such as editing a file, compiling without using the menu
+items or the mouse.
+
+The Shell Window is a work in progress so only a few commands are currently
+available. To get the full list of currently available commands, simply
+type @code{help} at the prompt, or @code{help} followed by the name of a
+command, to get more information about a specific command.
+
+You can use the @key{up} and @key{down} arrows to navigate through the
+history of commands.
+
+The intent is to provide all the commands available in GPS via the GPS
+shell, as well as providing access to the shell capabilities in batch
+mode, in order to help automate processes such as builds, automatic
+generation of graphs, @dots{}
 
 @c --------------------------------------------------------------------
 @node The Locations Tree
@@ -364,10 +478,63 @@ category items brings up a contextual menu which permits to remove the
 corresponding node from the view.
 
 @c --------------------------------------------------------------------
+@node The Execution Window
+@section The Execution Window
+@c --------------------------------------------------------------------
+@noindent
+
+Each time a program is launched using the menu @code{Build->Run}, a new
+execution window is created to provide input and output for this program.
+
+In order to allow post mortem analysis and copy/pasting, the execution
+windows are not destroyed when the application terminates.
+
+To close an execution window, click on the arrow icon on the top right corner
+of the window, or use the menu @code{File->Close}, or the menu @code{Window->Close}
+or the key binding @key{Ctrl-W}.
+
+If you close the execution window while the application is still running,
+a dialog window is displayed, asking whether you want to kill the application,
+or to cancel the close operation.
+
+@c --------------------------------------------------------------------
 @node The Status Line
 @section The Status Line
 @c --------------------------------------------------------------------
 @noindent
+
+The status line is composed of two areas: on the left a status bar and
+on the right a progress bar.
+
+The status bar is used to display temporary information about GPS
+operations. Note that most of the information GPS displays can be found
+in the @code{Messages} window.
+
+The progress bar is used to display information about on going operations
+such as builds.
+
+@c --------------------------------------------------------------------
+@node Integrated Help
+@chapter Integrated Help
+@c --------------------------------------------------------------------
+
+By default when you start GPS, the working area contains a help window
+displaying HTML help files. On-line help for the GNAT tools is available
+from the @code{Help} menu item.
+
+GPS will look in the @code{<prefix>/doc/gps/html} directory for the default
+help menus, and if the corresponding documentation cannot be found, the
+@code{Help} menu items will be disabled.
+
+Since HTML pages can contain lots of complex information, resizing the
+help window can take some time, making the user interface less responsive.
+It is therefore recommended to close the @code{Help} window
+when not using it. You can reopen this window at any time using the
+@code{Help} menu item.
+
+For the best use of the integrated help, it is recommended to load small
+HTML pages each time instead of long pages which will be slow to load and
+display.
 
 @c --------------------------------------------------------------------
 @node Multiple Document Interface
@@ -494,10 +661,6 @@ a few shortcuts through menus:
 All the windows will be resized to the same size, and be moved one on
 top of the other, so that the top and left sides of all windows are
 visible. This way, you can easily select any window
-
-@iftex
-@image{mdi-cascade, 12.7cm}
-@end iftex
 
 @ifhtml
 @image{mdi-cascade, 12.7cm}
@@ -697,7 +860,6 @@ docking area will be created.
 @item System window
 Under systems that support it, if you drop a window outside of GPS (for
 instance, on the background of your screen), the window will be floated.
-This is currently only supported under Linux, when using the GNOME 2 desktop.
 
 @item Sides of the GPS window
 On each side of the GPS window, a small zone (a few pixels high or
@@ -722,7 +884,7 @@ by side. Drag one of them on the drop area on the right side.
 * Navigation in the Source Editor::
 * Indentation::
 * Using an External Editor::
-* A note on the Clipboard::
+* Using the Clipboard::
 @end menu
 
 @node General Information
@@ -859,8 +1021,8 @@ on a file, or whether you need to explicitely select the contextual
 menu to open the external editor.
 
 @c --------------------------------------------------------------------------
-@node A note on the Clipboard
-@section A note on the Clipboard
+@node Using the Clipboard
+@section Using the Clipboard
 @c --------------------------------------------------------------------------
 
 This section concerns X-Window users who are used to cutting and
@@ -870,7 +1032,7 @@ cut/copy/paste actions, either through menu items or keyboard
 shorcuts, and the @i{primary clipboard} (i.e. the ``middle button''
 clipboard) is set by the current selection.
 
-Therefore, copy/paste between GPS and other X applications using the 
+Therefore, copy/paste between GPS and other X applications using the
 @i{primary clipboard} will still work, provided that there is some
 text currently selected. The @i{GPS clipboard}, when set, will
 override the @i{primary clipboard}.
@@ -884,19 +1046,15 @@ information.
 @c --------------------------------------------------------------------
 
 @menu
+* Support for Cross References::
 * Spec/Body::
-* Cross References::
 @end menu
 
-@node Spec/Body
-@section Spec/Body
+@node Support for Cross References
+@section Support for Cross References
 @noindent
 
-@node Cross References
-@section Cross References
-@noindent
-
-GPS provides cross-references for all the entities defined in your
+GPS provides cross-references for most of the entities defined in your
 application, as well as some advanced browsers like a call graph.
 For this to work, it needs some help from external tools, specific to
 each of the supported languages.
@@ -920,7 +1078,7 @@ complete set of non compilable sources.
 There are a few special cases where GPS can not find the external file
 (called @file{ALI file}) that contains the cross-references
 information. Most likely, this is either because you haven't compiled
-your sources first, or because the source code has changed since the
+your sources yet, or because the source code has changed since the
 @file{ALI file} was generated.
 
 It could also be that you haven't included in the project the object
@@ -961,6 +1119,10 @@ is ignored, which means for example that function calls made through macros
 won't be detected.
 
 @end table
+
+@node Spec/Body
+@section Spec/Body
+@noindent
 
 @c --------------------------------------------------------------------
 @node Project Handling
@@ -1032,7 +1194,7 @@ type definition, C++ method declaration,@dots{}
 @item @code{"Replace with"}
 This field should contain the string that will replace the occurrences
 of the pattern defined above.
-The combo box provided a history of previously used replacement
+The combo box provides a history of previously used replacement
 strings.
 
 @item @code{"Look in"}
@@ -1054,7 +1216,7 @@ comments, and ignore the code.
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
 focus. However, you can of course change the context to the one you
-prefer. 
+prefer.
 
 @end table
 
@@ -1063,7 +1225,7 @@ The second part of the window is a row of buttons, to start the search
 it is taking too long, or to display the options.
 
 @iftex
-@image{search-options, 12.7cm}
+@image{search-options, 12.0cm}
 @end iftex
 
 @ifhtml
@@ -1079,25 +1241,25 @@ stops as soon as one occurence of the pattern is found. You then have
 to press the @code{Next} button (or the equivalent shortcut
 @key{Control-N}) to go to the next occurrence.
 
-However, if you press this check box, the search widget will start
+However, if you enable this check box, the search widget will start
 searching for all occurrences right away, and put the results in a new
 window called @code{Locations} (initially found in the bottom dock of
-the GPS window). You can press the search at any time by pressing
-Stop. It will then stop when the next occurrence is found.
+the GPS window). You can interrupt the search at any time by pressing
+the @code{Stop} button: this will stop when the next occurrence is found.
 
 @item @code{"Case Sensitive"}
 By default, patterns are case insensitive (upper-case letters and
-lower-case letters are considered as equivalent). You can alter this
+lower-case letters are considered as equivalent). You can change this
 behavior by clicking on this check box.
 
 @item @code{"Whole Word Only"}
-This check box, if activated, will force the search engine to ignore
+If activated, this check box will force the search engine to ignore
 substrings. "sensitive" will no longer match "insensitive".
 
 @item @code{"Regular Expression"}
 This button commutes between fixed string patterns and regular
 expressions. As mentioned above, you can also commute these two modes
-by selecting the arrow on the right of the @code{Search for} field.
+by selecting the arrow on the right of the @code{Search for:} field.
 
 @end table
 
@@ -1109,7 +1271,7 @@ To force this behavior, open the menu @code{Window}, select
 @code{Search} in the list at the bottom of the menu, and then select
 either @code{Floating} or @code{Docked}.
 
-If you save the desktop (@code{File->Save->Desktop}, GPS will
+If you save the desktop (@code{File->Save...->Desktop}, GPS will
 automatically reopen the search dialog in its new place when it is
 started next time.
 
@@ -1142,6 +1304,92 @@ started next time.
 @section Integrating existing build procedures with the GPS build system
 @noindent
 
+Since the build system provided by GPS is based on makefiles, it is possible
+to integrate existing build scripts and makefiles. In the following section,
+we will call such projects that integrate with existing build procedures a
+@i{foreign project}.
+
+You first need to provide your own Makefile.@i{project} file, that will
+provide stubs to the real build commands.
+
+Then to tell GPS that it should not generate automatically the makefile
+corresponding to a given project, set the read-only attribute on the
+makefile, e.g under unix:
+
+@smallexample
+$ chmod -w Makefile.<project>
+@end smallexample
+
+or under Windows:
+
+@smallexample
+> attrib +r Makefile.<project>
+@end smallexample
+
+This way when saving the project, GPS knows that the existing makefile
+should not be overriden.
+
+Depending on your project, you will need to define some or all of the
+following targets in the makefile stub:
+
+@table @b
+@item internal-build
+This is the main rule, used for building all the files for a foreign
+project.
+
+@item internal-clean
+This is an optional rule, used to clean the temporary files, e.g. the
+object files generated during the build.
+
+@item SRC_DIRS
+
+@item LDFLAGS
+
+@item LIBS
+
+@item DEPS_PROJECTS
+
+@end table
+
+For example, suppose we have a foreign project called @code{Foo},
+with an existing makefile, here is how Makefile.foo would look like:
+
+@smallexample
+ifeq ($(FOO_PROJECT),)
+FOO_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   BASE_DIR=$(shell pwd)
+   FOO_ROOT=True
+
+# Redirect clean to the real clean rule
+   internal-clean:
+        $(MAKE) clean
+
+# Ditto for the build rule
+   internal-build:
+        $(MAKE) build
+endif
+
+FOO_BASE_DIR := $(BASE_DIR)
+
+# Add our source directories to the default search path
+# so that other projects can reference our include files
+FOO_SRC_DIRS = $(FOO_BASE_DIR)/include $(FOO_BASE_DIR)/include2
+SRC_DIRS += $(FOO_SRC_DIRS)
+
+# Add <build>/libfoo.a, built by the internal-build rule above, to the
+# list of libraries to link with
+LIBS := $(FOO_BASE_DIR)/<build>/libfoo.a $(LIBS)
+
+ifneq ($(FOO_ROOT),True)
+   DEPS_PROJECTS += $(FOO_BASE_DIR)/foo
+endif
+
+endif
+
+@end smallexample
+
 @c --------------------------------------------------------------------
 @node Source Browsing
 @chapter Source Browsing
@@ -1173,7 +1421,7 @@ any file to debug, by using the menu @code{Debug->Debug->Load File...}
 
 After the debugger has been initialized, you have access to two new windows:
 the data window (in the top of the working area), and the debugger console
-(in a second page, after the Messages window).
+(in a new page, after the Messages and Shell windows).
 All the menus under @code{Debugger}
 are now also accessible, and you also have access to additional contextual
 menus, in particular in the source editor where it is possible to easily
@@ -1192,11 +1440,6 @@ debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
 @c --------------------------------------------------------------------
 @node Version Control System
 @chapter Version Control System
-@c --------------------------------------------------------------------
-
-@c --------------------------------------------------------------------
-@node Preferences/Settings
-@chapter Preferences/Settings
 @c --------------------------------------------------------------------
 
 @c --------------------------------------------------------------------
@@ -1223,10 +1466,15 @@ debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
 @c --------------------------------------------------------------------
 
 @menu
+* The Preferences Dialog::
 * Customizing the Menu Bar::
 * Customizing the Tool Bar::
 * Changing Colors Fonts and Key Bindings::
 @end menu
+
+@node The Preferences Dialog
+@section The Preferences Dialog
+@noindent
 
 @node Customizing the Menu Bar
 @section Customizing the Menu Bar
@@ -1268,7 +1516,7 @@ Here is an example for such a file:
     (...)
   </Submenu>
 
- </Custom>
+</Custom>
 @end smallexample
 
 The example above creates a two toplevel menus, named @file{custom menu}
@@ -1355,14 +1603,14 @@ p : the project is the current project
 
 r : indicates that the listing should be project-recursive, i.e. that
 sub-projects should be listed as well, and their subprojects, and so
-on. 
+on.
 
 d : list the source directories
 
 s : list the source files
 
 f : output the list into a file and substitute the parameter with the
-name of that file. 
+name of that file.
 @end table
 
 Examples :
@@ -1390,14 +1638,14 @@ recursively.
 @section Changing Colors Fonts and Key Bindings
 @noindent
 
-GPS can be configured through the usual gtk+ mechanisms of @file{rc
-files}. You can create a text file called @file{gtkrc} in the
-gps home directory (@file{~/.gps} on Unix systems), or as a global
-change, in the directory etc/gps in the GPS installation. This file
+In addition to the preferences dialog, GPS can be configured through the
+Gtk+ mechanism of @file{rc files}. You can create a text file called
+@file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
+a global change, in the directory etc/gps in the GPS installation. This file
 contains the usual configuration description, following the gtk resource
 files syntax.
 
-Special effects can be achieved easily. For instance, the following
+Special effects can be achieved this way. For instance, the following
 code will change the background color of any button, when it is
 pressed. It will also set a background pixmap when it is not pressed.
 The style also inherits from the one above, so that the buttons also
@@ -1456,7 +1704,7 @@ Options:
    --help              Show this help message and exit.
    --version           Show the GPS version and exit.
 
-Source files are searched everywhere on the project's  source path
+Source files are searched everywhere on the project's source path
 
 @end smallexample
 
@@ -1484,11 +1732,12 @@ directories used by GPS are either relative to $HOME/.gps (%HOME%\.gps
 under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
 %GPS_HOME%\.gps) if set.
 
-   @item GDK_USE_XFT
-If this variable is set to 1, then the fonts used in most parts of gps will be
-anti-aliased fonts, provided your Xserver supports the Xft extension, and you
-have installed anti-aliased fonts on your system, like the truetype fonts
-available at @url{http://keithp.com/~keithp/truetype.tar.gz}
+@c Currently disabled, since this is not well supported yet
+@c    @item GDK_USE_XFT
+@c If this variable is set to 1, then the fonts used in most parts of gps will be
+@c anti-aliased fonts, provided your Xserver supports the Xft extension, and you
+@c have installed anti-aliased fonts on your system, like the truetype fonts
+@c available at @url{http://keithp.com/~keithp/truetype.tar.gz}
 
 @end table
 
@@ -1534,8 +1783,8 @@ remove this file.
 Directory containing the debugging sessions.
 
    @item $HOME/.gps/history
-Contains all the histories for the @code{File->Reopen} and
-@code{Project->Reopen} menus, and for the combo boxes
+Contains all the histories for the combo boxes and the @code{File->Reopen} and
+@code{Project->Reopen} menus.
 
    @item $HOME/.gps/gtkrc
 The theme used by the gtk+ library on which gps is based. It allows you
