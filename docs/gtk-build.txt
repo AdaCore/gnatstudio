@@ -60,7 +60,7 @@ make install
 ########
 
 # Not needed on Tru64 5.1
-# Not needed on IRIX 6.3
+# Not needed on IRIX 6.5
 
 tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
@@ -148,9 +148,11 @@ cd glib-2.0.6
 
 # on Linux, Solaris 8 and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
+
 # on IRIX, where we use SGI C compiler, cc does not use C_INCLUDE_PATH
 # to locate the extra C include files...
 CPPFLAGS="-I$C_INCLUDE_PATH" ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
+
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
 
@@ -214,8 +216,8 @@ cd gtk+-2.0.6
 # used for XIM support:
 # patch -p0 < .../gtk+-2.0.5-solaris2.5.1.diff
 
-# Under IRIX 6.5, the we need to tell SGI CC where to find the png
-# include files... So prepend the configure command with 
+# Under IRIX 6.5, we need to tell SGI cc where to find the png
+# include files, so prepend the configure command with 
 # ``CFLAGS="..."'' like so:
 # CFLAGS="-I$C_INCLUDE_PATH -O2" ./configure ....
 
