@@ -88,6 +88,20 @@
       <shell>echo No differences found</shell>
    </action>
 
+   <action name="generic_cvs_diff" show-command="true" output="">
+      <external>cvs -f diff -r $1 $2</external>
+
+      <on-failure>
+        <shell>dump "%1" TRUE</shell>
+        <shell>File %1</shell>
+        <shell>File $2</shell>
+        <shell>Hook "diff_action_hook"</shell>
+        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>delete %5</shell>
+      </on-failure>
+      <shell>echo No differences found</shell>
+   </action>
+
    <!-------------->
    <!-- CVS open -->
    <!-------------->
@@ -122,6 +136,7 @@
       <remove           action="generic_cvs_remove"       label="Remove"/>
       <revert           action="generic_cvs_revert"       label="Revert"/>
       <diff_head        action="generic_cvs_diff_head"    label="Compare against head rev."/>
+      <diff             action="generic_cvs_diff"         label="Compare against other rev."/>
 
       <status_parser>
          <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
