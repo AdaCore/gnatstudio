@@ -262,8 +262,8 @@ package body Python_Module is
    --  Open a new python console if none exists
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
+
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -1235,4 +1235,3 @@ package body Python_Module is
    end Primitive_Free;
 
 end Python_Module;
-
