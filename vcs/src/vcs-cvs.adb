@@ -1016,7 +1016,6 @@ package body VCS.CVS is
          declare
             S : String := Data (L_Temp);
          begin
-            A (J).Line := J;
             A (J).Text := new String' (S (S'First .. S'First + Index));
          end;
 
