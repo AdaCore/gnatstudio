@@ -10,6 +10,8 @@ is
    Desc      : CType_Description;
    Class_Def : CL_Table;
    Success   : Boolean;
+   P         : Pair_Ptr;
+   Super     : IN_Table;
 begin
 
    Info ("Sym_CL_Hanlder: """
@@ -25,6 +27,26 @@ begin
    if not Success then
       return;
    end if;
+
+   --  Find all the base classes for this one
+   Set_Cursor
+     (SN_Table (SN_IN),
+      By_Key,
+      --  Use name from Class_Def for it does not hold <> when
+      --  template class is encountered
+      Class_Def.Buffer (Class_Def.Name.First .. Class_Def.Name.Last)
+         & Field_Sep,
+      False);
+
+   loop
+      P := Get_Pair (SN_Table (SN_IN), Next_By_Key);
+      exit when P = null;
+      Super := Parse_Pair (P.all);
+      Info ("Found base class: "
+         & Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last));
+      Free (Super);
+      Free (P);
+   end loop;
 
    Insert_Declaration
      (Handler               => LI_Handler (Global_CPP_Handler),
@@ -50,4 +72,7 @@ begin
 
    Free (Desc);
    Free (Class_Def);
+exception
+   when DB_Error => -- something went wrong, ignore it
+      null;
 end Sym_CL_Handler;

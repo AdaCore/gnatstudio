@@ -141,6 +141,7 @@ package body Src_Info.CPP is
       EC     => Ext ("ec"),
       TO     => Ext ("to"),
       IV     => Ext ("iv"),
+      SN_IN  => Ext ("in"),
       UN     => Ext ("un"),
       others => Ext (""));
 
