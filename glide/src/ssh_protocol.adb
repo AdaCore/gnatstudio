@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,7 +31,6 @@ pragma Warnings (On);
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 with GUI_Utils;          use GUI_Utils;
 with String_Utils;       use String_Utils;
-with File_Utils;         use File_Utils;
 with OS_Utils;           use OS_Utils;
 with System;
 with Traces;             use Traces;
@@ -43,7 +42,7 @@ with VFS;                use VFS;
 
 package body SSH_Protocol is
 
-   Me : constant Debug_Handle := Create ("Remote");
+   Me      : constant Debug_Handle := Create ("Remote");
    Full_Me : constant Debug_Handle := Create ("Remote_Full");
 
    Prompt_String : constant String := "---GPS--#";
@@ -56,7 +55,7 @@ package body SSH_Protocol is
    --  Mark sent at the end of a file when it is written back to the remote
    --  host
 
-   Temporary_Dir : constant String := Name_As_Directory ("/tmp");
+   Temporary_Dir : constant String := Get_Tmp_Dir;
    --  Where temporary files are stored. This could also be in ~/.gps or
    --  the root project's object directory.
 
