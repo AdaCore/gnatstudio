@@ -3553,9 +3553,11 @@ package body Prj_API is
    begin
       if Recursive then
          return Prj.Env.Ada_Objects_Path (Project_View).all;
-      else
+      elsif Projects.Table (Project_View).Object_Directory /= No_Name then
          return Get_Name_String
            (Projects.Table (Project_View).Object_Directory);
+      else
+         return "";
       end if;
    end Object_Path;
 

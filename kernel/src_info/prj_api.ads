@@ -161,6 +161,8 @@ package Prj_API is
      (Project_View : Prj.Project_Id; Recursive : Boolean) return String;
    --  Return the object path for this project. If Recursive is True, it also
    --  includes the object path for all imported projects.
+   --  The empty string is returned if the project doesn't have any object
+   --  directory.
 
    All_Languages : constant Project_Browsers.Name_Id_Array;
 
