@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 2.2.0
 
+- DA17-002 Extra spaces adding in GPS shell commands
+  Problem:    When chaining multiple commands in an action for instance, the
+              result of previous commands always ends with a space. Likewise,
+              a command like '("a")' results in two command line arguments,
+              '("a"' and ')'.
+  Workaround: Write commands in python when possible, or surround parameters
+              in triple quotes
+
 - DB23-002 Retrieve project attribute with spaces
   Problem:    When retrieving through a call to get_attribute_as_string() an
               attribute that contains spaces, they are all quoted by a
