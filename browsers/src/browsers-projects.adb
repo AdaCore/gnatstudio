@@ -700,13 +700,17 @@ package body Browsers.Projects is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
+      Child : MDI_Child;
    begin
       if Node.Tag.all = "Project_Browser" then
-         return Put
+         Child := Put
            (User, Gtk_Widget (Create_Project_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height),
             Module         => Project_Browser_Module_ID);
+         Set_Title (Child, -"Project Browser");
+
+         return Child;
       end if;
 
       return null;

@@ -1655,13 +1655,17 @@ package body Browsers.Entities is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
+      Child : MDI_Child;
    begin
       if Node.Tag.all = "Entities_Browser" then
-         return Put
+         Child := Put
            (User, Gtk_Widget (Open_Type_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height),
             Module => Entity_Browser_Module);
+         Set_Title (Child, -"Entity Browser");
+
+         return Child;
       end if;
 
       return null;
