@@ -19,7 +19,7 @@ project Shared is
          when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
-               "-gnatwjmbeurk", "-Wall");
+               "-gnatwjmeurk", "-Wall");
          when "Production" =>
             for Default_Switches ("Ada") use ("-O2", "-gnatws");
       end case;
