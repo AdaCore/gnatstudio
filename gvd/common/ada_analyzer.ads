@@ -63,8 +63,6 @@ package Ada_Analyzer is
       Tok_Greater_Equal,   -- >=           Relop, Sterm
       Tok_Less_Equal,      -- <=           Relop, Sterm
 
-      Tok_Less_Less,       -- <<           Eterm, Sterm, After_SM
-
       Tok_Box,             -- <>           Relop, Eterm, Sterm
       Tok_Colon_Equal,     -- :=           Eterm, Sterm
 
@@ -161,6 +159,7 @@ package Ada_Analyzer is
 
       Tok_Left_Paren,      -- (            Namext, Consk
 
+      Tok_Less_Less,       -- <<           Eterm, Sterm, After_SM
       Tok_Greater_Greater, -- >>           Eterm, Sterm
 
       Tok_Colon,           -- :            Eterm, Sterm
