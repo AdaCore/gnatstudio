@@ -26,6 +26,7 @@ with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Types;    use Gdk.Types;
+with Gdk.Window;   use Gdk.Window;
 
 with Language;        use Language;
 with GVD.Types;       use GVD.Types;
@@ -425,8 +426,8 @@ package body Items.Records is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Left_Border, Y);
+           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+            Context.Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
 
@@ -438,8 +439,8 @@ package body Items.Records is
 
       if not Item.Visible then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Hidden_Pixmap,
-            Hidden_Mask, X + Left_Border, Current_Y);
+           (Context.Pixmap, Context.GC, Context.Hidden_Pixmap,
+            Context.Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
@@ -535,8 +536,7 @@ package body Items.Records is
 
    begin
       if not Item.Valid then
-         Item.Width := Unknown_Width;
-         Item.Height := Unknown_Height;
+         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
          return;
       end if;
 
@@ -631,8 +631,9 @@ package body Items.Records is
 
       if not Item.Visible then
          Item.Gui_Fields_Width := 0;
-         Item.Width := Left_Border + 2 * Item.Border_Spacing + Hidden_Width;
-         Item.Height := 2 * Item.Border_Spacing + Hidden_Height;
+         Get_Size (Context.Hidden_Pixmap, Item.Width, Item.Height);
+         Item.Width := Left_Border + 2 * Item.Border_Spacing + Item.Width;
+         Item.Height := 2 * Item.Border_Spacing + Item.Height;
       end if;
    end Size_Request;
 

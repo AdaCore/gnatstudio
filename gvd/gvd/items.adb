@@ -24,39 +24,12 @@ with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Bitmap;        use Gdk.Bitmap;
 with Gdk.GC;            use Gdk.GC;
-with Gdk.Window;        use Gdk.Window;
 with Language;          use Language;
 with GVD.Types;         use GVD.Types;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
 package body Items is
-
-   -----------------------
-   -- Set_Hidden_Pixmap --
-   -----------------------
-
-   procedure Set_Hidden_Pixmap
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap) is
-   begin
-      Hidden_Pixmap := Pixmap;
-      Hidden_Mask   := Mask;
-      Get_Size (Hidden_Pixmap, Hidden_Width, Hidden_Height);
-   end Set_Hidden_Pixmap;
-
-   ------------------------
-   -- Set_Unknown_Pixmap --
-   ------------------------
-
-   procedure Set_Unknown_Pixmap
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap) is
-   begin
-      Unknown_Pixmap := Pixmap;
-      Unknown_Mask   := Mask;
-      Get_Size (Unknown_Pixmap, Unknown_Width, Unknown_Height);
-   end Set_Unknown_Pixmap;
 
    ---------------
    -- Get_Width --

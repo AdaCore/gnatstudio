@@ -23,6 +23,7 @@ with GNAT.IO;  use GNAT.IO;
 with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
+with Gdk.Window;   use Gdk.Window;
 with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
@@ -129,8 +130,8 @@ package body Items.Simples is
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Border_Spacing, Y2);
+           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+            Context.Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
@@ -186,8 +187,13 @@ package body Items.Simples is
    procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
-      Hide_Big_Items : Boolean := False) is
+      Hide_Big_Items : Boolean := False)
+   is
+      Unknown_Height : Glib.Gint;
+      Unknown_Width  : Glib.Gint;
    begin
+      Get_Size (Context.Unknown_Pixmap, Unknown_Width, Unknown_Height);
+
       Item.Width := Unknown_Width;
       Item.Height := 0;
 
@@ -377,8 +383,8 @@ package body Items.Simples is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Border_Spacing, Y2);
+           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+            Context.Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
@@ -528,8 +534,7 @@ package body Items.Simples is
            Num_Lines;
 
       else
-         Item.Width := Unknown_Width;
-         Item.Height := Unknown_Height;
+         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       end if;
    end Size_Request;
 
@@ -552,8 +557,8 @@ package body Items.Simples is
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Border_Spacing, Y);
+           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+            Context.Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 

@@ -46,18 +46,6 @@ package Items is
    --  itself is never freed, the values are deleted every time we need to
    --  parse a new value.
 
-   procedure Set_Hidden_Pixmap
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap);
-   --  Set the pixmap used for hidden items.
-   --  This must be called, or hidden items will not be displayed at all.
-
-   procedure Set_Unknown_Pixmap
-     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap);
-   --  Set the pixmap used when the value of an item is unknown.
-   --  This must be called.
-
    ------------------
    -- Generic_Type --
    ------------------
@@ -105,13 +93,19 @@ package Items is
    --  Whether we should display the type of the item
 
    type Drawing_Context is record
-      GC           : Gdk.GC.Gdk_GC;
-      Xref_GC      : Gdk.GC.Gdk_GC;
-      Thaw_Bg_Gc   : Gdk.GC.Gdk_GC;
-      Freeze_Bg_Gc : Gdk.GC.Gdk_GC;
-      Modified_GC  : Gdk.GC.Gdk_GC;
-      Font         : Gdk.Font.Gdk_Font;
-      Type_Font    : Gdk.Font.Gdk_Font;
+      GC             : Gdk.GC.Gdk_GC;
+      Xref_GC        : Gdk.GC.Gdk_GC;
+      Modified_GC    : Gdk.GC.Gdk_GC;
+
+      Font           : Gdk.Font.Gdk_Font;
+      Type_Font      : Gdk.Font.Gdk_Font;
+      Command_Font   : Gdk.Font.Gdk_Font;
+
+      Unknown_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Unknown_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+      Hidden_Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Hidden_Mask    : Gdk.Bitmap.Gdk_Bitmap;
+
       Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
       Mode         : Display_Mode;
       Lang         : Language.Language_Access;
@@ -123,8 +117,14 @@ package Items is
    --  new items (such as access types).
    --  Modified_GC is the graphic context used to highlight the items whose
    --  value has changed since the last update.
-   --  Font is the default font to use.
+   --  Font is the default font to use, Type_Font is used to display the
+   --  font information, and Command_Font for items that come directly from the
+   --  output of the debugger.
    --  Pixmap is the pixmap to draw to.
+   --  Trash_Pixmap and Trash_Mask are the icon to draw when the value of an
+   --  item is unknown.
+   --  Hidden_Pixmap and Hidden_Mask are the icon to draw when part of an item
+   --  has been folded and is hidden.
    --
    --  All the contexts should be reset to their initial settings on exit of
    --  the Paint subprograms.
@@ -306,22 +306,6 @@ package Items is
    Left_Border : constant Glib.Gint := 5;
    --  Space of the column on the left of records and arrays, where the user
    --  can click to select the whole array or record.
-
-   -------------------------
-   -- Read-only variables --
-   -------------------------
-   --  These variables should be set only once, and then read only.
-
-   Hidden_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-   Hidden_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-   Hidden_Height : Glib.Gint;
-   Hidden_Width  : Glib.Gint;
-   --  pixmap used when items are hidden
-
-   Unknown_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-   Unknown_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-   Unknown_Height : Glib.Gint;
-   Unknown_Width  : Glib.Gint;
 
    procedure Clone_Dispatching
      (Item  : Generic_Type;

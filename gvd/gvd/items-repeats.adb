@@ -25,6 +25,7 @@ with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
+with Gdk.Window;   use Gdk.Window;
 with Language;     use Language;
 
 package body Items.Repeats is
@@ -146,8 +147,8 @@ package body Items.Repeats is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Border_Spacing, Y);
+           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+            Context.Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
@@ -201,8 +202,7 @@ package body Items.Repeats is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
    begin
       if not Item.Valid then
-         Item.Width := Unknown_Width;
-         Item.Height := Unknown_Height;
+         Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       else
          Size_Request (Item.Value.all, Context, Hide_Big_Items);
          Item.Repeat_Str_Width := Text_Width (Context.Font, Str);
