@@ -223,6 +223,7 @@ Scripting GPS
 
 @ifset python
 Python FAQ
+* Spawning external processes
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
 * Redirecting the output to specific windows::
@@ -10437,6 +10438,7 @@ This section lists some of the problems that have been encountered while using
 Python inside GPS. This is not a general Python discussion.
 
 @menu
+* Spawning external processes
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
 * Redirecting the output to specific windows::
@@ -10444,6 +10446,37 @@ Python inside GPS. This is not a general Python discussion.
 * Printing the GPS Python documentation::
 * Automatically loading python files at startup::
 @end menu
+
+c -------------------------------------------
+@node Spawning external processes
+@subsubsection Spawning external processes
+
+There exist various solutions to spawn external processes from a script:
+
+@itemize
+@item Use the functionalities provided by the @code{GPS.Console} class
+@item Execute a GPS action through @code{GPS.execute_action}.
+
+This action should have an @code{<external>} XML node indicating how to
+launch the process
+
+@item Create a pipe and execute the process with @code{os.popen()} calls
+
+This solution doesn't provide a full interaction with the process, though.
+
+@item Use a standard expect library of Python
+
+The use of an expect library may be a good solution. There are various python
+expect libraries that already exist.
+
+These libraries generally try to copy the parameters of the standard @code{file}
+class., They may fail doing so, as GPS's consoles do not fully emulated all
+the primitive functions of that class (there is no file descriptor for
+instance).
+
+When possible, it is recommanded to use one of the methods above instead.
+@end itemize
+
 
 @c -------------------------------------------
 @node Redirecting the output of spawned processes
