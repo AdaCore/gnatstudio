@@ -316,6 +316,8 @@ package SN.DB_Structures is
       File_Name      : Segment;
       Type_Position  : Point;
       Attributes     : SN_Attributes;
+      Value_Type     : Segment;
+      Template_Parameters  : Segment;
       Buffer   : GNAT.OS_Lib.String_Access;
    end record;
       --  Template arguments
@@ -336,15 +338,7 @@ package SN.DB_Structures is
    end record;
    --  References-To
 
-   type UN_Table is record
-      Name : Segment;
-      File_Name : Segment;
-      Start_Position : Point;
-      End_Position : Point;
-      Attributes : SN_Attributes;
-      Comments : Segment;
-      Buffer : GNAT.OS_Lib.String_Access;
-   end record;
+   subtype UN_Table is CL_Table;
    --  Unions
 
    ---------------------------------------------------------
@@ -423,9 +417,6 @@ package SN.DB_Structures is
    function Parse_Pair (Key_Data_Pair : Pair) return TO_Table;
    --  Function for parsing TO_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return UN_Table;
-   --  Function for parsing UN_Table key-data pair
-
    ---------------------------------------------------------
 
    procedure Free (target : in out BY_Table);
@@ -499,9 +490,6 @@ package SN.DB_Structures is
 
    procedure Free (target : in out TO_Table);
    --  frees resources allocated by TO_Table
-
-   procedure Free (target : in out UN_Table);
-   --  frees resources allocated by UN_Table
 
    ---------------------------------------------------------
    Number_Of_Allocated_Buffers : Integer := 0;

@@ -2503,90 +2503,6 @@ package body SN.Find_Fns is
       return Tab;
    end Find;
 
-   -----------
-   -- Find --
-   ----------
-   --  Find functions for Unions table
-
-   function Find
-     (DB       : DB_File;
-      Name     : String := Invalid_String;
-      Position : Point  := Invalid_Point;
-      Filename : String := Invalid_String) return UN_Table
-   is
-      P    : Pair_Ptr;
-      Tab  : UN_Table;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Tab := Parse_Pair (P.all);
-      Free (P);
-      return Tab;
-   end Find;
-
    ---------------
    -- To_String --
    ---------------
@@ -2632,6 +2548,7 @@ package body SN.Find_Fns is
          when T      => return "t";
          when UN     => return "un";
          when IU     => return "iu";
+         when TA     => return "ta";
          when others => raise Invalid_Symbol_Type;
       end case;
    end To_String;

@@ -110,10 +110,15 @@ package Src_Info.Type_Utils is
       SN_Table          : in SN_Table_Array;
       Module_Typedefs   : in Module_Typedefs_List;
       Desc              : out CType_Description;
-      Success           : out Boolean);
+      Success           : out Boolean;
+      Symbol            : Symbol_Type := Undef;
+      Scope             : String := "";
+      File_Name         : String := "";
+      Template_Args     : String := "");
    --  Attempts to convert type name into E_Kind.
-   --  At the moment searches up for
-   --  the name in the class, typedef, enum tables.
+   --  At the moment searches for
+   --  the name in the class, typedef, enum tables
+   --  and template arguments
 
    procedure Find_Original_Type
      (Type_Name         : in String;
@@ -157,6 +162,18 @@ package Src_Info.Type_Utils is
    --  Finds enum and stores information about it in the
    --  Desc and Enum_Def arguments
    --  Success returns error status
+
+   procedure Find_Template_Argument
+     (Type_Name       : String;
+      SN_Table        : SN_Table_Array;
+      Desc            : in out CType_Description;
+      Symbol          : Symbol_Type;
+      Scope           : String;
+      File_Name       : String;
+      Template_Args   : String;
+      Success         : out Boolean);
+   --  Find template type argument and stores information about it
+   --  in Desc. Success holds error status
 
    procedure Free (Desc : in out CType_Description);
    --  Frees memory used by access fields in given Desc structure.

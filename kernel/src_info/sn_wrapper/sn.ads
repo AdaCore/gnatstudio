@@ -109,7 +109,12 @@ package SN is
    SN_OVERLOADED         : constant SN_Attributes := 16#40000#;
    SN_TEMPLATE           : constant SN_Attributes := 16#80000#;
 
+   --  Template argument types
+   SN_TA_TYPE            : constant SN_Attributes := 0;
+   SN_TA_VALUE           : constant SN_Attributes := 1;
+   SN_TA_TEMPLATE        : constant SN_Attributes := 2;
 
+   --  Symbol types
    SN_TYPE_DEF           : constant SN_Attributes := 1;
    SN_CLASS_DEF          : constant SN_Attributes := 2;
    SN_MBR_FUNC_DEF       : constant SN_Attributes := 3;

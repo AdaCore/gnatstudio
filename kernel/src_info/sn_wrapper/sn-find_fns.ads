@@ -244,12 +244,5 @@ package SN.Find_Fns is
       Position    : Point       := Invalid_Point;
       Filename    : String      := Invalid_String) return TO_Table;
 
-   --  Find functions for Unions table
-   function Find
-     (DB       : DB_File;
-      Name     : String := Invalid_String;
-      Position : Point  := Invalid_Point;
-      Filename : String := Invalid_String) return UN_Table;
-
 end SN.Find_Fns;
 

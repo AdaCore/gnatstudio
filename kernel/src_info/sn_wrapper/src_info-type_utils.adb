@@ -108,6 +108,8 @@ package body Src_Info.Type_Utils is
       Desc      : out CType_Description;
       Success   : out Boolean) is
    begin
+      Desc.Parent_Point    := Invalid_Point;
+      Desc.Parent_Filename := null;
       if Type_Name = "char"          or Type_Name = "signed char"
          or Type_Name = "int"        or Type_Name = "signed int"
          or Type_Name = "long"       or Type_Name = "signed long"
@@ -140,13 +142,18 @@ package body Src_Info.Type_Utils is
       SN_Table          : in SN_Table_Array;
       Module_Typedefs   : in Module_Typedefs_List;
       Desc              : out CType_Description;
-      Success           : out Boolean)
+      Success           : out Boolean;
+      Symbol            : Symbol_Type := Undef;
+      Scope             : String := "";
+      File_Name         : String := "";
+      Template_Args     : String := "")
    is
       Matches      : Match_Array (0 .. 1);
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
    begin
       Success             := False;
+      Desc.Is_Template    := False;
 
       --  check for leading volatile/const modifier
       if Type_Name'Length > Volatile_Str'Length
@@ -269,6 +276,22 @@ package body Src_Info.Type_Utils is
                return;
             end if;
          end;
+      end if;
+
+      --  try template arguments
+      if Symbol /= Undef and Is_Open (SN_Table (TA)) then
+         Find_Template_Argument
+           (Type_Name,
+            SN_Table,
+            Desc,
+            Symbol,
+            Scope,
+            File_Name,
+            Template_Args,
+            Success);
+         if Success then
+            return;
+         end if;
       end if;
 
       --  when everything else failed
@@ -508,6 +531,70 @@ package body Src_Info.Type_Utils is
             Not_Found => -- missed, fall thru'
          Success := False;
    end Find_Enum;
+
+   ----------------------------
+   -- Find_Template_Argument --
+   ----------------------------
+
+   procedure Find_Template_Argument
+     (Type_Name       : String;
+      SN_Table        : SN_Table_Array;
+      Desc            : in out CType_Description;
+      Symbol          : Symbol_Type;
+      Scope           : String;
+      File_Name       : String;
+      Template_Args   : String;
+      Success         : out Boolean)
+   is
+      pragma Unreferenced (Symbol);
+      Arg             : TA_Table;
+      P               : Pair_Ptr;
+   begin
+      Success := False;
+      if not Is_Open (SN_Table (TA)) then
+         return;
+      end if;
+
+      Set_Cursor
+        (SN_Table (TA),
+         Position    => By_Key,
+         Key         => Scope & Field_Sep & Type_Name & Field_Sep,
+         Exact_Match => False);
+
+      loop
+         P := Get_Pair (SN_Table (TA), Next_By_Key);
+         exit when P = null;
+         Arg := Parse_Pair (P.all);
+         Free (P);
+
+         if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
+            and Template_Args
+               = Arg.Buffer (Arg.Template_Parameters.First ..
+                  Arg.Template_Parameters.Last)
+            and Arg.Attributes /= SN_TA_VALUE
+         then
+            Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
+            Desc.Parent_Point    := Arg.Start_Position;
+            Desc.Parent_Filename := new String' (File_Name);
+            Desc.Kind            := Private_Type;
+
+            if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+               Desc.Ancestor_Point    := Arg.Start_Position;
+               Desc.Ancestor_Filename := new String' (File_Name);
+            end if;
+
+            Success := True;
+            return;
+         end if;
+
+         Free (Arg);
+      end loop;
+
+      Release_Cursor (SN_Table (TA));
+   exception
+      when  DB_Error => -- non-existent table
+         null;
+   end Find_Template_Argument;
 
    -------------------
    -- Cmp_Arg_Types --
