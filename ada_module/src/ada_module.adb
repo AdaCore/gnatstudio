@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -33,6 +33,7 @@ with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
 with Projects.Registry;        use Projects.Registry;
+with Case_Handling;            use Case_Handling;
 
 package body Ada_Module is
 
@@ -50,7 +51,7 @@ package body Ada_Module is
 
    package Casing_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
-     ("Casing_Type", Language.Casing_Type);
+     ("Casing_Type", Casing_Type);
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
