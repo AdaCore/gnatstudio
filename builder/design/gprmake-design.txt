@@ -96,6 +96,26 @@ Process:
 TBC
 [...]
 
+Output created by gprmake:
+
+- For the convenience of tools launched, gprmake will set an environment
+  variable to the full path of the top level project file so that this info
+  is shared easily among tools.
+
+  This environment variable could be called GNAT_PROJECT
+
+  Note: this raises the interesting question of whether some gnat tools
+  (e.g. the gnat driver) should support this environment variable, and if set
+  and no -P switch is specified on the command line, use this project instead.
+  This would probably make things simpler for gprmake, in particular for setting
+  the Builder'Driver attribute described below.
+
+- (optionally) dependency files in the object directory
+
+- object files, results of compilations
+
+- executable and libraries, results of link
+
 Input needed from gprmake:
 
 - Specify compiler command
@@ -131,8 +151,13 @@ Input needed from gprmake:
     - Builder'Driver (<language>): If set, use this tool to check
       dependencies of sources for a given language, and rebuild them if
       needed.
-      Defaults to ("<prefix>gnatmake", "-c", "-P", <Project_Name>) for "ada".
+      Defaults to ("<prefix>gnat", "make", "-c") for "ada".
       Defaults to () otherwise.
+
+      Note: the default for Ada assumes that the GNAT_PROJECT environment
+      variable has been set and is recognized by the gnat driver.
+      Alternatively, we could provide a wrapper that would recognize it,
+      and call gnatmake -P -c $GNAT_PROJECT directly.
 
     - Compiler'Compiler_Kind (<language>): Kind of compiler used for a given
       language. Recognized values are:
@@ -241,14 +266,13 @@ Input needed from gprmake:
 - Specify how to handle dependencies
   TBC
 
-  - investigate how dependencies are handled in other languages
+  - how are dependencies handled in other languages ?
     and verify that the proposed scheme would allow handling of these languages
 
-    - fortran: apparently fortran does not really have the notion of
-    dependencies between files (there is no 'with' nor '#include' in the C
-    sense), so it's possible that the handling of dependencies is a simple
-    matter of comparing the timestamp of the object file against the timestamp
-    of the source file (correspond to having no
+    - fortran: does not really have the notion of dependencies between files,
+    basically each proram is self contained, so the handling of dependencies is
+    a simple matter of comparing the timestamp of the object file against the
+    timestamp of the source file (correspond to having no
     Dependency_Option/Compute_Dependency attribute).
 
     - java: it seems that recompiling java files is handled either by IDEs
@@ -264,18 +288,20 @@ Input needed from gprmake:
   - for simplicity, gprmake will, at least in a first step, only understand
     Makefile fragments.
     In the future, it would probably make sense to handle other formats
-    directly, in particular ALI files, so that compilation of Ada files is
-    handled without using gnatmake.
+    directly, in particular ALI files, so that compilation of Ada files can be
+    handled without using gnatmake, and have Ada be handled very much
+    like C or C++.
 
     Note: if some compiler (e.g. proprietary Ada compiler) does not provide
-    one of the capabilities listed above, the idea would be to provide a
+    the capabilities of generating a Makefile, the idea would be to provide a
     helper tool (a wrapper) that would extract the proprietary information
-    (from e.g. the Ada 83 library) and generate the information in one of the
-    supported formats (typically a Makefile fragment). Another approach
-    would be to use gcc -c -gnatc to generate .ali files, and gnatmake -M
-    to generate corresponding Makefile fragments. In this case,
-    Compiler'Compute_Dependency would be set to a wrapper that would
-    first call gcc -c -gnatc, and then gnatmake -M on the resulting ali file.
+    (from e.g. the Ada 83 library) and generate the information in the
+    expected format.
+    Another approach would be to use gcc -c -gnatc to generate .ali files, and
+    gnatmake -M to generate corresponding Makefile fragments. In this case,
+    Compiler'Compute_Dependency would be set to a wrapper that would e.g.
+    first call gcc -c -gnatc, and then gnatmake -M on the resulting ali file,
+    or a separate tool written in Ada that would provide a similar capability.
 
   Note: as opposed to gpr2make which needed to post process the Makefile
   fragments (*.d files), gprmake does not need to modify these files, since
@@ -370,6 +396,8 @@ Input needed from gprmake:
   builder driver will keep track of the object files required itself, and
   that they will be handled either by Linker'Driver, or via
   Linker'Default_Switches.
+  Concerning the approach of building a single big archive, see also file
+  link-order.txt for more info on why we're doing it.
 
   If a previous archive exists, it is removed before creating a new one, so
   as to avoid picking obsolete object files coming from deleted or moved source
