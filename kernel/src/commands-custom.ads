@@ -94,7 +94,8 @@ package Commands.Custom is
      (Item           : out Custom_Command_Access;
       Kernel         : Kernel_Handle;
       Command        : Glib.Xml_Int.Node_Ptr;
-      Default_Output : String := Console_Output);
+      Default_Output : String := Console_Output;
+      Show_Command   : Boolean := True);
    --  Create a new command with a list of <shell> and <external> nodes, as
    --  done in the customization files. Filter is the filter that needs to
    --  be tested to make sure that all parameters can be satisfied.
@@ -102,6 +103,8 @@ package Commands.Custom is
    --  made available to the next through %1, %2,...
    --  Default_Output specifies where the output should be sent by default, if
    --  not overriden by any "output" attribute in the XML tree.
+   --  If Show_Command is true, then the command itself will be shown along
+   --  with its output if the latter is not No_Output.
 
    function Create_Filter
      (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter;
@@ -142,6 +145,11 @@ private
 
       Default_Output_Destination : String_Access;
       --  The default location for the XML tree
+
+      Default_Show_Command : Boolean;
+      --  True if by default the various commands must be shown along with
+      --  their output. If the output is hidden, the command itself will not
+      --  be shown
 
       In_Process  : Boolean := False;
       --  True if we are processing the command, but there are some external

@@ -428,13 +428,15 @@ package body Commands.Custom is
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : Glib.Xml_Int.Node_Ptr;
-      Default_Output : String := Console_Output)
+      Default_Output : String := Console_Output;
+      Show_Command   : Boolean := True)
    is
       Node, Previous : Node_Ptr;
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Default_Output_Destination := new String'(Default_Output);
+      Item.Default_Show_Command := Show_Command;
 
       --  Make a deep copy of the relevant nodes
       Node := Command;
@@ -513,7 +515,8 @@ package body Commands.Custom is
       function Execute_Simple_Command
         (Script          : Scripting_Language;
          Command_Line    : String;
-         Output_Location : String := No_Output) return Boolean;
+         Output_Location : String := No_Output;
+         Show_Command    : Boolean := True) return Boolean;
       --  Execute a single command, and return whether it succeeded.
       --  Index is the number of the current command we are executing.
       --  Output_Location is the console where the output of the command should
@@ -723,7 +726,8 @@ package body Commands.Custom is
       function Execute_Simple_Command
         (Script          : Scripting_Language;
          Command_Line    : String;
-         Output_Location : String := No_Output) return Boolean
+         Output_Location : String := No_Output;
+         Show_Command    : Boolean := True) return Boolean
       is
          --  Perform arguments substitutions for the command.
          Subst_Cmd_Line : constant String := Substitute
@@ -756,21 +760,23 @@ package body Commands.Custom is
 
                --  Insert the command explicitely, since Execute_Command
                --  doesn't do it in this case.
-               if Console /= null then
+               if Console /= null and then Show_Command then
                   Insert (Console, Subst_Cmd_Line, Add_LF => True);
                end if;
 
                Command.Outputs (Command.Cmd_Index) := new String'
                  (Execute_Command
                     (Script, Subst_Cmd_Line,
-                     Hide_Output => Output_Location = No_Output,
-                     Console     => Console,
-                     Errors => Errors'Unchecked_Access));
+                     Hide_Output  => Output_Location = No_Output,
+                     Show_Command => Show_Command,
+                     Console      => Console,
+                     Errors       => Errors'Unchecked_Access));
             else
                Execute_Command
                  (Script, Subst_Cmd_Line,
-                  Hide_Output => Output_Location = No_Output,
-                  Console     => Console,
+                  Hide_Output  => Output_Location = No_Output,
+                  Show_Command => Show_Command,
+                  Console      => Console,
                   Errors => Errors);
             end if;
 
@@ -794,6 +800,7 @@ package body Commands.Custom is
                Callback      => Callback,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
+               Show_Command  => Show_Command,
                Callback_Data => Convert (Custom_Command_Access (Command)));
             Free (Args);
 
@@ -820,6 +827,7 @@ package body Commands.Custom is
       function Execute_Next_Command return Boolean is
          Index : Natural := 1;
          N : Node_Ptr;
+         Show_Command : Boolean := Command.Default_Show_Command;
       begin
          if Command.Command /= null then
             Success := Execute_Simple_Command
@@ -834,6 +842,14 @@ package body Commands.Custom is
             end loop;
 
             while Success and then N /= null loop
+               declare
+                  Att : constant String := Get_Attribute (N, "show-command");
+               begin
+                  if Att /= "" then
+                     Show_Command := To_Lower (Att) = "true";
+                  end if;
+               end;
+
                if To_Lower (N.Tag.all) = "shell" then
                   Success := Execute_Simple_Command
                     (Lookup_Scripting_Language
@@ -842,7 +858,8 @@ package body Commands.Custom is
                      N.Value.all,
                      Output_Location =>
                        Get_Attribute (N, "output",
-                                      Command.Default_Output_Destination.all));
+                                      Command.Default_Output_Destination.all),
+                     Show_Command => Show_Command);
 
                elsif To_Lower (N.Tag.all) = "external" then
                   Success := Execute_Simple_Command
@@ -850,7 +867,8 @@ package body Commands.Custom is
                      N.Value.all,
                      Output_Location =>
                        Get_Attribute (N, "output",
-                                      Command.Default_Output_Destination.all));
+                                      Command.Default_Output_Destination.all),
+                     Show_Command => Show_Command);
 
                   --  We'll have to run again to check for completion
                   return True;
