@@ -3111,13 +3111,13 @@ This menu gives access to a GPS wizard that allows you to edit dependencies
 between projects.
 
 This relationship between projects is extremely important, since it determines
-that source files the project's sources can depend on. For instance, if you
-are writting an XML application based on XML/Ada, you will need to make
-your project depend on @file{xmlada.gpr}.
+among other things, which source files are visible to the selected project.
+For instance, if you are writting an XML application based on XML/Ada, you
+will need to make your project depend on @file{xmlada.gpr}.
 
-The dependencies also determine in what order your application is build.
-When you compile a project, GPS will always first make sure that the projects
-is depends on are up-to-date, and otherwise recompile them.
+The dependencies also determine in what order your application is built.
+When you compile a project, the builder will first make sure that the projects
+it depends on are up-to-date, and otherwise recompile them.
 
 You can add or remove dependencies for your project through this wizard. There
 are three pages:
