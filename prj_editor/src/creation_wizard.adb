@@ -44,6 +44,8 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Prj.PP;   use Prj.PP;
 with Prj.Tree; use Prj.Tree;
 with Prj;      use Prj;
+with Snames;   use Snames;
+with Namet;    use Namet;
 
 with Wizards;          use Wizards;
 with Directory_Tree;   use Directory_Tree;
@@ -52,6 +54,7 @@ with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
+with Glide_Intl;       use Glide_Intl;
 
 package body Creation_Wizard is
 
@@ -122,17 +125,17 @@ package body Creation_Wizard is
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
-        (Wiz, Kernel, "Project setup", "#0e79bd", Num_Pages => 5);
+        (Wiz, Kernel, -"Project setup", "#0e79bd", Num_Pages => 5);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
       Add_Logo (Wiz, Pix, Mask);
 
-      Set_Toc (Wiz, 1, "Naming the project");
-      Set_Toc (Wiz, 2, "Selecting sources");
-      Set_Toc (Wiz, 3, "Build directory");
-      Set_Toc (Wiz, 4, "Switches");
-      Set_Toc (Wiz, 5, "Naming scheme");
+      Set_Toc (Wiz, 1, -"Naming the project");
+      Set_Toc (Wiz, 2, -"Selecting sources");
+      Set_Toc (Wiz, 3, -"Build directory");
+      Set_Toc (Wiz, 4, -"Switches");
+      Set_Toc (Wiz, 5, -"Naming scheme");
 
       Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
@@ -150,7 +153,7 @@ package body Creation_Wizard is
    begin
       case Page_Num is
          when 1 =>
-            Set_Wizard_Title (W, "Creating a new project");
+            Set_Wizard_Title (W, -"Creating a new project");
             W.Language_Changed := True;
 
             if Get_Nth_Page (W, 1) = null then
@@ -159,7 +162,7 @@ package body Creation_Wizard is
 
          when 2 =>
             Set_Wizard_Title
-              (W, "Please select the source directories for this project");
+              (W, -"Please select the source directories for this project");
 
             if Get_Nth_Page (W, 2) = null then
                Set_Page (W, 2, Second_Page (W));
@@ -167,7 +170,7 @@ package body Creation_Wizard is
 
          when 3 =>
             Set_Wizard_Title
-              (W, "Please select the build directory for this project");
+              (W, -"Please select the build directory for this project");
 
             if Get_Nth_Page (W, 3) = null then
                Set_Page (W, 3, Third_Page (W));
@@ -175,14 +178,14 @@ package body Creation_Wizard is
 
          when 4 =>
             Set_Wizard_Title
-              (W, "Please select the switches to build the project");
+              (W, -"Please select the switches to build the project");
 
             if W.Language_Changed or else Get_Nth_Page (W, 4) = null then
                Set_Page (W, 4, Fourth_Page (W));
             end if;
 
          when 5 =>
-            Set_Wizard_Title (W, "Please select the naming scheme to use");
+            Set_Wizard_Title (W, -"Please select the naming scheme to use");
 
             if W.Language_Changed or else Get_Nth_Page (W, 5) = null then
                Set_Page (W, 5, Fifth_Page (W));
@@ -222,14 +225,14 @@ package body Creation_Wizard is
       Gtk_New_Vbox (Page);
       Set_Border_Width (Page, 5);
 
-      Gtk_New (Frame, "Name and Location");
+      Gtk_New (Frame, -"Name and Location");
       Set_Border_Width (Frame, 5);
       Pack_Start (Page, Frame, Expand => False);
 
       Gtk_New (Table, Rows => 4, Columns => 2, Homogeneous => False);
       Add (Frame, Table);
 
-      Gtk_New (Label, "Enter the name of the project to create:");
+      Gtk_New (Label, -"Enter the name of the project to create:");
       Attach (Table, Label, 0, 2, 0, 1);
 
       Gtk_New (Wiz.Project_Name, 255);
@@ -246,20 +249,20 @@ package body Creation_Wizard is
 
       Set_Row_Spacing (Table, 1, 20);
 
-      Gtk_New (Label, "Enter the directory where to copy the file to:");
+      Gtk_New (Label, -"Enter the directory where to copy the file to:");
       Attach (Table, Label, 0, 2, 2, 3);
 
       Gtk_New (Wiz.Project_Location, 255);
       Set_Text (Wiz.Project_Location, Get_Current_Dir);
       Attach (Table, Wiz.Project_Location, 0, 1, 3, 4);
 
-      Gtk_New (Button, "Browse");
+      Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
-      Gtk_New (Frame, "Programming Languages");
+      Gtk_New (Frame, -"Programming Languages");
       Set_Border_Width (Frame, 5);
       Pack_Start (Page, Frame, Expand => False);
 
@@ -365,7 +368,7 @@ package body Creation_Wizard is
 
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
       Name : constant String := File_Selection_Dialog
-         ("Select project file location", Dir_Only => True);
+         (-"Select project file location", Dir_Only => True);
    begin
       if Name /= "" then
          Set_Text (Prj_Wizard (W).Project_Location, Name);
@@ -387,7 +390,8 @@ package body Creation_Wizard is
    begin
       if Arr'Length /= 0 then
          Pack := Get_Or_Create_Package (Project, Name);
-         Var := Create_Attribute (Pack, "default_switches", "ada", List);
+         Var := Create_Attribute
+           (Pack, Get_Name_String (Name_Default_Switches), Ada_String, List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
          end loop;
@@ -434,7 +438,8 @@ package body Creation_Wizard is
       Project := Create_Project (Name => Name, Path => Dir);
 
       --  Append the source directories
-      Var := Create_Attribute (Project, "source_dirs", Kind => List);
+      Var := Create_Attribute
+        (Project, Get_Name_String (Name_Source_Dirs), Kind => List);
       declare
          Dirs : Argument_List := Get_Multiple_Selection
            (Wiz.Src_Dir_Selection);
@@ -450,7 +455,8 @@ package body Creation_Wizard is
       end;
 
       --  Append the build directory
-      Var := Create_Attribute (Project, "object_dir", Kind => Single);
+      Var := Create_Attribute
+        (Project, Get_Name_String (Name_Object_Dir), Kind => Single);
       declare
          Dir : constant String :=
            Get_Single_Selection (Wiz.Obj_Dir_Selection);
@@ -463,22 +469,24 @@ package body Creation_Wizard is
       end;
 
       --  Append the switches
-      Emit_Switches (Wiz, Project, "builder", Gnatmake);
+      Emit_Switches (Wiz, Project, Get_Name_String (Name_Builder), Gnatmake);
 
       if Get_Active (Wiz.Ada_Support) then
-         Emit_Switches (Wiz, Project, "compiler", Ada_Compiler);
+         Emit_Switches
+           (Wiz, Project, Get_Name_String (Name_Compiler), Ada_Compiler);
       end if;
 
-      Emit_Switches (Wiz, Project, "binder", Binder);
-      Emit_Switches (Wiz, Project, "linker", Linker);
+      Emit_Switches (Wiz, Project, Get_Name_String (Name_Binder), Binder);
+      Emit_Switches (Wiz, Project, Get_Name_String (Name_Linker), Linker);
 
       --  Append the naming scheme
       Create_Project_Entry (Wiz.Naming, Project);
 
       if Dir (Dir'Last) = Directory_Separator then
-         Create (File, Out_File, Dir & Name & ".gpr");
+         Create (File, Out_File, Dir & Name & Project_File_Extension);
       else
-         Create (File, Out_File, Dir & Directory_Separator & Name & ".gpr");
+         Create (File, Out_File, Dir & Directory_Separator & Name
+                 & Project_File_Extension);
       end if;
 
       Pretty_Print
@@ -487,9 +495,9 @@ package body Creation_Wizard is
       Close (File);
 
       if Dir (Dir'Last) = Directory_Separator then
-         return Dir & Name & ".gpr";
+         return Dir & Name & Project_File_Extension;
       else
-         return Dir & Directory_Separator & Name & ".gpr";
+         return Dir & Directory_Separator & Name & Project_File_Extension;
       end if;
    end Generate_Prj;
 
