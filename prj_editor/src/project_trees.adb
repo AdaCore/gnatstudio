@@ -296,6 +296,12 @@ package body Project_Trees is
    --  It provides the standard behavior when an entity is selected (open the
    --  appropriate source editor).
 
+   function Filter_Category (Category : Language_Category)
+      return Language_Category;
+   --  Return the category to use when an entity is Category.
+   --  This is used to group subprograms (procedures and functions together),
+   --  or remove unwanted categories (in which case Cat_Unknown is returned).
+
    -------------
    -- Gtk_New --
    -------------
@@ -616,18 +622,33 @@ package body Project_Trees is
       N : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := True;
    begin
-      N := Insert_Node
-        (Ctree         => Tree,
-         Parent        => Parent_Node,
-         Sibling       => null,
-         Text          => Create_Line_Text (Construct.Name.all),
-         Spacing       => 5,
-         Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
-         Mask_Closed   => Tree.Close_Masks (Entity_Node),
-         Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
-         Mask_Opened   => Tree.Open_Masks (Entity_Node),
-         Is_Leaf       => Is_Leaf,
-         Expanded      => False);
+      if Construct.Is_Declaration then
+         N := Insert_Node
+           (Ctree         => Tree,
+            Parent        => Parent_Node,
+            Sibling       => null,
+            Text          => Create_Line_Text (Construct.Name.all & " (spec)"),
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
+            Mask_Closed   => Tree.Close_Masks (Entity_Node),
+            Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
+            Mask_Opened   => Tree.Open_Masks (Entity_Node),
+            Is_Leaf       => Is_Leaf,
+            Expanded      => False);
+      else
+         N := Insert_Node
+           (Ctree         => Tree,
+            Parent        => Parent_Node,
+            Sibling       => null,
+            Text          => Create_Line_Text (Construct.Name.all),
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
+            Mask_Closed   => Tree.Close_Masks (Entity_Node),
+            Pixmap_Opened => Tree.Open_Pixmaps (Entity_Node),
+            Mask_Opened   => Tree.Open_Masks (Entity_Node),
+            Is_Leaf       => Is_Leaf,
+            Expanded      => False);
+      end if;
 
       Node_Set_Row_Data
         (Tree, N, (Entity_Node,
@@ -745,6 +766,7 @@ package body Project_Trees is
       Indent, Next_Indent : Natural;
       Constructs : Construct_List;
       Length     : Natural;
+      Category   : Language_Category;
 
       type Ctree_Node_Array is array (Language_Category'Range)
         of Gtk_Ctree_Node;
@@ -776,19 +798,20 @@ package body Project_Trees is
 
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
-               if Categories (Constructs.Current.Category) = null then
-                  Categories (Constructs.Current.Category) := Add_Category_Node
-                    (Tree,
-                     Category_Name    =>
-                       Category_Name (Constructs.Current.Category),
-                     Is_Specification => False,
-                     Parent_Node => Node);
-               end if;
+               Category := Filter_Category (Constructs.Current.Category);
 
-               N := Add_Entity_Node
-                 (Tree,
-                  Constructs.Current.all,
-                  Categories (Constructs.Current.Category));
+               if Category /= Cat_Unknown then
+                  if Categories (Category) = null then
+                     Categories (Category) := Add_Category_Node
+                       (Tree,
+                        Category_Name    => Category_Name (Category),
+                        Is_Specification => False,
+                        Parent_Node      => Node);
+                  end if;
+
+                  N := Add_Entity_Node
+                    (Tree, Constructs.Current.all, Categories (Category));
+               end if;
             end if;
 
             Constructs.Current := Constructs.Current.Next;
@@ -1002,12 +1025,52 @@ package body Project_Trees is
    -------------------
 
    function Category_Name (Category : Language_Category) return String is
-      S : String := Language_Category'Image (Category);
    begin
-      Lower_Case (S);
-      --  Skip the "Cat_" part
-      return S (S'First + 4 .. S'Last);
+      if Category = Cat_Procedure then
+         return "Subprogram";
+
+      else
+         declare
+            S : String := Language_Category'Image (Category);
+         begin
+            Lower_Case (S);
+
+            --  Skip the "Cat_" partx
+            return S (S'First + 4 .. S'Last);
+         end;
+      end if;
    end Category_Name;
+
+   ---------------------
+   -- Filter_Category --
+   ---------------------
+
+   function Filter_Category (Category : Language_Category)
+      return Language_Category is
+   begin
+      --  No "with", "use", "#include"
+      --  No constructs ("loop", "if", ...)
+      --  No tokens (comments, reserved words, ...)
+
+      if Category in Dependency_Category
+        or else Category in Construct_Category
+        or else Category in Token_Category
+        or else Category = Cat_Representation_Clause
+        or else Category = Cat_Local_Variable
+      then
+         return Cat_Unknown;
+
+      --  All subprograms are grouped together
+      elsif Category in Subprogram_Explorer_Category then
+         return Cat_Procedure;
+
+      elsif Category in Type_Category then
+         return Cat_Type;
+
+      end if;
+
+      return Category;
+   end Filter_Category;
 
    ----------------------
    -- Select_Directory --
