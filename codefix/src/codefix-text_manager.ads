@@ -35,6 +35,9 @@ package Codefix.Text_Manager is
    function Is_Blank (Str : String) return Boolean;
    --  Return true if Str is only composed by white characters.
 
+   function Is_In_Comment (Str : String; J : Natural) return Boolean;
+   --  Return true if the position J in a comment line.
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -142,11 +145,12 @@ package Codefix.Text_Manager is
    --  Update the changes previously made in the real text.
 
    function Search_String
-     (This         : Text_Interface'Class;
-      Cursor       : Text_Cursor'Class;
-      Searched     : String;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True) return File_Cursor'Class;
+     (This          : Text_Interface'Class;
+      Cursor        : Text_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -238,11 +242,12 @@ package Codefix.Text_Manager is
    --  Create and initialise a new Text_Interface used by the text navigator.
 
    function Search_String
-     (This         : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class;
-      Searched     : String;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True) return File_Cursor'Class;
+     (This          : Text_Navigator_Abstr'Class;
+      Cursor        : File_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -307,11 +312,12 @@ package Codefix.Text_Manager is
    --  extract that record this line are cloned.
 
    function Search_String
-     (This         : Extract_Line;
-      Cursor       : File_Cursor'Class;
-      Searched     : String;
-      Step         : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True) return File_Cursor'Class;
+     (This          : Extract_Line;
+      Cursor        : File_Cursor'Class;
+      Searched      : String;
+      Step          : Step_Way := Normal_Step;
+      Skip_Strings  : Boolean := True;
+      Skip_Comments : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
    --  the scan in initialized from the end of the content.
