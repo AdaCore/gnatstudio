@@ -96,7 +96,6 @@ package Src_Info.Queries is
    --  On exit, Entity_Declaration is set to the declaration of the entity.
    --  Location is set to the location where the cursor should be moved (the
    --  next body reference, or the declaration, for instance).
-   --  declaration.
    --
    --  If no entity could be found, Status is set to a value other than
    --  Success. In that case, Entity_Declaration and Location are irrelevant.
