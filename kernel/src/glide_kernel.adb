@@ -1182,7 +1182,7 @@ package body Glide_Kernel is
 
          --  Call Show_All before restoring the desktop, in case some
          --  children stored in the desktop have something to hide.
-         Show_All (Main_Window);
+         Show_All (Get_Child (Main_Window));
 
          Present_On_Child_Focus (MDI, False);
 
@@ -1209,7 +1209,7 @@ package body Glide_Kernel is
 
       else
          Trace (Me, "loading default desktop");
-         Show_All (Main_Window);
+         Show_All (Get_Child (Main_Window));
 
          Present_On_Child_Focus (MDI, False);
 
