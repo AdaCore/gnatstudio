@@ -50,6 +50,7 @@ with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
 with Gtk.Vbutton_Box;              use Gtk.Vbutton_Box;
 with Gtk.Widget;                   use Gtk.Widget;
 with Gtk.Window;                   use Gtk.Window;
+with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -84,6 +85,7 @@ with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 
 with Prj;           use Prj;
+with Prj.Part;      use Prj.Part;
 with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
 with Types;         use Types;
@@ -291,6 +293,14 @@ package body Project_Viewers is
       User  : GObject);
    --  Change the sensitivity of User according to the state of the check
    --  button Check.
+
+   procedure Add_Dependency_Internal
+     (Kernel                : access Kernel_Handle_Record'Class;
+      Importing_Project     : Project_Node_Id;
+      Imported_Project_Path : String);
+   --  Internal function that creates a dependency between two projects. If
+   --  properly handle the case where a project with the same name as
+   --  Imported_Project_Path already exists in the project hierarchy
 
    --------------------------
    -- Project editor pages --
@@ -1100,19 +1110,6 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Widget);
 
-      procedure Report_Error (Msg : String);
-      --  Report an error to the console
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error (Msg : String) is
-      begin
-         Console.Insert (Get_Kernel (Context), Msg);
-      end Report_Error;
-
-      Prj : Project_Node_Id;
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
@@ -1125,15 +1122,10 @@ package body Project_Viewers is
             Name : constant String := Run (Wiz);
          begin
             if Name /= "" then
-               Prj := Get_Project_From_View (Project_Information (File));
-               if Add_Imported_Project
-                 (Prj, Name, Report_Error'Unrestricted_Access,
-                  Use_Relative_Path => Project_Uses_Relative_Paths
-                    (Get_Kernel (Context), Prj))
-               then
-                  Set_Project_Modified (Get_Kernel (Context), Prj, True);
-                  Recompute_View (Get_Kernel (Context));
-               end if;
+               Add_Dependency_Internal
+                 (Get_Kernel (File),
+                  Get_Project_From_View (Project_Information (File)),
+                  Name);
             end if;
          end;
 
@@ -1171,6 +1163,131 @@ package body Project_Viewers is
          Trace (Me, "Unexpected exception " & Exception_Message (E));
    end Remove_Project_Dependency;
 
+   -----------------------------
+   -- Add_Dependency_Internal --
+   -----------------------------
+
+   procedure Add_Dependency_Internal
+     (Kernel                : access Kernel_Handle_Record'Class;
+      Importing_Project     : Project_Node_Id;
+      Imported_Project_Path : String)
+   is
+      procedure Report_Error (S : String);
+      --  Output error messages from the project parser to the glide console.
+
+      procedure Replace_Project_Occurences
+        (Root_Project      : Project_Node_Id;
+         Project           : Project_Node_Id;
+         Use_Relative_Path : Boolean);
+      --  Replace all references to a project with the same name as Project by
+      --  a reference to Project.
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (S : String) is
+      begin
+         Console.Insert
+           (Kernel, S & ASCII.LF, Mode => Console.Error, Add_LF => False);
+      end Report_Error;
+
+      --------------------------------
+      -- Replace_Project_Occurences --
+      --------------------------------
+
+      procedure Replace_Project_Occurences
+        (Root_Project      : Project_Node_Id;
+         Project           : Project_Node_Id;
+         Use_Relative_Path : Boolean)
+      is
+         Imported_Path : constant String := Project_Path (Project);
+         Iterator : Imported_Project_Iterator := Start
+           (Root_Project, Recursive => True);
+         With_Clause : Project_Node_Id;
+
+      begin
+         while Current (Iterator) /= Empty_Node loop
+            With_Clause := First_With_Clause_Of (Current (Iterator));
+            while With_Clause /= Empty_Node loop
+               if Prj.Tree.Name_Of (Project_Node_Of (With_Clause)) =
+                 Prj.Tree.Name_Of (Project)
+               then
+                  Set_With_Clause_Path
+                    (With_Clause, Imported_Path, Project,
+                     Current (Iterator),
+                     Use_Relative_Path);
+                  Set_Project_Modified (Kernel, Current (Iterator), True);
+               end if;
+               With_Clause := Next_With_Clause_Of (With_Clause);
+            end loop;
+
+            Next (Iterator);
+         end loop;
+      end Replace_Project_Occurences;
+
+      Base : constant String := Get_String (Directory_Of (Importing_Project));
+      Use_Relative_Path : constant Boolean := Project_Uses_Relative_Paths
+        (Kernel, Importing_Project);
+      Changed : Import_Project_Error;
+      Result : Message_Dialog_Buttons;
+   begin
+      loop
+         Changed := Add_Imported_Project
+           (Importing_Project,
+            Normalize_Pathname (Imported_Project_Path, Base),
+            Report_Error'Unrestricted_Access,
+            Use_Relative_Path => Use_Relative_Path);
+
+         exit when Changed /= Project_Already_Exists;
+
+         --  If there is already a project by that name in the tree,
+         --  confirm whether we should rename it everywhere
+
+         Result := Message_Dialog
+           (Msg => -("A project with this name already exists in the"
+                     & ASCII.LF
+                     & "project graph. Do you want to replace all"
+                     & ASCII.LF
+                     & "occurences with the new project, or"
+                     & ASCII.LF
+                     & "cancel the new dependency ?"),
+            Dialog_Type => Gtkada.Dialogs.Error,
+            Buttons     => Button_OK or Button_Cancel,
+            Title       => -"Project already exists",
+            Parent      => Get_Main_Window (Kernel));
+
+         exit when Result = Button_Cancel;
+
+         declare
+            Imported_Project : Project_Node_Id;
+            Prj_Name : constant String := Base_Name
+              (Imported_Project_Path, Prj.Project_File_Extension);
+         begin
+            Name_Len := Prj_Name'Length;
+            Name_Buffer (1 .. Name_Len) := Prj_Name;
+            Tree_Private_Part.Projects_Htable.Remove (Name_Find);
+            Prj.Part.Parse
+              (Imported_Project, Imported_Project_Path,
+               Always_Errout_Finalize => True);
+
+            Replace_Project_Occurences
+              (Root_Project      => Get_Project (Kernel),
+               Project           => Imported_Project,
+               Use_Relative_Path => Use_Relative_Path);
+            Must_Recompute := True;
+         end;
+      end loop;
+
+      if Changed = Success then
+         Set_Project_Modified (Kernel, Importing_Project, True);
+      end if;
+
+      if Changed = Success or else Must_Recompute then
+         Recompute_View (Kernel);
+      end if;
+   end Add_Dependency_Internal;
+
    -------------------------------------
    -- On_Add_Dependency_From_Existing --
    -------------------------------------
@@ -1181,25 +1298,11 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Widget);
 
-      procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the glide console.
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error (S : String) is
-      begin
-         Console.Insert
-           (Get_Kernel (Context), S, Mode => Console.Error, Add_LF => False);
-      end Report_Error;
-
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Selector : File_Selector_Window_Access;
       Prj : constant Project_Node_Id :=
         Get_Project_From_View (Project_Information (File));
-
       Dir : constant String := Get_String (Path_Name_Of (Prj));
    begin
       if Has_Project_Information (File) then
@@ -1211,29 +1314,9 @@ package body Project_Viewers is
 
          declare
             Name : constant String := Select_File (Selector);
-            Base : constant String := Get_String (Directory_Of (Prj));
-            Changed : Boolean;
          begin
             if Name /= "" then
-               if Project_Uses_Relative_Paths (Get_Kernel (File), Prj) then
-                  Changed := Add_Imported_Project
-                    (Prj,
-                     Relative_Path_Name (Name, Base),
-                     Report_Error'Unrestricted_Access,
-                     Use_Relative_Path => Project_Uses_Relative_Paths
-                       (Get_Kernel (Context), Prj));
-               else
-                  Changed := Add_Imported_Project
-                    (Prj, Normalize_Pathname (Name, Base),
-                     Report_Error'Unrestricted_Access,
-                     Use_Relative_Path => Project_Uses_Relative_Paths
-                       (Get_Kernel (Context), Prj));
-               end if;
-
-               if Changed then
-                  Set_Project_Modified (Get_Kernel (Context), Prj, True);
-                  Recompute_View (Get_Kernel (Context));
-               end if;
+               Add_Dependency_Internal (Get_Kernel (File), Prj, Name);
             end if;
          end;
       end if;
