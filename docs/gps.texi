@@ -6340,6 +6340,9 @@ Base name of the currently opened file.
 @item %F
 Absolute name of the currently opened file.
 
+@item %d
+The currently directory
+
 @item %p
 The current project. This is the name of the project, not the project file.
 
