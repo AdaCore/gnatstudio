@@ -78,6 +78,8 @@ package body Docgen.Work_On_File is
       Doc_Suffix       : String;
       Converter        : Docgen.Doc_Subprogram_Type)
    is
+      use TSFL;
+      J                     : Natural;
       Source_File_Node      : Type_Source_File_List.List_Node;
       Doc_File              : File_Type;
       Next_Package          : GNAT.OS_Lib.String_Access;
@@ -85,6 +87,7 @@ package body Docgen.Work_On_File is
       Subprogram_Index_List : Type_Entity_List.List;
       Type_Index_List       : Type_Entity_List.List;
       Unused                : List_Reference_In_File.List;
+      Unused_Bis            : Type_Entity_List.List;
 
       Doc_Directory_Root : constant String :=
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
@@ -168,7 +171,8 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Source_File_List);
       Source_File_Node := TSFL.First (Source_File_List);
 
-      for J in 1 .. TSFL.Length (Source_File_List) loop
+      J := 1;
+      while Source_File_Node /= TSFL.Null_Node loop
          declare
             File_Name : constant String := Get_Doc_File_Name
               (TSFL.Data (Source_File_Node).File_Name,
@@ -200,6 +204,7 @@ package body Docgen.Work_On_File is
                Doc_Suffix);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
+            J := J + 1;
 
             Close (Doc_File);
 
@@ -213,17 +218,21 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Subprogram_Index_List);
       Sort_List_Name (Type_Index_List);
 
-      --  Create the index doc files for the packages
-
+      --  create the index doc files for the packages
       Process_Unit_Index
-        (B, Kernel, Source_File_List, Unused, Options, Converter,
-         Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Source_File_List,
+         Unused_Bis, Unused, Options, Converter,
+           Doc_Directory_Root, Doc_Suffix);
       Process_Subprogram_Index
-        (B, Kernel, Subprogram_Index_List, Unused, Options, Converter,
-         Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Subprogram_Index_List,
+         Unused_Bis, Unused, Options,
+         Converter,
+           Doc_Directory_Root, Doc_Suffix);
       Process_Type_Index
-        (B, Kernel, Type_Index_List, Unused,  Options, Converter,
-         Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Type_Index_List,
+         Unused_Bis, Unused,  Options,
+         Converter,
+          Doc_Directory_Root, Doc_Suffix);
 
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
@@ -259,6 +268,8 @@ package body Docgen.Work_On_File is
       Entity_List      : Type_Entity_List.List;
       List_Ref_In_File : List_Reference_In_File.List;
       List_Ent_In_File : List_Entity_In_File.List;
+      --  Used to clear space taken by Entity_Information which are
+      --  pointed by the field Entity of the record Reference_In_File
       Ent_Handle       : Entity_Handle := null;
       Status           : Find_Decl_Or_Body_Query_Status;
 
@@ -726,7 +737,6 @@ package body Docgen.Work_On_File is
          end if;
 
          --  If body files are not being processed, free directly here
-
          if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
