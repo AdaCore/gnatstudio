@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -101,16 +101,16 @@ package body Project_Explorers is
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
 
-   Icon_Column               : constant := 0;
-   Base_Name_Column          : constant := 1;
-   Absolute_Name_Column      : constant := 2;
-   Node_Type_Column          : constant := 3;
-   User_Data_Column          : constant := 4;
+   Icon_Column          : constant := 0;
+   Base_Name_Column     : constant := 1;
+   Absolute_Name_Column : constant := 2;
+   Node_Type_Column     : constant := 3;
+   User_Data_Column     : constant := 4;
 
-   Number_Of_Columns : constant := 1;
+   Number_Of_Columns    : constant := 1;
    --  Number of columns in the ctree.
 
-   Explorer_Module_ID : Module_ID := null;
+   Explorer_Module_ID   : Module_ID := null;
    --  Id for the explorer module
 
    -----------------
@@ -279,18 +279,19 @@ package body Project_Explorers is
    --  File must be an absolute file name.
 
    procedure File_Append_Directory
-     (Explorer  : access Project_Explorer_Record'Class;
-      Dir       : String;
-      Base      : Gtk_Tree_Iter;
-      Depth     : Integer := 0;
+     (Explorer      : access Project_Explorer_Record'Class;
+      Dir           : String;
+      Base          : Gtk_Tree_Iter;
+      Depth         : Integer := 0;
       Append_To_Dir : String := "";
-      Idle      : Boolean := False);
+      Idle          : Boolean := False);
    --  Add to the file view the directory Dir, at node given by Iter.
    --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
    --  the path is expanded recursively all the way to Append_To_Dir.
 
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean;
+   --  ???
    --  Called by File_Append_Directory.
 
    procedure Free_Children
@@ -731,13 +732,13 @@ package body Project_Explorers is
    --------------------
 
    function Read_Directory
-     (D : Append_Directory_Idle_Data_Access)
-     return Boolean is
+     (D : Append_Directory_Idle_Data_Access) return Boolean
+   is
       File       : String (1 .. 255);
       Last       : Natural;
       Path_Found : Boolean := False;
-
       Iter       : Gtk_Tree_Iter;
+      New_D      : Append_Directory_Idle_Data_Access;
 
       use String_List_Utils.String_List;
    begin
@@ -746,19 +747,14 @@ package body Project_Explorers is
 
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
-
          Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
               D.Norm_Dir.all);
-
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
               D.Norm_Dir.all);
-
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
               Gint (Node_Types'Pos (Directory_Node)));
-
          Set (D.Explorer.File_Model, Iter, Icon_Column,
               C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
-
          D.Base := Iter;
 
          return Read_Directory (D);
@@ -799,13 +795,9 @@ package body Project_Explorers is
             Dir : String := Head (D.Dirs);
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
-
             Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
                  D.Norm_Dir.all & Dir & Directory_Separator);
-
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Dir);
-
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column, Dir);
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
                  Gint (Node_Types'Pos (Directory_Node)));
 
@@ -856,8 +848,7 @@ package body Project_Explorers is
                      Path := Get_Path (D.Explorer.File_Model, Iter);
 
                      File_Append_Directory
-                       (D.Explorer, D.Norm_Dir.all & Dir
-                        & Directory_Separator,
+                       (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
                         Iter, D.Depth, D.Norm_Dest.all,
                         False);
 
@@ -872,15 +863,14 @@ package body Project_Explorers is
 
                else
                   File_Append_Directory
-                    (D.Explorer, D.Norm_Dir.all & Dir
-                     & Directory_Separator, Iter, D.Depth, D.Norm_Dest.all,
-                     D.Idle);
+                    (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
+                     Iter, D.Depth, D.Norm_Dest.all, D.Idle);
                end if;
 
             else
                File_Append_Directory
-                 (D.Explorer, D.Norm_Dir.all & Dir
-                  & Directory_Separator, Iter, D.Depth - 1, D.Norm_Dest.all,
+                 (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
+                  Iter, D.Depth - 1, D.Norm_Dest.all,
                   D.Idle);
                Set (D.Explorer.File_Model, Iter, Icon_Column,
                     C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
@@ -901,11 +891,8 @@ package body Project_Explorers is
 
       Pop_State (D.Explorer.Kernel);
 
-      declare
-         New_D : Append_Directory_Idle_Data_Access := D;
-      begin
-         Free (New_D);
-      end;
+      New_D := D;
+      Free (New_D);
 
       return False;
    end Read_Directory;
@@ -915,14 +902,14 @@ package body Project_Explorers is
    ---------------------------
 
    procedure File_Append_Directory
-     (Explorer  : access Project_Explorer_Record'Class;
-      Dir       : String;
-      Base      : Gtk_Tree_Iter;
-      Depth     : Integer := 0;
-      Append_To_Dir : String := "";
-      Idle      : Boolean := False)
+     (Explorer      : access Project_Explorer_Record'Class;
+      Dir           : String;
+      Base          : Gtk_Tree_Iter;
+      Depth         : Integer := 0;
+      Append_To_Dir : String  := "";
+      Idle          : Boolean := False)
    is
-      D  : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
       Timeout_Id : Timeout_Handler_Id;
 
    begin
@@ -941,12 +928,12 @@ package body Project_Explorers is
       end if;
 
       if Idle then
-         Timeout_Id
-           := File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
+         Timeout_Id :=
+           File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
          Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
       else
-         while Read_Directory (D) loop
-            null;
+         loop
+            exit when not Read_Directory (D);
          end loop;
       end if;
 
@@ -1125,7 +1112,7 @@ package body Project_Explorers is
          end;
       else
          File_Append_Directory
-           (Explorer, "" & Directory_Separator,
+           (Explorer, (1 => Directory_Separator),
             Null_Iter, 1, Get_Current_Dir, True);
       end if;
 
@@ -1187,7 +1174,7 @@ package body Project_Explorers is
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues)
    is
-      E : Project_Explorer := Project_Explorer (Explorer);
+      E     : Project_Explorer := Project_Explorer (Explorer);
       Child : MDI_Child := MDI_Child (To_Object (Args, 1));
    begin
       if Child = null
@@ -1239,7 +1226,7 @@ package body Project_Explorers is
    -------------------
 
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class) is
-      E : Project_Explorer := Project_Explorer (Explorer);
+      E    : Project_Explorer := Project_Explorer (Explorer);
       Node : Gtk_Ctree_Node := Node_List.Get_Data (Get_Selection (E.Tree));
       Data : User_Data := Node_Get_Row_Data (E.Tree, Node);
    begin
@@ -1250,9 +1237,8 @@ package body Project_Explorers is
       Pop_State (E.Kernel);
 
    exception
-      when Ex : others =>
-         Trace (Me, "Unexpected exception in On_Parse_Xref: "
-                  & Exception_Message (Ex));
+      when Exc : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (Exc));
          Pop_State (E.Kernel);
    end On_Parse_Xref;
 
@@ -1268,17 +1254,19 @@ package body Project_Explorers is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget);
-      T            : Project_Explorer := Project_Explorer (Object);
-      Context      : Selection_Context_Access;
-      Item         : Gtk_Menu_Item;
+
+      T       : Project_Explorer := Project_Explorer (Object);
+      Context : Selection_Context_Access;
+      Item    : Gtk_Menu_Item;
 
    begin
       if Get_Current_Page (T.Notebook) = 0 then
          declare
             use type Node_List.Glist;
-            Row, Column  : Gint;
-            Is_Valid     : Boolean;
-            Node, Parent : Gtk_Ctree_Node;
+
+            Row, Column       : Gint;
+            Is_Valid          : Boolean;
+            Node, Parent      : Gtk_Ctree_Node;
             Importing_Project : Project_Id := No_Project;
 
          begin
@@ -1293,6 +1281,7 @@ package body Project_Explorers is
 
                Node := Node_Nth (T.Tree, Guint (Row));
                Gtk_Select (T.Tree, Node);
+
             else
                if Get_Selection (T.Tree) /= Node_List.Null_List then
                   Node := Node_List.Get_Data (Get_Selection (T.Tree));
@@ -1341,7 +1330,6 @@ package body Project_Explorers is
                if Data.Node_Type = Obj_Directory_Node then
                   Gtk_New (Item, -"Parse all xref information");
                   Add (Menu, Item);
-
                   Widget_Callback.Object_Connect
                     (Item, "activate",
                      Widget_Callback.To_Marshaller (On_Parse_Xref'Access),
@@ -1349,11 +1337,13 @@ package body Project_Explorers is
                end if;
             end;
          end;
+
       else
          declare
             Iter      : Gtk_Tree_Iter;
             File      : String_Access := null;
             Node_Type : Node_Types;
+
          begin
             Iter := Find_Iter_For_Event (T, Event);
 
@@ -1364,8 +1354,7 @@ package body Project_Explorers is
                case Node_Type is
                   when Directory_Node | File_Node =>
                      File := new String'
-                       (Get_String
-                        (T.File_Model, Iter, Absolute_Name_Column));
+                       (Get_String (T.File_Model, Iter, Absolute_Name_Column));
                      Context := new File_Selection_Context;
 
                   when Entity_Node =>
@@ -1378,27 +1367,28 @@ package body Project_Explorers is
             end if;
 
             if File /= null then
-               if Context.all in File_Selection_Context'Class then
-                  Set_File_Information
-                    (Context   => File_Selection_Context_Access (Context),
-                     Directory => Dir_Name (File.all),
-                     File_Name => Base_Name (File.all));
-               end if;
+               Set_File_Information
+                 (Context   => File_Selection_Context_Access (Context),
+                  Directory => Dir_Name (File.all),
+                  File_Name => Base_Name (File.all));
+               Free (File);
             end if;
-
-            Free (File);
          end;
       end if;
+
       return Context;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         return Context;
    end Explorer_Context_Factory;
 
    ----------------------------
    -- File_Remove_Idle_Calls --
    ----------------------------
 
-   procedure File_Remove_Idle_Calls
-     (Explorer : Project_Explorer)
-   is
+   procedure File_Remove_Idle_Calls (Explorer : Project_Explorer) is
    begin
       while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
          Pop_State (Explorer.Kernel);
@@ -1415,8 +1405,9 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      T       : Project_Explorer := Project_Explorer (Explorer);
       pragma Unreferenced (Params);
+
+      T : Project_Explorer := Project_Explorer (Explorer);
    begin
       File_Remove_Idle_Calls (T);
    end On_File_Destroy;
@@ -1429,16 +1420,18 @@ package body Project_Explorers is
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues)
    is
-      T       : Project_Explorer := Project_Explorer (Explorer);
-      Path    : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
-      Iter    : Gtk_Tree_Iter;
+      T    : Project_Explorer := Project_Explorer (Explorer);
+      Path : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
+      Iter : Gtk_Tree_Iter;
+
    begin
       Iter := Get_Iter (T.File_Model, Path);
 
       if Iter /= Null_Iter then
          declare
-            Iter_Name : String
-              := Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            Iter_Name : constant String :=
+              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+
          begin
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
@@ -1456,11 +1449,11 @@ package body Project_Explorers is
      (T    : Project_Explorer;
       Iter : Gtk_Tree_Iter)
    is
-      Child_Iter : Gtk_Tree_Iter
-        := Children (T.File_Model, Iter);
+      Child_Iter : Gtk_Tree_Iter := Children (T.File_Model, Iter);
       Current    : Gtk_Tree_Iter;
       Val        : GValue;
       User       : User_Data_Access;
+
    begin
       if Has_Child (T.File_Model, Iter) then
          Current := Child_Iter;
@@ -1508,16 +1501,15 @@ package body Project_Explorers is
          T.Expanding := True;
 
          declare
-            Iter_Name : String
-              := Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            Iter_Name : constant String :=
+              Get_String (T.File_Model, Iter, Absolute_Name_Column);
             N_Type : Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
-         begin
 
+         begin
             case N_Type is
                when Directory_Node =>
                   Free_Children (T, Iter);
-
                   File_Append_Directory (T, Iter_Name, Iter, 1);
                   Set (T.File_Model, Iter, Icon_Column,
                        C_Proxy (T.Open_Pixbufs (Directory_Node)));
@@ -1553,8 +1545,8 @@ package body Project_Explorers is
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      T : Project_Explorer := Project_Explorer (Explorer);
-      Node     : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      T       : Project_Explorer := Project_Explorer (Explorer);
+      Node    : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Context : File_Selection_Context_Access;
 
    begin
@@ -1627,12 +1619,13 @@ package body Project_Explorers is
       Parent_Node      : Gtk_Ctree_Node := null;
       Modified_Project : Boolean := False) return Gtk_Ctree_Node
    is
-      N : Gtk_Ctree_Node;
-      Is_Leaf : constant Boolean :=
+      N         : Gtk_Ctree_Node;
+      Is_Leaf   : constant Boolean :=
         Projects.Table (Project).Imported_Projects = Empty_Project_List
         and then (not Get_Pref (Explorer.Kernel, Show_Directories)
                   or else Projects.Table (Project).Source_Dirs = Nil_String);
       Node_Type : Node_Types := Project_Node;
+
    begin
       if Modified_Project then
          Node_Type := Modified_Project_Node;
@@ -1672,6 +1665,7 @@ package body Project_Explorers is
       if not Is_Leaf then
          Add_Dummy_Node (Explorer, N);
       end if;
+
       return N;
    end Add_Project_Node;
 
@@ -1687,10 +1681,11 @@ package body Project_Explorers is
       Directory_String : String_Id;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node
    is
-      N : Gtk_Ctree_Node;
-      Is_Leaf : Boolean;
+      N         : Gtk_Ctree_Node;
+      Is_Leaf   : Boolean;
       Node_Type : Node_Types := Directory_Node;
       Node_Text : String_Access;
+
    begin
       pragma Assert (Object_Directory or else Directory_String /= No_String);
 
@@ -1699,6 +1694,7 @@ package body Project_Explorers is
       end if;
 
       --  Compute the absolute directory
+
       if not Is_Absolute_Path (Directory)
         and then Get_Pref (Explorer.Kernel, Absolute_Directories)
       then
@@ -1723,7 +1719,6 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (Node_Type),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
-
       Free (Node_Text);
 
       if Object_Directory then
@@ -1745,6 +1740,7 @@ package body Project_Explorers is
       if not Is_Leaf then
          Add_Dummy_Node (Explorer, N);
       end if;
+
       return N;
    end Add_Directory_Node;
 
@@ -2104,31 +2100,11 @@ package body Project_Explorers is
    -----------------
 
    function Has_Entries (Directory : String) return Boolean is
-      D    : Dir_Type;
-      File : String (1 .. 255);
-      Last : Natural;
    begin
-      Open (D, Directory);
-      loop
-         Read (D, File, Last);
-         exit when Last = 0;
+      --  ??? Return always True for now, since the previous implementation
+      --  was too inefficient, in particular across network disks.
 
-         --  and then Is_Directory (Absolute_Dir & File (File'First .. Last))
-         --  ??? Should check in the project itself, not on the physical drive.
-         if File (File'First .. Last) /= "."
-           and then File (File'First .. Last) /= ".."
-         then
-            Close (D);
-            return True;
-         end if;
-      end loop;
-      Close (D);
-      return False;
-
-   exception
-      when Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
-         return False;
+      return True;
    end Has_Entries;
 
    ------------------------
@@ -2621,7 +2597,7 @@ package body Project_Explorers is
          end;
       else
          File_Append_Directory
-           (T, "" & Directory_Separator,
+           (T, (1 => Directory_Separator),
             Null_Iter, 1, Get_Current_Dir, True);
       end if;
 
@@ -2640,7 +2616,9 @@ package body Project_Explorers is
 
       else
          --  Save the selection, so that we can restore it later
+
          T.Old_Selection := Get_Selected_Project_Node (T);
+
          if T.Old_Selection /= null then
             declare
                U : User_Data := Node_Get_Row_Data
