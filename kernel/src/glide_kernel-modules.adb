@@ -903,24 +903,21 @@ package body Glide_Kernel.Modules is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Width          : Integer;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True)
    is
-      Value : GValue_Array (1 .. 5);
+      Value : GValue_Array (1 .. 4);
       Norm_Filename : constant String := Normalize_Pathname (File);
 
    begin
       Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
-      Init (Value (3),  Glib.GType_Int);
-      Init (Value (4),  Glib.GType_Pointer);
-      Init (Value (5),  Glib.GType_Boolean);
+      Init (Value (3),  Glib.GType_Pointer);
+      Init (Value (4),  Glib.GType_Boolean);
       Set_String (Value (1), Norm_Filename);
       Set_String (Value (2), Identifier);
-      Set_Int (Value (3), Gint (Width));
-      Set_Address (Value (4), To_Address (Info));
-      Set_Boolean (Value (5), Stick_To_Data);
+      Set_Address (Value (3), To_Address (Info));
+      Set_Boolean (Value (4), Stick_To_Data);
 
       if not Mime_Action (Kernel, Mime_File_Line_Info, Value) then
          Trace (Me, "No file editor with line info display "
