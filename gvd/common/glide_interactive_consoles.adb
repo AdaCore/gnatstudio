@@ -253,6 +253,7 @@ package body Glide_Interactive_Consoles is
          Idle_Remove (Console.Idle_Id);
       end if;
 
+      Console.Idle_Id := 0;
       return False;
    end Delete_Event_Handler;
 
@@ -608,6 +609,10 @@ package body Glide_Interactive_Consoles is
 
    procedure Replace_Cursor (Console : Glide_Interactive_Console) is
    begin
+      if Console.Idle_Id /= 0 then
+         return;
+      end if;
+
       Console.Idle_Id :=
         Console_Idle.Add (Place_Cursor_At_Prompt'Access, Console);
    end Replace_Cursor;
