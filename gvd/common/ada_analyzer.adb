@@ -634,7 +634,7 @@ package body Ada_Analyzer is
                  new String' (Value.Identifier (1 .. Value.Ident_Len));
             end if;
 
-            if Top_Token.Token in Token_Class_Declk then
+            if Value.Profile_Start /= 0 then
                Constructs.Current.Profile :=
                  new String'
                    (Buffer (Value.Profile_Start .. Value.Profile_End));
