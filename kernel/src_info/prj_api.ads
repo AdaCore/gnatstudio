@@ -35,6 +35,7 @@ with Prj.Tree;   use Prj.Tree;
 with Src_Info;   use Src_Info;
 with Output;
 with Project_Browsers;
+with Project_Hash;
 with Basic_Types;
 
 package Prj_API is
@@ -131,8 +132,9 @@ package Prj_API is
    --  Return the list of source directories for Prj, as an array
 
    procedure Save_Project
-     (Project   : Prj.Tree.Project_Node_Id;
-      Recursive : Boolean := False);
+     (Project       : Prj.Tree.Project_Node_Id;
+      Projects_Data : in out Project_Hash.Project_Htable.HTable;
+      Recursive     : Boolean := False);
    --  Save the project to the corresponding file.
    --  If Recursive is True, all the imported projects are saved as well.
 

@@ -47,10 +47,12 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Glide_Intl;    use Glide_Intl;
 with Basic_Types;   use Basic_Types;
+with Project_Hash;  use Project_Hash;
 
 with Traces; use Traces;
 
 package body Prj_API is
+   use Project_Hash.Project_Htable;
 
    Me : Debug_Handle := Create ("Prj_API");
 
@@ -3177,8 +3179,9 @@ package body Prj_API is
    ------------------
 
    procedure Save_Project
-     (Project   : Prj.Tree.Project_Node_Id;
-      Recursive : Boolean := False)
+     (Project       : Prj.Tree.Project_Node_Id;
+      Projects_Data : in out Project_Hash.Project_Htable.HTable;
+      Recursive     : Boolean := False)
    is
       File : Ada.Text_IO.File_Type;
 
@@ -3216,16 +3219,20 @@ package body Prj_API is
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
    begin
       while Current (Iter) /= Empty_Node loop
-         Create (File, Mode => Out_File,
-                 Name => Get_Name_String
-                 (Prj.Tree.Path_Name_Of (Current (Iter))));
-         Pretty_Print
-           (Project => Current (Iter),
-            Eliminate_Empty_Case_Constructions => True,
-            W_Char => Internal_Write_Char'Unrestricted_Access,
-            W_Eol  => Internal_Write_Eol'Unrestricted_Access,
-            W_Str  => Internal_Write_Str'Unrestricted_Access);
-         Close (File);
+         if Project_Modified (Projects_Data, Current (Iter)) then
+            Create (File, Mode => Out_File,
+                    Name => Get_Name_String
+                      (Prj.Tree.Path_Name_Of (Current (Iter))));
+            Pretty_Print
+              (Project => Current (Iter),
+               Eliminate_Empty_Case_Constructions => True,
+               W_Char => Internal_Write_Char'Unrestricted_Access,
+               W_Eol  => Internal_Write_Eol'Unrestricted_Access,
+               W_Str  => Internal_Write_Str'Unrestricted_Access);
+            Close (File);
+
+            Set_Project_Modified (Projects_Data, Current (Iter), False);
+         end if;
 
          Next (Iter);
       end loop;
