@@ -554,6 +554,11 @@ package body Project_Explorers is
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
          Child_Selected'Unrestricted_Access, Explorer, After => True);
+
+      Set_Size_Request
+        (Explorer,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    --------------------

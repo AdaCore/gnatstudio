@@ -574,6 +574,11 @@ package body Project_Explorers_Files is
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "destroy",
          On_File_Destroy'Access, Explorer, False);
+
+      Set_Size_Request
+        (Explorer,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    ------------------------------
