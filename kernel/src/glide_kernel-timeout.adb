@@ -46,6 +46,7 @@ with Glide_Intl;           use Glide_Intl;
 
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Unchecked_Deallocation;
 
@@ -234,7 +235,8 @@ package body Glide_Kernel.Timeout is
       Success       : out Boolean;
       Show_Command  : Boolean := True;
       Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False)
+      Line_By_Line  : Boolean := False;
+      Directory     : String := "")
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
@@ -255,7 +257,8 @@ package body Glide_Kernel.Timeout is
          Arguments : Argument_List;
          Success   : out Boolean)
       is
-         Exec : String_Access := Locate_Exec_On_Path (Command);
+         Exec    : String_Access := Locate_Exec_On_Path (Command);
+         Old_Dir : String_Access;
       begin
          if Exec = null then
             Success := False;
@@ -278,6 +281,11 @@ package body Glide_Kernel.Timeout is
          end if;
 
          Fd := new TTY_Process_Descriptor;
+
+         if Directory /= "" then
+            Old_Dir := new String'(Get_Current_Dir);
+            Change_Dir (Directory);
+         end if;
 
          if Host = Windows then
             declare
@@ -304,6 +312,11 @@ package body Glide_Kernel.Timeout is
          else
             Non_Blocking_Spawn
               (Fd.all, Exec.all, Arguments, Err_To_Out => True);
+         end if;
+
+         if Directory /= "" then
+            Change_Dir (Old_Dir.all);
+            Free (Old_Dir);
          end if;
 
          Success := True;
