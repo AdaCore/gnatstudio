@@ -40,9 +40,6 @@ package Codefix.Text_Manager is
    function Is_Blank (Char : Character) return Boolean;
    --  Return true if Str is a white characters.
 
-   function Is_In_Comment (Str : String; J : Natural) return Boolean;
-   --  Return true if the position J in a comment line.
-
    function Without_Last_Blanks (Str : String) return String;
    --  Return the string Str without the last blanks characters.
 
@@ -794,6 +791,9 @@ package Codefix.Text_Manager is
 
    function Get_First_Line (This : Extract) return Ptr_Extract_Line;
    --  Return the first line recored in an extract.
+
+   function Get_Last_Line (This : Extract) return Ptr_Extract_Line;
+   --  Return the last line recorded in an extract.
 
    procedure Extend_Before
      (This         : in out Extract;
