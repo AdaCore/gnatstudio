@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -202,9 +202,10 @@ package body Directory_Tree is
    --  Called by File_Append_Directory.
 
    procedure Refresh
-     (Explorer : access Dir_Tree_Record'Class);
+     (Explorer : access Dir_Tree_Record'Class;
+      Dir      : String);
    --  Refresh the contents of the explorer.
-   pragma Unreferenced (Refresh);
+   --  Show directory Dir.
 
    procedure Append_Dummy_Iter
      (Model : Gtk_Tree_Store;
@@ -1321,8 +1322,7 @@ package body Directory_Tree is
    procedure Initialize
      (Tree    : access Dir_Tree_Record'Class;
       Root    : String;
-      Initial : String)
-   is
+      Initial : String) is
    begin
       Gtk.Scrolled_Window.Initialize (Tree);
       Set_Policy (Tree, Policy_Automatic, Policy_Automatic);
@@ -1382,12 +1382,8 @@ package body Directory_Tree is
             Initial_Dir := new String'(Initial);
          end if;
 
-         File_Append_Directory
-           (Tree,
-            Root_Dir.all,
-            Null_Iter,
-            1,
-            Initial_Dir.all);
+         --  ??? Root_Dir is not taken into account yet.
+         Refresh (Tree, Initial_Dir.all);
 
          Free (Root_Dir);
          Free (Initial_Dir);
@@ -1624,11 +1620,11 @@ package body Directory_Tree is
    -------------
 
    procedure Refresh
-     (Explorer : access Dir_Tree_Record'Class)
+     (Explorer : access Dir_Tree_Record'Class;
+      Dir      : String)
    is
       Buffer       : aliased String (1 .. 1024);
       Last, Len    : Integer;
-      Cur_Dir      : constant String := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
 
    begin
@@ -1640,7 +1636,7 @@ package body Directory_Tree is
       if Len = 0 then
          File_Append_Directory
            (Explorer, (1 => Directory_Separator),
-            Null_Iter, 1, Cur_Dir, True);
+            Null_Iter, 1, Dir, True);
 
       else
          Last := 1;
@@ -1649,12 +1645,12 @@ package body Directory_Tree is
             if Buffer (J) = ASCII.NUL then
                if File_Equal
                  (Buffer (Last .. J - 1),
-                  Cur_Dir (Cur_Dir'First ..
-                       Cur_Dir'First + J - Last - 1))
+                  Dir (Dir'First ..
+                       Dir'First + J - Last - 1))
                then
                   File_Append_Directory
                     (Explorer, Buffer (Last .. J - 1),
-                     Null_Iter, 1, Cur_Dir, True);
+                     Null_Iter, 1, Dir, True);
                   Dir_Inserted := True;
 
                else
@@ -1669,17 +1665,17 @@ package body Directory_Tree is
 
          if not Dir_Inserted then
             declare
-               J : Natural := Cur_Dir'First;
+               J : Natural := Dir'First;
             begin
-               while J < Cur_Dir'Last
-                 and then not Is_Directory_Separator (Cur_Dir (J))
+               while J < Dir'Last
+                 and then not Is_Directory_Separator (Dir (J))
                loop
                   J := J + 1;
                end loop;
 
                File_Append_Directory
-                 (Explorer, Cur_Dir (Cur_Dir'First .. J),
-                  Null_Iter, 1, Cur_Dir, True);
+                 (Explorer, Dir (Dir'First .. J),
+                  Null_Iter, 1, Dir, True);
             end;
          end if;
       end if;
