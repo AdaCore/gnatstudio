@@ -1,3 +1,5 @@
+with "../gvd/gvd_common";
+
 project Syntax is
 
    for Source_Dirs use ("src");
