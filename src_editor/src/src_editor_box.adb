@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.OS_Lib;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -75,10 +75,10 @@ use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Info;                   use Src_Info;
-with Src_Info.Prj_Utils;         use Src_Info.Prj_Utils;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
 with VFS;                        use VFS;
+with Projects;
 with GVD.Dialogs;                use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
@@ -1962,6 +1962,7 @@ package body Src_Editor_Box is
       Constructs : Construct_List;
       Info       : Construct_Access;
       New_Base_Name : GNAT.OS_Lib.String_Access;
+      Part       : Projects.Unit_Part;
 
       use type Basic_Types.String_Access;
    begin
@@ -2004,16 +2005,17 @@ package body Src_Editor_Box is
                --  Info.Name is a valid Ada unit name
 
                if Info.Is_Declaration then
-                  New_Base_Name := new String'
-                    (Get_Source_Filename
-                       (To_Lower (Info.Name.all) & "%s",
-                        Get_Project (Editor.Kernel)));
+                  Part := Projects.Unit_Spec;
                else
-                  New_Base_Name := new String'
-                    (Get_Source_Filename
-                       (To_Lower (Info.Name.all) & "%b",
-                        Get_Project (Editor.Kernel)));
+                  Part := Projects.Unit_Body;
                end if;
+
+               New_Base_Name := new String'
+                 (Projects.Get_Filename_From_Unit
+                    (Project   => Get_Project (Editor.Kernel),
+                     Unit_Name => To_Lower (Info.Name.all),
+                     Part      => Part,
+                     Check_Predefined_Library => True));
             end if;
 
             Free (Constructs);
