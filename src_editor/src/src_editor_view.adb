@@ -455,22 +455,13 @@ package body Src_Editor_View is
          declare
             Column  : constant := 80;
             Rect    : Gdk_Rectangle;
-            Context : constant Pango_Context := Get_Pango_Context (View);
-            --  ??? Should we cache the following two values:
-            Font    : constant Pango_Font := Load_Font
-              (Context, Get_Pref (Get_Kernel (Buffer), Source_Editor_Font));
-            Metrics : constant Pango_Font_Metrics := Get_Metrics (Font);
-            Char_Width : constant Gint :=
-              Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
 
          begin
             Get_Visible_Rect (View, Rect);
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
-            X := Column * Char_Width - Rect.X;
+            X := Column * View.Char_Width - Rect.X;
             Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Width);
-            Unref (Metrics);
-            Unref (Font);
          end;
       end if;
 
@@ -557,6 +548,13 @@ package body Src_Editor_View is
          Set_Foreground
            (Source_View (View).Side_Background_GC,
             White (Get_Default_Colormap));
+      end if;
+
+      Color := Parse ("#A0A0A0");
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground (Source_View (View).Default_GC, Color);
       end if;
 
    exception
@@ -690,9 +688,21 @@ package body Src_Editor_View is
    -------------------------
 
    procedure Preferences_Changed
-     (View : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (View : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Context : constant Pango_Context :=
+        Get_Pango_Context (Source_View (View));
+      Font    : constant Pango_Font := Load_Font
+        (Context, Get_Pref
+           (Get_Kernel (Source_Buffer (Get_Buffer (Source_View (View)))),
+            Source_Editor_Font));
+      Metrics : constant Pango_Font_Metrics := Get_Metrics (Font);
    begin
       Set_Font (Source_View (View), Get_Pref (Kernel, Source_Editor_Font));
+      Source_View (View).Char_Width
+        := Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
+      Unref (Font);
+      Unref (Metrics);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
