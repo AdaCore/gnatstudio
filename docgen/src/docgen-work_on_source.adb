@@ -4279,6 +4279,8 @@ package body Docgen.Work_On_Source is
                                  and not Package_Description));
 
       while Line_Is_Comment (New_Line.all) loop
+         --  ??? if there's an empty line the search stop.
+         --  It's necessary to write at least "--"
          Location := Get_Next_Location (File_Text,
                                         Location,
                                         Options.Comments_Above
