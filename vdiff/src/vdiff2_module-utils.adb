@@ -86,18 +86,17 @@ package body Vdiff2_Module.Utils is
 
    procedure Highlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "";
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "";
       Number : Natural := 1);
-   --  Color a line constaining Line in editor,at line Pos,
-   --  using Style for color.
+   --  Color a line at line Pos in a given file editor, using Style for color
 
    function Mark_Diff_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural) return String;
-   --  Return the mark corresponding the beginig of line number Pos
+   --  Return the mark corresponding the begining of line number Pos
 
    procedure Move_Mark (Source, Dest : Diff_List);
    --  Move Source mark on to Dest
@@ -453,14 +452,13 @@ package body Vdiff2_Module.Utils is
    --  Move_Mark  --
    -----------------
 
-   procedure Move_Mark (Source, Dest : Diff_List)
-   is
-      Curr_Node_Source           : Diff_List_Node := First (Source);
-      Curr_Chunk_Source          : Diff_Chunk_Access;
-      Curr_Node_Dest           : Diff_List_Node := First (Dest);
-      Curr_Chunk_Dest          : Diff_Chunk_Access;
-   begin
+   procedure Move_Mark (Source, Dest : Diff_List) is
+      Curr_Node_Source  : Diff_List_Node := First (Source);
+      Curr_Chunk_Source : Diff_Chunk_Access;
+      Curr_Node_Dest    : Diff_List_Node := First (Dest);
+      Curr_Chunk_Dest   : Diff_Chunk_Access;
 
+   begin
       while Curr_Node_Source /= Diff_Chunk_List.Null_Node
         and then Curr_Node_Dest /= Diff_Chunk_List.Null_Node
       loop
@@ -513,15 +511,15 @@ package body Vdiff2_Module.Utils is
       Source_Range : Diff_Range;
       Dest_Range   : Diff_Range := Null_Range)
    is
-      Offset_Dest       : constant Natural
-        := Dest_Range.Last - Dest_Range.First;
-      Offset_Source     : constant Natural
-        := Source_Range.Last - Source_Range.First;
-      Args_get_chars    : Argument_List :=
+      Offset_Dest       : constant Natural :=
+        Dest_Range.Last - Dest_Range.First;
+      Offset_Source     : constant Natural :=
+        Source_Range.Last - Source_Range.First;
+      Args_Get_Chars    : Argument_List :=
         (1 => new String'(Full_Name (Source_File)),
          2 => new String'(Natural'Image (Source_Range.First)),
          3 => new String'(Integer'Image (1)));
-      Args_replace_text : Argument_List :=
+      Args_Replace_Text : Argument_List :=
         (1 => new String'(Full_Name (Dest_File)),
          2 => new String'(Natural'Image (Dest_Range.First)),
          3 => new String'(Integer'Image (1)),
@@ -529,40 +527,37 @@ package body Vdiff2_Module.Utils is
       Current_Line      : String_Access;
 
    begin
-
       if Offset_Source > 0 and Offset_Dest > 0 then
-
-         for J in 1 .. Offset_Source
-         loop
-            Current_Line := new String'(Execute_GPS_Shell_Command
-                                          (Kernel, "get_chars",
-                                           Args_get_chars));
-            Args_replace_text (4) := Current_Line;
+         for J in 1 .. Offset_Source loop
+            Current_Line := new String'
+              (Execute_GPS_Shell_Command
+                 (Kernel, "get_chars", Args_Get_Chars));
+            Args_Replace_Text (4) := Current_Line;
             Execute_GPS_Shell_Command
-              (Kernel, "replace_text", Args_replace_text);
-            Free (Args_get_chars (2));
-            Free (Args_replace_text (2));
-            Free (Args_replace_text (4));
-            Args_get_chars (2) := new String'(Natural'Image
-                                                (Source_Range.First + J));
-            Args_replace_text (2) := new String'(Natural'Image
-                                                   (Dest_Range.First + J));
+              (Kernel, "replace_text", Args_Replace_Text);
+            Free (Args_Get_Chars (2));
+            Free (Args_Replace_Text (2));
+            Free (Args_Replace_Text (4));
+            Args_Get_Chars (2) := new String'
+              (Natural'Image (Source_Range.First + J));
+            Args_Replace_Text (2) := new String'
+              (Natural'Image (Dest_Range.First + J));
          end loop;
 
          if Offset_Source < Offset_Dest then
-            Args_replace_text (4) := new String'("");
+            Args_Replace_Text (4) := new String'("");
             for J in Offset_Source .. Offset_Dest loop
-               Free (Args_replace_text (2));
-               Args_replace_text (2) := new String'(Natural'Image
-                                                      (Dest_Range.First + J));
+               Free (Args_Replace_Text (2));
+               Args_Replace_Text (2) := new String'
+                 (Natural'Image (Dest_Range.First + J));
                Execute_GPS_Shell_Command
-                 (Kernel, "replace_text", Args_replace_text);
+                 (Kernel, "replace_text", Args_Replace_Text);
             end loop;
          end if;
       end if;
 
-      Basic_Types.Free (Args_get_chars);
-      Basic_Types.Free (Args_replace_text);
+      Basic_Types.Free (Args_Get_Chars);
+      Basic_Types.Free (Args_Replace_Text);
    end Move_Block;
 
    -------------------------
@@ -578,7 +573,7 @@ package body Vdiff2_Module.Utils is
    begin
       Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
 
-      if  Curr_Node /= Diff_Head_List.Null_Node then
+      if Curr_Node /= Diff_Head_List.Null_Node then
          Show_Differences3 (Kernel, Item);
          Item.Current_Node := First (Item.List);
          Set_Data (Curr_Node, Item);
@@ -600,14 +595,12 @@ package body Vdiff2_Module.Utils is
       pragma Unreferenced (Button);
 
    begin
-      if Is_In_Diff_List (Item_Local.File1, Diff_List.all) =
-        Diff_Head_List.Null_Node
-        and then
-          Is_In_Diff_List (Item_Local.File2, Diff_List.all) =
-          Diff_Head_List.Null_Node
-          and then
-            Is_In_Diff_List (Item_Local.File3, Diff_List.all) =
-            Diff_Head_List.Null_Node
+      if Is_In_Diff_List
+          (Item_Local.File1, Diff_List.all) = Diff_Head_List.Null_Node
+        and then Is_In_Diff_List
+          (Item_Local.File2, Diff_List.all) = Diff_Head_List.Null_Node
+        and then Is_In_Diff_List
+          (Item_Local.File3, Diff_List.all) = Diff_Head_List.Null_Node
       then
          Append (Diff_List.all, Item_Local);
          Show_Differences3 (Kernel, Item_Local);
@@ -615,9 +608,9 @@ package body Vdiff2_Module.Utils is
                           Data (Item_Local.Current_Node));
       else
          Button := Message_Dialog
-           (Msg         => -"One of this file is already used in VDiff.",
-            Buttons     => Button_OK,
-            Parent      => Get_Main_Window (Kernel));
+           (Msg     => -"One of this file is already used in VDiff.",
+            Buttons => Button_OK,
+            Parent  => Get_Main_Window (Kernel));
          return;
       end if;
    end Process_Differences;
@@ -636,10 +629,10 @@ package body Vdiff2_Module.Utils is
       Action   : Handler_Action_Line := null)
    is
       Cmd : Diff_Command_Line_Access;
-      Green_Button_Pixbuf : constant Gdk_Pixbuf
-        := Gdk_New_From_Xpm_Data (green_button_xpm);
-      Red_Button_Pixbuf   : constant Gdk_Pixbuf
-        := Gdk_New_From_Xpm_Data (red_button_xpm);
+      Green_Button_Pixbuf : constant Gdk_Pixbuf :=
+        Gdk_New_From_Xpm_Data (green_button_xpm);
+      Red_Button_Pixbuf   : constant Gdk_Pixbuf :=
+        Gdk_New_From_Xpm_Data (red_button_xpm);
 
    begin
       Create
@@ -1132,12 +1125,13 @@ package body Vdiff2_Module.Utils is
          return;
       end if;
 
-      Item := (List => Result,
-               File1 => File1,
-               File2 => File2,
-               File3 => File3,
-               Current_Node => First (Result),
-               Ref_File => 2);
+      Item :=
+        (List         => Result,
+         File1        => File1,
+         File2        => File2,
+         File3        => File3,
+         Current_Node => First (Result),
+         Ref_File     => 2);
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
