@@ -95,6 +95,10 @@ package body Vdiff_Module is
          end if;
 
          Gtk_New (Vdiff);
+         Set_Size_Request
+           (Vdiff.Main_Box,
+            Get_Pref (Kernel, Default_Widget_Width),
+            Get_Pref (Kernel, Default_Widget_Height));
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
          Fill_Diff_Lists
@@ -222,7 +226,7 @@ package body Vdiff_Module is
             end if;
 
             Set_Size_Request
-              (Vdiff,
+              (Vdiff.Main_Box,
                Get_Pref (Kernel, Default_Widget_Width),
                Get_Pref (Kernel, Default_Widget_Height));
             Show_All (Vdiff.Main_Box);
