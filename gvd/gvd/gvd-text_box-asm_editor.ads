@@ -28,6 +28,7 @@ with Gdk.Pixmap;
 with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
+with Basic_Types;
 with GVD.Types;
 
 package GVD.Text_Box.Asm_Editor is
@@ -101,10 +102,10 @@ private
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
    type Cache_Data is record
-      Low, High : GVD.Types.String_Access;
+      Low, High : Basic_Types.String_Access;
       --  The low and high ranges for this item
 
-      Data      : GVD.Types.String_Access;
+      Data      : Basic_Types.String_Access;
       --  The assembly code for that range
 
       Next      : Cache_Data_Access;

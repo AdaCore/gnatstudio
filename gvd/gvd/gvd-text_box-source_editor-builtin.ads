@@ -28,6 +28,7 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
+with Basic_Types;
 with GVD.Types;
 with GVD.Tooltips;
 pragma Elaborate_All (GVD.Tooltips);
@@ -87,7 +88,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor   : access Builtin_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : GVD.Types.Position_Type);
+      Position : Basic_Types.Position_Type);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
@@ -183,7 +184,7 @@ private
       --  Id for the Idle handle that is used to recompute the lines that
       --  contain some code.
 
-      Current_File_Cache : GVD.Types.File_Cache_List;
+      Current_File_Cache : Basic_Types.File_Cache_List;
       --  Cached data for the file currently displayed
 
       Tooltip : Editor_Tooltips.Tooltips;

@@ -954,7 +954,7 @@ package body Debugger.Jdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out GVD.Types.String_Access;
+      Code            : out Basic_Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "")
    is
@@ -1044,9 +1044,9 @@ package body Debugger.Jdb is
 
    function Complete
      (Debugger  : access Jdb_Debugger;
-      Beginning : in String) return GVD.Types.String_Array
+      Beginning : in String) return Basic_Types.String_Array
    is
-      Result : GVD.Types.String_Array (1 .. 0);
+      Result : Basic_Types.String_Array (1 .. 0);
    begin
       return Result;
    end Complete;

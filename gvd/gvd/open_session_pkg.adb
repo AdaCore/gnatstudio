@@ -35,6 +35,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Debugger; use Debugger;
 with GVD.Process; use GVD.Process;
 with GVD.Strings; use GVD.Strings;
+with GVD.Types; use GVD.Types;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Ada.Unchecked_Deallocation;
@@ -192,7 +193,7 @@ is
    Buffer        : String (1 .. 256);
    Last          : Natural;
    Item          : Gtk_List_Item;
-   Program       : GVD.Types.String_Access;
+   Program       : Basic_Types.String_Access;
    Debugger_List : Debugger_List_Link := Top.First_Debugger;
    Num_Debuggers : Natural := 0;
    use String_History;

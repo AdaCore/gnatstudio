@@ -22,23 +22,23 @@
 --  in GVD, including remote file access and caching for information
 --  that is displayed in the source window.
 
-with GVD.Types;
+with Basic_Types;
 with Main_Debug_Window_Pkg;
 
 package GVD.Files is
 
    function Find_In_Cache
      (Window    : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      File_Name : String) return GVD.Types.File_Cache_List;
+      File_Name : String) return Basic_Types.File_Cache_List;
    --  Return the cached data for a given file.
    --  If no data was previously cached for that file, then a new File_Cache
    --  is returned.
 
    procedure Load_File
-     (Contents    : out GVD.Types.String_Access;
-      Error_Msg   : out GVD.Types.String_Access;
-      Cache       : GVD.Types.File_Cache_List;
-      Remote_Host : GVD.Types.String_Access := null);
+     (Contents    : out Basic_Types.String_Access;
+      Error_Msg   : out Basic_Types.String_Access;
+      Cache       : Basic_Types.File_Cache_List;
+      Remote_Host : Basic_Types.String_Access := null);
    --  Load the contents of the file associated with Cache, and return a
    --  pointer to it in Contents.
    --  It is your responsability to free Contents and Error_Msg

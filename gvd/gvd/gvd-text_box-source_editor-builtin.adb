@@ -55,6 +55,7 @@ with GVD.Process;           use GVD.Process;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Trace;             use GVD.Trace;
 with GVD.Types;             use GVD.Types;
+with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
@@ -780,7 +781,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor   : access Builtin_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : GVD.Types.Position_Type)
+      Position : Position_Type)
    is
       Last     : Positive;
       Edit     : constant Builtin_Text_Box :=
@@ -788,7 +789,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Text     : constant Gtk_Text := Get_Child (Edit);
       Index    : Gint := Invisible_Column_Width (Edit);
       Col      : Natural := 1;
-      Buffer   : constant GVD.Types.String_Access := Get_Buffer (Edit);
+      Buffer   : constant Basic_Types.String_Access := Get_Buffer (Edit);
       Tab_Size : Integer := Integer (Get_Tab_Size);
 
    begin
@@ -975,8 +976,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Builtin_Text_Box (Editor.Widget);
       Process   : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
-      Contents  : GVD.Types.String_Access;
-      Error_Msg : GVD.Types.String_Access;
+      Contents  : Basic_Types.String_Access;
+      Error_Msg : Basic_Types.String_Access;
 
    begin
       --  Avoid reloading a file twice.
@@ -1457,8 +1458,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
-      Value         : GVD.Types.String_Access;
-      Variable_Name : GVD.Types.String_Access;
+      Value         : Basic_Types.String_Access;
+      Variable_Name : Basic_Types.String_Access;
 
       Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
@@ -1626,7 +1627,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Highlight_Current_Line (Editor : access Builtin_Record) is
       Edit           : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
-      Buffer         : constant GVD.Types.String_Access := Get_Buffer (Edit);
+      Buffer         : constant Basic_Types.String_Access := Get_Buffer (Edit);
       Index          : Natural := 0;
       Current_Line   : Natural := 1;
       Col            : Natural := 1;

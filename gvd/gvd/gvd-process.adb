@@ -73,6 +73,7 @@ with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Pixmaps;                use GVD.Pixmaps;
 with GVD.Strings;                use GVD.Strings;
 with GVD.Types;                  use GVD.Types;
+with Basic_Types;                use Basic_Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
@@ -1068,10 +1069,10 @@ package body GVD.Process is
       Last      : Positive;
       Enable    : Boolean;
       First     : Natural;
+      Link_Name : Basic_Types.String_Access;
+      Link_From : Display_Item;
       Dependent_On_First : Natural := Natural'Last;
       Link_Name_First    : Natural := Natural'Last;
-      Link_Name : GVD.Types.String_Access;
-      Link_From : Display_Item;
 
    begin
       --  graph (print|display) expression [dependent on display_num]

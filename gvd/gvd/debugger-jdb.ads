@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with Debugger;
 with Gtk.Window;
 with GNAT.Regpat;
+with Basic_Types;
 with GVD.Types;
 
 package Debugger.Jdb is
@@ -282,7 +283,7 @@ package Debugger.Jdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out GVD.Types.String_Access;
+      Code            : out Basic_Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "");
 
@@ -313,7 +314,7 @@ package Debugger.Jdb is
 
    function Complete
      (Debugger  : access Jdb_Debugger;
-      Beginning : in String) return GVD.Types.String_Array;
+      Beginning : in String) return Basic_Types.String_Array;
 
 private
 

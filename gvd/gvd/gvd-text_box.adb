@@ -37,6 +37,7 @@ with Gdk.Font;            use Gdk.Font;
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
+with Basic_Types;         use Basic_Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Strings;         use GVD.Strings;
@@ -479,11 +480,11 @@ package body GVD.Text_Box is
      (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
-      Menu    : Gtk_Menu;
-      Line    : Natural := 0;
-      Y       : Gint;
-      Area    : Gdk.Rectangle.Gdk_Rectangle;
-      Entity  : GVD.Types.String_Access;
+      Menu       : Gtk_Menu;
+      Line       : Natural := 0;
+      Y          : Gint;
+      Area       : Gdk.Rectangle.Gdk_Rectangle;
+      Entity     : String_Access;
       Select_Min : constant Gint := Gint
         (Guint'Min (Get_Selection_Start_Pos (Box.Child),
                     Get_Selection_End_Pos (Box.Child)));
@@ -573,7 +574,7 @@ package body GVD.Text_Box is
 
    procedure Set_Buffer
      (Box            : access GVD_Text_Box_Record;
-      Buffer         : GVD.Types.String_Access := null;
+      Buffer         : String_Access := null;
       Clear_Previous : Boolean := True) is
    begin
       if Clear_Previous then
@@ -688,7 +689,7 @@ package body GVD.Text_Box is
    ----------------
 
    function Get_Buffer
-     (Box : access GVD_Text_Box_Record) return GVD.Types.String_Access is
+     (Box : access GVD_Text_Box_Record) return String_Access is
    begin
       return Box.Buffer;
    end Get_Buffer;
@@ -701,7 +702,7 @@ package body GVD.Text_Box is
      (Box    : access GVD_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
-      Entity : in out GVD.Types.String_Access)
+      Entity : in out String_Access)
    is
       Line         : Natural := 0;
       Index        : Integer;

@@ -30,7 +30,7 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with GVD.Types; use GVD.Types;
+with Basic_Types; use Basic_Types;
 
 package Open_Session_Pkg is
 

@@ -80,10 +80,11 @@ package Items.Arrays is
    --  The returned structure should not be modified!
    --  ??? Could we use an access to constant ???
 
-   procedure Set_Value (Item       : in out Array_Type;
-                        Elem_Value : access Generic_Type'Class;
-                        Elem_Index : Long_Integer;
-                        Repeat_Num : Positive := 1);
+   procedure Set_Value
+     (Item       : in out Array_Type;
+      Elem_Value : access Generic_Type'Class;
+      Elem_Index : Long_Integer;
+      Repeat_Num : Positive := 1);
    --  Set a value in the array.
    --
    --  The sparse table that stores the values of Item is dynamically resized

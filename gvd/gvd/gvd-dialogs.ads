@@ -28,7 +28,7 @@ with Gtk.List; use Gtk.List;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
 with Debugger; use Debugger;
-with GVD.Types;
+with Basic_Types;
 with Gtk.Widget;
 
 package GVD.Dialogs is
@@ -49,10 +49,10 @@ package GVD.Dialogs is
    type History_Dialog_Access is access all History_Dialog_Record'Class;
 
    type Question_Record is record
-      Choice : GVD.Types.String_Access;
+      Choice : Basic_Types.String_Access;
       --  String that the user should enter to select that choice
 
-      Description : GVD.Types.String_Access;
+      Description : Basic_Types.String_Access;
       --  Associated description
    end record;
    type Question_Array is array (Positive range <>) of Question_Record;

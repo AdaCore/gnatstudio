@@ -18,26 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Types;
-with Ada.Unchecked_Deallocation;
+with Basic_Types; use Basic_Types;
 
 package GVD.Types is
-
-   subtype Pixmap_Array is Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-   type Pixmap_Access is access all Pixmap_Array;
-
-   type String_Access is access all String;
-   procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
-
-   type String_Array is array (Natural range <>) of String_Access;
-   procedure Free (Ar : in out String_Array);
-   --  Free all the strings in the array.
-
-   type Position_Type is new Natural;
-   --  Indicates the position in a file.
-   --  Note that these positions are relative to the real contents of the
-   --  editor, not necessarily the positions visible to the user (which
-   --  might be different because of ASCII.HT handling)
 
    type Command_Type is (Internal, Hidden, Visible, User);
    --  Internal commands are not stored into the command history. No output
@@ -151,48 +134,6 @@ package GVD.Types is
    type Exception_Array is array (Natural range <>) of Exception_Data;
 
    procedure Free (Exception_Access : in out Exception_Array);
-
-   -----------------
-   -- File caches --
-   -----------------
-
-   type Packed_Boolean_Array is array (Positive range <>) of Boolean;
-   pragma Pack (Packed_Boolean_Array);
-   type Packed_Boolean_Access is access Packed_Boolean_Array;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Packed_Boolean_Array, Packed_Boolean_Access);
-
-   type File_Cache;
-   type File_Cache_List is access File_Cache;
-   type File_Cache is record
-      File_Name     : String_Access := null;
-      --  The full name (including directory) for the file associated with
-      --  this record.
-
-      Line_Has_Code : Packed_Boolean_Access := null;
-      Line_Parsed   : Packed_Boolean_Access := null;
-
-      File_Contents : String_Access := null;
-      --  The contents of the file. To save some memory, this is not allocated
-      --  for files that can be found on the local disk. However, it is used
-      --  for files that had to be downloaded from a remote machine.
-
-      CR_Stripped : Boolean := False;
-      --  True if the carriage return characters were stripped when the file
-      --  was read.
-
-      Next : File_Cache_List := null;
-      --  Next file in the cache list
-   end record;
-   --  Data associated with each file, and that contain cached data for the
-   --  file.
-   --  Line_Parsed indicates whether the line at a given index has been parsed.
-   --  This array is freed once the parsing has been finished (and in the
-   --  case Current_Line points to the last line with a breakpoint.
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (File_Cache, File_Cache_List);
 
    ------------------------
    -- Program_Descriptor --

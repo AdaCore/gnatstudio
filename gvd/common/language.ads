@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;
-with GVD.Types;
+with Basic_Types;
 
 package Language is
 
@@ -127,10 +127,10 @@ package Language is
    type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
    type Explorer_Category is record
-      Name           : GVD.Types.String_Access;
+      Name           : Basic_Types.String_Access;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
-      Icon           : GVD.Types.Pixmap_Access;
+      Icon           : Basic_Types.Pixmap_Access;
       Make_Entry     : Make_Entry_Func;
    end record;
    --  Definition for a category (ie one of the subtrees of the explorer).

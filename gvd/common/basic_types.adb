@@ -18,49 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package body GVD.Text_Box.Source_Editor is
+with Gtkada.Types;
 
-   --------------------------
-   -- Set_Current_Language --
-   --------------------------
+package body Basic_Types is
 
-   procedure Set_Current_Language
-     (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access)
-   is
-      use Language;
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ar : in out String_Array) is
    begin
-      Free (Editor.Lang);
+      for A in Ar'Range loop
+         Free (Ar (A));
+      end loop;
+   end Free;
 
-      if Lang /= null then
-         Editor.Lang := new Language_Root'Class' (Lang.all);
-      end if;
-   end Set_Current_Language;
-
-   ----------------------
-   -- Get_Current_File --
-   ----------------------
-
-   function Get_Current_File
-     (Editor : access Source_Editor_Record) return String
-   is
-      use type Basic_Types.String_Access;
-   begin
-      if Editor.Current_File = null then
-         return "";
-      else
-         return Editor.Current_File.all;
-      end if;
-   end Get_Current_File;
-
-   ----------------
-   -- Get_Widget --
-   ----------------
-
-   function Get_Widget
-     (Editor : access Source_Editor_Record) return Gtk.Widget.Gtk_Widget is
-   begin
-      return Editor.Widget;
-   end Get_Widget;
-
-end GVD.Text_Box.Source_Editor;
+end Basic_Types;

@@ -45,6 +45,7 @@ with GVD.Code_Editors;  use GVD.Code_Editors;
 with GVD.Preferences;   use GVD.Preferences;
 with GVD.Strings;       use GVD.Strings;
 with GVD.Types;         use GVD.Types;
+with Basic_Types;       use Basic_Types;
 with Odd_Intl;          use Odd_Intl;
 
 with GNAT.Regpat;       use GNAT.Regpat;

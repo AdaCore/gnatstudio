@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;  use GNAT.IO;
+with GNAT.IO;         use GNAT.IO;
 
 with Glib;            use Glib;
 with Gdk.Font;        use Gdk.Font;
@@ -28,7 +28,7 @@ with Gdk.GC;          use Gdk.GC;
 with Gdk.Types;       use Gdk.Types;
 with Language;        use Language;
 
-with GVD.Types;       use GVD.Types;
+with Basic_Types;     use Basic_Types;
 with GVD.Strings;     use GVD.Strings;
 with GVD.Preferences; use GVD.Preferences;
 

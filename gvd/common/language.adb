@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GVD.Types;    use GVD.Types;
-with GNAT.Regpat;  use GNAT.Regpat;
+with Basic_Types; use Basic_Types;
+with GNAT.Regpat; use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 

@@ -43,7 +43,6 @@ with Memory_View_Pkg;  use Memory_View_Pkg;
 
 with Odd_Intl;         use Odd_Intl;
 with GVD.Strings;      use GVD.Strings;
-with GVD.Types;        use GVD.Types;
 with GVD.Process;      use GVD.Process;
 with GVD.Preferences;  use GVD.Preferences;
 

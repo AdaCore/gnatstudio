@@ -21,7 +21,7 @@
 --  Items used for record types.
 --  See the package Items for more information on all the private subprograms.
 
-with GVD.Types;
+with Basic_Types;
 with Ada.Unchecked_Deallocation;
 
 package Items.Records is
@@ -58,7 +58,7 @@ package Items.Records is
 
    function Get_Field_Name
      (Item  : in Record_Type;
-      Index : Positive) return GVD.Types.String_Access;
+      Index : Positive) return Basic_Types.String_Access;
    --  Return the name of the Index-th field in Item.
 
    function Find_Variant_Part
@@ -132,7 +132,7 @@ private
    type Record_Type_Array_Access is access Record_Type_Array;
 
    type Record_Field is record
-      Name         : GVD.Types.String_Access := null;
+      Name         : Basic_Types.String_Access := null;
       Value        : Items.Generic_Type_Access := null;
       Variant_Part : Record_Type_Array_Access := null;
    end record;

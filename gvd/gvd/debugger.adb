@@ -47,6 +47,7 @@ with GVD.Process;       use GVD.Process;
 with GVD.Strings;       use GVD.Strings;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
+with Basic_Types;       use Basic_Types;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
@@ -339,9 +340,9 @@ package body Debugger is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return GVD.Types.String_Array
+     (Debugger : access Debugger_Root) return String_Array
    is
-      A : GVD.Types.String_Array (1 .. 0);
+      A : String_Array (1 .. 0);
    begin
       return A;
    end Source_Files_List;
@@ -714,7 +715,7 @@ package body Debugger is
    ---------------------
 
    function List_Exceptions
-     (Debugger : access Debugger_Root) return GVD.Types.Exception_Array
+     (Debugger : access Debugger_Root) return Exception_Array
    is
       Arr : Exception_Array (1 .. 0);
    begin

@@ -33,6 +33,7 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
+with Basic_Types;         use Basic_Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;

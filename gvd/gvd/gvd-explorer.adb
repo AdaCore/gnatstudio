@@ -49,7 +49,7 @@ with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Strings;           use GVD.Strings;
-with GVD.Types;             use GVD.Types;
+with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Files;             use GVD.Files;
 
@@ -506,8 +506,8 @@ package body GVD.Explorer is
          declare
             Tab       : Debugger_Process_Tab := Convert (Explorer);
             Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
-            S         : GVD.Types.String_Access;
-            Error_Msg : GVD.Types.String_Access;
+            S         : Basic_Types.String_Access;
+            Error_Msg : Basic_Types.String_Access;
             Lang      : Language_Access;
 
          begin
@@ -716,7 +716,7 @@ package body GVD.Explorer is
 
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
-      List : GVD.Types.String_Array) is
+      List : String_Array) is
    begin
       Freeze (Tree);
 
@@ -843,12 +843,12 @@ package body GVD.Explorer is
      (Explorer : access Explorer_Record'Class)
    is
       Tab  : constant Debugger_Process_Tab := Convert (Explorer);
-      List : GVD.Types.String_Array := Source_Files_List (Tab.Debugger);
+      List : String_Array := Source_Files_List (Tab.Debugger);
 
    begin
       Clear_Explorer (Explorer);
       Add_List_Of_Files (Explorer, List);
-      GVD.Types.Free (List);
+      Free (List);
    end On_Executable_Changed;
 
    ---------------------
@@ -948,7 +948,7 @@ package body GVD.Explorer is
    procedure Display_Shared (Explorer : access Explorer_Record'Class) is
       Process : Debugger_Process_Tab := Convert (Explorer);
       Data    : Node_Data_Access := null;
-      Current : GVD.Types.String_Access;
+      Current : Basic_Types.String_Access;
 
    begin
       --  ??? Should be protected in case the debugger is currently busy

@@ -30,7 +30,7 @@ with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Handlers;      use Gtk.Handlers;
 
 with GVD.Memory_View;   use GVD.Memory_View;
-with GVD.Types;         use GVD.Types;
+with Basic_Types;       use Basic_Types;
 
 package body Memory_View_Pkg.Callbacks is
 

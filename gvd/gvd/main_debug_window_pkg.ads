@@ -35,6 +35,7 @@ with Open_Session_Pkg; use Open_Session_Pkg;
 with GVD.Dialogs; use GVD.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Basic_Types;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
@@ -80,7 +81,7 @@ package Main_Debug_Window_Pkg is
       Prefix_Directory    : String_Access;
       External_XID        : Glib.Guint32 := 0;
 
-      File_Caches         : GVD.Types.File_Cache_List;
+      File_Caches         : Basic_Types.File_Cache_List;
       --  List of data cached for each of the file of the application
       --  This field is handled in GVD.Files
 

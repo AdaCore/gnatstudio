@@ -22,7 +22,7 @@ with Gtk.Container;     use Gtk.Container;
 with Gtk.Socket;        use Gtk.Socket;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
-with GVD.Types;         use GVD.Types;
+with Basic_Types;       use Basic_Types;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.IO;           use GNAT.IO;
@@ -198,7 +198,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
 
    procedure Update_Breakpoints
      (Editor : access Socket_Record;
-      Br     : Breakpoint_Array) is
+      Br     : GVD.Types.Breakpoint_Array) is
    begin
       null;
    end Update_Breakpoints;

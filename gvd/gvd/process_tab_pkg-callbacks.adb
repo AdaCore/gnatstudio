@@ -38,6 +38,7 @@ with GVD.Process;           use GVD.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
+with Basic_Types;           use Basic_Types;
 with GVD.Types;             use GVD.Types;
 with GVD.Strings;           use GVD.Strings;
 
@@ -341,9 +342,9 @@ package body Process_Tab_Pkg.Callbacks is
             Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
 
             declare
-               C      : String :=
+               C      : constant String :=
                  Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos));
-               S      : GVD.Types.String_Array := Complete (Top.Debugger, C);
+               S      : String_Array := Complete (Top.Debugger, C);
                Max    : Integer := 0;
                Min    : Integer := 0;
                Prefix : Integer;

@@ -24,7 +24,7 @@ with Gdk.Window;
 with Items;
 with GVD.Process;
 with Gdk.Event;
-with GVD.Types;
+with Basic_Types;
 with Gtkada.Canvas;
 with Language;
 with Gdk.Pixmap;
@@ -196,7 +196,7 @@ private
    type Display_Item_Record is new Gtkada.Canvas.Buffered_Item_Record with
    record
       Num          : Integer;
-      Name         : GVD.Types.String_Access := null;
+      Name         : Basic_Types.String_Access := null;
       Entity       : Items.Generic_Type_Access := null;
       Auto_Refresh : Boolean := True;
       Debugger     : GVD.Process.Debugger_Process_Tab;
@@ -206,7 +206,7 @@ private
 
       Title_Height : Glib.Gint;
 
-      Id           : GVD.Types.String_Access := null;
+      Id           : Basic_Types.String_Access := null;
       --  Uniq ID used for the variable.
       --  This Id is returned by the debugger, and can be the address of a
       --  variable (in Ada or C), or simply the name of the variable (in

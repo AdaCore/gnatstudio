@@ -21,6 +21,7 @@
 with Glib;                    use Glib;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with GVD.Types;               use GVD.Types;
+with Basic_Types;             use Basic_Types;
 with Gtkada.Types;            use Gtkada.Types;
 with Gtk.Arguments;           use Gtk.Arguments;
 with GVD.Process;             use GVD.Process;

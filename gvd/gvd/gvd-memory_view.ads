@@ -24,7 +24,7 @@ with Gdk.Font;              use Gdk.Font;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Widget;            use Gtk.Widget;
 with Memory_View_Pkg;       use Memory_View_Pkg;
-with GVD.Types;             use GVD.Types;
+with Basic_Types;           use Basic_Types;
 
 package GVD.Memory_View is
 

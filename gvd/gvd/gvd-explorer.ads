@@ -24,7 +24,7 @@ with Gtk.Menu;
 with Gtk.Style;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
-with GVD.Types;
+with Basic_Types;
 
 --  This package implements a file explorer and browser.
 --  It shows all the files that belong to the current application, and makes
@@ -50,7 +50,7 @@ package GVD.Explorer is
 
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
-      List : GVD.Types.String_Array);
+      List : Basic_Types.String_Array);
    --  Add several files in the explorer.
 
    procedure Set_Current_File

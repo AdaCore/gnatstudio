@@ -48,6 +48,7 @@ with GVD.Text_Box.Asm_Editor;
 with GVD.Explorer;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
+with Basic_Types;
 
 package GVD.Code_Editors is
 
@@ -216,7 +217,7 @@ private
       Mode            : View_Mode := GVD.Code_Editors.Source;
 
       Source_Line     : Natural;
-      Asm_Address     : GVD.Types.String_Access;
+      Asm_Address     : Basic_Types.String_Access;
 
       Process         : Gtk.Widget.Gtk_Widget;
       --  The process tab in which the editor is found.

@@ -18,20 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Types;
+with Ada.Unchecked_Deallocation;
 
 package body GVD.Types is
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ar : in out String_Array) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
 
    ----------
    -- Free --

@@ -26,6 +26,7 @@ with Process_Proxies;
 with GNAT.Regpat;
 with Gtk.Window;
 with GVD.Types;
+with Basic_Types;
 with GVD.Proc_Utils;
 
 package Debugger is
@@ -313,7 +314,7 @@ package Debugger is
    --  there is one.
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return GVD.Types.String_Array;
+     (Debugger : access Debugger_Root) return Basic_Types.String_Array;
    --  Return the list of source files for the currently loaded executable.
    --  If the debugger can not return a list of specific sources, it should
    --  return an empty array.
@@ -497,9 +498,9 @@ package Debugger is
 
    type Backtrace_Record is record
       Frame_Id        : Natural;
-      Program_Counter : GVD.Types.String_Access;
-      Subprogram      : GVD.Types.String_Access;
-      Source_Location : GVD.Types.String_Access;
+      Program_Counter : Basic_Types.String_Access;
+      Subprogram      : Basic_Types.String_Access;
+      Source_Location : Basic_Types.String_Access;
    end record;
 
    type Backtrace_Array is array (Positive range <>) of Backtrace_Record;
@@ -720,7 +721,7 @@ package Debugger is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out GVD.Types.String_Access;
+      Code            : out Basic_Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "") is abstract;
    --  Return the machine code (or assembly code) for a specific region.
@@ -794,7 +795,7 @@ package Debugger is
 
    function Complete
      (Debugger   : access Debugger_Root;
-      Beginning  : in String) return GVD.Types.String_Array is abstract;
+      Beginning  : in String) return Basic_Types.String_Array is abstract;
    --  Return a list of commands recognized by the debugger that begin with
    --  Beginning.
    --  Note that the caller is responsible for freeing the memory allocated
@@ -826,7 +827,7 @@ private
    type Command_Record;
    type Command_Access is access Command_Record;
    type Command_Record is record
-      Cmd             : GVD.Types.String_Access;
+      Cmd             : Basic_Types.String_Access;
       Empty_Buffer    : Boolean;
       Mode            : GVD.Types.Command_Type;
       Next            : Command_Access;

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Types;             use GVD.Types;
+with Basic_Types;           use Basic_Types;
 with GVD.Preferences;       use GVD.Preferences;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
@@ -67,10 +67,10 @@ package body GVD.Files is
    ---------------
 
    procedure Load_File
-     (Contents    : out GVD.Types.String_Access;
-      Error_Msg   : out GVD.Types.String_Access;
-      Cache       : GVD.Types.File_Cache_List;
-      Remote_Host : GVD.Types.String_Access := null)
+     (Contents    : out Basic_Types.String_Access;
+      Error_Msg   : out Basic_Types.String_Access;
+      Cache       : Basic_Types.File_Cache_List;
+      Remote_Host : Basic_Types.String_Access := null)
    is
       F             : File_Descriptor;
       Length        : Positive;

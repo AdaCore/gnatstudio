@@ -25,6 +25,7 @@ with Gtk.Main;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Open_Program_Pkg.Callbacks; use Open_Program_Pkg.Callbacks;
+with Basic_Types; use Basic_Types;
 
 package body Open_Program_Pkg is
 

@@ -39,7 +39,8 @@ with Odd_Intl;         use Odd_Intl;
 with GVD.Canvas;       use GVD.Canvas;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
-with GVD.Types;        use GVD.Types;
+with GVD.Types;
+with Basic_Types;      use Basic_Types;
 with GVD.Trace;        use GVD.Trace;
 
 package body Display_Items is
@@ -795,7 +796,7 @@ package body Display_Items is
            (Debugger_Output_Type (Item.Entity.all),
             Send (Item.Debugger.Debugger,
                   Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
-                  Mode => Internal));
+                  Mode => GVD.Types.Internal));
 
       elsif Item.Name /= null then
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,

@@ -26,6 +26,7 @@ with Debugger;
 with GNAT.Regpat;
 with Gtk.Window;
 with Language.Debugger;
+with Basic_Types;
 with GVD.Types;
 
 package Debugger.Gdb is
@@ -80,7 +81,7 @@ package Debugger.Gdb is
       First, Last : out Natural);
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return GVD.Types.String_Array;
+     (Debugger : access Gdb_Debugger) return Basic_Types.String_Array;
 
    function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String;
@@ -311,7 +312,7 @@ package Debugger.Gdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out GVD.Types.String_Access;
+      Code            : out Basic_Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "");
 
@@ -342,7 +343,7 @@ package Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : in String) return GVD.Types.String_Array;
+      Beginning : in String) return Basic_Types.String_Array;
 
    procedure Open_Processes (Debugger : access Gdb_Debugger);
 

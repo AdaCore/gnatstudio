@@ -21,6 +21,7 @@
 with Gtk.Widget;
 with Gtk.Container;
 with Language;
+with Basic_Types;
 with GVD.Types;
 
 package GVD.Text_Box.Source_Editor is
@@ -49,7 +50,7 @@ package GVD.Text_Box.Source_Editor is
      (Editor   : access Source_Editor_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : GVD.Types.Position_Type) is abstract;
+      Position : Basic_Types.Position_Type) is abstract;
    --  Highlight the word that starts at the given position in the file
    --  associated with the editor (ie ignoring the line numbers that could
    --  be displayed).
@@ -112,9 +113,9 @@ package GVD.Text_Box.Source_Editor is
 private
    type Source_Editor_Record is abstract tagged record
       Widget : Gtk.Widget.Gtk_Widget;
-      Current_File : GVD.Types.String_Access;
+      Current_File : Basic_Types.String_Access;
 
-      Debugger_Current_File : GVD.Types.String_Access;
+      Debugger_Current_File : Basic_Types.String_Access;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
 

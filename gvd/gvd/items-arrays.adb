@@ -29,7 +29,7 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
 with Language;     use Language;
 
-with GVD.Types;       use GVD.Types;
+with Basic_Types;     use Basic_Types;
 with GVD.Preferences; use GVD.Preferences;
 
 with Items.Repeats; use Items.Repeats;

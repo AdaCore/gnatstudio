@@ -21,6 +21,7 @@
 with Glib; use Glib;
 with Gtk.Container;
 with Gtk.Window;
+with Basic_Types;
 with GVD.Types;
 
 --  This package provides an implementation of Source_Editor based on
@@ -56,7 +57,7 @@ package GVD.Text_Box.Source_Editor.Socket is
      (Editor   : access Socket_Record;
       Line     : Natural;
       Column   : Natural;
-      Position : GVD.Types.Position_Type);
+      Position : Basic_Types.Position_Type);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints

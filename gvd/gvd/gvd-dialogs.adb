@@ -28,7 +28,7 @@ with Callbacks_Odd;         use Callbacks_Odd;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
-with GVD.Types;             use GVD.Types;
+with Basic_Types;           use Basic_Types;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 pragma Elaborate_All (Odd_Intl);
@@ -46,6 +46,7 @@ with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD.Types;             use GVD.Types;
 with GVD.Utils;             use GVD.Utils;
 with Odd_Intl;              use Odd_Intl;
 

@@ -53,6 +53,7 @@ with GVD.Files;           use GVD.Files;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
+with Basic_Types;         use Basic_Types;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;

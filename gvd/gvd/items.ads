@@ -28,7 +28,7 @@ with Glib;
 with Language;
 with Glib;
 with Ada.Unchecked_Deallocation;
-with GVD.Types;
+with Basic_Types;
 
 package Items is
 
@@ -360,7 +360,7 @@ private
       --  Whether the value stored is valid, ie there was no error from the
       --  debugger when we got it.
 
-      Type_Name : GVD.Types.String_Access := null;
+      Type_Name : Basic_Types.String_Access := null;
       --  The type of the item.
       --  As a special case, this starts with Unknown_Type_Prefix if some extra
       --  info needs to be extracted from the debugger. In that case, the
