@@ -135,7 +135,7 @@ package body Src_Editor_Buffer.Blocks is
          --  when the notion of block nesting level is introduced.
 
          if Buffer.Block_Folding
-           and then (not Block_Folded)
+           and then not Block_Folded
            and then Current.Category in Subprogram_Category
            and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
          then
