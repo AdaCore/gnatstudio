@@ -339,6 +339,9 @@ package body Projects is
    begin
       if Project = No_Project then
          return "default";
+      elsif Get_View (Project) /= Prj.No_Project then
+         return Get_String
+           (Projects_Table (Project)(Get_View (Project)).Display_Name);
       else
          return Get_String
            (Prj.Tree.Name_Of (Project.Node, Project.Tree));
@@ -2087,7 +2090,8 @@ package body Projects is
 
       if Project.Data.View = Prj.No_Project then
          Trace (Me, "Get_View: No view computed for "
-                & Project_Name (Project));
+                & Get_String
+                  (Prj.Tree.Name_Of (Project.Node, Project.Tree)));
       end if;
       return Project.Data.View;
    end Get_View;
