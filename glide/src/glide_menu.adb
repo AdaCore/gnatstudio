@@ -319,7 +319,7 @@ package body Glide_Menu is
    is
       Wiz : Creation_Wizard.Prj_Wizard;
    begin
-      Gtk_New (Wiz);
+      Gtk_New (Wiz, Glide_Window (Object).Kernel);
       Set_Current_Page (Wiz, 1);
       Show_All (Wiz);
       Main;
