@@ -38,8 +38,8 @@ package body Src_Editor_Buffer.Blocks is
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
       Constructs    : Construct_List;
       Current       : Construct_Access;
-      Line_Start    : Integer;
-      Line_End      : Integer;
+      Line_Start    : Buffer_Line_Type;
+      Line_End      : Buffer_Line_Type;
       Column        : Integer;
       C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
       Slice_Length  : Natural;
@@ -84,8 +84,8 @@ package body Src_Editor_Buffer.Blocks is
          if Current.Category in Construct_Category
            or else Current.Category in Enclosing_Entity_Category
          then
-            Line_Start := Current.Sloc_Start.Line;
-            Line_End   := Current.Sloc_End.Line;
+            Line_Start := Buffer_Line_Type (Current.Sloc_Start.Line);
+            Line_End   := Buffer_Line_Type (Current.Sloc_End.Line);
             Column     := Integer'Min
               (Current.Sloc_Start.Column, Current.Sloc_End.Column);
 
