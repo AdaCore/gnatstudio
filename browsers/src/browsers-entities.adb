@@ -57,6 +57,9 @@ package body Browsers.Entities is
    Left_Margin : constant := 20;
    --  Indentation for the attributes and methods layouts.
 
+   UML_Abstract : constant String := "<<Abstract>>";
+   --  String used in UML to indicate that an entity is abstract
+
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Entity browser menu
@@ -470,8 +473,16 @@ package body Browsers.Entities is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Entity_Information) is
    begin
-      Initialize (Item, Browser, Get_Name (Entity),
-                  Find_Parent_Types'Access, Find_Children_Types'Access);
+      if Get_Kind (Entity).Is_Abstract then
+         Initialize
+           (Item, Browser,
+            Get_Name (Entity) & ASCII.LF & "   " & UML_Abstract,
+            Find_Parent_Types'Access, Find_Children_Types'Access);
+      else
+         Initialize
+           (Item, Browser, Get_Name (Entity),
+            Find_Parent_Types'Access, Find_Children_Types'Access);
+      end if;
       Item.Entity := Copy (Entity);
    end Initialize;
 
