@@ -236,9 +236,6 @@ package Glide_Kernel.Preferences is
    -- Wizards --
    Wizard_Title_Font : Param_Spec_Font;
 
-   -- Help --
-   Help_Font_Adjust : Param_Spec_Int;
-
    -- Browsers --
    Browsers_Bg_Color         : Param_Spec_Color;
    Browsers_Bg_Image         : Param_Spec_String;
