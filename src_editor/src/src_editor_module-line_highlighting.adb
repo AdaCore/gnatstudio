@@ -43,23 +43,16 @@ package body Src_Editor_Module.Line_Highlighting is
      (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
-      Line     : Natural := 0;
-      GC       : Gdk_GC;
-      Color    : Gdk_Color;
-      Success  : Boolean;
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
       if Command = "highlight" or else Command = "unhighlight" then
-         if Number_Of_Arguments (Data) = 3 then
-            Line := Nth_Arg (Data, 3);
-         end if;
-
          declare
-            File     : constant String := Nth_Arg (Data, 1);
-            Category : constant String := Nth_Arg (Data, 2);
+            File     : constant String  := Nth_Arg (Data, 1);
+            Category : constant String  := Nth_Arg (Data, 2);
+            Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Box   : Source_Box;
             Child : MDI_Child;
             Filename  : constant String := Get_Full_Path_From_File
@@ -87,6 +80,9 @@ package body Src_Editor_Module.Line_Highlighting is
          declare
             Category : constant String := Nth_Arg (Data, 1);
             Color_Id : constant String := Nth_Arg (Data, 2);
+            GC       : Gdk_GC;
+            Color    : Gdk_Color;
+            Success  : Boolean;
          begin
             --  Create a GC from the color.
 

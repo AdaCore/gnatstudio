@@ -476,17 +476,9 @@ package body Src_Editor_Module is
          declare
             File     : constant String := Nth_Arg (Data, 1);
          begin
-            if Number_Of_Arguments (Data) >= 2 then
-               Line := Nth_Arg (Data, 2);
-            end if;
-
-            if Number_Of_Arguments (Data) >= 3 then
-               Column := Nth_Arg (Data, 3);
-            end if;
-
-            if Number_Of_Arguments (Data) >= 4 then
-               Length := Nth_Arg (Data, 4);
-            end if;
+            Line   := Nth_Arg (Data, 2, Default => 1);
+            Column := Nth_Arg (Data, 3, Default => 1);
+            Length := Nth_Arg (Data, 4, Default => 0);
 
             if Is_Absolute_Path (File) then
                Filename := new String'(Normalize_Pathname (File));
@@ -652,18 +644,10 @@ package body Src_Editor_Module is
             File   : constant String  := Nth_Arg (Data, 1);
             Line   : constant Integer := Nth_Arg (Data, 2);
             Column : constant Integer := Nth_Arg (Data, 3);
-            Before : Integer := -1;
-            After  : Integer := -1;
+            Before : constant Integer := Nth_Arg (Data, 4, Default => -1);
+            After  : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
          begin
-            if Number_Of_Arguments (Data) >= 4 then
-               Before := Nth_Arg (Data, 4);
-            end if;
-
-            if Number_Of_Arguments (Data) >= 5 then
-               After := Nth_Arg (Data, 5);
-            end if;
-
             Set_Return_Value
               (Data,
                Get_Chars (Source_Box (Get_Widget (Child)).Editor,
@@ -677,18 +661,10 @@ package body Src_Editor_Module is
             Line   : constant Integer := Nth_Arg (Data, 2);
             Column : constant Integer := Nth_Arg (Data, 3);
             Text   : constant String  := Nth_Arg (Data, 4);
-            Before : Integer := -1;
-            After  : Integer := -1;
+            Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
+            After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
          begin
-            if Number_Of_Arguments (Data) >= 5 then
-               Before := Nth_Arg (Data, 5);
-            end if;
-
-            if Number_Of_Arguments (Data) >= 6 then
-               After := Nth_Arg (Data, 6);
-            end if;
-
             Replace_Slice_At_Position
               (Source_Box (Get_Widget (Child)).Editor,
                Line, Column,
@@ -797,18 +773,10 @@ package body Src_Editor_Module is
 
       elsif Command = "save" then
          declare
-            Force    : Boolean := True;
-            All_Save : Boolean := False;
+            Force    : constant Boolean := Nth_Arg (Data, 1, Default => False);
+            All_Save : constant Boolean := Nth_Arg (Data, 2, Default => True);
             Child    : MDI_Child;
          begin
-            if Number_Of_Arguments (Data) >= 1 then
-               Force := Nth_Arg (Data, 1) /= "t";
-            end if;
-
-            if Number_Of_Arguments (Data) >= 2 then
-               All_Save := Nth_Arg (Data, 2) = "t";
-            end if;
-
             if All_Save then
                if not Save_All_MDI_Children (Kernel, Force) then
                   Set_Error_Msg (Data, -"cancelled");
@@ -3180,9 +3148,9 @@ package body Src_Editor_Module is
          Command      => "save",
          Usage        => "save (interactive, all) -> None",
          Description  => -("Save current or all files." & ASCII.LF
-           & "  If interactive is ""t"", then prompt before each save."
+           & "  If interactive is true, then prompt before each save."
            & ASCII.LF
-           & "  If all is ""t"", then all files are saved"),
+           & "  If all is true, then all files are saved"),
          Minimum_Args => 0,
          Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
