@@ -150,11 +150,21 @@ package Glide_Kernel.Modules is
    --  See description of Module_Tooltip_Handler in Glide_Kernel and procedure
    --  Compute_Tooltip below for more details.
 
-   function Module_Name (ID : Module_ID) return String;
+   function Module_Name (ID : access Module_ID_Record'Class) return String;
    --  Return the name of t he module registered as ID.
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
    --  Free all the registered modules, and call Destroy for each of these.
+
+   function Get_Priority (ID : access Module_ID_Record'Class)
+      return Module_Priority;
+   --  Return the current priority of ID
+
+   procedure Set_Priority
+     (Kernel   : access Kernel_Handle_Record'Class;
+      ID       : access Module_ID_Record'Class;
+      Priority : Module_Priority);
+   --  Change the priority for a module
 
    ----------------------
    -- Desktop handling --
