@@ -89,7 +89,7 @@ procedure GPS is
    Directory      : Dir_Type;
    Str            : String (1 .. 1024);
    Last           : Natural;
-   Project_Loaded : Boolean := False;
+   Project_Name   : String_Access;
    Button         : Message_Dialog_Buttons;
    Home           : String_Access;
    Prefix         : String_Access;
@@ -377,7 +377,7 @@ procedure GPS is
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
 
-      if not Project_Loaded then
+      if Project_Name = null then
          Open (Directory, Get_Current_Dir);
 
          loop
@@ -386,8 +386,7 @@ procedure GPS is
             exit when Last = 0;
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               Load_Project (GPS.Kernel, Str (1 .. Last));
-               Project_Loaded := True;
+               Project_Name := new String' (Str (1 .. Last));
                exit;
             end if;
          end loop;
@@ -398,7 +397,11 @@ procedure GPS is
       --  If we are still using the default project, we need to compute its
       --  view now.
 
-      if not Project_Loaded then
+      if Project_Name /= null then
+         Trace (Me, "Loading project: " & Project_Name.all);
+         Load_Project (GPS.Kernel, Project_Name.all);
+         Free (Project_Name);
+      else
          Recompute_View (GPS.Kernel);
       end if;
 
@@ -456,7 +459,7 @@ begin
    Maximize (GPS);
 
    loop
-      case Getopt ("-version -help p") is
+      case Getopt ("-version -help p:") is
          -- long option names --
          when '-' =>
             case Full_Switch (Full_Switch'First + 1) is
@@ -483,13 +486,14 @@ begin
                      OS_Exit (0);
                   end if;
 
-               when 'p' =>
-                  Load_Project (GPS.Kernel, Normalize_Pathname (Parameter));
-                  Project_Loaded := True;
-
                when others =>
                   null;
             end case;
+
+         when 'p' =>
+            Project_Name := new String'
+              (Normalize_Pathname (Parameter));
+            Trace (Me, "Found project: " & Parameter);
 
          when ASCII.NUL =>
             exit;
