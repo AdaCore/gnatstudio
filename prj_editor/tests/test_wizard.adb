@@ -3,11 +3,12 @@ with Wizards; use Wizards;
 with Gtk.Main; use Gtk.Main;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Handlers; use Gtk.Handlers;
+with Gdk.Pixmap; use Gdk.Pixmap;
+with Gdk.Bitmap; use Gdk.Bitmap;
+with Gdk.Color; use Gdk.Color;
+with Gtk.Widget; use Gtk.Widget;
 
 procedure Test_Wizard is
-   Wiz : Wizard;
-   Lab : Gtk_Label;
-
    package Wiz_Cb is new Gtk.Handlers.Callback (Wizard_Record);
    procedure Custom_Next (Wiz : access Wizard_Record'Class);
 
@@ -19,10 +20,19 @@ procedure Test_Wizard is
       end if;
    end Custom_Next;
 
+   Wiz  : Wizard;
+   Lab  : Gtk_Label;
+   Pix  : Gdk_Pixmap;
+   Mask : Gdk_Bitmap;
+
 begin
    Gtk.Main.Init;
 
-   Gtk_New (Wiz, "Project setup");
+   Create_From_Xpm
+     (Pix, null, Get_Default_Colormap, Mask, Null_Color, "splash.xpm");
+
+   Gtk_New (Wiz, "Project setup", "#0476bc");
+   Add_Logo (Wiz, Pix, Mask);
    Wiz_Cb.Object_Connect
      (Next_Button (Wiz), "clicked",
       Wiz_Cb.To_Marshaller (Custom_Next'Unrestricted_Access), Wiz);
