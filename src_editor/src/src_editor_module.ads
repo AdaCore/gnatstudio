@@ -121,7 +121,7 @@ private
       Id     : Natural;
       Child  : MDI_Child;
       File   : VFS.Virtual_File;
-      Line   : Natural;
+      Line   : Natural := 0;
       Column : Natural;
       Mark   : Gtk_Text_Mark;
       Length : Natural;
