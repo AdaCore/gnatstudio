@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -89,11 +89,14 @@ package body Switches_Editors is
    --  default switches if File_Name is the empty string.
 
    procedure Close_Switch_Editor
-     (Switches : access Gtk_Widget_Record'Class;
-      Context  : Selection_Context_Access);
+     (Switches  : access Gtk_Widget_Record'Class;
+      Context   : Selection_Context_Access;
+      File_Name : String);
    --  Called when the user has closed a switch editor for a specific file.
    --  This modifies the edited project to reflect the changes done in the
    --  dialog.
+   --  File_Name is the name of the file whose switches we are changing, or ""
+   --  if we are changing the default switches.
 
    procedure Revert_To_Default
      (Switches : access GObject_Record'Class;
@@ -970,8 +973,9 @@ package body Switches_Editors is
    -------------------------
 
    procedure Close_Switch_Editor
-     (Switches : access Gtk_Widget_Record'Class;
-      Context  : Selection_Context_Access)
+     (Switches  : access Gtk_Widget_Record'Class;
+      Context   : Selection_Context_Access;
+      File_Name : String)
    is
       File    : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
@@ -995,7 +999,7 @@ package body Switches_Editors is
          Value    : Variable_Value;
          Is_Default_Value : Boolean := False;
       begin
-         if Has_File_Information (File) then
+         if File_Name /= "" then
             Get_Switches
               (Project          => Project_Information (File),
                In_Pkg           => Pkg_Name,
@@ -1047,7 +1051,7 @@ package body Switches_Editors is
                   Pkg_Name           => Pkg_Name,
                   Scenario_Variables => Scenario_Variables (S.Kernel),
                   Attribute_Name     => Get_Name_String (Name_Switches),
-                  Attribute_Index    => File_Information (File));
+                  Attribute_Index    => File_Name);
             else
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
@@ -1055,7 +1059,7 @@ package body Switches_Editors is
                   Scenario_Variables => Scenario_Variables (S.Kernel),
                   Attribute_Name     => Get_Name_String (Name_Switches),
                   Values             => Args,
-                  Attribute_Index    => File_Information (File),
+                  Attribute_Index    => File_Name,
                   Prepend            => False);
             end if;
 
@@ -1265,7 +1269,7 @@ package body Switches_Editors is
       --  of this dialog.
 
       if Run (Dialog) = Gtk_Response_OK then
-         Close_Switch_Editor (Switches, Context);
+         Close_Switch_Editor (Switches, Context, File_Name.all);
       end if;
 
       Free (File_Name);
