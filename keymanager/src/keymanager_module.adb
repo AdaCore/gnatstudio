@@ -625,9 +625,9 @@ package body KeyManager_Module is
 
                   elsif Context_Matches (Command.Context, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
-                     if Execute (Command.Command, Event) = Success then
-                        return True;
-                     end if;
+                     Launch_Synchronous_Interactive
+                       (Command.Command, Event);
+                     return True;
                   end if;
                end if;
             end if;
@@ -637,9 +637,9 @@ package body KeyManager_Module is
 
          if Any_Context_Command /= No_Action then
             Trace (Me, "Executing any context action");
-            if Execute (Any_Context_Command.Command, Event) = Success then
-               return True;
-            end if;
+            Launch_Synchronous_Interactive
+              (Any_Context_Command.Command, Event);
+            return True;
          end if;
       end if;
 
