@@ -145,6 +145,7 @@ package body GVD.Main_Window is
       Set_Priorities
         (Main_Window.Process_Mdi,
          (Top => 1, Bottom => 2, Right => 3, Left => 4));
+      Maximize_Children (Main_Window.Process_Mdi);
       Gtk_New
         (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
          Key, Main_Window.Main_Accel_Group);
