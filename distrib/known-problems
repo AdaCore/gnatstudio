@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 2.1.0
 
+- Directories in Project View contain no file after a change of scenario
+  Problem:    If you select a new value for the scenario variables at the
+              top of the project view, the directories that didn't exist
+              in the previous scenario are correctly added, but contain
+              no visible file
+  Workaround: Close the project node, select again the scenario, and reopen
+              the project node to force an update
+
 - D902-016 Project wizard print a warning if the directory contains a dot
   Problem:    If you use the project wizard to create a new project in
               a directory that contains a dot ('.'), GPS will display a
