@@ -38,7 +38,6 @@ with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
-with Breakpoints_Pkg; use Breakpoints_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Print_Dialog_Pkg; use Print_Dialog_Pkg;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
@@ -52,10 +51,10 @@ package Main_Debug_Window_Pkg is
 
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
-      Breakpoints         : Breakpoints_Access;
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Print_Dialog        : Print_Dialog_Access;
+      Breakpoints_Editor  : Gtk.Window.Gtk_Window;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
 
