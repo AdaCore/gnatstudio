@@ -32,7 +32,7 @@ with Gtk.Style;          use Gtk.Style;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
 with Glide_Kernel;             use Glide_Kernel;
@@ -44,9 +44,9 @@ package body Wizards is
    Min_Toc_Width : constant Gint := 100;
    --  Minimal width, in pixels, for the TOC area, when it is displayed.
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (GNAT.OS_Lib.String_List, String_List_Access);
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class);
