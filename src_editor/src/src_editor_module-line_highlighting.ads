@@ -21,15 +21,14 @@
 --  This package handles the commands necessary to configure/add/remove
 --  line highlighting in the source editors.
 
-with GNAT.OS_Lib;
 with Gdk.GC; use Gdk.GC;
+with Glide_Kernel.Scripts;
 
 package Src_Editor_Module.Line_Highlighting is
 
-   function Edit_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Edit_Command_Handler
+     (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
    --  Interactive command handler for the source editor module.
 
    --  The following functions are used to provide a cache-like capability

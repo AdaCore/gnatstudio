@@ -18,14 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Gdk.Color;         use Gdk.Color;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with Glide_Kernel;      use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Projects.Registry; use Projects.Registry;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;        use Glide_Intl;
 with Traces;            use Traces;
 
@@ -40,105 +39,71 @@ package body Src_Editor_Module.Line_Highlighting is
    -- Edit_Command_Handler --
    --------------------------
 
-   function Edit_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+   procedure Edit_Command_Handler
+     (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String)
    is
-      Filename : GNAT.OS_Lib.String_Access;
       Line     : Natural := 0;
-      Category : GNAT.OS_Lib.String_Access;
-      Color_Id : GNAT.OS_Lib.String_Access;
       GC       : Gdk_GC;
       Color    : Gdk_Color;
       Success  : Boolean;
-
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
-      if Command = "src.highlight" or else Command = "src.unhighlight" then
-         if Args'Length = 3 then
-            declare
-            begin
-               Line := Positive'Value (Args (Args'First + 1).all);
-            exception
-               when others =>
-                  return Command & ": " &
-                    (-"option line requires a numerical value.");
-            end;
+      if Command = "highlight" or else Command = "unhighlight" then
+         if Number_Of_Arguments (Data) = 3 then
+            Line := Nth_Arg (Data, 3);
          end if;
 
-         Filename := new String'(Args (Args'First).all);
-         Category := new String'(Args (Args'Last).all);
-
          declare
+            File     : constant String := Nth_Arg (Data, 1);
+            Category : constant String := Nth_Arg (Data, 2);
             Box   : Source_Box;
             Child : MDI_Child;
-            File  : constant String := Get_Full_Path_From_File
+            Filename  : constant String := Get_Full_Path_From_File
               (Registry        => Get_Registry (Kernel),
-               Filename        => Filename.all,
+               Filename        => File,
                Use_Source_Path => True,
                Use_Object_Path => False);
-
          begin
-            Child := Find_Editor (Kernel, Filename.all);
-            Free (Filename);
+            Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
-               if Command = "src.highlight" then
-                  Add_Line_Highlighting (Box.Editor, Line, Category.all);
+               if Command = "highlight" then
+                  Add_Line_Highlighting (Box.Editor, Line, Category);
                else
-                  Remove_Line_Highlighting (Box.Editor, Line, Category.all);
+                  Remove_Line_Highlighting (Box.Editor, Line, Category);
                end if;
             else
-               Free (Category);
-
-               return
-                 Command & ": " & (-"File editor not found for file " & File);
+               Set_Error_Msg
+                 (Data, -"File editor not found for file " & File);
             end if;
          end;
 
-         Free (Filename);
-         Free (Category);
-
-      elsif Command = "src.register_highlighting" then
-         if Args'Length /= 2 then
-            return Command & ": " & (-"wrong number of arguments");
-         end if;
-
-         Category := new String'(Args (Args'First).all);
-         Color_Id := new String'(Args (Args'Last).all);
-
-         --  Create a GC from the color.
-
-         Gdk_New (GC, Get_Window (Get_Main_Window (Module_Id.Kernel)));
-
+      elsif Command = "register_highlighting" then
+         declare
+            Category : constant String := Nth_Arg (Data, 1);
+            Color_Id : constant String := Nth_Arg (Data, 2);
          begin
-            Color := Parse (Color_Id.all);
+            --  Create a GC from the color.
 
-         exception
-            when Wrong_Color =>
-               Insert
-                 (Kernel,
-                    -"Could not parse color: " & Color_Id.all,
-                  Mode => Error);
-            when others =>
-               raise;
+            Gdk_New (GC, Get_Window (Get_Main_Window (Module_Id.Kernel)));
+
+            begin
+               Color := Parse (Color_Id);
+            exception
+               when Wrong_Color =>
+                  Set_Error_Msg (Data, -"Could not parse color: " & Color_Id);
+            end;
+
+            Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+            Set_Foreground (GC, Color);
+            Add_Category (Category, GC);
          end;
-
-         Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
-         Set_Foreground (GC, Color);
-
-         Add_Category (Category.all, GC);
-
-         Free (Category);
-         Free (Color_Id);
       end if;
-
-      return "";
    end Edit_Command_Handler;
 
    ------------------
