@@ -9,6 +9,7 @@ with Gdk.GC;           use Gdk.GC;
 with Gdk.Main;         use Gdk.Main;
 with Gdk.Pixmap;
 with Gdk.Rectangle;    use Gdk.Rectangle;
+with Gdk.Region;       use Gdk.Region;
 with Gdk.Types;        use Gdk.Types;
 with Gdk.Window;       use Gdk.Window;
 with Gtk.Accel_Label;  use Gtk.Accel_Label;
@@ -120,6 +121,15 @@ package body Gtkada.MDI is
       return Gdk_Cursor_Type;
    --  Return the cursor to use depending on the coordinates (X, Y) inside
    --  child.
+
+   procedure Layout_Child
+     (Child : access MDI_Child_Record'Class;
+      Region : Gdk_Region := null);
+   --  Compute the coordinates for Child.
+   --  If Region is null, we could through the list of all children, and try
+   --  to position the child in an area where it doesn't overlap any child.
+   --  If Region is not null, we use this to check that the child doesn't
+   --  overlap any widget.
 
    function Delete_Child
      (Child : access Gtk_Widget_Record'Class;
@@ -249,17 +259,95 @@ package body Gtkada.MDI is
          Widget_Callback.To_Marshaller (Size_Allocate_MDI'Access));
    end Initialize;
 
+   ------------------
+   -- Layout_Child --
+   ------------------
+
+   procedure Layout_Child
+     (Child : access MDI_Child_Record'Class;
+      Region : Gdk_Region := null)
+   is
+      use Widget_List;
+      W : constant Gint := Gint (Get_Allocation_Width (Child.MDI));
+      H : constant Gint := Gint (Get_Allocation_Height (Child.MDI));
+      R : Gdk_Region;
+      List, Tmp : Widget_List.Glist;
+      X, Y : Gint;
+      Overlap : Gdk_Overlap_Type;
+      C : MDI_Child;
+   begin
+      --  If necessary, create the region with all the existing children
+      if Gdk.C_Proxy (Region) = null then
+         Gdk_New (R);
+         List := Children (Child.MDI);
+         Tmp := First (List);
+         while Tmp /= Null_List loop
+            C := MDI_Child (Get_Data (Tmp));
+            if MDI_Child (Child) /= C and then C.State /= Docked then
+               Union_With_Rect (R, R,
+                                (C.X, C.Y,
+                                 Guint (C.Uniconified_Width),
+                                 Guint (C.Uniconified_Height)));
+            end if;
+            Tmp := Next (Tmp);
+         end loop;
+         Free (List);
+      else
+         R := Region;
+      end if;
+
+      Y := 10;
+      Child.X := 11;
+      Child.Y := 11;
+      if Child.Uniconified_Width = 0
+        or else Child.Uniconified_Height = 0
+      then
+         while Child.X = 11 and then Y < H loop
+            X := 10;
+            while X < W loop
+               Overlap := Rect_In
+                 (R, (X, Y, Guint (Child.Uniconified_Width),
+                      Guint (Child.Uniconified_Height)));
+
+               --  Perfect, it doesn't overlap anything
+               if Overlap = Overlap_Rectangle_Out then
+                  Child.X := X;
+                  Child.Y := Y;
+                  exit;
+
+                  --  Else, this is a possible candidate
+               elsif Overlap = Overlap_Rectangle_Part
+                 and then Child.X = 11
+               then
+                  Child.X := X;
+                  Child.Y := Y;
+               end if;
+               X := X + 10;
+            end loop;
+            Y := Y + 10;
+         end loop;
+      end if;
+
+      Move (Child.MDI, Child, Child.X, Child.Y);
+
+      if Gdk.C_Proxy (Region) = null then
+         Destroy (R);
+      end if;
+   end Layout_Child;
+
    -------------------
    -- Realize_MDI --
    -------------------
 
    procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class) is
+      use Widget_List;
       M : MDI_Window := MDI_Window (MDI);
       Color : Gdk_Color;
       List : Widget_List.Glist := Children (M);
       Tmp : Widget_List.Glist := First (List);
       Child_Req : Gtk_Requisition;
       Child : MDI_Child;
+      Region : Gdk_Region := Null_Region;
    begin
       Gdk_New (M.GC, Get_Window (MDI));
       Color := Parse (Title_Bar_Color);
@@ -282,14 +370,25 @@ package body Gtkada.MDI is
       --  Initialize the size of all children.
       --  This couldn't be done earlier since the child would have requested
       --  a size of 0x0
+      Gdk_New (Region);
       while Tmp /= Null_List loop
          Child := MDI_Child (Get_Data (Tmp));
-         Size_Request (Child, Child_Req);
-         Child.Uniconified_Width := Child_Req.Width;
-         Child.Uniconified_Height := Child_Req.Height;
+         if Child.State /= Docked then
+            Size_Request (Child, Child_Req);
+            Child.Uniconified_Width := Child_Req.Width;
+            Child.Uniconified_Height := Child_Req.Height;
+            Layout_Child (Child, Region);
+         end if;
+
+         Union_With_Rect
+           (Region, Region,
+            (Child.X, Child.Y,
+             Guint (Child.Uniconified_Width),
+             Guint (Child.Uniconified_Height)));
          Tmp := Next (Tmp);
       end loop;
       Free (List);
+      Destroy (Region);
    end Realize_MDI;
 
    -----------------------
@@ -993,10 +1092,12 @@ package body Gtkada.MDI is
    -------------
 
    procedure Gtk_New (Child : out MDI_Child;
-                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
+                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+                      Is_Dock : Boolean := False;
+                      Side : Dock_Side := None) is
    begin
       Child := new MDI_Child_Record;
-      Initialize (Child, Widget);
+      Initialize (Child, Widget, Is_Dock, Side);
    end Gtk_New;
 
    ----------------
@@ -1004,7 +1105,9 @@ package body Gtkada.MDI is
    ----------------
 
    procedure Initialize (Child : access MDI_Child_Record;
-                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+                         Is_Dock : Boolean := False;
+                         Side : Dock_Side := None)
    is
       Button : Gtk_Button;
       Box, Box2 : Gtk_Box;
@@ -1014,6 +1117,13 @@ package body Gtkada.MDI is
    begin
       Gtk.Event_Box.Initialize (Child);
       Child.Initial := Gtk_Widget (Widget);
+
+      if Is_Dock then
+         Child.State := Docked;
+         Child.Dock := Side;
+      else
+         Child.State := Normal;
+      end if;
 
       Add_Events (Child, Button_Press_Mask
                   or Button_Motion_Mask
@@ -1046,7 +1156,11 @@ package body Gtkada.MDI is
 
       Gtk_New_Hbox (Box2, Homogeneous => False);
       Pack_Start (Box, Box2, Expand => False, Fill => False);
-      Set_Border_Width (Box, Border_Thickness);
+      if Is_Dock and then Side = None then
+         Set_Border_Width (Box, 0);
+      else
+         Set_Border_Width (Box, Border_Thickness);
+      end if;
       Set_USize (Box2, -1, Title_Bar_Height);
 
       Gdk.Pixmap.Create_From_Xpm_D
@@ -1059,15 +1173,17 @@ package body Gtkada.MDI is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Child'Access), Child);
 
-      Gdk.Pixmap.Create_From_Xpm_D
-        (Pix, null, Get_Default_Colormap, Mask, Null_Color, Maximize_Xpm);
-      Gtk_New (Pixmap, Pix, Mask);
-      Gtk_New (Button);
-      Add (Button, Pixmap);
-      Pack_End (Box2, Button, Expand => False, Fill => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Maximize_Child'Access), Child);
+      if not Is_Dock then
+         Gdk.Pixmap.Create_From_Xpm_D
+           (Pix, null, Get_Default_Colormap, Mask, Null_Color, Maximize_Xpm);
+         Gtk_New (Pixmap, Pix, Mask);
+         Gtk_New (Button);
+         Add (Button, Pixmap);
+         Pack_End (Box2, Button, Expand => False, Fill => False);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Maximize_Child'Access), Child);
+      end if;
 
       Gdk.Pixmap.Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Iconify_Xpm);
@@ -1097,7 +1213,7 @@ package body Gtkada.MDI is
    end Initialize;
 
    ---------
-   -- Add --
+   -- Put --
    ---------
 
    function Put
@@ -1107,9 +1223,13 @@ package body Gtkada.MDI is
    is
       C : MDI_Child;
    begin
-      Gtk_New (C, Child);
-      C.MDI := MDI_Window (MDI);
+      if Child.all in MDI_Child_Record'Class then
+         C := MDI_Child (Child);
+      else
+         Gtk_New (C, Child);
+      end if;
 
+      C.MDI := MDI_Window (MDI);
       C.X := 10;
       C.Y := 10;
 
@@ -1124,7 +1244,15 @@ package body Gtkada.MDI is
          Create_Menu_Entry (C);
       end if;
 
-      Activate_Child (C);
+      --  If MDI is not realized, then we don't need to do anything now,
+      --  this will be done automatically in Realize_MDI
+      if Realized_Is_Set (MDI) then
+         Layout_Child (C);
+      end if;
+
+      if C.State /= Docked then
+         Activate_Child (C);
+      end if;
       return C;
    end Put;
 
@@ -1775,18 +1903,12 @@ package body Gtkada.MDI is
          Set_Tab_Pos (Note, Pos_Bottom);
          Set_Show_Tabs (Note, False);
          Set_Show_Border (Note, False);
-         MDI.Docks (Side) := Put (MDI, Note);
-         MDI.Docks (Side).State := Docked;
-         MDI.Docks (Side).Dock := Side;
+         Gtk_New (MDI.Docks (Side), Note, Is_Dock => True, Side => Side);
+         Put (MDI, MDI.Docks (Side));
          Widget_Callback.Object_Connect
            (Note, "switch_page",
             Widget_Callback.To_Marshaller (Docked_Switch_Page'Access),
             MDI.Docks (Side), After => True);
-         Destroy (MDI.Docks (Side).Menu_Item);
-
-         if Side = None then
-            Set_Border_Width (Gtk_Box (Get_Child (MDI.Docks (Side))), 0);
-         end if;
       else
          Note := Gtk_Notebook (MDI.Docks (Side).Initial);
          Set_Show_Tabs (Note, True);
@@ -1811,7 +1933,9 @@ package body Gtkada.MDI is
       --  already in the list
       Ref (Child);
       Widget_List.Prepend (MDI.Invisible_Items, Gtk_Widget (Child));
-      Remove (MDI, Child);
+      if Get_Parent (Child) /= null then
+         Remove (MDI, Child);
+      end if;
 
       --  The size of the notebook will be reinitialized based on its new
       --  contents
@@ -1877,6 +2001,7 @@ package body Gtkada.MDI is
          Remove_From_Notebook (Child, S);
          Add (Gtk_Box (Get_Child (Child)), Child.Initial_Child);
          Unref (Child.Initial_Child);
+         Child.State := Normal;
 
          --  If all items are maximized, maximize this one tool, unless
          --  it was already maximized.

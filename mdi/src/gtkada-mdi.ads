@@ -17,6 +17,7 @@ with GNAT.OS_Lib;
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - Icons should be placed correctly when there are also docked items
+--  - Hide maximize button in docks
 
 package Gtkada.MDI is
 
@@ -82,6 +83,8 @@ package Gtkada.MDI is
    --
    --  Note: You might have to call Set_USize on Child to set its initial
    --  size. This won't prevent it from being resized by the user.
+   --
+   --  If Child is a MDI_Child, its location is recomputed automatically.
 
    procedure Set_Title (Child : access MDI_Child_Record; Title : String);
    --  Set the title for a child.
@@ -281,11 +284,17 @@ private
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;
-                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+                      Is_Dock : Boolean := False;
+                      Side : Dock_Side := None);
    --  Create a new MDI child that contains widget.
+   --  If Is_Dock is True, then the child is created as a dock on one of the
+   --  sides of MDI (on Side).
 
    procedure Initialize (Child : access MDI_Child_Record;
-                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+                         Is_Dock : Boolean := False;
+                         Side : Dock_Side := None);
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
