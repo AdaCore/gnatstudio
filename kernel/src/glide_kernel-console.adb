@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -23,6 +23,8 @@ with Glide_Page;        use Glide_Page;
 with Glide_Consoles;    use Glide_Consoles;
 with GVD.Process;       use GVD.Process;
 with GNAT.IO;           use GNAT.IO;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.Handlers;   use Gtkada.Handlers;
 
 package body Glide_Kernel.Console is
 
@@ -34,6 +36,10 @@ package body Glide_Kernel.Console is
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
    --  Called when the console has been destroyed.
+
+   function Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Prevent the destrution of the console in the MDI
 
    -----------------
    -- Get_Console --
@@ -102,6 +108,18 @@ package body Glide_Kernel.Console is
       end if;
    end Console_Destroyed;
 
+   --------------------------
+   -- Console_Delete_Event --
+   --------------------------
+
+   function Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Console);
+   begin
+      return True;
+   end Console_Delete_Event;
+
    ------------------------
    -- Initialize_Console --
    ------------------------
@@ -116,6 +134,9 @@ package body Glide_Kernel.Console is
            (Console, "destroy",
             Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
             Kernel_Handle (Kernel));
+         Return_Callback.Connect
+           (Console, "delete_event",
+            Return_Callback.To_Marshaller (Console_Delete_Event'Access));
       end if;
    end Initialize_Console;
 
