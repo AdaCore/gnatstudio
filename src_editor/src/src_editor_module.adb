@@ -3989,6 +3989,7 @@ package body Src_Editor_Module is
          Minimum_Args => 2,
          Maximum_Args => 3,
          Class        => Editor_Class,
+         Static_Method => True,
          Handler      => Edit_Command_Handler'Access);
 
       --  Register the search functions
