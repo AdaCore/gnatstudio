@@ -61,18 +61,20 @@ package body Language.Debugger.C is
    function Is_Simple_Type
      (Lang : access C_Language; Str : String) return Boolean is
    begin
-      return Str = "int"
-        or else Str = "unsigned int"
+      return    Str = "int"
         or else Str = "char"
         or else Str = "float"
         or else Str = "double"
         or else Str = "long"
+        or else Str = "short"
+
+         --  "unsigned int", "unsigned char"
+        or else (Str'Length >= 9
+                 and then Str (Str'First .. Str'First + 8) = "unsigned ")
 
          --  "long int", "long unsigned int"
         or else (Str'Length >= 5
                  and then Str (Str'First .. Str'First + 4) = "long ")
-
-        or else Str = "short"
 
          --  "short int", "short unsigned int"
         or else (Str'Length >= 6
