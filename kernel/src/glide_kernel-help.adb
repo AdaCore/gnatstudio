@@ -25,6 +25,7 @@ with Csc_HTML_Widget;           use Csc_HTML_Widget;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
@@ -39,18 +40,11 @@ package body Glide_Kernel.Help is
 
    Me : Debug_Handle := Create ("Glide_Kernel.Help");
 
-   Html_Module_Id : Module_ID;
-   Html_Module_Name : constant String := "Help_Viewer";
-
-   Default_Width  : constant := 400;
-   Default_Height : constant := 400;
-   --  <preferences>
-
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Current_Help_File : GNAT.OS_Lib.String_Access;
       --  The current help file displayed. Used to find relative (hyper) links.
 
-      Csc               : Csc_HTML;
+      Csc : Csc_HTML;
    end record;
    type Help_Browser is access all Help_Browser_Record'Class;
 
@@ -271,7 +265,10 @@ package body Glide_Kernel.Help is
       Set_Policy (Html, Policy_Automatic, Policy_Always);
       Gtk_New (Html.Csc);
       Add (Html, Html.Csc);
-      Set_Size_Request (Html, Default_Width, Default_Height);
+      Set_Size_Request
+        (Html,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
 
       Widget_Callback.Object_Connect
         (Html.Csc, "url_requested", Url_Requested'Access, Slot_Object => Html);
@@ -337,11 +334,12 @@ package body Glide_Kernel.Help is
       Regular        : Boolean := False) return Boolean
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Child : MDI_Child := Find_MDI_Child_By_Tag
+      Child    : MDI_Child := Find_MDI_Child_By_Tag
         (MDI, Help_Browser_Record'Tag);
       Scrolled : Help_Browser;
+
    begin
-      if Scrolled = null then
+      if Child = null then
          return False;
       end if;
 
@@ -364,7 +362,7 @@ package body Glide_Kernel.Help is
       Scrolled : Help_Browser;
 
    begin
-      if Scrolled = null then
+      if Child = null then
          return False;
       end if;
 
@@ -448,10 +446,12 @@ package body Glide_Kernel.Help is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Html_Module_Id := Register_Module
-        (Module_Name             => Html_Module_Name,
+      Help_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Help_Module_Name,
          Priority                => Default_Priority,
          Initializer             => null,
          Contextual_Menu_Handler => null,
