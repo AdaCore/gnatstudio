@@ -44,6 +44,7 @@ with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Container;              use Gtk.Container;
+with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
@@ -895,7 +896,7 @@ package body Src_Editor_Box is
          end if;
 
          Gtk_New (Box.Buffer_Info_Frames (J));
-         Set_Shadow_Type (Box.Buffer_Info_Frames (J), Shadow_In);
+         Set_Shadow_Type (Box.Buffer_Info_Frames (J), Shadow_None);
 
          Add (Box.Buffer_Info_Frames (J), Label);
 
@@ -1015,7 +1016,9 @@ package body Src_Editor_Box is
       Frame          : Gtk_Frame;
       Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
+      Drawing_Area   : Gtk_Drawing_Area;
       Data           : Editor_Tooltip_Data;
+      Hbox           : Gtk_Hbox;
 
    begin
       Glib.Object.Initialize (Box);
@@ -1024,13 +1027,21 @@ package body Src_Editor_Box is
 
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
 
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box.Root_Container, Hbox, Expand => True, Fill => True);
+
+      Gtk_New (Drawing_Area);
+      Hide_All (Drawing_Area);
+      Set_Size_Request (Drawing_Area, 10, -1);
+
+      Pack_Start (Hbox, Drawing_Area, Expand => False, Fill => True);
+
       Gtk_New (Scrolling_Area);
       Set_Policy
         (Scrolling_Area,
          H_Scrollbar_Policy => Policy_Automatic,
          V_Scrollbar_Policy => Policy_Automatic);
-      Pack_Start (Box.Root_Container, Scrolling_Area,
-                  Expand => True, Fill => True);
+      Pack_End (Hbox, Scrolling_Area, Expand => True, Fill => True);
 
       if Source = null then
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
@@ -1040,7 +1051,10 @@ package body Src_Editor_Box is
       end if;
 
       Ref (Box.Source_Buffer);
-      Gtk_New (Box.Source_View, Box.Source_Buffer, Kernel);
+      Gtk_New (Box.Source_View,
+               Scrolling_Area,
+               Drawing_Area,
+               Box.Source_Buffer, Kernel);
       Add (Scrolling_Area, Box.Source_View);
 
       Data.Box := Source_Editor_Box (Box);
@@ -1049,7 +1063,7 @@ package body Src_Editor_Box is
       --  The status bar, at the bottom of the window...
 
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_Etched_In);
       Pack_Start (Box.Root_Container, Frame, Expand => False, Fill => False);
 
       Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
@@ -1057,7 +1071,7 @@ package body Src_Editor_Box is
 
       --  Line:Column number area...
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
@@ -1084,14 +1098,14 @@ package body Src_Editor_Box is
 
       --  Modified file area...
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Modified_Label);
       Add (Frame, Box.Modified_Label);
 
       --  Read only file area...
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
@@ -1104,7 +1118,7 @@ package body Src_Editor_Box is
 
       --  Insert/Overwrite label
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
@@ -1119,7 +1133,7 @@ package body Src_Editor_Box is
 
       --  Filename area...
       Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
+      Set_Shadow_Type (Frame, Shadow_None);
       Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
       --  Gtk_New (Box.Filename_Label);
       --  ??? Commented out as not used for the moment.
