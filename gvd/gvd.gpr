@@ -1,15 +1,15 @@
 with "../gtkada/gtkada";
-with "gnat_gvd";
 with "gvd_common";
 with "../kernel/kernel";
 
 project GVD is
 
   for Source_Dirs use ("gvd");
-  for Object_Dir use "gvd";
+  for Object_Dir use "obj";
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use
+        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("advanced_breakpoint_pkg.adb") use ("-g", "-O2");
       for Switches ("breakpoints_pkg.adb") use ("-g", "-O2");
       for Switches ("general_preferences_pkg.adb") use ("-g", "-O2");
