@@ -1675,7 +1675,7 @@ package body Entities is
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
    begin
-      return Get_Time_Stamp (File) <= File.Timestamp;
+      return Get_Time_Stamp (File) /= File.Timestamp;
    end Is_Up_To_Date;
 
    ------------------------
