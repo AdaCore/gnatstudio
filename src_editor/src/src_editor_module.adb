@@ -1217,6 +1217,44 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "block_fold" then
+         declare
+            Filename    : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Line        : constant Integer := Nth_Arg (Data, 2);
+            Child       : MDI_Child;
+            Box         : Source_Box;
+         begin
+            Child := Find_Editor (Kernel, Filename);
+
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+               Src_Editor_Buffer.Line_Information.Fold_Block
+                 (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+            else
+               Set_Error_Msg (Data, -"file not found or not open");
+            end if;
+         end;
+
+      elsif Command = "block_unfold" then
+         declare
+            Filename    : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Line        : constant Integer := Nth_Arg (Data, 2);
+            Child       : MDI_Child;
+            Box         : Source_Box;
+         begin
+            Child := Find_Editor (Kernel, Filename);
+
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+               Src_Editor_Buffer.Line_Information.Unfold_Line
+                 (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+            else
+               Set_Error_Msg (Data, -"file not found or not open");
+            end if;
+         end;
+
       elsif Command = "set_background_color" then
          declare
             Filename    : constant Virtual_File :=
@@ -3460,6 +3498,28 @@ package body Src_Editor_Module is
            -("Remove blank lines located at mark."
              & " If number is specified, remove only the n first lines"),
          Minimum_Args => 1,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_fold",
+         Params       => "(file, line)",
+         Return_Value => "string",
+         Description  =>
+           -("Fold the block around line."),
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_unfold",
+         Params       => "(file, line)",
+         Return_Value => "string",
+         Description  =>
+           -("Unfold the block around line."),
+         Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
 
