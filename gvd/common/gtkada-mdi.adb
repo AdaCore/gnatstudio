@@ -2695,10 +2695,7 @@ package body Gtkada.MDI is
          Set_Show_Border (MDI.Docks (Side), False);
          Set_Border_Width (MDI.Docks (Side), 0);
 
-         --  ??? Do not use scrollable notebooks for now, since if the tabs are
-         --  hidden then some blank windows are displayed in the middle of
-         --  the screen with gtk+1.3.7.
-         --  Set_Scrollable (MDI.Docks (Side));
+         Set_Scrollable (MDI.Docks (Side));
 
          --  Coordinates don't matter, they are set in Size_Allocate_MDI.
 
