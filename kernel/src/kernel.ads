@@ -1,5 +1,4 @@
---  Dummy package to provide a main file to compile that contains no
---  dependencies
+--  Provide dependencies on the Prj hierarchy needed within Glide.
 
 pragma Warnings (Off);
 with Prj.Ext;
