@@ -838,6 +838,7 @@ package body Odd.Code_Editors is
             Expand_Explorer_Tree'Access, Editor);
 
          Set_Cell_Style (Editor.Explorer, 0, 0, Editor.File_Name_Style);
+         Set_Column_Auto_Resize (Editor.Explorer, 0, True);
 
          Show_All (Editor.Explorer);
          Add (Editor.Explorer_Scroll, Editor.Explorer);
