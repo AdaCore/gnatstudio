@@ -797,45 +797,32 @@ package body Debugger.Gdb.Ada is
 
                Set_Type_Name (G, Type_Str (Tmp_Index .. Index - 1));
 
-            elsif Tmp_Index + 6 <= Type_Str'Last
-              and then Type_Str (Tmp_Index .. Tmp_Index + 6) = "access "
-            then
-               G := New_Access_Type;
-               Set_Value (Item  => R.all, Value => G, Field => Fields);
-
-               --  Display the result of "whatis", so as to get a more
-               --  concise information
-
-               Set_Type_Name
-                 (G,
-                  Unknown_Type_Prefix
-                  & Record_Field_Name
-                    (Lang, Entity, Get_Field_Name (R.all, Fields).all)
-                  & ASCII.LF & Type_Str (Tmp_Index .. Index - 1));
-
             else
-               if (Tmp_Index + 5 <= Index - 1
-                     and then Type_Str (Tmp_Index .. Tmp_Index + 5) = "range ")
-                 or else
-                 (Tmp_Index + 3 <= Index - 1
-                    and then Type_Str (Tmp_Index .. Tmp_Index + 3) = "mod ")
-               then
-                  declare
-                     Result : Generic_Type_Access;
-                     J      : Natural := Tmp_Index;
-                  begin
-                     Parse_Type
-                       (Lang,
-                        Type_Str (Tmp_Index .. Index - 1),
-                        Type_Str (Tmp_Index .. Index - 1), J, Result);
-                     Set_Value (R.all, Result, Field => Fields);
-                  end;
-               else
-                  Set_Value (R.all,
-                             Parse_Type (Get_Debugger (Lang),
-                                         Type_Str (Tmp_Index .. Index - 1)),
-                             Field => Fields);
-               end if;
+               declare
+                  Result : Generic_Type_Access;
+                  J      : Natural := Tmp_Index;
+               begin
+                  --  First try to parse the type as if it was already the
+                  --  result of a "ptype" command. This happens for instance
+                  --  when gdb outputs the field type as being "mod 15;" or
+                  --  "access foo".
+                  Parse_Type
+                    (Lang,
+                     Type_Str (Tmp_Index .. Index - 1),
+                     Record_Field_Name
+                       (Lang, Entity, Get_Field_Name (R.all, Fields).all),
+                     J, Result);
+
+                  Set_Value (R.all, Result, Field => Fields);
+
+               exception
+                  when Unexpected_Type =>
+                     --  However, sometimes we actually need to do a ptype
+                     Set_Value (R.all,
+                                Parse_Type (Get_Debugger (Lang),
+                                            Type_Str (Tmp_Index .. Index - 1)),
+                                Field => Fields);
+               end;
             end if;
 
             Index := Index + 1;
