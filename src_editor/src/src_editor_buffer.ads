@@ -343,9 +343,10 @@ package Src_Editor_Buffer is
    procedure Redo (Buffer : access Source_Buffer_Record);
    --  Redo last undone command.
 
-   function Get_Queue
-     (Buffer : access Source_Buffer_Record) return Command_Queue;
-   --  Return the action queue associated to Buffer.
+   procedure Enqueue
+     (Buffer  : access Source_Buffer_Record;
+      Command : Command_Access);
+   --  Enqueue an action in the Buffer queue.
 
    function Get_Kernel
      (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
@@ -368,11 +369,13 @@ package Src_Editor_Buffer is
 
    function Check_Timestamp
      (Buffer : access Source_Buffer_Record;
-      Ask_User : Boolean := False) return Boolean;
+      Ask_User : Boolean := False;
+      Force    : Boolean := False) return Boolean;
    --  Check whether the timestamp changed on the disk. If yes, ask the user
    --  whether he really wants to edit (unless Ask_User is False). False is
    --  returned if the timestamp is more recent, and the user doesn't want to
    --  force the edition.
+   --  If Force, then the buffer will be updated in any case.
 
    procedure Ref (Buffer : access Source_Buffer_Record);
    --  Should be called every time that a view is showing Buffer.
@@ -397,6 +400,32 @@ package Src_Editor_Buffer is
    --  Disconnect the Undo/Redo buttons from the queue containing the buffer
    --  commands. This MUST be called every time that the Buffer.Queue
    --  pointer is modified and the controls actually refer to Queue.
+
+   -------------------
+   -- Buffer Status --
+   -------------------
+
+   type Status_Type is (Unmodified, Modified, Saved);
+
+   function Get_Status
+     (Buffer : access Source_Buffer_Record)
+      return Status_Type;
+   --  Return the status of the buffer.
+   --  Calculate the status from the queue position.
+
+   procedure Status_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "status_changed" signal.
+
+   function Get_Last_Status
+     (Buffer : access Source_Buffer_Record'Class)
+      return Status_Type;
+   --  Return the last calculated status.
+
+   procedure Set_Last_Status
+     (Buffer : access Source_Buffer_Record'Class;
+      Status : Status_Type);
+   --  Set the last calculated status.
 
    ----------------------
    -- Line Information --
@@ -506,6 +535,10 @@ package Src_Editor_Buffer is
    --    Emitted when the information in the side column has been
    --    changed.
    --
+   --  - "status_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the status of the buffer has been changed.
+   --
    --  </signals>
 private
    type Completion_Data is record
@@ -575,8 +608,14 @@ private
       Queue           : Command_Queue;
       --  Contains the queue of editor commands for this editor.
 
+      Saved_Position         : Integer := 0;
+      --  The saved position in the command queue.
+
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above.
+
+      Current_Status  : Status_Type := Unmodified;
+      --  The current buffer status.
 
       Timestamp      : Src_Info.Timestamp := 0;
       --  Timestamp of the file the last time it was checked. It it used to
