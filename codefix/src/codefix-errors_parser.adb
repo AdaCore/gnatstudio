@@ -1504,7 +1504,7 @@ package body Codefix.Errors_Parser is
                     Solution_Cursor,
                     Get_Message (Message)
                       (Matches (1).First .. Matches (1).Last)));
-         Get_Message (Errors_List, Current_Text, Preview);
+         Skip_Message (Errors_List);
       end loop;
    end Fix;
 
@@ -1553,7 +1553,8 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Get_Message (Errors_List, Current_Text, Preview);
+      Skip_Message (Errors_List);
+      Free (Preview);
 
       loop
          Get_Preview (Errors_List, Current_Text, Preview);
@@ -1593,7 +1594,9 @@ package body Codefix.Errors_Parser is
                     Solution_Cursor,
                     Get_Message (Message)
                       (Matches (1).First .. Matches (1).Last)));
-         Get_Message (Errors_List, Current_Text, Preview);
+
+         Free (Solution_Cursor);
+         Skip_Message (Errors_List);
       end loop;
    end Fix;
 
