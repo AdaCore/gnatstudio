@@ -709,7 +709,6 @@ package body Traces is
 
       if Default_Output /= Convert (Ada.Text_IO.Standard_Output) then
          Close (Default_Output.all);
-         Unchecked_Free (Default_Output);
       end if;
    end Finalize;
 
