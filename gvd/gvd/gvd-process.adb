@@ -1218,8 +1218,7 @@ package body GVD.Process is
 
       --  Create the canvas for this process tab.
 
-      Gtk_New (GVD_Canvas (Process.Data_Canvas),
-               Process.Window.Main_Accel_Group);
+      Gtk_New (GVD_Canvas (Process.Data_Canvas));
       Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
       Widget_Callback.Connect
@@ -1237,7 +1236,6 @@ package body GVD.Process is
       Show_Call_Stack_Columns (Process);
 
       --  Initialize the canvas
-      --  ??? Should pass the full font for annotations, not only for size.
 
       Configure
         (Process.Data_Canvas,
