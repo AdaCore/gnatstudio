@@ -40,9 +40,9 @@ package Prj_API is
    type Project_Node_Array_Access is access Project_Node_Array;
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
 
-   Ada_String : Types.String_Id;
-   C_String   : Types.String_Id;
-   Cpp_String : Types.String_Id;
+   Ada_String : Types.String_Id;    --  See also Snames.Name_Ada
+   C_String   : Types.String_Id;    --  See also Snames.Name_C
+   Cpp_String : Types.String_Id;    --  See also Snames.Name_Cpp
    --  Strings used for the various languages supported by Glide
 
    function Get_String (Str : Types.String_Id) return String;
@@ -185,6 +185,9 @@ package Prj_API is
    --  scenario. This effectively reverses to the default behavior for the
    --  attribute.
 
+   procedure Delete_Package (Project : Project_Node_Id; Pkg_Name : String);
+   --  Remove package and all its declarative items from Project.
+
    function Create_Variable_Reference (Var : Project_Node_Id)
       return Project_Node_Id;
    --  Create and return a reference to the variable Var.
@@ -298,7 +301,7 @@ package Prj_API is
    procedure Get_Switches
      (Project          : Project_Id;
       In_Pkg           : String;
-      File             : Types.Name_Id;
+      File             : String;
       Language         : Types.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean);

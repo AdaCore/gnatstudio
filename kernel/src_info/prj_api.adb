@@ -297,6 +297,39 @@ package body Prj_API is
       Set_First_Literal_String (Typ, S2);
    end Add_Possible_Value;
 
+   --------------------
+   -- Delete_Package --
+   --------------------
+
+   procedure Delete_Package (Project : Project_Node_Id; Pkg_Name : String) is
+      Node, Next : Project_Node_Id;
+      Current : Project_Node_Id := Empty_Node;
+   begin
+      --  Remove the package from the list
+      Node := First_Package_Of (Project);
+      if Get_Name_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
+         Current := First_Package_Of (Project);
+         Set_First_Package_Of (Project, Next_Package_In_Project (Node));
+      else
+         loop
+            Next := Next_Package_In_Project (Node);
+            exit when Next = Empty_Node;
+
+            if Get_Name_String (Prj.Tree.Name_Of (Next)) = Pkg_Name then
+               Current := Next;
+               Set_Next_Package_In_Project
+                 (Node, Next_Package_In_Project (Next));
+            end if;
+            Node := Next;
+         end loop;
+      end if;
+
+      --  Remove the declaration from the list of decl. items
+      if Current /= Empty_Node then
+         Remove_Node (Project, Current);
+      end if;
+   end Delete_Package;
+
    ---------------------------
    -- Get_Or_Create_Package --
    ---------------------------
@@ -691,7 +724,7 @@ package body Prj_API is
    procedure Get_Switches
      (Project          : Project_Id;
       In_Pkg           : String;
-      File             : Name_Id;
+      File             : String;
       Language         : Types.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean)
@@ -716,12 +749,14 @@ package body Prj_API is
          In_Packages => Projects.Table (Project).Decl.Packages);
 
       --  Do we have some file-specific switches ?
-      if Pkg /= No_Package and then File /= No_Name then
+      if Pkg /= No_Package and then File /= "" then
          The_Array := Value_Of
              (Name      => Switches,
               In_Arrays => Packages.Table (Pkg).Decl.Arrays);
+         Name_Len := File'Length;
+         Name_Buffer (1 .. Name_Len) := File;
          Var_Value := Value_Of
-             (Index    => File,
+             (Index    => Name_Find,
               In_Array => The_Array);
 
          if Var_Value /= Nil_Variable_Value then
