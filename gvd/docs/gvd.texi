@@ -1175,7 +1175,7 @@ aspect of GVD. They also permit, through the use of the @code{--tty} command
 line option, a better integration of GVD into other integrated environments
 and editors like GNU Emacs.
 
-Here is the complete lists of such commands. The arguments between square
+Here is the complete list of such commands. The arguments between square
 brackets are optional and can be omitted.
 
 @table @b
