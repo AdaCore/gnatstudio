@@ -25,6 +25,7 @@ with Diff_Utils2; use Diff_Utils2;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Glide_Kernel;
 with VFS;         use VFS;
+with Traces;      use Traces;
 
 package Vdiff2_Module.Utils is
 
@@ -58,14 +59,6 @@ package Vdiff2_Module.Utils is
       Item   : Diff_Head);
    --  Remove the hightlighting of all file of Diff
 
-   procedure Goto_Difference
-     (Kernel : Kernel_Handle;
-      Link   : Diff_Chunk_Access);
-
-   procedure Register_Highlighting
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register color preferences
-
    procedure Unhighlight_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
@@ -94,8 +87,8 @@ package Vdiff2_Module.Utils is
      (Kernel       : Kernel_Handle;
       Source_File  : Virtual_File;
       Dest_File    : Virtual_File;
-      Source_Range : Diff_Range;
-      Dest_Range   : Diff_Range := Null_Range);
+      Source_Range : in out Diff_Range;
+      Dest_Range   : in out Diff_Range);
    --  Copy the text in the range Source_Range to Dest_Range in Dest_File
 
 
@@ -126,4 +119,16 @@ package Vdiff2_Module.Utils is
    --  Free the memory associated to a Text_Iterator_Access, and all next
    --  objects linked to this one.
 
+private
+
+   Me                   : constant Debug_Handle := Create ("VDiff2_Utils");
+   Default_Style        : constant String       := "Default_diff";
+   Old_Style            : constant String       := "Old_diff";
+   Append_Style         : constant String       := "Append_diff";
+   Remove_Style         : constant String       := "Remove_diff";
+   Change_Style         : constant String       := "Change_diff";
+   Fine_Change_Style    : constant String       := "Fine_Change_diff";
+   Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
+   Enable_Fine_Diff     : Boolean := True;
+   --  ??? Should not use a global variable
 end Vdiff2_Module.Utils;

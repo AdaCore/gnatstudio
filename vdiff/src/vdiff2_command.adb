@@ -17,16 +17,17 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
-with Glide_Intl;           use Glide_Intl;
-with Basic_Types;          use Basic_Types;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Diff_Utils2;          use Diff_Utils2;
-with Vdiff2_Module.Utils;  use Vdiff2_Module.Utils;
-with Traces;               use Traces;
-with VFS;                  use VFS;
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
+with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;              use Glide_Kernel.Scripts;
+with Glide_Intl;                        use Glide_Intl;
+with Basic_Types;                       use Basic_Types;
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with Diff_Utils2;                       use Diff_Utils2;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
+with Traces;                            use Traces;
+with VFS;                               use VFS;
 
 package body Vdiff2_Command is
 

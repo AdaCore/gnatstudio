@@ -18,31 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
+with Glib;                              use Glib;
+with Glib.Object;                       use Glib.Object;
+with Glib.Values;                       use Glib.Values;
 
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtk.Window;                use Gtk.Window;
+with Gtkada.File_Selector;              use Gtkada.File_Selector;
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
+with Gtk.Window;                        use Gtk.Window;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel;                      use Glide_Kernel;
+with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;          use Glide_Kernel.Preferences;
+with Glide_Intl;                        use Glide_Intl;
 
-with Traces;                    use Traces;
-with Commands;                  use Commands;
+with Traces;                            use Traces;
+with Commands;                          use Commands;
 
-with Diff_Utils2;               use Diff_Utils2;
-with Vdiff2_Command;            use Vdiff2_Command;
-with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
+with Diff_Utils2;                       use Diff_Utils2;
+with Vdiff2_Command;                    use Vdiff2_Command;
+with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
+with OS_Utils;                          use OS_Utils;
+with VFS;                               use VFS;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with OS_Utils;                  use OS_Utils;
-with VFS;                       use VFS;
-
-with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Exceptions;                    use Ada.Exceptions;
 
 
 package body Vdiff2_Module.Callback is

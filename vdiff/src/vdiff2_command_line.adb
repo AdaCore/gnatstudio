@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Diff_Utils2;          use Diff_Utils2;
 with Vdiff2_Module.Utils;  use Vdiff2_Module.Utils;
 with Text_IO;              use Text_IO;
@@ -164,6 +165,7 @@ package body Vdiff2_Command_Line is
       VRange   : T_VRange;
       Num_File : T_Loc := 0;
       pragma Unreferenced (Line);
+
    begin
       VRange (1) := Data (Diff.Current_Node).Range1;
       VRange (2) := Data (Diff.Current_Node).Range2;
@@ -185,7 +187,19 @@ package body Vdiff2_Command_Line is
 
       Move_Block (Kernel, VFile (Num_File), VFile (Diff.Ref_File),
                   VRange (Num_File), VRange (Diff.Ref_File));
+
+      declare
+         Info           : Line_Information_Data :=
+           new Line_Information_Array
+             (VRange (Num_File).First .. VRange (Num_File).First);
+         Null_Line_Info : Line_Information_Record;
+
+      begin
+         Info (Info'First) := Null_Line_Info;
+         Add_Line_Information
+           (Kernel, File, "Vdiff2_Col_Merge",
+            Info);
+      end;
    end Move_On_Ref_File;
 
 end Vdiff2_Command_Line;
-
