@@ -493,18 +493,23 @@ package Glide_Kernel is
    -- Signal emission --
    ---------------------
 
-   package Object_User_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Glib.Object.GObject);
+   procedure Setup (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id);
+   --  Make sure that when Data is destroyed, Id is properly removed
+
+   package Object_User_Callback is new Gtk.Handlers.User_Callback_With_Setup
+     (Glib.Object.GObject_Record, Glib.Object.Gobject, Setup);
    --  Generic callback that can be used to connect a signal to a kernel.
 
    package Object_Return_Callback is new Gtk.Handlers.Return_Callback
      (Glib.Object.GObject_Record, Boolean);
    --  Generic callback that can be used to connect a signal to a kernel.
 
-   package Object_User_Return_Callback is new Gtk.Handlers.User_Return_Callback
+   package Object_User_Return_Callback
+     is new Gtk.Handlers.User_Return_Callback_With_Setup
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Glib.Object.GObject,
-      Return_Type => Boolean);
+      Return_Type => Boolean,
+      Setup       => Setup);
    --  Generic callback that can be used to connect a signal to a kernel.
 
    package Kernel_Callback is new Gtk.Handlers.User_Callback

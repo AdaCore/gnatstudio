@@ -269,6 +269,16 @@ package body Glide_Kernel is
       return Result;
    end Get_Predefined_Source_Files;
 
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup
+     (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id) is
+   begin
+      Add_Watch (Id, Data);
+   end Setup;
+
    ----------------
    -- Save_Child --
    ----------------
