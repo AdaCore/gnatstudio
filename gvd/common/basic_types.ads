@@ -58,6 +58,9 @@ package Basic_Types is
    function To_Unchecked_String is new Ada.Unchecked_Conversion
      (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Unchecked_String, Unchecked_String_Access);
+
    type Position_Type is new Natural;
    --  Indicates the position in a file.
    --  Note that these positions are relative to the real contents of the
