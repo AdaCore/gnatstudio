@@ -54,7 +54,7 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message) return Solution_List
    is
       Current_Node : Parser_List.List_Node;
-      Success      : Boolean;
+      Success      : Boolean := False;
       Solutions    : Solution_List := Extract_List.Null_List;
 
    begin
@@ -68,9 +68,8 @@ package body Codefix.Errors_Parser is
                Message,
                Solutions,
                Success);
-            Current_Node := Next (Current_Node);
          end if;
-
+         Current_Node := Next (Current_Node);
          exit when Success;
       end loop;
 
@@ -1140,6 +1139,7 @@ package body Codefix.Errors_Parser is
    end Fix;
 
 begin
+
    Add_Parser (new Agregate_Misspelling);
    Add_Parser (new Double_Misspelling);
    Add_Parser (new Ligth_Misspelling);
