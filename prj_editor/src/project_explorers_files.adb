@@ -60,6 +60,7 @@ with Project_Explorers;        use Project_Explorers;
 with Prj_API;                  use Prj_API;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
+with File_Utils;               use File_Utils;
 with Traces;                   use Traces;
 
 package body Project_Explorers_Files is
@@ -525,8 +526,13 @@ package body Project_Explorers_Files is
          Push_State (D.Explorer.Kernel, Busy);
       end if;
 
-      Sort (D.Dirs);
-      Sort (D.Files);
+      if Filenames_Are_Case_Sensitive then
+         Sort (D.Dirs);
+         Sort (D.Files);
+      else
+         Sort_Case_Insensitive (D.Dirs);
+         Sort_Case_Insensitive (D.Files);
+      end if;
 
       while not Is_Empty (D.Dirs) loop
          declare
