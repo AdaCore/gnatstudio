@@ -17,7 +17,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001, ACT-Europe.
+Copyright @copyright{} 2001-2002, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -37,7 +37,7 @@ Version @value{GlideVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001, ACT-Europe.
+Copyright @copyright{} 2001-2002, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
