@@ -367,7 +367,7 @@ package body Builder_Module is
                   end if;
                else
                   K := K + 1;
-                  R_Tmp (K) := new String'(Full_Name (File).all);
+                  R_Tmp (K) := new String'(Base_Name (File));
                end if;
 
                Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
@@ -651,7 +651,7 @@ package body Builder_Module is
                         In_Pkg   => Builder_Package,
                         Index    => Ada_String,
                         Use_Initial_Value => True)
-                       & new String'(Full_Name (F).all));
+                       & new String'(Base_Name (F)));
                else
                   Args := Compute_Arguments (Kernel, Syntax, Prj, "", F);
                end if;
