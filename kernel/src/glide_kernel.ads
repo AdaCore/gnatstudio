@@ -46,6 +46,7 @@ with Ada.Unchecked_Conversion;
 with Default_Preferences;
 with Histories;
 with Projects.Registry;
+with Task_Manager;
 
 package Glide_Kernel is
 
@@ -540,7 +541,7 @@ package Glide_Kernel is
    --  Make sure that when Data is destroyed, Id is properly removed
 
    package Object_User_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Glib.Object.GObject_Record, Glib.Object.Gobject, Setup);
+     (Glib.Object.GObject_Record, Glib.Object.GObject, Setup);
    --  Generic callback that can be used to connect a signal to a kernel.
 
    package Object_Return_Callback is new Gtk.Handlers.Return_Callback
@@ -843,6 +844,9 @@ private
 
       History : Histories.History;
       --  The various histories used throughout GPS
+
+      Tasks : Task_Manager.Task_Manager_Access;
+      --  The GPS task manager.
    end record;
 
 end Glide_Kernel;
