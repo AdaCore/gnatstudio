@@ -161,7 +161,7 @@ package Glide_Kernel.Scripts is
    Invalid_Data : exception;
 
    function New_Instance
-     (Data : Callback_Data; Class : Class_Type)
+     (Script : access Scripting_Language_Record; Class : Class_Type)
       return Class_Instance is abstract;
    --  Create a new instance of the class.
    --  No data is stored in the object.
@@ -288,7 +288,8 @@ package Glide_Kernel.Scripts is
    -- Commands and methods --
    --------------------------
 
-   GPS_Shell_Name : constant String := "GPS Shell";
+   GPS_Shell_Name : constant String := "GPSShell";
+   Constructor_Method : constant String;
 
    procedure Initialize
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -305,8 +306,8 @@ package Glide_Kernel.Scripts is
       Command      : String;
       Usage        : String;
       Description  : String;
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
+      Minimum_Args : Natural    := 0;
+      Maximum_Args : Natural    := 0;
       Handler      : Module_Command_Function;
       Class        : Class_Type := No_Class);
    --  Add a new function to all currently registered script languages.
@@ -318,6 +319,24 @@ package Glide_Kernel.Scripts is
    --  is not object oriented. This first parameter must not be counted in
    --  Minimum_args and Maximum_Args
    --  Otherwise, it creates a global function in the script language.
+   --
+   --  If Command is Constructor_Method, then the function is setup as the
+   --  constructor for Class, which must not be No_Class. For compatibility
+   --  with the greater number of languages, only one such constructor can be
+   --  defined per class.
+   --  A constructor receives an already built instance of the object, and
+   --  should initialize the fields. Its first parameter is the instance, the
+   --  second, third,... are the parameters passed to the constructor.
+   --  The constructor shouldn't return any value through Set_Return_Value.
+   --
+   --  Usage should not include the command name, since the latter might be
+   --  marshalled differently depending on the script language.
+   --  Its recommended format is of the form:
+   --      "(file, [line=1]) -> List"
+   --  to indicate a function whose first parameter is a file, the second
+   --  parameter is optional and has a default value of 1. The function returns
+   --  a list (when supported by the language), or a string (when lists are not
+   --  supported).
 
    procedure Register_Scripting_Language
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -410,6 +429,8 @@ package Glide_Kernel.Scripts is
 
 
 private
+   Constructor_Method : constant String := "<@constructor@>";
+
    type Class_Type is record
       Name : GNAT.OS_Lib.String_Access;
    end record;

@@ -126,7 +126,7 @@ package body Glide_Kernel.Scripts is
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       while Tmp /= null loop
-         if Get_Name (Tmp.Script) = Name then
+         if Case_Insensitive_Equal (Get_Name (Tmp.Script), Name) then
             return Tmp.Script;
          end if;
 
@@ -427,13 +427,14 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Name   : constant String  := Nth_Arg (Data, 1);
-      File   : constant String  := Nth_Arg (Data, 2);
-      L      : constant Integer := Nth_Arg (Data, 3, Default => 1);
-      C      : constant Integer := Nth_Arg (Data, 4, Default => 1);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+      Name   : constant String  := Nth_Arg (Data, 2);
+      File   : constant String  := Nth_Arg (Data, 3);
+      L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
+      C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
       Status : Find_Decl_Or_Body_Query_Status;
       Entity : Entity_Information;
-      Instance : Class_Instance;
       Lib_Info : LI_File_Ptr;
    begin
       Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
@@ -455,10 +456,8 @@ package body Glide_Kernel.Scripts is
       if Status /= Success and then Status /= Fuzzy_Match then
          Set_Error_Msg (Data, -"Entity not found");
       else
-         Instance := New_Instance (Data, Get_Entity_Class (Kernel));
          Set_Data (Instance, Entity);
          Destroy (Entity);
-         Set_Return_Value (Data, Instance);
       end if;
    end Create_Entity_Command_Handler;
 
@@ -471,14 +470,13 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Name     : constant String := Nth_Arg (Data, 1);
-      Instance : constant Class_Instance := New_Instance
-        (Data, Get_File_Class (Kernel));
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      Name     : constant String := Nth_Arg (Data, 2);
       Info     : File_Info := (Name => new String'(Name));
    begin
       Set_Data (Instance, Info);
       Free (Info);
-      Set_Return_Value (Data, Instance);
    end Create_File_Command_Handler;
 
    ------------------------------------
@@ -490,17 +488,16 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Name     : constant String := Nth_Arg (Data, 1);
-      Instance : Class_Instance;
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Name     : constant String := Nth_Arg (Data, 2);
       Project  : constant Project_Type := Get_Project_From_Name
         (Project_Registry (Get_Registry (Kernel)), Get_String (Name));
    begin
       if Project = No_Project then
          Set_Error_Msg (Data, -"No such project: " & Name);
       else
-         Instance := New_Instance (Data, Get_Project_Class (Kernel));
          Set_Data (Instance, Project);
-         Set_Return_Value (Data, Instance);
       end if;
    end Create_Project_Command_Handler;
 
@@ -524,7 +521,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "insmod",
-         Usage        => "insmod (shared-lib, module) -> None",
+         Usage        => "(shared-lib, module) -> None",
          Description  => -"Dynamically register from shared-lib a new module.",
          Minimum_Args => 2,
          Maximum_Args => 2,
@@ -533,7 +530,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "lsmod",
-         Usage        => "lsmod () -> list of modules",
+         Usage        => "() -> list of modules",
          Description  => -"List modules currently loaded.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -541,31 +538,34 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => "get_entity",
+         Command      => Constructor_Method,
          Usage        =>
-           "get_entity (entity_name, file_name, [line], [column]) -> Entity",
+           "(entity_name, file_name, [line], [column]) -> entity",
          Description  =>
            -"Create a new entity, from any of its references.",
          Minimum_Args => 2,
          Maximum_Args => 4,
-         Handler      => Create_Entity_Command_Handler'Access);
+         Class        => Get_Entity_Class (Kernel),
+         Handler        => Create_Entity_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_file",
-         Usage        => "get_file (file_name) -> File",
+         Command      => Constructor_Method,
+         Usage        => "(file_name) -> file",
          Description  => -"Create a new file, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_project",
-         Usage        => "get_project (name) -> Project",
+         Command      => Constructor_Method,
+         Usage        => "(name) -> project",
          Description  => -"Create a project handle, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
