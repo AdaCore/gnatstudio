@@ -366,11 +366,11 @@ package body Debugger is
          Process_Post_Processes (Get_Process (Process.Debugger));
 
          if Is_Context_Command
-           (Process.Debugger, Process.Running_Command.all)
+           (Process.Debugger, Process.Current_Command.all)
          then
             Context_Changed (Process);
          elsif Is_Execution_Command
-           (Process.Debugger, Process.Running_Command.all)
+           (Process.Debugger, Process.Current_Command.all)
          then
             Process_Stopped (Process);
          end if;
@@ -379,8 +379,8 @@ package body Debugger is
            (Process,
             Force =>
               Is_Break_Command
-                (Process.Debugger, Process.Running_Command.all));
-         Free (Process.Running_Command);
+                (Process.Debugger, Process.Current_Command.all));
+         Free (Process.Current_Command);
       end if;
    end Output_Available;
 
@@ -408,10 +408,14 @@ package body Debugger is
 
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
-      --  Display the command in the output window if necessary
+      if Debugger.Window /= null then
+         Send_Init (Process);
 
-      if Mode = Visible and then Debugger.Window /= null then
-         Text_Output_Handler (Process, Cmd & ASCII.LF, True);
+         --  Display the command in the output window if necessary
+
+         if Mode = Visible then
+            Output_Text (Process, Cmd & ASCII.LF, True);
+         end if;
       end if;
 
       --  Append the command to the history if necessary
@@ -544,7 +548,7 @@ package body Debugger is
 
                elsif Wait_For_Prompt then
                   Process := Convert (Debugger.Window, Debugger);
-                  Process.Running_Command := new String'
+                  Process.Current_Command := new String'
                     (Cmd (First .. Last - 1));
                   Process.Input_Id := My_Input.Add
                     (To_Gint
