@@ -117,8 +117,8 @@ package body Glide_Result_View is
      (View     : access Result_View_Record'Class;
       Category : String;
       File     : String;
-      Line     : Integer;
-      Column   : Integer;
+      Line     : Positive;
+      Column   : Positive;
       Message  : String);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
@@ -434,8 +434,8 @@ package body Glide_Result_View is
      (View     : access Result_View_Record'Class;
       Category : String;
       File     : String;
-      Line     : Integer;
-      Column   : Integer;
+      Line     : Positive;
+      Column   : Positive;
       Message  : String)
    is
       Category_Iter    : Gtk_Tree_Iter;
@@ -613,8 +613,8 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Source_File   : String;
-      Source_Line   : Natural;
-      Source_Column : Natural;
+      Source_Line   : Positive;
+      Source_Column : Positive;
       Message       : String;
       Length        : Natural)
    is
