@@ -117,7 +117,7 @@ package VCS_View_API is
    --  Convenience function to get the current VCS system.
    --  If the creator of the current context is the VCS module, then
    --  the Ref will be obtained from the VCS Explorer, otherwise it
-   --  will be obtained from the
+   --  will be obtained from the ???
 
    procedure Query_Status_For_Project
      (Widget : access GObject_Record'Class;
@@ -128,6 +128,26 @@ package VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Update all files in the project
+
+   procedure Query_Status_For_Directory
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  List all files in the current directory
+
+   procedure Update_Directory
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Update all files in the current directory
+
+   procedure Query_Status_For_Directory_Recursive
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  List all files in the current directory and its subdirectories
+
+   procedure Update_Directory_Recursive
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Update all files in the current directory and its subdirectories
 
    function Context_Factory
      (Kernel : access Kernel_Handle_Record'Class;
