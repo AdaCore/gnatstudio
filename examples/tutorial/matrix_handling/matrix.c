@@ -2,8 +2,8 @@
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
+ *   the Free Software Foundation; either version 2 of the License, or,    *
+ *   at your option, any later version.                                    *
  *                                                                         *
  ***************************************************************************/
 //
@@ -44,11 +44,11 @@ Matrix *matrixAllocAll (int rows, int columns, int identity)
 
   retval->rows = rows;
   retval->columns = columns;
-  retval->value = (float * *) malloc (sizeof (double*)*rows);
+  retval->value = (int * *) malloc (sizeof (int*)*rows);
 
   while (--row >= 0)
     {
-      retval->value[row] = (float *) calloc (columns, sizeof (double));
+      retval->value[row] = (int *) calloc (columns, sizeof (int));
       retval->value[row][row] = identity;
     }
 
@@ -77,7 +77,7 @@ Matrix *matrixAlloc(short rows, short columns)
 * matrixSet *
 ************/
 
-void matrixSet (Matrix *matrix, int row, int column, float value)
+void matrixSet (Matrix *matrix, int row, int column, int value)
 {
   if (column < matrix->columns && row < matrix->rows)
     matrix->value [row][column] = value;
@@ -87,10 +87,11 @@ void matrixSet (Matrix *matrix, int row, int column, float value)
 * matrixGet *
 ************/
 
-float matrixGet (const Matrix *matrix, int row, int column)
+int matrixGet (const Matrix *matrix, int row, int column)
 {
   if (column < matrix->columns && row < matrix->rows)
-    return matrix->value[row][column];
+    return matrix -> value [row][column];
+
   return 0;
 }
 
@@ -105,10 +106,10 @@ Matrix *matrixMul (const Matrix *a, const Matrix *b)
 
   if (a->columns != b->rows && a->rows > b->rows)
     {
-const Matrix *tmp;
- tmp = a;
-a = b;
-  b = tmp;
+      const Matrix *tmp;
+      tmp = a;
+      a = b;
+      b = tmp;
     }
 
   if (a->columns != b->rows)
@@ -119,15 +120,15 @@ a = b;
   for (; column < b->columns; column++)
     {
       for (row = 0; row < a->rows; row++)
-	{
-	  double val = 0;
-	  for (c = 0; c < a->columns; c++)
-	    {
-	      val += matrixGet (a, row, c) * matrixGet (b, c, column);
-	    }
+        {
+          double val = 0;
+          for (c = 0; c < a->columns; c++)
+            {
+              val += matrixGet (a, row, c) * matrixGet (b, c, column);
+            }
 
-	  matrixSet (retval, row, column, val);
-	}
+          matrixSet (retval, row, column, val);
+        }
     }
   return retval;
 }
@@ -138,23 +139,28 @@ a = b;
 
 Matrix *matrixAdd (const Matrix *a, const Matrix *b)
 {
-  Matrix *retval;
+  Matrix *result;
   int column = a->columns, row = a->rows;
+
   if (a->columns != b->columns && a->rows != b->rows)
     return NULL;
 
-  retval = matrixAlloc (a->rows, a->columns);
+  result = matrixAlloc (a->rows, a->columns);
 
-  while (--row >= 0)
+  /* cycle through all rows */
+  for (row = 0 ; row < a->rows ; row++)
     {
-      column = a->columns;
-      while (--column >= 0)
-	matrixSet
-          (retval, row, column,
-	   matrixGet (a, row, column) + matrixGet (b, row, column));
+      /* cycle through all columns */
+      for (column = 0 ; column < a->columns ; column++)
+        {
+          int val_1 = matrixGet (a, row, column);
+          int val_2 = matrixGet (b, row, column);
+
+          matrixSet (result, row, column, val_1 / val_2);
+        }
     }
 
-  return retval;
+  return result;
 }
 
 /*************
@@ -172,8 +178,8 @@ Matrix *matrixCopy (const Matrix *matrix)
     {
       column = matrix->columns;
       while (--column >= 0)
-	  matrixSet (retval, row, column,
-	      matrixGet (matrix, row, column));
+        matrixSet (retval, row, column,
+                   matrixGet (matrix, row, column));
     }
 
   return retval;
