@@ -3702,7 +3702,9 @@ package body Src_Info.CPP is
             end if;
 
             if Our_Ref
-              and then Fu_To_Handlers (Ref.Referred_Symbol) /= null
+               and then Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+                  = Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
+               and then Fu_To_Handlers (Ref.Referred_Symbol) /= null
             then
                Fu_To_Handlers (Ref.Referred_Symbol)
                  (Ref, Handler, File, List, Project_View, Module_Type_Defs);
