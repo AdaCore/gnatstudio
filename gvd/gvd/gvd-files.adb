@@ -154,12 +154,26 @@ package body GVD.Files is
          --  and strip the ^Ms from the string
          declare
             S : String (1 .. Length);
+            Pos : Natural;
          begin
             Length := Read (F, S'Address, Length);
 
             Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
 
-            if Get_Pref (Should_Strip_CR) then
+            --  Check whether we should do an automatic strip (since GtkText is somewhat
+            --  unreliable and will sometimes put LF, sometimes CR & LF)
+            if not Cache.CR_Stripped then
+               Pos := S'First;
+               while Pos <= S'Last
+                 and then S (Pos) /= ASCII.CR
+                 and then S (Pos) /= ASCII.LF
+               loop
+                  Pos := Pos + 1;
+               end loop;
+               Cache.CR_Stripped := Pos <= S'Last and then S (Pos) = ASCII.CR;
+            end if;
+
+            if Cache.CR_Stripped then
                Contents := new String' (Strip_CR (S));
             else
                Contents := new String' (S);
