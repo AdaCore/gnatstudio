@@ -20,6 +20,7 @@
 
 with OS_Utils;                use OS_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;
 
 package body String_Utils is
@@ -649,5 +650,70 @@ package body String_Utils is
 
       return S (S_First .. S_Last);
    end Strip_Quotes;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (N : Natural) return String is
+   begin
+      return Image (Gint (N));
+   end Image;
+
+   function Image (N : Gint) return String is
+   begin
+      return Ada.Strings.Fixed.Trim (Gint'Image (N), Ada.Strings.Left);
+   end Image;
+
+   function Image (N : Natural; Length : Positive) return String is
+   begin
+      return Image (Gint (N), Length);
+   end Image;
+
+   function Image (N : Gint; Length : Positive) return String is
+      Pad         : constant Character := ' ';
+      Small_Image : constant String := Image (N);
+
+   begin
+      if Small_Image'Length >= Length then
+         return Small_Image;
+      else
+         declare
+            Padded_Image : String (1 .. Length);
+         begin
+            for Index in 1 .. Length - Small_Image'Length loop
+               Padded_Image (Index) := Pad;
+            end loop;
+
+            Padded_Image
+              (Length - Small_Image'Length + 1 ..  Length) :=
+              Small_Image;
+
+            return Padded_Image;
+         end;
+      end if;
+   end Image;
+
+   ----------------------
+   -- Number_Of_Digits --
+   ----------------------
+
+   function Number_Of_Digits (N : Natural) return Natural is
+   begin
+      case N is
+         when 0 .. 9 =>
+            return 1;
+         when 10 .. 99 =>
+            return 2;
+         when 100 .. 999 =>
+            return 3;
+         when 1_000 .. 9_999 =>
+            return 4;
+         when 10_000 .. 99_999 =>
+            return 5;
+         when others =>
+            return Image (Gint (N))'Length;
+      end case;
+   end Number_Of_Digits;
 
 end String_Utils;
