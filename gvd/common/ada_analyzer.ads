@@ -14,6 +14,24 @@ package Source_Analyzer is
       --  Column number for this entity
    end record;
 
+   type Indent_Parameters is record
+      Indent_Level    : Natural;
+      Indent_Continue : Natural;
+      Indent_Decl     : Natural;
+      Indent_Return   : Natural;
+   end record;
+   --  Indent_Level    is the number of spaces when indenting a block.
+   --  Indent_Continue is the number of spaces for a continuation line.
+   --  Indent_Decl     is the number of extra spaces for variables declaration.
+   --  Indent_Return   is the number of extra spaces for the return line in a
+   --                  function declaration.
+
+   Default_Indent_Parameters : constant Indent_Parameters :=
+     (Indent_Level    => 3,
+      Indent_Continue => 2,
+      Indent_Decl     => 0,
+      Indent_Return   => 0);
+
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
@@ -48,16 +66,11 @@ package Source_Analyzer is
 
    procedure Format_Ada
      (Buffer           : String;
-      Indent_Level     : Natural     := 3;
-      Indent_Continue  : Natural     := 2;
-      Indent_Decl      : Natural     := 0;
-      Reserved_Casing  : Casing_Type := Lower;
-      Ident_Casing     : Casing_Type := Mixed;
-      Format_Operators : Boolean     := True);
+      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
+      Reserved_Casing  : Casing_Type       := Lower;
+      Ident_Casing     : Casing_Type       := Mixed;
+      Format_Operators : Boolean           := True);
    --  Format Buffer and output the result on standard output.
-   --  Indent_Level is the number of spaces when indenting a block.
-   --  Indent_Continue is the number of spaces for a continuation line.
-   --  Indent_Decl is the number of spaces for variables declaration.
    --  Reserved_Casing specifies the casing for reserved words.
    --  Ident_Casing specifies the casing for identifiers.
    --  If Format_Operators is True, spaces are added when appropriate around
@@ -68,21 +81,17 @@ package Source_Analyzer is
       Result          : out Construct_List;
       Indent          : out Natural;
       Next_Indent     : out Natural;
-      Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2;
-      Indent_Decl     : Natural := 0);
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
    --  Parse the constructs contained in Buffer and store all the Ada
    --  constructs with their source location in Result.
    --  As a bonus (since it is computed anyway), store the current and
    --  next indentation levels.
 
    procedure Next_Ada_Indentation
-     (Buffer          : String;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2;
-      Indent_Decl     : Natural := 0);
+     (Buffer        : String;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
 
