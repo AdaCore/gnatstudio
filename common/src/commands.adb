@@ -55,7 +55,7 @@ package body Commands is
          Free (Q.Redo_Queue);
 
          Free (Q.The_Queue);
-         Destroy (Q.Queue_Change_Hook);
+         Free (Q.Queue_Change_Hook);
          Free_Queue_Access (Q);
       end if;
    end Free_Queue;
@@ -121,6 +121,15 @@ package body Commands is
          Execute_Next_Action (Queue);
       end if;
    end Enqueue;
+
+   ------------------
+   -- Get_Position --
+   ------------------
+
+   function Get_Position (Queue : Command_Queue) return Integer is
+   begin
+      return Queue.Position;
+   end Get_Position;
 
    -------------------------
    -- Execute_Next_Action --
@@ -207,19 +216,25 @@ package body Commands is
             --  When a normal command is finished, purge the redo
             --  queue.
             Free (Queue.Redo_Queue);
+            Queue.Position := Queue.Position + 1;
 
          when Done =>
             Action.Mode := Undone;
             Prepend (Queue.Redo_Queue, Command_Access (Action));
+            Queue.Position := Queue.Position - 1;
 
          when Undone =>
             Action.Mode := Done;
             Prepend (Queue.Undo_Queue, Command_Access (Action));
+            Queue.Position := Queue.Position + 1;
       end case;
 
-      if Queue.Queue_Change_Hook /= null then
-         Execute (Queue.Queue_Change_Hook);
-      end if;
+      Node := First (Queue.Queue_Change_Hook);
+
+      while Node /= Null_Node loop
+         Execute (Data (Node));
+         Node := Next (Node);
+      end loop;
 
       Execute_Next_Action (Action.Queue);
    end Command_Finished;
@@ -230,7 +245,7 @@ package body Commands is
 
    function Get_Queue_Change_Hook
      (Queue : Command_Queue)
-     return Command_Access
+     return Command_Queues.List
    is
    begin
       return Queue.Queue_Change_Hook;
@@ -245,8 +260,7 @@ package body Commands is
       Command : Command_Access)
    is
    begin
-      Queue.Queue_Change_Hook := Command;
-      Command.Queue := null;
+      Append (Queue.Queue_Change_Hook, Command);
    end Add_Queue_Change_Hook;
 
    -------------
