@@ -41,7 +41,9 @@ with Snames;                    use Snames;
 with Types;                     use Types;
 
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Src_Info.ALI;
+with OS_Utils; use OS_Utils;
 
 package body Glide_Kernel is
 
@@ -64,6 +66,10 @@ package body Glide_Kernel is
    --  Create a default project file.
    --  ??? This should actually be read from an external file when we have a
    --  ??? full installation procedure for Glide
+
+   function Get_Home_Directory return String;
+   --  Return the home directory in which glide's user files should be stored
+   --  (preferences, log, ...)
 
    ----------------------------
    -- Create_Default_Project --
@@ -153,6 +159,42 @@ package body Glide_Kernel is
       Recompute_View (Kernel);
    end Create_Default_Project;
 
+   ------------------------
+   -- Get_Home_Directory --
+   ------------------------
+
+   function Get_Home_Directory return String is
+      Home, Dir : String_Access;
+   begin
+      Home := Getenv ("GLIDE_HOME");
+
+      if Home.all = "" then
+         Free (Home);
+         Home := Getenv ("HOME");
+      end if;
+
+      if Home.all /= "" then
+         if Is_Directory_Separator (Home (Home'Last)) then
+            Dir := new String' (Home (Home'First .. Home'Last - 1) &
+              Directory_Separator & ".glide");
+         else
+            Dir := new String' (Home.all & Directory_Separator & ".glide");
+         end if;
+
+      else
+         --  Default to /
+         Dir := new String'(Directory_Separator & ".glide");
+      end if;
+
+      declare
+         D : constant String := Dir.all;
+      begin
+         Free (Home);
+         Free (Dir);
+         return D;
+      end;
+   end Get_Home_Directory;
+
    -------------
    -- Gtk_New --
    -------------
@@ -182,6 +224,9 @@ package body Glide_Kernel is
          "/usr/gnat-wavefront/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
       --  ??? This is a temporary hack for the demo. We should really compute
       --  ??? these values from the output of gnatls -v...
+
+      Load_Preferences
+        (Handle, Get_Home_Directory & Directory_Separator & "preferences");
    end Gtk_New;
 
    ---------------------
