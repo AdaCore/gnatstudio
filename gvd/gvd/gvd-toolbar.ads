@@ -20,13 +20,13 @@
 
 --  This package provides toolbar creation capabilities for GVD
 
-with Gtk.Toolbar; use Gtk.Toolbar;
+with Gtkada.Toolbar; use Gtkada.Toolbar;
 with Gtk.Window;  use Gtk.Window;
 
 package GVD.Toolbar is
 
    function Create_Toolbar
-     (Window : access Gtk_Window_Record'Class) return Gtk_Toolbar;
+     (Window : access Gtk_Window_Record'Class) return Gtkada_Toolbar;
    --  Create a toolbar containing common debugger buttons.
    --  Window is the GVD top level window.
 

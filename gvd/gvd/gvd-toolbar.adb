@@ -22,8 +22,6 @@ with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Toolbar;     use Gtk.Toolbar;
-with Gtkada.Toolbar;  use Gtkada.Toolbar;
 with Odd_Intl;        use Odd_Intl;
 with Pixmaps_IDE;     use Pixmaps_IDE;
 
@@ -100,7 +98,7 @@ package body GVD.Toolbar is
    --------------------
 
    function Create_Toolbar
-     (Window : access Gtk_Window_Record'Class) return Gtk_Toolbar
+     (Window : access Gtk_Window_Record'Class) return Gtkada_Toolbar
    is
       Toolbar : Gtkada_Toolbar;
       Button  : Gtk_Widget;
@@ -202,7 +200,7 @@ package body GVD.Toolbar is
       Widget_Callback.Object_Connect
         (Button, "clicked", On_Interrupt'Access, Window);
 
-      return Gtk_Toolbar (Toolbar);
+      return Toolbar;
    end Create_Toolbar;
 
    ------------
