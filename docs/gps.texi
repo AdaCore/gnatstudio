@@ -797,6 +797,8 @@ visible in your version of GPS, if GPS wasn't compiled with the
 support for that specific scripting language.
 @end ifset
 
+To show the shell consoles, select the menu @code{Tools}.
+
 See @ref{Scripting GPS} for more information on using
 scripting languages within GPS.
 
