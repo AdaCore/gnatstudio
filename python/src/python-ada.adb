@@ -161,14 +161,16 @@ package body Python.Ada is
 
       Def    : constant MethodDef_Access := new PyMethodDef'(Func);
       C_Func : PyObject;
+      Static : PyObject;
       Result : Integer;
       pragma Unreferenced (Result);
    begin
-      Def.Flags := Def.Flags or METH_CLASS;
+      Def.Flags := Def.Flags or METH_STATIC;
       C_Func := PyCFunction_New (Def, Self, PyString_FromString ("GPS"));
       if C_Func /= null then
+         Static := PyStaticMethod_New (C_Func);
          Result := PyObject_SetAttrString
-           (Class, Func.Name, PyStaticMethod_New (C_Func));
+           (Class, Func.Name, Static);
       end if;
    end Add_Static_Method;
 
@@ -185,7 +187,7 @@ package body Python.Ada is
       Result : Integer;
       pragma Unreferenced (Result);
    begin
-      Def.Flags := Def.Flags or METH_STATIC;
+      Def.Flags := Def.Flags or METH_CLASS;
       C_Func := PyCFunction_New (Def, null, PyString_FromString ("GPS"));
       if C_Func /= null then
          Result := PyObject_SetAttrString

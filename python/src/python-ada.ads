@@ -170,6 +170,9 @@ package Python.Ada is
    --     Add_Method (Dict, Create_Method_Def (...), Klass);
    --     Add_Method (Dict, Create_Method_Def (...), Klass);
 
+   function PyClass_Name (Class : PyClassObject) return PyObject;
+   --  Return the name of the class
+
    function Lookup_Class_Object
      (Module : String; Name : String) return PyObject;
    function Lookup_Class_Object
@@ -311,4 +314,5 @@ private
    pragma Import (C, PyInstance_New, "PyInstance_New");
    pragma Import (C, PyInstance_NewRaw, "PyInstance_NewRaw");
    pragma Import (C, PyMethod_Function, "PyMethod_Function");
+   pragma Import (C, PyClass_Name, "ada_pyclass_name");
 end Python.Ada;
