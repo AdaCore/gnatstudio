@@ -656,7 +656,7 @@ package body Shell_Script is
          400, 100,
          "Shell", "Shell Console",
          Docked, Bottom,
-         True, True);
+         False, False);
 
       Register_Menu
         (Kernel,
