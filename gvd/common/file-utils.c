@@ -123,7 +123,9 @@ __gps_ensure_valid_output (void)
  ** Return value must be freed by caller
  **********************************************************/
 
-char* user_login_name () {
+char*
+user_login_name (void)
+{
 #ifdef _WIN32
   DWORD size = UNLEN;
   char *str = alloca (UNLEN + 1);
