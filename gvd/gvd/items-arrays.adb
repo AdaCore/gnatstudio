@@ -342,7 +342,8 @@ package body Items.Arrays is
                declare
                   Repeat_Num      : constant Integer := Get_Repeat_Num
                     (Repeat_Type_Access (Item.Values (J).Value));
-                  Range_Index     : Long_Integer := Item.Values (J).Index;
+                  Range_Index     : constant Long_Integer :=
+                    Item.Values (J).Index;
                   Tmp             : Generic_Type_Access;
 
                begin

@@ -59,7 +59,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Event : Gdk_Event := To_Event (Params, 1);
+      Event : constant Gdk_Event := To_Event (Params, 1);
       use type Gdk.Types.Gdk_Key_Type;
    begin
       if Get_Key_Val (Event) = GDK_Delete then
