@@ -470,9 +470,11 @@ package body Aliases_Module is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Param_Record, Param_Access);
    begin
-      Free (P.Name);
-      Free (P.Initial);
-      Unchecked_Free (P);
+      if P /= null then
+         Free (P.Name);
+         Free (P.Initial);
+         Unchecked_Free (P);
+      end if;
    end Free;
 
    ----------
@@ -1983,11 +1985,11 @@ package body Aliases_Module is
       Read_Only : Boolean)
    is
       pragma Unreferenced (Level);
-      Alias       : Node_Ptr := Node;
-      Child       : Node_Ptr;
-      Expand      : String_Ptr;
-      P           : Param_Access;
-      Old          : Alias_Record;
+      Alias  : Node_Ptr := Node;
+      Child  : Node_Ptr;
+      Expand : String_Ptr;
+      P      : Param_Access;
+      Old    : Alias_Record;
    begin
       while Alias /= null loop
          if Alias.Tag.all = "alias" then
