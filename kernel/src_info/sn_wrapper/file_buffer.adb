@@ -21,6 +21,7 @@ package body File_Buffer is
       Number_Of_Lines := 0;
       Open (F, In_File, File_Name);
       loop
+         exit when End_Of_File (F);
          Get_Line (F, S, L);
          Number_Of_Lines := Number_Of_Lines + 1;
          File_Buffer_Arr (File_Buffer_Pos .. (File_Buffer_Pos + L - 1))
