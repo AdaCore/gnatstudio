@@ -133,6 +133,16 @@ package body Src_Info.CPP is
       end loop;
    end Free;
 
+   function Less (A, B : Point) return Boolean;
+   --  compares two positions within file
+
+   function Cmp_Prototypes
+     (Buffer_A, Buffer_B     : SN.String_Access;
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Ret_Type_A, Ret_Type_B : Segment)
+      return Boolean;
+   --  checks to see if function prototypes are the same
+
    ------------------------
    -- Global_CPP_Handler --
    ------------------------
@@ -1000,6 +1010,44 @@ package body Src_Info.CPP is
          null;
    end Refer_Type;
 
+
+   ----------
+   -- Less --
+   ----------
+   function Less (A, B : Point) return Boolean is
+   begin
+      return (A.Line < B.Line)
+         or else (A.Line = B.Line and then A.Column < B.Column);
+   end Less;
+
+   --------------------
+   -- Cmp_Prototypes --
+   --------------------
+   function Cmp_Prototypes
+     (Buffer_A, Buffer_B     : SN.String_Access;
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Ret_Type_A, Ret_Type_B : Segment)
+      return Boolean is
+      use DB_Structures.Segment_Vector;
+      Ptr_A : Segment_Vector.Node_Access := Args_A;
+      Ptr_B : Segment_Vector.Node_Access := Args_B;
+   begin
+      while Ptr_A /= null and Ptr_B /= null loop
+         if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
+            /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
+            return False;
+         end if;
+         Ptr_A := Ptr_A.Next;
+         Ptr_B := Ptr_B.Next;
+      end loop;
+
+      if Ptr_A /= null or Ptr_B /= null then
+         return False;
+      end if;
+
+      return Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
+         = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
+   end Cmp_Prototypes;
 
    --------------
    -- Handlers --

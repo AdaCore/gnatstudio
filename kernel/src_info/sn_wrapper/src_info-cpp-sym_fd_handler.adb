@@ -13,43 +13,6 @@ is
    FD_Tab       : FD_Table;
    FD_Tab_Tmp   : FD_Table;
 
-   function Less (A, B : Point) return Boolean;
-   --  compares two positions within file
-
-   function Less (A, B : Point) return Boolean is
-   begin
-      return (A.Line < B.Line)
-         or else (A.Line = B.Line and then A.Column < B.Column);
-   end Less;
-
-   function Cmp_Prototypes (A, B : FD_Table) return Boolean;
-   --  checks to see if function prototypes are the same
-
-   function Cmp_Prototypes (A, B : FD_Table) return Boolean is
-      use DB_Structures.Segment_Vector;
-      Ptr_A : Segment_Vector.Node_Access := A.Arg_Types;
-      Ptr_B : Segment_Vector.Node_Access := B.Arg_Types;
-   begin
-      while Ptr_A /= null and Ptr_B /= null loop
-         if A.Buffer (Ptr_A.Data.First .. Ptr_A.Data.Last)
-            /= B.Buffer (Ptr_B.Data.First .. Ptr_B.Data.Last) then
-            Info ("differ!!!");
-            return False;
-         end if;
-         Ptr_A := Ptr_A.Next;
-         Ptr_B := Ptr_B.Next;
-      end loop;
-
-      if Ptr_A /= null or Ptr_B /= null then
-         Info ("differ!!!");
-         return False;
-      end if;
-
-      Info ("may differ!!!");
-      return A.Buffer (A.Return_Type.First .. A.Return_Type.Last)
-         = B.Buffer (B.Return_Type.First .. B.Return_Type.Last);
-   end Cmp_Prototypes;
-
 begin
    Info ("Sym_FD_Hanlder: """
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -77,7 +40,13 @@ begin
       if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
          = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
                               FD_Tab_Tmp.File_Name.Last)
-         and then Cmp_Prototypes (FD_Tab, FD_Tab_Tmp)
+         and then Cmp_Prototypes
+           (FD_Tab.Buffer,
+            FD_Tab_Tmp.Buffer,
+            FD_Tab.Arg_Types,
+            FD_Tab_Tmp.Arg_Types,
+            FD_Tab.Return_Type,
+            FD_Tab_Tmp.Return_Type)
          and then ((First_FD_Pos = Invalid_Point)
          or else Less (FD_Tab_Tmp.Start_Position, First_FD_Pos)) then
          First_FD_Pos := FD_Tab_Tmp.Start_Position;
