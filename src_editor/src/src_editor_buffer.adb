@@ -357,6 +357,12 @@ package body Src_Editor_Buffer is
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
       Result : Boolean;
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Line_Info_Display_Array, Line_Info_Display_Array_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Line_Info_Display_Record, Line_Info_Display_Access);
    begin
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
@@ -384,6 +390,19 @@ package body Src_Editor_Buffer is
 
       Free_Queue (Buffer.Queue);
       Free (Buffer.Filename);
+      Unchecked_Free (Buffer.Real_Lines);
+
+      for J in Buffer.Line_Info'Range loop
+         for K in Buffer.Line_Info (J).Column_Info'Range loop
+            Free (Buffer.Line_Info (J).Column_Info (K));
+         end loop;
+
+         Free (Buffer.Line_Info (J).Identifier);
+         Unchecked_Free (Buffer.Line_Info (J).Column_Info);
+         Unchecked_Free (Buffer.Line_Info (J));
+      end loop;
+
+      Unchecked_Free (Buffer.Line_Info);
    end Buffer_Destroy;
 
    ---------------------
