@@ -196,6 +196,9 @@ package body Switches_Editors is
    procedure Check_Dependency
      (Check : access Gtk_Widget_Record'Class;
       Data  : Dependency_Data);
+   procedure Check_Field_Dependency
+     (Field : access Gtk_Widget_Record'Class;
+      Data  : Dependency_Data);
    --  Callback to handle the dependencies between two items
 
    -----------------------
@@ -1441,6 +1444,27 @@ package body Switches_Editors is
       return Gtk_Widget (B);
    end Create_Popup;
 
+   ----------------------------
+   -- Check_Field_Dependency --
+   ----------------------------
+
+   procedure Check_Field_Dependency
+     (Field : access Gtk_Widget_Record'Class;
+      Data  : Dependency_Data)
+   is
+      Has_Text : constant Boolean := Get_Text (Gtk_Entry (Field)) /= "";
+   begin
+      if (Has_Text and then Data.Master_Status)
+        or else (not Has_Text and then not Data.Master_Status)
+      then
+         Set_Sensitive (Data.Slave_Switch.Check, False);
+         Set_Active (Data.Slave_Switch.Check, Data.Slave_Activate);
+      else
+         Set_Sensitive (Data.Slave_Switch.Check, True);
+         Set_Active (Data.Slave_Switch.Check, not Data.Slave_Activate);
+      end if;
+   end Check_Field_Dependency;
+
    ----------------------
    -- Check_Dependency --
    ----------------------
@@ -1524,7 +1548,8 @@ package body Switches_Editors is
             S2 := Get_Switch_Widget (Slave_Page, Dep.Slave_Switch.all);
             if S1 = null
               or else S2 = null
-              or else S1.all not in Switch_Check_Widget'Class
+              or else (S1.all not in Switch_Check_Widget'Class
+                       and then S1.all not in Switch_Field_Widget'Class)
               or else S2.all not in Switch_Check_Widget'Class
             then
                Insert
@@ -1534,12 +1559,28 @@ package body Switches_Editors is
                   & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all,
                   Mode => Glide_Kernel.Console.Error);
             else
-               Dependency_Callback.Connect
-                 (Switch_Check_Widget_Access (S1).Check, "toggled",
-                  Dependency_Callback.To_Marshaller (Check_Dependency'Access),
-                  (Dep.Master_Status,
-                   Switch_Check_Widget_Access (S2),
-                   Dep.Slave_Status));
+               if S1.all in Switch_Check_Widget'Class then
+                  Dependency_Callback.Connect
+                    (Switch_Check_Widget_Access (S1).Check, "toggled",
+                     Dependency_Callback.To_Marshaller
+                       (Check_Dependency'Access),
+                     (Dep.Master_Status,
+                      Switch_Check_Widget_Access (S2),
+                      Dep.Slave_Status));
+               else
+                  Dependency_Callback.Connect
+                    (Switch_Field_Widget_Access (S1).Field, "changed",
+                     Dependency_Callback.To_Marshaller
+                       (Check_Field_Dependency'Access),
+                     (Dep.Master_Status,
+                      Switch_Check_Widget_Access (S2),
+                      Dep.Slave_Status));
+                  Check_Field_Dependency
+                    (Switch_Field_Widget_Access (S1).Field,
+                     (Dep.Master_Status,
+                      Switch_Check_Widget_Access (S2),
+                      Dep.Slave_Status));
+               end if;
             end if;
          end if;
 
