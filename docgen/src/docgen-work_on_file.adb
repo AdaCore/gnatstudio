@@ -677,18 +677,12 @@ package body Docgen.Work_On_File is
                Entity_Node.Is_Private := True;
             end if;
 
-            --  check if the entity in defined within a subprogram.
-            --  if true => ignore!
-
-            if not Is_Defined_In_Subprogram
-              (Get_Full_Name (Info, LI_Unit, "."),
-               Get_Name (Info),
-               Package_Name)
-            --  AND check if the declaration of the entity
+            --  check if the declaration of the entity
             --  is in one of the files
             --  which are in list, if false => no need for creating links
             --  => ignore!
-              and then Source_File_In_List
+            --  and then
+            if  Source_File_In_List
                 (Source_File_List, Get_Declaration_File_Of (Info))
             --  AND check if it's a private entity and if they
             --  should be processed
