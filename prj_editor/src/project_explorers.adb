@@ -469,7 +469,7 @@ package body Project_Explorers is
    --  Get the iter in the file view under the cursor corresponding to Event,
    --  if any.
 
-   function File_Button_Release
+   function File_Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
    --  Callback for the "button_press" event on the file view.
@@ -917,10 +917,8 @@ package body Project_Explorers is
                end if;
 
             else
-               File_Append_Directory
-                 (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                  Iter, D.Depth - 1, D.Norm_Dest.all,
-                  D.Idle);
+               File_Append_Dummy_Iter (D.Explorer, Iter);
+
                Set (D.Explorer.File_Model, Iter, Icon_Column,
                     C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
             end if;
@@ -978,7 +976,7 @@ package body Project_Explorers is
 
       if Idle then
          Timeout_Id :=
-           File_Append_Directory_Idle.Add (1, Read_Directory'Access, D);
+           File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
          Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
       else
          loop
@@ -1114,9 +1112,9 @@ package body Project_Explorers is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
-         "button_release_event",
+         "button_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller
-           (File_Button_Release'Access),
+           (File_Button_Press'Access),
          Explorer,
          After => False);
 
@@ -2907,11 +2905,11 @@ package body Project_Explorers is
       return Iter;
    end Find_Iter_For_Event;
 
-   -------------------------
-   -- File_Button_Release --
-   -------------------------
+   -----------------------
+   -- File_Button_Press --
+   -----------------------
 
-   function File_Button_Release
+   function File_Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
@@ -2945,7 +2943,7 @@ package body Project_Explorers is
                      User       : User_Data_Access;
                   begin
                      --  ??? the following two lines are due to a possible
-                     --  mapping error in GtkAd a: I need to call "Unset" on
+                     --  mapping error in GtkAda: I need to call "Unset" on
                      --  Val before calling Get_Value below, otherwise I get
                      --  a critical error saying "cannot init val because it
                      --  was initialized before with value null"... and I need
@@ -2977,7 +2975,7 @@ package body Project_Explorers is
       end if;
 
       return False;
-   end File_Button_Release;
+   end File_Button_Press;
 
    --------------------------
    -- Button_Press_Release --
