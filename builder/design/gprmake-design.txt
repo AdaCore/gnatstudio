@@ -1,6 +1,7 @@
 Design of a multi-language tool build, called gprmake.
+Main TN: D215-001
 
-The purpose of this tool is handle automatically multi-language builds,
+The purpose of this tool is handle automatically builds for most languages,
 based on the GNAT Project files.
 
 Similarly, other GNAT tools will need to be reviewed wrt multi-language support,
@@ -11,9 +12,11 @@ in particular:
 
 - gnatname: add support for non Ada languages in gnatname
   by taking the Languages attribute and the Naming package into account.
+  -> a new TN should be created
 
 - gnatls: should probably support non Ada objects/dependency files, and
   give info about the status of the corresponding sources.
+  -> a new TN should be created
 
 This document is focussing on the general project-related aspects to properly
 handle multi-language projects, and more particularly into the implications
@@ -95,6 +98,9 @@ Output created by gprmake:
   This will make things simpler for gprmake, in particular for setting
   the Builder'Driver attribute described below.
 
+- Each -Xname=val gprmake switch is translated into setting the environment
+  variable "name" to "val"
+
 - (optionally) dependency files in the object directory
 
 - object files, results of compilations
@@ -138,7 +144,7 @@ Input needed from gprmake:
   - Builder'Driver (<language>): If set, use this tool to check
     dependencies of sources for a given language, and rebuild them if
     needed.
-    Defaults to ("<prefix>gnat", "make", "-c", "-u") for "ada".
+    Defaults to ("<prefix>gnat", "make", "-c") for "ada".
     Defaults to () otherwise.
 
     where <prefix> is an optional prefix computed based on the name
@@ -152,23 +158,15 @@ Input needed from gprmake:
     and call gnatmake -P -c $GNAT_PROJECT directly.
 
     This tool is called for each subproject where Builder'Driver is set,
-    recursively. The current directory is set to the subproject's directory
+    and assumes that Builder'Driver will build recursively all the dependent
+    projects. This means for instance that if Builder'Driver is set on the
+    root project, no compilation for this language will occur.
+    The current directory is set to the subproject's directory
     before each call to provide a straightforward environment (for instance,
     to ease calling "make -f relative-make-file-path")
 
-    Note: it's slightly less efficient to call several gnatmake -u than
-    calling one gnatmake -Proot directly, but the cost shouldn't be too
-    high with recent project parsing improvements, and the need to have the
-    same behavior for Ada and other languages is higher than the small
-    overhead added by this generalization.
-    Also, a difference in behavior is that gprmake will always compile/
-    recompile all project sources, even for Ada. This is, again, for
-    consistency among languages. The bind phase will take care however of
-    choosing the smallest subset of object files needed, see Binder'Driver
-    below.
-
   - Compiler'Compiler_Kind (<language>): Kind of compiler used for a given
-    language. Recognized values are:
+    language for the current project. Recognized values are:
     - "GNU" (the default)
     - possibly others in the future, such as "Diab"
     This attribute is used by gprmake to set various defaults and change the
@@ -177,8 +175,8 @@ Input needed from gprmake:
     (e.g. "", or "unknown").
 
   - Compiler'Driver (<language>): name and switches of the tool that knows
-    how to compile files of the given language. Defaults to
-    ("<prefix>gcc", "-c", "-x", <language>) for GNU compilers.
+    how to compile files of the given language for the current project.
+    Defaults to ("<prefix>gcc", "-c", "-x", <language>) for GNU compilers.
     This tool is called inside the project's object directory.
 
     For non GNU compilers, defaults to ("cc", "-c")
@@ -338,34 +336,66 @@ Input needed from gprmake:
 
     The above syntax means that "source" depends on src1 and src2 and [...]
 
+    After a compilation launched by gprmake is finished, gprmake will look
+    in the object directory for either a source-file.ali or source-file.d file.
+    If none exist, gprmake will assume that there are no extra dependencies
+    for source-file other than the object file itself.
+
+    If source-file.ali exists, gprmake will take it into account to handle
+    dependencies, following current gnatmake rules.
+
+    Otherwise, if source-file.d exists, gprmake will take it into account,
+    following standard make rules.
+
     Note: if some compiler (e.g. proprietary Ada compiler) does not provide
     the capabilities of generating a Makefile, the idea would be to provide a
     wrapper that would extract the proprietary information
     (from e.g. the Ada 83 library) and generate the information in the
-    expected format.
-    Another approach would be to use gcc -c -gnatc to generate .ali files, and
-    gnatmake -M to generate corresponding Makefile fragments. In this case,
-    Compiler'Compute_Dependency would be set to a wrapper that would e.g.
-    first call gcc -c -gnatc, and then gnatmake -M on the resulting ali file,
-    or a separate tool written in Ada that would provide a similar capability.
+    expected format (either .d or .ali file).
+    Another approach would be to use gcc -c -gnatc to generate .ali files.
+    In this case, Compiler'Compute_Dependency would be set to e.g.
+    ("gcc", "-c", "-gnatc") or a wrapper is some post processing is needed.
 
   Note: as opposed to gpr2make which needed to post process the Makefile
   fragments (*.d files), gprmake does not need to modify these files, since
   the extra capability can be handled by the tool directly. Namely, handling
   of added/removed files in the project.
 
-- Ability to specify that a given project should not be compiled
+- Ability to specify that a given project should not be built
   This is needed so that external scripts/makefiles can be provided
   instead, and have other gpr-related tools such as GPS still be able to
   take advantage of the source list associated to a given project (for
   instance, to provide source navigation in GPS).
 
-  -> This can be achieved by specifying an empty value to
-  Builder'Driver: ("")
+  There is also a similar need to specify that a library project is read-only,
+  and should not be rebuilt (such as an installed library).
 
-  Consequently, this notation can also used to e.g. specify that a library
-  project is read-only, and should not be rebuilt (such as an installed
-  library).
+  ??? to be completed:
+
+  -> Are the two needs the same ?
+
+  -> What should the builder do during the link phase ?
+  - either not do anything (assuming the objects/libs are specified manually
+    in the Linker'Default_Switches)
+  - or look for the lib (if lib project) or object files, and take them into
+    account as usual.
+    -> Should an error be emitted if there are missing libs/objects ?
+
+  Proposal from Arno:
+  This can be achieved by specifying an empty value to Builder'Driver: ("")
+
+  Proposal from Vincent:
+
+  I don't think that using this switch is appropriate, because it is
+  supposed to be a switch indexed by the language (Builder'Driver
+  (<language>)).
+
+  How about a new project level attribute:
+
+     for Library_Externally_Built use "true"; 
+
+  The only valid values (case-insensitive) would be "true" and "false",
+  the default of course being "false".
 
 - Handling of bind phase between languages
   At bind time, the environment variable LPATH is set to
