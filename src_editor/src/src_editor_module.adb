@@ -1314,7 +1314,18 @@ package body Src_Editor_Module is
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
    begin
+      if Is_Valid_Location (D.Edit, D.Line) then
+         Set_Screen_Location (D.Edit, D.Line, D.Column);
+
+         if D.Column_End /= 0
+           and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
+         then
+            Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
+         end if;
+      end if;
+
       File_Edited (Get_Kernel (D.Edit), Get_Filename (D.Edit));
+
       return False;
 
    exception
@@ -1330,10 +1341,13 @@ package body Src_Editor_Module is
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
-      Src  : Source_Box := null;
-      File : Glib.String_Ptr;
-      Data : Location_Idle_Data;
-      Id   : Idle_Handler_Id;
+      Src    : Source_Box := null;
+      File   : Glib.String_Ptr;
+      Str    : Glib.String_Ptr;
+      Data   : Location_Idle_Data;
+      Id     : Idle_Handler_Id;
+      Line   : Positive := 1;
+      Column : Positive := 1;
       pragma Unreferenced (Id);
 
    begin
@@ -1341,31 +1355,47 @@ package body Src_Editor_Module is
          File := Get_Field (Node, "File");
 
          if File /= null then
+            Str := Get_Field (Node, "Line");
+
+            if Str /= null then
+               Line := Positive'Value (Str.all);
+            end if;
+
+            Str := Get_Field (Node, "Column");
+
+            if Str /= null then
+               Column := Positive'Value (Str.all);
+            end if;
 
             if not Is_Open (User, File.all) then
                Src := Open_File (User, File.all, False, False);
-
-               if Src /= null then
-                  Data.Edit := Src.Editor;
-                  Id := Location_Idle.Add
-                    (File_Edit_Callback'Access,
-                     (Src.Editor, 1, 1, 0, null));
-
-                  return Gtk_Widget (Src);
-               end if;
             else
                declare
                   Child : constant MDI_Child := Find_Editor (User, File.all);
                   Edit  : constant Source_Editor_Box :=
                     Get_Source_Box_From_MDI (Child);
                begin
-                  return Gtk_Widget (New_View (User, Edit, Add => False));
+                  Src := New_View (User, Edit, Add => False);
                end;
+            end if;
+
+            if Src /= null then
+               Data.Edit := Src.Editor;
+               Id := Location_Idle.Add
+                 (File_Edit_Callback'Access,
+                  (Src.Editor, Line, Column, 0, null));
+
+               return Gtk_Widget (Src);
             end if;
          end if;
       end if;
 
       return null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return null;
    end Load_Desktop;
 
    -----------------------
@@ -1421,19 +1451,39 @@ package body Src_Editor_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
    is
-      N, Child : Node_Ptr;
+      N, Child     : Node_Ptr;
+      Line, Column : Positive;
+      Editor       : Source_Editor_Box;
+
    begin
       if Widget.all in Source_Box_Record'Class then
          N := new Node;
          N.Tag := new String'("Source_Editor");
 
+         Editor := Source_Box (Widget).Editor;
+
          Child := new Node;
          Child.Tag := new String'("File");
-         Child.Value := new String'
-           (Get_Filename (Source_Box (Widget).Editor));
+         Child.Value := new String'(Get_Filename (Editor));
+         Add_Child (N, Child);
+
+         Get_Cursor_Location (Editor, Line, Column);
+
+         Child := new Node;
+         Child.Tag := new String'("Line");
+         Child.Value := new String'(Image (Line));
+         Add_Child (N, Child);
+
+         Child := new Node;
+         Child.Tag := new String'("Column");
+         Child.Value := new String'(Image (Column));
+         Add_Child (N, Child);
+
+         Child := new Node;
+         Child.Tag := new String'("Column_End");
+         Child.Value := new String'(Image (Column));
          Add_Child (N, Child);
 
          return N;
