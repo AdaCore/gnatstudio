@@ -28,8 +28,6 @@ with Docgen;
 
 package body Docgen.Html_Output is
 
-   package TEL renames Type_Entity_List;
-
    procedure Doc_HTML_Open
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
@@ -306,7 +304,7 @@ package body Docgen.Html_Output is
    begin
       Put_Line
         (File,
-         "<h4><PRE>" & Info.Package_Desc_Description.all & " </PRE></H4>");
+         "<H4><PRE>" & Info.Package_Desc_Description.all & " </PRE></H4>");
       Put_Line (File, "<HR> ");
    end Doc_HTML_Pack_Desc;
 
@@ -323,14 +321,14 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "  <A name="""
+        (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Package_Entity.Entity))
          & """></A>  <BR>");
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Package_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -368,7 +366,7 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       Format_File
         (B,
@@ -404,15 +402,15 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "  <A name="""
+        (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Var_Entity.Entity))
          & """></A>  <BR>");
 
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Var_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -450,15 +448,15 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "  <A name="""
+        (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Exception_Entity.Entity))
          & """></A>  <BR>");
 
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Exception_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -496,15 +494,15 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "  <A name="""
+        (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Type_Entity.Entity))
          & """></A>  <BR>");
 
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Type_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -543,14 +541,14 @@ package body Docgen.Html_Output is
    begin
       Put_Line
         (File,
-         "  <A name="""
+         "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Entry_Entity.Entity))
          & """></A>  <BR>");
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Entry_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -588,14 +586,14 @@ package body Docgen.Html_Output is
       Info   : Doc_Info) is
    begin
       Put_Line
-        (File, "  <A name="""
+        (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity))
          & """></A>  <BR> ");
       Put_Line
-        (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
       if Info.Subprogram_Entity.Is_Private then
-         Put_Line (File, "<i> private: </i>" & ASCII.LF);
+         Put_Line (File, "<I> private: </I>" & ASCII.LF);
       end if;
 
       Format_File
@@ -639,7 +637,7 @@ package body Docgen.Html_Output is
       File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      Put_Line (File, "<TABLE  bgcolor=""#9999FF"" width=""100%""><TR><TD>");
+      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
       Put_Line (File, " <H1>  Package <I>");
       Put_Line (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
 
@@ -693,13 +691,13 @@ package body Docgen.Html_Output is
       Put_Line (Frame_File, "<TITLE> Index </TITLE>");
       Put_Line (Frame_File, "</HEAD>");
       New_Line (Frame_File);
-      Put_Line (Frame_File, "<FRAMESET cols=""30%,70%"">");
-      Put_Line (Frame_File, "<FRAME src=""index_unit.htm"" NAME=""index"" >");
-      Put_Line (Frame_File, "<FRAME src=""" &
+      Put_Line (Frame_File, "<FRAMESET COLS=""30%,70%"">");
+      Put_Line (Frame_File, "<FRAME SRC=""index_unit.htm"" NAME=""index"" >");
+      Put_Line (Frame_File, "<FRAME SRC=""" &
                 Base_Name
                   (Get_Doc_File_Name
                      (Type_Source_File_List.Data (Source_File_Node).File_Name,
-                      Doc_Directory, Doc_Suffix)) & """ name=""main"" >");
+                      Doc_Directory, Doc_Suffix)) & """ NAME=""main"" >");
       New_Line (Frame_File);
       Put_Line (Frame_File, "</FRAMESET>");
       Put_Line (Frame_File, "<NOFRAMES>");
@@ -713,23 +711,23 @@ package body Docgen.Html_Output is
 
       Put_Line (File, "<HTML> ");
       Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE target=""main"">");
+      Put_Line (File, "<BASE TARGET=""main"">");
       Put_Line (File, "<META http-equiv=""Content-Type"" " &
                 "content=""text/html; charset=ISO-8859-1" & """>");
       Put_Line (File, "</HEAD>");
-      Put_Line (File, "<BODY bgcolor=""white"">");
-      Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
-                "width=""100%""><TR><TD> <PRE>");
+      Put_Line (File, "<BODY BGCOLOR=""white"">");
+      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" " &
+                "WIDTH=""100%""><TR><TD> <PRE>");
       Put_Line (File, "<H2> Unit Index </H2> ");
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, "<H4> <a href=""index_sub.htm"" " &
-                "target=""index""> Subprogram Index </a> <br>");
+      Put_Line (File, "<H4> <A HREF=""index_sub.htm"" " &
+                "TARGET=""index""> Subprogram Index </A> <BR>");
       if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<a href=""index_tagged_type.htm"" " &
-                   "target=""index""> Tagged Type Index </a> <br>");
+         Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
+                   "TARGET=""index""> Tagged Type Index </A> <BR>");
       end if;
-      Put_Line (File, " <A href=""index_type.htm"" " &
-                "target=""index""> Type Index </A> </H4><BR>");
+      Put_Line (File, " <A HREF=""index_type.htm"" " &
+                "TARGET=""index""> Type Index </A> </H4><BR>");
       Put_Line (File, "<HR> <BR>");
    end Doc_HTML_Unit_Index_Header;
 
@@ -742,28 +740,28 @@ package body Docgen.Html_Output is
    begin
       Put_Line (File, "<HTML> ");
       Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE target=""main"">");
+      Put_Line (File, "<BASE TARGET=""main"">");
       Put_Line (File, "<META http-equiv=""Content-" &
                 "Type"" content=""text/html; charset=ISO-8859-1"">");
       Put_Line (File, "</HEAD>");
       New_Line (File);
-      Put_Line (File, "<BODY bgcolor=""white"">");
+      Put_Line (File, "<BODY BGCOLOR=""white"">");
       New_Line (File);
-      Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
-                "width=""100%""><TR><TD> <PRE>");
+      Put_Line (File, "<TABLE  BGCOLOR=""#9999FF"" " &
+                "WIDTH=""100%""><TR><TD> <PRE>");
       Put_Line (File, "<H2> Subprogram Index </H2> ");
       Put_Line (File, "</PRE></TD></TR></TABLE>");
       New_Line (File);
-      Put_Line (File, "<H4> <A href=""index_unit.htm""  " &
+      Put_Line (File, "<H4> <A HREF=""index_unit.htm""  " &
                 "target=""index""> Unit Index </A> <BR>");
       New_Line (File);
       if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<A href=""index_tagged_type.htm""  " &
-                "target=""index""> Tagged Type Index </A> <BR>");
+         Put_Line (File, "<A HREF=""index_tagged_type.htm""  " &
+                "TARGET=""index""> Tagged Type Index </A> <BR>");
          New_Line (File);
       end if;
-      Put_Line (File, " <A href=""index_type.htm"" " &
-                "target=""index""> Type Index </A> </H4><BR>");
+      Put_Line (File, " <A HREF=""index_type.htm"" " &
+                "TARGET=""index""> Type Index </A> </H4><BR>");
       New_Line (File);
       Put_Line (File, "<HR> <BR>");
       New_Line (File);
@@ -779,30 +777,30 @@ package body Docgen.Html_Output is
       Put_Line (File, "<HTML> ");
       New_Line (File);
       Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE target=""main"">");
+      Put_Line (File, "<BASE TARGET=""main"">");
       New_Line (File);
       Put_Line (File, "<META http-equiv" &
                 "=""Content-Type"" content=""" &
                 "text/html; charset=" & "ISO-8859-1" & """>");
       Put_Line (File, "</HEAD>");
       New_Line (File);
-      Put_Line (File, "<BODY bgcolor=""white"">");
+      Put_Line (File, "<BODY BGCOLOR=""white"">");
       New_Line (File);
       Put_Line
-        (File, "<TABLE  bgcolor=""#9999FF"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD> <PRE>");
       Put_Line (File, "<H2> Type Index </H2> ");
       Put_Line (File, "</PRE></TD></TR></TABLE>");
       New_Line (File);
-      Put_Line (File, "<H4> <A href=""index_unit.htm"" " &
-                "target = ""index""> Unit Index </A> <BR>");
+      Put_Line (File, "<H4> <A HREF=""index_unit.htm"" " &
+                "TARGET=""index""> Unit Index </A> <BR>");
       New_Line (File);
       if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<A href=""index_tagged_type.htm"" " &
-                   "target = ""index""> Tagged Type Index </A> <BR>");
+         Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
+                   "TARGET=""index""> Tagged Type Index </A> <BR>");
          New_Line (File);
       end if;
-      Put_Line (File, " <A href=""index_sub.htm"" " &
-                "target=""index""> Subprogram Index </A></H4> <BR>");
+      Put_Line (File, " <A HREF=""index_sub.htm"" " &
+                "TARGET=""index""> Subprogram Index </A></H4> <BR>");
       New_Line (File);
       Put_Line (File, "<HR> <BR>");
       New_Line (File);
@@ -820,28 +818,28 @@ package body Docgen.Html_Output is
       Put_Line (File, "<HTML> ");
       New_Line (File);
       Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE target=""main"">");
+      Put_Line (File, "<BASE TARGET=""main"">");
       New_Line (File);
       Put_Line (File, "<META http-equiv" &
                 "=""Content-Type"" content=""" &
                 "text/html; charset=" & "ISO-8859-1" & """>");
       Put_Line (File, "</HEAD>");
       New_Line (File);
-      Put_Line (File, "<BODY bgcolor=""white"">");
+      Put_Line (File, "<BODY BGCOLOR=""white"">");
       New_Line (File);
       Put_Line
-        (File, "<TABLE  bgcolor=""#9999FF"" width=""100%""><TR><TD> <PRE>");
+        (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD> <PRE>");
       Put_Line (File, "<H2> Tagged Type Index </H2> ");
       Put_Line (File, "</PRE></TD></TR></TABLE>");
       New_Line (File);
-      Put_Line (File, "<H4> <A href=""index_unit.htm"" " &
-                "target = ""index""> Unit Index </A> <BR>");
+      Put_Line (File, "<H4> <A HREF=""index_unit.htm"" " &
+                "TARGET=""index""> Unit Index </A> <BR>");
       New_Line (File);
-      Put_Line (File, "<A href=""index_type.htm"" " &
-                "target = ""index""> Type Index </A> <BR>");
+      Put_Line (File, "<A HREF=""index_type.htm"" " &
+                "TARGET=""index""> Type Index </A> <BR>");
       New_Line (File);
-      Put_Line (File, " <A href=""index_sub.htm"" " &
-                "target=""index""> Subprogram Index </A></H4> <BR>");
+      Put_Line (File, " <A HREF=""index_sub.htm"" " &
+                "TARGET=""index""> Subprogram Index </A></H4> <BR>");
       New_Line (File);
       Put_Line (File, "<HR> <BR>");
       New_Line (File);
@@ -866,10 +864,10 @@ package body Docgen.Html_Output is
                              Info.Directory.all,
                              Info.Suffix.all)));
             Put_Line
-              (File, "<BR><A href=""" & Item_Doc_File.all
+              (File, "<BR><A HREF=""" & Item_Doc_File.all
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ target=""main""><b>"
-               & Get_Name (Info.Doc_Tagged_Type) & "</b></A><BR>");
+               & """ target=""main""><B>"
+               & Get_Name (Info.Doc_Tagged_Type) & "</B></A><BR>");
             New_Line (File);
             Free (Item_Doc_File);
 
@@ -887,9 +885,9 @@ package body Docgen.Html_Output is
                              Info.Directory.all,
                              Info.Suffix.all)));
             Put_Line
-              (File, "<b>Parent object : </b><A href=""" & Item_Doc_File.all
+              (File, "<B>Parent object : </B><A HREF=""" & Item_Doc_File.all
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ target=""main"">"
+               & """ TARGET=""main"">"
                & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
             New_Line (File);
             Free (Item_Doc_File);
@@ -898,7 +896,7 @@ package body Docgen.Html_Output is
             --  The parent of the tagged type is not declared in the processed
             --  files. Link can't be made.
             Put_Line (File,
-                      "<b>Parent object : </b>"
+                      "<B>Parent object : </B>"
                       & Get_Name (Info.Doc_Tagged_Type)
                       & "<BR>");
 
@@ -916,9 +914,9 @@ package body Docgen.Html_Output is
                              Info.Directory.all,
                              Info.Suffix.all)));
             Put_Line
-              (File, "<b>Child object : </b><A href=""" & Item_Doc_File.all
+              (File, "<B>Child object : </B><A HREF=""" & Item_Doc_File.all
                & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ target=""main"">"
+               & """ TARGET=""main"">"
                & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
             New_Line (File);
             Free (Item_Doc_File);
@@ -926,7 +924,7 @@ package body Docgen.Html_Output is
          when Child_Without_Link =>
             --  This child of the tagged type is not declared in the processed
             --  files. Link can't be made.
-            Put_Line (File, "<b>Child object : </b>"
+            Put_Line (File, "<B>Child object : </B>"
                       & Get_Name (Info.Doc_Tagged_Type)
                       & "<BR>");
       end case;
@@ -940,9 +938,9 @@ package body Docgen.Html_Output is
      (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
       Put_Line
-        (File, " <A href=""" & Info.Item_Doc_File.all
+        (File, " <A HREF=""" & Info.Item_Doc_File.all
          & "#" & Image (Info.Item_Line)
-         & """ target=""main""> "
+         & """ TARGET=""main""> "
          & Info.Item_Name.all & "</A>");
 
       Put_Line
@@ -1043,7 +1041,7 @@ package body Docgen.Html_Output is
                --  If a called subprogram => link to spec
                Put_Line
                  (File,
-                  "<TR><TD><A href="""
+                  "<TR><TD><A HREF="""
                   & Get_Html_File_Name
                     (Kernel,
                      Get_Declaration_File_Of
