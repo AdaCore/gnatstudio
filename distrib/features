@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- B820-007: Executable names can be changed in the project properties editor
+
 - Errors highlighting in the source editor.
 
 - Block highlighting in the source editor.
