@@ -47,6 +47,8 @@ with Glide_Kernel.Modules;
 with Src_Editor_Buffer;
 with Src_Editor_View;
 
+with Ada.Unchecked_Deallocation;
+
 package Src_Editor_Box is
 
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record
@@ -515,6 +517,12 @@ private
    --  the user. If he answers no the first time, we forbid editing until he
    --  has said yes.
 
+   type Label_Array is array (Natural range <>) of Gtk.Label.Gtk_Label;
+   type Label_Array_Access is access Label_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Label_Array, Label_Array_Access);
+
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
       Kernel               : Glide_Kernel.Kernel_Handle;
 
@@ -524,6 +532,8 @@ private
       Never_Attached       : Boolean := True;
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
+
+      Label_Box            : Gtk.Box.Gtk_Hbox;
 
       --  The status bar
       Filename_Label       : Gtk.Label.Gtk_Label;
@@ -548,6 +558,12 @@ private
       Status_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "status_changed"
       --  from the source buffer.
+
+      Buffer_Info_Handler  : Gtk.Handlers.Handler_Id;
+      --  Handler connected to the signal "buffer_information_changed" from the
+      --  source buffer.
+
+      Buffer_Info_Labels   : Label_Array_Access := null;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
