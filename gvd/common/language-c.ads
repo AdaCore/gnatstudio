@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -51,7 +51,7 @@ package Language.C is
    --  Regexp used to highlight keywords in C.
    --  Do not use this directly, use the function Keywords instead.
    --  ("auto" "case" "const" "struct" "union" "extern" "for" "if" "do"
-        "else" "while" "register" "switch" "static" "typedef" "volatile")
+   --   "else" "while" "register" "switch" "static" "typedef" "volatile")
 
    --------------
    -- Explorer --
