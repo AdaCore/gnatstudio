@@ -2,12 +2,260 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNAT.Regpat; use GNAT.Regpat;
+with Basic_Types; use Basic_Types;
+with String_Utils; use String_Utils;
 
 package body Codefix.Text_Manager is
 
    ----------------------------------------------------------------------------
+   --  type Text_Navigator
+   ----------------------------------------------------------------------------
+
+   procedure Free (This : in out Text_Navigator_Abstr) is
+   begin
+      null;
+   end Free;
+
+   --------------
+   -- Get_Unit --
+   --------------
+
+   function Get_Unit
+     (Current_Text : Text_Navigator_Abstr;
+      Cursor       : File_Cursor'Class)
+     return Construct_Information is
+   begin
+      return Get_Unit
+        (Get_File (Current_Text, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor));
+   end Get_Unit;
+
+   -----------------
+   -- Search_Body --
+   -----------------
+
+   function Search_Body
+     (Current_Text : Text_Navigator_Abstr;
+      File_Name    : String;
+      Spec         : Construct_Information)
+     return Construct_Information is
+   begin
+      return Search_Body
+        (Get_File (Current_Text, File_Name).all,
+         Spec);
+   end Search_Body;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (This   : Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class;
+      Len    : Natural)
+   return String is
+   begin
+      return Get
+        (Get_File (This, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor),
+         Len);
+   end Get;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line
+     (This   : Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class)
+     return String is
+   begin
+      return Get_Line
+        (Get_File (This, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor));
+   end Get_Line;
+
+   ---------------
+   -- Read_File --
+   ---------------
+
+   function Read_File
+     (This : Text_Navigator_Abstr;
+      File_Name : String)
+   return Dynamic_String is
+   begin
+      return Read_File (Get_File (This, File_Name).all);
+   end Read_File;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File
+     (This : Text_Navigator_Abstr'Class;
+      Name : String)
+     return Ptr_Text is
+
+      Iterator    : Text_List.List_Node := First (This.Files.all);
+      New_Text    : Ptr_Text;
+      New_Buffer  : Extended_Line_Buffer;
+      Indent      : Natural;
+      Next_Indent : Natural;
+
+   begin
+      while Iterator /= Text_List.Null_Node loop
+         if Get_File_Name (Data (Iterator).all) = Name then
+            return Data (Iterator);
+         end if;
+      end loop;
+      New_Text := New_Text_Interface (This);
+      Append (This.Files.all, New_Text);
+      New_Text.File_Name := new String'(Name);
+      Initialize (New_Text.all, Name);
+
+      Analyze_Ada_Source
+        (Buffer => Read_File (New_Text.all).all,
+         New_Buffer => New_Buffer,
+         Indent_Params => Default_Indent_Parameters,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing => Unchanged,
+         Format_Operators => False,
+         Indent => False,
+         Constructs => New_Text.Tokens_List,
+         Current_Indent => Next_Indent,
+         Prev_Indent => Indent,
+         Callback => null);
+
+      declare
+         Current : Construct_Access;
+      begin
+         Current := New_Text.Tokens_List.First;
+         while Current /= null loop
+            Put (Current.Name.all);
+            Put (" (");
+            Put (Language_Category'Image (Current.Category));
+            Put (")");
+            New_Line;
+            Current := Current.Next;
+         end loop;
+      end;
+
+      return New_Text;
+   end Get_File;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (This      : in out Text_Navigator_Abstr;
+      Cursor    : File_Cursor'Class;
+      Len       : Natural;
+      New_Value : String) is
+   begin
+      Replace
+        (Get_File (This, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor),
+         Len,
+         New_Value);
+   end Replace;
+
+   --------------
+   -- Add_Line --
+   --------------
+
+   procedure Add_Line
+     (This        : in out Text_Navigator_Abstr;
+      Cursor      : File_Cursor'Class;
+      New_Line    : String) is
+   begin
+      Add_Line
+        (Get_File (This, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor),
+         New_Line);
+   end Add_Line;
+
+   -----------------
+   -- Delete_Line --
+   -----------------
+
+   procedure Delete_Line
+     (This : in out Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class) is
+   begin
+      Delete_Line
+        (Get_File (This, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor));
+   end Delete_Line;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   procedure Get_Entity
+     (This : in out Extract;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor : File_Cursor)
+   is
+      Unit_Info, Body_Info : Construct_Information;
+      Line_Cursor          : File_Cursor := Cursor;
+   begin
+      Line_Cursor.Col := 1;
+      Unit_Info := Get_Unit (Current_Text, Cursor);
+
+      if Unit_Info.Is_Declaration then
+         Body_Info := Search_Body
+           (Current_Text,
+            Cursor.File_Name.all,
+            Unit_Info);
+         for J in Body_Info.Sloc_Start.Line .. Body_Info.Sloc_End.Line loop
+            Line_Cursor.Line := J;
+            Get_Line (Current_Text, Line_Cursor, This);
+         end loop;
+      end if;
+
+      for J in Unit_Info.Sloc_Start.Line .. Unit_Info.Sloc_End.Line loop
+         Line_Cursor.Line := J;
+         Get_Line (Current_Text, Line_Cursor, This);
+      end loop;
+
+   end Get_Entity;
+
+   -----------------
+   -- Line_Length --
+   -----------------
+
+   function Line_Length
+     (This   : Text_Navigator_Abstr;
+      Cursor : File_Cursor'Class)
+     return Natural is
+   begin
+      return Line_Length
+        (Get_File (This, Cursor.File_Name.all).all,
+         File_Cursor (Cursor));
+   end Line_Length;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (This : Text_Navigator_Abstr) is
+      Iterator : Text_List.List_Node := First (This.Files.all);
+
+   begin
+      while Iterator /= Text_List.Null_Node loop
+         Update (Data (Iterator).all);
+         Iterator := Next (Iterator);
+      end loop;
+   end Update;
+
+   ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
+
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (This : in out Ptr_Text) is
       procedure Delete is new
@@ -15,6 +263,142 @@ package body Codefix.Text_Manager is
    begin
       Delete (This);
    end Free;
+
+   --------------
+   -- Get_Unit --
+   --------------
+
+   function Get_Unit
+     (Current_Text : Text_Interface;
+      Cursor       : Text_Cursor'Class)
+     return Construct_Information is
+
+      Current_Info : Construct_Access;
+
+   begin
+      Current_Info := Current_Text.Tokens_List.First;
+
+      while Current_Info /= null loop
+         if (Current_Info.Sloc_Start.Line = Cursor.Line
+           and then Current_Info.Sloc_Start.Column = Cursor.Col)
+         or else (Current_Info.Sloc_Entity.Line = Cursor.Line
+                    and then Current_Info.Sloc_Entity.Column = Cursor.Col)
+         then
+            return Current_Info.all;
+         end if;
+         Current_Info := Current_Info.Next;
+      end loop;
+      Raise_Exception
+        (Codefix_Panic'Identity,
+         "Cursor given is not at the beginning of an unit.");
+   end Get_Unit;
+
+   -----------------
+   -- Search_Body --
+   -----------------
+
+   --  Assertion : The last unit can never be the unit looked for
+   function Search_Body
+     (Current_Text : Text_Interface;
+      Spec         : Construct_Information)
+
+     return Construct_Information is
+
+      function Normalize (Str : String_Access) return String;
+      procedure Seeker (Stop : Source_Location);
+
+      Current_Info : Construct_Access;
+      Found        : Boolean := False;
+      Result       : Construct_Access;
+
+      function Normalize (Str : String_Access) return String is
+      begin
+         if Str /= null then
+            return Reduce (Str.all);
+         else
+            return "";
+         end if;
+      end Normalize;
+
+      procedure Seeker (Stop : Source_Location) is
+
+         Current_Result : Construct_Access;
+         New_Sloc : Source_Location;
+
+      begin
+
+         while Current_Info /= null loop
+
+            --  Test de fin d'encapsulation
+            if Current_Info.Sloc_End.Line < Stop.Line
+              or else (Current_Info.Sloc_End.Line = Stop.Line
+                       and then Current_Info.Sloc_End.Column < Stop.Column)
+            then
+               return;
+            end if;
+
+            if not Current_Info.Is_Declaration and then --  test id body
+              Current_Info.Name.all = Spec.Name.all and then
+              Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+            then
+               Result := Current_Info;
+            end if;
+
+            --  Test de debut d'encapsulation
+            if not Current_Info.Is_Declaration and then
+              Current_Info.Category in Enclosing_Entity_Category
+            then
+               Current_Result := Result;
+               New_Sloc := Current_Info.Sloc_Start;
+               Current_Info := Current_Info.Prev;
+               Current_Result := Result;
+               Seeker (New_Sloc);
+               if Found then
+                  return;
+               else
+                  Result := Current_Result;
+               end if;
+            elsif Current_Info.Is_Declaration and then  --  test id spec
+              Current_Info.Name.all = Spec.Name.all and then
+              Current_Info.Sloc_Start = Spec.Sloc_Start and then
+              Normalize (Current_Info.Profile) = Normalize (Spec.Profile)
+            then
+               Found := True;
+               return;
+            else
+               Current_Info := Current_Info.Prev;
+            end if;
+
+         end loop;
+
+      end Seeker;
+
+   begin
+      Current_Info := Current_Text.Tokens_List.Last;
+      Seeker (Current_Info.Sloc_Start);
+      return Result.all;
+   end Search_Body;
+
+   -------------------
+   -- Get_File_Name --
+   -------------------
+
+   function Get_File_Name (This : Text_Interface) return String is
+   begin
+      return This.File_Name.all;
+   end Get_File_Name;
+
+   -----------------
+   -- Line_Length --
+   -----------------
+
+   function Line_Length
+     (This   : Text_Interface'Class;
+      Cursor : Text_Cursor'Class)
+     return Natural is
+   begin
+      return Get_Line (This, Cursor)'Length;
+   end Line_Length;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -81,8 +465,8 @@ package body Codefix.Text_Manager is
 
    procedure Update
      (This         : Extract_Line;
-      Current_Text : in out Text_Interface'Class;
-      Offset_Line  : in out Natural) is
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Offset_Line  : in out Integer) is
 
       Real_Cursor : File_Cursor := This.Cursor;
 
@@ -96,6 +480,11 @@ package body Codefix.Text_Manager is
                Real_Cursor,
                This.Content.all);
             Offset_Line := Offset_Line + 1;
+         when Line_Deleted =>
+            Delete_Line
+              (Current_Text,
+               Real_Cursor);
+            Offset_Line := Offset_Line - 1;
          when others =>
             Replace
              (Current_Text,
@@ -143,24 +532,12 @@ package body Codefix.Text_Manager is
       return New_Extract;
    end Clone;
 
-   -----------------
-   -- Line_Length --
-   -----------------
-
-   function Line_Length
-     (This   : Text_Interface'Class;
-      Cursor : File_Cursor'Class)
-     return Natural is
-   begin
-      return Get_Line (This, Cursor)'Length;
-   end Line_Length;
-
    ---------
    -- Get --
    ---------
 
    procedure Get
-     (This        : Text_Interface'Class;
+     (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
       Len         : Natural;
       Destination : in out Extract) is
@@ -178,7 +555,7 @@ package body Codefix.Text_Manager is
    --------------
 
    procedure Get_Line
-     (This        : Text_Interface'Class;
+     (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract) is
 
@@ -197,7 +574,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    function Get_String
-     (This : Extract;
+     (This     : Extract;
       Position : Natural := 1)
      return String is
 
@@ -236,7 +613,7 @@ package body Codefix.Text_Manager is
 
    procedure Update
      (This         : Extract;
-      Current_Text : in out Text_Interface'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Natural) is
 
       Current_Extract : Ptr_Extract_Line := This.First;
@@ -276,8 +653,8 @@ package body Codefix.Text_Manager is
    -----------------------
 
    procedure Put_Line_Original
-     (This : Extract;
-      Current_Text : Text_Interface'Class) is
+     (This          : Extract;
+      Current_Text : Text_Navigator_Abstr'Class) is
          Current_Extract : Ptr_Extract_Line := This.First;
    begin
       while Current_Extract /= null loop
@@ -290,19 +667,23 @@ package body Codefix.Text_Manager is
    -- Get_Line --
    --------------
 
-   function Get_Line (This : Extract; Number : Natural)
+   function Get_Line (This : Extract; Position : File_Cursor)
       return Ptr_Extract_Line is
       Current_Extract : Ptr_Extract_Line := This.First;
    begin
       while Current_Extract /= null loop
-         if Current_Extract.Cursor.Line = Number then
+         if Current_Extract.Cursor.Line = Position.Line
+           and Current_Extract.Cursor.File_Name.all = Position.File_Name.all
+         then
             return Current_Extract;
          end if;
          Current_Extract := Current_Extract.Next;
       end loop;
 
       Raise_Exception (Text_Manager_Error'Identity, "line" &
-                       Natural'Image (Number) &
+                       Natural'Image (Position.Line) &
+                       "of " &
+                       Position.File_Name.all &
                        " not found in an extract");
    end Get_Line;
 
@@ -351,8 +732,21 @@ package body Codefix.Text_Manager is
    -- Put_Line --
    --------------
 
-   procedure Put_Line (This : Extract_Line) is
+   procedure Put_Line (This : Extract_Line; Detail : Boolean := True) is
    begin
+      if Detail then
+         case This.Context is
+            when Original_Line =>
+               Put ("(O)");
+            when Line_Modified =>
+               Put ("(M)");
+            when Line_Created =>
+               Put ("(C)");
+            when Line_Deleted =>
+               Put ("(D)");
+         end case;
+      end if;
+
       Put (Natural'Image (This.Cursor.Line));
       Put (":");
       Put (Natural'Image (This.Cursor.Col));
@@ -365,21 +759,26 @@ package body Codefix.Text_Manager is
    -----------------------
 
    procedure Put_Line_Original
-     (This : Extract_Line;
-      Current_Text : Text_Interface'Class) is
+     (This         : Extract_Line;
+      Current_Text : Text_Navigator_Abstr'Class) is
 
       Old_Extract : Extract;
 
    begin
       case This.Context is
          when Original_Line | Line_Modified =>
+            --  Simplifier l'appel de GET pour n'avoir qu'une ligne et pas
+            --  un extrait
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
-            Put_Line (Old_Extract);
+
+            Put_Line (Get_Record (Old_Extract, 1).all, False);
             Free (Old_Extract);
          when Line_Created =>
             null;
          when Line_Deleted =>
-            null;
+            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
+            Put_Line (Get_Record (Old_Extract, 1).all, False);
+            Free (Old_Extract);
       end case;
 
 
@@ -391,7 +790,7 @@ package body Codefix.Text_Manager is
 
    procedure Replace_Word
      (This         : in out Extract;
-      Cursor       : Text_Cursor'Class;
+      Cursor       : File_Cursor'Class;
       New_String   : String;
       Format       : String := "(^[\w]*)") is
 
@@ -400,7 +799,7 @@ package body Codefix.Text_Manager is
       Current_Line : Ptr_Extract_Line;
 
    begin
-      Current_Line := Get_Line (This, Cursor.Line);
+      Current_Line := Get_Line (This, Cursor);
       Affect (Old_String, Current_Line.Content);
       Word_Length := Get_Word_Length (Current_Line.all, Cursor.Col, Format);
 
@@ -417,10 +816,10 @@ package body Codefix.Text_Manager is
 
    procedure Add_Word
      (This   : in out Extract;
-      Cursor : Text_Cursor'Class;
+      Cursor : File_Cursor'Class;
       Word   : String) is
 
-      Current_Line : Ptr_Extract_Line := Get_Line (This, Cursor.Line);
+      Current_Line : Ptr_Extract_Line := Get_Line (This, Cursor);
       Old_String   : Dynamic_String;
 
    begin
@@ -437,12 +836,12 @@ package body Codefix.Text_Manager is
 
    function Get_Word_Length
      (This   : Extract;
-      Cursor : Text_Cursor'Class;
+      Cursor : File_Cursor'Class;
       Format : String)
      return Natural is
    begin
       return Get_Word_Length
-        (Get_Line (This, Cursor.Line).all,
+        (Get_Line (This, Cursor).all,
          Cursor.Col,
          Format);
    end Get_Word_Length;
@@ -526,24 +925,10 @@ package body Codefix.Text_Manager is
       Line : Ptr_Extract_Line := This.First;
    begin
       while Line /= null loop
-         Line.Context = Line_Deleted;
+         Line.Context := Line_Deleted;
          Line := Line.Next;
       end loop;
    end Delete_All_Lines;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   procedure Get_Entity
-     (Current_Text : Text_Interface'Class
-      Cursor       : File_Cursor'Class
-      This         : in out Extract
-      Category     : Language_Category) is
-   begin
-
-   end Get_Entity;
-
 
    ----------
    -- Free --
