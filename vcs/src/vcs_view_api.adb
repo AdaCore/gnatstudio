@@ -1470,20 +1470,10 @@ package body VCS_View_API is
             Get_Log_From_ChangeLog (Kernel, File, Suffix);
             All_Logs_Exist := False;
 
-            declare
-               Log_File     : constant Virtual_File :=
-                                Get_Log_From_File
-                                  (Kernel, File, True, Suffix);
-               Already_Open : Boolean;
-            begin
-               Already_Open := Is_Open (Kernel, Log_File);
-               Open_File_Editor (Kernel, Log_File);
-
-               if not Already_Open then
-                  Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                         Reuse_If_Possible => True, After => True);
-               end if;
-            end;
+            Open_File_Editor
+              (Kernel,
+               Get_Log_From_File (Kernel, File, True, Suffix),
+               Position => Position_Bottom);
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
