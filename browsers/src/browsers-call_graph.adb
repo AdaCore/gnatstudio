@@ -602,9 +602,10 @@ package body Browsers.Call_Graph is
          end if;
 
          Redraw_Title_Bar (Item);
-         Layout (Browser, Force => False);
-         Refresh_Canvas (Get_Canvas (Browser));
       end if;
+
+      Layout (Browser, Force => False);
+      Refresh_Canvas (Get_Canvas (Browser));
 
       Pop_State (Kernel_Handle (Kernel));
       Free (Tree);
