@@ -24,4 +24,8 @@ project GVD is
       for Switches ("process_tab_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
 end GVD;
