@@ -46,6 +46,7 @@ with Gtk.Arguments;    use Gtk.Arguments;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Container;    use Gtk.Container;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gtk.Event_Box;    use Gtk.Event_Box;
@@ -332,6 +333,29 @@ package body Gtkada.MDI is
    procedure Unmaximize_Cb (MDI   : access Gtk_Widget_Record'Class);
    --  Callbacks for the menu
 
+   procedure Set_Focus_Child_MDI
+     (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args);
+   --  Called when the widget that has the keyboard focus has changed. This is
+   --  used to automatically select its parent MDI_Child.
+
+   -------------------------
+   -- Set_Focus_Child_MDI --
+   -------------------------
+
+   procedure Set_Focus_Child_MDI
+     (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+   is
+      pragma Warnings (Off, MDI);
+      Widget : Gtk_Widget := Gtk_Widget (To_Object (Args, 1));
+   begin
+      if Widget /= null then
+         --  The widget is currently either a notebook or the Gtk_Fixed. Get
+         --  its focus widget, which is the one we are really interested in.
+         Widget := Get_Focus_Child (Gtk_Container (Widget));
+         Set_Focus_Child (MDI_Window (MDI), Containing => Widget);
+      end if;
+   end Set_Focus_Child_MDI;
+
    -------------
    -- Gtk_New --
    -------------
@@ -387,6 +411,9 @@ package body Gtkada.MDI is
         (MDI, "motion_notify_event",
          Return_Callback.To_Marshaller (Button_Motion_MDI'Access));
       Return_Callback.Connect (MDI, "expose_event", Expose_MDI'Access);
+
+      Widget_Callback.Connect
+        (MDI, "set_focus_child", Set_Focus_Child_MDI'Access);
    end Initialize;
 
    ------------------------
@@ -3176,7 +3203,7 @@ package body Gtkada.MDI is
      (MDI : access MDI_Window_Record;
       Containing : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Parent : Gtk_Widget := Get_Parent (Containing);
+      Parent : Gtk_Widget := Gtk_Widget (Containing);
    begin
       while Parent /= null
         and then not (Parent.all in MDI_Child_Record'Class)
