@@ -24,7 +24,6 @@ with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View;   use Src_Editor_View;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Glib;              use Glib;
-with Glib.Unicode;      use Glib.Unicode;
 
 package body Src_Editor_View.Commands is
 
@@ -134,30 +133,8 @@ package body Src_Editor_View.Commands is
       View   : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Iter, First : Gtk_Text_Iter;
-      Result : Boolean;
    begin
       if Do_Indentation (Buffer, Get_Language (Buffer), False) then
-
-         --  Move the cursor to the first non-blank character on the line if
-         --  we are before it
-         Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
-         Copy (Source => Iter, Dest => First);
-         Set_Line_Index (First, 0);
-
-         while not Is_End (First)
-           and then not Ends_Line (First)
-           and then Is_Space (Get_Char (First))
-         loop
-            Forward_Char (First, Result);
-            exit when not Result;
-         end loop;
-
-         if Compare (Iter, First) < 0 then
-            Move_Mark (Buffer, View.Saved_Cursor_Mark, First);
-            Place_Cursor (Buffer, First);
-         end if;
-
          return Success;
       else
          return Failure;
