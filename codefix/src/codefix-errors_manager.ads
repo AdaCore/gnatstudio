@@ -27,7 +27,7 @@ use Codefix.Formal_Errors.Command_List;
 package Codefix.Errors_Manager is
 
    function Cut_Message (Str : String) return String;
-   --  Return the message lable of a message without line / cloumn / file
+   --  Return the message label of a message without line/column/file
    --  indication
 
    ----------------------------------------------------------------------------
