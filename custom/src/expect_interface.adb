@@ -23,19 +23,23 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Expect;               use GNAT.Expect;
 with System;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 
+with Gtk.Main;                  use Gtk.Main;
 with Glide_Intl;                use Glide_Intl;
 with Custom_Module;             use Custom_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Traces;                    use Traces;
 
 package body Expect_Interface is
 
-   use Expect_Filter_List;
+   Me : constant Debug_Handle := Create ("Expect", Off);
 
    Command_Cst         : aliased constant String := "command";
    Regexp_Cst          : aliased constant String := "regexp";
+   Timeout_Cst         : aliased constant String := "timeout";
    On_Match_Action_Cst : aliased constant String := "on_match";
    On_Exit_Action_Cst  : aliased constant String := "on_exit";
    Add_Lf_Cst          : aliased constant String := "add_lf";
@@ -45,7 +49,30 @@ package body Expect_Interface is
    Send_Args : constant Cst_Argument_List :=
      (Command_Cst'Access, Add_Lf_Cst'Access);
    Expect_Args : constant Cst_Argument_List :=
-     (Regexp_Cst'Access, On_Match_Action_Cst'Access);
+     (Regexp_Cst'Access, Timeout_Cst'Access);
+
+   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
+
+   type Custom_Action_Record is record
+      Pattern    : Pattern_Matcher_Access;
+      Command    : Argument_List_Access;
+      On_Match   : Glide_Kernel.Scripts.Subprogram_Type;
+      On_Exit    : Glide_Kernel.Scripts.Subprogram_Type;
+      Fd         : GNAT.Expect.Process_Descriptor_Access;
+
+      Processed_Output : String_Access;
+      Unmatched_Output : String_Access;
+   end record;
+
+   type Custom_Action_Access is access all Custom_Action_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Custom_Action_Record, Custom_Action_Access);
+
+   procedure Free (X : in out Custom_Action_Access);
+   procedure Free (X : in out Custom_Action_Record);
+   --  Free memory associated to X.
 
    -----------------------
    -- Local subprograms --
@@ -77,6 +104,41 @@ package body Expect_Interface is
      (Class_Instance, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Class_Instance);
+
+   type Exit_Type is (Matched, Timed_Out, Died);
+   function Interactive_Expect
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Action   : Custom_Action_Access;
+      Timeout  : Integer := 200;
+      Pattern  : String := "";
+      Till_End : Boolean := True) return Exit_Type;
+   --  Execute a call to Expect, but process the gtk+ events periodically.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Action_Record) is
+   begin
+      Free (X.Command);
+      Unchecked_Free (X.Pattern);
+      Free (X.Unmatched_Output);
+      Free (X.Processed_Output);
+      Free (X.On_Exit);
+      Free (X.On_Match);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Action_Access) is
+   begin
+      if X /= null then
+         Free (X.all);
+         Unchecked_Free (X);
+      end if;
+   end Free;
 
    --------------
    -- Get_Data --
@@ -135,6 +197,7 @@ package body Expect_Interface is
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
+      Trace (Me, "Exited");
       if D.On_Exit /= null then
          declare
             C : Callback_Data'Class := Create
@@ -166,11 +229,11 @@ package body Expect_Interface is
       Beg_Index : Natural;
       End_Index : Natural;
       Prev_Beg  : Natural;
-      Node      : List_Node;
-      Prev      : List_Node;
       Action_To_Execute : Subprogram_Type;
 
    begin
+      Trace (Me, "Output: " & Output);
+
       if D.Pattern = null
         and then D.On_Exit = null
       then
@@ -209,45 +272,12 @@ package body Expect_Interface is
       End_Index := D.Unmatched_Output'Last;
 
       loop
-         Matches (0) := No_Match;
-
-         --  Look for a match in the registered expect filters.
-
-         if not Is_Empty (D.Filters) then
-            Node := First (D.Filters);
-            Prev := Null_Node;
-
-            while Node /= Null_Node loop
-               Match
-                 (Expect_Filter_List.Data (Node).Pattern.all,
-                  D.Unmatched_Output.all,
-                  Matches,
-                  Beg_Index, End_Index);
-
-               --  A filter has matched: remove the node from the list and
-               --  process the action.
-               if Matches (0) /= No_Match then
-                  Action_To_Execute := Expect_Filter_List.Data (Node).Action;
-                  Remove_Nodes (D.Filters, Prev, Node);
-                  exit;
-               end if;
-
-               Prev := Node;
-               Node := Next (Node);
-            end loop;
-         end if;
-
-         --  If no filter matched, try with the installed regexp.
-
-         if Matches (0) = No_Match then
-            Action_To_Execute := D.On_Match;
-
-            Match
-              (D.Pattern.all,
-               D.Unmatched_Output.all,
-               Matches,
-               Beg_Index, End_Index);
-         end if;
+         Action_To_Execute := D.On_Match;
+         Match
+           (D.Pattern.all,
+            D.Unmatched_Output.all,
+            Matches,
+            Beg_Index, End_Index);
 
          if Matches (0) = No_Match then
             exit;
@@ -312,6 +342,70 @@ package body Expect_Interface is
       --  ??? Add exception handler ?
    end Output_Cb;
 
+   ------------------------
+   -- Interactive_Expect --
+   ------------------------
+
+   function Interactive_Expect
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Action   : Custom_Action_Access;
+      Timeout  : Integer := 200;
+      Pattern  : String := "";
+      Till_End : Boolean := True) return Exit_Type
+   is
+      Result : Expect_Match;
+      T      : Integer := Integer'Min (Timeout, 200);
+      Iter   : Integer := 1;
+      Dead   : Boolean;
+      pragma Unreferenced (Dead);
+   begin
+      Block_Commands (Kernel, True);
+      if Timeout < 0 then
+         T := 200;
+      end if;
+
+      while Action.Fd /= null loop
+         Expect (Descriptor => Action.Fd.all,
+                 Result     => Result,
+                 Regexp     => Pattern,
+                 Timeout    => T);
+
+         if Result = Expect_Timeout then
+            if not Till_End
+              and then Timeout /= -1
+              and then Iter * T >= Timeout
+            then
+               Trace (Me, "Interactive_Expect: Timeout after "
+                      & Integer'Image (T * Iter) & " >= "
+                      & Integer'Image (Timeout));
+               Block_Commands (Kernel, False);
+               return Exit_Type'(Timed_Out);
+            end if;
+
+            Trace (Me, "MANU Process gtk+ events");
+            while Gtk.Main.Events_Pending loop
+               Dead := Gtk.Main.Main_Iteration;
+            end loop;
+
+         elsif not Till_End then
+            Trace (Me, "Interactive_Expect: Matched " & Pattern);
+            Block_Commands (Kernel, False);
+            return Exit_Type'(Matched);
+         end if;
+
+         Iter := Iter + 1;
+      end loop;
+
+      Block_Commands (Kernel, False);
+      return Exit_Type'(Died);
+
+   exception
+      when Process_Died =>
+         Trace (Me, "Interactive_Expect: Process died");
+         Block_Commands (Kernel, False);
+         return Exit_Type'(Died);
+   end Interactive_Expect;
+
    --------------------------
    -- Custom_Spawn_Handler --
    --------------------------
@@ -323,6 +417,8 @@ package body Expect_Interface is
       Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
       D : Custom_Action_Access;
       Process_Class : constant Class_Type := New_Class (Kernel, "Process");
+      E : Exit_Type;
+      pragma Unreferenced (E);
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
@@ -337,6 +433,8 @@ package body Expect_Interface is
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
                return;
             end if;
+
+            Trace (Me, "Spawning " & Command_Line);
 
             D          := new Custom_Action_Record;
             D.Command  := Argument_String_To_List (Command_Line);
@@ -394,32 +492,28 @@ package body Expect_Interface is
             Close (D.Fd.all);
          end if;
 
+      elsif Command = "wait" then
+         E := Interactive_Expect
+           (Kernel   => Get_Kernel (Data),
+            Action   => Get_Data (Data, 1),
+            Timeout  => -1,
+            Pattern  => "@#$%^&",
+            Till_End => True);
+
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
          D := Get_Data (Data, 1);
-
-         declare
-            Regexp : constant String  := Nth_Arg (Data, 2);
-            Filter : Expect_Filter;
-         begin
-            if Regexp = "" then
-               Set_Error_Msg
-                 (Data, -"Cannot register expect for an empty regexp.");
-               return;
-            end if;
-
-            Filter.Action := Nth_Arg (Data, 3);
-
-            if Filter.Action = null then
-               Set_Error_Msg (Data, -"Action not found for expect_action");
-               return;
-            end if;
-
-            Filter.Pattern :=
-              new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
-
-            Append (D.Filters, Filter);
-         end;
+         E := Interactive_Expect
+           (Kernel   => Get_Kernel (Data),
+            Action   => D,
+            Timeout  => Nth_Arg (Data, 3, -1),
+            Pattern  => Nth_Arg (Data, 2),
+            Till_End => False);
+         if D.Fd /= null then
+            Set_Return_Value (Data, Expect_Out (D.Fd.all));
+         else
+            Set_Return_Value (Data, "Process terminated");
+         end if;
       end if;
    end Custom_Spawn_Handler;
 
@@ -451,8 +545,12 @@ package body Expect_Interface is
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
       Register_Command
+        (Kernel, "wait",
+         Class         => Process_Class,
+         Handler       => Custom_Spawn_Handler'Access);
+      Register_Command
         (Kernel, "expect",
-         Minimum_Args => 2,
+         Minimum_Args => 1,
          Maximum_Args => 2,
          Class         => Process_Class,
          Handler       => Custom_Spawn_Handler'Access);
