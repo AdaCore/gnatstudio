@@ -144,17 +144,6 @@ package body Src_Info.CPP is
    --  Parent_Name is needed only for predefined entities, ie when
    --  Parent_Location is set to SN.Predefined_Point
 
-   procedure Add_Parent
-     (Declaration_Info : in out E_Declaration_Info_List;
-      Handler          : Src_Info.CPP.CPP_LI_Handler;
-      List             : LI_File_List;
-      Parent_Filename  : VFS.Virtual_File;
-      Parent_Location  : SN.Point);
-   --  Add a new parent entity to the list of parents for
-   --  Declaration_Info. This is mostly used for multiple-inheritance.
-   --  ??? Best to use Set_Parent_Location instead, this one appears to be
-   --  incorrect
-
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
@@ -505,67 +494,6 @@ package body Src_Info.CPP is
               Next  => Declaration.Value.Declaration.Parent_Location);
       end if;
    end Set_Parent_Location;
-
-   ----------------
-   -- Add_Parent --
-   ----------------
-
-   procedure Add_Parent
-     (Declaration_Info : in out E_Declaration_Info_List;
-      Handler          : CPP_LI_Handler;
-      List             : LI_File_List;
-      Parent_Filename  : VFS.Virtual_File;
-      Parent_Location  : Point)
-   is
-      FL_Ptr          : File_Location_List;
-      Tmp_LI_File_Ptr : LI_File_Ptr;
-   begin
-      --  Isn't this a duplicate of Set_Parent_Location
-
-      Assert (Fail_Stream, Declaration_Info /= null, "Invalid declaration");
-
-      if Declaration_Info.Value.Declaration.Parent_Location = null then
-         Declaration_Info.Value.Declaration.Parent_Location :=
-           new File_Location_Node;
-         FL_Ptr := Declaration_Info.Value.Declaration.Parent_Location;
-
-      else
-         FL_Ptr := Declaration_Info.Value.Declaration.Parent_Location;
-
-         loop
-            if FL_Ptr.Value.Line = Parent_Location.Line
-              and then FL_Ptr.Value.Column = Parent_Location.Column
-              and then Get_LI_Filename (FL_Ptr.Value.File.LI) = Parent_Filename
-            then
-               return;
-            end if;
-
-            if FL_Ptr.Next = null then
-               FL_Ptr.Next := new File_Location_Node;
-               FL_Ptr := FL_Ptr.Next;
-               exit;
-            end if;
-
-            FL_Ptr := FL_Ptr.Next;
-         end loop;
-      end if;
-
-      --  Create a stub for the parent, or get the existing LI
-      Create_Stub_For_File
-        (LI            => Tmp_LI_File_Ptr,
-         Handler       => Handler,
-         List          => List,
-         Full_Filename => Parent_Filename);
-      FL_Ptr.all :=
-        (Value => (File   => (LI              => Tmp_LI_File_Ptr,
-                              Part            => Unit_Body,
-                              Source_Filename => null),
-                   Line   => Parent_Location.Line,
-                   Column => Parent_Location.Column),
-         Kind => Container_Type,
-         Predefined_Entity_Name => No_Name,
-         Next  => null);
-   end Add_Parent;
 
    --------------------------
    -- Create_Stub_For_File --
@@ -4582,10 +4510,8 @@ package body Src_Info.CPP is
                   Super_Def,
                   Success);
                if Success then -- if found, add it to parent list
-                  Add_Parent
-                    (Decl_Info,
-                     Handler => CPP_LI_Handler (Handler),
-                     List => List,
+                  Set_Parent_Location
+                    (File, List, Decl_Info,
                      Parent_Filename => Create
                        (Super_Def.Buffer
                           (Super_Def.File_Name.First ..
