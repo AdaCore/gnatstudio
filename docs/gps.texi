@@ -5725,6 +5725,17 @@ is provided that will automatically convert all files in the customization
 directory to the new format. This conversion tool is called
 @file{gps_convert_custom}, and must be run manually.
 
+This files must be utf8-encoded by default. However, you can specify any
+encoding you wish through the standard @code{<?xml encoding="..." ?>}
+declaration, as in the following example:
+
+@smallexample
+<?xml version="1.0" encoding="iso-8859-1">
+<submenu>
+   <title>ιθη</title>
+</submenu>
+@end smallexample
+
 @subsection Defining Actions
 @cindex action
 @noindent
