@@ -611,18 +611,14 @@ package body Project_Explorers is
       User : Kernel_Handle) return MDI_Child
    is
       Explorer : Project_Explorer;
-      Child    : MDI_Child;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
-         Trace (Me, "Load_Desktop");
          Gtk_New (Explorer, User);
          Refresh (Explorer);
-         Child := Put
+         return Put
            (MDI, Explorer,
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height));
-         Trace (Me, "Done loading desktop");
-         return Child;
       end if;
 
       return null;
