@@ -28,6 +28,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                       use Glib;
+with Glib.Object;
 with Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Editor;
@@ -67,18 +68,13 @@ package body Src_Editor_Box is
    --  able to display.
 
    package Widget_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Gtk_Widget_Record,
+     (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box);
-   --  ??? All 3 callback instantiations should probably be merged into
-   --  ??? one single instantiation later on.
 
-   package View_Callback is new Gtk.Handlers.User_Callback
+   package Return_Callback is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Source_View_Record,
-      User_Type => Source_Editor_Box);
-
-   package Buffer_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Source_Buffer_Record,
-      User_Type => Source_Editor_Box);
+      Return_Type => Boolean,
+      User_Type   => Source_Editor_Box);
 
    --------------------------
    -- Forward declarations --
@@ -120,10 +116,10 @@ package body Src_Editor_Box is
    --  Redraw the cursor position in the Line/Column areas of the status bar.
 
    procedure Cursor_Position_Changed_Handler
-     (Buffer : access Source_Buffer_Record'Class;
+     (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
-   --  This handler is merly a proxy to Show_Cursor_Position. It just
+   --  This handler is merely a proxy to Show_Cursor_Position. It just
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
 
@@ -147,6 +143,12 @@ package body Src_Editor_Box is
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
 
+   function Focus_In_Event_Cb
+     (Widget : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus;
+      Box    : Source_Editor_Box) return Boolean;
+   --  Set the current editor child in Kernel.
+
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -162,7 +164,7 @@ package body Src_Editor_Box is
    --  Return the contextual menu to use for the source box.
 
    procedure On_Goto_Declaration_Or_Body
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box);
    --  Callback for the "Goto Declaration<->Body" contextual menu
@@ -252,7 +254,7 @@ package body Src_Editor_Box is
    -------------------------------------
 
    procedure Cursor_Position_Changed_Handler
-     (Buffer : access Source_Buffer_Record'Class;
+     (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box)
    is
@@ -342,7 +344,7 @@ package body Src_Editor_Box is
       Pack_End
         (Frame_Hbox, Box.Cursor_Column_Label, Expand => False, Fill => True);
 
-      Buffer_Callback.Connect
+      Widget_Callback.Connect
         (Widget    => Box.Source_Buffer,
          Name      => "cursor_position_changed",
          Cb        => Cursor_Position_Changed_Handler'Access,
@@ -350,6 +352,14 @@ package body Src_Editor_Box is
          After     => True);
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
+
+      Return_Callback.Connect
+        (Widget    => Box.Source_View,
+         Name      => "focus_in_event",
+         Marsh     => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
+         User_Data => Source_Editor_Box (Box),
+         After     => True);
+      --  ??? Should also connect to destroy signal to reset the editor child
 
       --  The Contextual Menu handling
       CMenu.Register_Contextual_Menu
@@ -362,6 +372,8 @@ package body Src_Editor_Box is
 
    function Is_Entity_Letter (Char : Character) return Boolean is
    begin
+      --  ??? Does not handle accentuated letters
+
       case Char is
          when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
             return True;
@@ -383,6 +395,7 @@ package body Src_Editor_Box is
    begin
       --  Search forward the end of the entity...
       Copy (Source => Start_Iter, Dest => End_Iter);
+
       while not Is_End (End_Iter) loop
          exit when not Is_Entity_Letter (Get_Char (End_Iter));
          Forward_Char (End_Iter, Ignored);
@@ -391,12 +404,26 @@ package body Src_Editor_Box is
       --  And search backward the begining of the entity...
       while not Is_Start (Start_Iter) loop
          Backward_Char (Start_Iter, Ignored);
+
          if not Is_Entity_Letter (Get_Char (Start_Iter)) then
             Forward_Char (Start_Iter, Ignored);
             exit;
          end if;
       end loop;
    end Search_Entity_Bounds;
+
+   -----------------------
+   -- Focus_In_Event_Cb --
+   -----------------------
+
+   function Focus_In_Event_Cb
+     (Widget : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus;
+      Box    : Source_Editor_Box) return Boolean is
+   begin
+      Editor.Set_Editor_Child (Box.Kernel);
+      return False;
+   end Focus_In_Event_Cb;
 
    -------------------------
    -- Get_Contextual_Menu --
@@ -407,8 +434,9 @@ package body Src_Editor_Box is
       Event  : Gdk_Event)
       return Gtk_Menu
    is
-      V : Source_View := Editor.Source_View;
+      V    : Source_View := Editor.Source_View;
       Item : Gtk_Menu_Item;
+
    begin
       if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
          if Editor.Left_Contextual_Menu /= null then
@@ -446,6 +474,8 @@ package body Src_Editor_Box is
             User_Data => Editor,
             After     => True);
 
+         Gtk_New (Item, "Go to body");
+         Add (Editor.Contextual_Menu, Item);
          Gtk_New (Item, "List references");
          Add (Editor.Contextual_Menu, Item);
          Gtk_New (Item);
@@ -463,12 +493,13 @@ package body Src_Editor_Box is
    ---------------------------------
 
    procedure On_Goto_Declaration_Or_Body
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box) is
    begin
       Glide_Kernel.Editor.Goto_Declaration_Or_Body (Editor.Kernel);
    end On_Goto_Declaration_Or_Body;
+
    -------------
    -- Gtk_New --
    -------------
@@ -607,11 +638,11 @@ package body Src_Editor_Box is
       Set_Cursor_Location (Editor, 1, 1);
 
       if Success then
-         Editor.Filename := new String'(Filename);
+         Editor.Filename := new String' (Filename);
          --  ??? Not sure whether we should store the basename or not. For the
-         --  ??? moment we store the full path, but this might be an error,
-         --  ??? expecially if we change the cwd inside GLIDE. Should not
-         --  ??? happen though.
+         --  moment we store the full path, but this might be an error,
+         --  expecially if we change the cwd inside GLIDE. Should not
+         --  happen though.
       end if;
    end Load_File;
 
