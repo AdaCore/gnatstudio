@@ -1,19 +1,6 @@
 New features in GVD 2.0.0
 
-- General stabilization and improvements in error/warning messages.
-- Better handling of VxWorks targets.
-- [9417-007] New menu: File->Add Symbols, particularly useful under VxWorks.
-- [9403-007] GVD shows the main source file in the explorer when it opens.
-- [9305-023] The columns size and visibility for the stack window are now
-  memorized from one session to another.
-- [9325-017] The fields in the "New Debugger" dialog are now filled with
-  parameters from the command line.
-- [9305-037] A message dialog now pops up when trying to detach a process
-  while the underlying debugger is busy.
-- [9130-004] Explorer displays return type for functions.
 - A new multiple document interface (MDI) is provided.
-- The question dialogs now detects if the choices are "Yes/No" and changes
-  its display accordingly.
 
 New features in GVD 1.2.1
 
