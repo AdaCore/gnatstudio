@@ -1,3 +1,3 @@
 all: force
-	gnatmake -Pconvert -largs ../../common/obj/libcommon.a  `gtkada-config`
+	gnatmake -Pconvert -aO../../prj_editor/obj `gtkada-config` -largs ../../common/obj/libcommon.a
 force:
