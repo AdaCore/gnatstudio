@@ -139,11 +139,15 @@ package Src_Info is
    --------------------------
 
    type LI_Handler_Iterator is abstract tagged private;
+   type LI_Handler_Iterator_Access is access all LI_Handler_Iterator'Class;
    --  An iterator to generate the LI database for a set of source files.
    --  See the functions Generate_LI_For_Source and Generate_LI_For_Project
    --  for the factories used to create this type.
    --  See the private part for some subprograms that can be helpful when
    --  writting your own iterators.
+
+   procedure Free (LI : in out LI_Handler_Iterator_Access);
+   --  Free the memory associated with the handler, and destroy the iterator.
 
    procedure Continue
      (Iterator : in out LI_Handler_Iterator;
@@ -164,6 +168,9 @@ package Src_Info is
    --  Finished should be True if the Iterator has finished regenerating the
    --  database. The memory used for the iterator should be freed at the same
    --  time.
+
+   procedure Destroy (Iterator : in out LI_Handler_Iterator);
+   --  Free the memory used by the list of source files.
 
    ------------------
    --  LI handlers --
@@ -227,6 +234,8 @@ package Src_Info is
    --  file. However, for some languages the database can only be regenerated
    --  by parsing all the files, and so nothing should be done in this
    --  subprogram.
+   --  Note that only the database on the disk needs to be regenerated, not the
+   --  LI structures themselves, which will be done by Create_Or_Complete_LI.
 
    function Generate_LI_For_Project
      (Handler       : access LI_Handler_Record;
@@ -238,6 +247,8 @@ package Src_Info is
    --  its imported projects if Recursive is True).
    --  This function should do as few work as possible, and the iterator will
    --  be called until all the files are processed.
+   --  Note that only the database on the disk needs to be regenerated, not the
+   --  LI structures themselves, which will be done by Create_Or_Complete_LI.
 
    --------------
    -- Entities --
@@ -949,9 +960,6 @@ private
    procedure Next_Source_File (Iterator : in out LI_Handler_Iterator'Class);
    --  Move to the next source file.
    --  The empty string "" is returned if there are no more source files.
-
-   procedure Destroy (Iterator : in out LI_Handler_Iterator'Class);
-   --  Free the memory used by the list of source files.
 
    -----------------------------
    -- LI_File_HTable services --

@@ -859,9 +859,23 @@ package body Src_Info is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iterator : in out LI_Handler_Iterator'Class) is
+   procedure Destroy (Iterator : in out LI_Handler_Iterator) is
    begin
       Basic_Types.Free (Iterator.Source_Files);
    end Destroy;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (LI : in out LI_Handler_Iterator_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (LI_Handler_Iterator'Class, LI_Handler_Iterator_Access);
+   begin
+      if LI /= null then
+         Destroy (LI.all);
+         Unchecked_Free (LI);
+      end if;
+   end Free;
 
 end Src_Info;
