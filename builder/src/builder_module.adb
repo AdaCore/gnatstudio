@@ -1669,7 +1669,7 @@ package body Builder_Module is
       Set_Sensitive
         (Register_Menu
            (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
-           null, GDK_C, Control_Mask),
+           null, GDK_C, Control_Mask + Shift_Mask),
          False);
 
       Kernel_Callback.Connect
