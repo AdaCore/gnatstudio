@@ -118,7 +118,7 @@ package body Docgen_Backend_HTML is
      (B      : access Backend_HTML;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Close)
+      Info   : in out Docgen.Doc_Info_Base)
    is
       pragma Unreferenced (B, Kernel, Info);
    begin
@@ -415,6 +415,8 @@ package body Docgen_Backend_HTML is
       use List_Entity_Handle;
       Parent_Node : List_Entity_Handle.List_Node;
       Child_Node  : List_Entity_Handle.List_Node;
+      Entity      : Entity_Handle;
+      F           : VFS.Virtual_File;
       Space       : constant String :=
         (1 .. Level * Get_Indent (B.all) => ' ');
 
@@ -434,12 +436,12 @@ package body Docgen_Backend_HTML is
            (Info.Tagged_Entity.My_Parents);
 
          while Parent_Node /= List_Entity_Handle.Null_Node loop
-            if List_Entity_Handle.Data (Parent_Node) /= null then
-               if Source_File_In_List
-                 (Info.Tagged_Source_File_List,
-                  Get_Declaration_File_Of
-                    (List_Entity_Handle.Data (Parent_Node).all))
-               then
+            Entity := List_Entity_Handle.Data (Parent_Node);
+
+            if Entity /= null then
+               F := Get_Declaration_File_Of (Entity.all);
+
+               if Source_File_In_List (Info.Tagged_Source_File_List, F) then
                   --  Linkage is possible
                   Put_Line
                     (File, "<TR><TD><PRE>"
@@ -447,27 +449,18 @@ package body Docgen_Backend_HTML is
                      & "<A HREF="""
                      & Base_Name
                        (Get_Doc_File_Name
-                          (Get_Declaration_File_Of
-                             (List_Entity_Handle.Data
-                                (Parent_Node).all),
+                          (F,
                            Info.Tagged_Directory.all,
                            Info.Tagged_Suffix.all))
-                     & "#" & Image (Get_Declaration_Line_Of
-                                      (List_Entity_Handle.Data
-                                         (Parent_Node).all))
+                     & "#" & Image (Get_Declaration_Line_Of (Entity.all))
                      & """ TARGET=""main"">"
-                     & Get_Name (List_Entity_Handle.Data (Parent_Node).all)
+                     & Get_Name (Entity.all)
                      & "</A> at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & Base_Name (F)
                      & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of
-                                (List_Entity_Handle.Data (Parent_Node).all))
+                     & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & Image (Get_Declaration_Column_Of (Entity.all))
                      & "</PRE></TD><TR>");
 
                else
@@ -475,20 +468,13 @@ package body Docgen_Backend_HTML is
                   Put_Line
                     (File, "<TR><TD><PRE>"
                      & Space
-                     & Get_Name (List_Entity_Handle.Data
-                                   (Parent_Node).all)
+                     & Get_Name (Entity.all)
                      & " at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & Base_Name (F)
                      & "&nbsp;"
-                     & Image
-                       (Get_Declaration_Line_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & Image (Get_Declaration_Column_Of (Entity.all))
                      & "</PRE></TD><TR>");
                end if;
             end if;
@@ -518,11 +504,12 @@ package body Docgen_Backend_HTML is
            (Info.Tagged_Entity.My_Children);
 
          while Child_Node /= List_Entity_Handle.Null_Node loop
-            if List_Entity_Handle.Data (Child_Node) /= null then
-               if Source_File_In_List
-                 (Info.Tagged_Source_File_List, Get_Declaration_File_Of
-                    (List_Entity_Handle.Data (Child_Node).all))
-               then
+            Entity := List_Entity_Handle.Data (Child_Node);
+
+            if Entity /= null then
+               F := Get_Declaration_File_Of (Entity.all);
+
+               if Source_File_In_List (Info.Tagged_Source_File_List, F) then
                   --  Linkage is possible
 
                   Put_Line
@@ -531,47 +518,32 @@ package body Docgen_Backend_HTML is
                      & "<A HREF="""
                      & Base_Name
                        (Get_Doc_File_Name
-                          (Get_Declaration_File_Of
-                             (List_Entity_Handle.Data
-                                (Child_Node).all),
+                          (F,
                            Info.Tagged_Directory.all,
                            Info.Tagged_Suffix.all))
-                     & "#" & Image (Get_Declaration_Line_Of
-                                      (List_Entity_Handle.Data
-                                         (Child_Node).all))
+                     & "#" & Image (Get_Declaration_Line_Of (Entity.all))
                      & """ TARGET=""main"">"
-                     & Get_Name (List_Entity_Handle.Data (Child_Node).all)
+                     & Get_Name (Entity.all)
                      & "</A> at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
+                     & Base_Name (F)
                      & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of
-                                (List_Entity_Handle.Data (Child_Node).all))
+                     & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
+                     & Image (Get_Declaration_Column_Of (Entity.all))
                      & "</PRE></TD><TR>");
+
                else
                   --  No link for this child
                   Put_Line
                     (File, "<TR><TD><PRE>"
                      & Space
-                     & Get_Name (List_Entity_Handle.Data
-                                   (Child_Node).all)
+                     & Get_Name (Entity.all)
                      & " at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
+                     & Base_Name (F)
                      & "&nbsp;"
-                     & Image
-                       (Get_Declaration_Line_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
+                     & Image (Get_Declaration_Line_Of (Entity.all))
                      & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
+                     & Image (Get_Declaration_Column_Of (Entity.all))
                      & "</PRE></TD><TR>");
                end if;
             end if;
@@ -581,10 +553,7 @@ package body Docgen_Backend_HTML is
       else
          --  There's no child
          Put_Line
-           (File, "<TR><TD><PRE>"
-            & Space
-            & "<B>No child</B>"
-            & "</PRE></TD></TR>");
+           (File, "<TR><TD><PRE>" & Space & "<B>No child</B></PRE></TD></TR>");
       end if;
 
       Put_Line (File, "</TD></TR></TABLE>");
@@ -663,7 +632,9 @@ package body Docgen_Backend_HTML is
       Indent      : Natural)
    is
       use Type_Reference_List;
-      Node   : Type_Reference_List.List_Node;
+      Node : Type_Reference_List.List_Node;
+      Data : Type_Reference_List.Data_Access;
+      F    : VFS.Virtual_File;
 
    begin
       if Type_Reference_List.Is_Empty (Local_List) then
@@ -694,7 +665,10 @@ package body Docgen_Backend_HTML is
          while Node /= Type_Reference_List.Null_Node loop
             --  Check if the creating of a link is possible
 
-            if Type_Reference_List.Data (Node).Set_Link then
+            Data := Type_Reference_List.Data_Ref (Node);
+            F    := Get_Declaration_File_Of (Data.Entity);
+
+            if Data.Set_Link then
                --  If a called subprogram => link to spec
 
                Put_Line
@@ -702,27 +676,17 @@ package body Docgen_Backend_HTML is
                   "<TR><TD><PRE>"
                   & Space
                   & "<A HREF="""
-                  & Get_Html_File_Name
-                    (Kernel,
-                     Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Get_Html_File_Name (Kernel, F)
                   & "#"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Image (Get_Declaration_Line_Of (Data.Entity))
                   & """>"
-                  & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & Get_Name (Data.Entity)
                   & "</A> declared at&nbsp;"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Base_Name (F)
                   & "&nbsp;"
-                  & Image (Get_Declaration_Line_Of
-                             (Type_Reference_List.Data (Node).Entity))
+                  & Image (Get_Declaration_Line_Of (Data.Entity))
                   & ":"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Image (Get_Declaration_Column_Of (Data.Entity))
                   & "</PRE></TD><TR>");
 
             else
@@ -731,19 +695,13 @@ package body Docgen_Backend_HTML is
                  (File,
                   "<TR><TD><PRE>"
                   & Space
-                  & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & Get_Name (Data.Entity)
                   & " declared at&nbsp;"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Base_Name (F)
                   & "&nbsp;"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Image (Get_Declaration_Line_Of (Data.Entity))
                   & ":"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
+                  & Image (Get_Declaration_Column_Of (Data.Entity))
                   & "</PRE></TD></TR>");
             end if;
 
@@ -900,7 +858,7 @@ package body Docgen_Backend_HTML is
          "<FRAME SRC=""" &
          Base_Name
            (Get_Doc_File_Name
-              (Type_Source_File_List.Data (Source_File_Node).File_Name,
+              (Type_Source_File_List.Data_Ref (Source_File_Node).File_Name,
                Doc_Directory, Doc_Suffix)) & """ NAME=""main"" >");
       Put_Line
         (Frame_File,
@@ -1673,7 +1631,7 @@ package body Docgen_Backend_HTML is
          --  only if it's a subprogram or entry in a spec sometimes
          --  a link can be created to it body, so don't filter these ones.
             and then
-             (Get_Declaration_File_Of (Entity_Info) /= File_Name
+             (not Is_Declaration_File_Of (Entity_Info, File_Name)
               or else Get_Declaration_Line_Of (Entity_Info) /=
                 Start_Line + Entity_Line - 1
               or else Special_Link_Should_Be_Set));
