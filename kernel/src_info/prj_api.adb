@@ -242,33 +242,24 @@ package body Prj_API is
    -- Add_Possible_Value --
    ------------------------
 
-   function Add_Possible_Value (Typ : Project_Node_Id; Choice : String)
-      return String_Id
-   is
+   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String_Id) is
       Str, S2 : Project_Node_Id;
-      S   : String_Id;
    begin
       pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
 
-      Start_String;
-      Store_String_Chars (Choice);
-      S := End_String;
+      Str := First_Literal_String (Typ);
+      while Str /= Empty_Node loop
+         if String_Equal (String_Value_Of (Str), Choice) then
+            return;
+         end if;
+         Str := Next_Literal_String (Str);
+      end loop;
 
       S2 := Default_Project_Node (N_Literal_String, Single);
-      Set_String_Value_Of (S2, S);
+      Set_String_Value_Of (S2, Choice);
 
-      Str := First_Literal_String (Typ);
-
-      if Str = Empty_Node then
-         Set_First_Literal_String (Typ, S2);
-
-      else
-         while Next_Literal_String (Str) /= Empty_Node loop
-            Str := Next_Literal_String (Str);
-         end loop;
-         Set_Next_Literal_String (Str, S2);
-      end if;
-      return S;
+      Set_Next_Literal_String (S2, First_Literal_String (Typ));
+      Set_First_Literal_String (Typ, S2);
    end Add_Possible_Value;
 
    ---------------------------
@@ -1846,6 +1837,33 @@ package body Prj_API is
       return Find_Node_By_Name (Project, N_Package_Declaration, Name);
    end Find_Package_Declaration;
 
+   ----------------------------
+   -- Find_Scenario_Variable --
+   ----------------------------
+
+   function Find_Scenario_Variable
+     (Project : Project_Node_Id; External_Name : String_Id)
+      return Project_Node_Id
+   is
+      Decl : Project_Node_Id := First_Declarative_Item_Of
+        (Project_Declaration_Of (Project));
+      Current : Project_Node_Id;
+   begin
+      while Decl /= Empty_Node loop
+         Current := Current_Item_Node (Decl);
+         if Kind_Of (Current) = N_Typed_Variable_Declaration
+           and then Is_External_Variable (Current)
+           and then String_Equal
+              (External_Name, External_Reference_Of (Current))
+         then
+            return Current;
+         end if;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+      return Empty_Node;
+   end Find_Scenario_Variable;
+
    ------------------------------
    -- Post_Process_After_Clone --
    ------------------------------
@@ -2078,6 +2096,40 @@ package body Prj_API is
 
       Replace_In_Hierarchy (Root_Project);
    end Rename;
+
+   ----------------------------------
+   -- Set_Scenario_Variable_Values --
+   ----------------------------------
+
+   procedure Set_Scenario_Variable_Values
+     (Root_Project           : Project_Node_Id;
+      External_Variable_Name : String_Id;
+      Values                 : String_Id_Array)
+   is
+      Type_Node, With_Clause, Var : Project_Node_Id;
+   begin
+      Var := Find_Scenario_Variable (Root_Project, External_Variable_Name);
+
+      --  If variable is defined in the current project, then reset the type to
+      --  Values.
+
+      if Var /= Empty_Node then
+         Type_Node := String_Type_Of (Var);
+         pragma Assert (Type_Node /= Empty_Node);
+         Set_First_Literal_String (Type_Node, Empty_Node);
+
+         for J in Values'Range loop
+            Add_Possible_Value (Type_Node, Values (J));
+         end loop;
+      end if;
+
+      With_Clause := First_With_Clause_Of (Root_Project);
+      while With_Clause /= Empty_Node loop
+         Set_Scenario_Variable_Values
+           (Project_Node_Of (With_Clause), External_Variable_Name, Values);
+         With_Clause := Next_With_Clause_Of (With_Clause);
+      end loop;
+   end Set_Scenario_Variable_Values;
 
 begin
    Namet.Initialize;

@@ -46,6 +46,7 @@ package Prj_API is
 
    type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
    type Project_Node_Array_Access is access Project_Node_Array;
+   type String_Id_Array is array (Positive range <>) of Types.String_Id;
 
    Ada_String : Types.String_Id;
    C_String   : Types.String_Id;
@@ -140,9 +141,10 @@ package Prj_API is
    --  The new declaration is added at the end of the declarative item list for
    --  Prj_Or_Pkg (but before any package declaration).
 
-   function Add_Possible_Value (Typ : Project_Node_Id; Choice : String)
-      return Types.String_Id;
+   procedure Add_Possible_Value
+     (Typ : Project_Node_Id; Choice : Types.String_Id);
    --  Add a new choice in the list of possible values for the type Typ.
+   --  If Choice is already available in Typ, then it is not added again.
 
    function Create_Typed_Variable
      (Prj_Or_Pkg : Project_Node_Id;
@@ -198,6 +200,13 @@ package Prj_API is
    --  Name.
    --  This is different from using directly Prj.Tree.Projects_Htable, since we
    --  only look for the project in the hierarchy of Root_Project.
+
+   function Find_Scenario_Variable
+     (Project : Project_Node_Id; External_Name : Types.String_Id)
+      return Project_Node_Id;
+   --  Return the declaration of the scenario variable associated with
+   --  the external variable External_Name.
+   --  In normalized projects, there should be only such variable.
 
    ------------------
    -- Node cloning --
@@ -444,6 +453,16 @@ package Prj_API is
    --  Ref should be a N_Variable_Reference.
    --
    --  ??? Can this be merged with External_Reference_Of
+
+   procedure Set_Scenario_Variable_Values
+     (Root_Project           : Project_Node_Id;
+      External_Variable_Name : Types.String_Id;
+      Values                 : String_Id_Array);
+   --  Set the list of possible values for all the scenario variables
+   --  associated with External_Variable_Name. The previous values are
+   --  simply removed. This helps ensure type matching for all these variables.
+   --  The changes are done recursively in Root_Project and all its imported
+   --  projects.
 
    Invalid_Value : exception;
 
