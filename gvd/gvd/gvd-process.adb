@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -98,8 +98,11 @@ package body GVD.Process is
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Visual_Debugger_Record, Boolean);
 
+   pragma Warnings (Off);
+   --  This UC is safe aliasing-wise, so kill warning
    function To_Main_Debug_Window is new
      Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
+   pragma Warnings (On);
 
    Default_Widget_Width  : constant := 200;
    Default_Widget_Height : constant := 200;

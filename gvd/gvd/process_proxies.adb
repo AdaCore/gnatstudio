@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -339,8 +339,11 @@ package body Process_Proxies is
    is
       pragma Unreferenced (Descriptor);
 
+      pragma Warnings (Off);
+      --  This UC is safe aliasing-wise, so kill warning
       function To_Proxy is new Ada.Unchecked_Conversion
         (System.Address, Process_Proxy_Access);
+      pragma Warnings (On);
 
    begin
       if Get_Command_Mode (To_Proxy (Proxy)) /= Internal then
