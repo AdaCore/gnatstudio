@@ -37,6 +37,7 @@ with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
+with Prj.Util;                  use Prj.Util;
 with Prj.Part;                  use Prj.Part;
 with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
@@ -45,6 +46,7 @@ with Projects.Editor;           use Projects.Editor;
 with Snames;                    use Snames;
 with Stringt;
 with String_Hash;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
 
@@ -56,6 +58,10 @@ package body Projects.Registry is
    --  Should be set to true if saved project should be compatible with GNAT
    --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
    --  20021024
+
+   Unknown_Language : Name_Id;
+   --  Constant used to mark source files set in the project, but for which no
+   --  matching language has been found.
 
    procedure Do_Nothing (Project : in out Project_Type);
    --  Do not free the project (in the hash tables), since it shared by several
@@ -87,6 +93,9 @@ package body Projects.Registry is
    end record;
    No_Source_File_Data : constant Source_File_Data :=
      (No_Project, No_Name, No_Name);
+   --   In some case, Lang might be set to Unknown_Language, if the file was
+   --   set in the project (for instance through the Source_Files attribute),
+   --   but no matching language was found.
 
    procedure Do_Nothing (Data : in out Source_File_Data);
 
@@ -704,8 +713,13 @@ package body Projects.Registry is
       Project  : Project_Type;
       Errors   : Put_Line_Access)
    is
+      Sources_Specified : Boolean := False;
+
       procedure Record_Source (File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project
+
+      function File_In_Sources (File : String) return Boolean;
+      --  Whether File belongs to the list of source files for this project
 
       procedure Record_Source (File : String; Lang : Name_Id) is
       begin
@@ -720,6 +734,12 @@ package body Projects.Registry is
 
          Set (Registry.Data.Sources, K => File, E => (Project, Lang, No_Name));
       end Record_Source;
+
+      function File_In_Sources (File : String) return Boolean is
+      begin
+         return not Sources_Specified
+           or else Get (Registry.Data.Sources, File).Lang /= No_Name;
+      end File_In_Sources;
 
       Languages  : Argument_List := Get_Languages (Project);
       Languages2 : Argument_List := Languages;
@@ -757,11 +777,80 @@ package body Projects.Registry is
          return;
       end if;
 
-      --  Note: we do not have to check Source_File_List and Source_Files
-      --  attributes, since they have already been processed by the Ada parser.
+      --  Preprocess the Source_Files attribute
+      --  ??? Should be shared with the project parser (Prj.Nmsc)
 
-      --  ??? We are parsing Ada files twice for projects that have Ada and at
-      --  least another language.
+      declare
+         Data : constant Project_Data :=
+           Prj.Projects.Table (Get_View (Project));
+         Sources : constant Variable_Value :=
+           Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes);
+         File : String_List_Id := Sources.Values;
+
+      begin
+         if not Sources.Default then
+            Sources_Specified := True;
+            while File /= Nil_String loop
+               Get_Name_String (String_Elements.Table (File).Value);
+               Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
+               Set (Registry.Data.Sources,
+                    K => Name_Buffer (1 .. Name_Len),
+                    E => (No_Project, Unknown_Language, No_Name));
+               File := String_Elements.Table (File).Next;
+            end loop;
+         end if;
+      end;
+
+      --  Preprocess the Source_List_File attribute
+      --  ??? Should also be shared with the project parser (Prj.Nmsc)
+
+      declare
+         Data : constant Project_Data :=
+           Prj.Projects.Table (Get_View (Project));
+         Source_List_File : constant Variable_Value :=
+           Prj.Util.Value_Of (Name_Source_List_File, Data.Decl.Attributes);
+         File : Prj.Util.Text_File;
+         Line : String (1 .. 2000);
+         Last : Natural;
+
+      begin
+         if not Source_List_File.Default then
+            Sources_Specified := True;
+            declare
+               F : constant String :=
+                 Name_As_Directory (Get_String (Data.Directory))
+                 & Get_String (Source_List_File.Value);
+            begin
+               if Is_Regular_File (F) then
+                  Open (File, F);
+
+                  while not Prj.Util.End_Of_File (File) loop
+                     Prj.Util.Get_Line (File, Line, Last);
+
+                     if Last /= 0
+                       and then (Last = 1 or else Line (1 .. 2) /= "--")
+                     then
+                        Canonical_Case_File_Name (Line (1 .. Last));
+                        Set (Registry.Data.Sources,
+                             K => Line (1 .. Last),
+                             E => (No_Project, Unknown_Language, No_Name));
+                     end if;
+                  end loop;
+
+                  Close (File);
+               end if;
+            end;
+         end if;
+      end;
+
+      --  ??? Should check locally removed file, but this should really be done
+      --  by sharing code with Prj-Nmsc.
+      --  Given the implementation in prj-nmsc, does this attribute apply for
+      --  languages other than Ada ?
+
+
+      --  Parse all directories to find the files that match the naming
+      --  scheme.
 
       Dirs := Source_Dirs (Project, False);
 
@@ -773,11 +862,12 @@ package body Projects.Registry is
             Read (Dir, Buffer, Length);
             exit when Length = 0;
 
-            --  ??? Should check that the file is in Project'Source_Files
-
+            --  Check if the file is in the list of sources for this project,
+            --  as specified in the project file
             --  Nothing to do if the file is already registered
 
-            if Get_Project_From_File
+            if File_In_Sources (Buffer (1 .. Length))
+              and then Get_Project_From_File
               (Registry          => Registry,
                Source_Filename   => Buffer (1 .. Length),
                Root_If_Not_Found => False) = No_Project
@@ -1055,6 +1145,7 @@ package body Projects.Registry is
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
+      Unknown_Language := Get_String ("unknown");
    end Initialize;
 
    --------------
