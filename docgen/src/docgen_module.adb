@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -32,6 +33,7 @@ with Entities;                  use Entities;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Projects;                  use Projects;
 with Glib;                      use Glib;
 with Glib.Generic_Properties;
@@ -40,7 +42,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Docgen.Backend.Text;       use Docgen.Backend.Text;
+with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
 with Docgen_Registry;           use Docgen_Registry;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
@@ -181,7 +183,8 @@ package body Docgen_Module is
    -- main procedure for the documentation --
    ------------------------------------------
 
-   function Get_Backend return Docgen.Backend.Backend_Handle;
+   function Get_Backend
+     (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle;
    --  Return the backend to use given the current options
 
    procedure Generate
@@ -413,21 +416,25 @@ package body Docgen_Module is
       Project   : Project_Type := No_Project;
       Recursive : Boolean)
    is
-      B                : constant Docgen.Backend.Backend_Handle := Get_Backend;
+      B                : constant Docgen.Backend.Backend_Handle :=
+                           Get_Backend (Kernel);
       Sources          : VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
       P                : Project_Type := Project;
       Context          : Selection_Context_Access;
 
    begin
+      if B = null then
+         return;
+      end if;
+
       if P = No_Project then
          Context := Get_Current_Context (Kernel);
          if Context.all in File_Selection_Context'Class
            and then Has_Project_Information
              (File_Selection_Context_Access (Context))
          then
-            P := Project_Information
-              (File_Selection_Context_Access (Context));
+            P := Project_Information (File_Selection_Context_Access (Context));
          else
             P := Get_Project (Kernel);
          end if;
@@ -438,7 +445,7 @@ package body Docgen_Module is
       --  more files be parsed (try generating doc for traces.ads)
       Trace (Me, "Parsing files");
       Parse_All_LI_Information (Kernel, P, Recursive => Recursive);
-      Trace (Me, "Generating HTML files");
+      Trace (Me, "Generating files for " & B.Output_Description.Name.all);
 
       Sources := Get_Source_Files (P, Recursive);
       Array2List (Kernel, Sources, Source_File_List,
@@ -486,21 +493,32 @@ package body Docgen_Module is
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Kernel, Level, File);
+      pragma Unreferenced (Level);
    begin
       if Node.Tag.all = "docgen_backend" then
          --  This is a docgen backend description node
 
          declare
-            Att        : constant UTF8_String :=
+            Format     : constant UTF8_String :=
                            Get_Attribute (Node, "format", "text");
+            Name       : constant UTF8_String :=
+                           Get_Attribute (Node, "name", "");
             N          : Node_Ptr := Node.Child;
             Out_Format : Output_Description;
          begin
-            if Att = "text" then
-               Out_Format.Format := Text;
+            if Format = "text" then
+               Out_Format.Format := Docgen_Registry.Text;
             else
                Out_Format.Format := Binary;
+            end if;
+
+            if Name = "" then
+               Console.Insert
+                 (Kernel,
+                  -"DOCGEN: missing backend name in " & Full_Name (File).all,
+                  Mode => Error);
+            else
+               Out_Format.Name := new String'(Name);
             end if;
 
             while N /= null loop
@@ -508,7 +526,110 @@ package body Docgen_Module is
                   Out_Format.Description := new String'(N.Value.all);
                elsif N.Tag.all = "extension" then
                   Out_Format.Extension := new String'(N.Value.all);
+               elsif N.Tag.all = "file_header_template" then
+                  Out_Format.Entities_Templates (File_Header_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "file_footer_template" then
+                  Out_Format.Entities_Templates (File_Footer_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "comment_template" then
+                  Out_Format.Entities_Templates (Comment_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "keyword_template" then
+                  Out_Format.Entities_Templates (Keyword_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "string_template" then
+                  Out_Format.Entities_Templates (String_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "char_template" then
+                  Out_Format.Entities_Templates (Char_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "subtitle_template" then
+                  Out_Format.Entities_Templates (Subtitle_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "package_desc_template" then
+                  Out_Format.Entities_Templates (Package_Desc_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "package_template" then
+                  Out_Format.Entities_Templates (Package_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "with_template" then
+                  Out_Format.Entities_Templates (With_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "variable_template" then
+                  Out_Format.Entities_Templates (Variable_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "exception_template" then
+                  Out_Format.Entities_Templates (Exception_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "type_template" then
+                  Out_Format.Entities_Templates (Type_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "tagged_type_template" then
+                  Out_Format.Entities_Templates (Tagged_Type_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "calls_references_template" then
+                  Out_Format.Entities_Templates (Calls_References_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "caller_references_template" then
+                  Out_Format.Entities_Templates (Caller_References_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "entity_template" then
+                  Out_Format.Entities_Templates (Entity_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "subprogram_template" then
+                  Out_Format.Entities_Templates (Subprogram_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "header_template" then
+                  Out_Format.Entities_Templates (Header_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "footer_template" then
+                  Out_Format.Entities_Templates (Footer_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "header_private_template" then
+                  Out_Format.Entities_Templates (Header_Private_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "main_frame_template" then
+                  Out_Format.Entities_Templates (Main_Frame_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "unit_index_template" then
+                  Out_Format.Entities_Templates (Unit_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "subprogram_index_template" then
+                  Out_Format.Entities_Templates (Subprogram_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "type_index_template" then
+                  Out_Format.Entities_Templates (Type_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "tagged_type_index_template" then
+                  Out_Format.Entities_Templates (Tagged_Type_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "index_item_template" then
+                  Out_Format.Entities_Templates (Index_Item_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "private_index_template" then
+                  Out_Format.Entities_Templates (Private_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "public_index_template" then
+                  Out_Format.Entities_Templates (Public_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "end_index_template" then
+                  Out_Format.Entities_Templates (End_Index_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "index_tagged_type_template" then
+                  Out_Format.Entities_Templates (Index_Tagged_Type_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "block_template" then
+                  Out_Format.Entities_Templates (Block_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "link_template" then
+                  Out_Format.Entities_Templates (Link_Kind) :=
+                     new String'(N.Value.all);
+               elsif N.Tag.all = "description_template" then
+                  Out_Format.Entities_Templates (Description_Kind) :=
+                     new String'(N.Value.all);
                end if;
+
                N := N.Next;
             end loop;
 
@@ -525,17 +646,17 @@ package body Docgen_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File)
    is
+      B                : constant Docgen.Backend.Backend_Handle :=
+                           Get_Backend (Kernel);
       Is_Spec          : constant Boolean := Is_Spec_File (Kernel, File);
       Process_Body     : constant Boolean :=
          Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files;
-      B                : constant Docgen.Backend.Backend_Handle := Get_Backend;
-      Doc_Suffix       : constant String := Docgen.Backend.Get_Extension (B);
       Source_File_List : Type_Source_File_Table.HTable;
       Body_File        : Virtual_File;
       Source           : Source_File;
 
    begin
-      if not Is_Spec and then not Process_Body then
+      if B = null or else (not Is_Spec and then not Process_Body) then
          return;
       end if;
 
@@ -550,7 +671,7 @@ package body Docgen_Module is
          Source,
          (Package_Name  => new String'(Get_Unit_Name (Source)),
           Doc_File_Name => new String'
-            (Get_Doc_File_Name (File, Doc_Suffix)),
+            (Get_Doc_File_Name (File, Docgen.Backend.Get_Extension (B))),
           Is_Spec       => Is_Spec_File (Kernel, File)));
 
       if Is_Spec and then Process_Body then
@@ -572,7 +693,8 @@ package body Docgen_Module is
                Source,
                (Package_Name => new String'(Get_Unit_Name (Source)),
                 Doc_File_Name => new String'
-                  (Get_Doc_File_Name (Body_File, Doc_Suffix)),
+                  (Get_Doc_File_Name (Body_File,
+                                      Docgen.Backend.Get_Extension (B))),
                 Is_Spec      => Is_Spec_File (Kernel, Body_File)));
          end if;
       end if;
@@ -589,13 +711,28 @@ package body Docgen_Module is
    -- Get_Backend --
    -----------------
 
-   function Get_Backend return Docgen.Backend.Backend_Handle is
+   function Get_Backend
+     (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle
+   is
       Backends : Supported_Backends_Access :=
                    Docgen_Module (Docgen_Module_Id).Backends;
+      Button   : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
    begin
       --  ??? This routine needs to be changed to display the list supported
       --  formats in a dialog. Right now a single backend is supported for
       --  HTML so we just use this one.
+
+      if Length = 0 then
+         Button := Message_Dialog
+           (Msg         => "There is no document backend configured.",
+            Dialog_Type => Warning,
+            Title       => -"Documentation backend",
+            Buttons     => Button_OK,
+            Parent      => Get_Current_Window (Kernel));
+         return null;
+      end if;
+
 
       if Backends = null then
          --  Initialize the backends now
@@ -640,9 +777,8 @@ package body Docgen_Module is
       end if;
 
       Process_Files
-        (Backend,
+        (Backend, Kernel,
          List,
-         Kernel,
          Docgen_Module (Docgen_Module_Id).Options);
 
       Pop_State (Kernel);
