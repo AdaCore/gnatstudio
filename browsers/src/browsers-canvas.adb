@@ -34,6 +34,7 @@ with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
+with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -2239,13 +2240,21 @@ package body Browsers.Canvas is
    is
       use type Gdk.Gdk_Drawable;
 
-      Canvas : constant Image_Canvas := Image_Canvas (Browser.Canvas);
+      Canvas              : constant Image_Canvas :=
+                              Image_Canvas (Browser.Canvas);
       X, Y, Width, Height : Gint;
-      Src    : Gdk_Window;
-      Pixbuf : Gdk_Pixbuf;
+      X_Value, Y_Value    : Gdouble;
+      Src                 : Gdk_Window;
+      Pixbuf              : Gdk_Pixbuf;
+      Zoom_Level          : Guint;
 
    begin
       Src := Get_Window (Canvas);
+
+      --  Temporarily reset zoom level
+
+      Zoom_Level := Get_Zoom (Canvas);
+      Zoom (Canvas);
 
       Get_World_Coordinates (Canvas, X, Y, Width, Height);
       Gdk_New (Canvas.Pixmap, Src, Width, Height);
@@ -2254,22 +2263,33 @@ package body Browsers.Canvas is
          return null;
       end if;
 
+      --  Temporarily reset scroll values
+
+      X_Value := Get_Value (Get_Hadj (Canvas));
+      Y_Value := Get_Value (Get_Vadj (Canvas));
+      Set_Value (Get_Hadj (Canvas), 0.0);
+      Set_Value (Get_Vadj (Canvas), 0.0);
+
       --  Force a complete redraw on Canvas.Pixmap, so that we can
       --  copy the whole contents of Canvas to a pixbuf.
+      --  ??? Does not work properly when X < 0 or Y < 0
 
-      Draw_Area (Canvas, (X, Y, Width, Height));
+      Draw_Area (Canvas, (0, 0, Width, Height));
       Pixbuf := Get_From_Drawable
         (Dest   => null,
          Src    => Canvas.Pixmap,
          Cmap   => null,
-         Src_X  => X,
-         Src_Y  => Y,
+         Src_X  => 0,
+         Src_Y  => 0,
          Dest_X => 0,
          Dest_Y => 0,
          Width  => Width,
          Height => Height);
+      Set_Value (Get_Hadj (Canvas), X_Value);
+      Set_Value (Get_Vadj (Canvas), Y_Value);
       Gdk.Pixmap.Unref (Canvas.Pixmap);
       Canvas.Pixmap := null;
+      Zoom (Canvas, Zoom_Level);
 
       return Pixbuf;
    end Get_Pixbuf;
