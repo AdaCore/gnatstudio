@@ -34,6 +34,7 @@ with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
 with Glide_Result_View;    use Glide_Result_View;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 
 package body Glide_Kernel.Console is
 
@@ -73,6 +74,10 @@ package body Glide_Kernel.Console is
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
    --  Called when the console has been destroyed.
+
+   function Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Prevent the destruction of the console in the MDI
 
    procedure On_Save_Console_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -264,6 +269,18 @@ package body Glide_Kernel.Console is
       Console_Module_Id.Console := null;
    end Console_Destroyed;
 
+   --------------------------
+   -- Console_Delete_Event --
+   --------------------------
+
+   function Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Console);
+   begin
+      return True;
+   end Console_Delete_Event;
+
    ------------------------
    -- On_Save_Console_As --
    ------------------------
@@ -404,12 +421,18 @@ package body Glide_Kernel.Console is
         (Console, "destroy",
          Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
          Kernel_Handle (Kernel));
+      Return_Callback.Connect
+        (Console, "delete_event",
+         Return_Callback.To_Marshaller (Console_Delete_Event'Access));
 
       Kernel_Callback.Connect
         (Interactive_Console, "destroy",
             Kernel_Callback.To_Marshaller
          (Interactive_Console_Destroyed'Access),
          Kernel_Handle (Kernel));
+      Return_Callback.Connect
+        (Interactive_Console, "delete_event",
+         Return_Callback.To_Marshaller (Console_Delete_Event'Access));
    end Initialize_Console;
 
    ---------------------
