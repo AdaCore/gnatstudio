@@ -450,6 +450,7 @@ package body Src_Info.CPP is
       HI       : CPP_LI_Handler_Iterator;
       Success  : Boolean;
       Xref_File_Name : String_Access;
+      Num_Source_Files : Natural := 0;
    begin
       --  Prepare the list of files
       Trace (Info_Stream, "Computing the C and C++ sources list");
@@ -477,6 +478,7 @@ package body Src_Info.CPP is
             if not Is_Xref_Valid (File, Handler.Xrefs)
               or else not Up_To_Date (File, Handler.DB_Dir.all, Handler.Xrefs)
             then
+               Num_Source_Files := Num_Source_Files + 1;
                Trace (Info_Stream, "Updating " & File);
 
                Xref_File_Name := Xref_Filename_For
@@ -506,13 +508,17 @@ package body Src_Info.CPP is
 
       Close (Tmp_File);
 
-      SN.Browse.Browse
-        (File_Name     => HI.List_Filename.all,
-         DB_Directory  => Handler.DB_Dir.all,
-         DBIMP_Path    => Handler.DBIMP_Path.all,
-         Cbrowser_Path => Handler.CBrowser_Path.all,
-         PD            => HI.PD);
-      HI.State := Analyze_Files;
+      if Num_Source_Files > 0 then
+         SN.Browse.Browse
+           (File_Name     => HI.List_Filename.all,
+            DB_Directory  => Handler.DB_Dir.all,
+            DBIMP_Path    => Handler.DBIMP_Path.all,
+            Cbrowser_Path => Handler.CBrowser_Path.all,
+            PD            => HI.PD);
+         HI.State := Analyze_Files;
+      else
+         HI.State := Done;
+      end if;
       return HI;
    end Generate_LI_For_Project;
 
@@ -531,8 +537,8 @@ package body Src_Info.CPP is
 
       case Iterator.State is
          when Done =>
-            Finished := True;
-            return;
+            --  see below.
+            null;
 
          when Analyze_Files =>
             --  If we haven't finished the first phase, keep waiting.
@@ -558,21 +564,24 @@ package body Src_Info.CPP is
                return;
             end if;
 
-            Trace (Info_Stream, "dbimp process is finished");
-
-            Finished := True;
             Iterator.State := Done;
-            Save (Iterator.Handler.Xrefs,
-                  Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
-            Delete_File (Iterator.Tmp_Filename'Address, Success);
-
-            declare
-               Tmp : constant String := Iterator.List_Filename.all & ASCII.NUL;
-            begin
-               Delete_File (Tmp'Address, Success);
-            end;
-            Free (Iterator.List_Filename);
       end case;
+
+      if Iterator.State = Done then
+         Trace (Info_Stream, "dbimp process is finished");
+
+         Finished := True;
+         Save (Iterator.Handler.Xrefs,
+               Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
+         Delete_File (Iterator.Tmp_Filename'Address, Success);
+
+         declare
+            Tmp : constant String := Iterator.List_Filename.all & ASCII.NUL;
+         begin
+            Delete_File (Tmp'Address, Success);
+         end;
+         Free (Iterator.List_Filename);
+      end if;
    end Continue;
 
    ----------------
@@ -693,14 +702,14 @@ package body Src_Info.CPP is
       Handler.DBIMP_Path    := Locate_Exec_On_Path (DBIMP);
       if Handler.DBIMP_Path = null then
          return DBIMP
-           & " not found on the path. C/C++ browsing is not be available";
+           & " not found on the path. C/C++ browsing is not available";
       end if;
 
       Handler.CBrowser_Path := Locate_Exec_On_Path (CBrowser);
       if Handler.CBrowser_Path = null then
          Free (Handler.DBIMP_Path);
          return CBrowser
-           & " not found on the path. C/C++ browsing is not be available";
+           & " not found on the path. C/C++ browsing is not available";
       end if;
 
       return "";
