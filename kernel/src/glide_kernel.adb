@@ -944,7 +944,7 @@ package body Glide_Kernel is
          end loop;
 
          --  Only set the main window attributes the first time, this would be
-         --  to confusing to do it during an open session.
+         --  too confusing to do it during an open session.
 
          if not Desktop_Loaded then
             Set_Default_Size (Main_Window, Width, Height);
@@ -960,15 +960,17 @@ package body Glide_Kernel is
          Show_All (Main_Window);
 
          if Desktop_Node /= null then
+            Trace (Me, "Loadind desktop for " & Project_Name);
             Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
          else
+            Trace (Me, "loading default desktop");
             Kernel_Desktop.Restore_Desktop
               (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
          end if;
 
          Free (Node);
-         return True;
+         return Desktop_Node /= null;
 
       else
          Trace (Me, "loading default desktop");
