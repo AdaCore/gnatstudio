@@ -230,22 +230,17 @@ package body Commands is
       Node  : List_Node;
 
    begin
+      if Queue = null then
+         --  If we are not calling the commands in "Queue" mode, do not execute
+         --  the Next/Alternate commands.
+
+         return;
+      end if;
+
       if Success then
          Node := First (Action.Next_Commands);
       else
          Node := First (Action.Alternate_Commands);
-      end if;
-
-      if Queue = null then
-         --  If we are not calling the commands in "Queue" mode, execute the
-         --  Next/Alternate commands without adding them to the queue.
-
-         while Node /= Null_Node loop
-            Execute (Data (Node));
-            Node := Next (Node);
-         end loop;
-
-         return;
       end if;
 
       Queue.Command_In_Progress := False;
