@@ -81,6 +81,7 @@ package body Vsearch_Ext is
 
    Pattern_Hist_Key : constant History_Key := "search_patterns";
    Replace_Hist_Key : constant History_Key := "search_replace";
+   Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
    --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
@@ -348,6 +349,7 @@ package body Vsearch_Ext is
       Close_Button : Gtk_Button;
    begin
       Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
+      --  Add the "Close" button.
       Close_Button := Gtk_Button
         (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
                      Stock_Close,
@@ -355,6 +357,11 @@ package body Vsearch_Ext is
       Widget_Callback.Object_Connect
         (Close_Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
+      
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Float_Vsearch;
 
    -------------------
@@ -607,6 +614,13 @@ package body Vsearch_Ext is
             --  we can restart from the beginning simply by pressing Ctrl-N
             Set_First_Next_Mode (Vsearch, Find_Next => True);
          end if;
+      end if;
+
+      if Realized_Is_Set (Vsearch)
+        and then Get_History
+          (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key)
+      then
+         Close_Vsearch (Vsearch);
       end if;
 
    exception
@@ -901,6 +915,11 @@ package body Vsearch_Ext is
      (Search : access Gtk_Widget_Record'Class) is
    begin
       Set_Active (Vsearch_Extended (Search).Search_All_Check, False);
+      
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Reset_All_Occurrences;
 
    ----------------------------
@@ -941,6 +960,12 @@ package body Vsearch_Ext is
          return True;
       end if;
       return False;
+      
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press;
 
    -----------------------
@@ -959,6 +984,11 @@ package body Vsearch_Ext is
          return True;
       end if;
       return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press_Replace;
 
    -----------------------
@@ -1223,6 +1253,11 @@ package body Vsearch_Ext is
          "regexp_search",
          Vsearch.Regexp_Check);
 
+      Associate
+        (Get_History (Vsearch.Kernel).all,
+         Auto_Hide_Hist_Key,
+         Vsearch.Auto_Hide_Check);
+
       Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
       Add_Hook (Handle, Search_Functions_Changed_Hook,
                 Search_Functions_Changed'Access);
@@ -1242,6 +1277,12 @@ package body Vsearch_Ext is
       --  This is called when the user presses "Escape" in the dialog.
       Close_Vsearch (Vsearch);
       return True;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Delete;
 
    ---------------------------
