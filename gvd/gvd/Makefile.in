@@ -7,11 +7,19 @@ LINK_FLAGS = ../gnat/gexpect.o ../pixmaps/pixmaps.o @GTK_LIBS@
 MAIN = odd_main
 EXEC = gvd
 
+PKG_FILES=${wildcard *_pkg.adb}
+
 all: $(EXEC)
 
-stylechk:
-	gcc -c $(ALL_CFLAGS) *_pkg.adb
+stylechk: pkg_files style
+
+style: force
 	make CFLAGS="-gnaty $(CFLAGS)"
+
+pkg_files: ${PKG_FILES}
+
+${PKG_FILES}: force
+	gcc -c $(ALL_CFLAGS) $@
 
 $(EXEC): force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
