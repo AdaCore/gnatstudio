@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -160,7 +160,7 @@ package body Variable_Editors is
 
       --  Create the model that contains the data to show in the tree
 
-      Gtk_New (Editor.Model, Column_Types'Length, Column_Types);
+      Gtk_New (Editor.Model, Column_Types);
       Set_Model (Editor.Values_List, Gtk_Tree_Model (Editor.Model));
 
       --  Create the cell renderers that are needed to display the tree view
@@ -315,15 +315,14 @@ package body Variable_Editors is
    ---------------------
 
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E         : New_Var_Edit  := New_Var_Edit (Editor);
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      Success   : Boolean;
+      E         : New_Var_Edit := New_Var_Edit (Editor);
+      Iter      : Gtk_Tree_Iter;
       Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
 
    begin
-      Success := Get_Selected (Selection, E.Model, Iter);
+      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
 
-      if Success then
+      if Iter /= Null_Iter then
          Set (E.Model, Iter, Editable_Column, True);
          Set_Cursor
            (E.Values_List,
@@ -339,14 +338,13 @@ package body Variable_Editors is
 
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
       E         : New_Var_Edit := New_Var_Edit (Editor);
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      Success   : Boolean;
+      Iter      : Gtk_Tree_Iter;
       Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
 
    begin
-      Success := Get_Selected (Selection, E.Model, Iter);
+      Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
 
-      if Success then
+      if Iter /= Null_Iter then
          Remove (E.Model, Iter);
       end if;
    end Delete_Variable;
