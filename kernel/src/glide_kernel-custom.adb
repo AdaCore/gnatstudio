@@ -223,6 +223,7 @@ package body Glide_Kernel.Custom is
 
       Node : Node_Ptr;
       N    : Node_Ptr;
+      Err  : String_Access;
 
    begin
       --  Don't do this at declaration time, since we want to catch exceptions
@@ -232,12 +233,13 @@ package body Glide_Kernel.Custom is
         and then Customization (Customization'First .. Customization'First + 4)
           = "<?xml"
       then
-         Node := Parse_Buffer (Customization);
+         XML_Parsers.Parse_Buffer (Customization, Node, Err);
 
       else
          --  else enclose it
-         Node := Parse_Buffer
-           ("<?xml version=""1.0""?><Root>" & Customization & "</Root>");
+         XML_Parsers.Parse_Buffer
+           ("<?xml version=""1.0""?><Root>" & Customization & "</Root>",
+            Node, Err);
       end if;
 
       --  If the custom files have already been loaded, this means that all
@@ -273,6 +275,10 @@ package body Glide_Kernel.Custom is
             Node.Child := null;
             Free (Node);
          end if;
+
+      else
+         Insert (Kernel, Err.all, Mode => Error);
+         Free (Err);
       end if;
 
    exception
