@@ -16,7 +16,7 @@ def generate_doc (entity):
      The documentation is generated in the object directory of the root
      project"""
   obj_dir = GPS.Project.root().object_dirs (recursive=False) [0]
-  name = obj_dir + "/" + entity.__name__ + ".html"
+  name = obj_dir + os.sep + entity.__name__ + ".html"
   if not os.path.isfile (name) or os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
      GPS.set_busy()
      cwd = os.getcwd()
@@ -29,7 +29,8 @@ def generate_doc (entity):
 
 def browse_doc (entity):
   """Open a browser for the documentation relative to the specified entity"""
-  GPS.HTML.browse (generate_doc (entity))
+  ## Use a hook, so that users can substitute their internal browser if they wish
+  GPS.Hook ("html_action_hook").run (GPS.File (generate_doc (entity)), 1, "")
 
 ## Create a default menu for the python documentation
 GPS.parse_xml("""
