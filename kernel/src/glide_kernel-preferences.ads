@@ -219,7 +219,6 @@ package Glide_Kernel.Preferences is
 
    --  Debugger preferences are registered in GVD.Preferences
 
-
    package Indentation_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
      ("Indentation_Kind", Language.Indentation_Kind);
