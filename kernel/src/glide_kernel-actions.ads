@@ -32,13 +32,16 @@ package Glide_Kernel.Actions is
       Command     : Commands.Interactive.Interactive_Command_Access;
       Filter      : Action_Filter;
       Description : GNAT.OS_Lib.String_Access;
+      Modified    : Boolean;
+      Overriden   : Boolean;
    end record;
-   No_Action : constant Action_Record := (null, null, null);
    --  Command is freed automatically by the kernel.
    --  Context indicates when the action can be executed. If null, this means
    --  the action can always be executed. The context mustn't deallocated
    --  in the life of GPS, since there might be actions bound to it at any
    --  time.
+
+   type Action_Record_Access is access Action_Record;
 
    procedure Register_Action
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -54,8 +57,8 @@ package Glide_Kernel.Actions is
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Record;
-   --  Lookup a command by name. Return No_Action if no such action has been
+      Name   : String) return Action_Record_Access;
+   --  Lookup a command by name. Return null if no such action has been
    --  registered.
 
    type Action_Iterator is private;
@@ -71,17 +74,17 @@ package Glide_Kernel.Actions is
    --  Move to the next action
 
    function Get (Iter : Action_Iterator) return String;
-   function Get (Iter : Action_Iterator) return Action_Record;
+   function Get (Iter : Action_Iterator) return Action_Record_Access;
    --  Return the current action. The empty string or No_Action is returned if
    --  there are no more actions.
 
 private
 
-   procedure Free (Action : in out Action_Record);
+   procedure Free (Action : in out Action_Record_Access);
    --  Free the memory occupied by the action
 
    package Actions_Htable is new String_Hash
-     (Action_Record, Free, No_Action);
+     (Action_Record_Access, Free, null);
 
    type Actions_Htable_Record is new Root_Table with record
       Table : Actions_Htable.String_Hash_Table.HTable;
