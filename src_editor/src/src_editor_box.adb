@@ -2183,8 +2183,9 @@ package body Src_Editor_Box is
 
       elsif Is_Valid_Position (Editor.Source_Buffer, Editable_Line, 1) then
          Console.Insert
-           (Editor.Kernel, -"Invalid column number: " & Column'Img,
+           (Editor.Kernel, -"Invalid column number: " & Image (Column),
             Mode => Error);
+
          if Force_Focus then
             Grab_Focus (Editor.Source_View);
          end if;
@@ -2195,11 +2196,14 @@ package body Src_Editor_Box is
       else
          if Column = 1 then
             Console.Insert
-              (Editor.Kernel, -"Invalid line number: " & Line'Img,
+              (Editor.Kernel,
+               -"Invalid line number: " & Image (Integer (Line)),
                Mode => Error);
          else
             Console.Insert
-              (Editor.Kernel, -"Invalid source location: " & Line'Img &
+              (Editor.Kernel,
+               -"Invalid source location: " &
+               Image (Integer (Line)) &
                ':' & Image (Column), Mode => Error);
          end if;
       end if;
