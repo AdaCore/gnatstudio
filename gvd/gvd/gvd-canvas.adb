@@ -60,4 +60,16 @@ package body Odd.Canvas is
       Initialize (Canvas);
    end Gtk_New;
 
+   -----------------------
+   -- Get_Next_Item_Num --
+   -----------------------
+
+   function Get_Next_Item_Num (Canvas : access Odd_Canvas_Record'Class)
+                              return Integer
+   is
+   begin
+      Canvas.Item_Num := Canvas.Item_Num + 1;
+      return Canvas.Item_Num;
+   end Get_Next_Item_Num;
+
 end Odd.Canvas;

@@ -51,11 +51,17 @@ package Odd.Canvas is
       Activate : Boolean);
    --  Change the status of aliases detection in the canvas
 
+   function Get_Next_Item_Num (Canvas : access Odd_Canvas_Record'Class)
+                              return Integer;
+   --  Return the number that should be used for the next item inserted into
+   --  the canvas.
+   --  Two successive calls to that function will not return the same value.
 
 private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
       record
          Detect_Aliases : Boolean := Default_Detect_Aliases;
+         Item_Num       : Integer := 0;
       end record;
 end Odd.Canvas;
