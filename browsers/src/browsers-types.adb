@@ -53,7 +53,7 @@ package body Browsers.Types is
 
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Type bwser menu
+   --  Tools->Type browser menu
 
    function Open_Type_Browser_Child
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
@@ -181,8 +181,9 @@ package body Browsers.Types is
    -- Call --
    ----------
 
-   procedure Call (Callback : Show_Entity_Callback;
-                   Event    : Gdk.Event.Gdk_Event)
+   procedure Call
+     (Callback : Show_Entity_Callback;
+      Event    : Gdk.Event.Gdk_Event)
    is
       Canvas   : Interactive_Canvas;
       New_Item : Type_Item;
@@ -353,8 +354,9 @@ package body Browsers.Types is
                end if;
             end if;
 
-            X2      := X2 + W;
+            X2 := X2 + W;
          end if;
+
          In_Xref := not In_Xref;
       end Display;
 
@@ -374,12 +376,14 @@ package body Browsers.Types is
                Display (L);
                First   := Last + 1;
             end if;
+
             Last := Last + 1;
          end loop;
 
          Display (L);
 
          --  No need to query the size again, we just did
+
          Y := Y + H;
       end loop;
    end Display_Lines;
@@ -558,6 +562,7 @@ package body Browsers.Types is
       Child : constant MDI_Child := Open_Type_Browser_Child (Kernel);
       Item  : Type_Item;
       pragma Unreferenced (Widget, Item);
+
    begin
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
