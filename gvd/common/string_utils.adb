@@ -806,15 +806,6 @@ package body String_Utils is
       end if;
    end Name_As_Directory;
 
-   ------------------
-   -- Is_Word_Char --
-   ------------------
-
-   function Is_Word_Char (C : Character) return Boolean is
-   begin
-      return C = '_' or else Is_Alphanumeric (C);
-   end Is_Word_Char;
-
    ----------------------
    -- Is_Entity_Letter --
    ----------------------

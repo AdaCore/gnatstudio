@@ -152,9 +152,6 @@ package String_Utils is
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
 
-   function Is_Word_Char (C : Character) return Boolean;
-   --  Return whether C is a word character (alphanumeric or underscore).
-
    function Is_Entity_Letter (Char : Character) return Boolean;
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
@@ -254,6 +251,5 @@ private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
-   pragma Inline (Is_Word_Char);
    pragma Inline (Copy_String);
 end String_Utils;
