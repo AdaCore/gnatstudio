@@ -41,11 +41,10 @@ package body Vsearch_Pkg is
    is
       pragma Suppress (All_Checks);
       Tooltips : Gtk_Tooltips;
-
    begin
       Initialize_Vbox (Vsearch, False, 0);
 
-      Gtk_New (Vsearch.Table, 3, 2, False);
+      Gtk_New (Vsearch.Table, 4, 2, False);
       Set_Row_Spacings (Vsearch.Table, 1);
       Pack_Start (Vsearch, Vsearch.Table, False, False, 0);
 
@@ -90,7 +89,7 @@ package body Vsearch_Pkg is
       Set_Size_Request (Vsearch.Pattern_Entry, 0, -1);
       Set_Text (Vsearch.Pattern_Entry, -"");
       Set_Tip (Tooltips, Vsearch.Pattern_Entry,
-               -"The searched word or pattern");
+                -"The searched word or pattern");
 
       Gtk_New_Hbox (Vsearch.Buttons_Hbox, False, 0);
       Pack_Start (Vsearch, Vsearch.Buttons_Hbox, False, False, 0);
@@ -122,10 +121,15 @@ package body Vsearch_Pkg is
       Attach (Vsearch.Options_Vbox,
               Vsearch.Regexp_Check, 1, 2, 0, 1);
 
-      Gtk_New (Vsearch.Auto_Hide_Check, -"Close dialog on search");
+      Gtk_New (Vsearch.Select_Editor_Check, -"Select Window on Match");
+      Set_Active (Vsearch.Select_Editor_Check, False);
+      Attach (Vsearch.Options_Vbox,
+              Vsearch.Select_Editor_Check, 0, 2, 2, 3);
+
+      Gtk_New (Vsearch.Auto_Hide_Check, -"Close Dialog on Search");
       Set_Active (Vsearch.Auto_Hide_Check, False);
       Attach (Vsearch.Options_Vbox,
-              Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
+              Vsearch.Auto_Hide_Check, 0, 2, 3, 4);
    end Initialize;
 
 end Vsearch_Pkg;

@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,6 +43,7 @@ package Vsearch_Pkg is
       Buttons_Hbox : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Options_Vbox : Gtk_Table;
+      Select_Editor_Check : Gtk_Check_Button;
       Search_All_Check : Gtk_Check_Button;
       Case_Check : Gtk_Check_Button;
       Whole_Word_Check : Gtk_Check_Button;
