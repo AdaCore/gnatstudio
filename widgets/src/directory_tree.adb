@@ -181,6 +181,9 @@ package body Directory_Tree is
      (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean;
    --  Should return True if Dir_Name should be displayed in the tree.
 
+   procedure On_Destroy (Tree : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
+
    -------------
    -- Gtk_New --
    -------------
@@ -217,15 +220,30 @@ package body Directory_Tree is
          Transparent => Null_Color,
          Data        => mini_folder_xpm);
 
+      Tree.Idle := 0;
+
       N := Add_Directory_Node (Tree, "", Root, null);
       Widget_Callback.Connect (Tree, "tree_expand", Expand_Tree_Cb'Access);
       Widget_Callback.Connect (Tree, "tree_collapse", Collapse_Tree_Cb'Access);
+      Widget_Callback.Connect
+        (Tree, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       --  ??? This is a workaround for a horizontal scrollbar problem: When the
       --  ctree is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
       Set_Column_Auto_Resize (Tree, 0, True);
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Tree : access Gtk_Widget_Record'Class) is
+   begin
+      if Dir_Tree (Tree).Idle /= 0 then
+         Idle_Remove (Dir_Tree (Tree).Idle);
+      end if;
+   end On_Destroy;
 
    ---------------
    -- Directory --
@@ -457,7 +475,6 @@ package body Directory_Tree is
       Dir            : String;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
-      Id    : Idle_Handler_Id;
       Root : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
       Root_Dir : constant String := Directory (Tree, Root, False);
    begin
@@ -471,7 +488,7 @@ package body Directory_Tree is
          return;
       end if;
 
-      Id := Dir_Idle.Add
+      Tree.Idle := Dir_Idle.Add
         (Select_Directory_Idle'Access,
          new Idle_Data' (Tree        => Dir_Tree (Tree),
                          Dir         => new String' (Dir),
@@ -521,6 +538,7 @@ package body Directory_Tree is
          if Data.Busy_Cursor /= null then
             Set_Busy_Cursor (Data.Busy_Cursor, False);
          end if;
+         D.Tree.Idle := 0;
          Free (D.Dir);
          Free (D);
          return False;

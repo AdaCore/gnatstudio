@@ -43,6 +43,7 @@ with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Ctree;
 with Gtk.Menu;
+with Gtk.Main;
 with GNAT.OS_Lib;
 
 package Directory_Tree is
@@ -142,6 +143,7 @@ private
    type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Folder_Pix, Ofolder_Pix : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Mask, Ofolder_Mask : Gdk.Bitmap.Gdk_Bitmap;
+      Idle      : Gtk.Main.Idle_Handler_Id;
    end record;
 
    type Directory_Selector_Record is new Gtk.Box.Gtk_Box_Record with
