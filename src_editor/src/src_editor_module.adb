@@ -1580,7 +1580,8 @@ package body Src_Editor_Module is
          Attach (Editor, Box);
 
          if Add then
-            Child := Put (MDI, Box);
+            Child := Put (MDI, Box,
+                          Focus_Widget => Gtk_Widget (Get_View (Editor)));
 
             declare
                Im : constant String := Image (Get_Ref_Count (Editor));
@@ -1764,7 +1765,8 @@ package body Src_Editor_Module is
          Attach (Editor, Box);
 
          if Add_To_MDI then
-            Child := Put (MDI, Box);
+            Child := Put
+              (MDI, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)));
 
             if File /= "" then
                Set_Title (Child, File, Base_Name (File));
