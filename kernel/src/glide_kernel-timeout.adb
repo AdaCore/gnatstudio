@@ -295,26 +295,23 @@ package body Glide_Kernel.Timeout is
          end if;
 
          if Host = Windows then
+            --  ??? Should remove this kludge and the one in
+            --  commands-external.adb
+
             declare
-               Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
-               Real_Args         : GNAT.OS_Lib.Argument_List_Access;
+               Real_Args : GNAT.OS_Lib.Argument_List (1 .. 2);
             begin
-               Exec_Command_Args :=
-                 GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
-               Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
-               Real_Args (1) := new String'(Command);
+               Real_Args (1) := new String'("/c");
+               Real_Args (2) := new String'(Command);
 
                Non_Blocking_Spawn
                  (Fd.all,
-                  Exec_Command_Args (Exec_Command_Args'First).all,
-                  Exec_Command_Args
-                    (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
-                  & Real_Args.all
-                  & Arguments,
+                  "cmd",
+                  Real_Args & Arguments,
                   Err_To_Out => True);
 
-               GNAT.OS_Lib.Free (Real_Args);
-               GNAT.OS_Lib.Free (Exec_Command_Args);
+               GNAT.OS_Lib.Free (Real_Args (1));
+               GNAT.OS_Lib.Free (Real_Args (2));
             end;
          else
             Non_Blocking_Spawn
