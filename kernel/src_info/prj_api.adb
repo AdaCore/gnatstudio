@@ -48,6 +48,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Glide_Intl;    use Glide_Intl;
 with Basic_Types;   use Basic_Types;
 with Project_Hash;  use Project_Hash;
+with ALI;
+with Atree;
 
 with Traces; use Traces;
 
@@ -4137,10 +4139,22 @@ package body Prj_API is
    procedure Finalize is
    begin
       Prj.Reset;
-      Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
       Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
+      Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
       Namet.Finalize;
       Stringt.Initialize;
+
+      --  ??? Should this be done very time we parse an ali file ?
+      ALI.ALIs.Free;
+      ALI.Units.Free;
+      ALI.Withs.Free;
+      ALI.Args.Free;
+      ALI.Linker_Options.Free;
+      ALI.Sdep.Free;
+      ALI.Xref.Free;
+      Atree.Atree_Private_Part.Nodes.Free;
+
+
    end Finalize;
 
 begin
