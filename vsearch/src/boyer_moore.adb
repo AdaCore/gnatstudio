@@ -71,10 +71,11 @@
 --  combined, and the pattern is moved forward by the maximum amount reported
 --  by the two functions.
 
+
 with Unchecked_Deallocation;
-with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Text_IO;             use Ada.Text_IO;
+with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
+with GNAT.Case_Util;          use GNAT.Case_Util;
 
 package body Boyer_Moore is
 
@@ -92,95 +93,51 @@ package body Boyer_Moore is
    is
       Motif_First : constant := 1; --  Index of Motif.Motif'First
       Prefix_Func : Offset_Array (Motif_First .. From_String'Length);
-      Reverse_Prefix_Func : Offset_Array (Motif_First .. From_String'Length);
-      Good_Suffix : Offset_Array (Motif_First .. From_String'Length);
       K, K2 : Natural;
-      Max : constant Natural := From_String'Length + Motif_First;
    begin
       --  Compute the last occurrence function
-      --  Compute the two prefix functions (both from left-to-right and
-      --  from right-to-left for the suffixes).
-      --  We use a single loop over the pattern for these, for efficiency.
 
       pragma Assert (From_String'Length <= Max_Pattern_Length);
 
-      Motif.Case_Sensitive := Case_Sensitive;
+      Motif.Case_Sensitive  := Case_Sensitive;
       Motif.Last_Occurrence := (others => 1);
-      Motif.Motif := new String (Motif_First .. From_String'Length);
-      if Case_Sensitive then
-         Motif.Motif.all := From_String;
-      else
-         Motif.Motif.all := To_Lower (From_String);
+      Motif.Motif           := new String'(From_String);
+      if not Case_Sensitive then
+         To_Lower (Motif.Motif.all);
       end if;
 
-      Motif.Last_Occurrence (Motif.Motif (Motif_First)) := 1;
-
-      K := Motif_First - 1;
-      Prefix_Func (Motif_First) := K;
-      Reverse_Prefix_Func (Motif_First) := K;
-      K2 := K;
-
-      for Q in Motif_First + 1 .. From_String'Length loop
+      for Q in Motif_First .. From_String'Length loop
 
          --  The last occurrence function
 
          Motif.Last_Occurrence (Motif.Motif (Q)) := Q - Motif_First + 1;
 
-         --  The prefix function
+         --  Prefix_Func (Q) is the length of the longest suffix of
+         --  Motif (1 .. Q) that is also a suffix of Motif
 
-         loop
-            if K < Motif_First then
-               if Motif.Motif (Motif_First) = Motif.Motif (Q) then
-                  K := Motif_First;
-               end if;
-               exit;
-
-            elsif Motif.Motif (K + 1) /= Motif.Motif (Q) then
-               K := Prefix_Func (K);
-
-            else
+         K := 1;
+         if Q /= From_String'Length then
+            while Q - K + 1 >= Motif_First
+              and then Motif.Motif (Q - K + 1) =
+              Motif.Motif (Motif.Motif'Last - K + 1)
+            loop
                K := K + 1;
-               exit;
-            end if;
-         end loop;
+            end loop;
+         end if;
 
-         Prefix_Func (Q) := K;
-
-         --  The suffix function
-         loop
-            if K2 < Motif_First then
-               if From_String (From_String'Last) = Motif.Motif (Max - Q) then
-                  K2 := Motif_First;
-               end if;
-               exit;
-
-            elsif Motif.Motif (Max - K2 - 1) /= Motif.Motif (Max - Q) then
-               K2 := Reverse_Prefix_Func (K2);
-
-            else
-               K2 := K2 + 1;
-               exit;
-            end if;
-         end loop;
-
-         Reverse_Prefix_Func (Q) := K2;
+         Prefix_Func (Q) := K - 1;
       end loop;
 
       K := From_String'Length - Prefix_Func (From_String'Length);
-      Good_Suffix := (others => K);
+      Motif.Good_Suffix := new Offset_Array'(0 .. From_String'Length => K);
 
       for L in Motif.Motif'Range loop
-         K2 := Reverse_Prefix_Func (L);
+         K2 := Prefix_Func (Prefix_Func'Last + 1 - L);
          K := Motif.Motif'Last - K2;
-         if Good_Suffix (K) > L - K2 then
-            Good_Suffix (K) := L - K2;
+         if Motif.Good_Suffix (K) > L - K2 then
+            Motif.Good_Suffix (K) := L - K2;
          end if;
       end loop;
-
-      Motif.Good_Suffix := new Offset_Array (0 .. Motif.Motif'Last);
-      Motif.Good_Suffix (0) :=
-        Motif.Motif'Last - Prefix_Func (Motif.Motif'Last);
-      Motif.Good_Suffix (1 .. Good_Suffix'Length) := Good_Suffix;
 
       if Debug then
          Put_Line ("Pattern, and reverse-pattern: P and RP");
@@ -218,11 +175,6 @@ package body Boyer_Moore is
          Put ("   RP[i]= ");
          for J in reverse Motif.Motif'Range loop
             Put ("  " & Motif.Motif (J));
-         end loop;
-         New_Line;
-         Put ("   RF[i]= ");
-         for J in Reverse_Prefix_Func'Range loop
-            Put (Item => Reverse_Prefix_Func (J), Width => 3);
          end loop;
          New_Line;
 
@@ -287,7 +239,7 @@ package body Boyer_Moore is
                       & " Max ("
                       & Motif.Good_Suffix (J)'Img
                       & ","
-                      & Natural'Image
+                      & Integer'Image
                       (J - Motif.Last_Occurrence (In_String (Shift + J)))
                       & ")");
             Dump_Str (In_String);
