@@ -385,6 +385,10 @@ package Debugger.Gdb is
 
    procedure Close_Processes (Debugger : access Gdb_Debugger);
 
+   function Support_TTY (Debugger : access Gdb_Debugger) return Boolean;
+
+   procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String);
+
 private
 
    function Send

@@ -3465,7 +3465,7 @@ package body Debugger.Gdb is
       Debugger.Stored_Language :=
         new String'(S (First_Index + 1 .. End_Index - 1));
 
-      Send (Debugger, "set lang " & Language);
+      Send (Debugger, "set lang " & Language, Mode => Internal);
    end Switch_Language;
 
    ----------------------
@@ -3493,5 +3493,24 @@ package body Debugger.Gdb is
          end;
       end if;
    end Restore_Language;
+
+   -----------------
+   -- Support_TTY --
+   -----------------
+
+   function Support_TTY (Debugger : access Gdb_Debugger) return Boolean is
+      pragma Unreferenced (Debugger);
+   begin
+      return True;
+   end Support_TTY;
+
+   -------------
+   -- Set_TTY --
+   -------------
+
+   procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String) is
+   begin
+      Send (Debugger, "tty " & TTY, Mode => Hidden);
+   end Set_TTY;
 
 end Debugger.Gdb;
