@@ -1658,7 +1658,7 @@ package body Vsearch_Ext is
         (Kernel, Navigate, null, Ref_Item => -"Edit", Add_Before => False);
 
       Register_Menu
-        (Kernel, Navigate, -"Find/Replace...",
+        (Kernel, Navigate, -"Find or Replace...",
          Stock_Find, Search_Menu_Cb'Access,
          Ref_Item => Find_All,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
