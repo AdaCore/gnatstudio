@@ -335,13 +335,22 @@ package body Src_Editor_Module is
             Infos (J).Text := new String' (Image (J));
          end loop;
 
-         Add_Line_Information
-           (Kernel,
-            Directory_Information (Area_Context) &
-              File_Information (Area_Context),
-            Src_Editor_Module_Name,
-            Infos,
-            False);
+         if Has_File_Information (Area_Context) then
+            Add_Line_Information
+              (Kernel,
+               Directory_Information (Area_Context) &
+               File_Information (Area_Context),
+               Src_Editor_Module_Name,
+               Infos,
+               False);
+         else
+            Add_Line_Information
+              (Kernel,
+               "",
+               Src_Editor_Module_Name,
+               Infos,
+               False);
+         end if;
       end if;
    end On_Lines_Revealed;
 
@@ -1263,7 +1272,8 @@ package body Src_Editor_Module is
             loop
                Child := Get (Iter);
                exit when Child = null
-                 or else Get_Title (Child) = File;
+                 or else Get_Title (Child) = File
+                 or else (File = "" and then Get_Title (Child) = "No Name");
                Next (Iter);
             end loop;
 
