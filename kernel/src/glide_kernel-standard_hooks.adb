@@ -38,6 +38,7 @@ package body Glide_Kernel.Standard_Hooks is
    Me : constant Debug_Handle := Create ("Standard_Hooks");
 
    Open_File_Hook_Type     : constant String := "open_file_action_hooks";
+   Before_Exit_Hook_Type   : constant String := "before_exit_action_hooks";
    File_Line_Hook_Type     : constant String := "location_action_hooks";
    Location_Hook_Type      : constant String := "location_action_hooks";
    Html_Hook_Type          : constant String := "html_action_hooks";
@@ -59,6 +60,8 @@ package body Glide_Kernel.Standard_Hooks is
    --  and send it.
    --  If File is an empty string, send the Mime for all open buffers.
 
+   procedure Before_Exit_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Open_File_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Line_Information_Run_Hook_Handler
@@ -437,6 +440,37 @@ package body Glide_Kernel.Standard_Hooks is
                Force_Reload      => Nth_Arg (Data, 8));
       Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
    end Open_File_Run_Hook_Handler;
+
+   ----------------------------------
+   -- Before_Exit_Run_Hook_Handler --
+   ----------------------------------
+
+   procedure Before_Exit_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Name   : constant String := Get_Hook_Name (Data, 1);
+      Args   : constant Exit_Before_Action_Hooks_Args :=
+        (Hooks_Data with null record);
+      pragma Unreferenced (Command);
+   begin
+      Set_Return_Value (Data, Run_Hook_Until_Failure (Kernel, Name, Args));
+   end Before_Exit_Run_Hook_Handler;
+
+   --------------
+   -- Exit_GPS --
+   --------------
+
+   procedure Exit_GPS
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Data : constant Exit_Before_Action_Hooks_Args :=
+         (Hooks_Data with null record);
+   begin
+      if Run_Hook_Until_Failure (Kernel, Before_Exit_Action_Hook, Data) then
+         Gtk.Main.Main_Quit;
+      end if;
+   end Exit_GPS;
 
    ---------------------------------------
    -- Line_Information_Run_Hook_Handler --
@@ -854,6 +888,36 @@ package body Glide_Kernel.Standard_Hooks is
       return Tmp;
    end Execute_Shell;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Before_Exit_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Exit_Before_Action_Hooks_Args) return Boolean
+   is
+      D   : Callback_Data'Class := Create (Script, 1);
+      Tmp : Boolean;
+      pragma Unreferenced (Data);
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
    ---------------------------
    -- Register_Action_Hooks --
    ---------------------------
@@ -871,6 +935,16 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Open_File_Action_Hook,
          -("Hook called when a file needs to be opened or closed"),
          Type_Name => Open_File_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, Before_Exit_Hook_Type,
+         -("Hook type called before GPS exits." & ASCII.LF
+           & "No arguments."),
+         Hook_With_Args_And_Return, Before_Exit_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Before_Exit_Action_Hook,
+         -("Hook called when GPS is about to exit"),
+         Type_Name => Before_Exit_Hook_Type);
 
       Create_Hook_Type
         (Kernel, File_Line_Hook_Type,
@@ -930,6 +1004,17 @@ package body Glide_Kernel.Standard_Hooks is
            & ASCII.LF
            & "Arguments are the following: (context)"),
          Hook_With_Args, Context_Run_Hook_Handler'Access);
+
+      Create_Hook_Type
+        (Kernel, Before_Exit_Hook_Type,
+        -("Common type for all hooks related to opening files." & ASCII.LF
+          & "No arguments."),
+         Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
+      Register_Hook
+        (Kernel, Open_File_Action_Hook,
+         -("Hook called when a file needs to be opened or closed"),
+         Type_Name => Open_File_Hook_Type);
+
    end Register_Action_Hooks;
 
 end Glide_Kernel.Standard_Hooks;
