@@ -96,8 +96,11 @@ package body GVD.Process is
       Mask    : Stack_List_Mask;
    end record;
 
-   package Call_Stack_Cb is new Gtk.Handlers.User_Callback
-     (Gtk_Menu_Item_Record, Call_Stack_Record);
+   procedure Setup (Data : Call_Stack_Record; Id : Handler_Id);
+   --  Make sure that when Data is destroyed, Id is properly removed
+
+   package Call_Stack_Cb is new Gtk.Handlers.User_Callback_With_Setup
+     (Gtk_Menu_Item_Record, Call_Stack_Record, Setup);
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Debugger_Process_Tab_Record, Boolean);
@@ -226,6 +229,15 @@ package body GVD.Process is
       Object : access GObject_Record'Class)
      return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Call_Stack_Record; Id : Handler_Id) is
+   begin
+      Add_Watch (Id, Data.Process);
+   end Setup;
 
    ----------------------
    -- Complete_Command --
