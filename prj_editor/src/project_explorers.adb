@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -1063,7 +1063,7 @@ package body Project_Explorers is
 
       Create_Pixmaps (Project_Node, project_xpm, project_closed_xpm);
       Create_Pixmaps
-        (Modified_Project_Node, project_modified_xpm, project_modified_xpm);
+        (Modified_Project_Node, project_ext_xpm, project_ext_closed_xpm);
       Create_Pixmaps (Directory_Node, mini_ofolder_xpm, mini_folder_xpm);
       Create_Pixmaps
         (Obj_Directory_Node, mini_folder_object_xpm, mini_folder_object_xpm);
