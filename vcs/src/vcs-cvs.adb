@@ -858,7 +858,7 @@ package body VCS.CVS is
             Append (Arguments, Log_File);
 
             Create (Ft, Out_File, Log_File);
-            Put_Line (Ft, Data (Logs_Temp));
+            Put (Ft, Data (Logs_Temp));
             Close (Ft);
 
             Append (Arguments, Base_Name (File));

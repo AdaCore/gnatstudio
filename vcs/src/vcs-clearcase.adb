@@ -803,7 +803,7 @@ package body VCS.ClearCase is
             Append (Args, "-cfile");
 
             Create (Ft, Out_File, Log_File);
-            Put_Line (Ft, Data (Logs_Node));
+            Put (Ft, Data (Logs_Node));
             Close (Ft);
 
             Append (Args, Log_File);
