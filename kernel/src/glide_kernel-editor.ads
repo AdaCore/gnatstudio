@@ -97,12 +97,14 @@ package Glide_Kernel.Editor is
    ------------------
 
    procedure Goto_Declaration_Or_Body
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Find the location of the declaration for the entity below the
-   --  insert cursor (see Src_Info.Queries.Find_Declaration_Or_Body
-   --  for more details on the behavior of this query) and highlight
-   --  the entity found, opening a new editor if needed (this may depend
-   --  on the user preferences).
+     (Kernel : access Kernel_Handle_Record'Class;
+      Line   : Natural := 0;
+      Column : Natural := 0);
+   --  Perform a Declaration-or-Body cross-reference for the entity
+   --  located at (Line, Column). If either Line or Column is null,
+   --  then the position of the insert cursor is used instead.
+   --  Highlight the entity found, opening a new editor is needed
+   --  (this may depend on the user preferences).
 
    procedure Find_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
