@@ -942,8 +942,6 @@ package body Custom_Module is
          Class         => Process_Class,
          Static_Method => True,
          Handler       => Custom_Spawn_Handler'Access);
-      --  ??? should specify profiles of on_match_action and on_exit_action.
-      --  ??? should document return value
 
       Register_Command
         (Kernel,
