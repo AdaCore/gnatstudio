@@ -29,6 +29,7 @@
 with Glib.Values;     use Glib.Values;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Tree_Model;  use Gtk.Tree_Model;
+with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
 
 package body Gtkada.Tree_View is
@@ -61,9 +62,9 @@ package body Gtkada.Tree_View is
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
+
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
-
       Set (Tree.Model, Iter, Tree.Expanded_State_Column, True);
 
       Iter := Children (Tree.Model, Iter);
@@ -77,7 +78,6 @@ package body Gtkada.Tree_View is
 
          Next (Tree.Model, Iter);
       end loop;
-
    end Row_Expanded_Callback;
 
    ----------------------------
