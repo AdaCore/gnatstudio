@@ -123,15 +123,16 @@ package body Foreign_Naming_Editors is
                Attribute_Name     => Impl_Exception_Attribute,
                Attribute_Index    => Lang);
          end if;
+
          Changed := True;
       end if;
 
       if Project = No_Project
         or else Get_Attribute_Value
-        (Project        => Project,
-         Attribute_Name => Spec_Suffix_Attribute,
-         Package_Name   => Naming,
-         Index          => Lang) /=
+          (Project        => Project,
+           Attribute_Name => Spec_Suffix_Attribute,
+           Package_Name   => Naming,
+           Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Header_File_Extension))
       then
          Update_Attribute_Value_In_Scenario
@@ -146,10 +147,10 @@ package body Foreign_Naming_Editors is
 
       if Project = No_Project
         or else Get_Attribute_Value
-        (Project        => Project,
-         Attribute_Name => Impl_Suffix_Attribute,
-         Package_Name   => Naming,
-         Index          => Lang) /=
+          (Project        => Project,
+           Attribute_Name => Impl_Suffix_Attribute,
+           Package_Name   => Naming,
+           Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Implementation_Extension))
       then
          Update_Attribute_Value_In_Scenario
@@ -226,4 +227,5 @@ package body Foreign_Naming_Editors is
          end;
       end if;
    end Show_Project_Settings;
+
 end Foreign_Naming_Editors;
