@@ -706,7 +706,7 @@ package body Src_Editor_View is
       View.Pango_Font := Font;
       F := Gdk.Font.From_Description (Font);
 
-      if F = null then
+      if F /= null then
          View.Font := F;
 
          --  Make sure the widget is already realized. Otherwise, the
