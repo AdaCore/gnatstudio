@@ -398,6 +398,7 @@ package body Ada_Analyzer is
       Num_Spaces          : Integer           := 0;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
+      Index_Ident         : Natural;
       In_Generic          : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
@@ -408,11 +409,15 @@ package body Ada_Analyzer is
       Indents             : Indent_Stack.Simple_Stack;
       Top_Token           : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
+      Terminated          : Boolean := False;
 
-      procedure Handle_Reserved_Word (Reserved : Token_Type);
+      function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
+      --  Return whether parsing should be terminated.
 
-      procedure Next_Word (P : in out Natural);
+      procedure Next_Word
+        (P          : in out Natural;
+         Terminated : out Boolean);
       --  Starting at Buffer (P), find the location of the next word
       --  and set P accordingly.
       --  Formatting of operators is performed by this procedure.
@@ -421,6 +426,7 @@ package body Ada_Analyzer is
       --  The following variables are read and modified:
       --    New_Buffer, Num_Parens, Line_Count, Indents, Indent_Done,
       --    Prev_Token.
+      --  If parsing should be terminated, set Terminated to True.
 
       function End_Of_Word (P : Natural) return Natural;
       --  Return the end of the word pointed by P.
@@ -442,6 +448,11 @@ package body Ada_Analyzer is
         (Prec       : Natural;
          Num_Spaces : Integer);
       --  Perform indentation by inserting spaces in the buffer.
+
+      function End_Of_Identifier (P : Natural) return Natural;
+      --  Starting from P, scan for the end of the identifier.
+      --  P should be at the first non word character, which means that
+      --  if the identifier does not contain any dot, P - 1 will be returned.
 
       --------------------
       -- Stack Routines --
@@ -506,6 +517,58 @@ package body Ada_Analyzer is
 
          return Tmp;
       end End_Of_Word;
+
+      -----------------------
+      -- End_Of_Identifier --
+      -----------------------
+
+      function End_Of_Identifier (P : Natural) return Natural is
+         Tmp  : Natural := P;
+         Prev : Natural := P - 1;
+
+      begin
+         loop
+            while Tmp < Buffer_Length
+              and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
+            loop
+               Tmp := Tmp + 1;
+            end loop;
+
+            if Tmp = Buffer_Length
+              or else Buffer (Tmp) /= '.'
+              or else Buffer (Tmp + 1) = '.'
+            then
+               return Prev;
+            end if;
+
+            Tmp := Tmp + 1;
+
+            while Tmp < Buffer_Length
+              and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
+            loop
+               Tmp := Tmp + 1;
+            end loop;
+
+            if Buffer (Tmp) = '"' then
+               --  Case of an operator, e.g System."="
+
+               Tmp := Tmp + 2;
+
+               while Buffer (Tmp) /= '"' loop
+                  Tmp := Tmp + 1;
+               end loop;
+
+               return Tmp;
+
+            else
+               Tmp := End_Of_Word (Tmp);
+            end if;
+
+            Prev := Tmp;
+         end loop;
+
+         return Prev;
+      end End_Of_Identifier;
 
       ----------------
       -- Line_Start --
@@ -686,7 +749,7 @@ package body Ada_Analyzer is
       -- Handle_Reserved_Word --
       --------------------------
 
-      procedure Handle_Reserved_Word (Reserved : Token_Type) is
+      function Handle_Reserved_Word (Reserved : Token_Type) return Boolean is
          Temp          : Extended_Token;
          Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
          Start_Of_Line : Natural;
@@ -699,9 +762,12 @@ package body Ada_Analyzer is
          Temp.Sloc.Index  := Prec;
 
          if Callback /= null then
-            Callback
-              (Ent_Reserved_Word,
-               Temp.Sloc, (Line_Count, Current - Start_Of_Line + 1, Current));
+            if Callback
+              (Keyword_Text,
+               Temp.Sloc, (Line_Count, Current - Start_Of_Line + 1, Current))
+            then
+               return True;
+            end if;
          end if;
 
          --  Note: the order of the following conditions is important
@@ -1056,16 +1122,22 @@ package body Ada_Analyzer is
             end if;
          end if;
 
+         return False;
+
       exception
          when Token_Stack.Stack_Empty =>
             Syntax_Error := True;
+            return False;
       end Handle_Reserved_Word;
 
       ---------------
       -- Next_Word --
       ---------------
 
-      procedure Next_Word (P : in out Natural) is
+      procedure Next_Word
+        (P          : in out Natural;
+         Terminated : out Boolean)
+      is
          Comma         : String := ", ";
          Spaces        : String := "    ";
          End_Of_Line   : Natural;
@@ -1172,10 +1244,14 @@ package body Ada_Analyzer is
                   Indent_Done   := False;
 
                   if Callback /= null then
-                     Callback
-                       (Ent_Comment,
+                     if Callback
+                       (Comment_Text,
                         (Prev_Line, First - Prev_Start_Line + 1, First),
-                        (Line_Count - 1, Last - Line_Start (Last) + 1, Last));
+                        (Line_Count - 1, Last - Line_Start (Last) + 1, Last))
+                     then
+                        Terminated := True;
+                        return;
+                     end if;
                   end if;
                end;
             end if;
@@ -1270,10 +1346,14 @@ package body Ada_Analyzer is
                      end if;
 
                      if Callback /= null then
-                        Callback
-                          (Ent_String,
+                        if Callback
+                          (String_Text,
                            (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P));
+                           (Line_Count, P - Start_Of_Line + 1, P))
+                        then
+                           Terminated := True;
+                           return;
+                        end if;
                      end if;
                   end;
 
@@ -1539,10 +1619,14 @@ package body Ada_Analyzer is
                      Prev_Token := Tok_Char_Literal;
 
                      if Callback /= null then
-                        Callback
-                          (Ent_Character,
+                        if Callback
+                          (Character_Text,
                            (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P));
+                           (Line_Count, P - Start_Of_Line + 1, P))
+                        then
+                           Terminated := True;
+                           return;
+                        end if;
                      end if;
                   end if;
 
@@ -1552,6 +1636,8 @@ package body Ada_Analyzer is
 
             P := Next_Char (P);
          end loop;
+
+         Terminated := False;
       end Next_Word;
 
    begin  --  Analyze_Ada_Source
@@ -1561,9 +1647,15 @@ package body Ada_Analyzer is
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
 
-      Next_Word (Prec);
+      Next_Word (Prec, Terminated);
+
+      if Terminated then
+         return;
+      end if;
+
       Current := End_Of_Word (Prec);
 
+      Main_Loop :
       while Current < Buffer_Length loop
          Str_Len := Current - Prec + 1;
 
@@ -1574,6 +1666,22 @@ package body Ada_Analyzer is
          Token := Get_Token (Str (1 .. Str_Len));
 
          if Token = Tok_Identifier then
+            --  Handle dotted names, e.g Foo.Bar.X
+
+            Index_Ident := End_Of_Identifier (Current + 1);
+
+            if Index_Ident /= Current then
+               --  We have a dotted name, update indexes.
+
+               Str_Len := Index_Ident - Prec + 1;
+
+               for J in Current + 1 .. Index_Ident loop
+                  Str (J - Prec + 1) := To_Lower (Buffer (J));
+               end loop;
+
+               Current := Index_Ident;
+            end if;
+
             Top_Token := Top (Tokens);
 
             if (Top_Token.Token in Token_Class_Declk
@@ -1590,8 +1698,9 @@ package body Ada_Analyzer is
 
             if Callback /= null then
                Start_Of_Line := Line_Start (Prec);
-               Callback
-                 (Ent_Identifier,
+
+               exit Main_Loop when Callback
+                 (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
                   (Line_Count, Current - Start_Of_Line + 1, Current));
             end if;
@@ -1606,15 +1715,17 @@ package body Ada_Analyzer is
 
             if Callback /= null then
                Start_Of_Line := Line_Start (Prec);
-               Callback
-                 (Ent_Identifier,
+
+               exit Main_Loop when Callback
+                 (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
                   (Line_Count, Current - Start_Of_Line + 1, Current));
             end if;
 
          else
             Casing := Reserved_Casing;
-            Handle_Reserved_Word (Token);
+
+            exit Main_Loop when Handle_Reserved_Word (Token);
          end if;
 
          case Casing is
@@ -1664,6 +1775,7 @@ package body Ada_Analyzer is
                   --    Package2;  --  from Indent_Use
 
                   Do_Indent (Prec, Num_Spaces + Indent_Use);
+
                else
                   --  Default case, simply use Num_Spaces
 
@@ -1682,9 +1794,13 @@ package body Ada_Analyzer is
          Token_Prec      := Prec;
          Prec            := Current + 1;
          Prev_Token      := Token;
-         Next_Word (Prec);
+
+         Next_Word (Prec, Terminated);
+
+         exit Main_Loop when Terminated;
+
          Current := End_Of_Word (Prec);
-      end loop;
+      end loop Main_Loop;
 
       if Prev_Spaces < 0 then
          Prev_Indent := 0;
