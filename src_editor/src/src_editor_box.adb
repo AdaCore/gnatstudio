@@ -1080,6 +1080,9 @@ package body Src_Editor_Box is
       Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
       Add (Frame, Box.Label_Box);
 
+      --  Avoid resizing the main window whenever a label is changed.
+      Set_Resize_Mode (Box.Label_Box, Resize_Queue);
+
       --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
