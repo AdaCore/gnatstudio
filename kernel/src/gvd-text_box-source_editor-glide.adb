@@ -97,9 +97,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       Open_File_Editor
         (Kernel, Editor.Debugger_Current_File.all,
-         Editor.Line, 1,
-         Highlight_Line => True,
-         Enable_Navigation => False);
+         Editor.Line, 1, Highlight_Line => True,
+         Enable_Navigation => False, New_File => False);
    end Highlight_Current_Line;
 
    --------------------
