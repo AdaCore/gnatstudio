@@ -32,7 +32,6 @@
 #include "trash_xpm"
 #include "subprogram_xpm"
 #include "undisplay_xpm"
-#include "until_xpm"
 #include "up_xpm"
 #include "var_xpm"
 #include "watch_xpm"
