@@ -737,10 +737,10 @@ package body VCS_View_API is
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access)
    is
-      Explorer : constant VCS_View_Access :=
-                   VCS_View_Access (Get_Explorer (Kernel, True, True));
+      Explorer : VCS_View_Access;
    begin
-      if Context /= null then
+      if not Explorer_Is_Open then
+         Explorer := Get_Explorer (Kernel, True, True);
          Change_Context (Explorer, Context);
       end if;
    end Open_Explorer;
