@@ -43,8 +43,8 @@ package body Final_Window_Pkg.Callbacks is
       Commit
         (Final_Window.Graphic_Codefix.Corrector,
          Final_Window.Graphic_Codefix.Current_Text.all);
-      Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
+      Destroy (Final_Window);
 
    exception
       when E : others =>
@@ -61,8 +61,8 @@ package body Final_Window_Pkg.Callbacks is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
    begin
-      Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
+      Destroy (Final_Window);
 
    exception
       when E : others =>
