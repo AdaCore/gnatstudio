@@ -24,7 +24,6 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
-with Display_Items;   use Display_Items;
 
 package body Process_Tab_Pkg is
 
