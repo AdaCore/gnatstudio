@@ -278,7 +278,11 @@ package body Odd.Dialogs.Callbacks is
       --  Execute the commands and free the list while traversing it
 
       while New_List /= null loop
-         Process_User_Command (Tab, New_List.Command.all);
+         Process_User_Command
+           (Tab,
+            New_List.Command.all,
+            Output_Command => True,
+            Mode => User);
          Free (New_List.Command);
          First_Item := New_List;
          New_List := New_List.Next;
