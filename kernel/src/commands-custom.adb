@@ -1441,6 +1441,11 @@ package body Commands.Custom is
               (External_Component_Record'Class (Component.all));
          end if;
 
+         if not Success then
+            Trace
+              (Me, "Execute_Simple_Command => Command returned with error");
+         end if;
+
          return Success;
 
       exception
