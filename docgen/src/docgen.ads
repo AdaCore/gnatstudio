@@ -82,6 +82,7 @@ package Docgen is
                         Type_Entity,
                         Var_Entity,
                         Package_Entity,
+                        Entry_Entity,
                         Other_Entity);
    --  a simplfied list of possible entity types
 
@@ -125,8 +126,45 @@ package Docgen is
                        Unit_Index_Info, Type_Index_Info,
                        Subprogram_Index_Info, End_Of_Index_Info,
                        Index_Item_Info, Body_Line_Info, Var_Info,
-                       Package_Info);
+                       Package_Info, Entry_Info);
    --  the structure used in the type Doc_Info.
+
+   type Doc_Info;
+
+   type Doc_Subprogram_Type is access
+        procedure (File      : in Ada.Text_IO.File_Type;
+                   Text_Type : in out Doc_Info);
+   --  the procedure to define for each new output format
+
+
+   type All_Options is record
+      Doc_Subprogram       : Doc_Subprogram_Type;
+      --  subprogram to use in the output package
+      Doc_Suffix           : GNAT.OS_Lib.String_Access;
+      --  the suffix of the output file
+      Process_Body_Files   : Boolean := False;
+      --  create also the body documentation?
+      Info_Output          : Boolean := False;
+      --  show more information
+      Ignorable_Comments   : Boolean := False;
+      --  ignore all comments with "--!"
+      Comments_Under       : Boolean := False;
+      --  doc comments for entities under the header
+      Show_Private         : Boolean := False;
+      --  show also private entities
+      Doc_Directory        : GNAT.OS_Lib.String_Access;
+      --  where should the doc files be created
+      References           : Boolean := False;
+      --  True if the program should search for the references
+      --  adding information like "subprogram called by..."
+      One_Doc_File         : Boolean := False;
+      --  used for TexInfo: True, if the project.texi file should be
+      --  build and the package files should be included there later.
+      Project_Name         : GNAT.OS_Lib.String_Access;
+      --  The name of the main project
+   end record;
+   --  the type containing all the information which can be
+   --  set by using the opions of the command line
 
    --  The data structure used to pass the information
    --  to the procedure which is defined
@@ -135,20 +173,20 @@ package Docgen is
    --  when a new output format should be added
    type Doc_Info (Info_Type : Info_Types) is
       record
-
-         Process_Body : Boolean;
+         Doc_Info_Options                    : All_Options;
 
          case Info_Type is
-
                --  used to at the very beginning of the file
             when Open_Info =>
                Open_Title                    : GNAT.OS_Lib.String_Access;
                Open_File                     : GNAT.OS_Lib.String_Access;
                Open_Package_List             : Type_Source_File_List.List;
+               Open_Package_Next             : GNAT.OS_Lib.String_Access;
+               Open_Package_Prev             : GNAT.OS_Lib.String_Access;
 
                --  used at the end of the file
             when Close_Info =>
-               Close_Title                   : GNAT.OS_Lib.String_Access;
+               Close_File_Name               : GNAT.OS_Lib.String_Access;
 
                --  used to start an entity information
             when Header_Info =>
@@ -156,8 +194,6 @@ package Docgen is
                Header_File                   : GNAT.OS_Lib.String_Access;
                Header_Link                   : Boolean;
                Header_Line                   : Natural;
-               Header_Package_Next           : GNAT.OS_Lib.String_Access;
-               Header_Package_Prev           : GNAT.OS_Lib.String_Access;
 
                --  used to finish an entity information
             when Footer_Info =>
@@ -190,7 +226,7 @@ package Docgen is
             when Var_Info =>
                Var_Entity                    : Entity_List_Information;
                Var_Header                    : GNAT.OS_Lib.String_Access;
-               Var_Header_Line              : Natural;
+               Var_Header_Line               : Natural;
                Var_Description               : GNAT.OS_Lib.String_Access;
                Var_List                      : Type_Entity_List.List;
 
@@ -210,6 +246,15 @@ package Docgen is
                Type_Description              : GNAT.OS_Lib.String_Access;
                Type_List                     : Type_Entity_List.List;
 
+               --  used to add an entry info to the information file
+            when Entry_Info =>
+               Entry_Entity                  : Entity_List_Information;
+               Entry_Header                  : GNAT.OS_Lib.String_Access;
+               Entry_Header_Line             : Natural;
+               Entry_Description             : GNAT.OS_Lib.String_Access;
+               Entry_Link                    : Boolean;
+               Entry_List                    : Type_Entity_List.List;
+
                --  used to add a subprogram info to the information file
             when Subprogram_Info =>
                Subprogram_Entity             : Entity_List_Information;
@@ -221,18 +266,21 @@ package Docgen is
 
                --  used to start the package index file
             when Unit_Index_Info =>
-               --  the first file to show (for ex. by index.html)
-               First_File                    : GNAT.OS_Lib.String_Access;
-               --  to create the index.html if necessary
-               Doc_Directory                 : GNAT.OS_Lib.String_Access;
+               --  the list of the files
+               Unit_File_List                : Type_Source_File_List.List;
+               --  the name doc file name without the suffix
+               Unit_Index_File_Name          : GNAT.OS_Lib.String_Access;
+               Unit_Project_Name             : GNAT.OS_Lib.String_Access;
 
                --  used to start the subprogram index file
             when Subprogram_Index_Info =>
-               First_Dummy                   : GNAT.OS_Lib.String_Access;
+               --  the doc file name without the suffix
+               Subprogram_Index_File_Name    : GNAT.OS_Lib.String_Access;
 
                --  used to start the type index file
             when Type_Index_Info =>
-               Second_Dummy                  : GNAT.OS_Lib.String_Access;
+               --  the name doc file name without the suffix
+               Type_Index_File_Name          : GNAT.OS_Lib.String_Access;
 
                --  used to finish all 3 kinds of index files
             when End_Of_Index_Info =>
@@ -259,37 +307,6 @@ package Docgen is
    --  be the only procedure to be defined
    --  when a new output format should be added
 
-   type Doc_Subprogram_Type is access
-        procedure (File      : in Ada.Text_IO.File_Type;
-                   Text_Type : in out Doc_Info);
-   --  the procedure to define for each new output format
-
-   type All_Options is record
-      Doc_Subprogram       : Doc_Subprogram_Type;
-      --  subprogram to use in the output package
-      Doc_Suffix           : GNAT.OS_Lib.String_Access;
-      --  the suffix of the output file
-      Doc_One_File         : Boolean := False;
-      --  should all the packages be documented in only one file
-      Process_Body_Files   : Boolean := False;
-      --  create also the body documentation?
-      Info_Output          : Boolean := False;
-      --  show more information
-      Ignorable_Comments   : Boolean := False;
-      --  ignore all comments with "--!"
-      Comments_Under       : Boolean := False;
-      --  doc comments for entities under the header
-      Show_Private         : Boolean := False;
-      --  show also private entities
-      Doc_Directory        : GNAT.OS_Lib.String_Access;
-      --  where should the doc files be created
-      References           : Boolean := False;
-      --  True if the program should search for the references
-      --  adding information like "subprogram called by..."
-   end record;
-   --  the type containing all the information which can be
-   --  set by using the opions of the command line
-
    function Count_Lines
      (Line    : String) return Natural;
    --  returns the number of lines in the String
@@ -301,5 +318,14 @@ package Docgen is
    --  returns the index of the substring in the Type_Str.
    --  The search starts at position Index,
    --  if no position is found, return 0.
+
+   function Get_Doc_File_Name
+     (Source_Filename : String;
+      Source_Path     : String;
+      Doc_Suffix      : String) return String;
+   --  returns a string with the name for the new doc file:
+   --  first the doc path is added in front of the created name
+   --  then the "." in front of the suffix is replaced by "_",
+   --  so that a new output format suffix can be added
 
 end Docgen;
