@@ -461,11 +461,12 @@ package body Src_Editor_Box is
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
                 & Get_File (Location));
          Open_File_Editor
-           (Kernel, Get_Full_Path_From_File
-            (Registry        => Get_Registry (Kernel),
-             Filename        => Get_File (Location),
-             Use_Source_Path => True,
-             Use_Object_Path => False),
+           (Kernel,
+            Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => Get_File (Location),
+               Use_Source_Path => True,
+               Use_Object_Path => False),
             L, C, C + Length, False);
 
       else
@@ -476,11 +477,12 @@ package body Src_Editor_Box is
          C := Get_Declaration_Column_Of (Entity);
 
          Open_File_Editor
-           (Kernel, Get_Full_Path_From_File
-            (Registry        => Get_Registry (Kernel),
-             Filename        => Get_Declaration_File_Of (Entity),
-             Use_Source_Path => True,
-             Use_Object_Path => False),
+           (Kernel,
+            Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => Get_Declaration_File_Of (Entity),
+               Use_Source_Path => True,
+               Use_Object_Path => False),
             L, C, C + Length, False);
       end if;
 
@@ -524,19 +526,21 @@ package body Src_Editor_Box is
 
             if To_Body then
                Open_File_Editor
-                 (Kernel, Get_Full_Path_From_File
-                  (Registry        => Get_Registry (Kernel),
-                   Filename        => Get_File (Location),
-                   Use_Source_Path => True,
-                   Use_Object_Path => False),
+                 (Kernel,
+                  Get_Full_Path_From_File
+                    (Registry        => Get_Registry (Kernel),
+                     Filename        => Get_File (Location),
+                     Use_Source_Path => True,
+                     Use_Object_Path => False),
                   L, C, C + Length, False);
             else
                Open_File_Editor
-                 (Kernel, Get_Full_Path_From_File
-                  (Registry        => Get_Registry (Kernel),
-                   Filename        => Get_Declaration_File_Of (Entity),
-                   Use_Source_Path => True,
-                   Use_Object_Path => False),
+                 (Kernel,
+                  Get_Full_Path_From_File
+                    (Registry        => Get_Registry (Kernel),
+                     Filename        => Get_Declaration_File_Of (Entity),
+                     Use_Source_Path => True,
+                     Use_Object_Path => False),
                   L, C, C + Length, False);
             end if;
          end if;
