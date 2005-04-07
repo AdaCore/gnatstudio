@@ -383,6 +383,8 @@ package body Python_Module is
 
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Python_GUI_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Python_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Python_Entity_Command_Handler
@@ -749,6 +751,37 @@ package body Python_Module is
          Text        => -"Python Console",
          Callback    => Open_Python_Console'Access);
 
+      --  If PyGtk is available, register some special functions, so that
+      --  users can interact directly with widgets
+
+      Result := Run_Command
+        (Python_Module_Id.Script.Interpreter,
+         "import pygtk", Hide_Output => True,
+         Errors => Errors'Unchecked_Access);
+      if not Errors then
+         Trace (Me, "Loading support for pygtk");
+         Result := Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "pygtk.require('2.0'); import gtk", Hide_Output => True,
+            Errors => Errors'Unchecked_Access);
+
+--           Register_Command
+--             (Python_Module_Id.Script,
+--              Command      => "pywidget",
+--              Handler      => Python_GUI_Command_Handler'Access,
+--              Class        => Get_GUI_Class (Kernel));
+         Register_Command
+           (Python_Module_Id.Script,
+            Command       => "add",
+            Handler       => Python_GUI_Command_Handler'Access,
+            Class         => New_Class (Kernel, "MDI"),
+            Minimum_Args  => 1,
+            Maximum_Args  => 3,
+            Static_Method => True);
+      else
+         Trace (Me, "Not loading support for pygtk");
+      end if;
+
       --  Change the screen representation of the various classes. This way,
       --  commands can return classes, but still displayed user-readable
       --  strings.
@@ -963,6 +996,8 @@ package body Python_Module is
            (Data, Integer (Hash (Full_Name (Get_File (Info)).all)));
       end if;
 
+      Free (Instance);
+
    exception
       when Invalid_Parameter =>
          if Command = "__cmp__" then
@@ -972,6 +1007,45 @@ package body Python_Module is
             raise;
          end if;
    end Python_File_Command_Handler;
+
+   --------------------------------
+   -- Python_GUI_Command_Handler --
+   --------------------------------
+
+   procedure Python_GUI_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      function PyObject_From_Widget (W : System.Address) return PyObject;
+      pragma Import (C, PyObject_From_Widget, "ada_pyobject_from_widget");
+
+      function Widget_From_PyObject (Object : PyObject) return System.Address;
+      pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
+
+      Stub     : Gtk.Widget.Gtk_Widget_Record;
+      Widget   : Glib.Object.GObject;
+      Instance : Class_Instance;
+      Child    : MDI_Child;
+   begin
+      --  This is only called when pygtk has been loaded properly
+
+      if Command = "pywidget" then
+         null;
+         --  ??? Don't know how to implement that without depending on the
+         --  sources of pygtk when compiling GPS
+--           Instance := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+--           Python_Callback_Data (Data).Return_Value :=
+--             PyObject_From_Widget (Get_Object (Get_Data (Instance)));
+--           Free (Instance);
+
+      elsif Command = "add" then
+         Widget := Get_User_Data
+           (Widget_From_PyObject (Get_Param (Python_Callback_Data (Data), 1)),
+            Stub);
+         Child := Put (Get_MDI (Get_Kernel (Data)), Gtk_Widget (Widget));
+         Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
+         Set_Focus_Child (Child);
+      end if;
+   end Python_GUI_Command_Handler;
 
    ------------------------------------
    -- Python_Project_Command_Handler --
