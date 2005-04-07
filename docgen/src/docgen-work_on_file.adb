@@ -72,16 +72,6 @@ package body Docgen.Work_On_File is
       Free      => Free);
    --  Handle the one-file processing commands
 
-   procedure Find_Next_Unit
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Source_File_List : Type_Source_File_Table.HTable;
-      Source_File_Node : in out Type_Source_File_Table.Iterator;
-      Nb_Skiped        : out Natural;
-      Unit_Name        : out GNAT.OS_Lib.String_Access);
-   --  Returns the name of the next unit in the list
-   --  (body files with the same unit name are ignored)
-   --  If there is no next, Unit_Name is set to "".
-
    procedure Finalize_Files_Processing (Data : in out Process_One_File_Data);
    --  This procedure is in charge of the documentation generation phase
    --  that comes right after every single file has been processed.
@@ -600,46 +590,6 @@ package body Docgen.Work_On_File is
       end if;
    end Process_Tagged_Types;
 
-   --------------------
-   -- Find_Next_Unit --
-   --------------------
-
-   procedure Find_Next_Unit
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Source_File_List : Type_Source_File_Table.HTable;
-      Source_File_Node : in out Type_Source_File_Table.Iterator;
-      Nb_Skiped        : out Natural;
-      Unit_Name        : out GNAT.OS_Lib.String_Access)
-   is
-      use Type_Source_File_Table;
-   begin
-      Nb_Skiped := 0;
-
-      if Get_Element (Source_File_Node) = No_Source_File_Information then
-         Unit_Name := null;
-
-      else
-         Get_Next (Source_File_List, Source_File_Node);
-         if Get_Element (Source_File_Node) = No_Source_File_Information then
-            Unit_Name := null;
-            return;
-         end if;
-
-         if not Is_Spec_File
-           (Kernel, Get_Filename (Get_Key (Source_File_Node)))
-         then
-            Nb_Skiped := Nb_Skiped  + 1;
-            Get_Next (Source_File_List, Source_File_Node);
-         end if;
-
-         if Get_Element (Source_File_Node) = No_Source_File_Information then
-            Unit_Name := null;
-         else
-            Unit_Name := Get_Element (Source_File_Node).Unit_Name;
-         end if;
-      end if;
-   end Find_Next_Unit;
-
    -------------------------------
    -- Finalize_Files_Processing --
    -------------------------------
@@ -737,9 +687,8 @@ package body Docgen.Work_On_File is
                Binary);
 
             Process_Result : Unbounded_String;
-            Next_Unit      : GNAT.OS_Lib.String_Access;
-            Nb_Skiped      : Natural;
          begin
+
             Process_One_File
               (Data.Backend,
                Data.Kernel,
@@ -762,14 +711,11 @@ package body Docgen.Work_On_File is
             Put_Line (Doc_File, To_String (Process_Result));
             Close (Doc_File);
 
-            Find_Next_Unit
-              (Data.Kernel,
-               Data.Source_File_List,
-               Data.Source_File_Node,
-               Nb_Skiped,
-               Next_Unit);
-
-            Data.Nb_Processed := Data.Nb_Processed + Nb_Skiped;
+            if
+              Get_Element (Data.Source_File_Node) /= No_Source_File_Information
+            then
+               Get_Next (Data.Source_File_List, Data.Source_File_Node);
+            end if;
          end;
 
          Data.Nb_Processed := Data.Nb_Processed + 1;
