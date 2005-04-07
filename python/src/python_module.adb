@@ -1017,13 +1017,14 @@ package body Python_Module is
    is
       function PyObject_From_Widget (W : System.Address) return PyObject;
       pragma Import (C, PyObject_From_Widget, "ada_pyobject_from_widget");
+      pragma Unreferenced (PyObject_From_Widget);
 
       function Widget_From_PyObject (Object : PyObject) return System.Address;
       pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
 
       Stub     : Gtk.Widget.Gtk_Widget_Record;
       Widget   : Glib.Object.GObject;
-      Instance : Class_Instance;
+--      Instance : Class_Instance;
       Child    : MDI_Child;
    begin
       --  This is only called when pygtk has been loaded properly
