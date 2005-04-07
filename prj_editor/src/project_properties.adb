@@ -40,6 +40,7 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -3199,6 +3200,7 @@ package body Project_Properties is
    is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
+      Align  : Gtk_Alignment;
       Event  : Gtk_Event_Box;
       Find   : Natural;
    begin
@@ -3219,16 +3221,24 @@ package body Project_Properties is
       Gtk_New_Hbox (Box, Homogeneous => False);
 
       if Attr.Label /= null then
+         --  Put the label inside an event box, so that we can associate it
+         --  with a tooltip. Put the event box inside the box, so that the
+         --  size of the event box is just that of the label, and the tooltip
+         --  doesn't appear far from the label
+
+         Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
+                  Xscale => 0.0, Yscale => 0.0);
+         Set_Border_Width (Align, 0);
+         Pack_Start (Box, Align, Expand => False, Fill => True);
          Gtk_New (Event);
-         Pack_Start (Box, Event, Expand => False);
+         Add (Align, Event);
          Gtk_New (Label, Attr.Label.all & ':');
-         Set_Alignment (Label, 0.0, 0.5);
 
          if Size_Group = null then
             Gtk_New (Size_Group);
          end if;
 
-         Add_Widget (Size_Group, Label);
+         Add_Widget (Size_Group, Align);
          Add (Event, Label);
 
          if Attr.Description /= null
