@@ -1170,6 +1170,11 @@ procedure GPS.Main is
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
 
+      --  Register the locations view before all the modules that register a
+      --  highlighting category. Otherwise, when loading the desktop, the
+      --  locations view might create highligthting with categories that don't
+      --  exist.
+
       GPS.Location_View.Register_Module (GPS_Main.Kernel);
 
       --  Register the remote protocols early so that other modules can access
