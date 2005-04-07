@@ -26,7 +26,7 @@
    <Submenu>
      <Title>Edit</Title>
      <menu action="Generate body" before="Unit Testing" >
-        <Title>Generate Body</Title>
+        <Title>_Generate Body</Title>
      </menu>
    </Submenu>
 </gnatstub>

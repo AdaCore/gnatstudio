@@ -19,7 +19,7 @@
    <Submenu>
      <Title>Edit</Title>
      <menu action="Pretty print" before="Unit Testing" >
-        <Title>Pretty Print</Title>
+        <Title>P_retty Print</Title>
      </menu>
    </Submenu>
 
