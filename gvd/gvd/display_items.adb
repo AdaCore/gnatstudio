@@ -1262,6 +1262,8 @@ package body Display_Items is
             It := Display_Item (Get (Iter));
             exit when It = null;
 
+            Next (Iter);
+            
             --  If It is an alias of Item, and it wasn't displayed explicitly
             --  by the user, then remove it from the canvas as well.  Also
             --  remove It if it is currently hidden (alias detection), and was
@@ -1279,8 +1281,6 @@ package body Display_Items is
             then
                Free (It, Remove_Aliases => False);
             end if;
-
-            Next (Iter);
          end loop;
       end if;
 
