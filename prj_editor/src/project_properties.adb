@@ -3375,7 +3375,9 @@ package body Project_Properties is
                Gtk_New (Label, Attribute_Editors_Page_Name (P));
                Append_Page (Main_Note, Event, Label);
             end if;
+         end if;
 
+         if XML_Page /= null then
             Tmp := Editor.XML_Pages;
             if Tmp = null then
                Editor.XML_Pages := new Wizard_Pages_Array (1 .. 1);
