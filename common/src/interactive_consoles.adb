@@ -959,7 +959,7 @@ package body Interactive_Consoles is
             End_At := Text'Last;
          end if;
 
-         --  Do not leave blank spaces at the beginning of the line, since
+         --  Do not trim blank spaces at the beginning of the line, since
          --  they might be relevant in some contexts (for instance python)
          Command := new String'
            (Trim (Text (Start_At .. End_At), Ada.Strings.Right));
