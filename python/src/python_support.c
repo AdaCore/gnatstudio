@@ -19,6 +19,7 @@
 ---------------------------------------------------------------------*/
 
 #include <Python.h>
+#include <gtk/gtk.h>
 
 #undef DEBUG
 
@@ -202,5 +203,31 @@ PyObject* ada_py_true() {
 
 PyObject* ada_pyclass_name(PyClassObject* obj) {
   return obj->cl_name;
+}
+
+
+/******************************************************
+ Support for pygtk
+ The code below is duplicated from pygobject.h. However,
+ since we do not want to depend on the latter when compiling
+ GPS, we have simply copied it here. This means that we
+ might not be compatible with pygtk for ever. This was
+ tested with pygtk 2.4 and 2.6
+*******************************************************/
+
+typedef struct {
+    PyObject_HEAD
+    GObject *obj;
+} LocalPyGObject;
+
+GObject* ada_widget_from_pyobject (PyObject* object) {
+   return ((LocalPyGObject*)object)->obj;
+}
+
+PyObject* ada_pyobject_from_widget (GObject* object) {
+   return NULL;
+   //  ??? Not integrated yet, since this would mean we need the pygtk
+   //  sources around to compile GPS itself, which we do not want
+//   return pygobject_new (object);
 }
 
