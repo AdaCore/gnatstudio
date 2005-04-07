@@ -26,7 +26,7 @@ C_SRCS = \
 PYTHON_OBJ_DIR = $(PYTHON_BASE_DIR)/obj
 OBJ_DIR = $(PYTHON_OBJ_DIR)
 
-CFLAGS = -g -O2 $(PYTHON_INCLUDE)
+CFLAGS = -g -O2 $(PYTHON_INCLUDE) `pkg-config gtk+-2.0 --cflags`
 
 PROJECT_FILE = python
 
