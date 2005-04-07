@@ -1263,7 +1263,7 @@ package body Display_Items is
             exit when It = null;
 
             Next (Iter);
-            
+
             --  If It is an alias of Item, and it wasn't displayed explicitly
             --  by the user, then remove it from the canvas as well.  Also
             --  remove It if it is currently hidden (alias detection), and was
