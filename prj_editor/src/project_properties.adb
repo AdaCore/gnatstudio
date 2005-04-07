@@ -73,6 +73,7 @@ with Projects.Registry;         use Projects.Registry;
 with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
+with Types;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
@@ -931,24 +932,54 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean)
    is
+      use type Types.Name_Id;
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Attr  : constant Attribute_Pkg :=
         Build
           (Package_Name   => Editor.Attribute.Pkg.all,
            Attribute_Name => Editor.Attribute.Name.all);
-      Assoc : constant Projects.Associative_Array := Get_Attribute_Value
-        (Project, Attr);
+      Assoc : Projects.Associative_Array :=
+        Get_Attribute_Value (Project, Attr);
    begin
-      --  Remove all the values that were previously set
+      --  Remove all the values that are no longer in the list. We keep those
+      --  that are still in the list, so that we can compare them with their
+      --  new value and detect changes (E308-006)
+
+      while Iter /= Null_Iter loop
+         declare
+            Index : constant String := Get_String (Editor.Model, Iter, 0);
+         begin
+            for A in Assoc'Range loop
+               if Assoc (A).Index /= Types.No_Name then
+                  if Equal (Get_String (Assoc (A).Index), Index,
+                            Editor.Attribute.Case_Sensitive_Index)
+                  then
+                     Assoc (A).Index := Types.No_Name;
+                     exit;
+                  end if;
+               end if;
+            end loop;
+         end;
+         Next (Editor.Model, Iter);
+      end loop;
+
       for A in Assoc'Range loop
-         Delete_Attribute
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Attr,
-            Attribute_Index    => Get_String (Assoc (A).Index));
+         if Assoc (A).Index /= Types.No_Name then
+            Trace (Me, "Removing obsolete value "
+                   & Editor.Attribute.Pkg.all
+                   & ":" & Editor.Attribute.Name.all
+                   & " (" & Get_String (Assoc (A).Index) & ")");
+            Delete_Attribute
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute          => Attr,
+               Attribute_Index    => Get_String (Assoc (A).Index));
+            Project_Changed := True;
+         end if;
       end loop;
 
       --  Now set the proper value
+      Iter := Get_Iter_First (Editor.Model);
       while Iter /= Null_Iter loop
          declare
             Index : String := Get_String (Editor.Model, Iter, 0);
