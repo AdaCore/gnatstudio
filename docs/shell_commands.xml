@@ -2101,6 +2101,29 @@ The specific list depends on the hook type</param>
   <shell_doc name="GPS.MDI">
     <description>Represents GPS's Multiple Document Interface. This gives access to general graphical commands for GPS, as well as control over the current layout of the windows within GPS</description>
     <see_also name="GPS.MDIWindow" />
+    <example lang="python">
+If you have installed the pygtk package (see GPS's documentation}, GPS will export a few more functions to python so that it is easier to interact with GPS itself. In particular, the GPS.MDI.add function allows you to put a widget created by pygtk under control of GPS's MDI, so that users can interact with it as with all other GPS windows.
+Here is a small code example:
+
+import GPS
+
+## The following three lines are the usual to make pygtk visible
+import pygtk
+pygtk.require('2.0')
+import gtk
+
+def on_clicked (*args):
+   GPS.Console().write ("button was pressed\n")
+
+def create():
+   button=gtk.Button ('press')
+   button.connect ('clicked', on_clicked)
+   GPS.MDI.add (button, "From testgtk", "testgtk")
+   win = GPS.MDI.get ('testgtk')
+   win.split ()
+
+create()
+    </example>
   </shell_doc>
 
   <shell_doc name="GPS.MDI.get">
@@ -2158,7 +2181,15 @@ If the force parameter is false, then a confirmation dialog is displayed so that
       <description>Exit GPS. If there are unsaved changes, a dialog is first displayed to ask whether these should be saved. If the user cancels the operation through the dialog, GPS will not exit. If force is true, then no dialog is open, and nothing is saved</description>
   </shell_doc>
 
-
+  <shell_doc name="GPS.MDI.add">
+      <param name="widget">A widget, created by pygtk</param>
+      <param name="title">A string</param>
+      <param name="short">A string</param>
+      <description>This function is only available if pygtk could be loaded in the python shell. You must install this library first, see the documentation for GPS.MDI itself.
+This function adds a widget inside the MDI of GPS. The resulting window can then be manipulated by the user like any other standard GPS window. It can be split, floated, resized,... Title is the string used in the title bar of the window, short is the string used in the notebook tabs. You can immediately retrieve a handle to the created window by calling GPS.MDI.get (short).</description>
+      <see_also name="GPS.MDI.get"/>
+      <see_also name="GPS.MDI"/>
+  </shell_doc>
 
   <!--#################################################################
     ####   MDIWindow class
