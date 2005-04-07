@@ -343,16 +343,18 @@ package body Python.GUI is
       --  command the user is typing.
 
       if Hide_Output then
+         Trace (Me_Out, "Running command __gps_hide_output()");
          Ignored := PyRun_SimpleString ("__gps_hide_output()");
       end if;
 
       Trace (Me, "Running command: " & Cmd);
 
-      if not Hide_Output and then Show_Command then
+      Interpreter.Hide_Output := Hide_Output;
+
+      if Show_Command then
          Insert_Text (Interpreter, Command & ASCII.LF, Console);
       end if;
 
-      Interpreter.Hide_Output := Hide_Output;
       Errors.all := False;
 
       if Cmd = "" & ASCII.LF then
@@ -409,7 +411,11 @@ package body Python.GUI is
          end if;
 
          if Obj = null then
-            PyErr_Print;
+            if not Interpreter.Hide_Output then
+               PyErr_Print;
+            else
+               PyErr_Clear;
+            end if;
             Trace (Me, "Got a null result, this is an error");
             Errors.all := True;
          else
@@ -510,6 +516,7 @@ package body Python.GUI is
       end if;
 
       if Hide_Output then
+         Trace (Me_Out, "Running command __gps_restore_output()");
          Ignored := PyRun_SimpleString ("__gps_restore_output()");
       end if;
 

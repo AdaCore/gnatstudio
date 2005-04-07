@@ -719,15 +719,22 @@ package body Python_Module is
       Tmp := PyRun_SimpleString
         ("def __gps_no_write (*args): pass" & ASCII.LF
          & "__gps_saved_stdout=None" & ASCII.LF
+         & "__gps_saved_stderr=None" & ASCII.LF
          & "def __gps_hide_output ():" & ASCII.LF
          & "   global __gps_saved_stdout" & ASCII.LF
+         & "   global __gps_saved_stderr" & ASCII.LF
          & "   __gps_saved_stdout=sys.stdout.write" & ASCII.LF
-         & "   try: sys.stdout.write=__gps_no_write" & ASCII.LF
+         & "   __gps_saved_stderr=sys.stderr.write" & ASCII.LF
+         & "   try:" & ASCII.LF
+         & "     sys.stdout.write=__gps_no_write" & ASCII.LF
+         & "     sys.stderr.write=__gps_no_write" & ASCII.LF
          & "   except: pass" & ASCII.LF
          & ASCII.LF
          & "def __gps_restore_output():" & ASCII.LF
          & "   if sys.stdout.write == __gps_no_write:" & ASCII.LF
-         & "      try: sys.stdout.write = __gps_saved_stdout" & ASCII.LF
+         & "      try:" & ASCII.LF
+         & "         sys.stdout.write = __gps_saved_stdout" & ASCII.LF
+         & "         sys.stderr.write = __gps_saved_stderr" & ASCII.LF
          & "      except: pass" & ASCII.LF
          & ASCII.LF);
 
