@@ -11,15 +11,15 @@
 @@--
 <TABLE BGCOLOR="#9999FF" WIDTH="100%">
 <TR><TD>
-<H1>Package
+<H1>
 <I>
 <A NAME="@_FIRST_FILE_LINE_@"></A><A NAME="@_HEADER_LINE_@"></A>
 @@INLINE@@
-   @@IF@@ @_HEADER_LINK_@
+   @@IF@@ @_EXIST:HEADER_LINK_@
       <A HREF="@_HEADER_LINK_@">
    @@END_IF@@
    @_HEADER_PACKAGE_@
-   @@IF@@ @_HEADER_LINK_@
+   @@IF@@ @_EXIST:HEADER_LINK_@
       </A>
    @@END_IF@@
 @@END_INLINE@@
