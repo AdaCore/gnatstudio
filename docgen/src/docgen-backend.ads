@@ -279,7 +279,7 @@ package Docgen.Backend is
       Doc_File  : String) is abstract;
    --  Add items to one of the index files (units, types and subprograms)
 
-   procedure Doc_Body_Line
+   procedure Doc_Body
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
@@ -289,7 +289,7 @@ package Docgen.Backend is
       Level            : Natural;
       Body_File        : VFS.Virtual_File;
       Body_Text        : String) is abstract;
-   --  Process one line of the body file
+   --  Process a whole body
 
    procedure Doc_Description
      (B           : access Backend;

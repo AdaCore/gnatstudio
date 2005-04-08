@@ -256,7 +256,7 @@ package Docgen.Backend.Text is
       Line      : Natural;
       Doc_File  : String);
 
-   procedure Doc_Body_Line
+   procedure Doc_Body
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
