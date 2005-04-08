@@ -636,6 +636,9 @@ package body Gtkada.File_Selector is
 
          --  ??? The selectable state should be set here, if possible.
 
+         Iter := Null_Iter;
+         Color := Null_Color;
+
          case State is
             when Invisible =>
                null;
