@@ -185,6 +185,8 @@ package body Outline_View is
       Model   : Gtk_Tree_Store;
       Path    : Gtk_Tree_Path;
       Subprogram : Entity_Information;
+      Editor_Line : constant Natural :=
+        File_Location_Hooks_Args_Access (Data).Line;
 
       Distance : Gint := Gint'Last;
       Closest  : Gtk_Tree_Iter;
@@ -218,22 +220,26 @@ package body Outline_View is
                Loc := Get_Declaration_Of (Subprogram);
                if Get_Filename (Loc.File) = Outline.File then
                   Line := Gint (Loc.Line);
-               else
-                  Loc := Entities.No_File_Location;
-                  loop
-                     Find_Next_Body
-                       (Subprogram,
-                        Current_Location     => Loc,
-                        Location             => Loc,
-                        No_Location_If_First => True);
-                     exit when Loc = Entities.No_File_Location;
-
-                     if Get_Filename (Loc.File) = Outline.File then
-                        Line := Gint (Loc.Line);
-                        exit;
-                     end if;
-                  end loop;
                end if;
+
+               --  Check whether the body is closer
+               Loc := Entities.No_File_Location;
+               loop
+                  Find_Next_Body
+                    (Subprogram,
+                     Current_Location     => Loc,
+                     Location             => Loc,
+                     No_Location_If_First => True);
+                  exit when Loc = Entities.No_File_Location;
+
+                  if Get_Filename (Loc.File) = Outline.File then
+                     if abs (Loc.Line - Editor_Line) <
+                        abs (Integer (Line) - Editor_Line)
+                     then
+                        Line := Gint (Loc.Line);
+                     end if;
+                  end if;
+               end loop;
 
                --  Next find all occurrences for entities with the same name,
                --  and select the closest one to the current line
