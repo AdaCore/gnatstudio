@@ -254,7 +254,7 @@ package body Docgen.Work_On_Source is
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
-      Package_Info     : Entity_Information;
+      Unit_Info        : Entity_Information;
       File_Text        : GNAT.OS_Lib.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -391,17 +391,12 @@ package body Docgen.Work_On_Source is
    --  Return true, if the comment line starts with a "--!"
    --  It must be sure, that Comment_List is a comment line!
 
-   procedure Get_Whole_Header
-     (File_Text    : String;
-      Parsed_List  : Construct_List;
-      Entity_Name  : String;
-      Entity_Line  : Natural;
-      Header_Start : out Natural;
-      Header_End   : out Natural);
-   --  Return the Header of the entity. If no header was found, the empty
-   --  string will be returned.
-   --  The header is File_Text (Header_Start .. Header_End)
-   --  ??? This not clear and should probably be renamed.
+   function Get_Whole_Header
+     (File_Text   : String;
+      Parsed_List : Construct_List;
+      Entity      : Entity_List_Information)
+      return String;
+      --  Return the header of the declarative part of an entity.
 
    procedure Remove_Indent
      (Text       : String;
@@ -593,6 +588,7 @@ package body Docgen.Work_On_Source is
          Options,
          False, Display_Private,
          Level);
+
       Process_Vars
         (B, Kernel, Result,
          Parsed_List,
@@ -1221,7 +1217,7 @@ package body Docgen.Work_On_Source is
                        (Get_Project_From_File
                          (Project_Registry (Get_Registry (Kernel).all),
                           Source_Filename),
-                        Source_Filename) /= Full_Name (Source_Filename).all);
+                        Source_Filename) /= Base_Name (Source_Filename));
    end Process_Header;
 
    ------------------------------
@@ -1414,10 +1410,10 @@ package body Docgen.Work_On_Source is
    is
       pragma Unreferenced (Package_Name);
       use TEL;
-      Entity_Node              : Type_Entity_List.List_Node;
-      Description              : GNAT.OS_Lib.String_Access;
-      First_Already_Set        : Boolean := False;
-      Entity                   : TEL.Data_Access;
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      First_Already_Set : Boolean := False;
+      Entity            : TEL.Data_Access;
 
    begin
       if Entity_List /= TEL.Null_List
@@ -1435,7 +1431,8 @@ package body Docgen.Work_On_Source is
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then
-                ((Main_Unit and then Entity.Entity = Package_Information)
+                ((Main_Unit
+                  and then Entity.Entity.all = Package_Information.all)
                  or else
                    (not Main_Unit
                     and then
@@ -1462,6 +1459,11 @@ package body Docgen.Work_On_Source is
                --  Check if the subtitle "Packages" has already been
                --  set.
 
+               if Entity.Is_Private and then not Display_Private then
+                  Process_Header_Private (B, Kernel, Result, Level);
+                  Display_Private := True;
+               end if;
+
                if not First_Already_Set then -- ??? To be renamed.
                   Process_Header_Packages (B, Kernel, Result, Level);
                   First_Already_Set := True;
@@ -1474,8 +1476,7 @@ package body Docgen.Work_On_Source is
                   Options,
                   Level,
                   Entity => Entity.Entity,
-                  Header =>
-                    "package " & Get_Full_Name (Entity.Entity) & " is");
+                  Header => "package " & Get_Name (Entity.Entity).all & " is");
 
                Description := new String'
                  (Get_Documentation
@@ -1487,7 +1488,8 @@ package body Docgen.Work_On_Source is
 
                if Description.all /= "" then
                   Doc_Subtitle
-                    (B, Kernel, Result, Level, Subtitle_Name => "Description");
+                    (B, Kernel, Result, Level,
+                     Subtitle_Name => "Description");
                   Process_Description
                     (B, Kernel, Result,
                      Level,
@@ -1521,7 +1523,7 @@ package body Docgen.Work_On_Source is
                   Options,
                   Level,
                   Entity => Entity.Entity,
-                  Header => "end " & Get_Full_Name (Entity.Entity));
+                  Header => "end " & Get_Name (Entity.Entity).all & ";");
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -1574,7 +1576,6 @@ package body Docgen.Work_On_Source is
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
-      Header_Start, Header_End : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
 
@@ -1595,56 +1596,57 @@ package body Docgen.Work_On_Source is
             then
                Entity.Processed := True;
 
-               Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (Entity.Entity).all,
-                  Get_Line (Get_Declaration_Of (Entity.Entity)),
-                  Header_Start, Header_End);
-
+               declare
+                  Whole_Header : constant String :=
+                    Get_Whole_Header
+                      (File_Text.all,
+                       Parsed_List,
+                       Entity.all);
+               begin
                --  Check if it was an entity with its own header
 
-               if Header_Start <= Header_End then
-                  Remove_Indent
-                    (File_Text (Header_Start .. Header_End),
-                     Level * Get_Indent (B.all),
-                     Header, Header_Lines);
+                  if Whole_Header /= "" then
+                     Remove_Indent
+                       (Whole_Header,
+                        Level * Get_Indent (B.all),
+                        Header, Header_Lines);
 
-                  if Entity.Is_Private and then not Display_Private then
-                     --  It's the first time we met a private entity
-                     --  and we work on the private part, so we put the
-                     --  title "Private"
+                     if Entity.Is_Private and then not Display_Private then
+                        --  It's the first time we met a private entity
+                        --  and we work on the private part, so we put the
+                        --  title "Private"
 
-                     Process_Header_Private (B, Kernel, Result, Level);
-                     Display_Private := True;
+                        Process_Header_Private (B, Kernel, Result, Level);
+                        Display_Private := True;
+                     end if;
+
+                     --  Check if the subtitle "Constand and Named Numbers:"
+                     --  has been set already.
+
+                     if not First_Already_Set then
+                        Process_Header_Vars (B, Kernel, Result, Level);
+                        First_Already_Set := True;
+                     end if;
+
+                     Description := new String'
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel), Entity.Entity,
+                           File_Text.all));
+
+                     Doc_Var
+                       (B, Kernel, Result, List_Ref_In_File,
+                        Source_File_List, Options, Level,
+                        Entity => Entity.Entity, Header => Header.all);
+
+                     if Description.all /= "" then
+                        Process_Description
+                          (B, Kernel, Result, Level, Description.all);
+                     end if;
+
+                     Free (Header);
+                     Free (Description);
                   end if;
-
-                  --  Check if the subtitle "Constand and Named Numbers:"
-                  --  has been set already.
-
-                  if not First_Already_Set then
-                     Process_Header_Vars (B, Kernel, Result, Level);
-                     First_Already_Set := True;
-                  end if;
-
-                  Description := new String'
-                    (Get_Documentation
-                       (Get_Language_Handler (Kernel), Entity.Entity,
-                        File_Text.all));
-
-                  Doc_Var
-                    (B, Kernel, Result, List_Ref_In_File,
-                     Source_File_List, Options, Level,
-                     Entity => Entity.Entity, Header => Header.all);
-
-                  if Description.all /= "" then
-                     Process_Description
-                       (B, Kernel, Result, Level, Description.all);
-                  end if;
-
-                  Free (Header);
-                  Free (Description);
-               end if;
+               end;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -1692,7 +1694,6 @@ package body Docgen.Work_On_Source is
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
-      Header_Start, Header_End : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
 
@@ -1713,52 +1714,54 @@ package body Docgen.Work_On_Source is
             then
                Entity.Processed := True;
 
-               Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (Entity.Entity).all,
-                  Get_Line (Get_Declaration_Of (Entity.Entity)),
-                  Header_Start, Header_End);
+               declare
+                  Whole_Header : constant String :=
+                    Get_Whole_Header
+                      (File_Text.all,
+                       Parsed_List,
+                       Entity.all);
+               begin
+                  --  Check if it was a entity with its own header
 
-               --  Check if it was a entity with its own header
+                  if Whole_Header /= "" then
+                     Remove_Indent
+                       (Whole_Header,
+                        Level * Get_Indent (B.all),
+                        Header, Header_Lines);
 
-               if Header_Start <= Header_End then
-                  Remove_Indent
-                    (File_Text (Header_Start .. Header_End),
-                     Level * Get_Indent (B.all),
-                     Header, Header_Lines);
+                     if Entity.Is_Private and then not Display_Private then
+                        Process_Header_Private (B, Kernel, Result, Level);
+                        Display_Private := True;
+                     end if;
 
-                  if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Result, Level);
-                     Display_Private := True;
+                     --  Check if the subtitle "Exceptions:" has been set
+                     --  already.
+
+                     if not First_Already_Set then
+                        Process_Header_Exceptions (B, Kernel, Result, Level);
+                        First_Already_Set := True;
+                     end if;
+
+                     Description := new String'
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel), Entity.Entity,
+                           File_Text.all));
+
+                     Doc_Exception
+                       (B, Kernel, Result,
+                        List_Ref_In_File, Source_File_List, Options, Level,
+                        Entity => Entity.Entity,
+                        Header => Header.all);
+
+                     if Description.all /= "" then
+                        Process_Description
+                          (B, Kernel, Result, Level, Description.all);
+                     end if;
+
+                     Free (Header);
+                     Free (Description);
                   end if;
-
-                  --  Check if the subtitle "Exceptions:" has been set already.
-
-                  if not First_Already_Set then
-                     Process_Header_Exceptions (B, Kernel, Result, Level);
-                     First_Already_Set := True;
-                  end if;
-
-                  Description := new String'
-                    (Get_Documentation
-                       (Get_Language_Handler (Kernel), Entity.Entity,
-                        File_Text.all));
-
-                  Doc_Exception
-                    (B, Kernel, Result,
-                     List_Ref_In_File, Source_File_List, Options, Level,
-                     Entity => Entity.Entity,
-                     Header => Header.all);
-
-                  if Description.all /= "" then
-                     Process_Description
-                       (B, Kernel, Result, Level, Description.all);
-                  end if;
-
-                  Free (Header);
-                  Free (Description);
-               end if;
+               end;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -1845,7 +1848,6 @@ package body Docgen.Work_On_Source is
       Description              : GNAT.OS_Lib.String_Access;
       Header                   : GNAT.OS_Lib.String_Access;
       Header_Lines             : Natural;
-      Header_Start, Header_End : Natural;
       First_Already_Set        : Boolean;
       Entity                   : TEL.Data_Access;
       Kind                     : E_Kinds;
@@ -1885,89 +1887,90 @@ package body Docgen.Work_On_Source is
             then
                Entity.Processed := True;
 
-               Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (Entity.Entity).all,
-                  Get_Line (Get_Declaration_Of (Entity.Entity)),
-                  Header_Start, Header_End);
+               declare
+                  Whole_Header : constant String :=
+                    Get_Whole_Header
+                      (File_Text.all,
+                       Parsed_List,
+                       Entity.all);
+               begin
+                  --  Check if it was a entity with its own header
 
-               --  Check if it was a entity with its own header
+                  if Whole_Header /= "" then
+                     Remove_Indent
+                       (Whole_Header,
+                        Level * Get_Indent (B.all),
+                        Header, Header_Lines);
 
-               if Header_Start <= Header_End then
-                  Remove_Indent
-                    (File_Text (Header_Start .. Header_End),
-                     Level * Get_Indent (B.all),
-                     Header, Header_Lines);
+                     if Entity.Is_Private and then not Display_Private then
+                        --  It's the first time we met a private entity
+                        --  and we work on the private part, so we put the
+                        --  title "Private"
 
-                  if Entity.Is_Private and then not Display_Private then
-                     --  It's the first time we met a private entity
-                     --  and we work on the private part, so we put the
-                     --  title "Private"
+                        Process_Header_Private (B, Kernel, Result, Level);
+                        Display_Private := True;
+                     end if;
 
-                     Process_Header_Private (B, Kernel, Result, Level);
-                     Display_Private := True;
-                  end if;
+                     --  Check if the subtitle "Types:" has to be set.
 
-                  --  Check if the subtitle "Types:" has to be set.
+                     if not First_Already_Set then
+                        Process_Header_Types (B, Kernel, Result, Level);
+                        First_Already_Set := True;
+                     end if;
 
-                  if not First_Already_Set then
-                     Process_Header_Types (B, Kernel, Result, Level);
-                     First_Already_Set := True;
-                  end if;
+                     Description := new String'
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel), Entity.Entity,
+                           File_Text.all));
 
-                  Description := new String'
-                    (Get_Documentation
-                       (Get_Language_Handler (Kernel), Entity.Entity,
-                        File_Text.all));
+                     Doc_Type
+                       (B, Kernel, Result,
+                        List_Ref_In_File, Source_File_List, Options, Level,
+                        Entity => Entity.Entity,
+                        Header => Header.all);
 
-                  Doc_Type
-                    (B, Kernel, Result,
-                     List_Ref_In_File, Source_File_List, Options, Level,
-                     Entity => Entity.Entity,
-                     Header => Header.all);
+                     if Description.all /= "" then
+                        Process_Description
+                          (B, Kernel, Result, Level, Description.all);
+                     end if;
 
-                  if Description.all /= "" then
-                     Process_Description
-                       (B, Kernel, Result, Level, Description.all);
-                  end if;
+                     Kind := Get_Kind (Entity.Entity).Kind;
 
-                  Kind := Get_Kind (Entity.Entity).Kind;
-
-                  if Options.Tagged_Types
+                     if Options.Tagged_Types
                      --  ??? In Ada, tagged type are classified as Record
                      --  It must be improved (see also comments in
                      --  docgen-work_on_file.adb)
-                    and then (Kind = Record_Kind
-                              or else Kind = Class
-                              or else Kind = Class_Wide)
-                  then
-                     --  it's a tagged type
+                       and then (Kind = Record_Kind
+                                 or else Kind = Class
+                                 or else Kind = Class_Wide)
+                     then
+                        --  it's a tagged type
 
-                     if Private_Entity then
-                        --  List of private tagged types
+                        if Private_Entity then
+                           --  List of private tagged types
 
-                        Process_One_Family
-                          (B, Kernel, Result,
-                           Private_Tagged_Types_List,
-                           Source_File_List,
-                           Entity.Entity,
-                           Level);
-                     else
-                        --  List of public tagged types
+                           Process_One_Family
+                             (B, Kernel, Result,
+                              Private_Tagged_Types_List,
+                              Source_File_List,
+                              Entity.Entity,
+                              Level);
+                        else
+                           --  List of public tagged types
 
-                        Process_One_Family
-                          (B, Kernel, Result,
-                           Tagged_Types_List,
-                           Source_File_List,
-                           Entity.Entity,
-                           Level);
+                           Process_One_Family
+                             (B, Kernel, Result,
+                              Tagged_Types_List,
+                              Source_File_List,
+                              Entity.Entity,
+                              Level);
+                        end if;
                      end if;
-                  end if;
 
-                  Free (Header);
-                  Free (Description);
-               end if;
+                     Free (Header);
+                     Free (Description);
+                  end if;
+               end;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -2016,7 +2019,6 @@ package body Docgen.Work_On_Source is
       Description              : GNAT.OS_Lib.String_Access;
       Header                   : GNAT.OS_Lib.String_Access;
       Header_Lines             : Natural;
-      Header_Start, Header_End : Natural;
       First_Already_Set        : Boolean;
       Entity                   : TEL.Data_Access;
 
@@ -2037,52 +2039,53 @@ package body Docgen.Work_On_Source is
             then
                Entity.Processed := True;
 
-               Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (Entity.Entity).all,
-                  Get_Line (Get_Declaration_Of (Entity.Entity)),
-                  Header_Start, Header_End);
+               declare
+                  Whole_Header : constant String :=
+                    Get_Whole_Header
+                      (File_Text.all,
+                       Parsed_List,
+                       Entity.all);
+               begin
+                  --  Check if it was a entity with its own header
 
-               --  Check if it was a entity with its own header
+                  if Whole_Header /= "" then
+                     Remove_Indent
+                       (Whole_Header,
+                        Level * Get_Indent (B.all),
+                        Header, Header_Lines);
 
-               if Header_Start <= Header_End then
-                  Remove_Indent
-                    (File_Text (Header_Start .. Header_End),
-                     Level * Get_Indent (B.all),
-                     Header, Header_Lines);
+                     if Entity.Is_Private and then not Display_Private then
+                        Process_Header_Private (B, Kernel, Result, Level);
+                        Display_Private := True;
+                     end if;
 
-                  if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Result, Level);
-                     Display_Private := True;
+                     --  Check if the subtitle has to be set.
+
+                     if not First_Already_Set then
+                        Process_Header_Entries (B, Kernel, Result, Level);
+                        First_Already_Set := True;
+                     end if;
+
+                     Description := new String'
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel),
+                           Entity.Entity, File_Text.all));
+
+                     Doc_Entry
+                       (B, Kernel, Result, List_Ref_In_File,
+                        Source_File_List, Options, Level,
+                        Entity => Entity.Entity,
+                        Header => Header.all);
+
+                     if Description.all /= "" then
+                        Process_Description
+                          (B, Kernel, Result, Level, Description.all);
+                     end if;
+
+                     Free (Header);
+                     Free (Description);
                   end if;
-
-                  --  Check if the subtitle has to be set.
-
-                  if not First_Already_Set then
-                     Process_Header_Entries (B, Kernel, Result, Level);
-                     First_Already_Set := True;
-                  end if;
-
-                  Description := new String'
-                    (Get_Documentation
-                       (Get_Language_Handler (Kernel),
-                        Entity.Entity, File_Text.all));
-
-                  Doc_Entry
-                    (B, Kernel, Result, List_Ref_In_File,
-                     Source_File_List, Options, Level,
-                     Entity => Entity.Entity,
-                     Header => Header.all);
-
-                  if Description.all /= "" then
-                     Process_Description
-                       (B, Kernel, Result, Level, Description.all);
-                  end if;
-
-                  Free (Header);
-                  Free (Description);
-               end if;
+               end;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -2194,7 +2197,7 @@ package body Docgen.Work_On_Source is
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
-      Package_Info     : Entity_Information;
+      Unit_Info        : Entity_Information;
       File_Text        : GNAT.OS_Lib.String_Access;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -2207,8 +2210,6 @@ package body Docgen.Work_On_Source is
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
-      Header_Start      : Natural;
-      Header_End        : Natural;
       First_Already_Set : Boolean;
       Entity            : TEL.Data_Access;
 
@@ -2226,79 +2227,80 @@ package body Docgen.Work_On_Source is
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then
-                (Entity_Defined_In_Package (Entity.Entity, Package_Info)
-                 or else Package_Info = null)
+                (Entity_Defined_In_Package (Entity.Entity, Unit_Info)
+                 or else Unit_Info.all = Entity.Entity.all)
             --  The subprogram must either belong to the package currently
             --  processed or be the main unit itself in order to be processed.
             then
                Entity.Processed := True;
 
-               Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (Entity.Entity).all,
-                  Get_Line (Get_Declaration_Of (Entity.Entity)),
-                  Header_Start, Header_End);
+               declare
+                  Whole_Header : constant String :=
+                    Get_Whole_Header
+                      (File_Text.all,
+                       Parsed_List,
+                       Entity.all);
+               begin
+                  --  Check if it was an entity with its own header
 
-               --  Check if it was an entity with its own header
+                  if Whole_Header /= "" then
+                     Remove_Indent
+                       (Whole_Header,
+                        Level * Get_Indent (B.all),
+                        Header, Header_Lines);
 
-               if Header_Start <= Header_End then
-                  Remove_Indent
-                    (File_Text (Header_Start .. Header_End),
-                     Level * Get_Indent (B.all),
-                     Header, Header_Lines);
+                     if Entity.Is_Private and then not Display_Private then
+                        Process_Header_Private (B, Kernel, Result, Level);
+                        Display_Private := True;
+                     end if;
 
-                  if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Result, Level);
-                     Display_Private := True;
+                     --  Check if the subtitle "Subprograms:" has to be set.
+
+                     if not First_Already_Set then
+                        Process_Header_Subprograms (B, Kernel, Result, Level);
+                        First_Already_Set := True;
+                     end if;
+
+                     Description := new String'
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel),
+                           Entity.Entity, File_Text.all));
+
+                     Doc_Subprogram
+                       (B, Kernel, Result,
+                        List_Ref_In_File, Source_File_List, Options, Level,
+                        Entity => Entity.all, Header => Header.all);
+
+                     if Description.all /= "" then
+                        Process_Description
+                          (B, Kernel, Result, Level, Description.all);
+                     end if;
+
+                     if Options.References then
+                        --  Callgraph is processed
+
+                        Process_Caller_References
+                          (B                => B,
+                           Kernel           => Kernel,
+                           Result           => Result,
+                           Options          => Options,
+                           Info             => Entity.Entity,
+                           Source_File_List => Source_File_List,
+                           Level            => Level);
+                        Process_Calls_References
+                          (B                => B,
+                           Kernel           => Kernel,
+                           Result           => Result,
+                           Options          => Options,
+                           Info             => Entity.Entity,
+                           Source_File_List => Source_File_List,
+                           Level            => Level);
+                     end if;
+
+                     Free (Header);
+                     Free (Description);
                   end if;
-
-                  --  Check if the subtitle "Subprograms:" has to be set.
-
-                  if not First_Already_Set then
-                     Process_Header_Subprograms (B, Kernel, Result, Level);
-                     First_Already_Set := True;
-                  end if;
-
-                  Description := new String'
-                    (Get_Documentation
-                       (Get_Language_Handler (Kernel),
-                        Entity.Entity, File_Text.all));
-
-                  Doc_Subprogram
-                    (B, Kernel, Result,
-                     List_Ref_In_File, Source_File_List, Options, Level,
-                     Entity => Entity.all, Header => Header.all);
-
-                  if Description.all /= "" then
-                     Process_Description
-                       (B, Kernel, Result, Level, Description.all);
-                  end if;
-
-                  if Options.References then
-                     --  Callgraph is processed
-
-                     Process_Caller_References
-                       (B                => B,
-                        Kernel           => Kernel,
-                        Result           => Result,
-                        Options          => Options,
-                        Info             => Entity.Entity,
-                        Source_File_List => Source_File_List,
-                        Level            => Level);
-                     Process_Calls_References
-                       (B                => B,
-                        Kernel           => Kernel,
-                        Result           => Result,
-                        Options          => Options,
-                        Info             => Entity.Entity,
-                        Source_File_List => Source_File_List,
-                        Level            => Level);
-                  end if;
-
-                  Free (Header);
-                  Free (Description);
-               end if;
+               end;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
@@ -2378,19 +2380,19 @@ package body Docgen.Work_On_Source is
    --  Get_Whole_Header  --
    ------------------------
 
-   procedure Get_Whole_Header
-     (File_Text    : String;
-      Parsed_List  : Construct_List;
-      Entity_Name  : String;
-      Entity_Line  : Natural;
-      Header_Start : out Natural;
-      Header_End   : out Natural)
-   is
-      use type Basic_Types.String_Access;
-      Parse_Node : Construct_Access := Parsed_List.First;
+   function Get_Whole_Header
+     (File_Text   : String;
+      Parsed_List : Construct_List;
+      Entity      : Entity_List_Information)
+      return String
+      is
+         use type Basic_Types.String_Access;
+         Parse_Node : Construct_Access := Parsed_List.First;
+
    begin
       while Parse_Node /= null loop
-         if Parse_Node.Sloc_Start.Line = Entity_Line
+         if Parse_Node.Sloc_Start.Line =
+           Get_Line (Get_Declaration_Of (Entity.Entity))
            and then Parse_Node.Name /= null
          then
             if Parse_Node.Name (Parse_Node.Name'First) = '"'
@@ -2406,24 +2408,24 @@ package body Docgen.Work_On_Source is
                if To_Lower
                  (Parse_Node.Name
                     (Parse_Node.Name'First + 1 .. Parse_Node.Name'Last - 1)) =
-                   Entity_Name
+                 Get_Name (Entity.Entity).all
                then
-                  Header_Start := Parse_Node.Sloc_Start.Index;
-                  Header_End   := Parse_Node.Sloc_End.Index;
-                  return;
+                  return File_Text
+                    (Parse_Node.Sloc_Start.Index .. Parse_Node.Sloc_End.Index);
                end if;
 
-            elsif To_Lower (Parse_Node.Name.all) = Entity_Name then
-               Header_Start := Parse_Node.Sloc_Start.Index;
-               Header_End   := Parse_Node.Sloc_End.Index;
-               return;
+            elsif To_Lower (Parse_Node.Name.all) = Get_Name (Entity.Entity).all
+              or else
+            To_Lower (Parse_Node.Name.all) = Get_Full_Name (Entity.Entity)
+            then
+               return File_Text
+                 (Parse_Node.Sloc_Start.Index .. Parse_Node.Sloc_End.Index);
             end if;
          end if;
          Parse_Node := Parse_Node.Next;
       end loop;
 
-      Header_Start := File_Text'First;
-      Header_End   := Header_Start - 1;
+      return "";
    end Get_Whole_Header;
 
    -------------------
