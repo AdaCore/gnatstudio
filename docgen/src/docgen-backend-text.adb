@@ -1039,11 +1039,11 @@ package body Docgen.Backend.Text is
                Cached => Cache)));
    end Doc_End_Of_Index;
 
-   -------------------
-   -- Doc_Body_Line --
-   -------------------
+   --------------
+   -- Doc_Body --
+   --------------
 
-   procedure Doc_Body_Line
+   procedure Doc_Body
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
@@ -1063,7 +1063,7 @@ package body Docgen.Backend.Text is
          No_Body_Line_Needed,
          True, Options, Source_File_List, Level,
          Get_Indent (B.all));
-   end Doc_Body_Line;
+   end Doc_Body;
 
    ---------------------
    -- Doc_Description --
@@ -1162,7 +1162,7 @@ package body Docgen.Backend.Text is
          Append (Result, Text (Get_Last_Index (B.all) .. Start_Index - 1));
       end if;
 
-      --  Write entiry
+      --  Write entity
 
       declare
          Entity_Name : constant String := Text (Start_Index .. End_Index);
