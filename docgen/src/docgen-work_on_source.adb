@@ -435,7 +435,7 @@ package body Docgen.Work_On_Source is
 
    begin
       File_Text := Read_File (Source_Filename);
-      --  All the file is stored in a string
+      --  The whole file is stored in a string
 
       if File_Text = null then
          --  This is a non existing file
@@ -588,7 +588,6 @@ package body Docgen.Work_On_Source is
          Options,
          False, Display_Private,
          Level);
-
       Process_Vars
         (B, Kernel, Result,
          Parsed_List,
@@ -764,7 +763,7 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Level            : in out Natural) is
    begin
-      Doc_Body_Line
+      Doc_Body
         (B, Kernel, Result, List_Ref_In_File, Source_File_List,
          Options, Level,
          Body_Text => File_Text.all,
