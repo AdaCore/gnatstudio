@@ -104,8 +104,8 @@ package body Docgen.Backend is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean;
       --  Looks the value of type Language_Entity returned by
-      --  Parse_Entities and calls the good subprograms to format
-      --  the current entity
+      --  Parse_Entities and calls the appropriate subprograms to format
+      --  the current entity.
 
       -------------------
       --  Is_Operator  --
@@ -265,6 +265,7 @@ package body Docgen.Backend is
                   --  spec file and not for the text of body file. Perhaps,
                   --  the reason is that in the body the ";" ended the
                   --  file.
+
                   Format_Identifier
                     (B, Kernel, Result,
                      List_Ref_In_File,
@@ -438,11 +439,7 @@ package body Docgen.Backend is
                   Ref_List_Info);
             end if;
 
-            exit when Is_Body or else Found;
-
-            --  For body files, no loop because references in the list
-            --  are sorted. So the first element met in list is the right
-            --  one (for this elements are removed after being met).
+            exit when Found;
 
             Ref_List_Info_Prec := Ref_List_Info;
             Ref_List_Info      := List_Reference_In_File.Next (Ref_List_Info);
