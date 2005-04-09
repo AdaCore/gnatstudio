@@ -767,6 +767,7 @@ package body Codefix_Module is
       Add_Parser (new Missing_All);
       Add_Parser (new Statement_Missing);
       Add_Parser (new Space_Missing);
+      Add_Parser (new Two_Spaces_Missing);
       Add_Parser (new Name_Missing);
       Add_Parser (new Double_Keyword);
       Add_Parser (new Extra_Paren);
