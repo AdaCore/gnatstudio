@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,12 +25,12 @@ with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtk.Window;                        use Gtk.Window;
 
-with GPS.Kernel;                      use GPS.Kernel;
-with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                        use GPS.Intl;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                          use GPS.Intl;
 
 with Traces;                            use Traces;
 with Commands;                          use Commands;
@@ -359,19 +359,18 @@ package body Vdiff2_Module.Callback is
    --------------------
 
    procedure File_Closed_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : access Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Diff     : Diff_Head_Access := new Diff_Head;
+      D         : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Diff      : Diff_Head_Access := new Diff_Head;
       Curr_Node : Diff_Head_List.List_Node;
    begin
       if Vdiff_Module_ID = null then
          return;
       end if;
 
-      Curr_Node :=
-        First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Curr_Node := First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff.all := Diff_Head_List.Data (Curr_Node);
@@ -403,9 +402,9 @@ package body Vdiff2_Module.Callback is
    --------------------------
 
    procedure Diff_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "visual_diff" then
          declare

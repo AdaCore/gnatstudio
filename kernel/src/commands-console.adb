@@ -29,8 +29,7 @@ package body Commands.Console is
    ----------
 
    function Copy
-     (Item : Console_Command_Access)
-     return Console_Command_Access
+     (Item : Console_Command_Access) return Console_Command_Access
    is
       Result : Console_Command_Access;
    begin

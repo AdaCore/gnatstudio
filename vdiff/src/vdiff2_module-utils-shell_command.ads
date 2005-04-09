@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,7 +46,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       File1  : Virtual_File;
       File2  : Virtual_File;
       File3  : Virtual_File := No_File);
-   --  Synchronize the scrolling between files.
+   --  Synchronize the scrolling between files
 
    function Get_Chars
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -147,6 +147,5 @@ package Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1);
    --  Remove fine highlighting
    pragma Inline (Unhighlight_Range);
-
 
 end Vdiff2_Module.Utils.Shell_Command;

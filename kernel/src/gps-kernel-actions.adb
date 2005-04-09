@@ -20,9 +20,9 @@
 
 with Commands;                  use Commands;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Intl;                  use GPS.Intl;
 with Ada.Unchecked_Deallocation;
 with Commands.Interactive;      use Commands.Interactive;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;

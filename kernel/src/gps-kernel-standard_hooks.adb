@@ -436,10 +436,10 @@ package body GPS.Kernel.Standard_Hooks is
    -------------------------
 
    procedure Display_Differences
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Orig_File      : Virtual_File := VFS.No_File;
-      New_File       : Virtual_File := VFS.No_File;
-      Diff_File      : Virtual_File)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Orig_File : Virtual_File := VFS.No_File;
+      New_File  : Virtual_File := VFS.No_File;
+      Diff_File : Virtual_File)
    is
       Data : aliased Diff_Hooks_Args :=
         (Kernel_Handle (Kernel), Orig_File, New_File, Diff_File);

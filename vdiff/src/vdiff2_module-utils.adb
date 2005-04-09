@@ -184,20 +184,19 @@ package body Vdiff2_Module.Utils is
       File              : Virtual_File;
       Line              : Natural)
    is
-      Hor_List : constant Diff_List := Horizontal_Diff
+      Hor_List     : constant Diff_List := Horizontal_Diff
         (Current_Line_Dest, Current_Line_Source);
-      Curr_Node : Diff_Chunk_List.List_Node := First (Hor_List);
-      Diff      : Diff_Chunk;
-      First     : Natural := 0;
-      Last      : Natural := 0;
+      Curr_Node    : Diff_Chunk_List.List_Node := First (Hor_List);
+      Diff         : Diff_Chunk;
+      First        : Natural := 0;
+      Last         : Natural := 0;
       Nb_Hghlt_Chr : Natural := 0;
    begin
       if Current_Line_Dest'Length = 0 or Current_Line_Source'Length = 0 then
          return;
       end if;
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Diff := Data (Curr_Node).all;
          First := Diff.Range1.First;
          Last := Diff.Range1.Last;
@@ -260,11 +259,11 @@ package body Vdiff2_Module.Utils is
       Source_Range : Diff_Range;
       Dest_Range   : Diff_Range := Null_Range)
    is
-      Offset_Dest          : constant Natural :=
+      Offset_Dest         : constant Natural :=
         Dest_Range.Last - Dest_Range.First;
-      Offset_Source        : constant Natural :=
+      Offset_Source       : constant Natural :=
         Source_Range.Last - Source_Range.First;
-      Offset_Min           : Natural;
+      Offset_Min          : Natural;
       Current_Line_Source : String_Access;
       Current_Line_Dest   : String_Access;
       Line                : Natural := Dest_Range.First;
@@ -282,7 +281,6 @@ package body Vdiff2_Module.Utils is
 
       if Offset_Min > 0 then
          for J in 1 .. Offset_Min loop
-
             Current_Line_Dest := new String'
               (Get_Line
                  (Kernel, Dest_File, Line));
@@ -480,7 +478,7 @@ package body Vdiff2_Module.Utils is
    ------------------
 
    procedure Put_Button
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Info     : T_VLine_Information;
       Conflict : Boolean;
       Pos      : Natural;
@@ -648,6 +646,7 @@ package body Vdiff2_Module.Utils is
                  (Item.File2,
                   Curr_Chunk.Range2.First, Curr_Chunk.Range2.Last - 1,
                   "+");
+
             when Change =>
                Modification := "modified";
                The_Range := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
@@ -712,6 +711,7 @@ package body Vdiff2_Module.Utils is
                  (Item.File1,
                   Curr_Chunk.Range1.First, Curr_Chunk.Range1.Last - 1,
                   "-");
+
             when others =>
                null;
          end case;
@@ -1132,9 +1132,9 @@ package body Vdiff2_Module.Utils is
 
       if Result = Diff_Chunk_List.Null_List then
          Button := Message_Dialog
-           (Msg         => -"No differences found.",
-            Buttons     => Button_OK,
-            Parent      => Get_Current_Window (Kernel));
+           (Msg     => -"No differences found.",
+            Buttons => Button_OK,
+            Parent  => Get_Current_Window (Kernel));
          return False;
       end if;
 

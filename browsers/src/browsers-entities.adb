@@ -18,21 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Heap_Sort_G;
-with GNAT.Strings;         use GNAT.Strings;
+with GNAT.Strings;              use GNAT.Strings;
 
-with Entities.Queries;     use Entities, Entities.Queries;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with Entities.Queries;          use Entities, Entities.Queries;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Browsers.Canvas;      use Browsers.Canvas;
-with Traces;               use Traces;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with Browsers.Canvas;           use Browsers.Canvas;
+with Traces;                    use Traces;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 
 with Glib;          use Glib;
 with Glib.Object;   use Glib.Object;
@@ -64,7 +64,7 @@ package body Browsers.Entities is
    Entity_Browser_Module : Module_ID;
 
    Left_Margin : constant := 20;
-   --  Indentation for the attributes and methods layouts.
+   --  Indentation for the attributes and methods layouts
 
    UML_Abstract : constant String := "{Abstract}";
    --  String used in UML to indicate that an entity is abstract
@@ -76,7 +76,7 @@ package body Browsers.Entities is
 
    Generic_Item_Box_Height_Top : constant := 10;
    Generic_Item_Box_Height     : constant := Generic_Item_Box_Height_Top + 17;
-   --  Height of the top-rigth box for generic items.
+   --  Height of the top-rigth box for generic items
 
    ------------------
    -- Type browser --
@@ -174,13 +174,13 @@ package body Browsers.Entities is
      with null record;
 
    procedure Draw_Straight_Line
-     (Link : access Parent_Link_Record;
-      Window : Gdk.Window.Gdk_Window;
-      GC : Gdk.GC.Gdk_GC;
+     (Link        : access Parent_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      GC          : Gdk.GC.Gdk_GC;
       Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1 : Glib.Gint;
-      Child_Side : Gtkada.Canvas.Item_Side;
-      X2, Y2 : Glib.Gint);
+      X1, Y1      : Glib.Gint;
+      Child_Side  : Gtkada.Canvas.Item_Side;
+      X2, Y2      : Glib.Gint);
    --  See doc for inherited subprogram
 
    ----------
@@ -234,10 +234,10 @@ package body Browsers.Entities is
    --  See inherated doc
 
    function Build
-     (Item   : access Browser_Item_Record'Class;
-      Entity : Entity_Information;
+     (Item      : access Browser_Item_Record'Class;
+      Entity    : Entity_Information;
       Link_Name : String := "") return Active_Area_Cb;
-   --  Build a new callback to display entities.
+   --  Build a new callback to display entities
 
    procedure Show_Entity_Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -247,20 +247,20 @@ package body Browsers.Entities is
    function "<" (E1, E2 : Entity_Information) return Boolean;
 
    procedure Add_Primitive_Operations
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class);
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
    procedure Add_Parameters
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class);
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class);
    --  Add the list of parameters for Entity (a subprogram) to the end of
    --  Attr_Layout.
 
    procedure Add_Fields
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class);
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class);
    --  Add the list of fields for a record-like entity to the end of
    --  Attr_Layout.
    --  This is also usable to get the enumeration literals for an enumeration
@@ -402,9 +402,9 @@ package body Browsers.Entities is
       Ref (Entity);
       return new Show_Entity_Callback'
         (Active_Area_Callback with
-         Item => Browser_Item (Item),
+         Item      => Browser_Item (Item),
          Link_Name => new String'(Link_Name),
-         Entity => Entity);
+         Entity    => Entity);
    end Build;
 
    -------------
@@ -456,24 +456,24 @@ package body Browsers.Entities is
          Callback    => On_Type_Browser'Access);
       Register_Command
         (Kernel, "show",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "discriminants",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "fields",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "parameters",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
       Register_Command
         (Kernel, "return_type",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access);
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------------
@@ -484,10 +484,10 @@ package body Browsers.Entities is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Entity     : constant Entity_Information := Get_Data (Data, 1);
-      Child      : MDI_Child;
-      Item       : Type_Item;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Entity : constant Entity_Information := Get_Data (Data, 1);
+      Child  : MDI_Child;
+      Item   : Type_Item;
       pragma Unreferenced (Item);
    begin
       if Entity /= null then
@@ -499,8 +499,8 @@ package body Browsers.Entities is
 
          elsif Command = "discriminants" then
             declare
-               Iter   : Entity_Reference_Iterator;
-               Discr  : Entity_Information;
+               Iter  : Entity_Reference_Iterator;
+               Discr : Entity_Information;
             begin
                Find_All_References
                  (Iter   => Iter,
@@ -555,7 +555,7 @@ package body Browsers.Entities is
 
          elsif Command = "fields" then
             declare
-               Iter : Calls_Iterator;
+               Iter  : Calls_Iterator;
                Field : Entity_Information;
             begin
                Set_Return_Value_As_List (Data);
@@ -637,10 +637,10 @@ package body Browsers.Entities is
          Browser := Open_Type_Browser (Kernel);
          Child := Put
            (Kernel, Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
+            Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Entity_Browser_Module);
+            Module         => Entity_Browser_Module);
          Set_Focus_Child (Child);
          Set_Title (Child, Title);
       end if;
@@ -657,10 +657,9 @@ package body Browsers.Entities is
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-      Child : MDI_Child;
-      Item  : Type_Item;
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Child   : MDI_Child;
+      Item    : Type_Item;
       pragma Unreferenced (Widget, Item);
 
    begin
@@ -801,12 +800,12 @@ package body Browsers.Entities is
    ------------------------------
 
    procedure Add_Primitive_Operations
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class)
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class)
    is
       use Entity_Information_Arrays;
-      Prim  : Primitive_Operations_Iterator;
-      Arr   : Entity_Information_Arrays.Instance;
+      Prim : Primitive_Operations_Iterator;
+      Arr  : Entity_Information_Arrays.Instance;
    begin
       Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
              & Item.Inherited_Primitives'Img);
@@ -898,8 +897,8 @@ package body Browsers.Entities is
    --------------------
 
    procedure Add_Parameters
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class)
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class)
    is
       Subs : Subprogram_Iterator;
       Typ, Parameter : Entity_Information;
@@ -928,9 +927,9 @@ package body Browsers.Entities is
 
          Add_Line
            (List,
-            Get_Name (Parameter).all & ": "
-            & Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
-            Length1 => Get_Name (Parameter).all'Length + 1,
+            Get_Name (Parameter).all & ": " &
+              Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
+            Length1  => Get_Name (Parameter).all'Length + 1,
             Callback => (1 => Build (Item, Typ)));
          --  Do not free Typ, it is needed for callbacks
 
@@ -941,7 +940,7 @@ package body Browsers.Entities is
          Add_Line
            (List,
             "return " & Entity_As_Link (Returned),
-            Length1 => 7,
+            Length1  => 7,
             Callback => (1 => Build (Item, Returned)));
          --  Do not free Returned, it is needed for callbacks.
       end if;
@@ -1019,8 +1018,8 @@ package body Browsers.Entities is
    ----------------
 
    procedure Add_Fields
-     (List        : in out Xref_List;
-      Item        : access Type_Item_Record'Class)
+     (List : in out Xref_List;
+      Item : access Type_Item_Record'Class)
    is
       Field   : Entity_Information;
       Is_Enum : constant Boolean :=
@@ -1075,12 +1074,12 @@ package body Browsers.Entities is
    --------------
 
    procedure Add_Type
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class;
-      Entity   : Entity_Information;
-      Prefix   : String)
+     (List   : in out Xref_List;
+      Item   : access Type_Item_Record'Class;
+      Entity : Entity_Information;
+      Prefix : String)
    is
-      Typ : constant Entity_Information := Get_Variable_Type (Entity);
+      Typ        : constant Entity_Information := Get_Variable_Type (Entity);
       Info_Added : Boolean := False;
    begin
       if Typ = null then
@@ -1103,7 +1102,7 @@ package body Browsers.Entities is
          Add_Line
            (List,
             Prefix & ": " & Entity_As_Link (Typ),
-            Length1 => Prefix'Length + 2,
+            Length1  => Prefix'Length + 2,
             Callback => (1 => Build (Item, Typ, Prefix)));
          --  Do not free Typ, needed for callbacks
       end if;
@@ -1211,7 +1210,7 @@ package body Browsers.Entities is
    -----------------------
 
    procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
-      It : constant Type_Item := Type_Item (Item);
+      It      : constant Type_Item := Type_Item (Item);
       Parents : constant Entity_Information_Array :=
                   Get_Parent_Types (It.Entity);
    begin
@@ -1235,7 +1234,7 @@ package body Browsers.Entities is
    function Find_Children_Types_Idle
      (Data : Find_Children_Types_Data) return Boolean
    is
-      C     : Entity_Information;
+      C : Entity_Information;
    begin
       if At_End (Data.Iter.all) then
          return False;
@@ -1557,7 +1556,7 @@ package body Browsers.Entities is
            (User, Gtk_Widget (Open_Type_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height),
-            Module => Entity_Browser_Module);
+            Module         => Entity_Browser_Module);
          Set_Title (Child, -"Entity Browser");
 
          return Child;
@@ -1614,10 +1613,10 @@ package body Browsers.Entities is
    ------------------------
 
    function Contextual_Factory
-     (Item  : access Type_Item_Record;
+     (Item    : access Type_Item_Record;
       Browser : access General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Event);
       Context : Entity_Selection_Context_Access;
@@ -1688,13 +1687,13 @@ package body Browsers.Entities is
    ------------------------
 
    procedure Draw_Straight_Line
-     (Link : access Parent_Link_Record;
-      Window : Gdk.Window.Gdk_Window;
-      GC : Gdk.GC.Gdk_GC;
+     (Link        : access Parent_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      GC          : Gdk.GC.Gdk_GC;
       Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1 : Glib.Gint;
-      Child_Side : Gtkada.Canvas.Item_Side;
-      X2, Y2 : Glib.Gint)
+      X1, Y1      : Glib.Gint;
+      Child_Side  : Gtkada.Canvas.Item_Side;
+      X2, Y2      : Glib.Gint)
    is
       Depth : constant := 10;
       Width : constant := 5;
