@@ -794,6 +794,28 @@ package body Codefix.Errors_Parser is
       Solutions := Expected (Current_Text, Message, " ", False);
    end Fix;
 
+   ------------------------
+   -- Two_Spaces_Missing --
+   ------------------------
+
+   procedure Initialize (This : in out Two_Spaces_Missing) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'(Compile ("two spaces required")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Two_Spaces_Missing;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+   begin
+      Solutions := Expected (Current_Text, Message, "  ", False);
+   end Fix;
 
    ------------------
    -- Name_Missing --

@@ -529,6 +529,21 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix 'space required'.
 
+   type Two_Spaces_Missing is new Error_Parser
+     (new String'("Space_Required"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Two_Spaces_Missing);
+
+   procedure Fix
+     (This         : Two_Spaces_Missing;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix 'space required'.
+
    type Name_Missing is new Error_Parser
      (new String'("Block_Name_Expected"), 3)
    with record
