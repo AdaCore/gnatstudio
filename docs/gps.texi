@@ -13146,21 +13146,24 @@ parameters:
     @item $1 = file
   @end table
   Display a visual comparison between the local file and the latest
-  repository revision.
+  repository revision. The diff command must report a @i{normal} diff
+  as opposed to @i{context} or @i{unified} ones.
 
 @item diff_base_head
   @table @code
     @item $1 = file
   @end table
   Display a visual comparison between the revision from which the file
-  has been checked-out and the latest revision.
+  has been checked-out and the latest revision. The diff command must
+  report a @i{normal} diff as opposed to @i{context} or @i{unified} ones.
 
 @item diff_working
   @table @code
     @item $1 = file
   @end table
   Display a visual comparison between the local file and the revision
-  from which it was obtained.
+  from which it was obtained. The diff command must report a @i{normal} diff
+  as opposed to @i{context} or @i{unified} ones.
 
 @item diff
   @table @code
@@ -13168,7 +13171,8 @@ parameters:
     @item $2 = file
   @end table
   Display a visual comparison between the local file and the specified
-  revision.
+  revision. The diff command must report a @i{normal} diff
+  as opposed to @i{context} or @i{unified} ones.
 
 @item diff2
   @table @code
@@ -13177,7 +13181,8 @@ parameters:
     @item $3 = file
   @end table
   Display a visual comparison between the two specified revisions of
-  the file.
+  the file. The diff command must report a @i{normal} diff
+  as opposed to @i{context} or @i{unified} ones.
 
 @end table
 
