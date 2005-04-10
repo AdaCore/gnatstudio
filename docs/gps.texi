@@ -13085,6 +13085,13 @@ parameters:
   @end table
   Update the contents of one directory.
 
+@item resolved
+  @table @code
+    @item $* = list of files
+  @end table
+  Mark files' merge conflics as resolved. Some version control systems
+  (like Subversion) will block any commit until this action is called.
+
 @item commit
   @table @code
     @item $1  = log file
