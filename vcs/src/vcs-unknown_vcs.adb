@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with VCS_Module;                use VCS_Module;
-with VFS;                       use VFS;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with VCS_Module;         use VCS_Module;
+with VFS;                use VFS;
 
 package body VCS.Unknown_VCS is
 
@@ -174,6 +174,21 @@ package body VCS.Unknown_VCS is
          Error (Head (Filenames));
       end if;
    end Update;
+
+   --------------
+   -- Resolved --
+   --------------
+
+   procedure Resolved
+     (Rep       : access Unknown_VCS_Record;
+      Filenames : String_List.List)
+   is
+      pragma Unreferenced (Rep);
+   begin
+      if Filenames /= Null_List then
+         Error (Head (Filenames));
+      end if;
+   end Resolved;
 
    -----------
    -- Merge --
