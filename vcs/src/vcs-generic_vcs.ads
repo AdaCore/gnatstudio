@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -65,6 +65,10 @@ package VCS.Generic_VCS is
       Log       : String);
 
    procedure Update
+     (Rep       : access Generic_VCS_Record;
+      Filenames : String_List.List);
+
+   procedure Resolved
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List);
 

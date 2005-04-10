@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,6 +60,10 @@ package VCS.ClearCase is
       Log       : String);
 
    procedure Update
+     (Rep       : access ClearCase_Record;
+      Filenames : String_List.List);
+
+   procedure Resolved
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List);
 
