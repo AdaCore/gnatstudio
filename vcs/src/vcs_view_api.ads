@@ -52,6 +52,10 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Resolved
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
