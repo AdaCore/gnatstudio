@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
-with Glib.Xml_Int;                use Glib.Xml_Int;
-with Glib.Object;                 use Glib.Object;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.MDI;                  use Gtkada.MDI;
+with Glib;                      use Glib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Object;               use Glib.Object;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -38,21 +38,21 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Intl;                  use GPS.Intl;
 
-with Traces;                      use Traces;
+with Traces;                    use Traces;
 
-with VCS;                         use VCS;
-with VCS_View_API;                use VCS_View_API;
-with VCS_View_Pkg;                use VCS_View_Pkg;
-with Basic_Types;                 use Basic_Types;
-with Commands.VCS;                use Commands.VCS;
+with VCS;                       use VCS;
+with VCS_View_API;              use VCS_View_API;
+with VCS_View_Pkg;              use VCS_View_Pkg;
+with Basic_Types;               use Basic_Types;
+with Commands.VCS;              use Commands.VCS;
 
-with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
-with VCS.Generic_VCS;             use VCS.Generic_VCS;
-with Ada.Exceptions;              use Ada.Exceptions;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Projects;                    use Projects;
-with Projects.Registry;           use Projects.Registry;
-with VFS;                         use VFS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
+with VCS.Generic_VCS;           use VCS.Generic_VCS;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with VFS;                       use VFS;
 
 with String_List_Utils;
 with Log_Utils;
@@ -63,20 +63,18 @@ package body VCS_Module is
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
       VCS_List : Argument_List_Access;
-      --  The list of all VCS systems recognized by the kernel.
+      --  The list of all VCS systems recognized by the kernel
 
       Explorer : VCS_View_Access;
       --  The VCS Explorer
 
       Explorer_Child : MDI_Child;
-      --  The child containing the VCS Explorer.
+      --  The child containing the VCS Explorer
    end record;
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
 
    procedure Destroy (Module : in out VCS_Module_ID_Record);
-   --  Free the memory occupied by Module.
-
-
+   --  Free the memory occupied by Module
 
    type Has_VCS_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
@@ -319,7 +317,11 @@ package body VCS_Module is
          Menu_Label   : String;
          Filter       : Action_Filter;
          Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler);
-      --  Registers an action and a menu.
+      --  Registers an action and a menu
+
+      --------------------------
+      -- Register_Action_Menu --
+      --------------------------
 
       procedure Register_Action_Menu
         (Action_Label : String;
@@ -385,77 +387,77 @@ package body VCS_Module is
         (Kernel, "supported_systems",
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler_No_Param'Access);
+         Handler       => VCS_Command_Handler_No_Param'Access);
       Register_Command
         (Kernel, "get_status",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "update",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "commit",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "diff_head",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "diff_working",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "annotate",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "remove_annotations",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "log",
-         Minimum_Args => 1,
-         Maximum_Args => 2,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => VCS_Command_Handler'Access);
+         Handler       => VCS_Command_Handler'Access);
       Register_Command
         (Kernel, "status_parse",
-         Minimum_Args => 4,
-         Maximum_Args => 5,
+         Minimum_Args  => 4,
+         Maximum_Args  => 5,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => Status_Parse_Handler'Access);
+         Handler       => Status_Parse_Handler'Access);
       Register_Command
         (Kernel, "annotations_parse",
-         Minimum_Args => 3,
-         Maximum_Args => 3,
+         Minimum_Args  => 3,
+         Maximum_Args  => 3,
          Class         => VCS_Class,
          Static_Method => True,
-         Handler      => Annotations_Parse_Handler'Access);
+         Handler       => Annotations_Parse_Handler'Access);
 
       --  Register the main VCS menu and the VCS actions.
 
@@ -622,6 +624,13 @@ package body VCS_Module is
          -"Revert",
          File_Filter,
          On_Menu_Revert'Access);
+
+      Register_Action_Menu
+        ("Resolved",
+         -"Mark file conflicts resolved",
+         -"Resolved",
+         File_Filter,
+         On_Menu_Resolved'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
