@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,6 +56,7 @@ package VCS is
       Local_Status_Dir,   --  Queries the local status for one directory
       Open,               --  Open one or more file for writing
       Update,             --  Update one or more files
+      Resolved,           --  Change file status after conflict resolution
       Commit,             --  Commits one or more files
       History,            --  Get the entire revision history for one file
       History_Revision,   --  Get the revision history for specified revision
@@ -89,10 +90,10 @@ package VCS is
    --  Identifier.
 
    function Name (Ref : access VCS_Record) return String is abstract;
-   --  The name of the VCS system.
+   --  The name of the VCS system
 
    procedure Free (Ref : in out VCS_Record);
-   --  Free memory associated with Ref.
+   --  Free memory associated with Ref
 
    procedure Free (Ref : in out VCS_Access);
    --  Free the VCS pointed to by Ref, and Ref itself
@@ -188,10 +189,10 @@ package VCS is
    --  in order to display the status in the explorer.
 
    procedure Get_Status_Dirs
-     (Rep         : access VCS_Record;
-      Dirs        : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False) is abstract;
+     (Rep        : access VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False) is abstract;
    --  Same as above, but work on directories instead of files.
 
    function Local_Get_Status
@@ -227,6 +228,12 @@ package VCS is
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Synchronize the local files or directories.
+   --  The user must free Filenames.
+
+   procedure Resolved
+     (Rep       : access VCS_Record;
+      Filenames : String_List.List) is abstract;
+   --  Change file status to resolved after conflic resolution.
    --  The user must free Filenames.
 
    procedure Merge
