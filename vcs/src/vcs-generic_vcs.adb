@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -437,8 +437,8 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args      : GNAT.OS_Lib.String_List_Access;
-            Dir       : GNAT.Strings.String_Access;
+            Args : GNAT.OS_Lib.String_List_Access;
+            Dir  : GNAT.Strings.String_Access;
 
          begin
             --  Args, Dir and Dir_Args are freed when the command proxy is
@@ -518,12 +518,12 @@ package body VCS.Generic_VCS is
       use GNAT.Strings;
 
    begin
-      if not Ref.Absolute_Names then
-         Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
-      end if;
-
       if The_Action = null then
          return;
+      end if;
+
+      if not Ref.Absolute_Names then
+         Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
       end if;
 
       if First_Args /= null then
@@ -568,10 +568,10 @@ package body VCS.Generic_VCS is
    ----------------
 
    procedure Get_Status
-     (Rep         : access Generic_VCS_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False)
+     (Rep        : access Generic_VCS_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False)
    is
       Args   : GNAT.OS_Lib.String_List_Access;
       Sorted : String_List.List := Copy_String_List (Filenames);
@@ -608,10 +608,10 @@ package body VCS.Generic_VCS is
    ---------------------
 
    procedure Get_Status_Dirs
-     (Rep         : access Generic_VCS_Record;
-      Dirs        : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False)
+     (Rep        : access Generic_VCS_Record;
+      Dirs       : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False)
    is
       Args : GNAT.OS_Lib.String_List_Access;
    begin
@@ -703,6 +703,17 @@ package body VCS.Generic_VCS is
    begin
       Generic_Command (Rep, Filenames, null, Update);
    end Update;
+
+   --------------
+   -- Resolved --
+   --------------
+
+   procedure Resolved
+     (Rep       : access Generic_VCS_Record;
+      Filenames : String_List.List) is
+   begin
+      Generic_Command (Rep, Filenames, null, Resolved);
+   end Resolved;
 
    -----------
    -- Merge --
@@ -875,6 +886,10 @@ package body VCS.Generic_VCS is
 
       function Parse_Node (M : Node_Ptr) return Boolean;
       --  Parse one node that contains VCS information.
+
+      ----------------
+      -- Parse_Node --
+      ----------------
 
       function Parse_Node (M : Node_Ptr) return Boolean is
          Name   : constant String := Get_Attribute (M, "name");
