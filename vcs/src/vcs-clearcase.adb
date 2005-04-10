@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -958,6 +958,22 @@ package body VCS.ClearCase is
       end loop;
    end Update;
 
+   --------------
+   -- Resolved --
+   --------------
+
+   procedure Resolved
+     (Rep       : access ClearCase_Record;
+      Filenames : String_List.List)
+   is
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      pragma Unreferenced (Rep, Filenames);
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Resolved;
+
    -----------
    -- Merge --
    -----------
@@ -1728,25 +1744,26 @@ package body VCS.ClearCase is
 
       --  ??? Need to adapt this to the ClearCase terminology.
       Actions :=
-        (None         => null,
-         Status_Files => new String'(-"Query status"),
-         Status_Dir   => null,
+        (None               => null,
+         Status_Files       => new String'(-"Query status"),
+         Status_Dir         => null,
          Local_Status_Files => null,
-         Local_Status_Dir => null,
-         Open         => new String'(-"Start editing"),
-         Update       => new String'(-"Update"),
-         Commit       => new String'(-"Commit"),
-         History      => new String'(-"View revision history"),
-         History_Revision => null,
-         Annotate     => new String'(-"Annotate"),
-         Diff_Head    => new String'(-"Diff against head rev."),
-         Diff_Working => null,
-         Diff_Base_Head => null,
-         Diff         => new String'(-"Diff against specific rev."),
-         Diff2        => new String'(-"Diff between two revisions"),
-         Add          => new String'(-"Add to repository"),
-         Remove       => new String'(-"Remove from repository"),
-         Revert       => new String'(-"Revert to repository revision"));
+         Local_Status_Dir   => null,
+         Open               => new String'(-"Start editing"),
+         Update             => new String'(-"Update"),
+         Resolved           => null,
+         Commit             => new String'(-"Commit"),
+         History            => new String'(-"View revision history"),
+         History_Revision   => null,
+         Annotate           => new String'(-"Annotate"),
+         Diff_Head          => new String'(-"Diff against head rev."),
+         Diff_Working       => null,
+         Diff_Base_Head     => null,
+         Diff               => new String'(-"Diff against specific rev."),
+         Diff2              => new String'(-"Diff between two revisions"),
+         Add                => new String'(-"Add to repository"),
+         Remove             => new String'(-"Remove from repository"),
+         Revert             => new String'(-"Revert to repository revision"));
    end Register_Module;
 
    ----------------------------
