@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,8 +24,8 @@ with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Generic_List;
-with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
+with Commands;                use Commands;
+with Commands.VCS;            use Commands.VCS;
 
 package body VCS is
 
