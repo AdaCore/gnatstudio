@@ -18,17 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Accel_Group;             use Gtk.Accel_Group;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Enums;
 
-with Gtkada.Dialogs;              use Gtkada.Dialogs;
-with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 
-with VCS;                         use VCS;
-with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
-with VCS_View_Pkg;                use VCS_View_Pkg;
+with VCS;                       use VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -38,30 +38,30 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Location_View;           use GPS.Location_View;
+with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
-with String_List_Utils;           use String_List_Utils;
+with String_List_Utils;         use String_List_Utils;
 
-with VCS_Module;                  use VCS_Module;
-with Log_Utils;                   use Log_Utils;
-with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
+with VCS_Module;                use VCS_Module;
+with Log_Utils;                 use Log_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with Basic_Types;                 use Basic_Types;
+with Basic_Types;               use Basic_Types;
 
-with Projects.Registry;           use Projects, Projects.Registry;
+with Projects.Registry;         use Projects, Projects.Registry;
 
-with Commands;                    use Commands;
-with Commands.VCS;                use Commands.VCS;
-with Commands.External;           use Commands.External;
+with Commands;                  use Commands;
+with Commands.VCS;              use Commands.VCS;
+with Commands.External;         use Commands.External;
 
-with Traces;                      use Traces;
-with Ada.Exceptions;              use Ada.Exceptions;
-with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
-with VFS;                         use VFS;
-with File_Utils;                  use File_Utils;
-with String_Utils;                use String_Utils;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
 
 package body VCS_View_API is
 
@@ -538,6 +538,10 @@ package body VCS_View_API is
             Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
             Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             Add_Action (Revert, On_Menu_Revert'Access);
+
+            if Actions (Resolved) /= null then
+               Add_Action (Resolved, On_Menu_Resolved'Access);
+            end if;
          end if;
       end if;
 
@@ -1573,6 +1577,41 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Revert;
+
+   ----------------------
+   -- On_Menu_Resolved --
+   ----------------------
+
+   procedure On_Menu_Resolved
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List;
+      Ref   : VCS_Access;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context),
+            -"VCS: No file selected, cannot resolved file",
+            Mode => Error);
+         return;
+      end if;
+
+      Ref := Get_Current_Ref (Context);
+
+      Resolved (Ref, Files);
+      Get_Status (Ref, Files);
+
+      String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Resolved;
 
    --------------------
    -- On_Menu_Remove --
