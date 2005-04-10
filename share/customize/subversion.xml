@@ -8,7 +8,7 @@
    <action name="generic_svn_status" show-command="true" output="none">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for files in %1"</shell>
-      <external>svn status -N -u -v "$2-"</external>
+      <external>svn --non-interactive status -N -u -v "$2-"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -21,7 +21,7 @@
    <action name="generic_svn_status_dir" show-command="true" output="none">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
-      <external>svn status -N -u -v .</external>
+      <external>svn --non-interactive status -N -u -v .</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -33,7 +33,7 @@
 
    <action name="generic_svn_annotate" show-command="true" output="">
       <shell>echo "Querying annotations for $1"</shell>
-      <external output="none">svn annotate -v "$1"</external>
+      <external output="none">svn --non-interactive annotate -v "$1"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -45,7 +45,7 @@
 
    <action name="generic_svn_local_status" show-command="true" output="none">
       <shell>pwd</shell>
-      <external>svn status -N -v .</external>
+      <external>svn --non-interactive status -N -v .</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -58,7 +58,7 @@
    <action name="generic_svn_commit" show-command="true" output="none">
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
-      <external>svn commit -F "%1" "$2-"</external>
+      <external>svn --non-interactive commit -F "%1" "$2-"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -91,7 +91,7 @@
    <action name="generic_svn_remove" show-command="true" output="none">
       <shell output="">echo "removing file(s) $2-"</shell>
       <shell>delete "$2-"</shell>
-      <external>svn remove "$2-"</external>
+      <external>svn --non-interactive remove "$2-"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -104,7 +104,7 @@
 
    <action name="generic_svn_history" show-command="true" output="none">
       <shell output="">echo "Querying history for $1"</shell>
-      <external>svn log "$1"</external>
+      <external>svn --non-interactive log "$1"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -117,7 +117,7 @@
 
    <action name="generic_svn_history_rev" show-command="true" output="none">
       <shell output="">echo "Querying history for $2"</shell>
-      <external>svn log -r$1 "$2"</external>
+      <external>svn --non-interactive log -r$1 "$2"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -131,7 +131,7 @@
    <!-- SVN update -->
 
    <action name="generic_svn_update" show-command="true" output="none">
-      <external output="">svn update "$*"</external>
+      <external output="">svn --non-interactive update "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -154,7 +154,7 @@
 
    <action name="generic_svn_diff_head" show-command="true" output="none">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <external>svn diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
+      <external>svn --non-interactive diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -169,7 +169,7 @@
 
    <action name="generic_svn_diff" show-command="true" output="none">
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
-      <external>svn diff --diff-cmd diff -x --normal -r $1 "$2"</external>
+      <external>svn --non-interactive diff --diff-cmd diff -x --normal -r $1 "$2"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -184,7 +184,7 @@
 
    <action name="generic_svn_diff2" show-command="true" output="none">
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
-      <external>svn diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
+      <external>svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
@@ -199,7 +199,7 @@
 
    <action name="generic_svn_diff_base_head" show-command="true" output="none">
       <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
-      <external>svn diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
+      <external>svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
          <shell output="">echo "%2"</shell>
