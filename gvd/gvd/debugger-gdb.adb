@@ -286,6 +286,8 @@ package body Debugger.Gdb is
       pragma Unreferenced (Str, Matched);
    begin
       Set_Is_Started (Process.Debugger, False);
+      --  ??? Should generate a callback/hook informing other units
+      --  that debugging has ended (so that e.g. the call stack can be cleared)
    end Running_Filter;
 
    ---------------------
