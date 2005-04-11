@@ -5835,9 +5835,9 @@ through the integration of version control systems (VCS). Each project can be
 associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The Project Properties Editor}.
 
-GPS does not come with any version control system: it will use an underlying
-command-line system such as CVS, Subversion or ClearCase to perform
-the low level operations, and provides a high level user iterface on
+GPS does not come with any version control system: it uses underlying
+command-line systems such as CVS, Subversion or ClearCase to perform
+the low level operations, and provides a high level user interface on
 top of them. Be sure to have a properly installed version control
 system before enabling it under GPS.
 
