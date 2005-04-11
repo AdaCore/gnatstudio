@@ -127,6 +127,8 @@ package body Doc_Utils is
       Location           : File_Location;
       Must_Free_Buffer   : Boolean := False;
       Line, Column       : Integer;
+      End_Of_Scope       : File_Location;
+      Kind               : Reference_Kind;
 
    begin
       if Lang = null then
@@ -172,6 +174,14 @@ package body Doc_Utils is
          Comment_End   => Current);
 
       if Beginning = 0 then
+         Get_End_Of_Scope (Entity, End_Of_Scope, Kind);
+
+         if Kind = End_Of_Spec then
+            Index := Buffer'First;
+            Skip_Lines (Buffer.all, Get_Line (End_Of_Scope) - 1, Index);
+            Index := Line_Start (Buffer.all, Index);
+         end if;
+
          Get_Documentation_After
            (Context       => Context.all,
             Buffer        => Buffer.all,
