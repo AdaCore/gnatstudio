@@ -45,6 +45,8 @@ with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
 with Docgen_Registry;           use Docgen_Registry;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Templates_Parser;          use Templates_Parser;
+with Language_Handlers;         use Language_Handlers;
+with Language.Ada;              use Language, Language.Ada;
 
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Box;                   use Gtk.Box;
@@ -281,6 +283,7 @@ package body Docgen_Module is
       File    : aliased Virtual_File;
       Source  : Source_File;
       Is_Spec : Boolean;
+      Is_Ada  : Boolean;
    begin
       Nb_Files := 0;
 
@@ -289,7 +292,16 @@ package body Docgen_Module is
 
          Is_Spec := Is_Spec_File (Kernel, File);
 
-         if Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files
+         --  ??? For GPS 3.0.0, we only generate documentation for Ada
+         --  files.
+         Is_Ada :=
+           Get_Language_From_File (Get_Language_Handler (Kernel), File) =
+           Ada_Lang;
+
+         if not Is_Ada then
+            Trace (Me, Base_Name (File) & " is not an Ada file. " &
+                   "No documentation will be generated.");
+         elsif Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files
            or else Is_Spec
          then
             Nb_Files := Nb_Files + 1;
@@ -451,20 +463,25 @@ package body Docgen_Module is
       Trace (Me, "Generating files for " & B.Output_Description.Name.all);
 
       Sources := Get_Source_Files (P, Recursive);
+
       Array2List (Kernel, Sources, Source_File_List,
                   Docgen.Backend.Get_Extension (B), Nb_Files);
-      Generate (Kernel, Source_File_List, Nb_Files, B);
 
-      --  ??? The following commented line should probably be moved to
-      --  to the function in charge of finalizing the files processing
-      --  since it is executed as a background command whose execution
-      --  is up to the task manager. It's therefore better not to free
-      --  structures passed to it as parameters.
+      if Nb_Files > 0 then
+         Generate (Kernel, Source_File_List, Nb_Files, B);
 
-      --  VFS.Unchecked_Free (Sources);
+         --  ??? The following commented line should probably be moved to
+         --  to the function in charge of finalizing the files processing
+         --  since it is executed as a background command whose execution
+         --  is up to the task manager. It's therefore better not to free
+         --  structures passed to it as parameters.
 
-      Trace (Me, "Done generating for project");
+         --  VFS.Unchecked_Free (Sources);
 
+         Trace (Me, "Done generating for project");
+      else
+         Trace (Me, "No source file to generate documentation for.");
+      end if;
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -666,6 +683,14 @@ package body Docgen_Module is
       Nb_Files         : Natural := 1;
 
    begin
+      if Get_Language_From_File (Get_Language_Handler (Kernel), File) /=
+        Ada_Lang
+      then
+         Trace (Me, Base_Name (File) & " is not an Ada file. " &
+                "No documentation will be generated.");
+         return;
+      end if;
+
       if B = null or else (not Is_Spec and then not Process_Body) then
          return;
       end if;
