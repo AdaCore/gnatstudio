@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<!--  This file adds support for the emacs theme -->
+
+<emacs>
+
+  <theme name="Emacs" description="Emacs mode" category="">
+     <key action="subprogram box">control-c n</key>
+     <key action="kill line">control-k</key>
+     <key action="kill forward">control-d</key>
+     <key action="transpose chars">control-t</key>
+     <key action="save current editor">control-x control-s</key>
+     <key action="goto beginning of line">control-a</key>
+     <key action="goto end of line">control-e</key>
+     <key action="beginning of buffer">alt-less</key>
+
+     <key action="goto declaration or body">control-c control-d</key>
+     <key action="goto other file">control-c o</key>
+
+     <key action="/Navigate/Back">control-c control-s</key>
+
+     <key action="/Edit/Paste">control-y</key>
+     <key action="/Edit/Copy">alt-w</key>
+     <key action="/Edit/Cut">control-w</key>
+
+     <key action="/Edit/Undo">shift-control-underscore</key>
+
+     <key action="/File/Close">control-x k</key>
+
+     <key action="/File/Exit">control-x control-c</key>
+
+     <key action="/Navigate/Find or Replace...">control-s</key>
+
+     <key action="/Window/Split Horizontally">control-x 3</key>
+     <key action="/Window/Split Vertically">control-x 2</key>
+
+     <key action="Select other window">control-x o</key>
+
+     <key action="center cursor on screen">control-l</key>
+
+     <key action="Delete word backward">alt-BackSpace</key>
+     <key action="Move to next word">alt-Right</key>
+     <key action="Move to previous word">alt-Left</key>
+  </theme>
+
+</emacs>
