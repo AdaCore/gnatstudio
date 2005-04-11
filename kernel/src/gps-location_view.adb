@@ -2042,9 +2042,8 @@ package body GPS.Location_View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Location_View := Location_View
-        (Get_Child
-           (Get_Focus_Child (Get_MDI (Get_Kernel (Context.Context)))));
+      View : constant Location_View :=
+        Get_Or_Create_Location_View (Get_Kernel (Context.Context), False);
       Iter : Gtk_Tree_Iter;
    begin
       loop
