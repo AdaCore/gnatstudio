@@ -7797,10 +7797,10 @@ files are ignored.
 @itemize @bullet
 @item System wide customization
 
-The @file{INSTALL/share/gps/customize} directory, where
+The @file{INSTALL/share/gps/plug-ins} directory, where
 @file{INSTALL} is the name of the GPS installation directory, should contain
-the files that will always be loaded whenever GPS is started, by any user on
-the system.
+the xml and python files that will always be loaded whenever GPS is started,
+by any user on the system.
 
 @item @code{GPS_CUSTOM_PATH}
 
@@ -7816,10 +7816,10 @@ load specific aliases which do not make sense for other projects.
 
 @item User directory
 
-The directory @file{$HOME/.gps/customize} on Unix
-systems, and @file{%HOME%\.gps\customize} on Windows systems, can also contain
-customization files which are parsed at startup. This is a convenient way for
-users to define their own customization, that they want to load no matter which
+The directory @file{$HOME/.gps/plug-ins} on Unix
+systems, and @file{%HOME%\.gps\plug-ins} on Windows systems, can also contain
+customization files which are loaded at startup. This is a convenient way for
+users to define their own plug-ins, that they want to load no matter which
 project they are working on. Note that you can use the environment variable
 @code{GPS_HOME} to override the value of the @code{HOME} variable.
 
@@ -7840,7 +7840,7 @@ declaration, as in the following example:
 
 Any given XML file can contain customization for various aspects of GPS, mixing
 aliases, new languages or menus,@dots{} in a single file. This is
-a convenient way to distribute your customization to other users.
+a convenient way to distribute your plug-ins to other users.
 
 These files must be valid XML files, i.e. must start with the
 @code{<?xml?>} tag, and contain a single root XML node, the name of which is
@@ -9166,11 +9166,11 @@ own GPS directory.
 
 @smallexample
 <?xml version="1.0" ?>
-<customize>
+<my-plug-in>
    <theme name="my theme" description="Create a new menu">
        <menu action="my action"><title>/Edit/My Theme Menu</title></menu>
    </theme>
-</customize>
+</my-plug-in>
 @end smallexample
 
 @c ----------------------------------------------------------------
@@ -9246,7 +9246,7 @@ tag. Defining languages gives GPS the ability to highlight the syntax of a
 file, explore a file (using e.g. the project explorer), find files
 associated with a given language, @dots{}
 
-As described previously for menu items, any file in the @file{customize}
+As described previously for menu items, any file in the @file{plug-ins}
 directory will be loaded by GPS at start up. Therefore, you can either
 define new languages in a separate file, or reuse a file where you already
 define actions and menus.
@@ -9992,7 +9992,7 @@ declare project attributes.
 The following example declares three attributes, with a single string
 as their value. This string represents a file or a directory in the
 last two cases. You can simply copy this into a @file{.xml} file in
-your @file{$HOME/.gps/customize} directory, as usual.
+your @file{$HOME/.gps/plug-ins} directory, as usual.
 
 @smallexample
 <?xml version="1.0"?>
@@ -11770,8 +11770,8 @@ you wish, e.g:
 
 On startup, GPS will automatically import (with python's @code{import}
 command) all the files with the extension @file{.py} found in the directory
-@file{$HOME/.gps/python_startup}. These files are loaded only after all
-standard GPS modules have been loaded, as well as the custom files, but
+@file{$HOME/.gps/plug-ins}. These files are loaded only after all
+standard GPS modules have been loaded, as well as the custom files, and
 before the script file or batch commands specified on the command lines
 with the @code{--eval} or @code{--load} switches.
 
@@ -11796,10 +11796,10 @@ you need to provide several things:
 
 @itemize
 @item The python files themselves. This is a set of @file{.py} files, which
- the user should install in his @file{python_startup} directory.
+ the user should install in the @file{plug-ins} directory.
 
 @item An XML file with the format described in the customization section
- of this documentation. This XML file should create a series of actions,
+ of this documentation. This XML file should create a set of actions,
  through the @code{<action>} tag, exported to the user. This allows him
  to either create menus to execute these commands or to bind them to special
  key shortcuts
@@ -11815,15 +11815,15 @@ the key binding @key{control-c n}, and can be distributed as a single XML
 file.
 
 @smallexample
-# This code must be stored in a file test.py in $HOME/.gps/python_startup
+# This code can be stored in a file test.py in $HOME/.gps/plug-ins
 from GPS import *
 
 def add_dashes_line():
-   replace_text (current_context().file().name(),
-                 current_context().location().line(),
-                 current_context().location().column(),
-                 "--------------------------------", 0, 0)
-parse_xml ("""
+   Editor.replace_text (current_context().file().name(),
+                        current_context().location().line(),
+                        current_context().location().column(),
+                        "--------------------------------", 0, 0)
+GPS.parse_xml ("""
    <action name="dashes line">
       <shell lang="python">test.add_dashes_line()</shell>
       <context>Source editor</context>
@@ -12314,8 +12314,8 @@ As you can guess from this file, it defines an action "my_action", that you
 can for instance associate with a keybinding through the Edit->Key shortcuts
 menu.
 
-If this file has been copied in the @file{$HOME/.gps/python_startup/}
-directory, it will be automatically loaded at startup.
+If this file has been copied in one of the @file{plug-ins} directories,
+it will be automatically loaded at startup.
 
 Notice that the function @code{myfunc} is thus found in a separate namespace,
 with the name @code{mymod}, same as the file.
@@ -12325,7 +12325,7 @@ function print "In myfunc2" instead, you then have to reload the file by
 typing the following command in the Python console:
 
 @smallexample
-> execfile ("HOME/.gps/python_startup/mymod.py", mymod.__dict__)
+> execfile ("HOME/.gps/plug-ins/mymod.py", mymod.__dict__)
 @end smallexample
 
 The first parameter is the full path to the file that you want to reload.
@@ -12390,62 +12390,16 @@ to convert the text file into a postscript document.
 @subsubsection Automatically loading python files at startup
 
 @noindent
-At startup, GPS will automatically load a few python files. This includes
-the file @file{autoexec.py} in its installation directory
-@file{share/gps/python}, as well as all the files that each user has put
-in his own @file{$HOME/.gps/python_startup} directory.
+At startup, GPS will automatically load all python files found in
+the directories @file{share/gps/plug-ins} and
+@file{$HOME/.gps/plug-ins}.
 
-In addition, in order to make python files available to a group of users,
-several approaches are possible:
+In addition, python files located under
+@file{<prefix>/share/gps/python} can be imported (using the @code{import}
+command) by any python script.
 
-@itemize @bullet
-@item Each user can install them in his @file{$HOME/.gps/python_startup}
-directory
-
-@item The system administrator copies them in GPS installation directory in
-@file{<prefix>/share/gps/python}
-
-@item The system administrator copies them to any directory on your system.
-This directory then needs to be added by each user to his @code{PYTHONPATH}
-environment variable. Under unix, you can alternatively modify the small
-@file{gps} wrapper script to do this automatically on startup.
-@end itemize
-
-The above steps will make your files available to GPS, but will not execute
-them automatically (apart for the first solution described above).
-
-If you want to automatically execute a script, there are again a number of
-possibilities:
-
-@itemize @bullet
-@item Modify the file @file{autoexec.py} installed by GPS in
-@file{<prefix>/share/gps/python/}, and add an @code{import} statement for
-each python package to execute.
-
-This will need to be redone after each new installation of GPS
-
-@item Ask the users to select what packages they want to load, and ask them
-to create a file (named for instance @code{myautoexec.py}) which contains one
-import statement for each package to load, as in
-
-@smallexample
-import common_package1, common_package2
-@end smallexample
-@end itemize
-
-All the methods above require you to modify the installation of GPS somehow.
-Alternatively, you can also provide a small wrapper script to launch GPS.
-Here is an example of such a script, assuming your files are in /dir/support
-and the file to load is support_autoexec.py.
-
-This is a unix-shell syntax. Such shells are also available on Windows, but
-you can also do the following using a windows @file{.bat} file
-
-@smallexample
-  LD_LIBRARY_PATH=/dir/support:$LD_LIBRARY_PATH
-  export LD_LIBRARY_PATH
-  gps --eval=python:'import support_autoexec.py' $*
-@end smallexample
+You can also set the @code{PYTHONPATH} environment variable to add other
+directories to the python search path.
 
 @c --------------------------------------------------------------------
 @node Hiding contextual menus
@@ -12864,7 +12818,7 @@ those steps.
 
 GPS is distributed with XML files describing the interfaces to
 ClearCase and CVS. These XML files are located in the directory
-@code{share/gps/customize} in the GPS installation, and can be used as a
+@code{share/gps/plug-ins} in the GPS installation, and can be used as a
 reference for implementing new custom VCS interfaces.
 
 @node Describing a VCS
@@ -13336,9 +13290,10 @@ file.
 @cindex aliases
 File containing the user-defined aliases (@pxref{Defining text aliases}).
 
-   @item $HOME/.gps/customize
-Directory containing files with user-defined customizations.
-All files found under this directory are loaded by GPS during start up.
+   @item $HOME/.gps/plug-ins
+Directory containing files with user-defined plug-ins.
+All xml and python files found under this directory are loaded by GPS during
+start up.
 You can create/edit these files to add your own menu/tool-bar entries in GPS,
 or define support for new languages.
 @pxref{Customizing through XML files} and
@@ -13381,8 +13336,6 @@ By default, they are sent to the file @file{$HOME/.gps/log.<pid>}.
 This file is created automatically when the @file{$HOME/.gps/} directory is
 created. If you remove it manually, it won't be recreated the next time you
 start GPS.
-When upgrading to a new version of GPS, it is recommended to remove it since
-its contents may change from version to version.
 
    @item @i{prefix}
 The prefix directory where GPS is installed, e.g @file{/opt/gps}.
@@ -13413,10 +13366,12 @@ This directory contains the sources used by the GPS tutorial.
 See @url{gps-tutorial.html}.
 @end ifhtml
 
-   @item @i{prefix}/share/gps/customize
-Directory containing files with system-wide customizations
-(see @ref{Adding support for new languages} and
- @ref{Defining text aliases}).
+   @item @i{prefix}/share/gps/plug-ins
+Directory containing files with system-wide plug-ins (xml and python files)
+loaded at start-up.
+
+   @item @i{prefix}/share/gps/python
+Directory containing python files that are not loaded automatically.
 
    @item @i{prefix}/share/gps/gps-animation.png
 @cindex png
