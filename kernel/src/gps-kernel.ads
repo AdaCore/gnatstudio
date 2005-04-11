@@ -427,7 +427,7 @@ package GPS.Kernel is
    --  Project_Wide is used if the customization comes from a custom file found
    --  in one of the directories lists in GPS_CUSTOM_PATH.
    --  User_Specific is used if the customization comes from a custom file
-   --  found in the user's own directory (see GPS_HOME/.gps/customize).
+   --  found in the user's own directory (see GPS_HOME/.gps/plug-ins).
    --  Themes is used if the customization was found in a theme definition,
    --  wherever that definition was found.
 
