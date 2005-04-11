@@ -5,4 +5,4 @@
 @@--         of templates.
 @@-- LINE  : the source line number for this block
 @@--
-<a name="@_LINE_@"></a>@_BLOCK_@
+<a name="@_LINE_@"></a>@_WEB_ESCAPE:BLOCK_@
