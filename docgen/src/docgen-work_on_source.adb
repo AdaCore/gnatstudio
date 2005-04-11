@@ -396,15 +396,18 @@ package body Docgen.Work_On_Source is
       Parsed_List : Construct_List;
       Entity      : Entity_List_Information)
       return String;
-      --  Return the header of the declarative part of an entity.
+   --  Return the header of the declarative part of an entity.
 
    procedure Remove_Indent
      (Text       : String;
-      Space      : Natural;
       Clean_Text : out GNAT.OS_Lib.String_Access;
       Line_Count : out Natural);
-   --  The header returned by Get_Whole_Header contains indent spaces (except
-   --  those of the first line). This function removes those spaces.
+   --  The header returned by Get_Whole_Header contains leading spaces. We
+   --  the first line is well indented.
+   --  Leading spaces are removed from the first line.
+   --  Let's say N spaces have been removed.
+   --  For the following lines, if there are at least N leading spaces,
+   --  N leading spaces are removed, otherwise, the line is kept as is.
 
    --------------------
    -- Process_Source --
@@ -452,9 +455,7 @@ package body Docgen.Work_On_Source is
          Options);
 
       --  Different processing for spec and body files
-
       if Source_Is_Spec then
-
          --  ??? Entity_List is always empty for files not compiled
          --  (no ALI file generated). This is true for glu_h.ads for example.
 
@@ -1605,10 +1606,7 @@ package body Docgen.Work_On_Source is
                --  Check if it was an entity with its own header
 
                   if Whole_Header /= "" then
-                     Remove_Indent
-                       (Whole_Header,
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
+                     Remove_Indent (Whole_Header, Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
                         --  It's the first time we met a private entity
@@ -1723,10 +1721,7 @@ package body Docgen.Work_On_Source is
                   --  Check if it was a entity with its own header
 
                   if Whole_Header /= "" then
-                     Remove_Indent
-                       (Whole_Header,
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
+                     Remove_Indent (Whole_Header, Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
                         Process_Header_Private (B, Kernel, Result, Level);
@@ -1896,10 +1891,7 @@ package body Docgen.Work_On_Source is
                   --  Check if it was a entity with its own header
 
                   if Whole_Header /= "" then
-                     Remove_Indent
-                       (Whole_Header,
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
+                     Remove_Indent (Whole_Header, Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
                         --  It's the first time we met a private entity
@@ -2048,10 +2040,7 @@ package body Docgen.Work_On_Source is
                   --  Check if it was a entity with its own header
 
                   if Whole_Header /= "" then
-                     Remove_Indent
-                       (Whole_Header,
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
+                     Remove_Indent (Whole_Header, Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
                         Process_Header_Private (B, Kernel, Result, Level);
@@ -2243,10 +2232,8 @@ package body Docgen.Work_On_Source is
                   --  Check if it was an entity with its own header
 
                   if Whole_Header /= "" then
-                     Remove_Indent
-                       (Whole_Header,
-                        Level * Get_Indent (B.all),
-                        Header, Header_Lines);
+
+                     Remove_Indent (Whole_Header, Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
                         Process_Header_Private (B, Kernel, Result, Level);
@@ -2384,9 +2371,9 @@ package body Docgen.Work_On_Source is
       Parsed_List : Construct_List;
       Entity      : Entity_List_Information)
       return String
-      is
-         use type Basic_Types.String_Access;
-         Parse_Node : Construct_Access := Parsed_List.First;
+   is
+      use type Basic_Types.String_Access;
+      Parse_Node : Construct_Access := Parsed_List.First;
 
    begin
       while Parse_Node /= null loop
@@ -2414,11 +2401,12 @@ package body Docgen.Work_On_Source is
                end if;
 
             elsif To_Lower (Parse_Node.Name.all) = Get_Name (Entity.Entity).all
-              or else
-            To_Lower (Parse_Node.Name.all) = Get_Full_Name (Entity.Entity)
+              or else To_Lower (Parse_Node.Name.all) =
+                 Get_Full_Name (Entity.Entity)
             then
                return File_Text
-                 (Parse_Node.Sloc_Start.Index .. Parse_Node.Sloc_End.Index);
+                 (Line_Start (File_Text, Parse_Node.Sloc_Start.Index) ..
+                    Parse_Node.Sloc_End.Index);
             end if;
          end if;
          Parse_Node := Parse_Node.Next;
@@ -2433,47 +2421,64 @@ package body Docgen.Work_On_Source is
 
    procedure Remove_Indent
      (Text       : String;
-      Space      : Natural;
       Clean_Text : out GNAT.OS_Lib.String_Access;
       Line_Count : out Natural)
    is
       use Ada.Strings.Unbounded;
 
-      Result   : Unbounded_String;
-      Old_J    : Natural := Text'First;
-      J        : Natural := Text'First;
-      Stop     : Boolean;
+      Result            : Unbounded_String := Null_Unbounded_String;
+      J                 : Natural := Text'First;
+      Indent            : Natural := 0;
+      End_Of_First_Line : Natural;
+      End_Of_Line       : Natural;
 
    begin
-      Line_Count := 1;
-      while J <= Text'Last loop
-         if Text (J) = ASCII.LF then
-            Line_Count := Line_Count + 1;
-            Append (Result, Text (Old_J .. J));
-            Stop := False;
+      Line_Count := 0;
+      End_Of_First_Line := Line_End (Text, Text'First);
 
-            for K in J + 1 .. Natural'Min (J + Space, Text'Last) loop
-               if Text (K) /= ' ' then
-                  --  If the indentation is bad
-                  Old_J := K;
-                  J := Old_J;
-                  Stop := True;
-                  exit;
-               end if;
-            end loop;
+      --  We try to figure out how much spaces ther are before the actual
+      --  text.
+      while J < End_Of_First_Line
+        and then Text (J) = ' '
+      loop
+         J := J + 1;
+      end loop;
+      Indent := J - Text'First;
 
-            if not Stop then
-               Old_J := J + Space + 1;
-               J := Old_J;
-            end if;
+      J := Text'First;
+      loop
+         Line_Count := Line_Count + 1;
 
+         if Line_End (Text, J) = Line_End (Text, Next_Line (Text, J))
+         --  Last line
+         then
+            End_Of_Line := Text'Last;
          else
-            J := J + 1;
+            End_Of_Line := Next_Line (Text, J) - 1;
          end if;
+
+         if Indent > 0 and then J + Indent < Text'Last
+           and then Text (J .. J + Indent - 1) =
+           Text (Text'First .. Text'First + Indent - 1)
+         then
+            --  We remove as many blanks as there are one the first line before
+            --  the first non blank character
+            Append (Result,  Text (J + Indent .. End_Of_Line));
+         else
+            --  Bad formatting ==> put the line as is to avoid skipping
+            --  characters.
+            --  ??? a better solution would be to figure out the right number
+            --  of blanks to be added.
+            Append (Result, Text (J .. End_Of_Line));
+         end if;
+
+         exit when Line_End (Text, J) = Line_End (Text, Next_Line (Text, J));
+
+         J := Next_Line (Text, J);
       end loop;
 
-      Append (Result, Text (Old_J .. J - 1));
       Clean_Text := new String'(To_String (Result));
+
    end Remove_Indent;
 
 end Docgen.Work_On_Source;
