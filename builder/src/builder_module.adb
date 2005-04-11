@@ -1337,10 +1337,12 @@ package body Builder_Module is
          else
             declare
                Full_Command : constant String :=
-                 Command & " " & Argument_List_To_String (Arguments);
-               New_Args     : Argument_List_Access
-                 := Argument_String_To_List (Remote_Cmd & " " & Remote_Host);
+                 To_Unix_Pathname (Command) & " "
+                 & Argument_List_To_String (Arguments);
+               New_Args     : Argument_List_Access :=
+                 Argument_String_To_List (Remote_Cmd & " " & Remote_Host);
                Last_Arg     : String_Access := new String'(Full_Command);
+
             begin
                Launch_Process
                  (K,
