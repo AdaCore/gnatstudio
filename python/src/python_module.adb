@@ -897,34 +897,34 @@ package body Python_Module is
       Sys    : constant String :=
         Format_Pathname (Get_System_Dir (Kernel), UNIX)
         & "share/gps/python/";
-      Dir    : constant String :=
+      Local_Dir : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins";
+      Old_Local_Dir : constant String :=
         Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "python_startup";
-      D      : Dir_Type;
-      File   : String (1 .. 1024);
-      Last   : Natural;
+      System_Dir : constant String :=
+        Format_Pathname (Get_System_Dir (Kernel), UNIX)
+        & "share/gps/plug-ins/";
       Errors : aliased Boolean;
-      Result : PyObject;
-      pragma Unreferenced (Result);
 
-   begin
-      if Python_Module_Id = null then
-         return;
-      end if;
+      procedure Load_Dir (Dir : String);
+      --  Load all .py files from Dir, if any
 
-      if Is_Regular_File (Sys & "autoexec.py") then
-         Trace (Me, "Load python files from " & Sys & "autoexec.py");
+      --------------
+      -- Load_Dir --
+      --------------
 
-         Execute_Command
-           (Python_Module_Id.Script,
-            "execfile (""" & Sys & "autoexec.py"")",
-            Hide_Output => True,
-            Errors => Errors);
-      else
-         Trace (Me,
-                "File " & Sys & "autoexec.py doesn't exist, nothing done");
-      end if;
+      procedure Load_Dir (Dir : String) is
+         D      : Dir_Type;
+         File   : String (1 .. 1024);
+         Last   : Natural;
+         Result : PyObject;
+         pragma Unreferenced (Result);
 
-      if Is_Directory (Dir) then
+      begin
+         if not Is_Directory (Dir) then
+            return;
+         end if;
+
          Trace (Me, "Load python files from " & Dir);
 
          Result := Run_Command
@@ -961,9 +961,36 @@ package body Python_Module is
          end loop;
 
          Close (D);
-      else
-         Make_Dir (Dir);
+      end Load_Dir;
+
+   begin
+      if Python_Module_Id = null then
+         return;
       end if;
+
+      if Is_Regular_File (Sys & "autoexec.py") then
+         Trace (Me, "Load python files from " & Sys & "autoexec.py");
+
+         Execute_Command
+           (Python_Module_Id.Script,
+            "execfile (""" & Sys & "autoexec.py"")",
+            Hide_Output => True,
+            Errors => Errors);
+      else
+         Trace (Me,
+                "File " & Sys & "autoexec.py doesn't exist, nothing done");
+      end if;
+
+      if not Is_Directory (Local_Dir) then
+         Make_Dir (Local_Dir);
+      end if;
+
+      Load_Dir (System_Dir);
+
+      --  For compatiblity with GPS < 3.0.0, also load old python directory
+      Load_Dir (Old_Local_Dir);
+
+      Load_Dir (Local_Dir);
    end Load_Python_Startup_Files;
 
    ---------------------------------
