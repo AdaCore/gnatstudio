@@ -577,7 +577,9 @@ package body Debugger.Gdb is
    begin
       --  The value is valid only if it starts with '$'
 
-      if S (S'First) /= '$' then
+      if S = ""
+        or else S (S'First) /= '$'
+      then
          return "";
       end if;
 
