@@ -23,7 +23,8 @@ install-common:
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/docgen
-	(cd share; tar cf - customize/*.xml) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - python/) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen/templates; tar cf - html/) \
