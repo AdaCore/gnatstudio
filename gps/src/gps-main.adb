@@ -503,8 +503,8 @@ procedure GPS.Main is
         ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
 
       declare
-         Customize : constant String :=
-           File_Utils.Name_As_Directory (Dir.all) & "customize";
+         Plug_Ins : constant String :=
+           File_Utils.Name_As_Directory (Dir.all) & "plug-ins";
 
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
@@ -535,12 +535,12 @@ procedure GPS.Main is
             Close (File);
          end if;
 
-         if not Is_Directory (Customize) then
-            Make_Dir (Customize);
+         if not Is_Directory (Plug_Ins) then
+            Make_Dir (Plug_Ins);
 
             if not Dir_Created then
                Button := Message_Dialog
-                 ((-"Created config directory ") & Customize,
+                 ((-"Created plug-ins directory ") & Plug_Ins,
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
