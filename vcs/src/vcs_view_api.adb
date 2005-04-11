@@ -538,10 +538,7 @@ package body VCS_View_API is
             Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
             Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             Add_Action (Revert, On_Menu_Revert'Access);
-
-            if Actions (Resolved) /= null then
-               Add_Action (Resolved, On_Menu_Resolved'Access);
-            end if;
+            Add_Action (Resolved, On_Menu_Resolved'Access);
          end if;
       end if;
 
