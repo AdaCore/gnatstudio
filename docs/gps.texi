@@ -266,11 +266,12 @@ to a wide range of tools and integrates them smoothly.
 GPS gives access to built-in file editing; HTML based help system;
 complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
-browsers such as source dependency, project dependency, call graphs, etc@dots{};
-fully integrated visual debugger, based on the GVD technology, and enhanced
-for inclusion in GPS; generic version control system, providing access
-to CVS, ClearCase, and possibly others in the future; many other tools
-such as a visual comparison, automatic generation of files, source reformatting.
+browsers such as source dependency, project dependency, call graphs,
+etc@dots{}; fully integrated visual debugger, based on the GVD
+technology, and enhanced for inclusion in GPS; generic version control
+system, providing access to CVS, Subversion, ClearCase, and possibly
+others in the future; many other tools such as a visual comparison,
+automatic generation of files, source reformatting.
 
 @cindex customization
 GPS is fully customizable, providing several levels of customizations:
@@ -5835,27 +5836,30 @@ associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The Project Properties Editor}.
 
 GPS does not come with any version control system: it will use an underlying
-command-line system such as CVS or ClearCase to perform the low level
-operations, and provides a high level user iterface on top of them.
-Be sure to have a properly installed version control system before enabling it
-under GPS.
+command-line system such as CVS, Subversion or ClearCase to perform
+the low level operations, and provides a high level user iterface on
+top of them. Be sure to have a properly installed version control
+system before enabling it under GPS.
 
-The systems that are supported out of the box in GPS are CVS and ClearCase.
-There are two interfaces to ClearCase: the standard ClearCase interface, which
-is built-in and uses a generic GPS terminology for VCS operations, and the
-Native ClearCase interface, which is fully customizable and uses by default the
-terminology specific to ClearCase.
+The systems that are supported out of the box in GPS are CVS, Subversion and
+ClearCase. There are two interfaces to ClearCase: the standard
+ClearCase interface, which is built-in and uses a generic GPS
+terminology for VCS operations, and the Native ClearCase interface,
+which is fully customizable and uses by default the terminology
+specific to ClearCase. 
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
 It is also possible to add your own support for other version control systems,
-or modify the existing CVS and ClearCase interfaces,
+or modify the existing CVS, Subversion and ClearCase interfaces,
 see @ref{Adding support for new Version Control Systems} for more information.
 
-When using CVS, GPS will also need a corresponding @command{patch} command
-that usually comes with it. If you are under Windows, be sure to install
-a set of CVS and patch executables that are compatible.
+When using CVS or Subversion, GPS will also need a corresponding
+@command{patch} command that usually comes with it. If you are under
+Windows, be sure to install a set of CVS and patch executables that
+are compatible. Additionally a @command{diff} command is required to
+use Subversion.
 
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
@@ -6130,8 +6134,8 @@ Display the annotations for the file, i.e. the information for each
 line of the file showing the revision corresponding to that file, and
 additional information depending on the VCS system.
 
-When using CVS, the annotations are clickable. Left-clicking on an
-annotation line will query and display the changelog associated to the
+When using CVS or Subversion, the annotations are clickable. Left-clicking on
+an annotation line will query and display the changelog associated to the
 specific revision for this line.
 
 @item Remove Annotate
@@ -12806,8 +12810,8 @@ needs, or to add support for other Version Control systems.
 
 Custom VCS interfaces are defined entirely through XML files. Those
 files are read in the same location as all the other XML
-customizations that GPS offers. See @ref{Customizing through XML
-files} for a complete description.
+customizations that GPS offers. See @ref{Customizing through XML files} for a
+complete description.
 
 There are two steps to follow when creating a custom VCS
 interface. The first step is to describe the VCS itself, and the
@@ -12817,7 +12821,7 @@ operations that this VCS can perform. The following two sections
 those steps.
 
 GPS is distributed with XML files describing the interfaces to
-ClearCase and CVS. These XML files are located in the directory
+ClearCase, CVS and Subversion. These XML files are located in the directory
 @code{share/gps/plug-ins} in the GPS installation, and can be used as a
 reference for implementing new custom VCS interfaces.
 
@@ -12909,8 +12913,8 @@ custom VCS, and the icons associated to it:
 Where:
 @table @samp
    @item STATUS_LABEL
-is the name of the status, for example ``Up to date'' or ``Needs
-update'' in the context of CVS.
+is the name of the status, for example ``Up to date'' or ``Needs update''
+in the context of CVS.
    @item STOCK_LABEL
 is the stock identifier of the icon associated to this status, that
 will be used, for example, in the VCS Explorer. See section
