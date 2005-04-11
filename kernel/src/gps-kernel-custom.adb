@@ -20,8 +20,6 @@
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with XML_Parsers;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtk.Enums;                 use Gtk.Enums;
 with Traces;                    use Traces;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System.Assertions;         use System.Assertions;
@@ -162,35 +160,19 @@ package body GPS.Kernel.Custom is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       System_Directory : constant String :=
-        Get_System_Dir (Kernel) & "share/gps/customize/";
-      User_Directory : constant String :=
+        Get_System_Dir (Kernel) & "share/gps/plug-ins/";
+      User_Directory   : constant String :=
+        Get_Home_Dir (Kernel) & "plug-ins/";
+      Old_User_Dir     : constant String :=
         Get_Home_Dir (Kernel) & "customize/";
-      Aliases_Sys_Dir : constant String :=
-        Get_System_Dir (Kernel) & "share/gps/aliases/";
-      Custom_File  : constant String := Get_Home_Dir (Kernel) & "custom";
+      Old_System_Dir   : constant String :=
+        Get_System_Dir (Kernel) & "share/gps/customize/";
       Env_Path     : String_Access := Getenv (GPS_Custom_Path_External);
       Path         : Path_Iterator;
-      Success      : Boolean;
       N            : Node_Ptr;
-      Button       : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+
    begin
       Kernel.Custom_Files_Loaded := True;
-
-      --  For backward compatibility with GPS <= 1.2.0, move the "custom" file
-      --  to the customization directory
-
-      if Is_Regular_File (Custom_File) then
-         Rename_File (Custom_File, User_Directory & "custom", Success);
-
-         if Success then
-            Button := Message_Dialog
-              ((-"Moved file ") & Custom_File & ASCII.LF &
-               (-"to directory ") & User_Directory,
-               Information, Button_OK,
-               Justification => Gtk.Enums.Justify_Left);
-         end if;
-      end if;
 
       --  Load the hard-coded customization strings first, so that anyone
       --  can override them
@@ -210,12 +192,12 @@ package body GPS.Kernel.Custom is
          end loop;
       end if;
 
-      --  For backward compatibility with GPS <= 1.3.0, parse the aliases
+      --  For backward compatibility with GPS < 3.0.0, parse the custom
       --  directory
 
-      Parse_Custom_Dir (Kernel, Aliases_Sys_Dir, System_Wide);
+      Parse_Custom_Dir (Kernel, Old_System_Dir, System_Wide);
 
-      --  Load the system custom directory first, so that its contents can
+      --  Load the system plug-ins directory first, so that its contents can
       --  be overriden locally by the user
       Parse_Custom_Dir (Kernel, System_Directory, System_Wide);
 
@@ -229,6 +211,10 @@ package body GPS.Kernel.Custom is
       end loop;
 
       Free (Env_Path);
+
+      --  For backward compatibility with GPS < 3.0.0, parse the user custom
+      --  directory
+      Parse_Custom_Dir (Kernel, Old_User_Dir, User_Specific);
 
       Parse_Custom_Dir (Kernel, User_Directory, User_Specific);
    end Load_All_Custom_Files;
