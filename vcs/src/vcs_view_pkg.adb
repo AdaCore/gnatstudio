@@ -575,6 +575,8 @@ package body VCS_View_Pkg is
       Log           : Boolean;
       Line          : Line_Record;
       Sort_Id       : Gint;
+      Cache_Empty   : Boolean;
+      Iter          : Status_Hash.Iterator;
 
       use Status_Hash;
 
@@ -639,6 +641,9 @@ package body VCS_View_Pkg is
       end if;
 
       Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
+      Status_Hash.Get_First (Page.Cached_Status, Iter);
+      Cache_Empty := Get_Element (Iter) = No_Element;
+
       Set_Current_Page (Explorer.Notebook,
                         Page_Num (Explorer.Notebook, Page));
 
@@ -667,7 +672,9 @@ package body VCS_View_Pkg is
          --  if it already exists in Page.Stored_Status, we simply modify
          --  the element, otherwise we add it to the list.
 
-         if Display then
+         if Display
+           or else Cache_Empty
+         then
             declare
                New_Status         : constant Line_Record := Copy (Line);
                New_File           : constant Virtual_File :=
