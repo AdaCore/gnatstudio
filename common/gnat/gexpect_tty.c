@@ -829,6 +829,12 @@ allocate_pty (void)
       "/dev/ptmx_bsd"   /* Tru64 */
     };
 
+#ifdef OSF1
+  /* GPS does not apparently support well the new way of allocating ptys,
+     so disable it for now ??? */
+  goto lose;
+#endif
+
 #ifdef HAVE_GETPT /* glibc */
   master_fd = getpt ();
   if (master_fd >= 0)
