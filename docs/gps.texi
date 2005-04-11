@@ -12490,16 +12490,13 @@ in the python console
 @cindex pygtk
 
 @noindent
-GPS is based on a graphical toolkit called gtk+, which has been ported to a lot
-of systems, including most Unix systems and Windows. One of the strenght of this
-toolkit is the number of language bindings that exist to it, so that you can
-most likely use your own favorite language to create graphical interfaces.
-In particular, GPS itself used the Ada binding (GtkAda).
+GPS is based on the Gtk+ graphical toolkit, which is available under many
+platforms and for many programming languages.
 
-You can install an optional package, downloadable from @url{http://www.pygtk.org},
-which is a python binding to this toolkit. Using pygtk, you will be able to
-create your own graphical windows, as complex as you might want. Note that pygtk
-is not a support product of AdaCore.
+You can install an third party package, downloadable from
+@url{http://www.pygtk.org}, which is a python binding to Gtk+.
+Using pygtk, you will be able to create your own dialogs and graphical
+windows using the python capabilities provided by GPS.
 
 See the menu @code{Help->Python Extensions}, in particular the @code{GPS.MDI}
 documentation, for a sample of code on how to create your own graphical
