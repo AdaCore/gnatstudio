@@ -225,8 +225,7 @@ package body Creation_Wizard.Selector is
       Gtk_New_Hseparator (Separator);
       Pack_Start (Box, Separator, Expand => False);
 
-      Gtk_New (Page.From_Library,
-               Get_Group (Page.From_Scratch),
+      Gtk_New (Page.From_Library, Get_Group (Page.From_Scratch),
                Label => -"Library Project");
       Pack_Start (Box, Page.From_Library, Expand => False);
       Gtk_New
