@@ -3570,7 +3570,9 @@ package body Project_Properties is
                   Page_Box := new XML_Project_Wizard_Page;
                   Page_Box.Page := Page;
 
-                  if Page.Name.all = -"General" then
+                  if Page.Name.all = -"General"
+                    and then General_Page_Box /= null
+                  then
                      Page_Box.Box := General_Page_Box;
                   else
                      Gtk_New_Vbox (Page_Box.Box, Homogeneous => False);
