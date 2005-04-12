@@ -67,7 +67,7 @@ with Commands.Interactive; use Commands.Interactive;
 
 package body GPS.Kernel.Modules is
 
-   Me : constant Debug_Handle := Create ("GPS.Kernel.Modules");
+   Me : constant Debug_Handle := Create ("GPS.Kernel.Modules", Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;
