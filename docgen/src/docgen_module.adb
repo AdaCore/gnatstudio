@@ -953,7 +953,8 @@ package body Docgen_Module is
            Default => False,
            Blurb   =>
              -("Whether Docgen should ignore all comments with --!"),
-           Nick    => -"Ignore comments with --!"));
+           Nick    => -"Ignore comments with --!",
+           Flags   => Param_Readable)); --  ??? For 3.0.0
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
@@ -1004,7 +1005,7 @@ package body Docgen_Module is
              Blurb   =>
                -"List of tagged types declared in processed files",
              Nick    => -"List tagged types"));
---               Flags   => Param_Readable));
+
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
