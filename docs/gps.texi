@@ -670,10 +670,20 @@ variables). This means that e.g. the exact list of source files, or the
 exact switches to use to compile the application can be changed when
 the value of these external variables is changed.
 
-GPS provides a simple access to these variables, through a special
-area on top of the @code{Project View}. These variables are called
+GPS provides a simple access to these variables, through a window
+called the @code{Scenario View}. These variables are called
 @code{Configuration Variables}, since they provide various scenarios for
 the same set of project files.
+
+@iftex
+@cindex screen shot
+@image{file-view, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{file-view}
+@end ifhtml
 
 A combo box is displayed in this area for each environment
 variable the project depends on. The current value of the variable can
@@ -703,6 +713,16 @@ according to the new setup.
 In addition to the @code{Project View}, GPS also provides a
 @code{File View} through the @code{Tools->File View} menu.
 
+@iftex
+@cindex screen shot
+@image{file-view, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{file-view}
+@end ifhtml
+
 In this view, directories are displayed exactly as they are organized
 physically on the disk (including Windows drives).
 
@@ -723,6 +743,16 @@ Each source file can also be explored as described in
 @noindent
 The Outline View, which you can choose to activate through the
 @code{Tools->Outline View} menu, shows the contents of the current file.
+
+@iftex
+@cindex screen shot
+@image{outline-view, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{outline-view}
+@end ifhtml
 
 The exact meaning of this depends on the language you are seeing. For
 Ada, C and C++ files, this is the list of entities that are declared at
