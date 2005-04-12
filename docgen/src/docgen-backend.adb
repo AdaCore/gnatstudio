@@ -92,12 +92,6 @@ package body Docgen.Backend is
       Level            : Natural;
       Indent           : Natural)
    is
-      --  ???
-      --       Is_Spec : constant Boolean := Is_Spec_File (Kernel, File_Name);
-
-      --         function Is_Operator (Op : String) return Boolean;
-      --  Indicates if op is a subprogram which overloads an operator
-
       function Callback
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
@@ -106,40 +100,6 @@ package body Docgen.Backend is
       --  Looks the value of type Language_Entity returned by
       --  Parse_Entities and calls the appropriate subprograms to format
       --  the current entity.
-
-      -------------------
-      --  Is_Operator  --
-      -------------------
-
-      --  ???
---        function Is_Operator (Op : String) return Boolean is
---           use List_Reference_In_File;
---           Ref_List_Info : List_Reference_In_File.List_Node;
---           Ref           : List_Reference_In_File.Data_Access;
---
---        begin
---           --  Can this function be simplified ???
---
---           Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
---
---           while Ref_List_Info /= List_Reference_In_File.Null_Node loop
---              Ref := List_Reference_In_File.Data_Ref (Ref_List_Info);
---
---              if Get_Name (Ref.Entity) = Op then
---                 case Get_Kind (Ref.Entity).Kind is
---                    when Function_Or_Operator | Procedure_Kind =>
---                       --  The entity of this reference overloads an operator
---                       return True;
---                    when others  =>
---                       return False;
---                 end case;
---              end if;
---
---              Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
---           end loop;
---
---           return False;
---        end Is_Operator;
 
       --------------
       -- Callback --
@@ -175,56 +135,6 @@ package body Docgen.Backend is
                   Entity_Line);
 
             when String_Text =>
-               --  ???
-               --  In this context, we must detect overriden operators
---                 if Text (Sloc_Start.Index) = '"'
---                   and then
---                     Text (Sloc_End.Index) = '"'
---                   and then
---                     Sloc_Start.Index + 1 <= Sloc_End.Index - 1
---                 then
---                    if (not Is_Spec
---                        and then
---                        --  For a body file, we must search the word in the
---                        --  list of reference that has been made before
---                        --  because the body is formated in one piece and we
---                        --  don't have any information about this word
---                          Is_Operator
---                            (Text (Sloc_Start.Index + 1 ..
---                                     Sloc_End.Index - 1)))
---                      or else
---                        (Is_Spec
---                         --  For a spec file, we know immediatly the nature
---                         --  of the word
---                         and then Info in Doc_Info_Subprogram'Class
---                         and then
---                          Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1) =
---                           Get_Name (Doc_Info_Subprogram
---                                       (Info).Subprogram_Entity.Entity))
---                    then
---                       --  Function which overrides an operator
---                       Format_Identifier
---                         (B,
---                          List_Ref_In_File,
---                          Sloc_Start.Index + 1,
---                          Sloc_Start.Line,
---                          Sloc_Start.Column,
---                          Sloc_End.Index - 1,
---                          Sloc_End.Line,
---                          Kernel,
---                          File,
---                          Text,
---                          File_Name,
---                          Entity_Line,
---                          Line_In_Body,
---                          Source_File_List,
---                          Options.Link_All,
---                          Is_Body,
---                          Options.Process_Body_Files,
---                          Level,
---                          Indent);
---                    else
---                       Simple String
                Format_String
                  (B, Kernel, Result,
                   Text,
@@ -233,20 +143,6 @@ package body Docgen.Backend is
                   Sloc_End.Index,
                   Sloc_End.Line,
                   Entity_Line);
-
-               --                       end if;
-               --                    else
-               --                       --  Simple string
-               --                       Format_String
-               --                         (B,
-               --                          File,
-               --                          Text,
-               --                          Sloc_Start.Index,
-               --                          Sloc_Start.Line,
-               --                          Sloc_End.Index,
-               --                          Sloc_End.Line,
-               --                          Entity_Line);
-               --                    end if;
 
             when Character_Text =>
                Format_Character
