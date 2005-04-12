@@ -23,6 +23,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with XML_Parsers;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Gdk;                       use Gdk;
 with Gdk.Window;                use Gdk.Window;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -597,12 +598,19 @@ package body GPS.Kernel is
       State        : Gdk_Window_State;
       X, Y         : Gint;
       Err          : String_Access;
+      Main_Window : constant Gdk.Window.Gdk_Window :=
+        Get_Window (Handle.Main_Window);
+
 
    begin
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
       Trace (Me, "saving desktop file " & File_Name);
+
+      if Main_Window = null then
+         return;
+      end if;
 
       if Is_Regular_File (File_Name) then
          XML_Parsers.Parse (File_Name, Old, Err);
@@ -649,7 +657,7 @@ package body GPS.Kernel is
 
       --  Add GPS-specific nodes
 
-      State := Get_State (Get_Window (Handle.Main_Window));
+      State := Get_State (Main_Window);
 
       if (State and Window_State_Maximized) = 0 then
          M       := new Node;
