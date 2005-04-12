@@ -222,13 +222,14 @@ package body Docgen.Backend is
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
       use Type_Entity_List;
+
       Loc_End            : Natural;
       Loc_Start          : Natural;
       Point_In_Column    : Natural := 0;
       Entity_Info        : Entity_Information;
       Ref_List_Info      : List_Reference_In_File.List_Node;
       Ref_List_Info_Prec : List_Reference_In_File.List_Node;
-      Found              : Boolean;
+      Found              : Boolean := False;
       Entity_Abstract    : Boolean;
       Indentation        : Natural;
       --  This last parameter is used to add levels of indentation
