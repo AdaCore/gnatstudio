@@ -160,7 +160,7 @@ package body Docgen.Backend is
                   Text,
                   Sloc_Start.Index,
                   Sloc_Start.Line,
-                  Sloc_End.Index - 1,
+                  Sloc_End.Index,
                   Sloc_End.Line,
                   Entity_Line);
 
@@ -233,6 +233,7 @@ package body Docgen.Backend is
                   Sloc_End.Index,
                   Sloc_End.Line,
                   Entity_Line);
+
                --                       end if;
                --                    else
                --                       --  Simple string
@@ -258,33 +259,25 @@ package body Docgen.Backend is
                   Entity_Line);
 
             when Identifier_Text =>
-               if Text (Sloc_Start.Index .. Sloc_End.Index) /= ";" then
-                  --  ???  This test is necessary because Parse_Entity
-                  --  consider the last ";" of the text as an identifier.
-                  --  What is surprising is it occurs only for the text of
-                  --  spec file and not for the text of body file. Perhaps,
-                  --  the reason is that in the body the ";" ended the
-                  --  file.
+               Format_Identifier
+                 (B, Kernel, Result,
+                  List_Ref_In_File,
+                  Sloc_Start.Index,
+                  Sloc_Start.Line,
+                  Sloc_Start.Column,
+                  Sloc_End.Index,
+                  Sloc_End.Line,
+                  Text,
+                  File_Name,
+                  Entity_Line,
+                  Line_In_Body,
+                  Source_File_List,
+                  Options.Link_All,
+                  Is_Body,
+                  Options.Process_Body_Files,
+                  Level,
+                  Indent);
 
-                  Format_Identifier
-                    (B, Kernel, Result,
-                     List_Ref_In_File,
-                     Sloc_Start.Index,
-                     Sloc_Start.Line,
-                     Sloc_Start.Column,
-                     Sloc_End.Index,
-                     Sloc_End.Line,
-                     Text,
-                     File_Name,
-                     Entity_Line,
-                     Line_In_Body,
-                     Source_File_List,
-                     Options.Link_All,
-                     Is_Body,
-                     Options.Process_Body_Files,
-                     Level,
-                     Indent);
-               end if;
             when others =>
                null;
          end case;
