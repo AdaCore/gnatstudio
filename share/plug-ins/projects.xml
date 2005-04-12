@@ -264,6 +264,7 @@
        editor_page="Libraries"
        editor_section="General"
        label="Library Name"
+       hide_in="wizard"
        description="Name of the library that will contain all the object files from this project. You must chose a name which is valid for your platform.">
        <string />
    </project_attribute>
@@ -273,6 +274,7 @@
        editor_page="Libraries"
        editor_section="General"
        label="Library Directory"
+       hide_in="wizard"
        description="Directory in which the library will be copied as a result of the compilation. Some extra files will be copied in this directory as well, for instance the ALI file for Ada sources. This directory must be different from the object directory">
        <string type="directory"/>
    </project_attribute>
@@ -282,6 +284,7 @@
        editor_page="Libraries"
        editor_section="General"
        label="Library Kind"
+       hide_in="wizard"
        description="The kind of library that should be built. If you need to build different kinds of libraries, it is recommend to select a different library directory for each, since the object files might need to be compiled differently in each case">
        <choice default="true">static</choice>
        <choice>dynamic</choice>
@@ -293,6 +296,7 @@
        editor_page="Libraries"
        editor_section="General"
        label="Version"
+       hide_in="wizard"
        description="The version of the library. This is a platform depend string, and you should make sure it is valid for your platform.">
        <string />
    </project_attribute>
@@ -302,6 +306,7 @@
        editor_page="Libraries"
        editor_section="Standalone libraries"
        label="Interface" 
+       hide_in="wizard"
        description="This attribute is optional. If it is defined, it should contain the list of units that are the public interface to the library. All other units will not be accessible by users of the library. If this attribute is defined, the library will be a standalone library."
        list="true">
        <string type="file" />
@@ -312,6 +317,7 @@
        editor_page="Libraries"
        editor_section="Standalone libraries"
        label="Auto Init"
+       hide_in="wizard"
        description="If this attribute is true, then the standalone library will be automatically initialized when part of the project. If this attribute is false, you need to call some special elaboration code yourself. You must defined the interface to the library as well.">
        <choice default="true">True</choice>
        <choice>False</choice>
@@ -322,6 +328,7 @@
        editor_page="Libraries"
        editor_section="Standalone libraries"
        label="Source directory"
+       hide_in="wizard"
        description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory">
        <string type="directory" />
    </project_attribute>
