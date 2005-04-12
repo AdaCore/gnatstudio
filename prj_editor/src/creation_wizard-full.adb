@@ -117,7 +117,8 @@ package body Creation_Wizard.Full is
 
    procedure Add_Full_Wizard_Pages
      (Wiz          : access Project_Wizard_Record'Class;
-      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class)
+      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class;
+      Context      : String)
    is
       P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
@@ -135,7 +136,7 @@ package body Creation_Wizard.Full is
             Project           => No_Project,
             Path_Widget       => Get_Path_Widget (Name_And_Loc),
             Nth_Page          => E,
-            Context           => "wizard");
+            Context           => Context);
          if Page /= null then
             Add_Page (Wiz,
                       Page         => Page,

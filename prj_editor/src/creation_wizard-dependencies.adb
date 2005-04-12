@@ -590,7 +590,7 @@ package body Creation_Wizard.Dependencies is
    begin
       Creation_Wizard.Gtk_New (Wiz, B.Kernel, -"Add New Project");
       Add_Full_Wizard_Pages
-        (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz));
+        (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz), "wizard");
 
       declare
          Name : constant String := Creation_Wizard.Run (Wiz);

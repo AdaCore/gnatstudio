@@ -45,6 +45,7 @@ package body Creation_Wizard.Selector is
       Name_And_Loc  : Name_And_Location_Page_Access;
       From_Scratch  : Gtk_Radio_Button;
       From_Existing : Gtk_Radio_Button;
+      From_Library  : Gtk_Radio_Button;
       From_Adp      : Gtk_Radio_Button;
    end record;
    type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
@@ -76,8 +77,10 @@ package body Creation_Wizard.Selector is
          Selected := 1;
       elsif Get_Active (Page.From_Adp) then
          Selected := 2;
-      else
+      elsif Get_Active (Page.From_Scratch) then
          Selected := 3;
+      else
+         Selected := 4;
       end if;
 
       if Page.Last_Selected /= Selected then
@@ -86,8 +89,10 @@ package body Creation_Wizard.Selector is
          case Selected is
             when 1 => Add_Simple_Wizard_Pages (Project_Wizard (Wiz));
             when 2 => Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
+            when 3 => Add_Full_Wizard_Pages
+                 (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
             when others => Add_Full_Wizard_Pages
-                 (Project_Wizard (Wiz), Page.Name_And_Loc);
+                 (Project_Wizard (Wiz), Page.Name_And_Loc, "library_wizard");
          end case;
       end if;
 
@@ -217,6 +222,23 @@ package body Creation_Wizard.Selector is
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
+
+      Gtk_New (Page.From_Library,
+               Get_Group (Page.From_Scratch),
+               Label => -"Library Project");
+      Pack_Start (Box, Page.From_Library, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create a new project file, that creates a library as a result"
+           & ASCII.LF
+           & "of the a build, instead of an executable"));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
 
       Set_Active (Page.From_Scratch, True);
       return Gtk_Widget (Box);
