@@ -517,12 +517,12 @@ will be loaded; any other file will be opened in a new source editor.
 
 @iftex
 @cindex screen shot
-@image{explorer-views, 10.7cm}
+@image{project-view, 10.7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{explorer-views}
+@image{project-view}
 @end ifhtml
 
 @cindex interactive search
@@ -701,7 +701,7 @@ according to the new setup.
 
 @noindent
 In addition to the @code{Project View}, GPS also provides a
-@code{File View} through the @code{Tools->file View} menu.
+@code{File View} through the @code{Tools->File View} menu.
 
 In this view, directories are displayed exactly as they are organized
 physically on the disk (including Windows drives).
@@ -1152,16 +1152,6 @@ part of the MDI (each of the docks or the middle area) that previously
 had the focus. Therefore, if you simply open an editor as a result of
 a cross-reference query, you can simply close that editor to go back
 to where you were before.
-
-@iftex
-@cindex screen shot
-@image{mdi-title-bar, 10.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{mdi-title-bar}
-@end ifhtml
 
 Alternatively, you can also select the window by clicking anywhere in
 its title bar, and then select the menu @code{Window->Close}
@@ -3312,8 +3302,7 @@ It has a number of pages, each dedicated to editing a specific set of
 attributes for the project.
 
 The typical way to access this wizard is through the
-@code{Project->New...} menu. On exit, the wizard will ask whether the newly
-created project should replace the currently loaded ones.
+@code{Project->New...} menu.
 
 The project wizard is also launched when a new dependency is created
 between two projects, through the contextual menu in the project
@@ -3332,7 +3321,7 @@ explorer.
 The wizard gives access to the following list of pages:
 
 @itemize @bullet
-@item Wizard Types
+@item Project type
 @item Project Naming
 @item Languages Selection
 @item Version Control System Selection
@@ -3344,7 +3333,7 @@ The wizard gives access to the following list of pages:
 @end itemize
 
 @c ------------------------------------------------------------------
-@subsection Wizard Types
+@subsection Project Type
 @c ------------------------------------------------------------------
 
 @noindent
@@ -3353,17 +3342,17 @@ information you have or your current setup, you will choose one or the
 other.
 
 @itemize @bullet
-@item From Scratch
+@item Single Project
 
 This is likely the wizard you will use most often. It creates a project
 file from scratch, and asks you for the location of source directories,
 the object directory,... The rest of this chapter describes this wizard
 in more details
 
-@item From Existing Ada Sources
+@item Project Tree
 
 This wizard will attempt to create a set of one or more project files to
-try and represent your current build environment. It will analyze what
+represent your current build environment. It will analyze what
 your sources are, where the corresponding object files are, and will try
 and find some possible setup for the project files (remember that a given
 @file{.gpr} project file can be associated with a single object directory.
@@ -3371,11 +3360,11 @@ and find some possible setup for the project files (remember that a given
 This wizard might not work in all cases, but is worth a try to get you
 started if you already have an existing set of sources
 
-@item From .adp project
+@item Convert GLIDE Project (.adp)
 
 This wizard will help you convert a @file{.adp} project file that is used
-by the Glide environment distributed by AdaCore. The same restrictions
-apply as above, but the list of source directories, object directories
+by the GLIDE environment. The same restrictions apply as above, except
+that the list of source directories, object directories
 and tool switches are read directly from that file.
 @end itemize
 
@@ -3637,6 +3626,16 @@ in your system.
 The dependencies also determine in what order your application is built.
 When you compile a project, the builder will first make sure that the projects
 it depends on are up-to-date, and otherwise recompile them.
+
+@iftex
+@cindex screen shot
+@image{project-deps, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-deps}
+@end ifhtml
 
 When you select that contextual menu, GPS will open a dialog that allows
 you to add or remove dependencies to your project. New dependencies are
