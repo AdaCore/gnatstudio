@@ -7,7 +7,7 @@ Known Problems fixed in GPS 3.0.0
 - E317-016 Changing fonts using the font selector
   Problem:    In the preferences dialog, when changing a font using the font
               selector, GPS does not take into account the new preference.
-  Workaround: Type the name of the font manually in the text entry.
+  Workaround: Type the name of the font manually in the text entry
 
 - E310-003 Casing of project names not preserved in the Project View
   Problem:    The project view doesn't show the proper casing for project names,
@@ -36,19 +36,20 @@ Known Problems fixed in GPS 3.0.0
 - File selector is slow to list large directories under UNIX.
   Problem:    Under non-Windows systems, the file selector can be slow to list
               the contents of large directories.
-  Workaround: Type the name of the file/directory in the bottom entry.
+  Workaround: Type the name of the file/directory in the bottom entry
 
 - E308-006 Removing main files from project doesn't update Executables attribute
   Problem:    If you remove some main units from your project through the
-              Project Properties dialog, the attribute Executables is not updated
-              at the same time.
-  Workaround: Even if the attribute is still set, this doesn't impact the loading
-              of your project, and the unit is no longer part of the main units
+              Project Properties dialog, the attribute Executables is not
+              updated at the same time.
+  Workaround: Even if the attribute is still set, this doesn't impact the
+              loading of your project, and the unit is no longer part of the
+              main units
 
 - Files duplicates in the "Open From Project" dialog
   Problem:    If source directories are specified both in the projects and
               through ADA_INCLUDE_PATH, the dialog contains duplicate entries.
-  Workaround: this is just a display glitch
+  Workaround: This is a display artifact that can be ignored
 
 - E302-018 GPS hangs when modifying invalid debugger memory contents
   Problem:    During a debugging session, trying to modify the contents
@@ -78,13 +79,13 @@ Known Problems fixed in GPS 3.0.0
   Problem:    When searching for a string in comments only, or all but
               comments, GPS will sometimes report incorrect matches, or
               not report valid ones.
-  Workaround: Use the 'Whole Text' context instead.
+  Workaround: Use the 'Whole Text' context instead
 
 - E204-005 Refresh problems after a Commit in the VCS Explorer under Windows
   Problem:    Under Windows, when working on files where the full path has
               some upper case characters, the VCS Explorer is not properly
               refreshed after doing a Commit operation
-  Workaround: Refresh the VCS Explorer using the Query Status operation.
+  Workaround: Refresh the VCS Explorer using the Query Status operation
 
 - E111-013 File casing incorrectly shown in project properties editor
   Problem:    On Windows, if you edit the properties of a project file that
@@ -105,7 +106,7 @@ Known Problems fixed in GPS 3.0.0
               command lines containing the "%" sign, GPS always attempts to
               expand it.
   Workaround: When you need to use the "%" sign, use a python command or an
-              external wrapper.
+              external wrapper
 
 - DB25-012 Contextual menu's filter in File View
   Problem:    If you create a custom contextual menu through an XML file,
@@ -120,7 +121,7 @@ Known Problems fixed in GPS 3.0.0
               attribute that contains spaces, they are all quoted by a
               backslash in the result string.
   Workaround: Use get_attribute_as_list and recreate a string from the
-              output, without the backslashes.
+              output, without the backslashes
 
 - DA17-002 Extra spaces added in GPS shell commands
   Problem:    When chaining multiple commands in an action for instance, the
@@ -138,11 +139,6 @@ Known Problems fixed in GPS 3.0.0
   Workaround: Execute your program through a script that sets the proper PATH
               and LD_LIBRARY_PATH variables
 
-- D806-004 Display problems with the help browser under Windows
-  Problem:    Under Windows, the integrated help browser cannot display
-              properly the long HTML files after a certain point.
-  Workaround: Use an external HTML browser to view these files
-
 - D923-003 Closing search dialog sends GPS window into the background
   Problem:    Under Windows, when opening the search dialog and using
               the browse button (in the Files... option), closing the browse
@@ -159,6 +155,11 @@ Known Problems fixed in GPS 3.0.0
                                (Foo ("bar")));
   Workaround: Indent the line manually, or put the first 'Foo' on the previous
               line.
+
+- D806-004 Display problems with the help browser under Windows
+  Problem:    Under Windows, the integrated help browser cannot display
+              properly the long HTML files after a certain point.
+  Workaround: Use an external HTML browser to view these files
 
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
