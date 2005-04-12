@@ -2514,8 +2514,6 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (Buffer);
       end Reset_Buffer;
 
-      Highlight_Threshold : constant := 16384;
-
       Contents      : GNAT.OS_Lib.String_Access;
       UTF8          : Gtkada.Types.Chars_Ptr;
       Ignore        : aliased Natural;
@@ -2609,21 +2607,14 @@ package body Src_Editor_Buffer is
       Insert_At_Cursor (Buffer, UTF8, Gint (Length));
       g_free (UTF8);
 
-      --  Force a highlight of the newly inserted text.
+      --  Highlight the newly inserted text
 
       if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Get_Bounds (Buffer, F, L);
          Buffer.Highlight_Needed := True;
          Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
          Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
-
-         --  If the buffer is small, highlight it right away. Otherwise,
-         --  do it later in order to speed up file opening (in particular
-         --  when directly jumping to a given line).
-
-         if Length <= Highlight_Threshold then
-            Process_Highlight_Region (Source_Buffer (Buffer));
-         end if;
+         Process_Highlight_Region (Source_Buffer (Buffer));
       end if;
 
       if CR_Found then
