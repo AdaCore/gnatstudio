@@ -517,7 +517,7 @@ will be loaded; any other file will be opened in a new source editor.
 
 @iftex
 @cindex screen shot
-@image{project-view, 10.7cm}
+@image{project-view, 6.7cm}
 @end iftex
 
 @ifhtml
@@ -677,12 +677,12 @@ the same set of project files.
 
 @iftex
 @cindex screen shot
-@image{file-view, 10.7cm}
+@image{scenario-view, 6.7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{file-view}
+@image{scenario-view}
 @end ifhtml
 
 A combo box is displayed in this area for each environment
@@ -715,7 +715,7 @@ In addition to the @code{Project View}, GPS also provides a
 
 @iftex
 @cindex screen shot
-@image{file-view, 10.7cm}
+@image{file-view, 6.7cm}
 @end iftex
 
 @ifhtml
@@ -2293,7 +2293,7 @@ If the preference is enabled, the saving is performed automatically.
 
 @iftex
 @cindex screen shot
-@image{save-dialog, 10cm}
+@image{save-dialog, 7cm}
 @end iftex
 
 @ifhtml
@@ -3072,7 +3072,7 @@ scenario view will contain something similar to:
 
 @iftex
 @cindex screen shot
-@image{explorer-scenario, 8.5cm}
+@image{explorer-scenario, 5.5cm}
 @end iftex
 
 @ifhtml
@@ -3918,7 +3918,7 @@ screen, similar to the following:
 
 @iftex
 @cindex screen shot
-@image{search-hide, 7cm}
+@image{search-hide, 5cm}
 @end iftex
 
 @ifhtml
@@ -4011,7 +4011,7 @@ it is taking too long, or to display the options.
 
 @iftex
 @cindex screen shot
-@image{search-options, 7cm}
+@image{search-options, 6cm}
 @end iftex
 
 @ifhtml
