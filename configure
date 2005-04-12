@@ -1403,7 +1403,7 @@ else
   PYTHON_PATH_WITH="no"
 fi;
 
-PROJECT_PATH=`gnatls -v | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
+PROJECT_PATH=`gnatls -v | tr -d '\015' | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
 # Extract the first word of "xmlada.gpr", so it can be a program name with args.
 set dummy xmlada.gpr; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
