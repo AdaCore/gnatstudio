@@ -28,15 +28,16 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Intl;                  use GPS.Intl;
 with Projects;                  use Projects;
 
 with File_Utils;                use File_Utils;
@@ -46,7 +47,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
 
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -840,6 +841,11 @@ package body Custom_Module is
 
    begin
       Add_Child ("/", Node);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Customize;
 
    -----------------
@@ -863,6 +869,11 @@ package body Custom_Module is
             Free (C);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Activate;
 
    ------------------
@@ -943,6 +954,11 @@ package body Custom_Module is
             Free (Inst);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Menu_Handler;
 
    ------------------------
@@ -991,6 +1007,11 @@ package body Custom_Module is
             Free (Menus);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Contextual_Handler;
 
    ---------------------
