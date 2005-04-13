@@ -444,9 +444,11 @@ package body Entities.Debug is
                return True;
             elsif OpF2 = VFS.No_File then
                return False;
-            else
+            elsif Dump_Full_File_Names then
                --  We want <=, but it is more efficient to compute it this way
-               return not (OpF2 < OpF1);
+               return OpF2 < opF1;
+            else
+               return not (Base_Name (OpF2) < Base_Name (OpF1));
             end if;
          end Lt;
 
