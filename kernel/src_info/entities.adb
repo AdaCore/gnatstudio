@@ -387,10 +387,10 @@ package body Entities is
             --  and the user is not supposed to call Unref more often than Ref
             Reset (F);
 
-            if not Active (Debug_Me) then
-               Unchecked_Free (F);
-            else
+            if Active (Debug_Me) then
                F := null;
+            else
+               Unchecked_Free (F);
             end if;
          end if;
       end if;
@@ -769,10 +769,10 @@ package body Entities is
             Destroy (Tree.Contents);
          end if;
 
-         if not Active (Debug_Me) then
-            Unchecked_Free (Tree);
-         else
+         if Active (Debug_Me) then
             Tree := null;
+         else
+            Unchecked_Free (Tree);
          end if;
       end if;
    end Destroy;
@@ -796,11 +796,11 @@ package body Entities is
                LI.Files.Table (L).LI := null;
             end loop;
 
-            if not Active (Debug_Me) then
+            if Active (Debug_Me) then
+               LI := null;
+            else
                Free (LI.Files);
                Unchecked_Free (LI);
-            else
-               LI := null;
             end if;
          end if;
       end if;
@@ -858,10 +858,10 @@ package body Entities is
             Remove (Entity.Declaration.File.Entities, Entity);
             Entity.Ref_Count := 0;
 
-            if not Active (Debug_Me) then
-               Unchecked_Free (Entity);
-            else
+            if Active (Debug_Me) then
                Entity.Shared_Name := Shared;
+            else
+               Unchecked_Free (Entity);
             end if;
 
             --  Only reset to null when the entity is indeed no longer valid.
@@ -1008,10 +1008,10 @@ package body Entities is
         (Source_File_Item_Record, Source_File_Item);
    begin
       Unref (E.File);
-      if not Active (Debug_Me) then
-         Unchecked_Free (E);
-      else
+      if Active (Debug_Me) then
          E := null;
+      else
+         Unchecked_Free (E);
       end if;
    end Free;
 
@@ -1052,10 +1052,10 @@ package body Entities is
    begin
       Unref (E.File);
 
-      if not Active (Debug_Me) then
-         Unchecked_Free (E);
-      else
+      if Active (Debug_Me) then
          E := null;
+      else
+         Unchecked_Free (E);
       end if;
    end Free;
 
@@ -1099,22 +1099,18 @@ package body Entities is
                   Free  (EL.Table (E).Child_Types);
                   Free  (EL.Table (E).References);
                   Free (EL.Table (E).Called_Entities);
-
-                  if not Active (Debug_Me) then
-                     Unchecked_Free (EL.Table (E));
-                  else
-                     EL.Table (E) := null;
-                  end if;
+                  Unchecked_Free (EL.Table (E));
                end if;
             end loop;
          end loop;
 
+         Reset (File.All_Entities);
+         Reset (File.Entities);
+         Free (File.Depends_On);
+         Free (File.Depended_On);
+
          if not Active (Debug_Me) then
-            Reset (File.All_Entities);
-            Reset (File.Entities);
             Free (File.Unit_Name);
-            Free (File.Depends_On);
-            Free (File.Depended_On);
          end if;
       end Fast_Reset;
 
@@ -1141,10 +1137,10 @@ package body Entities is
         (Entities_Database_Record, Entities_Database);
    begin
       Reset (Db);
-      if not Active (Debug_Me) then
-         Unchecked_Free (Db);
-      else
+      if Active (Debug_Me) then
          Db := null;
+      else
+         Unchecked_Free (Db);
       end if;
    end Destroy;
 
@@ -1395,9 +1391,7 @@ package body Entities is
       if Active (Ref_Me) then
          Trace (Ref_Me, "Freeing shared name " & D.Name.all);
       end if;
-      if not Active (Debug_Me) then
-         Free (D.Name);
-      end if;
+      Free (D.Name);
       Unchecked_Free (D.List);
       Unchecked_Free (D);
    end Destroy;
