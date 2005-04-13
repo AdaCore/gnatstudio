@@ -123,7 +123,7 @@ procedure GPS.Main is
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
-   Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", Off);
+   Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", On);
    Metrics_Trace  : constant Debug_Handle := Create ("MODULE.Metrics", Off);
    Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
    Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
