@@ -1229,6 +1229,8 @@ package body Src_Editor_Box is
             return False;
          end if;
 
+         Check_Writable (B);
+
          B.Timestamp_Mode := Check_At_Focus;
       end if;
 
