@@ -2605,6 +2605,8 @@ package body Ada_Analyzer is
                         --  This is an operator symbol, e.g function ">=" (...)
 
                         Prev_Token := Tok_Operator_Symbol;
+                        Entity     := Identifier_Text;
+
                         Len := P - First + 1;
                         Top_Token.Identifier (1 .. Len) := Buffer (First .. P);
                         Top_Token.Ident_Len := Len;
@@ -2612,17 +2614,17 @@ package body Ada_Analyzer is
                         Top_Token.Sloc_Name.Column :=
                           First - Start_Of_Line + 1;
                         Top_Token.Sloc_Name.Index := First;
-                        Entity := Identifier_Text;
+
                      else
                         Prev_Token := Tok_String_Literal;
-                        Entity := String_Text;
+                        Entity     := String_Text;
                      end if;
 
                      Compute_Indentation
                        (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
 
-                     if Callback /= null and then
-                       Callback
+                     if Callback /= null
+                       and then Callback
                          (Entity,
                           (Line_Count, First - Start_Of_Line + 1,
                            First),
