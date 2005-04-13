@@ -4,7 +4,7 @@ Known Problems fixed in GPS 3.0.0
   Problem:    When a file is modified outside of GPS, when choosing to Reload
               the editor corresponding to that file, the "Writable/Read-only"
               status of the editor is not refreshed.
-  Workaround: None found.
+  Workaround: Change the state by hand by clicking on the box
 
 - Various problems with the multiple editor Views.
   Problem:    When using multiple Views of the same file, unwanted scrolling
