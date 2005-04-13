@@ -2623,16 +2623,17 @@ package body Ada_Analyzer is
                      Compute_Indentation
                        (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
 
-                     if Callback /= null
-                       and then Callback
-                         (Entity,
-                          (Line_Count, First - Start_Of_Line + 1,
-                           First),
-                          (Line_Count, P - Start_Of_Line + 1, P),
-                          False)
-                     then
-                        Terminated := True;
-                        return;
+                     if Callback /= null then
+                        if Callback
+                          (Entity,
+                           (Line_Count, First - Start_Of_Line + 1,
+                            First),
+                           (Line_Count, P - Start_Of_Line + 1, P),
+                           False)
+                        then
+                           Terminated := True;
+                           return;
+                        end if;
                      end if;
                   end;
 
