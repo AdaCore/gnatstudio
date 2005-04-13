@@ -1704,6 +1704,7 @@ package body Switches_Editors is
    begin
       Editor := new Switches_Edit_Record;
       Gtk.Notebook.Initialize (Editor);
+      Set_Scrollable (Editor);
 
       Editor.Kernel := Kernel_Handle (Kernel);
       Editor.Pages := new Pages_Array (1 .. Switches_Page_Count (Kernel));
