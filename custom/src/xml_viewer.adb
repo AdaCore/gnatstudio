@@ -170,7 +170,7 @@ package body XML_Viewer is
             Set (View.Tree.Model, I, Name_Column,
                  "<b>" & Base_Name (Get_Attribute (N, "name")) & "</b>");
             Set (View.Tree.Model, I, Command_Column,
-                 "Editor.edit """ & Get_Attribute (N, "name") & """");
+                 "Editor.edit """"""" & Get_Attribute (N, "name") & """""""");
 
          elsif N.Tag.all = "unit" then
             Append (View.Tree.Model, I, Parent);
@@ -279,17 +279,17 @@ package body XML_Viewer is
       Add_Attribute (Col, Rend, "markup", Name_Column);
       Dumm := Append_Column (View.Tree, Col);
 
---        Gtk_New (Col);
+      Gtk_New (Col);
       Gtk_New (Rend);
-      Pack_End (Col, Rend, False);
+      Pack_Start (Col, Rend, False);
       Add_Attribute (Col, Rend, "text", Value_Column);
---        Dumm := Append_Column (View.Tree, Col);
+      Dumm := Append_Column (View.Tree, Col);
 
       Pack_Start (View, Scroll);
 
       View.Child := Put
         (Kernel, View,
-         Position => Position_Graphs,
+         Position => Position_Left,
          Module   => Custom_Module_ID);
 
       Set_Title (View.Child, Name);
@@ -324,7 +324,7 @@ package body XML_Viewer is
 
          Free (Inst);
 
-      elsif Command = "parse_metrics" then
+      elsif Command = "parse" then
          Value := Nth_Arg_Data (Data, 1, XML_Viewer_Class);
          View := Convert (Value);
          Set_Error_Msg (Data, Parse_Metrix (View, Nth_Arg (Data, 2)));
