@@ -337,7 +337,6 @@ package body XML_Viewer is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-
       XML_Viewer_Class : constant Class_Type := New_Class
         (Kernel, "XMLViewer");
 

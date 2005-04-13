@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package contains XML Tree viewers
+--  This package provides XML Tree viewers
 
-with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package XML_Viewer is
 
