@@ -4434,6 +4434,7 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
+	PYTHON_LIBS="-ldl -lutil"
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
