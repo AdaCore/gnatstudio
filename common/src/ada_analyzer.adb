@@ -2577,7 +2577,8 @@ package body Ada_Analyzer is
 
                when '"' =>
                   declare
-                     Len : Natural;
+                     Len    : Natural;
+                     Entity : Language_Entity;
                   begin
                      First := P;
 
@@ -2597,8 +2598,9 @@ package body Ada_Analyzer is
                         end if;
                      end if;
 
-                     if Top_Token.Token in Token_Class_Declk
-                       and then Top_Token.Ident_Len = 0
+                     if (Top_Token.Token in Token_Class_Declk
+                         and then Top_Token.Ident_Len = 0)
+                       or else Prev_Token = Tok_End
                      then
                         --  This is an operator symbol, e.g function ">=" (...)
 
@@ -2610,24 +2612,25 @@ package body Ada_Analyzer is
                         Top_Token.Sloc_Name.Column :=
                           First - Start_Of_Line + 1;
                         Top_Token.Sloc_Name.Index := First;
-
+                        Entity := Identifier_Text;
                      else
                         Prev_Token := Tok_String_Literal;
+                        Entity := String_Text;
                      end if;
 
                      Compute_Indentation
                        (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
 
-                     if Callback /= null then
-                        if Callback
-                          (String_Text,
-                           (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P),
-                           False)
-                        then
-                           Terminated := True;
-                           return;
-                        end if;
+                     if Callback /= null and then
+                       Callback
+                         (Entity,
+                          (Line_Count, First - Start_Of_Line + 1,
+                           First),
+                          (Line_Count, P - Start_Of_Line + 1, P),
+                          False)
+                     then
+                        Terminated := True;
+                        return;
                      end if;
                   end;
 
