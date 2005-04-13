@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.0.0
 
+- E408-001 The "Writable/Read-only" state is not refreshed
+  Problem:    When a file is modified outside of GPS, when choosing to Reload
+              the editor corresponding to that file, the "Writable/Read-only"
+              status of the editor is not refreshed.
+  Workaround: None found.
+
 - Various problems with the multiple editor Views.
   Problem:    When using multiple Views of the same file, unwanted scrolling
               can happen on the editor which is not being currently used.
