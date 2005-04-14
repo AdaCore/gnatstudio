@@ -21,7 +21,7 @@
        editor_page="Languages"
        editor_section="Tools"
        description="The command to compile the source files for a given language"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="compiler">
        <index attribute="Languages">
           <string />
@@ -55,7 +55,7 @@
        editor_page="Languages"
        editor_section="Tools"
        description="The gnatls command used to find where the Ada run time files are installed"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="Gnatls">
        <choice default="true" >gnatls</choice>
        <choice>powerpc-wrs-vxworks-gnatls</choice>
@@ -80,7 +80,7 @@
        editor_page="Languages"
        editor_section="Tools"
        description="The application to use when debugging applications. Only gdb and its variants are currently supported by GPS"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="Debugger">
        <choice default="true" >gdb</choice>
        <choice>powerpc-wrs-vxworks-gdb</choice>
@@ -105,7 +105,7 @@
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
        label="Global pragmas"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        base_name_only="true" >
        <string type="file" />
    </project_attribute> 
@@ -117,7 +117,7 @@
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
        label="Local pragmas"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        base_name_only="true" >
        <string type="file" />
    </project_attribute>
@@ -128,7 +128,7 @@
        editor_page="General"
        editor_section="Cross environment"
        description="Name or IP address of the machine on which the application should be compiled, debugged and run. It is recommended that you always start GPS locally, and work remotely on your application. Leave this field blank when working locally"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="Tools host">
        <string />
    </project_attribute>
@@ -139,7 +139,7 @@
        editor_page="General"
        editor_section="Cross environment"
        description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="Program host">
        <string />
    </project_attribute>
@@ -150,7 +150,7 @@
        editor_page="General"
        editor_section="Cross environment"
        description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
-       hide_in="wizard"
+       hide_in="wizard library_wizard"
        label="Protocol">
        <choice>wtx</choice>
        <choice>vxworks</choice>
