@@ -190,7 +190,7 @@ package body Remote_Connections is
       GPS_Termination : Boolean)
    is
       pragma Unreferenced (GPS_Termination);
-      Tmp : Connection_List := Open_Connections;
+      Tmp      : Connection_List := Open_Connections;
       Previous : Connection_List;
    begin
       while Tmp.Connection /= Remote_Connection (Connection) loop
@@ -213,7 +213,7 @@ package body Remote_Connections is
    ---------------------------
 
    procedure Close_All_Connections is
-      Tmp : Connection_List := Open_Connections;
+      Tmp  : Connection_List := Open_Connections;
       Next : Connection_List;
    begin
       while Tmp /= null loop
@@ -229,7 +229,7 @@ package body Remote_Connections is
 
    function Get_Connection
      (Protocol, User, Host : String;
-      Force_New : Boolean := False) return Remote_Connection
+      Force_New            : Boolean := False) return Remote_Connection
    is
       Tmp  : Connection_List := Open_Connections;
       Fact : Remote_Connection;
@@ -288,15 +288,11 @@ package body Remote_Connections is
       Max : constant Natural :=
         Integer'Min (URL'Last, URL'First + Longest_Protocol);
    begin
-      while Index <= Max
-        and then URL (Index) /= ':'
-      loop
+      while Index <= Max and then URL (Index) /= ':' loop
          Index := Index + 1;
       end loop;
 
-      if Index + 2 > URL'Last
-        or else URL (Index .. Index + 2) /= "://"
-      then
+      if Index + 2 > URL'Last or else URL (Index .. Index + 2) /= "://" then
          Protocol := null;
          Remote_User := null;
          Remote_Host := null;
@@ -321,9 +317,7 @@ package body Remote_Connections is
          At_Sign := At_Sign + 1;
       end loop;
 
-      if At_Sign = Protocol_End
-        or else At_Sign >= Index
-      then
+      if At_Sign = Protocol_End or else At_Sign >= Index then
          Remote_User := new String'(User_Login_Name);
       else
          Remote_User := new String'(URL (Protocol_End .. At_Sign - 1));
@@ -349,7 +343,7 @@ package body Remote_Connections is
    function User_Login_Name return String is
       function Internal return Interfaces.C.Strings.chars_ptr;
       pragma Import (C, Internal, "user_login_name");
-      S : constant chars_ptr := Internal;
+      S      : constant Chars_Ptr := Internal;
       Result : constant String := Value (S);
    begin
       C_Free (S);
