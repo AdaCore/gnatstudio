@@ -9,7 +9,6 @@ with "../codefix/codefix";
 with "../vdiff/vdiff";
 with "../browsers/browsers";
 with "../vcs/vcs";
-with "../metrics/metrics";
 with "../builder/builder";
 with "../navigation/navigation";
 with "../custom/custom";
