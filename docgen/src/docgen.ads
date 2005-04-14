@@ -203,9 +203,6 @@ package Docgen is
       References         : Boolean := False;
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
-      One_Doc_File       : Boolean := False;
-      --  Used for TexInfo: True, if the project.texi file should be
-      --  build and the package files should be included there later.
       Link_All           : Boolean := False;
       --  Should links be created to entities whose declaration files
       --  aren't being processed
