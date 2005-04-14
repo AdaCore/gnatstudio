@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 with GNAT.Regpat; use GNAT.Regpat;
-with String_Hash;
-with Ada.Unchecked_Deallocation;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Traces;      use Traces;
+with String_Hash;
 
 package body Remote_Connections is
 

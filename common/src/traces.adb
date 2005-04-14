@@ -347,7 +347,7 @@ package body Traces is
       Entity        : String := GNAT.Source_Info.Enclosing_Entity;
       Message_Color : String := Default_Fg)
    is
-      Start, Last : Positive;
+      Start, Last  : Positive;
       Continuation : constant String := '_' & Handle.Name.all & "_ ";
    begin
       if Message'Length = 0 then

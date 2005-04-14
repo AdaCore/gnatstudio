@@ -27,16 +27,16 @@ with Commands;                    use Commands;
 with Commands.Interactive;        use Commands.Interactive;
 with Commands.Custom;             use Commands.Custom;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
+with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Task_Manager;     use GPS.Kernel.Task_Manager;
 with VCS_Module;                  use VCS_Module;
 with VCS_View_Pkg;                use VCS_View_Pkg;
 with Traces;                      use Traces;
