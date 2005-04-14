@@ -177,8 +177,8 @@ package body XML_Viewer is
             Set (View.Tree.Model, I, Name_Column,
                  "<b>" & Get_Attribute (N, "name") & "</b>");
             Set (View.Tree.Model, I, Command_Column,
-                 "Editor.edit """
-                 & File & """ "
+                 "Editor.edit """""""
+                 & File & """"""" "
                  & Get_Attribute (N, "line") & " "
                  & Get_Attribute (N, "col"));
 
