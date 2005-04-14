@@ -3358,6 +3358,7 @@ The wizard gives access to the following list of pages:
 @item Source Directories Selection
 @item Build Directory
 @item Main Units
+@item Library
 @item Naming Scheme
 @item Switches
 @end itemize
@@ -3396,6 +3397,13 @@ This wizard will help you convert a @file{.adp} project file that is used
 by the GLIDE environment. The same restrictions apply as above, except
 that the list of source directories, object directories
 and tool switches are read directly from that file.
+
+@item Library Project
+
+This specialized wizard is similar to the Single Project wizard, except it
+adds one extra page, the Library page. The output of the compilation of this
+project is a library (shared or static), as opposed to an executable in the
+case o the Single Project.
 @end itemize
 
 
@@ -3538,6 +3546,29 @@ is visible in the second column in this page. If you are using a
 recent enough version of GNAT (3.16 or more recent), you can change
 the name of this executable by clicking in the second column and
 changing the name interactively.
+
+@c ------------------------------------------------------------------
+@subsection Library
+@cindex library projects
+@c ------------------------------------------------------------------
+
+@noindent
+This page allows you to configure your project so that the output of
+its compilation is a library (shared or static), as opposed to an
+executable or a simple set of objet files. This library can then be linked
+with other executables (and will be automatically if the project is imported
+by another one.
+
+You need to define the attributes in the top box to transform your project
+into a library project. See the tooltips that appear when you leave your
+mouse on top of the label to the left of each field.
+
+If you define any of the attributes in the Standalone Library box, you
+will compile a standalone library. This is a library that takes care of
+its elaboration by itself, instead of relying on its caller to elaborate
+it as is standard in Ada. You also have more control over what files make
+up the public interface to the library, and what files are private to the
+library and invisible from the outside.
 
 @c ------------------------------------------------------------------
 @subsection Naming Scheme
