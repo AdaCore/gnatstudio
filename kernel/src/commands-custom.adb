@@ -214,6 +214,9 @@ package body Commands.Custom is
    procedure Store_Command_Output (Data : Process_Data; Output : String) is
       Command : constant Custom_Command_Access := Convert (Data.Callback_Data);
 
+      procedure Append (S : in out String_Access; Value : String);
+      --  Append Value to S
+
       procedure Insert (Message : String);
       --  Insert Message in the current console
 
@@ -232,7 +235,22 @@ package body Commands.Custom is
          end if;
       end Insert;
 
-      Old : GNAT.OS_Lib.String_Access := Command.Execution.Current_Output;
+      ------------
+      -- Append --
+      ------------
+
+      procedure Append (S : in out String_Access; Value : String) is
+         Previous : GNAT.OS_Lib.String_Access;
+      begin
+         if S = null then
+            S := new String'(Value);
+         else
+            Previous := S;
+            S        := new String'(Previous.all & Value);
+            Free (Previous);
+         end if;
+      end Append;
+
       Current, Total : Integer := 0;
       Save_Output : constant Boolean :=
         Command.Execution.Save_Output (Command.Execution.Cmd_Index);
@@ -261,9 +279,9 @@ package body Commands.Custom is
                then
                   Insert (Output (Index .. EOL));
                   if Save_Output then
-                     Command.Execution.Current_Output :=
-                       new String'(Old.all & Output (Index .. EOL));
-                     Free (Old);
+                     Append
+                       (Command.Execution.Current_Output,
+                        Output (Index .. EOL));
                   end if;
                else
                   if Matched (0).Last < Output'Last then
@@ -279,9 +297,7 @@ package body Commands.Custom is
                         end if;
 
                         if Save_Output then
-                           Command.Execution.Current_Output := new String'
-                             (Old.all & Outp);
-                           Free (Old);
+                           Append (Command.Execution.Current_Output, Outp);
                         end if;
                      end;
 
@@ -293,10 +309,9 @@ package body Commands.Custom is
                      end if;
 
                      if Save_Output then
-                        Command.Execution.Current_Output := new String'
-                          (Old.all
-                           & Output (Index .. Matched (0).First - 1));
-                        Free (Old);
+                        Append
+                          (Command.Execution.Current_Output,
+                           Output (Index .. Matched (0).First - 1));
                      end if;
                   end if;
 
@@ -321,8 +336,7 @@ package body Commands.Custom is
 
       elsif Save_Output then
          Insert (Output);
-         Command.Execution.Current_Output := new String'(Old.all & Output);
-         Free (Old);
+         Append (Command.Execution.Current_Output, Output);
       else
          Insert (Output);
       end if;
