@@ -18,7 +18,6 @@ UNEXPECTED_EXCEPTIONS=yes
 --  Select the modules that should be loaded
 
 MODULE.DOCGEN             = no
-MODULE.METRICS            = no
 MODULE.REFACTOR           = no
 MODULE.PYTHON             = yes
 MODULE.CALL_GRAPH         = yes
@@ -59,7 +58,7 @@ ENTITIES.DEBUG=no
 --  Debug handles related to scripts
 
 SHELL_SCRIPT=no
-GLIDE_KERNEL.SCRIPTS=no
+GPS.KERNEL.SCRIPTS=no
 PYTHON.OUT=no
 COMMANDS.CUSTOM=no
 HOOKS=no
