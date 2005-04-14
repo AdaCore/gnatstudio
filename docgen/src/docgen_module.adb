@@ -102,7 +102,6 @@ package body Docgen_Module is
       Ignorable_Comments_P : Boolean := False;
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
-      One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False;
       Tagged_Types_P       : Boolean := False);
    --  Set new options or reset options
@@ -115,8 +114,6 @@ package body Docgen_Module is
    --    the header.
    --  - Show_Private_P indicates if we show also private entities
    --  - References_P says if we add information like "subprogram called by..."
-   --  - One_Doc_File_P says if we create documentation in only one
-   --    file (only for texi)
    --  - Link_All_P indicates if links are created for entities whose
    --    declaration files aren't processed
    --  - Tagged_Types indicates if we make a list with all tagged
@@ -232,8 +229,6 @@ package body Docgen_Module is
            Docgen_Module (Docgen_Module_Id).Options.Show_Private,
          References         =>
            Docgen_Module (Docgen_Module_Id).Options.References,
-         One_Doc_File       =>
-           Docgen_Module (Docgen_Module_Id).Options.One_Doc_File,
          Link_All           =>
            Docgen_Module (Docgen_Module_Id).Options.Link_All,
          Tagged_Types       =>
@@ -249,7 +244,6 @@ package body Docgen_Module is
       Ignorable_Comments_P : Boolean := False;
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
-      One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False;
       Tagged_Types_P       : Boolean := False) is
    begin
@@ -261,8 +255,6 @@ package body Docgen_Module is
         Show_Private_P;
       Docgen_Module (Docgen_Module_Id).Options.References :=
         References_P;
-      Docgen_Module (Docgen_Module_Id).Options.One_Doc_File :=
-        One_Doc_File_P;
       Docgen_Module (Docgen_Module_Id).Options.Link_All :=
         Link_All_P;
       Docgen_Module (Docgen_Module_Id).Options.Tagged_Types :=
@@ -978,7 +970,8 @@ package body Docgen_Module is
            Default => False,
            Blurb   =>
              -("Whether Docgen should compute references (e.g. call graph)"),
-           Nick    => -"Compute references"));
+           Nick    => -"Call graph"));
+--             Flags   => Param_Readable)); --  ??? For 3.0.0
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
@@ -1005,7 +998,7 @@ package body Docgen_Module is
              Blurb   =>
                -"List of tagged types declared in processed files",
              Nick    => -"List tagged types"));
-
+--               Flags   => Param_Readable)); --  ??? For 3.0.0
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
