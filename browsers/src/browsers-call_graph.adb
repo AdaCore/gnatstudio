@@ -29,7 +29,6 @@ with Gtk.Check_Button;     use Gtk.Check_Button;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Frame;            use Gtk.Frame;
-with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Object;           use Gtk.Object;
 with Gtk.Radio_Button;     use Gtk.Radio_Button;
@@ -45,32 +44,31 @@ with Gtkada.MDI;           use Gtkada.MDI;
 with Entities;                      use Entities;
 with Entities.Debug;                use Entities.Debug;
 with Entities.Queries;              use Entities.Queries;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;     use GPS.Kernel.Task_Manager;
+with GPS.Kernel;                    use GPS.Kernel;
+with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Console;            use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Location_View;             use GPS.Location_View;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;                  use String_Utils;
 with Browsers.Canvas;               use Browsers.Canvas;
-with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
+with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with VFS;                           use VFS;
 with Commands.Interactive;          use Commands, Commands.Interactive;
+with GPS.Intl;                      use GPS.Intl;
+with Browsers.Canvas;               use Browsers.Canvas;
 
-with GPS.Intl;       use GPS.Intl;
-with Browsers.Canvas;  use Browsers.Canvas;
-
-with Ada.Text_IO;      use Ada.Text_IO;
-with Ada.Exceptions;   use Ada.Exceptions;
-with System;           use System;
+with Ada.Text_IO;                   use Ada.Text_IO;
+with Ada.Exceptions;                use Ada.Exceptions;
+with System;                        use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with Traces;           use Traces;
+with GNAT.OS_Lib;                   use GNAT.OS_Lib;
+with Traces;                        use Traces;
 
 package body Browsers.Call_Graph is
 
@@ -107,10 +105,8 @@ package body Browsers.Call_Graph is
    ------------------------
 
    type Call_Graph_Browser_Record is new
-     Browsers.Canvas.General_Browser_Record
-   with record
-      Idle_Id : Gtk.Main.Idle_Handler_Id;
-   end record;
+     Browsers.Canvas.General_Browser_Record with null record;
+
    type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
 
    --------------
@@ -133,10 +129,10 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Find_All_Refs_Command is new Interactive_Command with record
-      Locals_Only      : Boolean := False;
-      Recurse_Project  : Boolean := True;
-      Writes_Only      : Boolean := False;
-      Reads_Only       : Boolean := False;
+      Locals_Only     : Boolean := False;
+      Recurse_Project : Boolean := True;
+      Writes_Only     : Boolean := False;
+      Reads_Only      : Boolean := False;
    end record;
    function Execute
      (Command : access Find_All_Refs_Command;
@@ -190,10 +186,10 @@ package body Browsers.Call_Graph is
    --  the item is removed from the canvas.
 
    function Contextual_Factory
-     (Item  : access Entity_Item_Record;
+     (Item    : access Entity_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -205,14 +201,14 @@ package body Browsers.Call_Graph is
    --  See doc for inherited subprogram
 
    function Build
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Item : access Entity_Item_Record'Class;
-      Location : File_Location) return Active_Area_Cb;
+      Location    : File_Location) return Active_Area_Cb;
    --  Build a callback for links in callgraph items
 
    type Show_Location_Callback is new Active_Area_Callback with record
-      Kernel : Kernel_Handle;
-      Parent : Entity_Item;
+      Kernel   : Kernel_Handle;
+      Parent   : Entity_Item;
       Location : File_Location;
    end record;
    type Show_Location_Callback_Access
@@ -245,13 +241,13 @@ package body Browsers.Call_Graph is
    ----------
 
    type Entity_Idle_Data is record
-      Kernel           : Kernel_Handle;
-      Iter             : Entity_Reference_Iterator_Access;
-      Entity           : Entity_Information;
-      Filter           : Reference_Kind_Filter;
-      Iter_Started     : Boolean;
-      Show_Caller      : Boolean;
-      Category         : String_Access;
+      Kernel       : Kernel_Handle;
+      Iter         : Entity_Reference_Iterator_Access;
+      Entity       : Entity_Information;
+      Filter       : Reference_Kind_Filter;
+      Iter_Started : Boolean;
+      Show_Caller  : Boolean;
+      Category     : String_Access;
    end record;
 
    type Examine_Callback is record
@@ -261,17 +257,17 @@ package body Browsers.Call_Graph is
       Link_From_Item : Boolean;
    end record;
    type Execute_Callback is access procedure
-     (Cb     : Examine_Callback;
-      Entity : Entity_Information;
-      Ref    : Entity_Reference;
+     (Cb          : Examine_Callback;
+      Entity      : Entity_Information;
+      Ref         : Entity_Reference;
       Is_Renaming : Boolean);
 
    type Examine_Ancestors_Idle_Data is record
-      Iter     : Entity_Reference_Iterator_Access;
-      Entity   : Entity_Information;
-      Kernel   : Kernel_Handle;
-      Callback : Examine_Callback;
-      Execute  : Execute_Callback;
+      Iter              : Entity_Reference_Iterator_Access;
+      Entity            : Entity_Information;
+      Kernel            : Kernel_Handle;
+      Callback          : Examine_Callback;
+      Execute           : Execute_Callback;
       Browser_Destroyed : Boolean;
    end record;
    type Examine_Ancestors_Data_Access is access Examine_Ancestors_Idle_Data;
@@ -327,8 +323,7 @@ package body Browsers.Call_Graph is
    --  ??? Should also have line and column information
 
    function Open_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Child;
+     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child;
    --  Find, or create a new, call graph editor.
 
    function Create_Call_Graph_Browser
@@ -336,19 +331,19 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
 
    procedure Parse_All_Refs
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Entity            : Entity_Information;
-      Locals_Only       : Boolean;
-      Show_Caller       : Boolean;
-      Filter            : Reference_Kind_Filter);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Information;
+      Locals_Only : Boolean;
+      Show_Caller : Boolean;
+      Filter      : Reference_Kind_Filter);
    --  Internal implementation of find_all_references
 
    procedure Find_All_References_Internal
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Info             : Entity_Information;
-      Category_Title   : String;
-      Show_Caller      : Boolean;
-      Filter           : Reference_Kind_Filter);
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Info           : Entity_Information;
+      Category_Title : String;
+      Show_Caller    : Boolean;
+      Filter         : Reference_Kind_Filter);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
    --  Starts a background search for all references.
@@ -376,9 +371,6 @@ package body Browsers.Call_Graph is
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data);
    --  Called when the idle loop is destroyed.
-
-   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
-   --  Called when the browser is destroyed
 
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Entity_Idle_Data, Destroy_Idle);
@@ -505,14 +497,14 @@ package body Browsers.Call_Graph is
    -------------
 
    procedure Destroy (Item : in out Entity_Item_Record) is
-      Item2 : constant Entity_Item := Item'Unrestricted_Access;
-      Iter : Item_Iterator := Start (Get_Canvas (Get_Browser (Item2)));
-      It : Canvas_Item;
-      Line : Positive;
-      Text : String_Access;
+      Item2    : constant Entity_Item := Item'Unrestricted_Access;
+      Iter     : Item_Iterator := Start (Get_Canvas (Get_Browser (Item2)));
+      It       : Canvas_Item;
+      Line     : Positive;
+      Text     : String_Access;
       Callback : Active_Area_Cb;
-      Cb : Show_Location_Callback_Access;
-      Removed : Boolean;
+      Cb       : Show_Location_Callback_Access;
+      Removed  : Boolean;
    begin
       if not Gtk.Object.In_Destruction_Is_Set (Get_Browser (Item2)) then
          --  Remove all references to the current item in other items, to keep
@@ -559,18 +551,6 @@ package body Browsers.Call_Graph is
       Destroy (Arrow_Item_Record (Item));
    end Destroy;
 
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class) is
-      B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
-   begin
-      if B.Idle_Id /= 0 then
-         Idle_Remove (B.Idle_Id);
-      end if;
-   end On_Destroy;
-
    -------------------------------
    -- Create_Call_Graph_Browser --
    -------------------------------
@@ -591,14 +571,12 @@ package body Browsers.Call_Graph is
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
 
-      Widget_Callback.Connect (Browser, "destroy", On_Destroy'Access);
-
       Child := Put
         (Kernel, Browser,
          Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
          Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
          Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-         Module => Call_Graph_Module_Id);
+         Module         => Call_Graph_Module_Id);
       Set_Title (Child, -"Call graph Browser");
 
       return Child;
@@ -612,7 +590,7 @@ package body Browsers.Call_Graph is
      (Kernel : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
-      Child   : MDI_Child;
+      Child : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Call_Graph_Browser_Record'Tag);
@@ -635,8 +613,7 @@ package body Browsers.Call_Graph is
 
    function Find_Entity
      (In_Browser : access General_Browser_Record'Class;
-      Entity     : Entity_Information)
-      return Canvas_Item
+      Entity     : Entity_Information) return Canvas_Item
    is
       Found : Canvas_Item := null;
       Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
@@ -702,9 +679,9 @@ package body Browsers.Call_Graph is
       Execute  : Execute_Callback)
    is
       Rename : Entity_Information;
-      Iter : Calls_Iterator;
-      Refs : Entity_Reference_Iterator;
-      Ref  : Entity_Reference;
+      Iter   : Calls_Iterator;
+      Refs   : Entity_Reference_Iterator;
+      Ref    : Entity_Reference;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -809,8 +786,13 @@ package body Browsers.Call_Graph is
    ------------------
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Data_Access) is
+
       procedure Clean;
       --  Clean up before exiting Destroy_Idle
+
+      -----------
+      -- Clean --
+      -----------
 
       procedure Clean is
       begin
@@ -818,7 +800,6 @@ package body Browsers.Call_Graph is
          Unref (Data.Entity);
 
          if Data.Callback.Browser /= null then
-            Data.Callback.Browser.Idle_Id := 0;
             Pop_State (Get_Kernel (Data.Callback.Browser));
          end if;
       end Clean;
@@ -925,10 +906,10 @@ package body Browsers.Call_Graph is
       Execute         : Execute_Callback;
       Background_Mode : Boolean)
    is
-      C             : Ancestor_Commands.Generic_Asynchronous_Command_Access;
-      Rename        : Entity_Information;
-      Data          : Examine_Ancestors_Data_Access;
-      Result        : Command_Return_Type;
+      C      : Ancestor_Commands.Generic_Asynchronous_Command_Access;
+      Rename : Entity_Information;
+      Data   : Examine_Ancestors_Data_Access;
+      Result : Command_Return_Type;
    begin
       --  If we have a renaming, add the entry for the renamed entity
       Rename := Renaming_Of (Entity);
@@ -978,11 +959,11 @@ package body Browsers.Call_Graph is
       Ref         : Entity_Reference;
       Is_Renaming : Boolean)
    is
-      Child : Entity_Item;
-      Link  : Browser_Link;
-      Loc   : File_Location;
-      Line  : Natural;
-      Text  : String_Access;
+      Child            : Entity_Item;
+      Link             : Browser_Link;
+      Loc              : File_Location;
+      Line             : Natural;
+      Text             : String_Access;
       New_Cb, Callback : Active_Area_Cb;
    begin
       Child := Add_Entity_If_Not_Present (Cb.Browser, Entity);
@@ -1246,7 +1227,7 @@ package body Browsers.Call_Graph is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Count    : Integer := 0;
+      Count : Integer := 0;
    begin
       Result := Execute_Again;
 
