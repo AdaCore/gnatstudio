@@ -84,7 +84,6 @@ with Browsers.Entities;
 with Cpp_Module;
 with External_Editor_Module;
 with GVD_Module;
-with Metrics_Module;
 with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Viewers;
@@ -124,7 +123,6 @@ procedure GPS.Main is
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", On);
-   Metrics_Trace  : constant Debug_Handle := Create ("MODULE.Metrics", Off);
    Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
    Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
    Call_Graph_Trace       : constant Debug_Handle :=
@@ -1232,10 +1230,6 @@ procedure GPS.Main is
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
-
-      if Active (Metrics_Trace) then
-         Metrics_Module.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
