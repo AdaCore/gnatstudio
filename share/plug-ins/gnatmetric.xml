@@ -37,19 +37,19 @@
   </action>
 
   <contextual action="metrics project" >
-     <Title>Metrics for %p</Title>
+     <Title>Compute metrics for %p</Title>
   </contextual>
   <contextual action="metrics file" >
-     <Title>Metrics for %f</Title>
+     <Title>Compute metrics for %f</Title>
   </contextual>
 
   <Submenu>
      <Title>Tools/Metrics</Title>
      <menu action="metrics project">
-        <Title>Compute metrics for project %p</Title>
+        <Title>Compute metrics for current project</Title>
      </menu>
      <menu action="metrics file">
-        <Title>Compute metrics for file %f</Title>
+        <Title>Compute metrics for current file</Title>
      </menu>
   </Submenu>
 
