@@ -51,7 +51,7 @@ def project_recomputed (hook_name):
   """Setup GPS for python support"""
 
   GPS.Project.add_predefined_paths \
-    (sources=GPS.get_home_dir() + "python_startup")
+    (sources=GPS.get_home_dir() + "plug-ins")
 
   try:
     GPS.Project.root().languages (recursive=True).index ("python")
@@ -69,7 +69,7 @@ def project_recomputed (hook_name):
     GPS.Menu.get ("/Python").hide()
 
 def show_python_library ():
-  """Open a navigator to show  the help on the python library"""
+  """Open a navigator to show the help on the python library"""
   global pydoc_proc, pydoc_port
   if not pydoc_proc:
      while 1:
