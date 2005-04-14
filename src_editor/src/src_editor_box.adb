@@ -1907,7 +1907,8 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      Editor.Writable := Is_Writable (Get_Filename (Editor.Source_Buffer));
+      Editor.Writable := Get_Filename (Editor.Source_Buffer) = VFS.No_File
+        or else Is_Writable (Get_Filename (Editor.Source_Buffer));
 
       if Editor.Writable then
          Set_Text (Editor.Read_Only_Label, -"Writable");
