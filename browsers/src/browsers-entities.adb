@@ -34,28 +34,28 @@ with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 
-with Glib;          use Glib;
-with Glib.Object;   use Glib.Object;
-with Glib.Xml_Int;  use Glib.Xml_Int;
-with Gdk.GC;        use Gdk.GC;
-with Gdk.Event;     use Gdk.Event;
-with Gdk.Drawable;  use Gdk.Drawable;
-with Gdk.Pixbuf;    use Gdk.Pixbuf;
-with Gdk.Rectangle; use Gdk.Rectangle;
-with Gdk.Region;    use Gdk.Region;
-with Gdk.Window;    use Gdk.Window;
-with Gtk.Enums;     use Gtk.Enums;
-with Gtk.Main;      use Gtk.Main;
-with Gtk.Menu;      use Gtk.Menu;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Stock;     use Gtk.Stock;
-with Gtk.Style;     use Gtk.Style;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtkada.Canvas; use Gtkada.Canvas;
-with Gtkada.MDI;    use Gtkada.MDI;
-with Pango.Layout;  use Pango.Layout;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gdk.GC;                    use Gdk.GC;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Drawable;              use Gdk.Drawable;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Region;                use Gdk.Region;
+with Gdk.Window;                use Gdk.Window;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Style;                 use Gtk.Style;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Canvas;             use Gtkada.Canvas;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Pango.Layout;              use Pango.Layout;
 with Gtkada.Types;
-with Commands.Interactive; use Commands, Commands.Interactive;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body Browsers.Entities is
 
@@ -85,7 +85,7 @@ package body Browsers.Entities is
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
-      Idle_Id          : Gtk.Main.Idle_Handler_Id;
+      Idle_Id          : Gtk.Main.Idle_Handler_Id := 0;
    end record;
    type Type_Browser is access all Type_Browser_Record'Class;
 
@@ -94,7 +94,7 @@ package body Browsers.Entities is
    ---------------
 
    type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
-      Entity : Entity_Information;
+      Entity               : Entity_Information;
       Inherited_Primitives : Boolean := False;
    end record;
    type Type_Item is access all Type_Item_Record'Class;
@@ -122,12 +122,12 @@ package body Browsers.Entities is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    function Contextual_Factory
-     (Item  : access Type_Item_Record;
+     (Item    : access Type_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
-   function Get_Last_Button_Number (Item : access Type_Item_Record)
-      return Glib.Gint;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+   function Get_Last_Button_Number
+     (Item : access Type_Item_Record) return Glib.Gint;
    procedure Redraw_Title_Bar (Item : access Type_Item_Record);
    procedure Highlight (Item : access Type_Item_Record);
    --  See doc for inherited subprograms
@@ -223,13 +223,14 @@ package body Browsers.Entities is
    --  If Parent_Link is true, then the link used is a Parent_Link_Record.
 
    type Show_Entity_Callback is new Active_Area_Callback with record
-      Item    : Browser_Item;
-      Entity  : Entity_Information;
+      Item      : Browser_Item;
+      Entity    : Entity_Information;
       Link_Name : GNAT.Strings.String_Access;
    end record;
 
-   function Call (Callback : Show_Entity_Callback;
-                  Event    : Gdk.Event.Gdk_Event) return Boolean;
+   function Call
+     (Callback : Show_Entity_Callback;
+      Event    : Gdk.Event.Gdk_Event) return Boolean;
    procedure Destroy (Callback : in out Show_Entity_Callback);
    --  See inherated doc
 
@@ -395,8 +396,8 @@ package body Browsers.Entities is
    -----------
 
    function Build
-     (Item   : access Browser_Item_Record'Class;
-      Entity : Entity_Information;
+     (Item      : access Browser_Item_Record'Class;
+      Entity    : Entity_Information;
       Link_Name : String := "") return Active_Area_Cb is
    begin
       Ref (Entity);
@@ -598,10 +599,11 @@ package body Browsers.Entities is
       pragma Import (C, i_page_xpm, "i_page_xpm");
 
    begin
-      Initialize (Browser, Kernel,
-                  Create_Toolbar  => False,
-                  Parents_Pixmap  => Stock_Go_Up,
-                  Children_Pixmap => Stock_Go_Down);
+      Initialize
+        (Browser, Kernel,
+         Create_Toolbar  => False,
+         Parents_Pixmap  => Stock_Go_Up,
+         Children_Pixmap => Stock_Go_Down);
 
       --  ??? Should be freed when browser is destroyed.
       Browser.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
@@ -759,6 +761,10 @@ package body Browsers.Entities is
 
       Tmp : Entity_Information;
 
+      ----------
+      -- Move --
+      ----------
+
       procedure Move (From, To : Natural) is
       begin
          if From = 0 then
@@ -772,6 +778,10 @@ package body Browsers.Entities is
               Arr.Table (Entity_Information_Arrays.Index_Type (From + First));
          end if;
       end Move;
+
+      --------
+      -- Lt --
+      --------
 
       function Lt (Op1, Op2 : Natural) return Boolean is
       begin
@@ -900,7 +910,7 @@ package body Browsers.Entities is
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class)
    is
-      Subs : Subprogram_Iterator;
+      Subs           : Subprogram_Iterator;
       Typ, Parameter : Entity_Information;
       Returned    : constant Entity_Information := Returned_Type (Item.Entity);
    begin
@@ -1021,11 +1031,11 @@ package body Browsers.Entities is
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class)
    is
-      Field   : Entity_Information;
-      Is_Enum : constant Boolean :=
-        Get_Kind (Item.Entity).Kind = Enumeration_Kind;
+      Field         : Entity_Information;
+      Is_Enum       : constant Boolean :=
+                        Get_Kind (Item.Entity).Kind = Enumeration_Kind;
       Discriminants : Entity_Reference_Iterator;
-      Iter    : Calls_Iterator;
+      Iter          : Calls_Iterator;
 
    begin
       Find_All_References
@@ -1166,7 +1176,7 @@ package body Browsers.Entities is
       Reverse_Link : Boolean := False)
    is
       Canvas   : constant Interactive_Canvas :=
-        Get_Canvas (Get_Browser (Item));
+                   Get_Canvas (Get_Browser (Item));
       New_Item : Type_Item;
       Link     : Canvas_Link;
    begin
@@ -1840,8 +1850,8 @@ package body Browsers.Entities is
    -------------------
 
    function Point_In_Item
-     (Item   : access Generic_Item_Record;
-      X, Y   : Glib.Gint) return Boolean is
+     (Item : access Generic_Item_Record;
+      X, Y : Glib.Gint) return Boolean is
    begin
       if (Y < Get_Coord (Item).Y + Generic_Item_Box_Height_Top
           and then X - Get_Coord (Item).X <
