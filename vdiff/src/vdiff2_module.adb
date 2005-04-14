@@ -175,12 +175,16 @@ package body Vdiff2_Module is
       Register_Menu
         (Kernel, Tools, -"Compare Three Files...", "",
          On_Compare_Three_Files'Access);
-      Register_Menu
-        (Kernel, Tools, -"Merge Two Files...", "",
-         On_Merge_Two_Files'Access);
-      Register_Menu
-        (Kernel, Tools, -"Merge Three Files...", "",
-         On_Merge_Three_Files'Access);
+
+      --  ??? Disable these menus for now, since the "Merge" interface doesn't
+      --  work yet.
+
+--        Register_Menu
+--          (Kernel, Tools, -"Merge Two Files...", "",
+--           On_Merge_Two_Files'Access);
+--        Register_Menu
+--          (Kernel, Tools, -"Merge Three Files...", "",
+--           On_Merge_Three_Files'Access);
 
       Register_Command
         (Kernel, "visual_diff",
