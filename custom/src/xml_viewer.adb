@@ -46,6 +46,7 @@ with Traces;                  use Traces;
 
 with XML_Parsers;             use XML_Parsers;
 
+with VFS;                     use VFS;
 
 with System;                  use System;
 with Ada.Unchecked_Conversion;
@@ -205,6 +206,30 @@ package body XML_Viewer is
 
       use type GNAT.OS_Lib.String_Access;
    begin
+      --  ??? Add a dirty kludge here to support versions of gnatmetrix prior
+      --  to 5.03a1, which didn't output correct XML.
+
+      declare
+         V : Virtual_File := Create (File);
+         S : GNAT.OS_Lib.String_Access := Read_File (V);
+         W : Writable_File;
+
+         use type GNAT.OS_Lib.String_Access;
+      begin
+         if S /= null
+           and then S.all'Length > 2
+           and then S (S'First .. S'First + 1) /= "<?"
+         then
+            --  The beginning tag is missing, add it.
+
+            W := Write_File (V);
+            Write (W, "<?xml version=""1.0""?>" & ASCII.LF & S.all);
+            Close (W);
+         end if;
+
+         GNAT.OS_Lib.Free (S);
+      end;
+
       Parse (File, Root, Error);
 
       if Error /= null then
@@ -217,7 +242,10 @@ package body XML_Viewer is
          end;
       end if;
 
-      Parse_Node (Root, Null_Iter, "");
+      while Root /= null loop
+         Parse_Node (Root, Null_Iter, "");
+         Root := Root.Next;
+      end loop;
 
       Columns_Autosize (View.Tree);
 
