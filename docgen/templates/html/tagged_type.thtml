@@ -29,7 +29,7 @@
       @@END_IF@@
       at&nbsp; @_P_DECL_FILE_@&nbsp;@_P_DECL_LINE_@:@_P_DECL_COLUMN_@
       </PRE></TD><TR>
-   @@END_TABLE
+   @@END_TABLE@@
 @@ELSE@@
    <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>No parent</B></PRE></TD></TR>
 @@END_IF@@
@@ -45,7 +45,7 @@
       @@END_IF@@
       at&nbsp; @_C_DECL_FILE_@&nbsp;@_C_DECL_LINE_@:@_C_DECL_COLUMN_@
       </PRE></TD><TR>
-   @@END_TABLE
+   @@END_TABLE@@
 @@ELSE@@
    <TR><TD><PRE>@_REPEAT(" "):INDENT_@<B>No children</B></PRE></TD></TR>
 @@END_IF@@
