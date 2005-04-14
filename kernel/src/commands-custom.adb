@@ -233,9 +233,11 @@ package body Commands.Custom is
       end Insert;
 
       Old : GNAT.OS_Lib.String_Access := Command.Execution.Current_Output;
-      Current, Total : Integer;
+      Current, Total : Integer := 0;
       Save_Output : constant Boolean :=
         Command.Execution.Save_Output (Command.Execution.Cmd_Index);
+      Index, EOL : Integer;
+
    begin
       if Command.Execution.Progress_Matcher /= null then
          declare
@@ -243,66 +245,78 @@ package body Commands.Custom is
               (0 .. Integer'Max (Command.Execution.Current_In_Regexp,
                                  Command.Execution.Total_In_Regexp));
          begin
-            Match (Command.Execution.Progress_Matcher.all, Output, Matched);
-            if Matched (Command.Execution.Current_In_Regexp) = No_Match
-              or else Matched (Command.Execution.Total_In_Regexp) = No_Match
-            then
-               Insert (Output);
-               if Save_Output then
-                  Command.Execution.Current_Output :=
-                    new String'(Old.all & Output);
-                  Free (Old);
-               end if;
-            else
-               if Matched (0).Last < Output'Last then
-                  declare
-                     Outp : constant String :=
-                       Output (Output'First .. Matched (0).First - 1)
-                     & Output (Matched (0).Last + 1 .. Output'Last);
-                  begin
+            Index := Output'First;
+            while Index <= Output'Last loop
+               EOL := Index;
+               while EOL <= Output'Last
+                 and then Output (EOL) /= ASCII.LF
+               loop
+                  EOL := EOL + 1;
+               end loop;
+
+               Match (Command.Execution.Progress_Matcher.all,
+                      Output (Index .. EOL), Matched);
+               if Matched (Command.Execution.Current_In_Regexp) = No_Match
+                 or else Matched (Command.Execution.Total_In_Regexp) = No_Match
+               then
+                  Insert (Output (Index .. EOL));
+                  if Save_Output then
+                     Command.Execution.Current_Output :=
+                       new String'(Old.all & Output (Index .. EOL));
+                     Free (Old);
+                  end if;
+               else
+                  if Matched (0).Last < Output'Last then
+                     declare
+                        Outp : constant String :=
+                          Output (Index .. Matched (0).First - 1)
+                          & Output (Matched (0).Last + 1 .. EOL);
+                     begin
+                        if Command.Execution.Hide_Progress then
+                           Insert (Outp);
+                        else
+                           Insert (Output (Index .. EOL));
+                        end if;
+
+                        if Save_Output then
+                           Command.Execution.Current_Output := new String'
+                             (Old.all & Outp);
+                           Free (Old);
+                        end if;
+                     end;
+
+                  else
                      if Command.Execution.Hide_Progress then
-                        Insert (Outp);
+                        Insert (Output (Index .. Matched (0).First - 1));
                      else
-                        Insert (Output);
+                        Insert (Output (Index .. EOL));
                      end if;
 
                      if Save_Output then
                         Command.Execution.Current_Output := new String'
-                          (Old.all & Outp);
+                          (Old.all
+                           & Output (Index .. Matched (0).First - 1));
                         Free (Old);
                      end if;
-                  end;
-
-               else
-                  if Command.Execution.Hide_Progress then
-                     Insert (Output (Output'First .. Matched (0).First - 1));
-                  else
-                     Insert (Output);
                   end if;
 
-                  if Save_Output then
-                     Command.Execution.Current_Output := new String'
-                       (Old.all
-                        & Output (Output'First .. Matched (0).First - 1));
-                     Free (Old);
-                  end if;
+                  Current := Safe_Value
+                    (Output
+                       (Matched (Command.Execution.Current_In_Regexp).First ..
+                          Matched (Command.Execution.Current_In_Regexp).Last));
+                  Total := Safe_Value
+                    (Output
+                       (Matched (Command.Execution.Total_In_Regexp).First
+                        .. Matched (Command.Execution.Total_In_Regexp).Last));
+                  Set_Progress
+                    (Command,
+                     Progress_Record'
+                       (Activity => Running,
+                        Current  => Current,
+                        Total    => Total));
                end if;
-
-               Current := Safe_Value
-                 (Output
-                    (Matched (Command.Execution.Current_In_Regexp).First
-                     .. Matched (Command.Execution.Current_In_Regexp).Last));
-               Total := Safe_Value
-                 (Output
-                    (Matched (Command.Execution.Total_In_Regexp).First
-                     .. Matched (Command.Execution.Total_In_Regexp).Last));
-               Set_Progress
-                 (Command,
-                  Progress_Record'
-                    (Activity => Running,
-                     Current  => Current,
-                     Total    => Total));
-            end if;
+               Index := EOL + 1;
+            end loop;
          end;
 
       elsif Save_Output then
