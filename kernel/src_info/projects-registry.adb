@@ -958,7 +958,7 @@ package body Projects.Registry is
 
          exception
             when Directory_Error =>
-               Trace (Me, "Unexpected exception while opening " & Curr);
+               Trace (Me, "Directory_Error while opening " & Curr);
          end;
 
          Iter := Next (Path, Iter);
