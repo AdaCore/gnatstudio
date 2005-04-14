@@ -510,15 +510,15 @@ package body Debugger.Gdb is
       end loop;
 
       declare
-         S : constant String :=
-           Send (Debugger, "ptype " & Entity, Mode => Internal);
+         S   : constant String :=
+                 Send (Debugger, "ptype " & Entity, Mode => Internal);
+         Pos : constant Integer := Index (S, "type = ");
+
       begin
-         if S'Length > 6
-           and then S (S'First .. S'First + 5) = "type ="
-         then
-            return S (S'First + 7 .. S'Last);
-         else
+         if Pos = 0 then
             return "";
+         else
+            return S (Pos + 7 .. S'Last);
          end if;
       end;
    end Type_Of;
