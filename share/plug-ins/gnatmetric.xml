@@ -15,6 +15,7 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
+     <shell>Editor.save</shell>
      <shell>XMLViewer "Metrics (%p)"</shell>
      <shell>XMLViewer.parse %1 metrix.xml</shell>
   </action>
@@ -30,6 +31,7 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
+     <shell>Editor.save</shell>
      <shell>XMLViewer "Metrics (%f)"</shell>
      <shell>XMLViewer.parse %1 metrix.xml</shell>
   </action>
