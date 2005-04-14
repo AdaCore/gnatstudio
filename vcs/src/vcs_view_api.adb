@@ -1592,7 +1592,7 @@ package body VCS_View_API is
       if String_List.Is_Empty (Files) then
          Console.Insert
            (Get_Kernel (Context),
-            -"VCS: No file selected, cannot resolved file",
+            -"VCS: No file selected, cannot mark file as resolved",
             Mode => Error);
          return;
       end if;
