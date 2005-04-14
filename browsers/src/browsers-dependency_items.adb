@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2001-2005                      --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,47 +18,47 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;         use Ada.Exceptions;
 
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Gdk.Event;            use Gdk.Event;
-with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
-with Gtk.Main;             use Gtk.Main;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Window;           use Gtk.Window;
-with Gtkada.Canvas;        use Gtkada.Canvas;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Pango.Layout;         use Pango.Layout;
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Glib.Xml_Int;           use Glib.Xml_Int;
+with Gdk.Event;              use Gdk.Event;
+with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
+with Gtk.Main;               use Gtk.Main;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
+with Gtkada.Canvas;          use Gtkada.Canvas;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Pango.Layout;           use Pango.Layout;
 
-with Browsers.Canvas;           use Browsers.Canvas;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel;              use GPS.Kernel;
-with Entities.Queries;          use Entities.Queries;
-with Entities;                  use Entities;
-with Traces;                    use Traces;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-with Fname;                     use Fname;
-with Namet;                     use Namet;
-with Histories;                 use Histories;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with VFS;                       use VFS;
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with Browsers.Canvas;        use Browsers.Canvas;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
+with Entities.Queries;       use Entities.Queries;
+with Entities;               use Entities;
+with Traces;                 use Traces;
+with Projects;               use Projects;
+with Projects.Registry;      use Projects.Registry;
+with Fname;                  use Fname;
+with Namet;                  use Namet;
+with Histories;              use Histories;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with VFS;                    use VFS;
+with Commands.Interactive;   use Commands, Commands.Interactive;
 
-with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Exceptions;         use Ada.Exceptions;
 
 package body Browsers.Dependency_Items is
 
@@ -95,12 +95,12 @@ package body Browsers.Dependency_Items is
    type Dependency_Browser_Record is new
      Browsers.Canvas.General_Browser_Record with
    record
-      Idle_Id : Gtk.Main.Idle_Handler_Id;
+      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
    end record;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
    type Project_Changed_Hook_Record is new Hook_No_Args_Record with record
-      Browser         : Dependency_Browser;
+      Browser : Dependency_Browser;
    end record;
    type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
    procedure Execute (Hook   : Project_Changed_Hook_Record;
@@ -146,10 +146,10 @@ package body Browsers.Dependency_Items is
    --  Free the memory associated with the item
 
    function Contextual_Factory
-     (Item  : access File_Item_Record;
+     (Item    : access File_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return GPS.Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
    procedure Resize_And_Draw
@@ -172,8 +172,8 @@ package body Browsers.Dependency_Items is
    type Dependency_Link is access all Dependency_Link_Record'Class;
 
    procedure Gtk_New
-     (Link      : out Dependency_Link;
-      Explicit  : Boolean);
+     (Link     : out Dependency_Link;
+      Explicit : Boolean);
    --  Create a new link.
 
    ----------
@@ -181,26 +181,26 @@ package body Browsers.Dependency_Items is
    ----------
 
    type Examine_Dependencies_Idle_Data is record
-      Iter    : Dependency_Iterator_Access;
-      Browser : Dependency_Browser;
-      Item    : File_Item;
+      Iter             : Dependency_Iterator_Access;
+      Browser          : Dependency_Browser;
+      Item             : File_Item;
       Recompute_Layout : Boolean;
    end record;
    package Dependency_Idle is new Gtk.Main.Idle
      (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : Virtual_File;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File             : Virtual_File;
       Recompute_Layout : Boolean := True);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
    --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Examine_From_Dependencies
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File        : Virtual_File;
-      Interactive : Boolean := True;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File             : Virtual_File;
+      Interactive      : Boolean := True;
       Recompute_Layout : Boolean := True);
    --  Display the list of files that depend directly on File.
    --  if Interactive is True, then the computation is done in an idle loop, so
@@ -214,7 +214,7 @@ package body Browsers.Dependency_Items is
 
    function Find_File
      (In_Browser : access General_Browser_Record'Class;
-      Filename : Virtual_File) return Canvas_Item;
+      Filename   : Virtual_File) return Canvas_Item;
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
@@ -252,7 +252,7 @@ package body Browsers.Dependency_Items is
    --  browser.
 
    function Open_Dependency_Browser
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Open a new browser that supports all the types described in
    --  Browser_Type.
@@ -280,8 +280,7 @@ package body Browsers.Dependency_Items is
    --  Support functions for the MDI
 
    function Create_Dependency_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
-      return Dependency_Browser;
+     (Kernel : access Kernel_Handle_Record'Class) return Dependency_Browser;
    --  Create a new dependency browser
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
@@ -293,7 +292,7 @@ package body Browsers.Dependency_Items is
    --  Create a current kernel context, based on the currently selected item
 
    procedure Depends_On_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the command "uses" and "used_by"
 
    procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class);
@@ -313,8 +312,8 @@ package body Browsers.Dependency_Items is
    ------------------------
 
    procedure Check_Dependencies
-     (Browser  : access Dependency_Browser_Record'Class;
-      Item     : File_Item)
+     (Browser : access Dependency_Browser_Record'Class;
+      Item    : File_Item)
    is
       function Check_Dep
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -639,6 +638,10 @@ package body Browsers.Dependency_Items is
       procedure Clean;
       --  Clean up routine for Destroy_Idle.
 
+      -----------
+      -- Clean --
+      -----------
+
       procedure Clean is
       begin
          Data.Browser.Idle_Id := 0;
@@ -722,9 +725,9 @@ package body Browsers.Dependency_Items is
    -------------------------------
 
    procedure Examine_From_Dependencies
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File        : Virtual_File;
-      Interactive : Boolean := True;
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File             : Virtual_File;
+      Interactive      : Boolean := True;
       Recompute_Layout : Boolean := True)
    is
       Data          : Examine_Dependencies_Idle_Data;
@@ -809,8 +812,7 @@ package body Browsers.Dependency_Items is
    function Filter
      (Kernel   : access Kernel_Handle_Record'Class;
       Explicit : Boolean;
-      File     : Source_File)
-      return Boolean
+      File     : Source_File) return Boolean
    is
       Explicit_Dependency : Boolean;
       System_File         : Boolean;
@@ -835,8 +837,7 @@ package body Browsers.Dependency_Items is
 
    function Find_File
      (In_Browser : access General_Browser_Record'Class;
-      Filename : Virtual_File)
-      return Canvas_Item
+      Filename   : Virtual_File) return Canvas_Item
    is
       Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
       Item : Canvas_Item;
@@ -861,8 +862,7 @@ package body Browsers.Dependency_Items is
       Child : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
-      Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
    begin
       Ref (Context);
       Child := Open_Dependency_Browser (Kernel);
@@ -923,7 +923,7 @@ package body Browsers.Dependency_Items is
    ---------------
 
    procedure Open_File
-     (Browser  : access GObject_Record'Class;
+     (Browser : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : constant Virtual_File :=
@@ -977,10 +977,10 @@ package body Browsers.Dependency_Items is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Instance   : constant Class_Instance :=
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      File       : constant File_Info := Get_Data (Instance);
+      File     : constant File_Info := Get_Data (Instance);
    begin
       if Command = "uses" then
          Examine_Dependencies (Kernel, File => Get_File (File));
@@ -996,7 +996,7 @@ package body Browsers.Dependency_Items is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := '/' & (-"Tools");
+      Tools   : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
         Action_Filter (not Lookup_Filter (Kernel, "Entity"));
@@ -1108,8 +1108,7 @@ package body Browsers.Dependency_Items is
    -- Examine_Dependencies --
    --------------------------
 
-   procedure Examine_Dependencies
-     (Item : access Arrow_Item_Record'Class) is
+   procedure Examine_Dependencies (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Dependencies
         (Get_Kernel (Get_Browser (Item)),
@@ -1131,7 +1130,7 @@ package body Browsers.Dependency_Items is
    -------------
 
    procedure Gtk_New
-     (Link : out Dependency_Link;
+     (Link     : out Dependency_Link;
       Explicit : Boolean) is
    begin
       Link := new Dependency_Link_Record;
@@ -1155,7 +1154,7 @@ package body Browsers.Dependency_Items is
      (Item : access File_Item_Record'Class) return Project_Type
    is
       File_Name : constant Virtual_File := Get_Filename (Get_Source (Item));
-      P : Project_Type;
+      P         : Project_Type;
    begin
       P := Get_Project_From_File
         (Get_Registry (Get_Kernel (Get_Browser (Item))).all, File_Name);
@@ -1177,11 +1176,11 @@ package body Browsers.Dependency_Items is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      B : constant Dependency_Browser := Dependency_Browser
+      C          : constant File_Selection_Context_Access :=
+                     File_Selection_Context_Access (Context.Context);
+      B          : constant Dependency_Browser := Dependency_Browser
         (Get_Widget (Open_Dependency_Browser (Get_Kernel (C))));
-      Item : File_Item;
+      Item       : File_Item;
       Other_File : constant Virtual_File := Create
         (Other_File_Base_Name
            (Project_Information (C), File_Information (C)),
@@ -1210,15 +1209,15 @@ package body Browsers.Dependency_Items is
    ------------------------
 
    function Contextual_Factory
-     (Item  : access File_Item_Record;
+     (Item    : access File_Item_Record;
       Browser : access General_Browser_Record'Class;
-      Event : Gdk.Event.Gdk_Event;
-      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Browser, Menu, Event);
-      Context : constant Selection_Context_Access :=
-         new File_Selection_Context;
-      Src     : constant Source_File := Get_Source (Item);
+      Context  : constant Selection_Context_Access :=
+                   new File_Selection_Context;
+      Src      : constant Source_File := Get_Source (Item);
       Filename : constant Virtual_File := Get_Filename (Src);
    begin
       Set_File_Information
