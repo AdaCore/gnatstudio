@@ -15,7 +15,8 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
-     <shell>Editor.edit "metrix.xml"</shell>
+     <shell>XMLViewer "Metrics (%p)"</shell>
+     <shell>XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
   <action name="metrics file" >
@@ -29,40 +30,24 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
-     <shell>Editor.edit "metrix.xml"</shell>
-  </action>
-
-  <action name="metrics entity" >
-     <filter id="Entity" language="ada" />
-     <description>Run GNAT Metrics on a single entity</description>
-     <external
-      progress-regexp="completed (\d+) out of (\d+).*"
-      progress-current="1"
-      progress-final="2"
-      progress-hide="true">gnat metric -x -dd "%pps" "%F"</external>
-     <on-failure>
-         <shell>Locations.parse "%1" category</shell>
-     </on-failure>
-     <shell>Editor.edit "metrix.xml"</shell>
+     <shell>XMLViewer "Metrics (%f)"</shell>
+     <shell>XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
   <contextual action="metrics project" >
-     <Title>Metrics for project</Title>
+     <Title>Metrics for %p</Title>
   </contextual>
   <contextual action="metrics file" >
-     <Title>Metrics for source</Title>
-  </contextual>
-  <contextual action="metrics entity" >
-     <Title>Metrics for entity</Title>
+     <Title>Metrics for %f</Title>
   </contextual>
 
   <Submenu>
      <Title>Tools/Metrics</Title>
      <menu action="metrics project">
-        <Title>Compute metrics for current project</Title>
+        <Title>Compute metrics for project %p</Title>
      </menu>
      <menu action="metrics file">
-        <Title>Compute metrics for current file</Title>
+        <Title>Compute metrics for file %f</Title>
      </menu>
   </Submenu>
 
