@@ -35,8 +35,6 @@ BASE_DIR=$(GPS_BASE_DIR)/../browsers
 include $(BASE_DIR)/Makefile.browsers
 BASE_DIR=$(GPS_BASE_DIR)/../vcs
 include $(BASE_DIR)/Makefile.vcs
-BASE_DIR=$(GPS_BASE_DIR)/../metrics
-include $(BASE_DIR)/Makefile.metrics
 BASE_DIR=$(GPS_BASE_DIR)/../builder
 include $(BASE_DIR)/Makefile.builder
 BASE_DIR=$(GPS_BASE_DIR)/../navigation
