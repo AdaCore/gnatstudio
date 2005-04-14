@@ -271,6 +271,9 @@ package body Commands.Custom is
                loop
                   EOL := EOL + 1;
                end loop;
+               if EOL > Output'Last then
+                  EOL := EOL - 1;
+               end if;
 
                Match (Command.Execution.Progress_Matcher.all,
                       Output (Index .. EOL), Matched);
@@ -284,36 +287,21 @@ package body Commands.Custom is
                         Output (Index .. EOL));
                   end if;
                else
-                  if Matched (0).Last < Output'Last then
-                     declare
-                        Outp : constant String :=
-                          Output (Index .. Matched (0).First - 1)
-                          & Output (Matched (0).Last + 1 .. EOL);
-                     begin
-                        if Command.Execution.Hide_Progress then
-                           Insert (Outp);
-                        else
-                           Insert (Output (Index .. EOL));
-                        end if;
-
-                        if Save_Output then
-                           Append (Command.Execution.Current_Output, Outp);
-                        end if;
-                     end;
-
-                  else
+                  declare
+                     Outp : constant String :=
+                       Output (Index .. Matched (0).First - 1)
+                       & Output (Matched (0).Last + 1 .. EOL);
+                  begin
                      if Command.Execution.Hide_Progress then
-                        Insert (Output (Index .. Matched (0).First - 1));
+                        Insert (Outp);
                      else
                         Insert (Output (Index .. EOL));
                      end if;
 
                      if Save_Output then
-                        Append
-                          (Command.Execution.Current_Output,
-                           Output (Index .. Matched (0).First - 1));
+                        Append (Command.Execution.Current_Output, Outp);
                      end if;
-                  end if;
+                  end;
 
                   Current := Safe_Value
                     (Output
@@ -1070,7 +1058,8 @@ package body Commands.Custom is
 
             if Component.Progress_Regexp.all /= "" then
                Command.Execution.Progress_Matcher := new Pattern_Matcher'
-                 (Compile (Component.Progress_Regexp.all, Multiple_Lines));
+                 (Compile (Component.Progress_Regexp.all,
+                           Multiple_Lines or Single_Line));
             end if;
 
             Args := Argument_String_To_List (Subst_Cmd_Line);
