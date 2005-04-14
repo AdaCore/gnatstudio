@@ -1414,6 +1414,7 @@ package body Docgen.Work_On_Source is
       Description       : GNAT.OS_Lib.String_Access;
       First_Already_Set : Boolean := False;
       Entity            : TEL.Data_Access;
+      Renamed           : Entity_Information;
 
    begin
       if Entity_List /= TEL.Null_List
@@ -1459,71 +1460,117 @@ package body Docgen.Work_On_Source is
                --  Check if the subtitle "Packages" has already been
                --  set.
 
-               if Entity.Is_Private and then not Display_Private then
-                  Process_Header_Private (B, Kernel, Result, Level);
-                  Display_Private := True;
-               end if;
-
                if not First_Already_Set then -- ??? To be renamed.
                   Process_Header_Packages (B, Kernel, Result, Level);
                   First_Already_Set := True;
                end if;
 
-               Doc_Package_Open_Close
-                 (B, Kernel, Result,
-                  List_Ref_In_File,
-                  Source_File_List,
-                  Options,
-                  Level,
-                  Entity => Entity.Entity,
-                  Header => "package " & Get_Name (Entity.Entity).all & " is");
+               Renamed := Renaming_Of (Entity.Entity);
 
-               Description := new String'
-                 (Get_Documentation
-                    (Get_Language_Handler (Kernel),
-                     Entity.Entity,
-                     File_Text.all));
-
-               Level := Level + 1;
-
-               if Description.all /= "" then
-                  Doc_Subtitle
-                    (B, Kernel, Result, Level,
-                     Subtitle_Name => "Description");
-                  Process_Description
+               if Renamed = null then
+                  Doc_Package_Open_Close
                     (B, Kernel, Result,
+                     List_Ref_In_File,
+                     Source_File_List,
+                     Options,
                      Level,
-                     Description.all);
+                     Entity => Entity.Entity,
+                     Header =>
+                       "package " & Get_Name (Entity.Entity).all & " is");
+
+                  Description := new String'
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel),
+                        Entity.Entity,
+                        File_Text.all));
+
+                  Level := Level + 1;
+
+                  if Description.all /= "" then
+                     Doc_Subtitle
+                       (B, Kernel, Result, Level,
+                        Subtitle_Name => "Description");
+                     Process_Description
+                       (B, Kernel, Result,
+                        Level,
+                        Description.all);
+                  end if;
+
+                  --  Recursive call in order to deal with entities defined
+                  --  in the current package.
+
+                  Process_Source_Spec
+                    (B, Kernel, Result,
+                     Source_File_List,
+                     Source_Filename,
+                     Get_Name (Entity.Entity).all,
+                     Entity.Entity,
+                     False,
+                     Entity_List,
+                     List_Ref_In_File,
+                     Tagged_Types_List,
+                     Private_Tagged_Types_List,
+                     Options,
+                     Level,
+                     File_Text,
+                     Parsed_List);
+                  Level := Level - 1;
+
+                  Doc_Package_Open_Close
+                    (B, Kernel, Result,
+                     List_Ref_In_File,
+                     Source_File_List,
+                     Options,
+                     Level,
+                     Entity => Entity.Entity,
+                     Header => "end " & Get_Name (Entity.Entity).all & ";");
+               else
+                  --  The current entity is a package that renames another one.
+                  declare
+                     Whole_Header : constant String :=
+                       Get_Whole_Header
+                         (File_Text.all,
+                          Parsed_List,
+                          Entity.all);
+                     Header       : GNAT.OS_Lib.String_Access;
+                     Header_Lines : Natural;
+                  begin
+                     --  Check if it was an entity with its own header
+
+                     if Whole_Header /= "" then
+                        Remove_Indent (Whole_Header, Header, Header_Lines);
+
+                        Description := new String'
+                          (Get_Documentation
+                             (Get_Language_Handler (Kernel),
+                              Entity.Entity,
+                              File_Text.all));
+
+                        Doc_Package
+                          (B, Kernel, Result,
+                           List_Ref_In_File,
+                           Source_File_List,
+                           Options,
+                           Level,
+                           Entity.Entity,
+                           Header.all);
+
+                        if Description.all /= "" then
+                           Doc_Subtitle
+                             (B, Kernel, Result, Level,
+                              Subtitle_Name => "Description");
+                           Process_Description
+                             (B, Kernel, Result,
+                              Level,
+                              Description.all);
+                        end if;
+
+                        Free (Header);
+                        Free (Description);
+                     end if;
+                  end;
+
                end if;
-
-               --  Recursive call in order to deal with entities defined
-               --  in the current package.
-
-               Process_Source_Spec
-                 (B, Kernel, Result,
-                  Source_File_List,
-                  Source_Filename,
-                  Get_Name (Entity.Entity).all,
-                  Entity.Entity,
-                  False,
-                  Entity_List,
-                  List_Ref_In_File,
-                  Tagged_Types_List,
-                  Private_Tagged_Types_List,
-                  Options,
-                  Level,
-                  File_Text,
-                  Parsed_List);
-               Level := Level - 1;
-
-               Doc_Package_Open_Close
-                 (B, Kernel, Result,
-                  List_Ref_In_File,
-                  Source_File_List,
-                  Options,
-                  Level,
-                  Entity => Entity.Entity,
-                  Header => "end " & Get_Name (Entity.Entity).all & ";");
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
