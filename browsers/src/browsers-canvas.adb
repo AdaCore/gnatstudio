@@ -18,54 +18,54 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Glib.Convert;        use Glib.Convert;
-with Glib.Error;          use Glib.Error;
-with Glib.Graphs;         use Glib.Graphs;
-with Glib.Object;         use Glib.Object;
-with Pango.Enums;         use Pango.Enums;
-with Gdk.Color;           use Gdk.Color;
-with Gdk.GC;              use Gdk.GC;
-with Gdk.Drawable;        use Gdk.Drawable;
-with Gdk.Event;           use Gdk.Event;
-with Gdk.Pixbuf;          use Gdk.Pixbuf;
-with Gdk.Pixmap;          use Gdk.Pixmap;
-with Gdk.Rectangle;       use Gdk.Rectangle;
-with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
-with Gdk.Window;          use Gdk.Window;
-with Gtk.Accel_Group;     use Gtk.Accel_Group;
-with Gtk.Adjustment;      use Gtk.Adjustment;
-with Gtk.Button;          use Gtk.Button;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
-with Gtk.Image;           use Gtk.Image;
-with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gdk.Rectangle;       use Gdk.Rectangle;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Style;           use Gtk.Style;
-with Gtk.Widget;          use Gtk.Widget;
-with Pango.Layout;        use Pango.Layout;
-with Pango.Context;       use Pango.Context;
-with Pango.Font;          use Pango.Font;
+with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
+with Glib.Error;             use Glib.Error;
+with Glib.Graphs;            use Glib.Graphs;
+with Glib.Object;            use Glib.Object;
+with Pango.Enums;            use Pango.Enums;
+with Gdk.Color;              use Gdk.Color;
+with Gdk.GC;                 use Gdk.GC;
+with Gdk.Drawable;           use Gdk.Drawable;
+with Gdk.Event;              use Gdk.Event;
+with Gdk.Pixbuf;             use Gdk.Pixbuf;
+with Gdk.Pixmap;             use Gdk.Pixmap;
+with Gdk.Rectangle;          use Gdk.Rectangle;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+with Gdk.Window;             use Gdk.Window;
+with Gtk.Accel_Group;        use Gtk.Accel_Group;
+with Gtk.Adjustment;         use Gtk.Adjustment;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Hbutton_Box;        use Gtk.Hbutton_Box;
+with Gtk.Image;              use Gtk.Image;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gdk.Rectangle;          use Gdk.Rectangle;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Style;              use Gtk.Style;
+with Gtk.Widget;             use Gtk.Widget;
+with Pango.Layout;           use Pango.Layout;
+with Pango.Context;          use Pango.Context;
+with Pango.Font;             use Pango.Font;
 
-with Ada.Exceptions;      use Ada.Exceptions;
+with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;        use GNAT.Strings;
+with GNAT.Strings;           use GNAT.Strings;
 
-with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Intl;                use GPS.Intl;
-with Layouts;                   use Layouts;
-with VFS;                       use VFS;
-with Traces;                    use Traces;
+with Gtkada.Canvas;          use Gtkada.Canvas;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Intl;               use GPS.Intl;
+with Layouts;                use Layouts;
+with VFS;                    use VFS;
+with Traces;                 use Traces;
 
 package body Browsers.Canvas is
 
@@ -220,8 +220,8 @@ package body Browsers.Canvas is
    ---------------------
 
    procedure Draw_Background
-     (Canvas        : access Image_Canvas_Record;
-      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle)
+     (Canvas      : access Image_Canvas_Record;
+      Screen_Rect : Gdk.Rectangle.Gdk_Rectangle)
    is
       X_Left : constant Gint := Left_World_Coordinates (Canvas);
       Y_Top  : constant Gint := Top_World_Coordinates (Canvas);
@@ -253,15 +253,15 @@ package body Browsers.Canvas is
                     (Screen_Rect.Height + Screen_Rect.Y - Ys, Bh - Y);
 
                   Render_To_Drawable
-                    (Pixbuf       => Canvas.Scaled_Background,
-                     Drawable     => Get_Window (Canvas),
-                     Gc           => Get_Black_GC (Get_Style (Canvas)),
-                     Src_X        => X,
-                     Src_Y        => Y,
-                     Dest_X       => Xs,
-                     Dest_Y       => Ys,
-                     Width        => W,
-                     Height       => H);
+                    (Pixbuf   => Canvas.Scaled_Background,
+                     Drawable => Get_Window (Canvas),
+                     Gc       => Get_Black_GC (Get_Style (Canvas)),
+                     Src_X    => X,
+                     Src_Y    => Y,
+                     Dest_X   => Xs,
+                     Dest_Y   => Ys,
+                     Width    => W,
+                     Height   => H);
                   Ys := Ys + H;
                end loop;
 
@@ -1015,12 +1015,16 @@ package body Browsers.Canvas is
      (Event : Gdk.Event.Gdk_Event;
       User  : access Browser_Item_Record'Class)
    is
-      B    : constant General_Browser := Get_Browser (User);
+      B : constant General_Browser := Get_Browser (User);
 
       function Reset_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean;
       --  Reset the items linked to User.
+
+      ----------------
+      -- Reset_Item --
+      ----------------
 
       function Reset_Item
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -1188,9 +1192,9 @@ package body Browsers.Canvas is
    function Get_Title_Background_GC
      (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC
    is
-      B : constant General_Browser := Get_Browser (Item);
+      B      : constant General_Browser := Get_Browser (Item);
       Canvas : constant Interactive_Canvas := Get_Canvas (B);
-      Iter : Item_Iterator;
+      Iter   : Item_Iterator;
    begin
       if Is_Selected (Canvas, Item) then
          return Get_Selected_Item_GC (B);
