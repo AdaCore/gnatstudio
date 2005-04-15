@@ -6613,7 +6613,7 @@ The metrics generator can be invoked from two places inside GPS:
 
 @table @command
 @item Metrics->Compute metrics for root project
-Generate metrics for all files from the root project of the current one.
+Generate metrics for all files from the root project.
 
 @item Metrics->Compute metrics for current file
 Generate metrics for the current source file.
