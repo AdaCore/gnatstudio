@@ -1,1 +1,3 @@
 sdefault.adb
+common.gpr
+Makefile.common
