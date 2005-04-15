@@ -188,7 +188,6 @@ package GPS.Kernel.Preferences is
    Warning_Pattern_Index  : Param_Spec_Int;
 
    -- Diff_Utils --
-   Diff_Context_Length : Param_Spec_Int;
    Diff_Cmd            : Param_Spec_String;
    Patch_Cmd           : Param_Spec_String;
    Old_Vdiff           : Param_Spec_Boolean;
