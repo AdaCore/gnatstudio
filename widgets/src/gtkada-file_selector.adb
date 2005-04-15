@@ -1867,6 +1867,7 @@ package body Gtkada.File_Selector is
          Gtk_New
            (File_Selector_Window.File_Tree,
             File_Selector_Window.File_Model);
+         --  ??? File_Model should be Unref when File_Selector is destroyed
 
          Set_Headers_Visible (File_Selector_Window.File_Tree, True);
          Set_Column_Types (File_Selector_Window.File_Tree);
