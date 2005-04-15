@@ -343,7 +343,7 @@ package body Remote_Connections is
    function User_Login_Name return String is
       function Internal return Interfaces.C.Strings.chars_ptr;
       pragma Import (C, Internal, "user_login_name");
-      S      : constant Chars_Ptr := Internal;
+      S      : constant chars_ptr := Internal;
       Result : constant String := Value (S);
    begin
       C_Free (S);
