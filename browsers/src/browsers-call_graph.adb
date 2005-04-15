@@ -854,7 +854,7 @@ package body Browsers.Call_Graph is
             Parent := Get_Caller (Ref);
             if Parent /= null
               and then Show_In_Call_Graph (Get_Kind (Ref))
-              and then Is_Subprogram (Parent)
+              and then Is_Container (Get_Kind (Parent).Kind)
             then
                Data.Execute (Data.Callback, Parent, Ref, False);
             end if;
