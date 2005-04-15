@@ -1383,9 +1383,16 @@ package body GPS.Kernel.Scripts is
               (Data, -"No file information stored in the context");
          end if;
 
-      elsif Command = "current_context" then
-         Context := Get_Current_Context (Kernel);
+      elsif Command = "current_context"
+        or else Command = "contextual_context"
+      then
+         if Command = "current_context" then
+            Context := Get_Current_Context (Kernel);
+         else
+            Context := Kernel.Last_Context_For_Contextual;
+         end if;
          if Context = null then
+            Trace (Me, "There is no current context");
             Set_Error_Msg (Data, -"There is no current context");
 
          elsif Context.all in Entity_Selection_Context'Class then
@@ -1404,6 +1411,7 @@ package body GPS.Kernel.Scripts is
               (Get_Script (Data), File_Selection_Context_Access (Context)));
 
          else
+            Trace (Me, "Unknown current context");
             Set_Error_Msg (Data, -"Unknown current context");
          end if;
       end if;
@@ -1848,6 +1856,9 @@ package body GPS.Kernel.Scripts is
 
       Register_Command
         (Kernel, "current_context",
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel, "contextual_context",
          Handler      => Context_Command_Handler'Access);
 
       Register_Command
