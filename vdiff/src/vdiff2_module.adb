@@ -41,12 +41,17 @@ package body Vdiff2_Module is
 
    use Diff_Head_List;
 
-
    type In_Diff_List_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access In_Diff_List_Filter;
       Context : access Selection_Context'Class) return Boolean;
    --  ??? See In_Diff_List subprogram
+
+   type In_3Diff_List_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access In_3Diff_List_Filter;
+      Context : access Selection_Context'Class) return Boolean;
+   --  Filter for 3-way diff contextual menus
 
    ---------------------
    -- Register_Module --
@@ -55,10 +60,11 @@ package body Vdiff2_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools  : constant String := '/' & (-"Tools") & '/'
+      Tools          : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';
-      Filter : Action_Filter;
-      Command : Interactive_Command_Access;
+      Filter         : Action_Filter;
+      Filter_3_Files : Action_Filter;
+      Command        : Interactive_Command_Access;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
@@ -72,34 +78,35 @@ package body Vdiff2_Module is
          Priority    => Default_Priority);
 
       Filter := new In_Diff_List_Filter;
-
-      Command := new Change_Ref_File_Command;
-      Register_Contextual_Menu
-        (Kernel, "Vdiff change reference file",
-         Label  => -"Visual Diff/Change Reference File",
-         Action => Command,
-         Filter => Filter);
+      Filter_3_Files := new In_3Diff_List_Filter;
 
       Command := new Recompute_Diff_Command;
       Register_Contextual_Menu
         (Kernel, "Vdiff recompute difference",
-         Label  => -"Visual Diff/Recompute Difference",
+         Label  => -"Visual Diff/Recompute",
          Action => Command,
          Filter => Filter);
 
       Command := new Hide_Difference_Command;
       Register_Contextual_Menu
         (Kernel, "Vdiff hide difference",
-         Label  => -"Visual Diff/Hide Difference",
+         Label  => -"Visual Diff/Hide",
          Action => Command,
          Filter => Filter);
 
       Command := new Close_Difference_Command;
       Register_Contextual_Menu
         (Kernel, "Vdiff close difference",
-         Label  => -"Visual Diff/Close Difference",
+         Label  => -"Visual Diff/Close editors",
          Action => Command,
          Filter => Filter);
+
+      Command := new Change_Ref_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff change reference file",
+         Label  => -"Visual Diff/Use this editor as reference",
+         Action => Command,
+         Filter => Filter_3_Files);
 
       Diff3_Cmd := Param_Spec_String
       (Gnew_String
@@ -220,6 +227,25 @@ package body Vdiff2_Module is
           (File_Selection_Context_Access (Context))
       then
          return Is_In_Diff_List
+           (File_Information (File_Selection_Context_Access (Context)),
+            VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
+           Diff_Head_List.Null_Node;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   function Filter_Matches_Primitive
+     (Filter  : access In_3Diff_List_Filter;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Context.all in File_Selection_Context'Class
+        and then Has_File_Information (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         return Is_In_3Diff_List
            (File_Information (File_Selection_Context_Access (Context)),
             VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
            Diff_Head_List.Null_Node;
