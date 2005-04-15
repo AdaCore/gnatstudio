@@ -150,6 +150,7 @@ package body XML_Viewer is
       Root  : Node_Ptr;
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
+      Col   : Gint;
       pragma Unreferenced (Dummy);
 
       procedure Parse_Node
@@ -242,17 +243,21 @@ package body XML_Viewer is
          end;
       end if;
 
+      Col := Freeze_Sort (View.Tree.Model);
+
       while Root /= null loop
          Parse_Node (Root, Null_Iter, "");
          Root := Root.Next;
       end loop;
+
+      Thaw_Sort (View.Tree.Model, Col);
 
       Columns_Autosize (View.Tree);
 
       --  Expand the first iter
 
       Path := Get_Path (View.Tree.Model, Get_Iter_First (View.Tree.Model));
-      Dummy := Expand_Row (View.Tree, Path, False);
+      Dummy := Expand_Row (View.Tree, Path, True);
       Path_Free (Path);
 
       return "";
@@ -299,26 +304,28 @@ package body XML_Viewer is
       Set_Headers_Visible (View.Tree, False);
       Set_Rules_Hint (View.Tree, True);
 
-      --  Create the columns
-
-      Gtk_New (Col);
-      Gtk_New (Rend);
-      Pack_Start (Col, Rend, False);
-      Add_Attribute (Col, Rend, "markup", Name_Column);
-      Dumm := Append_Column (View.Tree, Col);
-
-      Gtk_New (Col);
-      Gtk_New (Rend);
-      Pack_Start (Col, Rend, False);
-      Add_Attribute (Col, Rend, "text", Value_Column);
-      Dumm := Append_Column (View.Tree, Col);
-
       Pack_Start (View, Scroll);
 
       View.Child := Put
         (Kernel, View,
          Position => Position_Left,
          Module   => Custom_Module_ID);
+
+      --  Create the columns
+
+      Gtk_New (Col);
+      Gtk_New (Rend);
+      Pack_Start (Col, Rend, False);
+      Add_Attribute (Col, Rend, "markup", Name_Column);
+      Set_Sort_Column_Id (Col, Name_Column);
+      Dumm := Append_Column (View.Tree, Col);
+      Clicked (Col);
+
+      Gtk_New (Col);
+      Gtk_New (Rend);
+      Pack_Start (Col, Rend, False);
+      Add_Attribute (Col, Rend, "text", Value_Column);
+      Dumm := Append_Column (View.Tree, Col);
 
       Set_Title (View.Child, Name);
 
