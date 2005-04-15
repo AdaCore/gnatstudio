@@ -6613,8 +6613,8 @@ The metrics generator can be invoked from two places inside GPS:
 @item @ref{The Tools Menu}
 
 @table @command
-@item Metrics->Compute metrics for current project
-Generate metrics for all files from the loaded project.
+@item Metrics->Compute metrics for root project
+Generate metrics for all files from the root project of the current one.
 
 @item Metrics->Compute metrics for current file
 Generate metrics for the current source file.
@@ -6626,10 +6626,6 @@ Generate metrics for the current source file.
 When relevant (depending on the context), right-clicking with your mouse
 will show metrics-related contextual menu entries.
 
-From an entity contextual menu, you have an option called
-@command{Metrics for entity} that will generate the metrics for the currently
-selected entity.
-
 From a source file contextual menu, you have an option called
 @command{Metrics for file} that will generate the metrics for
 the current file.
@@ -6639,6 +6635,13 @@ option @command{Metrics for project} that will generate the metrics for
 all files in the project.
 
 @end table
+
+Each of these commands produces a new window in the left-side area,
+which shows the computed metrics as a hierarchical tree view. The metrics
+are arranged by files, and then by scopes inside the files in a nested fashion.
+Double-clicking on any of the files or scopes displayed will open the
+appropriate source location in the editor. Any errors encountered during
+metrics computation will be displayed in the Locations Window.
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
