@@ -6421,9 +6421,6 @@ Open a view of the current source editor.
 @section Visual Comparison
 @cindex visual diff
 @noindent
-@i{Note that this tool is in a preliminary stage. More capabilities will
-be added in the future such as comparison of multiple files, interactive
-merge, @dots{}}.
 
 The visual comparison, available either from the VCS menus or from the Tools
 menu, provide a way to display graphically differences between two files,
@@ -6435,37 +6432,21 @@ with GPS, called @command{gnudiff.exe}. You may want to provide an alternate
 implementation by e.g. installing a set of Unix tools such as cygwin
 (@url{http://www.cygwin.com}).
 
-The dialog is composed of two main areas: on the left side, the reference
-file is displayed; on the right side, the modified file.
+When querying a visual comparison in GPS, the user area will show, side by
+side, editors for the files involved in the comparison. The reference file is
+placed by default on the left side.
 
-By default, only chunks of differences are displayed, with a number of lines
-of context around, that can be parametrized in the preferences dialog.
-
-Vertical and horizontal scroll bars are available for each file that allow you
-to scroll both files at the same time. In addition, empty lines are added
-when needed so that the two files can always be displayed side by side and
-stay synchronized.
-
-@iftex
-@cindex screen shot
-@image{visual-diff, 12.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{visual-diff}
-@end ifhtml
-
-Colors are used to display the different kinds of chunks:
+Color highlighting will be added to the file editors:
 
 @table @b
 @item gray
 This color is used for all the chunks on the reference (left) file. Only
 the modified (right) file is displayed with different colors.
 
-@item blue
+@item yellow
 This color is used to display lines that have been modified compared to the
-reference file.
+reference file. When there are fine differences within one line, they are
+shown in a brighter yellow.
 
 @item green
 Used to display lines added compared to the reference file; in other words,
@@ -6476,6 +6457,54 @@ Used to display lines removed from the reference file; in other words,
 lines that are present only in the reference file.
 
 @end table
+
+These colors can be configured, @pxref{The Preferences Dialog}.
+
+As with all highlighted lines in GPS, the visual differences highlights are
+visible in the Speed Column at the left of the editors.
+
+Blank lines are also added in the editors, in places that correspond to
+existing lines in the other editors. The vertical and horizontal scrolling
+are synchronized between all editors involved in a visual comparison.
+
+When a visual comparison is created, the Locations View is populated with the
+entries for each chunk of differences, and can be used to navigate between
+those.
+
+Closing one of the editors involved in a visual comparison removes the
+highlighting, blank lines, and scrolling in the other editors.
+
+Editors involved in a visual comparison have a contextual menu
+@code{Visual diff} that contains the following entries:
+
+@table @code
+@item Recompute
+Regenerates the visual comparison. This is useful, for example, when one of
+the editors has been modified by hand while it was involved in a visual
+comparison
+
+@item Hide
+Removes the highlighting corresponding to the visual comparison from all
+editors involved
+
+@item Close editors
+Closes all editors involved in this visual comparison
+
+@item Use this editor as reference
+Change the reference to this editor. (This is only visible when displaying a
+visual comparison involving 3 files).
+
+@end table
+
+@iftex
+@cindex screen shot
+@image{visual-diff, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{visual-diff}
+@end ifhtml
 
 @node Code Fixing
 @section Code Fixing
@@ -7620,10 +7649,6 @@ available, such as msys (@url{http://www.mingw.org/msys.shtml}) or
 cygwin (@url{http://www.cygwin.com}).
 
 @table @i
-@item Context length
-@cindex context length
-The number of lines displayed before and after each chunk of differences.
-Specifying -1 will display the whole file.
 
 @item Diff command
 @cindex diff
@@ -7658,6 +7683,51 @@ versioned files (e.g. when performing a comparison with a version control
 system).
 
 This command should be compatible with the @command{GNU patch} utility.
+
+@item Use old diff
+@cindex old diff
+Use the old version of the visual comparison.
+
+@item Diff3 command
+@cindex diff3
+This item is only displayed if the preference @i{Use old diff} is disabled.
+Command used to query a 3-way diff. See @i{Diff command} for a description
+of the parameters.
+
+@item Default color 
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to indicate lines on which there is a difference, in the
+"reference" editor.
+
+@item Old color
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to indicate spaces used by lines not present in one of the
+editors in a 3-way diff and present in the other editors.
+
+@item Append color
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to display the lines that are present in an editor but not in the
+reference editor.
+
+@item Remove color
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to display the lines that are present in the reference editor
+but not in other editors.
+
+@item Change color
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to display the lines that have changed between the reference
+editor and the other editors.
+
+@item Fine change color
+This item is only displayed if the preference @i{Use old diff} is disabled.
+The color used to highlight fine differences within a modified line.
+
+@item Context length
+@cindex context length
+This item is only displayed if the preference @i{Use old diff} is enabled.
+The number of lines displayed before and after each chunk of differences.
+Specifying -1 will display the whole file.
 
 @end table
 
@@ -13496,7 +13566,7 @@ Options:
    --eval=lang:file    Execute an in-line script written in the
                        language lang
    --server=port       Start GPS in server mode, opening a socket on the
-                       given port                                         
+                       given port
    --tracelist         Output the current configuration for logs
    --traceon=name      Activate the logs for a given module
    --traceoff=name     Deactivate the logs for a given module
