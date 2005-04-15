@@ -182,6 +182,7 @@ Customizing and Extending GPS
 * Customization examples::
 * Scripting GPS::
 * Adding support for new Version Control Systems::
+* The Server Mode::
 
 Customizing through XML files
 * Defining Actions::
@@ -201,8 +202,6 @@ Customizing through XML files
 * Adding documentation::
 * Adding stock icons::
 * Defining a documentation format::
-
-Adding support for new Version Control Systems
 
 Adding support for new tools
 * Defining supported languages::
@@ -6763,6 +6762,7 @@ machine, you can specify the name of this machine by setting the
 * Customization examples::
 * Scripting GPS::
 * Adding support for new Version Control Systems::
+* The Server Mode::
 @end menu
 
 @noindent
@@ -13236,6 +13236,97 @@ parameters:
 @end table
 
 @c --------------------------------------------------------------------
+@node The Server Mode
+@section The Server Mode
+@cindex server
+@c --------------------------------------------------------------------
+
+@noindent
+In order to give access to the GPS capabilities from external processes
+(e.g. @code{Emacs}), GPS can be launched in @i{server mode}.
+
+The two relevant command line switches are @code{--server} and
+@code{--hide}.
+
+@code{--server} will open a socket on the given port, allowing multiple
+clients to connect to a running GPS, and sending GPS shell or python
+commands.
+
+@code{--hide} tells GPS not to display its main window when starting.
+note that under unix systems, you still need to have access to the current
+screen (as determined by the @code{DISPLAY} environment variable) in this
+mode.
+
+Using the two switches together provides a way to launch GPS as a background
+process with no initial user interface.
+
+Clients connecting through a standard socket have access to a simple
+shell using @code{GPS>> } as the separating prompt between each command. This
+is needed in order to determine when the output (result) of a command
+is terminated.
+
+All the GPS shell commands (as defined in @ref{The GPS Shell}) are
+available from this shell. In addition, the python interpreter, if
+enabled, is also available through the use of the @code{python} prefix
+before a python command.
+
+For example, sending @code{pwd} through the socket will send the @code{pwd}
+command through the GPS shell and display the result on the socket;
+similarly, sending @code{python GPS.pwd()} will send the @code{GPS.help()}
+command through the python interpreter (see @ref{The Python Interpreter} for
+more details).
+
+The socket shell provides also additional commands:
+
+@itemize @bullet
+@item logout
+This command will inform the GPS server that the connection should now
+be closed.
+
+@item id <string>
+This command will register the current session with a given string.
+This string can then be used within GPS itself (for example via a
+.xml or python plug-in) to display extra information to the client via
+the socket, using the command GPS.Socket.send.
+@end itemize
+
+For example, let suppose that we start gps with the @code{--server=1234}
+command: this will bring up GPS as usual.
+
+Now, on a separate terminal, create a simple server by typing the following:
+
+@smallexample
+telnet localhost 1234
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+GPS>> id test-1
+id set to 'test-1'
+GPS>> pwd
+c:\working-dir\
+GPS>>
+@end smallexample
+
+Then in the GPS Python Console:
+
+@smallexample
+>>> GPS.Socket ("test-1").send ("hello, it's time to logout\n");
+@end smallexample
+
+At this point, the following is received on the client (telnet) side:
+
+@smallexample
+GPS>> hello, it's time to logout
+@end smallexample
+
+We can then close the client:
+
+@smallexample
+logout
+Connection closed by foreign host.
+@end smallexample
+
+@c --------------------------------------------------------------------
 @node Environment
 @chapter Environment
 @cindex environment
@@ -13264,12 +13355,15 @@ Options:
    --debug[=program]   Start a debug session and optionally load the
                        program with the given arguments
    --debugger debugger Specify the debugger's command line
+   --hide              Hide GPS main window
    --host=tools_host   Use tools_host to launch tools (e.g. gdb)
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
    --load=lang:file    Execute an external file written in the
                        language lang
    --eval=lang:file    Execute an in-line script written in the
                        language lang
+   --server=port       Start GPS in server mode, opening a socket on the
+                       given port                                         
    --tracelist         Output the current configuration for logs
    --traceon=name      Activate the logs for a given module
    --traceoff=name     Deactivate the logs for a given module
