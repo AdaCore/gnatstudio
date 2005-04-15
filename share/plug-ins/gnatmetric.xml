@@ -9,11 +9,7 @@
      <description>Run GNAT Metrics on a project</description>
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps"</shell>
-     <external
-      progress-regexp="completed (\d+) out of (\d+).*"
-      progress-current="1"
-      progress-final="2"
-      progress-hide="true">gnat metric -dd -x "%pps"</external>
+     <external>gnat metric -v -x "%pps"</external>
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
@@ -25,12 +21,7 @@
      <description>Run GNAT Metrics on a root project</description>
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%PPs"</shell>
-     <external
-      show-command="true"
-      progress-regexp="completed (\d+) out of (\d+).*"
-      progress-current="1"
-      progress-final="2"
-      progress-hide="true">gnat metric -dd -x "%PPs"</external>
+     <external>gnat metric -v -x "%PPs"</external>
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
@@ -43,12 +34,7 @@
      <description>Run GNAT Metrics on a single file</description>
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps" "%F"</shell>
-     <external
-      show-command="true"
-      progress-regexp="completed (\d+) out of (\d+).*"
-      progress-current="1"
-      progress-final="2"
-      progress-hide="true">gnat metric -x -dd "%pps" "%F"</external>
+     <external>gnat metric -x "%pps" "%F"</external>
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
