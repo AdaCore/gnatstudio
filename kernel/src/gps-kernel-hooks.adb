@@ -1096,6 +1096,25 @@ package body GPS.Kernel.Hooks is
          -("Hook called when the value of some of the preferences"
            & " changes. Modules should refresh themselves dynamically."));
       Register_Hook
+        (Kernel, Contextual_Menu_Open_Hook,
+         -("Hook called just before a contextual menu is created. It is called"
+           & " before any of the filters is evaluated, and can be used to"
+           & " precomputed data shared by multiple filters to speed up the"
+           & " computation. Use GPS.contextual_context() to get the context of"
+           & " the contextual menu and store precomputed data in it."
+           & ASCII.LF
+           & "See also the " & Contextual_Menu_Close_Hook));
+      Register_Hook
+        (Kernel, Contextual_Menu_Close_Hook,
+         -("Hook called just before a contextual menu is destroyed. At this"
+           & " time, the value returned by GPS.contextual_context() is still"
+           & " the one used in " & Contextual_Menu_Open_Hook
+           & ", and therefore you can still"
+           & " reference the data you stored in the context. This hook is"
+           & " called even if no action was selected by the user. However,"
+           & " it is always called before the action is executed, since the"
+           & " menu itself is closed first"));
+      Register_Hook
         (Kernel, Search_Reset_Hook,
          -("Hook called when the current search pattern is reset or changed"
            & " by the user, or when the current search is no longer possible"
