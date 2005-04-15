@@ -76,9 +76,6 @@ package body Docgen.Work_On_File is
    --  This procedure is in charge of the documentation generation phase
    --  that comes right after every single file has been processed.
 
-   function Is_Operator (Name : String) return Boolean;
-   --  Return True is Name is an operator
-
    function Is_Tagged_Type (Info : Entity_Information) return Boolean;
    --  Whether Info is tagged type or a C++ class
 
@@ -186,24 +183,6 @@ package body Docgen.Work_On_File is
    --  All_Scope_Tree : hash table which contains the scope trees built. This
    --  hash table is shared by all files and finally destroyed at the end of
    --  the documentation process in Process_Files.
-
-   -----------------
-   -- Is_Operator --
-   -----------------
-
-   function Is_Operator (Name : String) return Boolean is
-   begin
-      case Name (Name'First) is
-         when '=' | '>' | '+' | '-' | '*' | '/' | '<' | '&' =>
-            return True;
-         when 'a' =>
-            return Name = "and";
-         when 'o' =>
-            return Name = "or";
-         when others =>
-            return False;
-      end case;
-   end Is_Operator;
 
    --------------------
    -- Is_Tagged_Type --
@@ -415,19 +394,7 @@ package body Docgen.Work_On_File is
                Private_Tagged_Types_List     => Private_Tagged_Types_List);
          end if;
 
-         if File_Is_Spec or else not Is_Operator (Get_Name (Info).all) then
-            --  ??? Temporary solution: operators are not added.
-            --  In fact, it seems that Parse_Entity doesn't return
-            --  them as identifiers. So, if we add them in the
-            --  references list, they won't be matched and as a
-            --  consequence all the following references also.
-            --  NB: for spec file, there isn't this problem because
-            --  we must search in the whole list of references: so
-            --  no link is lost (we only have "too many" reference
-            --  nodes).
-            --  If there's some operators missing in the test above
-            --  it will explain the loss of links for body files
-
+         if File_Is_Spec then
             Find_All_References
               (Iter    => Refs,
                Entity  => Info,
@@ -494,6 +461,7 @@ package body Docgen.Work_On_File is
             Line_In_Body       => No_File_Location,
             Public_Declaration => null,
             Processed          => False);
+
          Find_Next_Body (Info, Location => Entity_Node.Line_In_Body);
 
          --  Get the entity specific parameters.
