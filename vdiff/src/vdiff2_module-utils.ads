@@ -86,7 +86,14 @@ package Vdiff2_Module.Utils is
      (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Diff_Head_List.List_Node;
-   --  ???
+   --  Return the first Diff that contains Selected_File.
+
+   function Is_In_3Diff_List
+     (Selected_File : VFS.Virtual_File;
+      List          : Diff_Head_List.List)
+      return Diff_Head_List.List_Node;
+   --  Return the first 3-file Diffs that contains Selected_File.
+
 
    type Text_Iterator;
 
