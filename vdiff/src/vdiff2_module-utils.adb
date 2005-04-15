@@ -361,6 +361,32 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Hide_Differences;
 
+   ----------------------
+   -- Is_In_3Diff_List --
+   ----------------------
+
+   function Is_In_3Diff_List
+     (Selected_File : VFS.Virtual_File;
+      List          : Diff_Head_List.List)
+      return Diff_Head_List.List_Node
+   is
+      Curr_Node : Diff_Head_List.List_Node := First (List);
+      Diff      : Diff_Head;
+   begin
+      while Curr_Node /= Diff_Head_List.Null_Node loop
+         Diff := Data (Curr_Node);
+         exit when (Diff.File1 = Selected_File
+                    or else Diff.File2 = Selected_File
+                    or else Diff.File3 = Selected_File)
+           and then (Diff.File1 /= No_File
+                     and then Diff.File2 /= No_File
+                     and then Diff.File3 /= No_File);
+         Curr_Node := Next (Curr_Node);
+      end loop;
+
+      return Curr_Node;
+   end Is_In_3Diff_List;
+
    ---------------------
    -- Is_In_Diff_List --
    ---------------------
