@@ -26,6 +26,7 @@ with Gtk.Enums;   use Gtk.Enums;
 with Gtk.Image;   use Gtk.Image;
 with Gtk.Label;   use Gtk.Label;
 with Gtk.Widget;  use Gtk.Widget;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 with VFS;         use VFS;
 with Traces;      use Traces;
@@ -130,6 +131,7 @@ package body Welcome_Page is
       Label    : Gtk_Label;
       Child    : MDI_Child;
       Image    : Gtk_Image;
+      Scroll   : Gtk_Scrolled_Window;
 
       Pics_Dir : constant String := Get_System_Dir (Kernel)
         & "doc" & Directory_Separator & "gps" & Directory_Separator
@@ -141,6 +143,10 @@ package body Welcome_Page is
 
       Gtk_New (Image, Pics_Dir & "gps_title.gif");
       Pack_Start (Main_Box, Image);
+
+      Gtk_New (Scroll);
+      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
+      Add_With_Viewport (Scroll, Main_Box);
 
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
       Pack_Start (Main_Box, Hbox);
@@ -198,9 +204,9 @@ package body Welcome_Page is
       Gtk_New (Label, -"User's Guide");
       Pack_Start (Vbox, Label, False, False);
 
-      Show_All (Main_Box);
+      Show_All (Scroll);
 
-      Child := Put (Get_MDI (Kernel), Main_Box);
+      Child := Put (Get_MDI (Kernel), Scroll);
 
       Modify_Bg (Get_Parent (Main_Box),
                  State_Normal, White (Get_Default_Colormap));
