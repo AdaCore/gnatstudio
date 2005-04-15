@@ -7,6 +7,7 @@
   <action name="metrics project" >
      <filter id="Project only" language="ada" />
      <description>Run GNAT Metrics on a project</description>
+     <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps"</shell>
      <external
       progress-regexp="completed (\d+) out of (\d+).*"
@@ -16,13 +17,13 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
-     <shell show-command="false">Editor.save</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%p)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
 
   <action name="metrics root project" >
      <description>Run GNAT Metrics on a root project</description>
+     <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%PPs"</shell>
      <external
       show-command="true"
@@ -33,7 +34,6 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
-     <shell show-command="false">Editor.save</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%P)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
@@ -41,6 +41,7 @@
   <action name="metrics file" >
      <filter id="File" language="ada" />
      <description>Run GNAT Metrics on a single file</description>
+     <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps" "%F"</shell>
      <external
       show-command="true"
@@ -51,7 +52,6 @@
      <on-failure>
          <shell>Locations.parse "%1" category</shell>
      </on-failure>
-     <shell show-command="false">Editor.save</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%f)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
