@@ -121,10 +121,92 @@ Optionally you can also pass the full contents of an XML file, starting from the
 
   <shell_doc name="GPS.current_context">
      <return>An instance of GPS.FileContext, GPS.AreaContext,...</return>
-     <description>Returns the current context in GPS. This is the currently selected file, line, column, project,... depending on what window is currently active</description>
+     <description>Returns the current context in GPS. This is the currently selected file, line, column, project,... depending on what window is currently active. From one call of this function to the next, a different instance is returned, and therefore you shouldn't store your own data in the instance, since you will not be able to recover it later on</description>
      <see_also name="GPS.Editor.get_line()"/>
      <see_also name="GPS.Editor.*: Most of these functions apply to the current editor" />
      <see_also name="GPS.MDI.current(): Access the current window" />
+     <see_also name="GPS.contextual_context()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.contextual_context">
+     <return>An instance of GPS.FileContext, GPS.AreaContext,...</return>
+     <description>Returns the context at the time the contextual menu was open.
+This function will only return a valid context while the menu is open, or while an action executed from that menu is executed. You can store your own data in the returned instance, so that for instance you can precompute some internal data in the filters for the contextual actions (see &lt;filter&gt; in the XML files), and reuse that precomputed data when the menu is executed.
+See also the documentation for "contextual_menu_open" hook.</description>
+     <see_also name="GPS.current_context" />
+     <example lang="python">
+Here is an example that shows how to precompute some data when we decide whether a menu entry should be displayed in a contextual menu, and reuse that data when the action executed through the menu is reused.
+
+import GPS
+
+def on_contextual_open (name):
+   context = GPS.contextual_context ()
+   context.private = 10
+   GPS.Console().write ("creating data " + `context.private` + '\n')
+
+def on_contextual_close (name):
+   context = GPS.contextual_context ()
+   GPS.Console().write ("destroying data " + `context.private` + '\n')
+
+def my_own_filter ():
+   context = GPS.contextual_context()
+   context.private=context.private + 1
+   GPS.Console().write ("context.private=" + `context.private` + '\n')
+   return 1
+
+def my_own_action ():
+   context = GPS.contextual_context()
+   GPS.Console().write ("my_own_action " + `context.private` + '\n')
+
+GPS.parse_xml('
+   &lt;action name="myaction%gt;"
+      &lt;filter shell_lang="python"
+              shell_cmd="contextual.my_own_filter()" /&gt;
+      &lt;shell lang="python">contextual.my_own_action()&lt;/shell&gt;
+   &lt;/action&gt;
+
+   &lt;contextual action="myaction"&gt;
+      &lt;Title&gt;Foo1&lt;/Title&gt;
+   &lt;/contextual&gt;
+   &lt;contextual action="myaction"&gt;
+      &lt;Title&gt;Foo2&lt;/Title&gt;
+   &lt;/contextual&gt;
+ """)
+
+GPS.Hook ("contextual_menu_open").add (on_contextual_open)
+GPS.Hook ("contextual_menu_close").add (on_contextual_close)
+     </example>
+     <example lang="python">
+The following example does almost the same thing as the above, but without relying on the hooks to initialize the value. We set the value in the context the first time we need it, instead of every time the menu is open.
+
+import GPS
+def my_own_filter2 ():
+   try:
+      context = GPS.contextual_context()
+      context.private2 = context.private2 + 1
+   except AttributeError:
+      context.private2 = 1
+   GPS.Console().write ("context.private2=" + `context.private2` + '\n')
+   return 1
+
+def my_own_action2 ():
+   context = GPS.contextual_context()
+   GPS.Console().write ("my_own_action, private2=" + `context.private2` + '\n')
+
+GPS.parse_xml ("""
+   &lt;action name="myaction2"&gt;
+      &lt;filter shell_lang="python"
+              shell_cmd="contextual.my_own_filter2()" /&gt;
+      &lt;shell lang="python">contextual.my_own_action2()&lt;/shell&gt;
+   &lt;/action&gt;
+   &lt;contextual action="myaction2"&gt;
+      &lt;Title&gt;Bar1&lt;/Title&gt;
+   &lt;/contextual&gt;
+   &lt;contextual action="myaction2"&gt;
+      &lt;Title&gt;Bar2&lt;/Title&gt;
+   &lt;/contextual&gt;
+""")
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.compute_xref">
@@ -2102,7 +2184,7 @@ The specific list depends on the hook type</param>
     <description>Represents GPS's Multiple Document Interface. This gives access to general graphical commands for GPS, as well as control over the current layout of the windows within GPS</description>
     <see_also name="GPS.MDIWindow" />
     <example lang="python">
-If you have installed the pygtk package (see GPS's documentation}, GPS will export a few more functions to python so that it is easier to interact with GPS itself. In particular, the GPS.MDI.add function allows you to put a widget created by pygtk under control of GPS's MDI, so that users can interact with it as with all other GPS windows.
+If you have installed the pygtk package (see GPS's documentation}, GPS will export a few more functions to python so that it is easier to interact with GPS itself. In particular, the GPS.MDI.add function allows you to put a widg et created by pygtk under control of GPS's MDI, so that users can interact with it as with all other GPS windows.
 Here is a small code example:
 
 import GPS
