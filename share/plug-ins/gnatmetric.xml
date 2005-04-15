@@ -10,7 +10,7 @@
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps"</shell>
      <external>gnat metric -v -x "%pps"</external>
-     <shell>Locations.parse "%1" category</shell>
+     <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%p)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
@@ -20,7 +20,7 @@
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%PPs"</shell>
      <external>gnat metric -v -x "%PPs"</external>
-     <shell>Locations.parse "%1" category</shell>
+     <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%P)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
@@ -31,7 +31,7 @@
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%pps" "%F"</shell>
      <external>gnat metric -x "%pps" "%F"</external>
-     <shell>Locations.parse "%1" category</shell>
+     <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer "Metrics (%f)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>
   </action>
