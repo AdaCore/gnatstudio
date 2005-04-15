@@ -5906,7 +5906,7 @@ ClearCase. There are two interfaces to ClearCase: the standard
 ClearCase interface, which is built-in and uses a generic GPS
 terminology for VCS operations, and the Native ClearCase interface,
 which is fully customizable and uses by default the terminology
-specific to ClearCase. 
+specific to ClearCase.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
@@ -6575,6 +6575,24 @@ or from the selected project recursively.
 
 You will find the list of all documentation options in
 @ref{The Preferences Dialog}.
+
+@item Restrictions
+There are some restrictions in the generated documentation:
+
+@itemize @bullet
+@item The formal part of generics is not displayed.
+@end itemize
+
+Furthermore, the documentation generator relies on the ALI files created by
+GNAT. Improvements have been made in the development version of the compiler.
+This makes the following restrictions obsolete:
+
+@itemize @bullet
+@item A type named @i{type} may be generated in the type index.
+
+@item Parameters and objects of private generic types may be considered as
+types.
+@end itemize
 @end table
 
 @node Metrics
@@ -7632,6 +7650,7 @@ information.
 If this preference is enabled, implementation files will be processed.
 Otherwise, only the specification files will.
 
+@c ??? Commented for 3.0.0
 @c @item Ignore comments with --!
 
 @item Show private entities
@@ -7639,17 +7658,20 @@ Otherwise, only the specification files will.
 By default, no documentation is generated for private entities.
 Enabling this preference will change this behavior.
 
-@item Compute references
-
-If enabled, the documentation tool will compute and take advantage of source
-references to e.g generate call graph information.
-Activating this option will slow down the documentation generation process.
+@c ??? Commented for 3.0.0
+@c @item Call graph
+@c
+@c If enabled, the documentation tool will compute and take advantage of source
+@c references to e.g generate call graph information.
+@c Activating this option will slow down the documentation generation process.
 
 @item Create all links
 Choosing this option will activate the creation of links to files that are not
 processed.
 
-@c @item List tagged types
+@item List tagged types
+If enabled, an index will be created that lists all tagged types as well as
+their parents and childs. Links are created in order to ease the navigation.
 
 @end table
 
