@@ -2115,6 +2115,7 @@ package body Entities.Queries is
             end if;
 
          elsif Iter.Name = null then
+            Iter.Index_In_EL := Entity_Information_Arrays.First;
             Get_Next (Iter.File.All_Entities, Iter.Iter);
             UEI := Get_Element (Iter.Iter);
             if UEI = null then
