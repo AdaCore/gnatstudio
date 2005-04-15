@@ -7,8 +7,8 @@
 ##  - Dynamically generating HTML file to document python entities. In
 ##    particular, a predefined menu is added for the GPS extensions
 
-import GPS, pydoc, os, inspect, pydoc, sys
-from string import rstrip, lstrip
+import GPS, pydoc, os, inspect, pydoc, sys, re
+from string import rstrip, lstrip, expandtabs
 
 def generate_doc (entity):
   """Generate the documentation for a python entity dynamically.
@@ -47,6 +47,13 @@ GPS.parse_xml("""
 ##  you do a help() command
 #####################################################################
 
+def subst_spaces(matchobj):
+  len=matchobj.end() - matchobj.start()
+  return '\n' + ('&nbsp;' * len)
+
+def replace_spaces (text):
+  return re.sub (re.compile (r'\n[ \t]+', re.MULTILINE), subst_spaces, text)
+
 ## These two wrappers are used to make sure that the call to getdoc() knows
 ## about the class name of the entity, otherwise it is lost in pydoc functions
 ## and thus we will not be able to find in the XML file the reference for the
@@ -58,6 +65,29 @@ class XMLTextDoc (pydoc.TextDoc):
        return pydoc.TextDoc.document(self, object, name, *args)
 
 class XMLHtmlDoc (pydoc.HTMLDoc):
+    def page (self, title, contents):
+       return '''
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>%s</title>
+<style>
+dd {width: 800px}</style>
+</head><body bgcolor="#f0f0f8">
+%s
+</body></html>''' % (title, contents)
+
+    ## Rename this preformat if we want to have narrower paragraphs. Otherwise,
+    ## all blank spaces are non breakable, which is ugly
+    def preformat2 (self, text):
+       text = self.escape (expandtabs (text))
+       return pydoc.replace (text, '\n\n', '\n \n', '\n\n', '\n \n',
+                             '\n', '<br>\n')
+
+    def preformat (self, text):
+       text = self.escape (expandtabs (text))
+       return pydoc.replace (replace_spaces (text), '\n\n', '\n \n',
+                             '\n\n', '\n \n',
+                             '\n', '<br>\n')
+
     def document(self, object, name=None, *args):
        Help_Wrapper.set_current_class (object)
        return pydoc.HTMLDoc.document (self, object, name, *args)
@@ -108,7 +138,7 @@ class Help_Wrapper:
          else:
             name = module + Help_Wrapper.current_class + object.__name__
 
-         return self.doc.getdoc (name)
+         return self.doc.getdoc (name);
       except:
          return __oldgetdoc__(object)
 
