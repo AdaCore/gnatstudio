@@ -314,7 +314,8 @@ package GPS.Kernel is
 
    procedure Unref (Context : in out Selection_Context_Access);
    --  Free the memory occupied by Context. It automatically calls the
-   --  primitive subprogram Destroy as well.
+   --  primitive subprogram Destroy as well. Context is reset to null if it
+   --  was destroyed.
    --  It in fact decrements the reference counter for Context, and frees the
    --  memory only if this counter reaches 0.
 
@@ -329,6 +330,9 @@ package GPS.Kernel is
    --  selection contexts.
    --  This function is mostly intended to be called for the callbacks in the
    --  menu bar.
+   --  The context returned will be that of the active contextual menu if there
+   --  is one at that point in time (therefore, we ignore cases where for
+   --  instance a new child has been selected automatically at that point)
 
    function Get_Context_For_Child
      (Kernel : access Kernel_Handle_Record;
@@ -698,6 +702,8 @@ package GPS.Kernel is
    Variable_Changed_Hook         : constant String := "variable_changed";
    Project_View_Changed_Hook     : constant String := "project_view_changed";
    Project_Changed_Hook          : constant String := "project_changed";
+   Contextual_Menu_Open_Hook     : constant String := "contextual_menu_open";
+   Contextual_Menu_Close_Hook    : constant String := "contextual_menu_close";
 
    --  Hooks with File_Hooks_Args argument
    File_Edited_Hook              : constant String := "file_edited";
