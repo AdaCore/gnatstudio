@@ -6584,8 +6584,8 @@ There are some restrictions in the generated documentation:
 @end itemize
 
 Furthermore, the documentation generator relies on the ALI files created by
-GNAT. Improvements have been made in the development version of the compiler.
-This makes the following restrictions obsolete:
+GNAT. Depending on the version of GNAt used, the following restrictions may
+or may not apply:
 
 @itemize @bullet
 @item A type named @i{type} may be generated in the type index.
