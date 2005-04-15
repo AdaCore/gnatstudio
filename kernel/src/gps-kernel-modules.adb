@@ -51,6 +51,7 @@ with Projects;          use Projects;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with GPS.Intl;        use GPS.Intl;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;   use GPS.Kernel.Macros;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
@@ -116,6 +117,8 @@ package body GPS.Kernel.Modules is
      (Contextual_Menu_Record, Contextual_Menu_Access);
 
    function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Kernel_Handle);
+   function Convert is new Ada.Unchecked_Conversion
      (System.Address, Contextual_Menu_Access);
    function Convert is new Ada.Unchecked_Conversion
      (Contextual_Menu_Access, System.Address);
@@ -123,6 +126,12 @@ package body GPS.Kernel.Modules is
    package Action_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Contextual_Menu_Access);
 
+   procedure Contextual_Menu_Destroyed
+     (Data : System.Address;
+      Object : System.Address);
+   pragma Convention (C, Contextual_Menu_Destroyed);
+   --  Called when a contextual menu is destroyed and its context can be
+   --  unrefed
 
    type Contextual_Label_Parameters is new Contextual_Menu_Label_Creator_Record
       with record
@@ -471,6 +480,24 @@ package body GPS.Kernel.Modules is
                 & Action.Name.all & " " & Exception_Information (E));
    end Contextual_Action;
 
+   -------------------------------
+   -- Contextual_Menu_Destroyed --
+   -------------------------------
+
+   procedure Contextual_Menu_Destroyed
+     (Data : System.Address;
+      Object : System.Address)
+   is
+      pragma Unreferenced (Object);
+      Kernel : constant Kernel_Handle := Convert (Data);
+   begin
+      if Kernel.Last_Context_For_Contextual /= null then
+         Run_Hook (Kernel, Contextual_Menu_Close_Hook);
+         Trace (Me, "Destroying contextual menu and its context");
+         Unref (Kernel.Last_Context_For_Contextual);
+      end if;
+   end Contextual_Menu_Destroyed;
+
    ----------------------------
    -- Create_Contextual_Menu --
    ----------------------------
@@ -718,6 +745,8 @@ package body GPS.Kernel.Modules is
          Kernel  => User.Kernel,
          Creator => User.ID);
 
+      Run_Hook (User.Kernel, Contextual_Menu_Open_Hook);
+
       --  Compute what items should be made visible, except for separators
       --  for the moment
       C := Convert (User.Kernel.Contextual);
@@ -782,6 +811,11 @@ package body GPS.Kernel.Modules is
       if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
          Destroy (Menu);
          Menu := null;
+      end if;
+
+      if Menu /= null then
+         Weak_Ref (Menu, Contextual_Menu_Destroyed'Access,
+                   Data => User.Kernel.all'Address);
       end if;
 
       return Menu;
