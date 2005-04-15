@@ -6584,7 +6584,7 @@ There are some restrictions in the generated documentation:
 @end itemize
 
 Furthermore, the documentation generator relies on the ALI files created by
-GNAT. Depending on the version of GNAt used, the following restrictions may
+GNAT. Depending on the version of GNAT used, the following restrictions may
 or may not apply:
 
 @itemize @bullet
