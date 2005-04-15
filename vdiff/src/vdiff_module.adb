@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
@@ -353,6 +354,18 @@ package body Vdiff_Module is
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+
+      Diff_Context_Length := Param_Spec_Int (Gnew_Int
+        (Name    => "Diff_Utils-Context-Length",
+         Minimum => -1,
+         Maximum => Gint'Last,
+         Default => 5,
+         Blurb   => -("The number of lines displayed before and after each"
+                      & " chunk of differences. -1 to display the whole file"),
+         Nick    => -"Context length"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Context_Length), -"Visual diff");
    end Register_Module;
 
 end Vdiff_Module;
