@@ -24,7 +24,6 @@
      <shell show-command="false">Editor.save</shell>
      <shell>echo gnat metric -x "%PPs"</shell>
      <external
-      show-command="true"
       progress-regexp="completed (\d+) out of (\d+).*"
       progress-current="1"
       progress-final="2"
