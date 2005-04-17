@@ -166,18 +166,28 @@ package body XML_Viewer is
       is
          C : Node_Ptr;
          I : Gtk_Tree_Iter;
+         Name : constant UTF8_String := Get_Attribute (N, "name");
       begin
          if N.Tag.all = "file" then
             Append (View.Tree.Model, I, Parent);
             Set (View.Tree.Model, I, Name_Column,
-                 "<b>" & Base_Name (Get_Attribute (N, "name")) & "</b>");
+                 "<b>" & Base_Name (Name) & "</b>");
             Set (View.Tree.Model, I, Command_Column,
-                 "Editor.edit """"""" & Get_Attribute (N, "name") & """""""");
+                 "Editor.edit """"""" & Name & """""""");
 
          elsif N.Tag.all = "unit" then
             Append (View.Tree.Model, I, Parent);
-            Set (View.Tree.Model, I, Name_Column,
-                 "<b>" & Get_Attribute (N, "name") & "</b>");
+            declare
+               Kind : constant UTF8_String := Get_Attribute (N, "kind");
+            begin
+               if Kind = "" then
+                  Set (View.Tree.Model, I, Name_Column,
+                       "<b>" & Name & "</b>");
+               else
+                  Set (View.Tree.Model, I, Name_Column,
+                       "<b>" & Name & "</b> (" & Kind & ")");
+               end if;
+            end;
             Set (View.Tree.Model, I, Command_Column,
                  "Editor.edit """""""
                  & File & """"""" "
@@ -186,7 +196,7 @@ package body XML_Viewer is
 
          elsif  N.Tag.all = "metric" then
             Append (View.Tree.Model, I, Parent);
-            Set (View.Tree.Model, I, Name_Column, Get_Attribute (N, "name"));
+            Set (View.Tree.Model, I, Name_Column, Name);
             Set (View.Tree.Model, I, Value_Column, N.Value.all);
          else
             I := Parent;
@@ -196,7 +206,7 @@ package body XML_Viewer is
 
          while C /= null loop
             if N.Tag.all = "file" then
-               Parse_Node (C, I, Get_Attribute (N, "name"));
+               Parse_Node (C, I, Name);
             else
                Parse_Node (C, I, File);
             end if;
