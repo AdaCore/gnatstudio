@@ -2527,7 +2527,7 @@ highlight_category, style_category and warning_category reference the colors to 
   <shell_doc name="GPS.Socket.__init__">
      <param name="self">The instance of GPS.Socket</param>
      <param name="id">A string</param>
-     <description>Creates an interface to one of the specific clients connect to GPS through the --server socket. The id can be set by the client by sending the "id" command to GPS</description>
+     <description>Creates an interface to one of the specific clients connected to GPS through the --server socket. The id can be set by the client by sending the "id" command to GPS</description>
   </shell_doc>
 
   <shell_doc name="GPS.Socket.send">
@@ -2543,7 +2543,7 @@ highlight_category, style_category and warning_category reference the colors to 
 
   <shell_doc name="GPS.Socket.list">
      <return>List of strings</return>
-     <description>Return a list of all the registered socket identifiers. These strings can be used to instanciate GPS.Socket.</description>
+     <description>Return a list of all the registered socket identifiers. These strings can be used to instantiate GPS.Socket.</description>
    </shell_doc>
 
 
