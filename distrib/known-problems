@@ -10,6 +10,12 @@ Known Problems fixed in GPS 3.0.0
   Problem:    When using multiple Views of the same file, unwanted scrolling
               can happen on the editor which is not being currently used.
 
+- E317-021 Copy/Paste now working in search dialog
+  Problem:    The menu Edit->Paste doesn't work when the cursor is in the Search
+              field of the search dialog (nor in any other location than a
+              source editor)
+  Workaround: On Unix, use the middle mouse button to paste.
+
 - E317-016 Changing fonts using the font selector
   Problem:    In the preferences dialog, when changing a font using the font
               selector, GPS does not take into account the new preference.
