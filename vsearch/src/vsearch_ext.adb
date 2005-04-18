@@ -827,7 +827,6 @@ package body Vsearch_Ext is
       Child : constant MDI_Child := Find_MDI_Child
         (Get_MDI (Vsearch.Kernel), Vsearch);
       Req : Gtk_Requisition;
-
    begin
       if Child /= null then
          if Is_Floating (Child) then
@@ -837,15 +836,13 @@ package body Vsearch_Ext is
             end if;
 
          else
-            --  ??? +16 is for the notebook's border on each side
-            --  Never resize in width, only in height
-
-            Size_Request (Vsearch, Req);
+            Size_Request (Child, Req);
             Set_Size
               (Get_MDI (Vsearch.Kernel),
-               Child => Child,
-               Width  => 0,
-               Height => Req.Height + 16);
+               Child      => Child,
+               Width      => 0,
+               Height     => Req.Height,
+               Fixed_Size => True);
          end if;
       end if;
    end Resize_If_Needed;
