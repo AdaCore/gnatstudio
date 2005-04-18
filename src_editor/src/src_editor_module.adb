@@ -4316,35 +4316,42 @@ package body Src_Editor_Module is
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"_Select All",  "",
-                     On_Select_All'Access, Ref_Item => -"Preferences");
+                     On_Select_All'Access, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Insert _File...",  "",
-                     On_Insert_File'Access, Ref_Item => -"Preferences");
+                     On_Insert_File'Access, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Edit, -"Comment _Lines", "",
                      On_Comment_Lines'Access, null,
-                     GDK_minus, Control_Mask, Ref_Item => -"Preferences");
+                     GDK_minus, Control_Mask, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
                      On_Uncomment_Lines'Access, null,
-                     GDK_underscore, Control_Mask, Ref_Item => -"Preferences");
+                     GDK_underscore, Control_Mask, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Edit, -"R_efill", "",
                      On_Refill'Access, null,
-                     GDK_equal, Control_Mask, Ref_Item => -"Preferences");
+                     GDK_equal, Control_Mask, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
                      On_Fold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Preferences");
+                     0, 0, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
       Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
                      On_Unfold_Blocks'Access, null,
-                     0, 0, Ref_Item => -"Preferences");
+                     0, 0, Ref_Item => -"Preferences",
+                     Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
