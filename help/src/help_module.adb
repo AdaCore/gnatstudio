@@ -143,6 +143,10 @@ package body Help_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Load HMTL_File in the HTML/Help widget
 
+   procedure On_Load_Index
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Create and load the index of all help contents
+
    procedure Register_Help
      (Kernel     : access Kernel_Handle_Record'Class;
       HTML_File  : VFS.Virtual_File := VFS.No_File;
@@ -1001,6 +1005,81 @@ package body Help_Module is
       end loop;
    end Parse_Index_Files;
 
+   -------------------
+   -- On_Load_Index --
+   -------------------
+
+   procedure On_Load_Index
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      File     : constant Virtual_File := Create_Html (Template_Index, Kernel);
+      Buffer   : GNAT.OS_Lib.String_Access := Read_File (File);
+      Index    : Natural;
+      Str      : Unbounded_String;
+      Cat      : Help_Category_List.List_Node;
+      F        : Help_File_List.List_Node;
+      Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
+      Output   : constant Virtual_File :=
+        Create (Get_Home_Dir (Kernel) & "help_index.html");
+      Output_Write : Writable_File;
+
+   begin
+      Trace (Me, "loading file: " & Full_Name (File).all);
+      if Buffer /= null then
+         Index := Buffer'First;
+         while Index + Contents_Marker'Length - 1 <= Buffer'Last
+           and then Buffer (Index .. Index + Contents_Marker'Length - 1) /=
+           Contents_Marker
+         loop
+            Index := Index + 1;
+         end loop;
+
+         Str := To_Unbounded_String (Buffer (Buffer'First .. Index - 1));
+
+         Cat := First (Help_Module_ID.Categories);
+         Append (Str, "<table cellspacing=""0"" width=""100%"" border=""2"""
+                 & "cellpadding=""6"">");
+
+         while Cat /= Help_Category_List.Null_Node loop
+            Append (Str,
+                    "<tr><td bgcolor=""#006db6"">"
+                    & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
+                    & Data (Cat).Name.all
+                    & "</font></td> </tr>" & ASCII.LF);
+
+            F := First (Data (Cat).Files);
+            while F /= Help_File_List.Null_Node loop
+               Append (Str, "<tr><td><a href=""");
+               if Data (F).File = VFS.No_File then
+                  Append (Str, "%" & Data (F).Shell_Lang.all & ":"
+                          & Glib.Xml_Int.Protect (Data (F).Shell_Cmd.all));
+               else
+                  Append (Str, Full_Name (Data (F).File).all);
+               end if;
+
+                  Append (Str, """>" & Data (F).Descr.all
+                          & "</a></td></tr>");
+               F := Next (F);
+            end loop;
+
+            Cat := Next (Cat);
+         end loop;
+
+         Append (Str, "</table>");
+         Append
+           (Str, Buffer (Index + Contents_Marker'Length .. Buffer'Last));
+
+         Output_Write := Write_File (Output);
+         Write (Output_Write, To_String (Str), As_UTF8 => False);
+         Close (Output_Write);
+
+         Free (Buffer);
+
+         Open_Html (Kernel, Output);
+      end if;
+   end On_Load_Index;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1099,19 +1178,11 @@ package body Help_Module is
          Static_Method => True,
          Handler      => Command_Handler'Access);
 
-      declare
-         Item : String_Menu_Item;
-      begin
-         Item := new String_Menu_Item_Record;
-         Gtk.Menu_Item.Initialize_With_Mnemonic (Item, -"_Contents");
-         Item.File := Create (Template_Index);
-         Register_Menu
-           (Kernel      => Kernel,
-            Parent_Path => Help,
-            Item        => Gtk_Menu_Item (Item));
-         Kernel_Callback.Connect
-           (Item, "activate", On_Load_HTML'Access, Kernel_Handle (Kernel));
-      end;
+      Register_Menu
+        (Kernel,
+         Parent_Path => Help,
+         Text        => -"_Contents",
+         Callback    => On_Load_Index'Access);
 
       Parse_Index_Files (Kernel);
 
