@@ -661,7 +661,7 @@ package body Project_Explorers is
          Slot_Object => Explorer,
          After       => False);
       Widget_Callback.Connect
-        (Explorer, "destrpy", On_Destroy'Access);
+        (Explorer, "destroy", On_Destroy'Access);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.Tree), "changed",
