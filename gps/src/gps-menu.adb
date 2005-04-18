@@ -20,14 +20,22 @@
 
 with Glib;                         use Glib;
 with Glib.Object;                  use Glib.Object;
+with Gdk.Types;                    use Gdk.Types;
+with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
+with Gtk.Clipboard;                use Gtk.Clipboard;
+with Gtk.Editable;                 use Gtk.Editable;
+with Gtk.Text_View;                use Gtk.Text_View;
+with Gtk.Text_Buffer;              use Gtk.Text_Buffer;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
+with Gtk.Widget;                   use Gtk.Widget;
 
 with GPS.Intl;                     use GPS.Intl;
 
 with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
@@ -35,6 +43,7 @@ with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with Histories;                    use Histories;
 with Projects;                     use Projects;
+with Commands.Interactive;         use Commands, Commands.Interactive;
 
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with Ada.Exceptions;               use Ada.Exceptions;
@@ -56,6 +65,74 @@ package body GPS.Menu is
    procedure On_Project_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project has just changed
+
+   type Clipboard_Kind is (Cut, Copy, Paste);
+   type Clipboard_Command is new Interactive_Command with record
+      Kernel : Kernel_Handle;
+      Kind   : Clipboard_Kind;
+   end record;
+   function Execute
+     (Command : access Clipboard_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   --  Perform the various actions associated with the clipboard
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Clipboard_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
+   begin
+      if W /= null and then W.all in Gtk_Editable_Record'Class then
+         case Command.Kind is
+            when Cut   => Cut_Clipboard (Gtk_Editable (W));
+            when Copy  => Copy_Clipboard (Gtk_Editable (W));
+            when Paste => Paste_Clipboard (Gtk_Editable (W));
+         end case;
+         return Commands.Success;
+
+      elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
+         declare
+            Buffer : constant Gtk_Text_Buffer :=
+              Get_Buffer (Gtk_Text_View (W));
+            Result : Boolean;
+            pragma Unreferenced (Result);
+         begin
+            case Command.Kind is
+               when Cut =>
+                  Cut_Clipboard
+                    (Buffer,
+                     Gtk.Clipboard.Get,
+                     Default_Editable => Get_Editable (Gtk_Text_View (W)));
+               when Copy =>
+                  Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+               when Paste =>
+                  --  Delete the selected region if it exists.
+                  --  ??? This works around a bug which it seems is in gtk+,
+                  --  to be investigated.
+                  --  Scenario to reproduce the gtk bug : do a "select_region"
+                  --  and then a "paste_clipboard", twice. (See C703-005)
+
+                  if Selection_Exists (Buffer) then
+                     Result := Delete_Selection (Buffer, False, False);
+                  end if;
+
+                  Paste_Clipboard
+                    (Buffer, Gtk.Clipboard.Get,
+                     Default_Editable => Get_Editable (Gtk_Text_View (W)));
+            end case;
+         end;
+         return Commands.Success;
+      else
+         return Commands.Failure;
+      end if;
+   end Execute;
 
    --------------
    -- Activate --
@@ -180,7 +257,7 @@ package body GPS.Menu is
       Edit        : constant String := "/_" & (-"Edit")     & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
-
+      Command     : Interactive_Command_Access;
    begin
       Register_Menu
         (Kernel, Edit, -"_Preferences",
@@ -204,6 +281,46 @@ package body GPS.Menu is
       Register_Menu
         (Kernel, Project, -"R_ecompute Project", "",
          On_Project_Recompute'Access);
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Cut;
+      Register_Action
+        (Kernel, -"Cut to Clipboard", Command,
+         -"Cut the current selection to the clipboard");
+      Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
+                     null, Command_Access (Command),
+                     GDK_Delete, Shift_Mask,
+                     Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Cut, Command_Access (Command), -"Cut To Clipboard");
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Copy;
+      Register_Action
+        (Kernel, -"Copy to Clipboard", Command,
+         -"Copy the current selection to the clipboard");
+      Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
+                     null, Command_Access (Command),
+                     GDK_Insert, Control_Mask,
+                     Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Copy, Command_Access (Command), -"Copy To Clipboard");
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Paste;
+      Register_Action
+        (Kernel, -"Paste From Clipboard", Command,
+         -"Paste the contents of the clipboard into the current text area");
+      Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
+                     null, Command_Access (Command),
+                     GDK_Insert, Shift_Mask,
+                     Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Paste, Command_Access (Command),
+         -"Paste From Clipboard");
    end Register_Common_Menus;
 
 end GPS.Menu;
