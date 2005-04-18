@@ -967,14 +967,16 @@ package body GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null)
+      Action      : Action_Record_Access := null;
+      Filter      : Action_Filter  := null)
    is
       Item  : Gtk_Menu_Item;
       pragma Unreferenced (Item);
    begin
       Item := Register_Menu
         (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
-         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive, Action);
+         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive, Action,
+         Filter);
    end Register_Menu;
 
    ---------------------
@@ -1022,7 +1024,8 @@ package body GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null) return Gtk_Menu_Item
+      Action      : Action_Record_Access := null;
+      Filter      : Action_Filter  := null) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
@@ -1055,6 +1058,7 @@ package body GPS.Kernel.Modules is
       Pix   : Gtk_Image;
       Accel_Path : constant String :=
         Cleanup ("<gps>/" & Parent_Path & '/' & Text);
+      Menu_Filter : Action_Filter := Filter;
 
    begin
       if Stock_Image = "" then
@@ -1090,7 +1094,7 @@ package body GPS.Kernel.Modules is
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel),
                             Command,
-                            null));
+                            Filter));
       end if;
 
       if Action /= null then
@@ -1101,13 +1105,21 @@ package body GPS.Kernel.Modules is
                             Command_Access (Action.Command),
                             Action.Filter));
          if Action.Filter /= null then
-            Command_Callback.Object_Connect
-              (Get_Toplevel (Item), "map", Map_Menu'Access,
-               Slot_Object => Item,
-               User_Data   => (Kernel_Handle (Kernel),
-                               Command_Access (Action.Command),
-                               Action.Filter));
+            if Menu_Filter = null then
+               Menu_Filter := Action.Filter;
+            else
+               Menu_Filter := Menu_Filter and Action.Filter;
+            end if;
          end if;
+      end if;
+
+      if Menu_Filter /= null then
+         Command_Callback.Object_Connect
+           (Get_Toplevel (Item), "map", Map_Menu'Access,
+            Slot_Object => Item,
+            User_Data   => (Kernel_Handle (Kernel),
+                            null,
+                            Menu_Filter));
       end if;
 
       return Item;
@@ -1125,9 +1137,7 @@ package body GPS.Kernel.Modules is
         Get_Current_Context (Command.Kernel);
    begin
       Set_Sensitive
-        (Gtk_Widget (Item),
-         Command.Filter = null
-         or else Filter_Matches_Primitive (Command.Filter, Context));
+        (Gtk_Widget (Item), Filter_Matches (Command.Filter, Context));
 
    exception
       when E : others =>

@@ -452,12 +452,16 @@ package GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null);
+      Action      : Action_Record_Access := null;
+      Filter      : Action_Filter  := null);
    --  Same as the above, but creates the menu item directly, and connects the
-   --  appropriate callback.
-   --  If Command is not null, then a callback will be created to launch
-   --  this command when the menu is activated. In this case, both Callback
-   --  and Command will be called.
+   --  appropriate callback. The latter is all of:
+   --     - Callback parameter if the Filter parameter matches
+   --     - Action parameter, if the Action's filter matches
+   --     - Command, if the Filter parameter matches
+   --  The menu item will be active if both of the Action's filter and the
+   --  Filter parameter matches. If none of these are defined, the menu item is
+   --  always visible.
    --  Sensitive indicates whether the menu item is created sensitive or not.
 
    function Register_Menu
@@ -472,7 +476,8 @@ package GPS.Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record_Access := null)
+      Action      : Action_Record_Access := null;
+      Filter      : Action_Filter  := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created.
 
