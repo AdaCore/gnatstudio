@@ -118,61 +118,53 @@ package body Docgen.Backend is
                Format_Comment
                  (B, Kernel, Result,
                   Text,
-                  Sloc_Start.Index,
-                  Sloc_Start.Line,
-                  Sloc_End.Index,
-                  Sloc_End.Line,
+                  Sloc_Start,
+                  Sloc_End,
                   Entity_Line);
 
             when Keyword_Text =>
                Format_Keyword
                  (B, Kernel, Result,
                   Text,
-                  Sloc_Start.Index,
-                  Sloc_Start.Line,
-                  Sloc_End.Index,
-                  Sloc_End.Line,
+                  Sloc_Start,
+                  Sloc_End,
                   Entity_Line);
 
             when String_Text =>
                Format_String
                  (B, Kernel, Result,
                   Text,
-                  Sloc_Start.Index,
-                  Sloc_Start.Line,
-                  Sloc_End.Index,
-                  Sloc_End.Line,
+                  Sloc_Start,
+                  Sloc_End,
                   Entity_Line);
 
             when Character_Text =>
                Format_Character
                  (B, Kernel, Result,
                   Text,
-                  Sloc_Start.Index,
-                  Sloc_Start.Line,
-                  Sloc_End.Index,
-                  Sloc_End.Line,
+                  Sloc_Start,
+                  Sloc_End,
                   Entity_Line);
 
             when Identifier_Text =>
-               Format_Identifier
-                 (B, Kernel, Result,
-                  List_Ref_In_File,
-                  Sloc_Start.Index,
-                  Sloc_Start.Line,
-                  Sloc_Start.Column,
-                  Sloc_End.Index,
-                  Sloc_End.Line,
-                  Text,
-                  File_Name,
-                  Entity_Line,
-                  Line_In_Body,
-                  Source_File_List,
-                  Options.Link_All,
-                  Is_Body,
-                  Options.Process_Body_Files,
-                  Level,
-                  Indent);
+               --  Parse_Entities return ";" as an identifier.
+               if Text (Sloc_Start.Index .. Sloc_End.Index) /= ";" then
+                  Format_Identifier
+                    (B, Kernel, Result,
+                     List_Ref_In_File,
+                     Text,
+                     Sloc_Start,
+                     Sloc_End,
+                     File_Name,
+                     Entity_Line,
+                     Line_In_Body,
+                     Source_File_List,
+                     Options.Link_All,
+                     Is_Body,
+                     Options.Process_Body_Files,
+                     Level,
+                     Indent);
+               end if;
 
             when others =>
                null;
@@ -204,11 +196,9 @@ package body Docgen.Backend is
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : in out Natural;
@@ -231,9 +221,6 @@ package body Docgen.Backend is
       Ref_List_Info_Prec : List_Reference_In_File.List_Node;
       Found              : Boolean := False;
       Entity_Abstract    : Boolean;
-      Indentation        : Natural;
-      --  This last parameter is used to add levels of indentation
-      --  for spec files
 
       procedure Get_Declaration
         (Text            : String;
@@ -259,6 +246,8 @@ package body Docgen.Backend is
          Result          : out Boolean;
          Entity_Abstract : in out Boolean)
       is
+         pragma Unreferenced (Column);
+
          Ref : List_Reference_In_File.Data_Access;
       begin
          Result := False;
@@ -267,7 +256,8 @@ package body Docgen.Backend is
 
          if Ref.Line = Line
            and then To_Lower (Text) = Get_Name (Ref.Entity).all
-           and then Ref.Column = Column
+         --  The column should be tested as well but cannot be with the
+         --  current implementation since the text has been reformated.
          then
             Result := True;
             E_I := Ref.Entity;
@@ -279,28 +269,19 @@ package body Docgen.Backend is
       end Get_Declaration;
 
    begin
-      if Is_Body then
-         Indentation := 0;
-      else
-         Indentation := Level * Indent;
-         --  For spec files, we must add levels of indentation otherwise
-         --  a text and its associated reference in list won't match.
-         --  In fact, the string which is given to Format_File is obtained by
-         --  Get_Whole_Header + Remove_Indent. Get_Whole_Header remove the
-         --  indentation of the first line and Remove_Indent remove the
-         --  indentation of the other lines
-      end if;
+      Loc_Start := Sloc_Start.Index;
 
-      Loc_Start := Start_Index;
 
       --  Take apart parsed entites with any "."'s in the middle
-      for J in 1 .. 1 + Count_Points (Text (Start_Index .. End_Index)) loop
-         Point_In_Column := Index (Text (Loc_Start .. End_Index), ".");
+      for J in 1 ..
+        1 + Count_Points (Text (Sloc_Start.Index .. Sloc_End.Index))
+      loop
+         Point_In_Column := Index (Text (Loc_Start .. Sloc_End.Index), ".");
 
          if Point_In_Column > 0 then
             Loc_End := Point_In_Column - 1;
          else
-            Loc_End := End_Index;
+            Loc_End := Sloc_End.Index;
          end if;
 
          --  We search the declaration of the entity
@@ -313,12 +294,14 @@ package body Docgen.Backend is
          --  Text (Loc_Start .. Loc_End) is a reference.
          --  We search it in the list we have made before in order to
          --  find its declaration.
+
          while Ref_List_Info /= List_Reference_In_File.Null_Node loop
             Get_Declaration
               (Text (Loc_Start .. Loc_End),
                Entity_Info,
-               Start_Line + Entity_Line - 1,
-               Start_Column + Loc_Start - Start_Index + Indentation,
+               Sloc_Start.Line + Entity_Line - 1,
+               Sloc_Start.Column + Loc_Start - Sloc_Start.Index +
+                 Level * Indent,
                Ref_List_Info,
                Found,
                Entity_Abstract);
@@ -340,8 +323,9 @@ package body Docgen.Backend is
          if Found then
             Format_Link
               (B, Kernel, Result,
-               Start_Index, Start_Line, Start_Column, End_Index,
-               Text, File_Name, Entity_Line,
+               Text,
+               Sloc_Start, Sloc_End,
+               File_Name, Entity_Line,
                Line_In_Body, Source_File_List, Link_All, Is_Body,
                Process_Body, Loc_End, Loc_Start, Entity_Info,
                Entity_Abstract);

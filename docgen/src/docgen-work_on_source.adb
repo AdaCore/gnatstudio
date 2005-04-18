@@ -1332,8 +1332,8 @@ package body Docgen.Work_On_Source is
          end if;
 
          if Parse_Node = Parsed_List.Last
-           or else Parse_Node.Category = Cat_Procedure
-           or else Parse_Node.Category = Cat_Function
+           or else Parse_Node.Category in Enclosing_Entity_Category
+           or else Parse_Node.Category in Subprogram_Category
          then
             Parsed_List_End := True;
          else
@@ -1569,7 +1569,6 @@ package body Docgen.Work_On_Source is
                         Free (Description);
                      end if;
                   end;
-
                end if;
             end if;
 

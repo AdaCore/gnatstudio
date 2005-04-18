@@ -392,9 +392,7 @@ package body Docgen.Work_On_File is
                Subprogram_Index_List         => Subprogram_Index_List,
                Tagged_Types_List             => Tagged_Types_List,
                Private_Tagged_Types_List     => Private_Tagged_Types_List);
-         end if;
 
-         if File_Is_Spec then
             Find_All_References
               (Iter    => Refs,
                Entity  => Info,
@@ -402,7 +400,11 @@ package body Docgen.Work_On_File is
 
             while not At_End (Refs) loop
                Ref := Get (Refs);
-               if Ref /= No_Entity_Reference then
+               if Ref /= No_Entity_Reference
+                 and then Get_Location (Ref).File = File
+               --  Here we are only interested in references in File of
+               --  entities that appear in File.
+               then
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Line   => Get_Line   (Get_Location (Ref)),

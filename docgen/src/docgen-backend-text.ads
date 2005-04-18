@@ -279,10 +279,8 @@ package Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural);
    --  Generate a comment in Text format
 
@@ -291,10 +289,8 @@ package Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural);
    --  Generate a keyword in Text format
 
@@ -303,10 +299,8 @@ package Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural);
    --  Generate a string (between two ") in Text format
 
@@ -315,10 +309,8 @@ package Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural);
    --  Generate a character (between two ') in Text format
 
@@ -327,12 +319,9 @@ package Docgen.Backend.Text is
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      End_Line         : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
@@ -348,11 +337,9 @@ package Docgen.Backend.Text is
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;

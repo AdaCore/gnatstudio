@@ -20,6 +20,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Docgen_Registry;       use Docgen_Registry;
+with Language;              use Language;
 
 package Docgen.Backend is
 
@@ -304,10 +305,8 @@ package Docgen.Backend is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is abstract;
    --  Format text as a comment
 
@@ -316,10 +315,8 @@ package Docgen.Backend is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is abstract;
    --  Format text as a keyword
 
@@ -328,10 +325,8 @@ package Docgen.Backend is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is abstract;
    --  Format text as a string (between two ")
 
@@ -340,10 +335,8 @@ package Docgen.Backend is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is abstract;
    --  Format text as a character (between two ')
 
@@ -352,12 +345,9 @@ package Docgen.Backend is
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      End_Line         : Natural;
       Text             : String;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
@@ -409,21 +399,15 @@ package Docgen.Backend is
    --  public type which has private fields, it's used to make a link from
    --  private part to public part.
    --  Is_Body      : indicate if the current file is a spec/body file.
-   --  Process_Body : indicate if the option "process body files" is chosen
-   --  in the preferences.
-   --  Link_All     : indicate if the option "create all links" is chosen
-   --  in the preferences.
    --  Level, indent: same comments as those made for Format_Identifier.
 
    procedure Format_Link
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
@@ -477,11 +461,9 @@ package Docgen.Backend is
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : in out Natural;
@@ -495,9 +477,6 @@ package Docgen.Backend is
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
    --  a child instance of a Backend object.
-   --  This process is done in Docgen because for each entity we must search
-   --  for its declaration in all concerned files: this work is
-   --  independant of the choosen format of documentation.
    --  Level, indent: same comments as those made for Format_Identifier.
 
 private

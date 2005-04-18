@@ -18,16 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with OS_Utils;                  use OS_Utils;
-with String_Utils;              use String_Utils;
-with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with Entities.Queries;          use Entities.Queries;
 with File_Utils;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with Language;                  use Language;
+with OS_Utils;                  use OS_Utils;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with String_Utils;              use String_Utils;
 with Templates_Parser;          use Templates_Parser;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Entities.Queries;          use Entities.Queries;
 
 package body Docgen.Backend.Text is
 
@@ -47,10 +48,8 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_Line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity      : Entities_Kind;
       Entity_Line : Natural);
    --  Write the formatted text since the last output to doc file.
@@ -272,7 +271,6 @@ package body Docgen.Backend.Text is
       With_File        : VFS.Virtual_File;
       With_Header_Line : Natural)
    is
-      pragma Unreferenced (Level);
       Block : Unbounded_String;
    begin
       Format_Code
@@ -282,7 +280,7 @@ package body Docgen.Backend.Text is
          With_File,
          With_Header_Line,
          No_Body_Line_Needed,
-         False, Options, Source_File_List, 0, Get_Indent (B.all));
+         False, Options, Source_File_List, Level, Get_Indent (B.all));
 
       Append
         (Result,
@@ -1146,26 +1144,26 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_Line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity      : Entities_Kind;
       Entity_Line : Natural) is
    begin
-      if Start_Line > Get_Last_Line (B.all) then
+      if Sloc_Start.Line > Get_Last_Line (B.all) then
          Set_Name_Tags
            (B, Kernel, Result,
-            Text (Get_Last_Index (B.all) .. Start_Index - 1),
+            Text (Get_Last_Index (B.all) .. Sloc_Start.Index - 1),
             Entity_Line);
       else
-         Append (Result, Text (Get_Last_Index (B.all) .. Start_Index - 1));
+         Append (Result,
+                 Text (Get_Last_Index (B.all) .. Sloc_Start.Index - 1));
       end if;
 
       --  Write entity
 
       declare
-         Entity_Name : constant String := Text (Start_Index .. End_Index);
+         Entity_Name : constant String :=
+           Text (Sloc_Start.Index .. Sloc_End.Index);
       begin
          Append
            (Result,
@@ -1174,8 +1172,8 @@ package body Docgen.Backend.Text is
                       (1 => Assoc ("TEXT", Entity_Name)))));
       end;
 
-      Set_Last_Index (B.all, End_Index + 1);
-      Set_Last_Line (B.all, End_Line);
+      Set_Last_Index (B.all, Sloc_End.Index + 1);
+      Set_Last_Line (B.all, Sloc_End.Line);
    end Callback_Output;
 
    -------------------
@@ -1242,19 +1240,15 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is
    begin
       Callback_Output
         (B, Kernel, Result,
          Text,
-         Start_Index,
-         Start_line,
-         End_Index,
-         End_Line,
+         Sloc_Start,
+         Sloc_End,
          Comment_Kind,
          Entity_Line);
    end Format_Comment;
@@ -1268,19 +1262,15 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is
    begin
       Callback_Output
         (B, Kernel, Result,
          Text,
-         Start_Index,
-         Start_line,
-         End_Index,
-         End_Line,
+         Sloc_Start,
+         Sloc_End,
          Keyword_Kind,
          Entity_Line);
    end Format_Keyword;
@@ -1294,19 +1284,15 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is
    begin
       Callback_Output
         (B, Kernel, Result,
          Text,
-         Start_Index,
-         Start_line,
-         End_Index,
-         End_Line,
+         Sloc_Start,
+         Sloc_End,
          String_Kind,
          Entity_Line);
    end Format_String;
@@ -1320,19 +1306,15 @@ package body Docgen.Backend.Text is
       Kernel      : access Kernel_Handle_Record'Class;
       Result      : in out Unbounded_String;
       Text        : String;
-      Start_Index : Natural;
-      Start_line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
       Entity_Line : Natural) is
    begin
       Callback_Output
         (B, Kernel, Result,
          Text,
-         Start_Index,
-         Start_line,
-         End_Index,
-         End_Line,
+         Sloc_Start,
+         Sloc_End,
          Char_Kind,
          Entity_Line);
    end Format_Character;
@@ -1346,12 +1328,9 @@ package body Docgen.Backend.Text is
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      End_Line         : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
@@ -1362,9 +1341,7 @@ package body Docgen.Backend.Text is
       Level            : Natural;
       Indent           : Natural)
    is
-      pragma Unreferenced (End_Line);
       Line_Body : Natural := Line_In_Body;
-
    begin
       --  In Text, each identifier may have a link,
       --  Each link is made by the subprogram Format_Link (see just below).
@@ -1374,11 +1351,9 @@ package body Docgen.Backend.Text is
       Format_All_Link
         (B, Kernel, Result,
          List_Ref_In_File,
-         Start_Index,
-         Start_Line,
-         Start_Column,
-         End_Index,
          Text,
+         Sloc_Start,
+         Sloc_End,
          File_Name,
          Entity_Line,
          Line_Body,
@@ -1398,11 +1373,9 @@ package body Docgen.Backend.Text is
      (B                : access Backend;
       Kernel           : access Kernel_Handle_Record'Class;
       Result           : in out Unbounded_String;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
       Text             : String;
+      Sloc_Start       : Source_Location;
+      Sloc_End         : Source_Location;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
       Line_In_Body     : Natural;
@@ -1415,7 +1388,7 @@ package body Docgen.Backend.Text is
       Entity_Info      : Entity_Information;
       Entity_Abstract  : in out Boolean)
    is
-      pragma Unreferenced (Start_Index, Start_Column, End_Index);
+      pragma Unreferenced (Sloc_End);
 
       procedure Create_Regular_Link;
       --  will create a regular link to the entity, links to both spec
@@ -1444,7 +1417,7 @@ package body Docgen.Backend.Text is
          Decl_File : constant Virtual_File := Get_Filename
             (Get_File (Get_Declaration_Of (Entity_Info)));
       begin
-         if Start_Line > Get_Last_Line (B.all) then
+         if Sloc_Start.Line > Get_Last_Line (B.all) then
             Set_Name_Tags
               (B, Kernel, Result,
                Text (Get_Last_Index (B.all) .. Loc_Start - 1),
@@ -1479,7 +1452,7 @@ package body Docgen.Backend.Text is
       procedure Create_Regular_Link is
          Line_To_Use : Natural;
       begin
-         if Start_Line > Get_Last_Line (B.all) then
+         if Sloc_Start.Line > Get_Last_Line (B.all) then
             Set_Name_Tags
               (B, Kernel, Result,
                Text (Get_Last_Index (B.all) .. Loc_Start - 1),
@@ -1531,7 +1504,7 @@ package body Docgen.Backend.Text is
               (Get_Filename (Get_File (Get_Declaration_Of (Entity_Info))) /=
                  File_Name
               or else Get_Line (Get_Declaration_Of (Entity_Info)) /=
-                Start_Line + Entity_Line - 1
+                Sloc_Start.Line + Entity_Line - 1
               or else Special_Link_Should_Be_Set));
       end Link_Should_Be_Set;
 
@@ -1540,13 +1513,14 @@ package body Docgen.Backend.Text is
       --------------------------------
 
       function Special_Link_Should_Be_Set return Boolean is
+         Entity_Kind : constant E_Kinds := Get_Kind (Entity_Info).Kind;
       begin
          return not Is_Body
-           and then Process_Body
            and then
-             (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
-              or else Get_Kind (Entity_Info).Kind = Procedure_Kind
-              or else Get_Kind (Entity_Info).Kind = Function_Or_Operator);
+             (Entity_Kind = Entry_Or_Entry_Family
+              or else Entity_Kind = Procedure_Kind
+              or else Entity_Kind = Function_Or_Operator)
+           and then (Process_Body or else Link_All);
       end Special_Link_Should_Be_Set;
 
       --------------------------------
@@ -1554,14 +1528,15 @@ package body Docgen.Backend.Text is
       --------------------------------
 
       function Regular_Link_Should_Be_Set return Boolean is
+         Entity_Kind : constant E_Kinds := Get_Kind (Entity_Info).Kind;
       begin
          --  No subprograms/tasks are processed here, if working on a spec
          --  file
          return Is_Body
            or else not
-             (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
-              or else Get_Kind (Entity_Info).Kind = Procedure_Kind
-              or else Get_Kind (Entity_Info).Kind = Function_Or_Operator);
+             (Entity_Kind = Entry_Or_Entry_Family
+              or else Entity_Kind = Procedure_Kind
+              or else Entity_Kind = Function_Or_Operator);
       end Regular_Link_Should_Be_Set;
 
    begin  --  Format_Link
