@@ -1560,7 +1560,7 @@ package body Docgen.Backend.Text is
       Text        : String;
       Entity_Line : Natural) is
    begin
-      if Get_Last_Index (B.all) < Text'Last then
+      if Get_Last_Index (B.all) <= Text'Last then
          Set_Name_Tags
            (B, Kernel, Result,
             Text (Get_Last_Index (B.all) .. Text'Last),
