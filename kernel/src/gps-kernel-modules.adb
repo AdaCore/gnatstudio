@@ -470,7 +470,7 @@ package body GPS.Kernel.Modules is
         (Kernel          => Kernel_Handle (Kernel),
          Command         => C,
          Active          => True,
-         Show_Bar        => False,
+         Show_Bar        => True,
          Destroy_On_Exit => True);
       Pop_State (Kernel_Handle (Kernel));
    exception
@@ -991,7 +991,7 @@ package body GPS.Kernel.Modules is
       if Context /= null and then Filter_Matches (Command.Filter, Context) then
          Launch_Background_Command
            (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
-            Active => True, Show_Bar => False, Queue_Id => "");
+            Active => True, Show_Bar => True, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
                  Mode => Error);
