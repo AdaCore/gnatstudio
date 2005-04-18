@@ -970,8 +970,8 @@ package body Docgen_Module is
            Default => False,
            Blurb   =>
              -("Whether Docgen should compute references (e.g. call graph)"),
-           Nick    => -"Call graph"));
---             Flags   => Param_Readable)); --  ??? For 3.0.0
+           Nick    => -"Call graph",
+           Flags   => Param_Readable)); --  ??? For 3.0.0
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
@@ -998,7 +998,6 @@ package body Docgen_Module is
              Blurb   =>
                -"List of tagged types declared in processed files",
              Nick    => -"List tagged types"));
---               Flags   => Param_Readable)); --  ??? For 3.0.0
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
