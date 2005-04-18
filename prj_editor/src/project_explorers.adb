@@ -407,6 +407,9 @@ package body Project_Explorers is
    --  If Include_Project is False, then Project itself will not be included in
    --  the returned array
 
+   procedure On_Destroy (Explorer : access Gtk_Widget_Record'Class);
+   --  Called when the explorer is destroyed
+
    --------------
    -- Commands --
    --------------
@@ -587,6 +590,19 @@ package body Project_Explorers is
    end Tree_Select_Row_Cb;
 
    ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Explorer : access Gtk_Widget_Record'Class)
+   is
+      use Project_Explorer_Tooltips;
+      Expl : constant Project_Explorer := Project_Explorer (Explorer);
+   begin
+      Destroy_Tooltip (Expl.Tooltip);
+   end On_Destroy;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -644,6 +660,8 @@ package body Project_Explorers is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
+      Widget_Callback.Connect
+        (Explorer, "destrpy", On_Destroy'Access);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.Tree), "changed",
