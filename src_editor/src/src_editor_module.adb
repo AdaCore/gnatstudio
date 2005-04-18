@@ -200,17 +200,6 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
 
-   type Clipboard_Kind is (Cut, Copy, Paste);
-   type Clipboard_Command is new Interactive_Command with record
-      Kernel : Kernel_Handle;
-      Kind   : Clipboard_Kind;
-   end record;
-   function Execute
-     (Command : access Clipboard_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
-   --  Perform the various actions associated with the clipboard
-
    procedure Gtk_New
      (Box : out Source_Box; Editor : Source_Editor_Box);
    --  Create a new source box.
@@ -3374,31 +3363,6 @@ package body Src_Editor_Module is
       end if;
    end On_Print;
 
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Clipboard_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
-   is
-      pragma Unreferenced (Context);
-      Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
-   begin
-      if Source /= null then
-         case Command.Kind is
-            when Cut   => Cut_Clipboard (Source);
-            when Copy  => Copy_Clipboard (Source);
-            when Paste => Paste_Clipboard (Source);
-         end case;
-         return Commands.Success;
-      else
-         return Commands.Failure;
-      end if;
-   end Execute;
-
    -------------------
    -- On_Select_All --
    -------------------
@@ -4348,49 +4312,6 @@ package body Src_Editor_Module is
          Kernel_Handle (Kernel));
 
       Append_Space (Toolbar);
-
-      Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Clipboard_Command (Command.all).Kind   := Cut;
-      Register_Action
-        (Kernel, -"Cut to Clipboard", Command,
-         -"Cut the current selection to the clipboard",
-         Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
-                     null, Command_Access (Command),
-                     GDK_Delete, Shift_Mask,
-                     Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Cut, Command_Access (Command), -"Cut To Clipboard");
-
-      Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Clipboard_Command (Command.all).Kind   := Copy;
-      Register_Action
-        (Kernel, -"Copy to Clipboard", Command,
-         -"Copy the current selection to the clipboard",
-         Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
-                     null, Command_Access (Command),
-                     GDK_Insert, Control_Mask,
-                     Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Copy, Command_Access (Command), -"Copy To Clipboard");
-
-      Command := new Clipboard_Command;
-      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Clipboard_Command (Command.all).Kind   := Paste;
-      Register_Action
-        (Kernel, -"Paste From Clipboard", Command,
-         -"Paste the contents of the clipboard into the current editor",
-         Src_Action_Context);
-      Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
-                     null, Command_Access (Command),
-                     GDK_Insert, Shift_Mask,
-                     Ref_Item => -"Preferences");
-      Register_Button
-        (Kernel, Stock_Paste, Command_Access (Command),
-         -"Paste From Clipboard");
 
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
