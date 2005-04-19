@@ -70,7 +70,7 @@ unmodified in any copy.
 * Version Control System::
 * Tools::
 * Working in a Cross Environment::
-* Using GPS for remote development::
+* Using GPS for Remote Development::
 * Customizing and Extending GPS::
 * Environment::
 
@@ -174,7 +174,7 @@ Working in a Cross Environment
 * Customizing your Projects::
 * Debugger Issues::
 
-Using GPS for remote development
+Using GPS for Remote Development
 * Network requirements::
 * Setup with a shared filesystem::
 * Setup without a shared filesystem::
@@ -6783,8 +6783,8 @@ machine, you can specify the name of this machine by setting the
 @code{Tools host} field of the project properties.
 
 @c --------------------------------------------------------------------
-@node Using GPS for remote development
-@chapter Using GPS for remote development
+@node Using GPS for Remote Development
+@chapter Using GPS for Remote Development
 @cindex remote
 @cindex network
 @cindex client/server
@@ -6796,51 +6796,55 @@ machine, you can specify the name of this machine by setting the
 @end menu
 
 @noindent
-In a network environment, it is common for programers to use as a desktop,
+In a network environment, it is common for programmers to use as a desktop
 a computer that is not directly suitable for their development tasks. For
 instance, each developers may have a PC running Windows or GNU/Linux as their
 main entrypoint to the company network and do all their development activities
 on servers potentially running a different operating system and on which the
-various project ressources are shared. A typical way of operating in such an
-environment is to access the server through X-windows. GPS does naturally work
+various project resources are shared. A typical way of operating in such an
+environment is to access the server through X-Windows. GPS does naturally work
 in such a context but it is not necessarily the most efficient organization.
-Running GPS on a shared remote server will increase the workload of the server
-as well as the traffic on the network. When the network is slow or saturated,
-the user interactions can become uncomfortably sluggish. This is a pity when the
-desktop used to access the network is often a powerful PC which remains
-idle most of the time.
-
-GPS offers the possibility to run on a desktop while all compilation, run and
-debug activities remain on the remote server.
+Running GPS remotely on a shared remote server will increase the workload of the
+server as well as the traffic on the network. When the network is slow or
+saturated, the user interactions can become uncomfortably sluggish. This is a
+pity when the desktop used to access the network is often a powerful PC which
+remains idle most of the time. GPS offers the possibility to run natively on the
+desktop while compilation, run and/or debug activities are performed
+transparently on the remote server.
 
 @node Network requirements
 @section Network requirements
 
 @noindent
+Future versions of GPS will most certainly have new features that will
+facilitate its use with remote servers. Nonetheless, in its current state GPS
+already provides many interesting features that can be used once the limitation
+of the current scheme as well as their workaround are understood.
+
 In order to compile, run or debug on a remote host from GPS, two conditions need
 to be met:
 
 @itemize
 @item
-Have a passwordless non-interactive remote connexion to the host.
+Have a password-less non-interactive remote connection to the host.
 @item
-Offer to GPS a coherent view the project from the local and from the remote
+Offer to GPS a coherent view of the project from the local and from the remote
 machine.
 @end itemize
 
 The first condition can be met by using protocols such as 'rsh' or 'ssh'. In
-the first case, the user will have to create the necessary entries in the its
-.rhost file on the remote machine in order to meet the passwordless criterium.
-In the second case, an ssh agent is one of the possibility that can be used to
-obtain the same effect.
+the first case, you will have to create the necessary entries in your
+@file{.rhosts} file on the remote machine to allow a password-less connection.
+In the second case, an ssh agent or @file{.shosts} file are one of the
+possibilities that can be used to obtain the same effect.
 
 Here are the steps that need to be taken in order to setup the work with the
 remote host:
 @itemize
-@item Verify some of the preferences in @code{Edit->Preferences}:
+@item Check some of the preferences in @code{Edit->Preferences}:
   @itemize
-  @item @code{External Command->Remote shell} does contain the remote
-        desired passwordless connexion command (e.g. "ssh").
+  @item @code{External Command->Remote shell} should contain the desired remote
+        password-less connection command (e.g. "ssh").
   @item @code{Debugger->Execution Window} is disabled.
   @end itemize
 @item Change some of the main project properties
@@ -6850,31 +6854,31 @@ remote host:
   of the server (e.g. machine.company.com) or an IP address if the name is not
   available. The 2 fields below @code{Program host} and @code{Protocol} should
   be left empty.
-  @item @code{Languages->Tools->compiler->Ada} should be set to the full
+  @item @code{Languages->Tools->compiler->Ada} may be set to the full
   pathname of the gnatmake command on the remote machine (e.g.
-  /home/gnatpro/5.03a/bin/gnatmake)
-  @item @code{Languages->Tools->compiler->Gnatls} should be set to the full
+  /opt/gnatpro/5.03a/bin/gnatmake)
+  @item @code{Languages->Tools->compiler->Gnatls} may be set to the full
   pathname of the gnatls command on the remote machine (e.g.
-  /home/gnatpro/5.03a/bin/gnatls)
-  @item @code{Languages->Tools->Debugger} should be set to the full
+  /opt/gnatpro/5.03a/bin/gnatls)
+  @item @code{Languages->Tools->Debugger} may be set to the full
   pathname of the gdb command on the remote machine (e.g.
-  /home/gnatpro/5.03a/bin/gdb)
+  /opt/gnatpro/5.03a/bin/gdb)
   @end itemize
 @end itemize
 
 The 3 latter changes are necessary when the remote shell command does not
 initialize the user environment on the remote machine when used in batch mode.
-This is the case with 'rsh' as well as 'ssh'. Providing
+This is the case when using directly 'rsh' or 'ssh'. Providing
 the full path names of the GNAT tools on the remote machine allows GPS to
 access the right GNAT toolset without having to rely on the user default
 initialization (such as .profile or .cshrc on Unix machines). If a more complex
 setup is required in order to properly run GNAT commands on the remote host,
 then it is possible to replace the remote shell command specified in the
-preferences a script calling another script on the remote machine
+preferences by a script calling another script on the remote machine
 whose job is to set up the environment before launching the command.
 For instance, if both the desktop and the remote hosts are unix machines (or
-Windows machines running cygwin), one can this script on your desktop
-after having reset @code{Preferences->External Command->Remote shell} to
+Windows machines running cygwin), you can use this script on your desktop
+after having set @code{Preferences->External Command->Remote shell} to
 "sh /some_path/my_ssh":
 @smallexample
 #!/bin/sh
@@ -6896,15 +6900,25 @@ along with a script "execute" on the remote host which can look like:
 The second condition mentioned earlier is related to providing GPS with a
 coherent view of the project on the desktop and on the remote host. A GNAT
 project is composed of several elements such as project files, sources,
-objects, ALI files, etc. that can be spread in various directories. Most of
-those elements will be needed on both the desktop and the remote machine. This
-is particularly true for sources which will be edited on the desktop and
-compiled on the remote host and the ALI files that are produced remotely during
-the compilation process and used by GPS for cross-references. We will present
-two kind of setups that help solving this issue.
+objects, ALI files, etc. that can be spread through various directories. Most of
+those elements must be accessible from both the desktop and the remote machine.
+More specifically, For editing/modifying the project, the source code need to
+be accessible from the desktop along with the project files. The paths used in
+the project need to be coherent with the desktop filesystem. For compiling,
+The source code need to be accessible from the remote server and the path in
+project files must be coherent with the server filesystem. For browsing and
+navigating, the ALI files produced during compilation must be accessible from
+the desktop. For debugging, the project and sources must be accessible from the
+desktop while the sources and the executable must be accessible from the remote
+server. The next sections describe two setups that help meeting this second
+condition.
 
 @node Setup with a shared filesystem
 @section Setup with a shared filesystem
+
+Having the shared disk between the desktop machine and the remote host offers
+simple ways of meeting the coherent view requirement mentioned in the previous
+section.
 
 @node Setup without a shared filesystem
 @section Setup without a shared filesystem
@@ -7694,7 +7708,7 @@ This item is only displayed if the preference @i{Use old diff} is disabled.
 Command used to query a 3-way diff. See @i{Diff command} for a description
 of the parameters.
 
-@item Default color 
+@item Default color
 This item is only displayed if the preference @i{Use old diff} is disabled.
 The color used to indicate lines on which there is a difference, in the
 "reference" editor.
