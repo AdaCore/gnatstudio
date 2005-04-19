@@ -1305,56 +1305,34 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Level            : in out Natural)
    is
-      Old_Line, New_Line : GNAT.OS_Lib.String_Access;
-      Parse_Node         : Construct_Access;
-      Parsed_List_End    : Boolean;
-      First_With_Line    : Natural;
+      Parse_Node         : Construct_Access := Parsed_List.First;
+      First_With_Line    : Natural := 0;
+      Start_Index        : Natural := 0;
+      End_Index          : Natural;
    begin
-      New_Line        := new String'("");
-      --  "  " replaced by "". It avoids to print the header Dependencies
-      --  if there isn't such clause
-      Parse_Node      := Parsed_List.First;
-      Parsed_List_End := False;
-      First_With_Line := 0;
-
-      while not Parsed_List_End loop
-         if Parse_Node.Category = Cat_With then
-            Old_Line := New_Line;
-            New_Line := new String'
-              (New_Line.all & ASCII.LF &
-               File_Text (Parse_Node.Sloc_Start.Index ..
-                          Parse_Node.Sloc_End.Index));
-            Free (Old_Line);
-
-            if First_With_Line = 0 then
-               First_With_Line := Parse_Node.Sloc_Start.Line;
-            end if;
+      while Parse_Node.Category in Dependency_Category loop
+         if First_With_Line = 0 then
+            Start_Index := Parse_Node.Sloc_Start.Index;
+            First_With_Line := Parse_Node.Sloc_Start.Line;
          end if;
+         End_Index := Parse_Node.Sloc_End.Index;
 
-         if Parse_Node = Parsed_List.Last
-           or else Parse_Node.Category in Enclosing_Entity_Category
-           or else Parse_Node.Category in Subprogram_Category
-         then
-            Parsed_List_End := True;
-         else
-            Parse_Node := Parse_Node.Next;
-         end if;
+         exit when Parse_Node = Parsed_List.Last;
+         Parse_Node := Parse_Node.Next;
       end loop;
 
-      if New_Line'Length > 0 then
-         Doc_Subtitle (B, Kernel, Result, Level,
-                       Subtitle_Name => "Dependencies");
-         Doc_With (B, Kernel, Result,
-                   List_Ref_In_File, Source_File_List,
-                   Options, Level,
-                   With_Header_Line => First_With_Line,
-                   With_File        => Source_Filename,
-                   With_Header      =>
-                     New_Line (New_Line'First + 1 .. New_Line'Last));
-         --  the "+1" avoids the first ASCII.LF in New_Line
+      if Start_Index > 0 then
+         Doc_Subtitle
+           (B, Kernel, Result, Level,
+            Subtitle_Name => "Dependencies");
+         Doc_With
+           (B, Kernel, Result,
+            List_Ref_In_File, Source_File_List,
+            Options, Level,
+            With_Header_Line => First_With_Line,
+            With_File        => Source_Filename,
+            With_Header      => File_Text (Start_Index .. End_Index));
       end if;
-
-      Free (New_Line);
    end Process_With_Clause;
 
    -----------------------------
