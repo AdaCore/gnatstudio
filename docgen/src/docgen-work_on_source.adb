@@ -1289,9 +1289,9 @@ package body Docgen.Work_On_Source is
       Free (Description);
    end Process_File_Description;
 
-   --------------------------
-   -- Process_With_Clauses --
-   --------------------------
+   -------------------------
+   -- Process_With_Clause --
+   -------------------------
 
    procedure Process_With_Clause
      (B                : access Docgen.Backend.Backend'Class;
@@ -1310,7 +1310,7 @@ package body Docgen.Work_On_Source is
       Start_Index        : Natural := 0;
       End_Index          : Natural;
    begin
-      while Parse_Node.Category in Dependency_Category loop
+      while Parse_Node.Category = Cat_With loop
          if First_With_Line = 0 then
             Start_Index := Parse_Node.Sloc_Start.Index;
             First_With_Line := Parse_Node.Sloc_Start.Line;
