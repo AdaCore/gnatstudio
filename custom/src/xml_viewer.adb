@@ -74,6 +74,7 @@ package body XML_Viewer is
    Name_Column    : constant := 0;
    Value_Column   : constant := 1;
    Command_Column : constant := 2;
+   Sort_Column    : constant := 3;
 
    -----------------------
    -- Local subprograms --
@@ -151,13 +152,24 @@ package body XML_Viewer is
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
       Col   : Gint;
+      Metric_Count : Natural := 1;
       pragma Unreferenced (Dummy);
+
+      function Right_Align return String;
+      pragma Inline (Right_Align);
+      --  Returns the right-aligned Metric_Count for sorting purposes
 
       procedure Parse_Node
         (N      : Node_Ptr;
          Parent : Gtk_Tree_Iter;
          File   : String);
       --  Add a metrix node to the tree.
+
+      function Right_Align return String is
+         Img : constant String := Metric_Count'Img;
+      begin
+         return (1 .. 7 - Img'Length => ' ') & Img;
+      end Right_Align;
 
       procedure Parse_Node
         (N      : Node_Ptr;
@@ -172,8 +184,10 @@ package body XML_Viewer is
             Append (View.Tree.Model, I, Parent);
             Set (View.Tree.Model, I, Name_Column,
                  "<b>" & Base_Name (Name) & "</b>");
+            Set (View.Tree.Model, I, Sort_Column, '~' & Base_Name (Name));
             Set (View.Tree.Model, I, Command_Column,
                  "Editor.edit """"""" & Name & """""""");
+            Metric_Count := 1; --  Reset the count on new file
 
          elsif N.Tag.all = "unit" then
             Append (View.Tree.Model, I, Parent);
@@ -188,6 +202,7 @@ package body XML_Viewer is
                        "<b>" & Name & "</b> (" & Kind & ")");
                end if;
             end;
+            Set (View.Tree.Model, I, Sort_Column, '~' & Name);
             Set (View.Tree.Model, I, Command_Column,
                  "Editor.edit """""""
                  & File & """"""" "
@@ -197,7 +212,9 @@ package body XML_Viewer is
          elsif  N.Tag.all = "metric" then
             Append (View.Tree.Model, I, Parent);
             Set (View.Tree.Model, I, Name_Column, Name);
+            Set (View.Tree.Model, I, Sort_Column, Right_Align);
             Set (View.Tree.Model, I, Value_Column, N.Value.all);
+            Metric_Count := Metric_Count + 1;
          else
             I := Parent;
          end if;
@@ -300,7 +317,8 @@ package body XML_Viewer is
         (View.Tree,
          (Name_Column    => GType_String,
           Value_Column   => GType_String,
-          Command_Column => GType_String));
+          Command_Column => GType_String,
+          Sort_Column    => GType_String));
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree, "button_press_event",
@@ -327,7 +345,7 @@ package body XML_Viewer is
       Gtk_New (Rend);
       Pack_Start (Col, Rend, False);
       Add_Attribute (Col, Rend, "markup", Name_Column);
-      Set_Sort_Column_Id (Col, Name_Column);
+      Set_Sort_Column_Id (Col, Sort_Column);
       Dumm := Append_Column (View.Tree, Col);
       Clicked (Col);
 
