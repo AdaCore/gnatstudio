@@ -2006,7 +2006,7 @@ package body Docgen.Work_On_Source is
       Level  : in out Natural) is
    begin
       Doc_Subtitle (B, Kernel, Result, Level,
-                    Subtitle_Name => "Tasks, Entries and Entry Families");
+                    Subtitle_Name => "Tasking");
    end Process_Header_Entries;
 
    ---------------------
