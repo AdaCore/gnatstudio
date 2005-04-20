@@ -177,7 +177,7 @@ Working in a Cross Environment
 Using GPS for Remote Development
 * Network requirements::
 * Setup with a shared filesystem::
-* Setup without a shared filesystem::
+@c * Setup without a shared filesystem::
 
 Customizing and Extending GPS
 * The Preferences Dialog::
@@ -6792,7 +6792,7 @@ machine, you can specify the name of this machine by setting the
 @menu
 * Network requirements::
 * Setup with a shared filesystem::
-* Setup without a shared filesystem::
+@c * Setup without a shared filesystem::
 @end menu
 
 @noindent
@@ -6920,8 +6920,42 @@ Having the shared disk between the desktop machine and the remote host offers
 simple ways of meeting the coherent view requirement mentioned in the previous
 section.
 
-@node Setup without a shared filesystem
-@section Setup without a shared filesystem
+In order to simplify the set up, it is recommended to use relative paths
+in your project files instead of absolute paths.
+
+GPS will also need to reference for building the root project file with the
+same pathname for the desktop and the remote host, so this requires appropriate
+mounting and possibly the use of symbolic links under Unix systems.
+
+Similarly, GPS will need to access executables (found in the executable or
+object directory of the project file) with same pathname between the
+desktop and the remote host.
+
+When under Windows, the drive letter will also be used by GPS.
+If the remote host is also a Windows machine, use the same drive letter
+by e.g. using the @code{subst} command.
+
+If the remote host is a Unix machine, you will need create in your remote
+home directory a symbolic link corresponding to the drive letter where
+the project is, pointing to the directory starting the directory hierarchy
+used by your project.
+
+For example, if you have a project file called @file{d:\projects\foo.gpr}
+corresponding to the remote file @file{/home/users/projects/foo.gpr} and that
+your remote home directory is @file{/home/users}, you need to create the
+following link on the remote host:
+
+@smallexample
+$ cd /home/users  # home directory
+$ ln -s . d:
+@end smallexample
+
+So that, when GPS will be referencing d:/projects/foo.gpr on the remote
+host, this will automatically get transformed into
+@file{/home/users/projects/foo.gpr}
+
+@c @node Setup without a shared filesystem
+@c @section Setup without a shared filesystem
 
 @c --------------------------------------------------------------------
 @node Customizing and Extending GPS
