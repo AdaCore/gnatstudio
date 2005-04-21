@@ -58,7 +58,7 @@ Known Problems fixed in GPS 3.0.0
               loading of your project, and the unit is no longer part of the
               main units
 
-- Files duplicates in the "Open From Project" dialog
+- File duplicates in the "Open From Project" dialog
   Problem:    If source directories are specified both in the projects and
               through ADA_INCLUDE_PATH, the dialog contains duplicate entries.
   Workaround: This is a display artifact that can be ignored
@@ -98,6 +98,11 @@ Known Problems fixed in GPS 3.0.0
               some upper case characters, the VCS Explorer is not properly
               refreshed after doing a Commit operation
   Workaround: Refresh the VCS Explorer using the Query Status operation
+
+- E117-007 Random crash when parsing ALI files
+  Problem:    When using extensively the cross references and recompiling
+              some files, GPS sometimes crashes due to a memory corruption
+  Workaround: Quit and restart GPS regularly when doing lots of recompilation
 
 - E111-013 File casing incorrectly shown in project properties editor
   Problem:    On Windows, if you edit the properties of a project file that
