@@ -378,6 +378,12 @@ package body Interactive_Consoles is
       Console.Idle_Registered := True;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Delete_Event_Handler;
 
    -----------------------
