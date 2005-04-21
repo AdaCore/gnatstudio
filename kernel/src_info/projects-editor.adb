@@ -3222,6 +3222,7 @@ package body Projects.Editor is
                when N_Attribute_Declaration =>
                   if Prj.Tree.Name_Of (Current, Tree) = Name_Source_Dirs
                     or else Prj.Tree.Name_Of (Current, Tree) = Name_Object_Dir
+                    or else Prj.Tree.Name_Of (Current, Tree) = Name_Exec_Dir
                   then
                      Expr := Expression_Of (Current, Tree);
                      while Expr /= Empty_Node loop
