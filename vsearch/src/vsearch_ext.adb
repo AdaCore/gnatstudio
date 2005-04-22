@@ -840,7 +840,7 @@ package body Vsearch_Ext is
             Set_Size
               (Get_MDI (Vsearch.Kernel),
                Child      => Child,
-               Width      => 0,
+               Width      => Req.Width,
                Height     => Req.Height,
                Fixed_Size => True);
          end if;
