@@ -1383,7 +1383,7 @@ procedure GPS.Main is
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
-         "(c) 2001-2004 ACT-Europe" & ASCII.LF);
+         "(c) 2001-2005 AdaCore" & ASCII.LF);
       Free (About_Contents);
 
       --  We now make sure we have a project loaded, so that opening editors
