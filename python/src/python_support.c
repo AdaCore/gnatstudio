@@ -45,6 +45,10 @@ PyObject * ada_pycfunction_newex (PyMethodDef *ml, PyObject* self, PyObject* mod
   return method;
 }
 
+int ada_pyget_refcount (PyObject* obj) {
+   return obj->ob_refcnt;
+}
+
 void ada_py_print_refcount (PyObject* obj, char* msg) {
 #ifdef DEBUG
   if (obj) {

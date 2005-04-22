@@ -64,6 +64,9 @@ package Python is
    --  A debug procedure that prints the reference count of the object on
    --  stdout
 
+   function Get_Refcount (Obj : PyObject) return Integer;
+   --  Return the current reference counter for Obj. Used for debug only
+
    function PyObject_Str (Obj : PyObject) return PyObject;
    --  Compute the string representation of Obj.  Returns the string
    --  representation on success, NULL on failure.  This is the equivalent of
@@ -604,6 +607,7 @@ private
    pragma Import (C, PyList_Size, "PyList_Size");
    pragma Import (C, PyDict_SetItem, "PyDict_SetItem");
    pragma Import (C, PyDict_GetItem, "PyDict_GetItem");
+   pragma Import (C, Get_Refcount, "ada_pyget_refcount");
    pragma Import (C, PyFunction_Get_Code, "ada_pyfunction_get_code");
    pragma Import (C, PyFunction_Get_Globals, "ada_pyfunction_get_globals");
    pragma Import (C, PyFunction_Get_Closure, "ada_pyfunction_get_closure");
