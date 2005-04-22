@@ -859,7 +859,13 @@ private
       --  The current setting for the preferences.
 
       Last_Context_For_Contextual : Selection_Context_Access := null;
-      --  The context used in the last contextual menu.
+      --  The context used in the last contextual menu. Ref_Count isn't
+      --  incremented when this variable is set. However, the variable is
+      --  automatically reset to null when we last unref the context it was
+      --  assigned to.
+      --  This variable should remain not null and unchanged while a contextual
+      --  menu or standard menu is displayed and executed, so that user scripts
+      --  have access to it.
 
       Current_Context : Selection_Context_Access := null;
       --  The selection for the current MDI child. It is recomputed every time
