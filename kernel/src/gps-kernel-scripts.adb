@@ -1306,6 +1306,7 @@ package body GPS.Kernel.Scripts is
       Area     : File_Area_Context_Access;
       Context  : Selection_Context_Access;
       L, C     : Integer := -1;
+      Inst     : Class_Instance;
 
    begin
       if Command = Constructor_Method then
@@ -1391,28 +1392,12 @@ package body GPS.Kernel.Scripts is
          else
             Context := Kernel.Last_Context_For_Contextual;
          end if;
-         if Context = null then
-            Trace (Me, "There is no current context");
-            Set_Error_Msg (Data, -"There is no current context");
 
-         elsif Context.all in Entity_Selection_Context'Class then
-            Set_Return_Value
-             (Data, Create_Entity_Context
-               (Get_Script (Data), Entity_Selection_Context_Access (Context)));
-
-         elsif Context.all in File_Area_Context'Class then
-            Set_Return_Value
-             (Data, Create_Area_Context
-                (Get_Script (Data), File_Area_Context_Access (Context)));
-
-         elsif Context.all in File_Selection_Context'Class then
-            Set_Return_Value
-             (Data, Create_File_Context
-              (Get_Script (Data), File_Selection_Context_Access (Context)));
-
+         Inst := Create_Context (Get_Script (Data), Context);
+         if Inst = null then
+            Set_Error_Msg (Data, -"No context available");
          else
-            Trace (Me, "Unknown current context");
-            Set_Error_Msg (Data, -"Unknown current context");
+            Set_Return_Value (Data, Inst);
          end if;
       end if;
    end Context_Command_Handler;
@@ -1532,6 +1517,9 @@ package body GPS.Kernel.Scripts is
                Create_If_Not_Exist => Title /= "Python"
                  and then Title /= "Shell",
                Force_Create        => Force);
+            --   ??? If the console was already associated with an instance,
+            --  we would lose that original instance and all data the user
+            --  might have stored in it.
             Set_Data (Inst, Widget => Gtk_Widget (Console));
 
             if Console /= null then
@@ -2427,22 +2415,26 @@ package body GPS.Kernel.Scripts is
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance
-   is
-      Inst : Class_Instance;
+      Context : GPS.Kernel.Selection_Context_Access) return Class_Instance is
    begin
-      if Context.all in Entity_Selection_Context'Class then
+      if Context = null then
+         Trace (Me, "Null context passed to Create_Context");
+         return null;
+      elsif Context.all in Entity_Selection_Context'Class then
          return Create_Entity_Context
            (Script, Entity_Selection_Context_Access (Context));
       elsif Context.all in File_Selection_Context'Class then
          return Create_File_Context
            (Script, File_Selection_Context_Access (Context));
+      elsif Context.all in File_Area_Context'Class then
+         return Create_Area_Context
+           (Script, File_Area_Context_Access (Context));
       else
          Trace (Me, "Context type is not supported by GPS");
-         Inst :=
-           New_Instance (Script, Get_Context_Class (Get_Kernel (Script)));
-         Set_Data (Inst, Context);
-         return Inst;
+         return Get_Or_Create_Context
+           (Script,
+            Get_Context_Class (Get_Kernel (Script)),
+            Context);
       end if;
    end Create_Context;
 
