@@ -204,6 +204,11 @@ package body GPS.Kernel.Modules is
    --  Called when a registered menu is displayed, so that we can check whether
    --  it should be made sensitive or not
 
+   procedure Unmap_Menu
+     (Item    : access GObject_Record'Class;
+      Command : Non_Interactive_Action);
+   --  Called when a registered menu is hidden
+
    ---------------
    -- Get_Label --
    ---------------
@@ -458,6 +463,10 @@ package body GPS.Kernel.Modules is
       Push_State (Kernel_Handle (Kernel), Busy);
       Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
       Context.Event   := Get_Current_Event;
+
+      --  This ensure that Context.Context will not be freed while it is needed
+      --  and also that Kernel.Last_Context_For_Contextual is not reset to
+      --  null while the action executes
       Ref (Context.Context);
 
       if Action.Action /= null then
@@ -492,8 +501,13 @@ package body GPS.Kernel.Modules is
       Kernel : constant Kernel_Handle := Convert (Data);
    begin
       if Kernel.Last_Context_For_Contextual /= null then
+         Trace (Me, "Running Hook " & Contextual_Menu_Close_Hook);
          Run_Hook (Kernel, Contextual_Menu_Close_Hook);
          Trace (Me, "Destroying contextual menu and its context");
+
+         --  This context might still be needed by the action itself, but a ref
+         --  is already created from Contextual_Action and ensures this isn't
+         --  reset to null in that case
          Unref (Kernel.Last_Context_For_Contextual);
       end if;
    end Contextual_Menu_Destroyed;
@@ -720,10 +734,6 @@ package body GPS.Kernel.Modules is
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
    begin
-      if User.Kernel.Last_Context_For_Contextual /= null then
-         Unref (User.Kernel.Last_Context_For_Contextual);
-      end if;
-
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
 
@@ -738,6 +748,11 @@ package body GPS.Kernel.Modules is
       if Context = null then
          Context := new Selection_Context;
       end if;
+
+      --  Override the previous value. No Ref is taken explicitly, so we do not
+      --  need to Unref either. This field is automatically reset to null when
+      --  the last holder of a ref calls Unref.
+      Trace (Me, "Set Last_Context_For_Contextual");
       User.Kernel.Last_Context_For_Contextual := Context;
 
       Set_Context_Information
@@ -1120,24 +1135,59 @@ package body GPS.Kernel.Modules is
             User_Data   => (Kernel_Handle (Kernel),
                             null,
                             Menu_Filter));
+         Command_Callback.Object_Connect
+           (Get_Toplevel (Item), "unmap", Unmap_Menu'Access,
+            Slot_Object => Item,
+            User_Data   => (Kernel_Handle (Kernel),
+                            null,
+                            null));
       end if;
 
       return Item;
    end Register_Menu;
+
+   ----------------
+   -- Unmap_Menu --
+   ----------------
+
+   procedure Unmap_Menu
+     (Item    : access GObject_Record'Class;
+      Command : Non_Interactive_Action)
+   is
+      pragma Unreferenced (Item);
+   begin
+      if Command.Kernel.Last_Context_For_Contextual /= null then
+         --  This removes the Ref we had taken in Map_Menu for each menu item
+         --  that required a filter
+         Unref (Command.Kernel.Last_Context_For_Contextual);
+      end if;
+   end Unmap_Menu;
 
    --------------
    -- Map_Menu --
    --------------
 
    procedure Map_Menu
-     (Item : access GObject_Record'Class;
+     (Item    : access GObject_Record'Class;
       Command : Non_Interactive_Action)
    is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Command.Kernel);
    begin
+      if Command.Kernel.Last_Context_For_Contextual = null then
+         Trace (Me, "Creating last_context_for_contextual (Map_Menu)");
+         Command.Kernel.Last_Context_For_Contextual :=
+           Get_Current_Context (Command.Kernel);
+      else
+         --  For each call to Map_Menu, there is a call to Unmap_Menu.
+         --  Therefore we take as many Refs as Unmap_Menu will be called.
+         --  In the case above when we created the context, it already has a
+         --  ref_count of 1
+         Ref (Command.Kernel.Last_Context_For_Contextual);
+      end if;
+
       Set_Sensitive
-        (Gtk_Widget (Item), Filter_Matches (Command.Filter, Context));
+        (Gtk_Widget (Item),
+         Filter_Matches (Command.Filter,
+                         Command.Kernel.Last_Context_For_Contextual));
 
    exception
       when E : others =>
@@ -1174,24 +1224,17 @@ package body GPS.Kernel.Modules is
       Ref (Data.Menu);
       Forall (Data.Menu, Remove_Item'Unrestricted_Access);
 
-      --  Unref the previous context used for a global or contextual menu,
-      --  if any.
-
-      if Data.Kernel.Last_Context_For_Contextual /= null then
-         Unref (Data.Kernel.Last_Context_For_Contextual);
-      end if;
-
-      --  Append all items in the menu.
-
+      --  Override the previous value. Since no explicit Ref is taken, we also
+      --  do not need to free it.
+      Trace (Me, "Menu_Button_Press: Setting Last_Context_For_Contextual");
       Data.Kernel.Last_Context_For_Contextual :=
         Get_Current_Context (Data.Kernel);
 
-      --  The context must live until the menu is unmapped, therefore
-      --  we need to Ref it.
       Ref (Data.Kernel.Last_Context_For_Contextual);
       Data.Factory
         (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
       Show_All (Data.Menu);
+      Unref (Data.Kernel.Last_Context_For_Contextual);
 
    exception
       when E : others =>
