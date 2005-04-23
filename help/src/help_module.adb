@@ -564,6 +564,7 @@ package body Help_Module is
          HTML_File := Create_Html (Full_Name (Item.File).all, Kernel);
          Trace (Me, "Loading HTML file " & Full_Name (Item.File).all
                 & " => " & Full_Name (HTML_File).all);
+
       elsif Item.Shell /= null then
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
@@ -966,9 +967,9 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : String)
    is
-      Full : constant String := Name_As_Directory (Directory) & Index_File;
+      Full    : constant String := Name_As_Directory (Directory) & Index_File;
       Node, N : Node_Ptr;
-      Err  : GNAT.OS_Lib.String_Access;
+      Err     : GNAT.OS_Lib.String_Access;
    begin
       if Is_Regular_File (Full) then
          Trace (Me, "Parsing index " & Full);
@@ -1087,9 +1088,9 @@ package body Help_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Help  : constant String := "/_" & (-"Help") & '/';
+      Help             : constant String := "/_" & (-"Help") & '/';
       Recent_Menu_Item : Gtk_Menu_Item;
-      Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Path_From_Env    : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
    begin
       Help_Module_ID := new Help_Module_ID_Record;
