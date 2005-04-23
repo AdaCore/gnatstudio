@@ -332,7 +332,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 	   : CREATE_NEW_CONSOLE);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
-  if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
+  if (!CreateProcess (NULL, cmdline, &sec_attrs, NULL, TRUE,
 		      flags, env, ".", &start, procinfo))
     goto EH_Fail;
 
