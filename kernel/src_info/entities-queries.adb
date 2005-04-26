@@ -22,7 +22,7 @@ with VFS;                     use VFS;
 with Traces;                  use Traces;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
-with Language_Handlers.GPS; use Language_Handlers.GPS;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Glib.Unicode;            use Glib.Unicode;
 
