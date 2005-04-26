@@ -127,8 +127,6 @@ package body Doc_Utils is
       Location           : File_Location;
       Must_Free_Buffer   : Boolean := False;
       Line, Column       : Integer;
-      End_Of_Scope       : File_Location;
-      Kind               : Reference_Kind;
 
    begin
       if Lang = null then
@@ -166,6 +164,8 @@ package body Doc_Utils is
          Case_Sensitive => Context.Case_Sensitive);
       Skip_Lines (Buffer.all, Line - 1, Index);
 
+      --  First, look for documentation before the entity's declaration.
+
       Get_Documentation_Before
         (Context       => Context.all,
          Buffer        => Buffer.all,
@@ -174,13 +174,9 @@ package body Doc_Utils is
          Comment_End   => Current);
 
       if Beginning = 0 then
-         Get_End_Of_Scope (Entity, End_Of_Scope, Kind);
+         --  No documentation has been found before the entity.
 
-         if Kind = End_Of_Spec then
-            Index := Buffer'First;
-            Skip_Lines (Buffer.all, Get_Line (End_Of_Scope) - 1, Index);
-            Index := Line_Start (Buffer.all, Index);
-         end if;
+         --  Search for documentation after the declaration.
 
          Get_Documentation_After
            (Context       => Context.all,
@@ -188,6 +184,60 @@ package body Doc_Utils is
             Decl_Index    => Index,
             Comment_Start => Beginning,
             Comment_End   => Current);
+
+         --  ??? The documentation should be returned only if followed with a
+         --  blank line.
+      end if;
+
+      if Beginning = 0 then
+         --  We search for documentation after the end of the declaration.
+         declare
+            Iter     : Entity_Reference_Iterator;
+            Ref      : Entity_Reference;
+            Kind     : Reference_Kind;
+            Location : File_Location := No_File_Location;
+         begin
+            Get_End_Of_Scope (Entity, Location, Kind);
+
+            if Kind /= End_Of_Spec then
+               --  The end of scope does not correspond to the end of spec
+               --  that needs to be search in the reference list.
+
+               Location := No_File_Location;
+
+               Find_All_References
+                 (Iter,
+                  Entity,
+                  In_File => Get_Declaration_Of (Entity).File,
+                  Filter  => (End_Of_Spec => True, others => False));
+
+               if not At_End (Iter) then
+                  Ref := Get (Iter);
+
+                  if Get_Kind (Ref) = End_Of_Spec then
+                     Location := Get_Location (Ref);
+                  end if;
+               end if;
+
+               Destroy (Iter);
+            end if;
+
+            if Location /= No_File_Location then
+               Index := Buffer'First;
+               Skip_Lines
+                 (Buffer.all,
+                  Get_Line (Location) - 1,
+                  Index);
+               Index := Line_Start (Buffer.all, Index);
+
+               Get_Documentation_After
+                 (Context       => Context.all,
+                  Buffer        => Buffer.all,
+                  Decl_Index    => Index,
+                  Comment_Start => Beginning,
+                  Comment_End   => Current);
+            end if;
+         end;
       end if;
 
       --  If not found, check the comment just before the body
