@@ -8,6 +8,19 @@ New features in GPS 3.0.0
 
 - E329-005 Support for metrics generation via gnatmetric
 
+- E312-006 The status bar at the bottom of the GPS window can now be hidden.
+  It only contains the progress bars while an action is taking place, and can
+  be replaced by the task manager
+
+- E302-007 Improved installation of plug-ins
+  All xml and python files found under the plug-ins directories are now
+  loaded automatically. See the documentation for more details.
+
+- E302-005 customization directory renamed plug-ins
+  To allow more flexible handling of plug-ins. Note that you will get warnings
+  if you install GPS over a previous GPS installation, since som xml files
+  will be duplicated under the two directories.
+
 - E221-026 Support for multiple memory views
 
 - The project manager will attempt to preserve comments when saving project
@@ -16,10 +29,6 @@ New features in GPS 3.0.0
 - New Scenario View, which contains the scenario variables. These are no
   longer part of the project view, so that you can choose whether or not to
   have them on the screen.
-
-- E312-006 The status bar at the bottom of the GPS window can now be hidden.
-  It only contains the progress bars while an action is taking place, and can
-  be replaced by the task manager
 
 - E221-011 Saving files on a slow drive is optimized
 
