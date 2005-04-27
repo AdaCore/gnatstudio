@@ -141,6 +141,10 @@ package body GVD.Tooltips is
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
+        (Widget, "scroll_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltip);
+      Tooltip_Handler.Connect
         (Widget, "focus_in_event",
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
@@ -212,10 +216,6 @@ package body GVD.Tooltips is
       X, Y   : Gint;
 
    begin
-      if Tooltip.Active then
-         Remove_Tooltip (Tooltip);
-      end if;
-
       Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
 
       if X <= Tooltip.X + Tooltip.Area.X +
@@ -226,6 +226,10 @@ package body GVD.Tooltips is
         and then Y >= Tooltip.Y + Tooltip.Area.Y
       then
          return;
+      end if;
+
+      if Tooltip.Active then
+         Remove_Tooltip (Tooltip);
       end if;
 
       Tooltip.X := X;
