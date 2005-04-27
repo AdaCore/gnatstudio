@@ -873,7 +873,7 @@ package body Gtkada.File_Selector is
       Dir : String)
    is
       Normalized : constant String :=
-        Normalize_Pathname (Dir, Resolve_Links => False);
+                     Normalize_Pathname (Dir, Resolve_Links => False);
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
