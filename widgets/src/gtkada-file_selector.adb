@@ -879,13 +879,15 @@ package body Gtkada.File_Selector is
       --  then update the File_List.
 
       if Dir /= ""
-        and then Win.Current_Directory.all /= Normalized
+        and then Normalize_Pathname (Win.Current_Directory.all) /= Normalized
         and then Is_Directory (Normalized)
       then
          Free (Win.Current_Directory);
 
          if Dir = -"Drives" then
             Win.Current_Directory := new String'("");
+         elsif Dir = "/" then
+            Win.Current_Directory := new String'(Dir);
          else
             Win.Current_Directory := new String'
               (Normalized & Directory_Separator);
