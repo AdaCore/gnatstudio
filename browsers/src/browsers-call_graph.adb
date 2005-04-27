@@ -2067,13 +2067,15 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Go to spec",
          Action => Command,
-         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name)));
+         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name))
+         and Lookup_Filter (Kernel, "Entity"));
 
       Command := new Edit_Body_Command;
       Register_Contextual_Menu
         (Kernel, "Go to body",
          Action => Command,
-         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name)));
+         Filter => Action_Filter (Create (Module => Call_Graph_Module_Name))
+         and Lookup_Filter (Kernel, "Entity"));
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
       Register_Menu
