@@ -1840,10 +1840,8 @@ process_send_signal (p, signo, current_group)
 	else
 	  err = ioctl (XINT (p->infd), TIOCGPGRP, &gid);
 
-#ifdef pfa
 	if (err == -1)
 	  gid = - XFASTINT (p->pid);
-#endif /* ! defined (pfa) */
       }
       if (gid == -1)
 	no_pgrp = 1;
