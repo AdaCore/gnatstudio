@@ -233,7 +233,7 @@ package body GVD.Text_Box.Asm_Editor is
            (Do_Tab_Expansion (S.all, 8) & ASCII.LF & S2.all);
          Free (S2);
 
-      --  Should we append to the current buffer
+      --  Should we append to the current buffer ?
       elsif Pc_In_Range and then not Pc_End_In_Range then
          Get_Machine_Code
            (Process.Debugger,
@@ -840,20 +840,10 @@ package body GVD.Text_Box.Asm_Editor is
            (Visual_Debugger (Box.Process), True, Force_Refresh => True);
 
          if Down then
-            Pos := Get_Upper (Get_Vadj (Get_Child (Box)))
-              - Get_Page_Size (Get_Vadj (Get_Child (Box)));
-            On_Frame_Changed
-              (Box,
-               Box.Current_Range.High.all,
-               Add_Address
-               (Box.Current_Range.High.all,
-                Integer (Get_Pref (GVD_Prefs, Assembly_Range_Size))));
-
-         else
             declare
                Addr : constant String := Address_From_Line
                  (Box, Get_Line (Box));
-               F : constant Gdk_Font := From_Description
+               F    : constant Gdk_Font := From_Description
                  (Get_Pref_Font (GVD_Prefs, Default_Style));
                Line : Natural;
             begin
@@ -863,10 +853,22 @@ package body GVD.Text_Box.Asm_Editor is
                Pos := Grange_Float
                  (Gint (Line) * (Get_Ascent (F) + Get_Descent (F)));
             end;
+         elsif Box.Current_Range.High /= null then
+            Pos := Get_Upper (Get_Vadj (Get_Child (Box)))
+              - Get_Page_Size (Get_Vadj (Get_Child (Box)));
+            On_Frame_Changed
+              (Box,
+               Box.Current_Range.High.all,
+               Add_Address
+                 (Box.Current_Range.High.all,
+                  Integer (Get_Pref (GVD_Prefs, Assembly_Range_Size))));
          end if;
 
-         --  Scroll to the right position
-         Set_Value (Get_Vadj (Get_Child (Box)), Pos);
+         if Down or else Box.Current_Range.High /= null then
+            --  Scroll to the right position
+            Set_Value (Get_Vadj (Get_Child (Box)), Pos);
+         end if;
+
 
          --  Re-highlight the current range
          Highlight_Range
