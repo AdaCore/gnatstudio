@@ -829,9 +829,9 @@ allocate_pty (void)
       "/dev/ptmx_bsd"   /* Tru64 */
     };
 
-#ifdef OSF1
-  /* GPS does not apparently support well the new way of allocating ptys,
-     so disable it for now ??? */
+#if defined (OSF1) || defined (HPUX)
+  /* GPS does not apparently support well the new way of allocating ptys
+     under these platforms, so disable it for now ??? */
   goto lose;
 #endif
 
