@@ -10,8 +10,8 @@ project Remote is
    end Builder;
 
    package Ide is
-      for Compiler_Command ("ada") use "/cardiff.a/gnatmail-5_34/install-cardiff/bin/gnatmake";
-      for Remote_Host use "cardiff";
+      for Compiler_Command ("ada") use "/opt/gnat/bin/gnatmake";
+      for Remote_Host use "my_remote";
    end Ide;
 
 end Remote;
