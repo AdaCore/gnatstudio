@@ -1,0 +1,32 @@
+#!/bin/sh
+# As ssh the first argument of this script is the name of the
+# remote machine
+machine=$1
+shift
+
+# variables containing the path to local and remote directory that
+# are the root project directory.
+local_dir="local_root_project_dir"
+remote_dir="remote_root_project_dir"
+
+# convert the local path into a path suitable for the remote machine
+cmd=`echo "$@" | sed -e "s|$local_dir|$remote_dir/|g"`
+
+# in the Cygwin case, the paths passed to the rsync command must be
+# in Unix format
+case `uname` in
+   CYGWIN*) local_dir=`cygpath -u $local_dir`;;
+esac
+
+# synchronize sources from local to remote machine
+rsync -ar --rsh="ssh" --include="*.ads" --include="*.adb" \
+      --include="*.gpr" --include="*/" --exclude="*" \
+      $local_dir/ $machine:$remote_dir
+
+# execute the remote command
+ssh $machine "$cmd"
+
+# synchronize ALI files from remote to local machine
+rsync -ar --rsh="ssh" --include="*.ali" --include="*/" \
+      --exclude="*" \
+      $machine:$remote_dir/ $local_dir/
