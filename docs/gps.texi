@@ -175,9 +175,9 @@ Working in a Cross Environment
 * Debugger Issues::
 
 Using GPS for Remote Development
-* Network requirements::
+* Requirements::
 * Setup with a shared filesystem::
-@c * Setup without a shared filesystem::
+* Setup without a shared filesystem::
 
 Customizing and Extending GPS
 * The Preferences Dialog::
@@ -6790,9 +6790,9 @@ machine, you can specify the name of this machine by setting the
 @cindex client/server
 @c --------------------------------------------------------------------
 @menu
-* Network requirements::
+* Requirements::
 * Setup with a shared filesystem::
-@c * Setup without a shared filesystem::
+* Setup without a shared filesystem::
 @end menu
 
 @noindent
@@ -6812,8 +6812,8 @@ remains idle most of the time. GPS offers the possibility to run natively on the
 desktop while compilation, run and/or debug activities are performed
 transparently on the remote server.
 
-@node Network requirements
-@section Network requirements
+@node Requirements
+@section Requirements
 
 @noindent
 Future versions of GPS will most certainly have new features that will
@@ -6882,7 +6882,7 @@ after having set @code{Preferences->External Command->Remote shell} to
 "sh /some_path/my_ssh":
 @smallexample
 #!/bin/sh
-# my_ssh is a wrapper to ssh calling "execute" on the remote host
+# @code{my_ssh} is a wrapper to ssh calling @code{execute} on the remote host
 machine=$1
 shift
 ssh $machine sh --login bin/execute "$@@"
@@ -6910,7 +6910,11 @@ project files must be coherent with the server filesystem. For browsing and
 navigating, the ALI files produced during compilation must be accessible from
 the desktop. For debugging, the project and sources must be accessible from the
 desktop while the sources and the executable must be accessible from the remote
-server. The next sections describe two setups that help meeting this second
+server.
+
+It is recommended to use relative paths in the project files instead of
+absolute paths so that the relative path match on the local and remote machines.
+The next sections describe two setups that help meeting this second
 condition.
 
 @node Setup with a shared filesystem
@@ -6920,20 +6924,13 @@ Having the shared disk between the desktop machine and the remote host offers
 simple ways of meeting the coherent view requirement mentioned in the previous
 section.
 
-In order to simplify the set up, it is recommended to use relative paths
-in your project files instead of absolute paths.
-
 GPS will also need to reference for building the root project file with the
 same pathname for the desktop and the remote host, so this requires appropriate
 mounting and possibly the use of symbolic links under Unix systems.
 
 Similarly, GPS will need to access executables (found in the executable or
-object directory of the project file) with same pathname between the
-desktop and the remote host.
-
-When under Windows, the drive letter will also be used by GPS.
-If the remote host is also a Windows machine, use the same drive letter
-by e.g. using the @code{subst} command.
+object directory of the project file) with same pathname between the desktop and
+the remote host. When under Windows, the drive letter will also be used by GPS.
 
 If the remote host is a Unix machine, you will need create in your remote
 home directory a symbolic link corresponding to the drive letter where
@@ -6954,9 +6951,64 @@ So that, when GPS will be referencing d:/projects/foo.gpr on the remote
 host, this will automatically get transformed into
 @file{/home/users/projects/foo.gpr}
 
-@c @node Setup without a shared filesystem
-@c @section Setup without a shared filesystem
+@node Setup without a shared filesystem
+@section Setup without a shared filesystem
 
+When a shared filesystem is not an option, the next best option is to have all
+the elements of the project (sources, ALI files etc.) duplicated on both sides.
+It is possible to synchronize automatically both sides by using a standard tool
+such as rsync in conjunction with slightly more sophisticated version of the
+remote shell script @code{my_ssh} mentioned earlier. Here is an example that has
+been tested with a local Windows machine running cygwin and a remote Unix
+server or another Windows server running cygwin and in particular a sshd deamon:
+@smallexample
+#!/bin/sh
+machine=$1
+shift
+#where is the main project file
+local_dir="C:/my_home/test/demo2"
+remote_dir="test/demo2"
+
+# convert the local path into a path suitable for the remote machine
+cmd=`echo "$@@" | sed -e "s|$local_dir|$remote_dir/|g"`
+
+# This line can be removed if the local machine is a Unix machine
+local_dir=`cygpath -u $local_dir`
+
+# synchronize sources from local to remote machine
+rsync -ar --rsh="ssh" --include="*.ads" --include="*.adb" \
+      --include="*.gpr" --include="*/" --exclude="*" \
+      $local_dir/ $machine:$remote_dir
+
+# execute the remote command
+ssh $machine "bin/execute $cmd"
+
+# synchronize ALI files from remote to local machine
+rsync -ar --rsh="ssh" --include="*.ali" --exclude="*" \
+      $machine:$remote_dir/ $local_dir/
+@end smallexample
+
+This script makes a few assumptions:
+@itemize
+@item All the sources of the project are available of the local desktop.
+@item The main project file is at the root of the project hierarchy
+@item The sources use the default GNAT naming conventions
+@item the @code{execute} script described in a previous section must be
+installed in the $HOME/bin directory of the remote machine.
+@end itemize
+If some of those assumptions are not met, the script will need adaptations. In
+all cases, minor adaptations to the local setup are required before usage:
+@itemize
+@item The @code{local_dir} variable needs to be set to the full path of the
+project file on the local machine precisely as GPS will generate it when it
+launches gnatmake command.
+@item The @code{remote_dir} variable must be set to the directory on the remote
+hosts that will serve as a root of the project mirror hierarchy.
+@item The line containing the call to @code{cygpath} command must only be used
+from a local Windows machine running cygwin. Otherwise it must be removed.
+@end itemize
+A more sophisticated and safe version of this script is available in the GPS
+examples directory.
 @c --------------------------------------------------------------------
 @node Customizing and Extending GPS
 @chapter Customizing and Extending GPS
