@@ -1,4 +1,3 @@
-
 generic
    type Elmt is private;
 package Gen_List is

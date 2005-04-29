@@ -1,4 +1,3 @@
-
 package Instr is
 
    --   Instruments for a Dashboard

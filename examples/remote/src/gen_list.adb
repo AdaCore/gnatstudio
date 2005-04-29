@@ -1,4 +1,3 @@
-
 package body Gen_List is
 
    function Append (E1 : Elmt) return List is
