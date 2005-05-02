@@ -118,12 +118,15 @@ package body Src_Editor_Box is
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : access Entity_Selection_Context'Class;
-      Entity  : out Entity_Information);
+      Entity  : out Entity_Information;
+      Ref     : out Entity_Reference);
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
    --  Entity is set to the entity that was found, or No_Entity_Information if
    --  not found. It must be destroyed by the caller.
+   --  Ref is the closest reference to the entity from Context. It might not be
+   --  set if we haven't found this information
 
    function Get_Contextual_Menu
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -476,12 +479,14 @@ package body Src_Editor_Box is
    procedure Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : access Entity_Selection_Context'Class;
-      Entity  : out Entity_Information)
+      Entity  : out Entity_Information;
+      Ref     : out Entity_Reference)
    is
       Status   : Find_Decl_Or_Body_Query_Status;
       Filename : constant Virtual_File := Get_Filename (Editor);
-
    begin
+      Ref := No_Entity_Reference;
+
       if Filename = VFS.No_File then
          Entity := null;
          return;
@@ -498,6 +503,7 @@ package body Src_Editor_Box is
          Line        => Contexts.Line_Information (Context),
          Column      => Entity_Column_Information (Context),
          Entity      => Entity,
+         Closest_Ref => Ref,
          Status      => Status);
 
       Pop_State (Editor.Kernel);
@@ -607,7 +613,8 @@ package body Src_Editor_Box is
 
       declare
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
-         Entity : Entity_Information;
+         Entity      : Entity_Information;
+         Entity_Ref  : Entity_Reference;
 
       begin
          if Entity_Name = "" then
@@ -637,7 +644,8 @@ package body Src_Editor_Box is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         Get_Declaration_Info (Data.Box, Context'Unchecked_Access, Entity);
+         Get_Declaration_Info
+           (Data.Box, Context'Unchecked_Access, Entity, Entity_Ref);
 
          Destroy (Context);
 
@@ -661,11 +669,35 @@ package body Src_Editor_Box is
               Get_Documentation
                 (Get_Language_Handler (Data.Box.Kernel), Entity);
 
+            function Get_Instance return String;
+            --  Return the text describing from what instance the entity is
+
+            function Get_Instance return String is
+               Inst : Entity_Information;
+            begin
+               if Entity_Ref /= No_Entity_Reference then
+                  Inst := From_Instantiation_At (Entity_Ref);
+                  if Inst /= null then
+                     return ASCII.LF
+                       & (-"from instance ")
+                       & Get_Name (Inst).all
+                       & (-" at ")
+                       &  Base_Name (Get_Filename
+                                (Get_File (Get_Declaration_Of (Inst)))) & ':'
+                       & Image (Get_Line (Get_Declaration_Of (Inst)));
+                  else
+                     return "";
+                  end if;
+               else
+                  return "";
+               end if;
+            end Get_Instance;
+
          begin
             if Doc /= "" then
                Create_Pixmap_From_Text
                  (Text     => Str & ASCII.LF & "-----------------------------"
-                  & ASCII.LF & Doc,
+                  & Get_Instance & ASCII.LF & Doc,
                   Font     => Get_Pref (Data.Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
@@ -674,7 +706,7 @@ package body Src_Editor_Box is
                   Height   => Height);
             else
                Create_Pixmap_From_Text
-                 (Text     => Str,
+                 (Text     => Str & Get_Instance,
                   Font     => Get_Pref (Data.Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
