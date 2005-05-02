@@ -63,6 +63,7 @@ with Ada.Unchecked_Deallocation;
 with VFS;               use VFS;
 with File_Utils;        use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
 with System;            use System;
 with Commands.Interactive; use Commands.Interactive;
 
@@ -1402,7 +1403,8 @@ package body GPS.Kernel.Modules is
                  and then Files (First .. First + 7) = "file:///"
                then
                   File := Create
-                    (Locale_To_UTF8 (Files (First + 8 .. Last - 1)));
+                    (Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
+                       (Files (First + 8 .. Last - 1))));
 
                   if Is_Regular_File (File) then
                      if File_Extension (File) = Project_File_Extension then
