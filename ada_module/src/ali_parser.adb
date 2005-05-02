@@ -293,6 +293,7 @@ package body ALI_Parser is
    --  Find or create an entity information based on the information contained
    --  in the current LI. This returns a placeholder for the declaration, but
    --  no specific information has been set
+   --  If Column is 0, the first entity that matches the line is returned.
 
    procedure Process_Renaming_Ref
      (Handler               : access ALI_Handler_Record'Class;
@@ -309,6 +310,7 @@ package body ALI_Parser is
       LI                    : LI_File;
       Entity                : Entity_Information;
       Sfiles                : Sdep_To_Sfile_Table;
+      Current_Entity        : Nat;
       Current_Ref           : Nat;
       Current_Sfile         : in out Sdep_Id;
       First_Sect, Last_Sect : Nat);
@@ -714,7 +716,7 @@ package body ALI_Parser is
          end if;
 
          Process_Entity_Ref
-           (Handler, LI, Entity, Sfiles, Xref_Id, Current_Sfile,
+           (Handler, LI, Entity, Sfiles, Xref_Ent, Xref_Id, Current_Sfile,
             First_Sect, Last_Sect);
       end loop;
 
@@ -744,17 +746,20 @@ package body ALI_Parser is
       LI                    : LI_File;
       Entity                : Entity_Information;
       Sfiles                : Sdep_To_Sfile_Table;
+      Current_Entity        : Nat;
       Current_Ref           : Nat;
       Current_Sfile         : in out Sdep_Id;
       First_Sect, Last_Sect : Nat)
    is
       Kind      : constant Reference_Kind := Char_To_R_Kind
         (Xref.Table (Current_Ref).Rtype);
+      Next_Kind : Reference_Kind;
       Location  : File_Location;
       Primitive : Entity_Information;
+      Instantiation : Entity_Information := null;
 
    begin
-      --  ??? For the moment, ignore references to the instantiations
+      --  This is processed in the context of the previous reference already
       if Kind /= Instantiation_Reference then
          Current_Sfile := Xref.Table (Current_Ref).File_Num;
 
@@ -798,7 +803,22 @@ package body ALI_Parser is
             end if;
 
          else
-            Add_Reference (Entity, Location, Kind);
+            --  Look at the next reference. If it is a generic instantiation,
+            --  take it into account
+            if Current_Ref <= Xref_Entity.Table (Current_Entity).Last_Xref then
+               Next_Kind :=
+                 Char_To_R_Kind (Xref.Table (Current_Ref + 1).Rtype);
+               if Next_Kind = Instantiation_Reference then
+                  Instantiation := Find_Entity_In_ALI
+                    (Handler,
+                     LI, Sfiles,
+                     Xref.Table (Current_Ref + 1).File_Num,
+                     Xref.Table (Current_Ref + 1).Line,
+                     0, First_Sect, Last_Sect);
+               end if;
+            end if;
+
+            Add_Reference (Entity, Location, Kind, Instantiation);
          end if;
       end if;
    end Process_Entity_Ref;
@@ -827,7 +847,8 @@ package body ALI_Parser is
               Xref_Section.Table (Sect).Last_Entity
             loop
                if Xref_Entity.Table (Entity).Line = Line
-                 and then Xref_Entity.Table (Entity).Col = Column
+                 and then (Column = 0
+                           or else Xref_Entity.Table (Entity).Col = Column)
                then
                   return Get_Or_Create
                     (Name => Locale_To_UTF8 (To_Lower
