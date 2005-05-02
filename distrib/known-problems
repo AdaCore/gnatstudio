@@ -2,6 +2,11 @@ Known Problems fixed in GPS 3.1.0
 
 Known Problems fixed in GPS 3.0.0
 
+- E501-006 Cross-references unavailable on Windows when source drag-and-dropped
+  Problem:    When the source file is opened by means of drag-and-drop
+              operation, cross-reference data might be unavailable.
+  Workaround: Close the file, then use any other method to open the file.
+
 - E408-001 The "Writable/Read-only" state is not refreshed
   Problem:    When a file is modified outside of GPS, when choosing to Reload
               the editor corresponding to that file, the "Writable/Read-only"
