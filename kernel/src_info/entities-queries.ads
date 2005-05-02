@@ -51,11 +51,22 @@ package Entities.Queries is
       Check_Decl_Only : Boolean := False);
    procedure Find_Declaration
      (Db              : Entities_Database;
+      File_Name       : VFS.Virtual_File;
+      Entity_Name     : String := "";
+      Line            : Natural;
+      Column          : Natural;
+      Entity          : out Entity_Information;
+      Closest_Ref     : out Entity_Reference;
+      Status          : out Find_Decl_Or_Body_Query_Status;
+      Check_Decl_Only : Boolean := False);
+   procedure Find_Declaration
+     (Db              : Entities_Database;
       Source          : Source_File;
       Entity_Name     : String := "";
       Line            : Natural;
       Column          : Natural;
       Entity          : out Entity_Information;
+      Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
       Handler         : LI_Handler := null);
@@ -64,6 +75,8 @@ package Entities.Queries is
    --  If Check_Decl_Only is True, then only declarations are checked, not
    --  any other kind of reference.
    --  The Handler is computed automatically if not passed as an argument.
+   --  Closest_Ref is the reference to the entity that was the closest to the
+   --  given location.
 
    procedure Find_Next_Body
      (Entity               : Entity_Information;

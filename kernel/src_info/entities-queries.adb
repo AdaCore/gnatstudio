@@ -59,7 +59,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information);
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference);
    --  Check in EL the entities which has a reference as close as possible
    --  to (Line, Column). Distance is the initial closest distance known, and
    --  is changed to reflect the result of the find. It is set to 0 if an
@@ -74,6 +75,7 @@ package body Entities.Queries is
       Column                 : Integer;
       Check_Decl_Only        : Boolean;
       Entity                 : out Entity_Information;
+      Closest_Ref            : out Entity_Reference;
       Status                 : out Find_Decl_Or_Body_Query_Status);
    --  Find the closest entity to (Line, Column) in Source
 
@@ -83,7 +85,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information);
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference);
    --  Find the entity in File which is referenced at the given location
 
    procedure Find_Any_Entity
@@ -93,7 +96,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information);
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference);
    procedure Find_Any_Entity
      (Trie            : Shared_Entities_Hash.HTable;
       File            : Source_File;
@@ -101,7 +105,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information);
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference);
    --  Same as above, but restricted to a subset of the entities only
 
    function Get_Start_Of_Scope_In_File
@@ -186,7 +191,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information)
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference)
    is
       Prox : Integer;
       E    : Entity_Information;
@@ -203,6 +209,7 @@ package body Entities.Queries is
 
                if Prox < Distance then
                   Closest := E;
+                  Closest_Ref := Declaration_As_Reference (E);
                   Distance := Prox;
                   exit For_Each_Entity when Distance = 0;
                end if;
@@ -222,6 +229,7 @@ package body Entities.Queries is
 
                      if Prox < Distance then
                         Closest := E;
+                        Closest_Ref := (E, R);
                         Distance := Prox;
 
                         exit For_Each_Entity when Distance = 0;
@@ -246,7 +254,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information)
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference)
    is
       Iter   : Entities_Hash.Iterator;
       UEI    : Unshared_Entity_Informations;
@@ -258,7 +267,7 @@ package body Entities.Queries is
          exit when UEI = null;
 
          Find (UEI.List, File, Line, Column,
-               Check_Decl_Only, Distance, Closest);
+               Check_Decl_Only, Distance, Closest, Closest_Ref);
          exit when Distance = 0;
 
          Get_Next (Trie, Iter);
@@ -276,7 +285,8 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information)
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference)
    is
       Iter   : Shared_Entities_Hash.Iterator;
       EIS    : Entity_Informations;
@@ -287,7 +297,7 @@ package body Entities.Queries is
          exit when EIS = No_Entity_Informations;
 
          Find (EIS.List, File, Line, Column,
-               Check_Decl_Only, Distance, Closest);
+               Check_Decl_Only, Distance, Closest, Closest_Ref);
          exit when Distance = 0;
 
          Get_Next (Trie, Iter);
@@ -304,16 +314,17 @@ package body Entities.Queries is
       Column          : Integer;
       Check_Decl_Only : Boolean;
       Distance        : in out Integer;
-      Closest         : in out Entity_Information) is
+      Closest         : in out Entity_Information;
+      Closest_Ref     : in out Entity_Reference) is
    begin
       Find_Any_Entity
         (File.Entities, File, Line, Column, Check_Decl_Only,
-         Distance, Closest);
+         Distance, Closest, Closest_Ref);
 
       if Distance /= 0 and then not Check_Decl_Only then
          Find_Any_Entity
            (File.All_Entities, File, Line, Column,
-            Check_Decl_Only, Distance, Closest);
+            Check_Decl_Only, Distance, Closest, Closest_Ref);
       end if;
    end Find_Any_Entity;
 
@@ -328,6 +339,7 @@ package body Entities.Queries is
       Column                 : Integer;
       Check_Decl_Only        : Boolean;
       Entity                 : out Entity_Information;
+      Closest_Ref            : out Entity_Reference;
       Status                 : out Find_Decl_Or_Body_Query_Status)
    is
       Distance : Integer := Integer'Last;
@@ -342,9 +354,12 @@ package body Entities.Queries is
                 & " check_decl=" & Check_Decl_Only'Img);
       end if;
 
+      Closest_Ref := No_Entity_Reference;
+
       if Normalized_Entity_Name = "" then
          Find_Any_Entity
-           (Source, Line, Column, Check_Decl_Only, Distance, Closest);
+           (Source, Line, Column, Check_Decl_Only, Distance, Closest,
+            Closest_Ref);
       else
          EIS := Get (Source.Entities,
                      Normalized_Entity_Name'Unrestricted_Access);
@@ -352,7 +367,7 @@ package body Entities.Queries is
             Find
               (EIS.List,
                Source, Line,
-               Column, Check_Decl_Only, Distance, Closest);
+               Column, Check_Decl_Only, Distance, Closest, Closest_Ref);
             Trace (Me, "After find in entities: distance=" & Distance'Img);
          end if;
 
@@ -361,7 +376,8 @@ package body Entities.Queries is
                         Normalized_Entity_Name'Unrestricted_Access);
             if UEI /= null then
                Find (UEI.List,
-                     Source, Line, Column, Check_Decl_Only, Distance, Closest);
+                     Source, Line, Column, Check_Decl_Only, Distance, Closest,
+                     Closest_Ref);
                Trace (Me, "After find in all entities: distance="
                       & Distance'Img);
             end if;
@@ -372,8 +388,9 @@ package body Entities.Queries is
          Status := Success;
          Entity := Closest;
       elsif Distance = Integer'Last then
-         Status := Entity_Not_Found;
-         Entity := null;
+         Status      := Entity_Not_Found;
+         Entity      := null;
+         Closest_Ref := No_Entity_Reference;
       else
          Status := Fuzzy_Match;
          Entity := Closest;
@@ -394,6 +411,28 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False)
    is
+      Ref      : Entity_Reference;
+   begin
+      Find_Declaration
+        (Db, File_Name, Entity_Name, Line, Column, Entity, Ref, Status,
+         Check_Decl_Only);
+   end Find_Declaration;
+
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   procedure Find_Declaration
+     (Db              : Entities_Database;
+      File_Name       : VFS.Virtual_File;
+      Entity_Name     : String := "";
+      Line            : Natural;
+      Column          : Natural;
+      Entity          : out Entity_Information;
+      Closest_Ref     : out Entity_Reference;
+      Status          : out Find_Decl_Or_Body_Query_Status;
+      Check_Decl_Only : Boolean := False)
+   is
       Handler  : constant LI_Handler := Get_LI_Handler (Db, File_Name);
       Source   : Source_File;
    begin
@@ -405,8 +444,8 @@ package body Entities.Queries is
 
          if Source /= null then
             Find_Declaration
-              (Db, Source, Entity_Name, Line, Column, Entity, Status,
-               Check_Decl_Only, Handler);
+              (Db, Source, Entity_Name, Line, Column, Entity, Closest_Ref,
+               Status, Check_Decl_Only, Handler);
             return;
          end if;
       end if;
@@ -425,6 +464,7 @@ package body Entities.Queries is
       Line            : Natural;
       Column          : Natural;
       Entity          : out Entity_Information;
+      Closest_Ref     : out Entity_Reference;
       Status          : out Find_Decl_Or_Body_Query_Status;
       Check_Decl_Only : Boolean := False;
       Handler         : LI_Handler := null)
@@ -464,10 +504,10 @@ package body Entities.Queries is
          if Updated /= null then
             if Case_Insensitive_Identifiers (H) then
                Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
-                     Check_Decl_Only, Entity, Status);
+                     Check_Decl_Only, Entity, Closest_Ref, Status);
             else
                Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
-                     Entity, Status);
+                     Entity, Closest_Ref, Status);
             end if;
          end if;
 
