@@ -1321,11 +1321,13 @@ package body GPS.Kernel is
       Line        : Natural;
       Column      : Natural;
       Entity      : out Entities.Entity_Information;
-      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status) is
+      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
+   is
+      Closest_Ref : Entities.Entity_Reference;
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,
-         Line, Column, Entity, Status);
+         Line, Column, Entity, Closest_Ref, Status);
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;
