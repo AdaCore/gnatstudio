@@ -872,6 +872,11 @@ package body GPS.Kernel is
                Context.Kernel.Last_Context_For_Contextual := null;
             end if;
 
+            if Context = Context.Kernel.Current_Context then
+               Trace (Me, "Setting current_context to null");
+               Context.Kernel.Current_Context := null;
+            end if;
+
             Destroy (Context.all);
             Internal (Context);
          end if;
