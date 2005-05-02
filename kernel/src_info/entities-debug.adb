@@ -197,6 +197,12 @@ package body Entities.Debug is
    procedure Dump (Ref : E_Reference; Full : Boolean) is
    begin
       Dump (Ref.Location); Output (':' & Reference_Kind_To_Char (Ref.Kind));
+      if Full and then Ref.From_Instantiation_At /= null then
+         Output ("[");
+         Dump (Ref.From_Instantiation_At, Full => False, Name => "");
+         Output ("]");
+      end if;
+
       if Full and then Ref.Caller /= null then
          Output ("@"); Dump (Ref.Caller, Full => False, Name => "");
       end if;
