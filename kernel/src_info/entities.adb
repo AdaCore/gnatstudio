@@ -490,6 +490,8 @@ package body Entities is
                if Entity.References.Table (R).Location.File = File then
                   Unref (Entity.References.Table (R).Caller,
                          "reference.caller");
+                  Unref (Entity.References.Table (R).From_Instantiation_At,
+                         "reference.instantiation");
                   if To = Entity_Reference_Arrays.Index_Type'Last then
                      To := R;
                   end if;
@@ -708,6 +710,9 @@ package body Entities is
          loop
             Unref (Entity.References.Table (R).Caller, "reference.caller");
             Entity.References.Table (R).Caller := null;
+            Unref (Entity.References.Table (R).From_Instantiation_At,
+                   "reference.instantiation");
+            Entity.References.Table (R).From_Instantiation_At := null;
          end loop;
 
          Free (Entity.References);
@@ -1440,7 +1445,8 @@ package body Entities is
                Location => Entity.End_Of_Scope.Location,
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
-            Entity.End_Of_Scope := (Location, null, Kind);
+            Unref (Entity.End_Of_Scope.From_Instantiation_At);
+            Entity.End_Of_Scope := (Location, null, Kind, null);
          else
             Add_Reference
               (Entity,
@@ -1449,7 +1455,8 @@ package body Entities is
          end if;
       else
          Unref (Entity.End_Of_Scope.Caller);
-         Entity.End_Of_Scope := (Location, null, Kind);
+         Unref (Entity.End_Of_Scope.From_Instantiation_At);
+         Entity.End_Of_Scope := (Location, null, Kind, null);
       end if;
    end Set_End_Of_Scope;
 
@@ -1514,9 +1521,10 @@ package body Entities is
    -------------------
 
    procedure Add_Reference
-     (Entity   : Entity_Information;
-      Location : File_Location;
-      Kind     : Reference_Kind) is
+     (Entity                : Entity_Information;
+      Location              : File_Location;
+      Kind                  : Reference_Kind;
+      From_Instantiation_At : Entity_Information := null) is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
       if Active (Add_Reference_Force_Unique) then
@@ -1529,7 +1537,9 @@ package body Entities is
          end loop;
       end if;
 
-      Append (Entity.References, (Location, null, Kind));
+      Append
+        (Entity.References, (Location, null, Kind, From_Instantiation_At));
+      Ref (From_Instantiation_At, "add_reference.from_instantiation");
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
@@ -1978,6 +1988,23 @@ package body Entities is
          return Reference;
       end if;
    end Get_Kind;
+
+   ---------------------------
+   -- From_Instantiation_At --
+   ---------------------------
+
+   function From_Instantiation_At
+     (Ref : Entity_Reference) return Entity_Information is
+   begin
+      if Ref.Entity /= null
+        and then Ref.Entity.References /= Null_Entity_Reference_List
+        and then Ref.Index <= Last (Ref.Entity.References)
+      then
+         return Ref.Entity.References.Table (Ref.Index).From_Instantiation_At;
+      else
+         return null;
+      end if;
+   end From_Instantiation_At;
 
    --------------------
    -- Kind_To_String --

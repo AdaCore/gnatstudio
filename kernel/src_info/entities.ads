@@ -548,13 +548,19 @@ package Entities is
    procedure Set_Is_Renaming_Of
      (Entity : Entity_Information; Renaming_Of : Entity_Information);
    --  Override some information for the entity.
+   --  See the documentation of the fields in the full declaration of
+   --  Entity_Information_Record.
 
    procedure Add_Reference
-     (Entity   : Entity_Information;
-      Location : File_Location;
-      Kind     : Reference_Kind);
+     (Entity                : Entity_Information;
+      Location              : File_Location;
+      Kind                  : Reference_Kind;
+      From_Instantiation_At : Entity_Information := null);
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
+   --  From_Instantiation_At indicates which instantiation of the entity is
+   --  being called at that reference. This is a pointer to the entity that
+   --  actually instantiates a generic (generally a package).
 
    procedure Add_Called
      (Entity   : Entity_Information;
@@ -605,6 +611,14 @@ package Entities is
 
    function Get_Kind (Ref : Entity_Reference) return Reference_Kind;
    --  Return the type of reference we have
+
+   function From_Instantiation_At
+     (Ref : Entity_Reference) return Entity_Information;
+   --  Return a pointer to the instance that declared the instance of the
+   --  entity referenced at Ref.
+   --  For instance, if the entity is subprogram declared in a generic package,
+   --  the result of this function points to the instantiation of the generic
+   --  package that is used at Ref.
 
    function "<" (Ref1, Ref2 : Entity_Reference) return Boolean;
    --  Whether Ref1 comes before Ref2.
@@ -733,9 +747,10 @@ private
    ---------------------
 
    type E_Reference is record
-      Location : File_Location;
-      Caller   : Entity_Information;
-      Kind     : Reference_Kind;
+      Location              : File_Location;
+      Caller                : Entity_Information;
+      Kind                  : Reference_Kind;
+      From_Instantiation_At : Entity_Information;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
    --  but keep a reasonable alignment to avoid inefficiencies.
@@ -743,7 +758,7 @@ private
    for E_Reference'Alignment use 4;
 
    No_E_Reference : constant E_Reference :=
-     (No_File_Location, null, Reference);
+     (No_File_Location, null, Reference, null);
    --  Caller is the enclosing entity at that location
 
    package Entity_Reference_Arrays is new Dynamic_Arrays
