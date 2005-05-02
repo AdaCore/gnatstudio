@@ -3,6 +3,10 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
+- BA07-005 Improves cross-references for generics. From a reference to an
+  entity declared in a generic, it is now possible to find out what
+  instantiation of the generic is involved
+
 - Improved handling of tooltips in editors. Tooltip now remains displayed
   while the mouse cursor stays on the hotspot word. Using the mousewheel to
   scroll now hides the tooltip.
