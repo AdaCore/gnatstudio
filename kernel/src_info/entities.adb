@@ -1446,7 +1446,7 @@ package body Entities is
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
             Unref (Entity.End_Of_Scope.From_Instantiation_At);
-            Entity.End_Of_Scope := (Location, null, Kind, null);
+            Entity.End_Of_Scope := (Location, null, null, Kind);
          else
             Add_Reference
               (Entity,
@@ -1456,7 +1456,7 @@ package body Entities is
       else
          Unref (Entity.End_Of_Scope.Caller);
          Unref (Entity.End_Of_Scope.From_Instantiation_At);
-         Entity.End_Of_Scope := (Location, null, Kind, null);
+         Entity.End_Of_Scope := (Location, null, null, Kind);
       end if;
    end Set_End_Of_Scope;
 
@@ -1538,7 +1538,7 @@ package body Entities is
       end if;
 
       Append
-        (Entity.References, (Location, null, Kind, From_Instantiation_At));
+        (Entity.References, (Location, null, From_Instantiation_At, Kind));
       Ref (From_Instantiation_At, "add_reference.from_instantiation");
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;

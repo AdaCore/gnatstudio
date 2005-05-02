@@ -749,8 +749,8 @@ private
    type E_Reference is record
       Location              : File_Location;
       Caller                : Entity_Information;
-      Kind                  : Reference_Kind;
       From_Instantiation_At : Entity_Information;
+      Kind                  : Reference_Kind;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
    --  but keep a reasonable alignment to avoid inefficiencies.
@@ -758,7 +758,7 @@ private
    for E_Reference'Alignment use 4;
 
    No_E_Reference : constant E_Reference :=
-     (No_File_Location, null, Reference, null);
+     (No_File_Location, null, null, Reference);
    --  Caller is the enclosing entity at that location
 
    package Entity_Reference_Arrays is new Dynamic_Arrays
