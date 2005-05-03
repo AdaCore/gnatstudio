@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -673,41 +674,41 @@ package body Src_Editor_Box is
             --  Return the text describing from what instance the entity is
 
             function Get_Instance return String is
-               Inst : Entity_Information;
+               use Ada.Strings.Unbounded;
+               Result  : Unbounded_String;
+               Inst    : Entity_Instantiation;
+               Inst_E  : Entity_Information;
                Inst_Of : Entity_Information;
+
             begin
                if Entity_Ref /= No_Entity_Reference then
                   Inst := From_Instantiation_At (Entity_Ref);
-                  if Inst /= null then
-                     Inst_Of := Is_Instantiation_Of (Inst);
+                  while Inst /= No_Instantiation loop
+                     Inst_E := Get_Entity (Inst);
+                     Inst_Of := Is_Instantiation_Of (Inst_E);
                      if Inst_Of = null then
-                        return ASCII.LF
-                          & (-"from instance at ")
-                          & Get_Name (Inst).all
-                          & ':'
-                          &  Base_Name (Get_Filename
-                              (Get_File (Get_Declaration_Of (Inst)))) & ':'
-                          & Image (Get_Line (Get_Declaration_Of (Inst)));
+                        Result := Result
+                          & ASCII.LF & (-"from instance at ");
                      else
-                        return ASCII.LF
+                        Result := Result & ASCII.LF
                           & (-"from instance of ")
                           & Get_Name (Inst_Of).all & ':'
                           & Base_Name (Get_Filename
                               (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
                           & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
-                          & ASCII.LF & "  at "
-                          & Get_Name (Inst).all
-                          & ':'
-                          &  Base_Name (Get_Filename
-                              (Get_File (Get_Declaration_Of (Inst)))) & ':'
-                          & Image (Get_Line (Get_Declaration_Of (Inst)));
+                          & ASCII.LF & "  at ";
                      end if;
-                  else
-                     return "";
-                  end if;
-               else
-                  return "";
+                     Result := Result
+                       & Get_Name (Inst_E).all
+                       & ':'
+                       &  Base_Name (Get_Filename
+                         (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
+                       & Image (Get_Line (Get_Declaration_Of (Inst_E)));
+                     Inst := Generic_Parent (Inst);
+                  end loop;
                end if;
+
+               return To_String (Result);
             end Get_Instance;
 
          begin
