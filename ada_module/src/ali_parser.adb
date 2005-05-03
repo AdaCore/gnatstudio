@@ -773,10 +773,11 @@ package body ALI_Parser is
    is
       Kind      : constant Reference_Kind := Char_To_R_Kind
         (Xref.Table (Current_Ref).Rtype);
-      Next_Kind : Reference_Kind;
       Location  : File_Location;
       Primitive : Entity_Information;
       Instantiation : Entity_Information := null;
+      Ref       : Nat;
+      Inst      : Entity_Instantiation;
 
    begin
       --  This is processed in the context of the previous reference already
@@ -825,20 +826,23 @@ package body ALI_Parser is
          else
             --  Look at the next reference. If it is a generic instantiation,
             --  take it into account
-            if Current_Ref < Xref_Entity.Table (Current_Entity).Last_Xref then
-               Next_Kind :=
-                 Char_To_R_Kind (Xref.Table (Current_Ref + 1).Rtype);
-               if Next_Kind = Instantiation_Reference then
-                  Instantiation := Find_Entity_In_ALI
-                    (Handler,
-                     LI, Sfiles,
-                     Xref.Table (Current_Ref + 1).File_Num,
-                     Xref.Table (Current_Ref + 1).Line,
-                     0, First_Sect, Last_Sect);
-               end if;
-            end if;
+            Ref := Current_Ref + 1;
+            while Ref <= Xref_Entity.Table (Current_Entity).Last_Xref
+              and then Char_To_R_Kind (Xref.Table (Ref).Rtype) =
+                Instantiation_Reference
+            loop
+               Instantiation := Find_Entity_In_ALI
+                 (Handler,
+                  LI, Sfiles,
+                  Xref.Table (Ref).File_Num,
+                  Xref.Table (Ref).Line,
+                  0, First_Sect, Last_Sect);
+               Inst := Get_Or_Create_Instantiation
+                 (Location.File, Instantiation, Inst);
+               Ref := Ref + 1;
+            end loop;
 
-            Add_Reference (Entity, Location, Kind, Instantiation);
+            Add_Reference (Entity, Location, Kind, Inst);
          end if;
       end if;
    end Process_Entity_Ref;
