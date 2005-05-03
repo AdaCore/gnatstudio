@@ -394,6 +394,7 @@ package body Entities.Debug is
                Output_Line ("");
             end if;
 
+            Dump (Entity.Instantiation_Of, False, "instantiates");
             Dump (Entity.Caller_At_Declaration, False, "caller_at_decl");
             Dump (Entity.Rename, False, "renames");
             Dump (Entity.Parent_Types,    False, "parents");

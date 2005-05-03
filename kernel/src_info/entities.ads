@@ -547,6 +547,8 @@ package Entities is
       Kind     : Reference_Kind);
    procedure Set_Is_Renaming_Of
      (Entity : Entity_Information; Renaming_Of : Entity_Information);
+   procedure Set_Is_Instantiation
+     (Entity : Entity_Information; Of_Generic : Entity_Information);
    --  Override some information for the entity.
    --  See the documentation of the fields in the full declaration of
    --  Entity_Information_Record.
@@ -829,6 +831,9 @@ private
       Called_Entities       : Entity_Information_List;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
+
+      Instantiation_Of      : Entity_Information;
+      --  The generic entity that this one instantiates
 
       Ref_Count             : Natural := 1;
       --  The reference count for this entity. When it reaches 0, the entity

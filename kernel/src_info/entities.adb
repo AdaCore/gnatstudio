@@ -672,6 +672,8 @@ package body Entities is
       Entity.Primitive_Op_Of := null;
       Unref (Entity.Rename, "rename");
       Entity.Rename := null;
+      Unref (Entity.Instantiation_Of, "instantiation_of");
+      Entity.Instantiation_Of := null;
       Unref_All_Entities_In_List (Entity.Called_Entities, "called_entities");
 
       if Entity_Information_Arrays.Length (Entity.Parent_Types) /= 0 then
@@ -1543,6 +1545,18 @@ package body Entities is
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
+   --------------------------
+   -- Set_Is_Instantiation --
+   --------------------------
+
+   procedure Set_Is_Instantiation
+     (Entity : Entity_Information; Of_Generic : Entity_Information) is
+   begin
+      Unref (Entity.Instantiation_Of, "instantiation_of");
+      Entity.Instantiation_Of := Of_Generic;
+      Ref (Entity.Instantiation_Of, "set_is_instantiation");
+   end Set_Is_Instantiation;
+
    -----------------
    -- Set_Type_Of --
    -----------------
@@ -1685,6 +1699,7 @@ package body Entities is
             Returned_Type         => null,
             Primitive_Op_Of       => null,
             Rename                => null,
+            Instantiation_Of      => null,
             Called_Entities       => Null_Entity_Information_List,
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
