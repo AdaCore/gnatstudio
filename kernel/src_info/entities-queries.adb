@@ -1291,6 +1291,17 @@ package body Entities.Queries is
       end case;
    end Image;
 
+   -------------------------
+   -- Is_Instantiation_Of --
+   -------------------------
+
+   function Is_Instantiation_Of
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+      return Entity.Instantiation_Of;
+   end Is_Instantiation_Of;
+
    -----------------
    -- Renaming_Of --
    -----------------

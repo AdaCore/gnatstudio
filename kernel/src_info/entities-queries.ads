@@ -184,6 +184,14 @@ package Entities.Queries is
    --  type), return the entity that is renamed. Return null if there is no
    --  renaming.
 
+   --------------
+   -- Generics --
+   --------------
+
+   function Is_Instantiation_Of
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the generic entity that Entity instantiates. It is assumed
+
    ----------------------------
    -- Subprograms parameters --
    ----------------------------
