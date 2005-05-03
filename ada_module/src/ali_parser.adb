@@ -635,6 +635,7 @@ package body ALI_Parser is
       First_Sect, Last_Sect : Nat)
    is
       Entity         : Entity_Information;
+      Instantiation_Of : Entity_Information;
       Current_Sfile  : Sdep_Id;
       File_Num       : constant Sdep_Id :=
                          Xref_Section.Table (Xref_Sect).File_Num;
@@ -702,6 +703,25 @@ package body ALI_Parser is
             Process_Renaming_Ref
               (Handler, LI, Entity, Xref_Sect, Xref_Ent, Sfiles,
                First_Sect, Last_Sect);
+         end if;
+      end if;
+
+      --  Process the generics instantation information
+
+      if Xref_Entity.Table (Xref_Ent).Iref_File_Num /= No_Sdep_Id then
+         Instantiation_Of := Find_Entity_In_ALI
+           (Handler,
+            LI, Sfiles, Xref_Entity.Table (Xref_Ent).Iref_File_Num,
+            Xref_Entity.Table (Xref_Ent).Iref_Line, 0,
+            First_Sect, Last_Sect);
+         if Instantiation_Of = null then
+            if Active (Me) then
+               Trace (Me, "Couldn't find instantiated entity: "
+                      & Xref_Entity.Table (Xref_Ent).Iref_File_Num'Img
+                      & Xref_Entity.Table (Xref_Ent).Iref_Line'Img);
+            end if;
+         else
+            Set_Is_Instantiation (Entity, Instantiation_Of);
          end if;
       end if;
 
