@@ -674,17 +674,34 @@ package body Src_Editor_Box is
 
             function Get_Instance return String is
                Inst : Entity_Information;
+               Inst_Of : Entity_Information;
             begin
                if Entity_Ref /= No_Entity_Reference then
                   Inst := From_Instantiation_At (Entity_Ref);
                   if Inst /= null then
-                     return ASCII.LF
-                       & (-"from instance ")
-                       & Get_Name (Inst).all
-                       & (-" at ")
-                       &  Base_Name (Get_Filename
-                                (Get_File (Get_Declaration_Of (Inst)))) & ':'
-                       & Image (Get_Line (Get_Declaration_Of (Inst)));
+                     Inst_Of := Is_Instantiation_Of (Inst);
+                     if Inst_Of = null then
+                        return ASCII.LF
+                          & (-"from instance at ")
+                          & Get_Name (Inst).all
+                          & ':'
+                          &  Base_Name (Get_Filename
+                              (Get_File (Get_Declaration_Of (Inst)))) & ':'
+                          & Image (Get_Line (Get_Declaration_Of (Inst)));
+                     else
+                        return ASCII.LF
+                          & (-"from instance of ")
+                          & Get_Name (Inst_Of).all & ':'
+                          & Base_Name (Get_Filename
+                              (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
+                          & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
+                          & ASCII.LF & "  at "
+                          & Get_Name (Inst).all
+                          & ':'
+                          &  Base_Name (Get_Filename
+                              (Get_File (Get_Declaration_Of (Inst)))) & ':'
+                          & Image (Get_Line (Get_Declaration_Of (Inst)));
+                     end if;
                   else
                      return "";
                   end if;
