@@ -38,6 +38,9 @@ package Entities is
    type Source_File_Record is tagged private;
    type Source_File is access Source_File_Record'Class;
 
+   type Entity_Information_Record is tagged private;
+   type Entity_Information is access Entity_Information_Record'Class;
+
    type LI_Handler_Record is abstract tagged limited private;
    type LI_Handler is access all LI_Handler_Record'Class;
    --  General type to handle and generate Library Information data (for
@@ -458,12 +461,51 @@ package Entities is
    --  Whether Loc1 comes before Loc2. If the two locations are not in the same
    --  file, then the order is the one given by comparing the file names.
 
+   ----------------------------
+   -- Generic instantiations --
+   ----------------------------
+
+   type Entity_Instantiation is private;
+   No_Instantiation : constant Entity_Instantiation;
+   --  Describe in the context in which an entity is instantiated.
+   --  It isn't safe to store this type anywhere, since it might cease to be
+   --  valid when the database is reparsed, even partly.
+
+   function Get_Entity
+     (Instantiation : Entity_Instantiation) return Entity_Information;
+   --  Return the entity (package or subprogram) that was instantiated
+
+   function Generic_Parent
+     (Instantiation : Entity_Instantiation) return Entity_Instantiation;
+   --  Return the generic parent of the entity. This will return
+   --  No_Instantiation if the entity wasn't in turn instantiated as part of
+   --  a nested generic.
+   --  If we have a nested generic, as in:
+   --     generic package B is type T is new Integer; end B;
+   --     generic package A is
+   --        package B1 is new B;
+   --     end A;
+   --     package AI is new A;
+   --     C : AI.BI.T;
+   --  then the Entity_Instantiation for the last ref to T will return
+   --  BI, then calling Next will return AI
+
+   function Get_Or_Create_Instantiation
+     (File   : Source_File;
+      Entity : Entity_Information;
+      Nested : Entity_Instantiation := No_Instantiation)
+      return Entity_Instantiation;
+   --  Create a new (nested) description for an entity instantiation.
+   --  In the example above, one would call the following to create the
+   --  context for T:
+   --      Get_Or_Create_Instantiation
+   --         (File, "AI", Get_Or_Create_Instantiation (File, "BI"));
+   --  Do not modify an instantiation returned by any
+
    ------------------------
    -- Entity_Information --
    ------------------------
 
-   type Entity_Information_Record is tagged private;
-   type Entity_Information is access Entity_Information_Record'Class;
    type Entity_Information_Array
      is array (Integer range <>) of Entity_Information;
 
@@ -557,7 +599,7 @@ package Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Information := null);
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation);
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
    --  From_Instantiation_At indicates which instantiation of the entity is
@@ -615,7 +657,7 @@ package Entities is
    --  Return the type of reference we have
 
    function From_Instantiation_At
-     (Ref : Entity_Reference) return Entity_Information;
+     (Ref : Entity_Reference) return Entity_Instantiation;
    --  Return a pointer to the instance that declared the instance of the
    --  entity referenced at Ref.
    --  For instance, if the entity is subprogram declared in a generic package,
@@ -744,6 +786,49 @@ private
       return Entity_Information;
    --  Return entity declared at Loc, or null if there is no such entity
 
+   --------------------
+   -- Instantiations --
+   --------------------
+
+   type E_Instantiation_Record;
+   type Entity_Instantiation is access E_Instantiation_Record;
+   type E_Instantiation_Record is record
+      Entity         : Entity_Information;
+      Generic_Parent : Entity_Instantiation;
+   end record;
+   --  An instantiation describes how one or more generic entities were
+   --  instantiated. Each Source_File has its own list of instantiations, which
+   --  are not necessarily the ones taking place in this file, just the ones
+   --  that are necessary to store information for this file.
+   --  Each entity reference and entity type might be associated with a
+   --  specific instantiation.
+   --  For instance, if we have:
+   --     generic package P is type T is new Integer; end P;
+   --     package P2 is new P;
+   --     A : P2.T;
+   --  Then the last reference to T references the version of T inside the
+   --  specific generic instantiation at line 2.
+   --  The associated source_file in this example has one element that
+   --  contains   (P2, null).
+   --  Generic_Parent is used for nested generics (if P contained a generic
+   --  entity in turn for instance).
+   --
+   --  IMPORTANT: To avoid pointers to deallocated space, it is only legal
+   --  to point to an E_Instantiation of a given Source_File for references
+   --  to entities inside that file, or for parent types of entities declared
+   --  in that file.
+
+   No_Instantiation : constant Entity_Instantiation := null;
+
+   package Instantiation_Arrays is new Dynamic_Arrays
+     (Data                    => Entity_Instantiation,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 3,
+      Table_Initial_Size      => 3);
+   subtype Instantiation_List is Instantiation_Arrays.Instance;
+   Null_Instantiation_List : constant Instantiation_List :=
+     Instantiation_Arrays.Empty_Instance;
+
    ---------------------
    -- References_List --
    ---------------------
@@ -751,7 +836,7 @@ private
    type E_Reference is record
       Location              : File_Location;
       Caller                : Entity_Information;
-      From_Instantiation_At : Entity_Information;
+      From_Instantiation_At : Entity_Instantiation;
       Kind                  : Reference_Kind;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
@@ -996,6 +1081,10 @@ private
       --  If an entity of another source file has this one has a child_type,
       --  for instance, that entity will *not* be added to All_Entities, unless
       --  it is also explicitly referenced elsewhere
+
+      Instantiations : Instantiation_List;
+      --  List of generic instantiations needed for xref in this file.
+      --  See the comments for E_Instantiation.
 
       Ref_Count   : Integer := 0;
       --  The reference counter

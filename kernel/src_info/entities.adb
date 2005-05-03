@@ -62,6 +62,7 @@ package body Entities is
    use Source_File_Arrays;
    use Entity_Reference_Arrays;
    use Dependency_Arrays;
+   use Instantiation_Arrays;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Record'Class, Entity_Information);
@@ -72,6 +73,8 @@ package body Entities is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Unshared_Entity_Informations_Record,
       Unshared_Entity_Informations);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (E_Instantiation_Record, Entity_Instantiation);
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
@@ -126,6 +129,10 @@ package body Entities is
    --  Remove references in file for all entities declared in File or
    --  referenced in it.
    --  The entities declared in File are also marked as valid.
+
+   procedure Unref (Instantiation : in out Entity_Instantiation);
+   --  Unref all the entities referenced in Instantiation, and free
+   --  Instantiation itself.
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
@@ -490,8 +497,7 @@ package body Entities is
                if Entity.References.Table (R).Location.File = File then
                   Unref (Entity.References.Table (R).Caller,
                          "reference.caller");
-                  Unref (Entity.References.Table (R).From_Instantiation_At,
-                         "reference.instantiation");
+                  Entity.References.Table (R).From_Instantiation_At := null;
                   if To = Entity_Reference_Arrays.Index_Type'Last then
                      To := R;
                   end if;
@@ -535,6 +541,21 @@ package body Entities is
          Clean_References (UEI.List, False);
       end loop;
    end Mark_And_Isolate_Entities;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Instantiation : in out Entity_Instantiation) is
+      Tmp : Entity_Instantiation;
+   begin
+      while Instantiation /= null loop
+         Unref (Instantiation.Entity);
+         Tmp := Instantiation.Generic_Parent;
+         Unchecked_Free (Instantiation);
+         Instantiation := Tmp;
+      end loop;
+   end Unref;
 
    -----------
    -- Reset --
@@ -617,6 +638,13 @@ package body Entities is
             end loop;
          end loop;
       end;
+
+      --  Clean up the list of instantiations
+
+      for J in Instantiation_Arrays.First .. Last (File.Instantiations) loop
+         Unref (File.Instantiations.Table (J));
+      end loop;
+      Free (File.Instantiations);
 
       --  Clean up various other fields
 
@@ -712,8 +740,6 @@ package body Entities is
          loop
             Unref (Entity.References.Table (R).Caller, "reference.caller");
             Entity.References.Table (R).Caller := null;
-            Unref (Entity.References.Table (R).From_Instantiation_At,
-                   "reference.instantiation");
             Entity.References.Table (R).From_Instantiation_At := null;
          end loop;
 
@@ -1447,7 +1473,6 @@ package body Entities is
                Location => Entity.End_Of_Scope.Location,
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
-            Unref (Entity.End_Of_Scope.From_Instantiation_At);
             Entity.End_Of_Scope := (Location, null, null, Kind);
          else
             Add_Reference
@@ -1457,7 +1482,6 @@ package body Entities is
          end if;
       else
          Unref (Entity.End_Of_Scope.Caller);
-         Unref (Entity.End_Of_Scope.From_Instantiation_At);
          Entity.End_Of_Scope := (Location, null, null, Kind);
       end if;
    end Set_End_Of_Scope;
@@ -1526,7 +1550,7 @@ package body Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Information := null) is
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation) is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
       if Active (Add_Reference_Force_Unique) then
@@ -1541,7 +1565,6 @@ package body Entities is
 
       Append
         (Entity.References, (Location, null, From_Instantiation_At, Kind));
-      Ref (From_Instantiation_At, "add_reference.from_instantiation");
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
@@ -2009,7 +2032,7 @@ package body Entities is
    ---------------------------
 
    function From_Instantiation_At
-     (Ref : Entity_Reference) return Entity_Information is
+     (Ref : Entity_Reference) return Entity_Instantiation is
    begin
       if Ref.Entity /= null
         and then Ref.Entity.References /= Null_Entity_Reference_List
@@ -2400,5 +2423,101 @@ package body Entities is
    begin
       Sort.Sort (Integer (Last (Sources)) - First);
    end Sort;
+
+   ---------------------------------
+   -- Get_Or_Create_Instantiation --
+   ---------------------------------
+
+   function Get_Or_Create_Instantiation
+     (File   : Source_File;
+      Entity : Entity_Information;
+      Nested : Entity_Instantiation := No_Instantiation)
+      return Entity_Instantiation
+   is
+      Inst, Tmp, Previous : Entity_Instantiation;
+   begin
+      if Nested = No_Instantiation then
+         for J in Instantiation_Arrays.First .. Last (File.Instantiations) loop
+            if File.Instantiations.Table (J).Entity = Entity
+              and then File.Instantiations.Table (J).Generic_Parent = null
+            then
+               return File.Instantiations.Table (J);
+            end if;
+         end loop;
+
+         Inst := new E_Instantiation_Record'(Entity, null);
+         Ref (Entity);
+         Append (File.Instantiations, Inst);
+
+      else
+         for J in Instantiation_Arrays.First .. Last (File.Instantiations) loop
+            Inst := Nested;
+            Tmp  := File.Instantiations.Table (J);
+            while Inst /= null
+              and then Tmp /= null
+              and then Inst.Entity = Tmp.Entity
+            loop
+               Inst := Inst.Generic_Parent;
+               Tmp := Tmp.Generic_Parent;
+            end loop;
+
+            if Inst = null
+              and then Tmp /= null
+              and then Tmp.Entity = Entity
+              and then Tmp.Generic_Parent = null
+            then
+               return File.Instantiations.Table (J);
+            end if;
+         end loop;
+
+         Tmp := Nested;
+         Previous := null;
+         while Tmp /= null loop
+            Inst := new E_Instantiation_Record'(Tmp.Entity, null);
+            Ref (Tmp.Entity);
+
+            if Previous /= null then
+               Previous.Generic_Parent := Inst;
+            else
+               Append (File.Instantiations, Inst);
+            end if;
+            Previous := Inst;
+
+            Tmp := Tmp.Generic_Parent;
+         end loop;
+
+         Previous.Generic_Parent := new E_Instantiation_Record'(Entity, null);
+         Ref (Entity);
+      end if;
+      return File.Instantiations.Table (Last (File.Instantiations));
+   end Get_Or_Create_Instantiation;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Instantiation : Entity_Instantiation) return Entity_Information is
+   begin
+      if Instantiation = null then
+         return null;
+      else
+         return Instantiation.Entity;
+      end if;
+   end Get_Entity;
+
+   --------------------
+   -- Generic_Parent --
+   --------------------
+
+   function Generic_Parent
+     (Instantiation : Entity_Instantiation) return Entity_Instantiation is
+   begin
+      if Instantiation = null then
+         return null;
+      else
+         return Instantiation.Generic_Parent;
+      end if;
+   end Generic_Parent;
 
 end Entities;
