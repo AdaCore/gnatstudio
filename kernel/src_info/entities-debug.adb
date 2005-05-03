@@ -38,6 +38,7 @@ package body Entities.Debug is
    use Entity_Reference_Arrays;
    use Entity_Information_Arrays;
    use Dependency_Arrays;
+   use Instantiation_Arrays;
 
    type Source_File_Array is array (Natural range <>) of Source_File;
 
@@ -75,6 +76,7 @@ package body Entities.Debug is
    procedure Dump_Entities_From_Files
      (Files         : Source_File_Array;
       Entities_Only : Boolean := False);
+   procedure Dump (Instantiation : Entity_Instantiation);
    --  Dump various parts of the system
 
    function Image (Col : Column_Type) return String;
@@ -121,6 +123,20 @@ package body Entities.Debug is
    begin
       Show_Timestamps := Show;
    end Set_Show_Timestamp;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (Instantiation : Entity_Instantiation) is
+      Ins : Entity_Instantiation := Instantiation;
+   begin
+      while Ins /= null loop
+         Dump (Get_Entity (Ins), Full => False, Name => "");
+         Output (" ");
+         Ins := Generic_Parent (Ins);
+      end loop;
+   end Dump;
 
    ----------
    -- Dump --
@@ -199,7 +215,7 @@ package body Entities.Debug is
       Dump (Ref.Location); Output (':' & Reference_Kind_To_Char (Ref.Kind));
       if Full and then Ref.From_Instantiation_At /= null then
          Output ("[");
-         Dump (Ref.From_Instantiation_At, Full => False, Name => "");
+         Dump (Ref.From_Instantiation_At);
          Output ("]");
       end if;
 
@@ -358,6 +374,16 @@ package body Entities.Debug is
       end if;
 
       Dump (File.All_Entities, Full => False, Name => "all_entities");
+
+      if Length (File.Instantiations) /= 0 then
+         Output ("instantiations=");
+         for J in Instantiation_Arrays.First .. Last (File.Instantiations) loop
+            Output ("[");
+            Dump (File.Instantiations.Table (J));
+            Output ("] ");
+         end loop;
+         Output_Line ("");
+      end if;
    end Dump;
 
    ----------
@@ -453,7 +479,7 @@ package body Entities.Debug is
                return False;
             elsif Dump_Full_File_Names then
                --  We want <=, but it is more efficient to compute it this way
-               return OpF2 < opF1;
+               return OpF2 < OpF1;
             else
                return not (Base_Name (OpF2) < Base_Name (OpF1));
             end if;
