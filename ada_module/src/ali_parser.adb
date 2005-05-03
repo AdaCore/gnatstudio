@@ -368,7 +368,7 @@ package body ALI_Parser is
          return Char_To_Reference_Kind (C);
       else
          --  If we reach this point, the character is illegal.
-         Trace (Me, "Char_To_R_Kind: Invalid character '" & C & ''');
+         Trace (Me, "Char_To_R_Kind: Invalid character '" & C'Img & ''');
          return Reference;
       end if;
    end Char_To_R_Kind;
@@ -825,7 +825,7 @@ package body ALI_Parser is
          else
             --  Look at the next reference. If it is a generic instantiation,
             --  take it into account
-            if Current_Ref <= Xref_Entity.Table (Current_Entity).Last_Xref then
+            if Current_Ref < Xref_Entity.Table (Current_Entity).Last_Xref then
                Next_Kind :=
                  Char_To_R_Kind (Xref.Table (Current_Ref + 1).Rtype);
                if Next_Kind = Instantiation_Reference then
@@ -875,7 +875,7 @@ package body ALI_Parser is
                         (Get_String (Xref_Entity.Table (Entity).Entity))),
                      File => Sfiles (File_Num).File,
                      Line => Integer (Line),
-                     Column => Integer (Column));
+                     Column => Integer (Xref_Entity.Table (Entity).Col));
                end if;
             end loop;
          end if;
@@ -896,7 +896,8 @@ package body ALI_Parser is
             loop
                if Xref.Table (Ref).File_Num = File_Num
                  and then Xref.Table (Ref).Line = Line
-                 and then Xref.Table (Ref).Col = Column
+                 and then (Column = 0
+                           or else Xref.Table (Ref).Col = Column)
                then
                   return Get_Or_Create
                     (Name => Locale_To_UTF8 (To_Lower
