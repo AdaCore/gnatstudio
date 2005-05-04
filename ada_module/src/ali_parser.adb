@@ -74,8 +74,7 @@ package body ALI_Parser is
    procedure Destroy (Iterator : in out ALI_Handler_Iterator);
    --  See doc for inherited subprograms
 
-
-   type E_Kind_To_Char_Map is array (Character range '+' .. 'z') of E_Kind;
+   type E_Kind_To_Char_Map is array (Character range '*' .. 'z') of E_Kind;
    E_Kind_To_Char : constant E_Kind_To_Char_Map :=
      ('a'    => (Array_Kind,             False, False, False),
       'A'    => (Array_Kind,             False, True,  False),
@@ -130,6 +129,7 @@ package body ALI_Parser is
       'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
       'Z'    => Unresolved_Entity_Kind,
       '+'    => (Private_Type,           False, True,  False),
+      '*'    => (Private_Type,           False, True,  False),
       others => Unresolved_Entity_Kind);
 
    Char_To_Reference_Kind : constant array (Character range ' ' .. 'z')
@@ -1256,7 +1256,6 @@ package body ALI_Parser is
          end loop;
          Last := Last - 1;
       end Next_Candidate;
-
 
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
