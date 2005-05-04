@@ -572,17 +572,14 @@ package body Src_Editor_Buffer is
       Start, The_End : Gtk_Text_Iter;
       Result         : GNAT.OS_Lib.String_Access;
       Chars          : Interfaces.C.Strings.chars_ptr;
+      C_Str          : Unchecked_String_Access;
 
    begin
       if Lines_Are_Real (Buffer) then
          Get_Bounds (Buffer, Start, The_End);
-         Chars := Get_Text (Buffer, Start, The_End, True);
-
-         --  ??? Need to find a way to avoid the call to Value which is
-         --  inefficient.
-
-         Result := new String'(Value (Chars));
-
+         Chars  := Get_Text (Buffer, Start, The_End, True);
+         C_Str  := To_Unchecked_String (Chars);
+         Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
          C_Free (Chars);
          --  We need to use the C function to free Chars, since memory was
          --  allocated in C code.
