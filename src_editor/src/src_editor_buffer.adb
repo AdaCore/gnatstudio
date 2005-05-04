@@ -579,7 +579,7 @@ package body Src_Editor_Buffer is
          Chars := Get_Text (Buffer, Start, The_End, True);
 
          --  ??? Need to find a way to avoid the call to Value which is
-         --  inneficient.
+         --  inefficient.
 
          Result := new String'(Value (Chars));
 
