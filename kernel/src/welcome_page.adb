@@ -206,6 +206,7 @@ package body Welcome_Page is
 
       Show_All (Scroll);
 
+      Set_Size_Request (Scroll, -1, 500);
       Child := Put (Get_MDI (Kernel), Scroll);
 
       Modify_Bg (Get_Parent (Main_Box),
