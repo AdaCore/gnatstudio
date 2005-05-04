@@ -229,6 +229,23 @@
          <dependency master-page="Make" slave-page="Linker"
                      master-switch="-g" slave-switch="-g"
                      master-status="on" slave-status="on" />
+
+         <check label="Code coverage" switch="-ftest-coverage"
+                tip="Create data files for the gcov code-coverage utility" />
+         <check label="Instrument arcs" switch="-fprofile-arcs"
+                tip="Instrument arcs during compilation. For each function of your program, gcc creates a program flow graph, then finds a spanning tree for the graph. Only arcs that are not on the spanning tree have to be instrumented: the compiler adds code to count the number of times that these arcs are executed" />
+         <dependency master-page="Ada Linker" slave-page="Ada Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-fprofile-arcs"
+                     master-status="off" slave-status="off" />
+         <dependency master-page="Ada" slave-page="Ada Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-ftest-coverage"
+                     master-status="on" slave-status="on" />
+         <dependency master-page="Ada" slave-page="Ada Linker"
+                     master-switch="-ftest-coverage"
+                     slave-switch="-fprofile-arcs"
+                     master-status="on" slave-status="on" />
       </switches>
    </tool>
 
