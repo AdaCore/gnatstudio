@@ -58,10 +58,11 @@ with GNAT.Strings;           use GNAT.Strings;
 with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.MDI;             use Gtkada.MDI;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Intl;               use GPS.Intl;
 with Layouts;                use Layouts;
 with VFS;                    use VFS;
@@ -173,6 +174,26 @@ package body Browsers.Canvas is
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
+
+   -------------
+   -- Markers --
+   -------------
+
+   type Browser_Marker_Record is new Location_Marker_Record with record
+      Title : GNAT.OS_Lib.String_Access;
+   end record;
+   type Browser_Marker is access all Browser_Marker_Record'Class;
+
+   function Go_To
+     (Marker : access Browser_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   procedure Destroy (Marker : in out Browser_Marker_Record);
+   function To_String (Marker : access Browser_Marker_Record) return String;
+   --  See inherited documentation
+
+   function Create_Browser_Marker
+     (Browser_Name : String) return Browser_Marker;
+   --  Create a new marker that will bring the user back to the browser
 
    ----------------
    -- Get_Window --
@@ -2320,18 +2341,58 @@ package body Browsers.Canvas is
 
    procedure Add_Navigation_Location
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title  : String)
-   is
-      Args   : GNAT.OS_Lib.Argument_List (1 .. 1);
+      Title  : String) is
    begin
-      Args (1) := new String'
-        ("MDI.get """ & Title & """ ; MDIWindow.raise_window %1");
-
-      Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
-
-      for J in Args'Range loop
-         GNAT.OS_Lib.Free (Args (J));
-      end loop;
+      Push_Marker_In_History
+        (Kernel, Create_Browser_Marker (Browser_Name => Title));
    end Add_Navigation_Location;
+
+   -----------
+   -- Go_To --
+   -----------
+
+   function Go_To
+     (Marker : access Browser_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Child : constant MDI_Child := Find_MDI_Child_By_Name
+        (Get_MDI (Kernel), Marker.Title.all);
+   begin
+      if Child = null then
+         return False;
+      else
+         Raise_Child (Child, Give_Focus => True);
+         return True;
+      end if;
+   end Go_To;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Marker : in out Browser_Marker_Record) is
+   begin
+      Free (Marker.Title);
+   end Destroy;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Marker : access Browser_Marker_Record) return String is
+   begin
+      return "Browser: " & Marker.Title.all;
+   end To_String;
+
+   ---------------------------
+   -- Create_Browser_Marker --
+   ---------------------------
+
+   function Create_Browser_Marker
+     (Browser_Name : String) return Browser_Marker is
+   begin
+      return new Browser_Marker_Record'
+        (Location_Marker_Record with Title => new String'(Browser_Name));
+   end Create_Browser_Marker;
 
 end Browsers.Canvas;
