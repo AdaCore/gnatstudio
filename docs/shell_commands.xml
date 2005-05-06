@@ -236,7 +236,6 @@ GPS.parse_xml ("""
 
   <shell_doc name="GPS.add_location_command">
       <param name="command">A string</param>
-      <param name="...">Any number of parameters</param>
       <description>Add a command to the navigation buttons in the toolbar. When the user presses the back button, this command will be executed, and should put GPS in a previous state. This is for instance used while navigating in the HTML browsers to handle the back button</description>
   </shell_doc>
 
