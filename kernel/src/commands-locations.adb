@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VFS;                  use VFS;
 
 package body Commands.Locations is
@@ -72,37 +71,6 @@ package body Commands.Locations is
    ------------
 
    procedure Create
-     (Item   : out Generic_Location_Command;
-      Kernel : Kernel_Handle;
-      Args   : GNAT.OS_Lib.Argument_List)
-   is
-      A : String_List (Args'Range);
-   begin
-      Item := new Generic_Location_Command_Type;
-      Item.Kernel := Kernel;
-
-      if Item.Args /= null then
-         Free (Item.Args);
-      end if;
-
-      for J in Args'Range loop
-         A (J) := new String'(Args (J).all);
-      end loop;
-
-      Item.Args := new String_List'(A);
-   end Create;
-
-   procedure Create
-     (Item     : out Html_Location_Command;
-      Kernel   : Kernel_Handle;
-      Filename : VFS.Virtual_File) is
-   begin
-      Item := new Html_Location_Command_Type;
-      Item.Kernel := Kernel;
-      Item.Filename := Filename;
-   end Create;
-
-   procedure Create
      (Item       : out Source_Location_Command;
       Kernel     : Kernel_Handle;
       Filename   : VFS.Virtual_File;
@@ -118,52 +86,9 @@ package body Commands.Locations is
       Item.Column_End := Column_End;
    end Create;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Generic_Location_Command_Type) is
-   begin
-      Free (X.Args);
-   end Free;
-
    -------------
    -- Execute --
    -------------
-
-   function Execute
-     (Command : access Generic_Location_Command_Type)
-      return Command_Return_Type is
-   begin
-      if Command.Args /= null then
-         if Command.Args'Length > 1 then
-            Execute_GPS_Shell_Command
-              (Command.Kernel,
-               Command.Args (Command.Args'First).all,
-               Command.Args (Command.Args'First + 1 .. Command.Args'Last));
-         else
-            Execute_GPS_Shell_Command
-              (Command.Kernel, Command.Args (Command.Args'First).all);
-         end if;
-
-         return Success;
-      else
-         return Failure;
-      end if;
-   end Execute;
-
-   function Execute
-     (Command : access Html_Location_Command_Type) return Command_Return_Type
-   is
-   begin
-      if Command.Filename /= VFS.No_File then
-         Open_Html (Command.Kernel, Command.Filename, False);
-      end if;
-
-      Command_Finished (Command, True);
-
-      return Success;
-   end Execute;
 
    function Execute
      (Command : access Source_Location_Command_Type) return Command_Return_Type
