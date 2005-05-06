@@ -1176,6 +1176,7 @@ package body Src_Editor_Module is
             Child       : constant MDI_Child :=
               Find_Editor (Kernel, Mark_Record.File);
          begin
+            Push_Current_Editor_Location_In_History (Kernel);
             if Child /= null then
                Raise_Child (Child);
                Set_Focus_Child (Child);

@@ -1689,7 +1689,9 @@ package body Src_Editor_Box is
             return;
          end if;
 
+         Push_Current_Editor_Location_In_History (Kernel);
          Set_Cursor_Location (Box, Editable_Line_Type'Value (Str), 1);
+         Add_Navigation_Location (Box);
 
       exception
          when Constraint_Error =>

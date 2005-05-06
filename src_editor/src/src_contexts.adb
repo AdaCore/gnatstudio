@@ -62,6 +62,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
+with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 
 package body Src_Contexts is
 
@@ -634,6 +635,8 @@ package body Src_Contexts is
             To_Positive (Match.Line), To_Positive (Match.Column),
             To_Positive (Match.End_Column),
             Focus => Give_Focus);
+         Push_Current_Editor_Location_In_History (Kernel);
+
       else
          Insert_Location
            (Kernel,
@@ -1264,6 +1267,7 @@ package body Src_Contexts is
 
          Unchecked_Free (Match);
 
+         Push_Current_Editor_Location_In_History (Kernel);
          Select_Region
            (Get_Buffer (Editor),
             Context.Begin_Line,
