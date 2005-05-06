@@ -92,6 +92,7 @@ with Casing_Exceptions;           use Casing_Exceptions;
 with Default_Preferences;         use Default_Preferences;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Entities;                    use Entities;
+with Completion_Module;           use Completion_Module;
 
 with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -4327,24 +4328,6 @@ package body Src_Editor_Module is
                      GDK_equal, Control_Mask, Ref_Item => -"Preferences",
                      Filter => Src_Action_Context);
 
-      Command := new Completion_Command;
-      Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
-        (Kernel, "Complete identifier", Command,
-         -("Complete current identifier based on the contents of the editor"),
-         Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Complete Identifier",
-         Default_Key => "control-slash");
-      Register_Menu (Kernel, Edit, -"Complete _Identifier",
-                     Ref_Item   => -"Refill",
-                     Accel_Key  => GDK_slash,
-                     Accel_Mods => Control_Mask,
-                     Callback   => null,
-                     Command    => Command_Access (Command),
-                     Filter     => Src_Action_Context);
-
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
@@ -4883,6 +4866,8 @@ package body Src_Editor_Module is
                       & "means the same size as a character")));
       Register_Property
         (Kernel, Param_Spec (Cursor_Aspect_Ratio), -"Editor:Fonts & Colors");
+
+      Completion_Module.Register_Module (Kernel);
    end Register_Module;
 
    -------------------------

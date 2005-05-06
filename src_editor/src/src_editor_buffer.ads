@@ -44,7 +44,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Generic_List;
 with VFS;
 
-with String_List_Utils;
 with Gdk.GC; use Gdk.GC;
 
 with Commands; use Commands;
@@ -678,6 +677,11 @@ package Src_Editor_Buffer is
    --  Return True if the position of the cursor has been set explicitely (ie
    --  not as a side effect of a text change)
 
+   procedure End_Action (Buffer : access Source_Buffer_Record'Class);
+   --  This procedure should be called every time that an internal
+   --  event should cancel the current user action: focus switching
+   --  to another window, cursor moved, etc.
+
 private
 
    procedure Get_Cursor_Position
@@ -731,11 +735,6 @@ private
    --  the re-highlighted area is automatically extended to the right.
    --  When the re-highlighted area is extended to the right, the extension
    --  is computed in a semi-intelligent fashion.
-
-   procedure End_Action (Buffer : access Source_Buffer_Record'Class);
-   --  This procedure should be called every time that an internal
-   --  event should cancel the current user action: focus switching
-   --  to another window, cursor moved, etc.
 
    procedure Buffer_Information_Changed
      (Buffer : access Source_Buffer_Record'Class);
@@ -817,52 +816,6 @@ private
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Data_Array, Line_Data_Array_Access);
-
-   ----------------
-   -- Completion --
-   ----------------
-
-   type Completion_Data is record
-      Prefix : GNAT.OS_Lib.String_Access;
-      --  The current prefix for the search.
-      --  Warning : this is an UTF-8 string obtained from the buffer, and
-      --  should only be compared with UTF-8 strings.
-
-      List : String_List_Utils.String_List.List;
-      --  The possible current completions. If empty, then there is no
-      --  current completion operation.
-
-      Node : String_List_Utils.String_List.List_Node;
-      --  The current position in the completions list.
-
-      Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The position of the start point for the completion,
-      --  The insert mark must always be the end point of the completion.
-
-      Previous_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      Next_Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The marks for the current back/forward searches.
-
-      Top_Reached    : Boolean;
-      Bottom_Reached : Boolean;
-      --  Whether the top and bottom of the buffer have been reached
-      --  while searching.
-
-      Complete : Boolean;
-      --  Whether the search for the current prefix is complete;
-
-      Backwards : Boolean;
-      --  True if the last direction searched was backwards.
-
-      Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
-      --  The buffer on which the marks are effective.
-   end record;
-
-   procedure Clear (Data : in out Completion_Data);
-   --  Free memory associated to Data;
-
-   function Is_Empty (Data : Completion_Data) return Boolean;
-   --  return True if the completion data is unset.
 
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer.
@@ -975,9 +928,6 @@ private
       Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
       End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  Bounds for the parenthesis highlighting.
-
-      Completion : Completion_Data;
-      --  Completion data.
 
       Controls_Set : Boolean := False;
       --  Whether the Queue is currently connected to the

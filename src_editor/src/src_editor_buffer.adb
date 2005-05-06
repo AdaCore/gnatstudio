@@ -70,10 +70,10 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Casing_Exceptions;         use Casing_Exceptions;
 with Case_Handling;             use Case_Handling;
+with Completion_Module;         use Completion_Module;
 
 with Pango.Font;                use Pango.Font;
 
-with String_List_Utils;         use String_List_Utils;
 with VFS;                       use VFS;
 
 with Src_Editor_Module;                  use Src_Editor_Module;
@@ -1087,7 +1087,7 @@ package body Src_Editor_Buffer is
       --  Clear the completion data if we are not already completing.
 
       if not Buffer.Inserting then
-         Clear (Buffer.Completion);
+         Reset_Completion_Data;
       end if;
 
       Register_Cursor_Timeout (Buffer);
@@ -1109,10 +1109,9 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
+      pragma Unreferenced (Buffer);
    begin
-      --  Clear the completion data.
-
-      Clear (Buffer.Completion);
+      Reset_Completion_Data;
    end User_Edit_Hook;
 
    ------------------
@@ -1121,11 +1120,6 @@ package body Src_Editor_Buffer is
 
    procedure Destroy_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
-      --  Remove the completion data.
-
-      String_List_Utils.String_List.Free (Buffer.Completion.List);
-      GNAT.OS_Lib.Free (Buffer.Completion.Prefix);
-
       --  ??? Must remove the line information column
 
       --  Unregister the blocks timeout.
@@ -1216,9 +1210,7 @@ package body Src_Editor_Buffer is
 
       Unchecked_Free (Buffer.Line_Data);
 
-      Delete_Mark (Buffer, Buffer.Completion.Mark);
-      Delete_Mark (Buffer, Buffer.Completion.Previous_Mark);
-      Delete_Mark (Buffer, Buffer.Completion.Next_Mark);
+      Reset_Completion_Data;
 
       Delete_Mark (Buffer, Buffer.First_Highlight_Mark);
       Delete_Mark (Buffer, Buffer.Last_Highlight_Mark);
@@ -1384,9 +1376,7 @@ package body Src_Editor_Buffer is
             Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
             Natural (Get_Line_Offset (Pos) + 1));
 
-         Buffer.Inserting := True;
          Enqueue (Buffer, Command_Access (Command));
-         Buffer.Inserting := False;
 
          Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
@@ -1405,9 +1395,7 @@ package body Src_Editor_Buffer is
                  (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
                Natural (Get_Line_Offset (Pos) + 1));
 
-            Buffer.Inserting := True;
             Enqueue (Buffer, Command_Access (Command));
-            Buffer.Inserting := False;
          end if;
 
          Add_Text (Command, Text (1 .. Length));
@@ -1605,9 +1593,7 @@ package body Src_Editor_Buffer is
             Editable_Line_End,
             Natural (Column + 1));
 
-         Buffer.Inserting := True;
          Enqueue (Buffer, Command_Access (Command));
-         Buffer.Inserting := False;
 
          Add_Text
            (Command,
@@ -2104,16 +2090,9 @@ package body Src_Editor_Buffer is
    procedure Initialize_Hook (Buffer : access Source_Buffer_Record'Class) is
       Iter : Gtk_Text_Iter;
    begin
-      --  Initialize the completion.
-      Clear (Buffer.Completion);
+      Reset_Completion_Data;
 
       Get_Start_Iter (Buffer, Iter);
-
-      Buffer.Completion.Mark := Create_Mark (Buffer, "", Iter);
-      Buffer.Completion.Previous_Mark := Create_Mark (Buffer, "", Iter);
-      Buffer.Completion.Next_Mark := Create_Mark (Buffer, "", Iter);
-
-      Buffer.Completion.Buffer := Gtk.Text_Buffer.Gtk_Text_Buffer (Buffer);
 
       --  Initialize the data for timeout highlighting
 
@@ -3764,10 +3743,9 @@ package body Src_Editor_Buffer is
    ---------------------
 
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class) is
+      pragma Unreferenced (Buffer);
    begin
-      if not Is_Empty (Buffer.Completion) then
-         Clear (Buffer.Completion);
-      end if;
+      Reset_Completion_Data;
    end End_Action_Hook;
 
    ----------------
@@ -3833,11 +3811,13 @@ package body Src_Editor_Buffer is
      (Buffer  : access Source_Buffer_Record;
       Command : Command_Access) is
    begin
+      Buffer.Inserting := True;
       if Buffer.Saved_Position > Get_Position (Buffer.Queue) then
          Buffer.Saved_Position := -1;
       end if;
 
       Enqueue (Buffer.Queue, Command);
+      Buffer.Inserting := False;
    end Enqueue;
 
    ----------------
@@ -4012,32 +3992,6 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.References;
    end Get_Ref_Count;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Data : in out Completion_Data) is
-   begin
-      GNAT.OS_Lib.Free (Data.Prefix);
-
-      String_List_Utils.String_List.Free (Data.List);
-      Data.Node := String_List_Utils.String_List.Null_Node;
-
-      Data.Top_Reached := False;
-      Data.Bottom_Reached := False;
-      Data.Complete := False;
-      Data.Backwards := False;
-   end Clear;
-
-   --------------
-   -- Is_Empty --
-   --------------
-
-   function Is_Empty (Data : Completion_Data) return Boolean is
-   begin
-      return (Data.Prefix = null);
-   end Is_Empty;
 
    ------------------
    -- Add_Controls --
