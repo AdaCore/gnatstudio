@@ -21,6 +21,7 @@
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
+with Src_Editor_Box;            use Src_Editor_Box;
 
 package body Src_Editor_Module.Markers is
 
@@ -38,13 +39,36 @@ package body Src_Editor_Module.Markers is
       --  eye if the file is modified, so that the File_Marker is updated as
       --  appropriate.
       --  We should also pay attention whether the file will be opened later,
-      --  and put a mark at that time.
+      --  and put a mark at that time. Harder to do, since this means we need
+      --  to keep a ref to that marker somewhere...
       return new File_Marker_Record'
         (Location_Marker_Record with
          File   => File,
          Line   => Line,
          Column => Column);
    end Create_File_Marker;
+
+   ---------------------------------------------
+   -- Push_Current_Editor_Location_In_History --
+   ---------------------------------------------
+
+   procedure Push_Current_Editor_Location_In_History
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Child : constant MDI_Child := Find_Current_Editor (Kernel);
+      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Line, Column : Integer;
+   begin
+      if Box /= null then
+         Get_Cursor_Location (Box, Line, Column);
+         Push_Marker_In_History
+           (Kernel  => Kernel,
+            Marker  => Create_File_Marker
+              (File   => Get_Filename (Box),
+               Line   => Line,
+               Column => Column));
+      end if;
+   end Push_Current_Editor_Location_In_History;
 
    -----------
    -- Go_To --
@@ -72,7 +96,8 @@ package body Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record) return String is
    begin
       return Base_Name (Marker.File)
-        & " at line" & Integer'Image (Marker.Line);
+        & " at line" & Integer'Image (Marker.Line)
+        & " column"  & Integer'Image (Marker.Column);
    end To_String;
 
 end Src_Editor_Module.Markers;

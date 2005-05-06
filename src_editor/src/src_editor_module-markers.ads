@@ -34,6 +34,13 @@ package Src_Editor_Module.Markers is
    --  Create a new marker that represents a position inside a file. It isn't
    --  related to a specific editor
 
+   procedure Push_Current_Editor_Location_In_History
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Push the location in the current editor in the history of locations.
+   --  This should be called before jumping to a new location on a user's
+   --  request, so that he can easily choose to go back to the previous
+   --  location.
+
 private
    type File_Marker_Record
      is new GPS.Kernel.Location_Marker_Record with
