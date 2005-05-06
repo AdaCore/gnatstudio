@@ -37,6 +37,7 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_View;           use Src_Editor_View;
+with Language;                  use Language;
 
 package body Completion_Module is
    use String_List_Utils.String_List;
@@ -54,13 +55,17 @@ package body Completion_Module is
       Node : String_List_Utils.String_List.List_Node;
       --  The current position in the completions list.
 
-      Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The position of the start point for the completion,
-      --  The insert mark must always be the end point of the completion.
+      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
+      Word_Start_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The mark where the cursor was when the completion was started, and
+      --  the position of the start of the current word
 
       Previous_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       Next_Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The marks for the current back/forward searches.
+      --  The marks for the current back/forward searches. We do the searches
+      --  in both direction alternatively (one match in one direction, then one
+      --  in the other direction,... so as to try and get the match closest to
+      --  the current cursor location).
 
       Top_Reached    : Boolean;
       Bottom_Reached : Boolean;
@@ -75,6 +80,9 @@ package body Completion_Module is
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       --  The buffer on which the marks are effective.
+
+      Case_Sensitive : Boolean;
+      --  Whether the current completion should be done case sensitive or not
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -87,6 +95,19 @@ package body Completion_Module is
    --  Add an item to the buffer's completion, or mark it as
    --  complete. Place the completion node to the newly added
    --  item, or to Null if the completion was finished.
+
+   procedure Move_To_Previous_Word_Start
+     (Iter       : in out Gtk_Text_Iter;
+      Word_Begin : out Gtk_Text_Iter;
+      Word_End   : out Gtk_Text_Iter;
+      Word_Found : out Boolean);
+   procedure Move_To_Next_Word_Start
+     (Iter       : in out Gtk_Text_Iter;
+      Word_Begin : out Gtk_Text_Iter;
+      Word_End   : out Gtk_Text_Iter;
+      Word_Found : out Boolean);
+   --  Move to the start of the next or previous word. This correctly takes
+   --  into account '_' as part of a word.
 
    ------------------------
    -- Completion_Command --
@@ -132,27 +153,89 @@ package body Completion_Module is
          Delete_Mark
            (Completion_Module.Buffer, Completion_Module.Previous_Mark);
          Delete_Mark (Completion_Module.Buffer, Completion_Module.Next_Mark);
+         Delete_Mark
+           (Completion_Module.Buffer, Completion_Module.Word_Start_Mark);
          Completion_Module.Mark := null;
       end if;
       Completion_Module.Buffer := null;
    end Reset_Completion_Data;
+
+   ---------------------------------
+   -- Move_To_Previous_Word_Start --
+   ---------------------------------
+
+   procedure Move_To_Previous_Word_Start
+     (Iter       : in out Gtk_Text_Iter;
+      Word_Begin : out Gtk_Text_Iter;
+      Word_End   : out Gtk_Text_Iter;
+      Word_Found : out Boolean)
+   is
+      Success : Boolean := True;
+      Aux     : Gtk_Text_Iter;
+      Count   : Gint := 0;
+   begin
+      while Success loop
+         Backward_Word_Start (Iter, Success);
+         Count := Count + 1;
+
+         if Success then
+            Copy (Iter, Aux);
+            Backward_Char (Aux, Success);
+
+            if not Success or else Get_Char (Aux) /= '_' then
+               Copy (Iter, Word_Begin);
+               Copy (Iter, Word_End);
+               Forward_Word_Ends (Word_End, Count, Success);
+               Word_Found := True;
+               return;
+            end if;
+         end if;
+      end loop;
+      Word_Found := False;
+   end Move_To_Previous_Word_Start;
+
+   -----------------------------
+   -- Move_To_Next_Word_Start --
+   -----------------------------
+
+   procedure Move_To_Next_Word_Start
+     (Iter       : in out Gtk_Text_Iter;
+      Word_Begin : out Gtk_Text_Iter;
+      Word_End   : out Gtk_Text_Iter;
+      Word_Found : out Boolean)
+   is
+      Success : Boolean := True;
+      Count   : Gint := 0;
+   begin
+      while Success loop
+         Forward_Word_End (Iter, Success);
+         Count := Count + 1;
+
+         if Success then
+            if Get_Char (Iter) /= '_' then
+               Copy (Iter, Word_End);
+               Copy (Iter, Word_Begin);
+               Backward_Word_Starts (Word_Begin, Count, Success);
+               Word_Found := True;
+               return;
+            end if;
+         end if;
+      end loop;
+      Word_Found := False;
+   end Move_To_Next_Word_Start;
 
    -----------------------------
    -- Extend_Completions_List --
    -----------------------------
 
    procedure Extend_Completions_List is
-      M : Completion_Module_Access renames Completion_Module;
+      M            : Completion_Module_Access renames Completion_Module;
       Word_Begin   : Gtk_Text_Iter;
       Word_End     : Gtk_Text_Iter;
       Iter_Back    : Gtk_Text_Iter;
       Iter_Forward : Gtk_Text_Iter;
-      Aux          : Gtk_Text_Iter;
-      Success      : Boolean := True;
       Found        : Boolean := False;
       Word_Found   : Boolean := False;
-      Count        : Gint := 1;
-
    begin
       if M.Complete then
          if M.Node = Null_Node then
@@ -181,55 +264,15 @@ package body Completion_Module is
             M.Backwards := not M.Backwards;
          end if;
 
-         --  Find a word and examine it.
-
-         Count := 0;
-
-         while not Word_Found loop
-            if M.Backwards then
-               --  Find the previous real word, if it exists.
-
-               Backward_Word_Start (Iter_Back, Success);
-               Count := Count + 1;
-
-               if Success then
-                  Copy (Iter_Back, Aux);
-                  Backward_Char (Aux, Success);
-
-                  if not Success or else Get_Char (Aux) /= '_' then
-                     Copy (Iter_Back, Word_Begin);
-                     Copy (Iter_Back, Word_End);
-                     Forward_Word_Ends (Word_End, Count, Success);
-
-                     Word_Found := True;
-                  end if;
-               else
-                  exit;
-               end if;
-
-            else
-               --  Find the next real word.
-
-               Forward_Word_End (Iter_Forward, Success);
-               Count := Count + 1;
-
-               if Success then
-                  if Get_Char (Iter_Forward) /= '_' then
-                     Copy (Iter_Forward, Word_End);
-                     Copy (Iter_Forward, Word_Begin);
-                     Backward_Word_Starts (Word_Begin, Count, Success);
-
-                     Word_Found := True;
-                  end if;
-               else
-                  exit;
-               end if;
-            end if;
-         end loop;
+         if M.Backwards then
+            Move_To_Previous_Word_Start
+              (Iter_Back, Word_Begin, Word_End, Word_Found);
+         else
+            Move_To_Next_Word_Start
+              (Iter_Forward, Word_Begin, Word_End, Word_Found);
+         end if;
 
          if Word_Found then
-            --  We have a valid word between Word_Begin and Word_End.
-
             declare
                S : constant String := Get_Slice (Word_Begin, Word_End);
             begin
@@ -240,13 +283,13 @@ package body Completion_Module is
                --  The string comparison below is correct, since both
                --  strings are UTF-8.
 
-               if S'Length > M.Prefix'Length
-                 and then S
-                   (S'First .. S'First - 1 + M.Prefix'Length)
-                   = M.Prefix.all
-                 and then not Is_In_List
-                   (M.List,
-                    S (S'First + M.Prefix'Length .. S'Last))
+               if S'Length >= M.Prefix'Length
+                 and then Equal
+                   (S (S'First .. S'First - 1 + M.Prefix'Length),
+                    M.Prefix.all,
+                    Case_Sensitive => M.Case_Sensitive)
+                 and then S /= M.Prefix.all   --  only if case differs
+                 and then not Is_In_List (M.List, S (S'First .. S'Last))
                then
                   Found := True;
 
@@ -256,10 +299,7 @@ package body Completion_Module is
                      Move_Mark (M.Buffer, M.Next_Mark, Word_End);
                   end if;
 
-                  Append
-                    (M.List,
-                     S (S'First + M.Prefix'Length .. S'Last));
-
+                  Append (M.List, S (S'First .. S'Last));
                   M.Node := Last (M.List);
                end if;
 
@@ -267,7 +307,7 @@ package body Completion_Module is
             end;
          else
             if M.Backwards then
-               M.Top_Reached := True;
+               M.Top_Reached    := True;
             else
                M.Bottom_Reached := True;
             end if;
@@ -280,8 +320,6 @@ package body Completion_Module is
                end if;
 
                return;
-            else
-               null;
             end if;
          end if;
       end loop;
@@ -302,11 +340,11 @@ package body Completion_Module is
       View          : Source_View;
       Buffer        : Source_Buffer;
       Shell_Command : Editor_Replace_Slice;
-      Delete        : Editor_Command;
       Iter          : Gtk_Text_Iter;
       Prev          : Gtk_Text_Iter;
       Success       : Boolean;
       Text          : GNAT.OS_Lib.String_Access;
+      Lang          : Language_Context_Access;
 
    begin
       if Widget /= null
@@ -327,11 +365,18 @@ package body Completion_Module is
          End_Action (Buffer);
 
          Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+         M.Mark            := Create_Mark (Buffer, "", Iter);
+         M.Previous_Mark   := Create_Mark (Buffer, "", Iter);
+         M.Next_Mark       := Create_Mark (Buffer, "", Iter);
+         M.Buffer          := Gtk_Text_Buffer (Buffer);
+         M.Backwards       := True;
 
-         M.Mark          := Create_Mark (Buffer, "", Iter);
-         M.Previous_Mark := Create_Mark (Buffer, "", Iter);
-         M.Next_Mark     := Create_Mark (Buffer, "", Iter);
-         M.Buffer        := Gtk_Text_Buffer (Buffer);
+         if Get_Language (Buffer) = null then
+            M.Case_Sensitive := True;
+         else
+            Lang := Get_Language_Context (Get_Language (Buffer));
+            M.Case_Sensitive := Lang = null or else Lang.Case_Sensitive;
+         end if;
 
          --  At this point the completion data is reset.
          --  Get the completion suffix.
@@ -353,14 +398,16 @@ package body Completion_Module is
             Forward_Char (Prev, Success);
          end if;
 
+         M.Word_Start_Mark := Create_Mark (Buffer, "", Prev);
+
          declare
             P : constant String := Get_Slice (Prev, Iter);
          begin
             if P /= "" then
                M.Prefix := new String'(P);
-               Move_Mark (Buffer, M.Mark, Iter);
+               Move_Mark (Buffer, M.Mark,          Iter);
                Move_Mark (Buffer, M.Previous_Mark, Iter);
-               Move_Mark (Buffer, M.Next_Mark, Iter);
+               Move_Mark (Buffer, M.Next_Mark,     Iter);
 
                Extend_Completions_List;
             else
@@ -375,42 +422,22 @@ package body Completion_Module is
       if M.Node /= Null_Node then
          Text := new String'(Data (M.Node));
       else
-         Text := new String'("");
+         Text := new String'(M.Prefix.all);
       end if;
 
-      Get_Iter_At_Mark (Buffer, Prev, M.Mark);
+      Get_Iter_At_Mark (Buffer, Prev, M.Word_Start_Mark);
       Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+      Create
+        (Shell_Command,
+         Buffer,
+         Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
+         Natural (Get_Line_Offset (Prev) + 1),
+         Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
+         Natural (Get_Line_Offset (Iter) + 1),
+         Text.all,
+         True);
 
-      if Text.all = ""
-        and then
-          (Get_Line (Prev) /= Get_Line (Iter)
-           or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
-      then
-         Create
-           (Delete,
-            Deletion,
-            Buffer,
-            False,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
-            Natural (Get_Line_Offset (Prev) + 1),
-            Forward);
-
-         Set_Text (Delete, Get_Slice (Prev, Iter));
-         Enqueue (Buffer, Command_Access (Delete));
-
-      else
-         Create
-           (Shell_Command,
-            Buffer,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
-            Natural (Get_Line_Offset (Prev) + 1),
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
-            Natural (Get_Line_Offset (Iter) + 1),
-            Text.all,
-            True);
-         Enqueue (Buffer, Command_Access (Shell_Command));
-      end if;
-
+      Enqueue (Buffer, Command_Access (Shell_Command));
       GNAT.OS_Lib.Free (Text);
 
       return Commands.Success;
