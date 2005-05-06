@@ -37,11 +37,9 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_View;           use Src_Editor_View;
-with Traces;                    use Traces;
 
 package body Completion_Module is
-
-   Me : constant Debug_Handle := Create ("Completion");
+   use String_List_Utils.String_List;
 
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -84,6 +82,11 @@ package body Completion_Module is
 
    procedure Destroy (Module : in out Completion_Module_Record);
    --  See inherited documentation
+
+   procedure Extend_Completions_List;
+   --  Add an item to the buffer's completion, or mark it as
+   --  complete. Place the completion node to the newly added
+   --  item, or to Null if the completion was finished.
 
    ------------------------
    -- Completion_Command --
@@ -134,6 +137,156 @@ package body Completion_Module is
       Completion_Module.Buffer := null;
    end Reset_Completion_Data;
 
+   -----------------------------
+   -- Extend_Completions_List --
+   -----------------------------
+
+   procedure Extend_Completions_List is
+      M : Completion_Module_Access renames Completion_Module;
+      Word_Begin   : Gtk_Text_Iter;
+      Word_End     : Gtk_Text_Iter;
+      Iter_Back    : Gtk_Text_Iter;
+      Iter_Forward : Gtk_Text_Iter;
+      Aux          : Gtk_Text_Iter;
+      Success      : Boolean := True;
+      Found        : Boolean := False;
+      Word_Found   : Boolean := False;
+      Count        : Gint := 1;
+
+   begin
+      if M.Complete then
+         if M.Node = Null_Node then
+            M.Node := First (M.List);
+         else
+            M.Node := Next (M.Node);
+         end if;
+
+         return;
+      end if;
+
+      --  Loop until a new word with the right prefix is found.
+
+      Get_Iter_At_Mark (M.Buffer, Iter_Back,    M.Previous_Mark);
+      Get_Iter_At_Mark (M.Buffer, Iter_Forward, M.Next_Mark);
+
+      while not Found loop
+         --  If a boundary is reached, force the search in the other
+         --  direction, otherwise extend search in the opposite direction
+
+         if M.Top_Reached then
+            M.Backwards := False;
+         elsif M.Bottom_Reached then
+            M.Backwards := True;
+         else
+            M.Backwards := not M.Backwards;
+         end if;
+
+         --  Find a word and examine it.
+
+         Count := 0;
+
+         while not Word_Found loop
+            if M.Backwards then
+               --  Find the previous real word, if it exists.
+
+               Backward_Word_Start (Iter_Back, Success);
+               Count := Count + 1;
+
+               if Success then
+                  Copy (Iter_Back, Aux);
+                  Backward_Char (Aux, Success);
+
+                  if not Success or else Get_Char (Aux) /= '_' then
+                     Copy (Iter_Back, Word_Begin);
+                     Copy (Iter_Back, Word_End);
+                     Forward_Word_Ends (Word_End, Count, Success);
+
+                     Word_Found := True;
+                  end if;
+               else
+                  exit;
+               end if;
+
+            else
+               --  Find the next real word.
+
+               Forward_Word_End (Iter_Forward, Success);
+               Count := Count + 1;
+
+               if Success then
+                  if Get_Char (Iter_Forward) /= '_' then
+                     Copy (Iter_Forward, Word_End);
+                     Copy (Iter_Forward, Word_Begin);
+                     Backward_Word_Starts (Word_Begin, Count, Success);
+
+                     Word_Found := True;
+                  end if;
+               else
+                  exit;
+               end if;
+            end if;
+         end loop;
+
+         if Word_Found then
+            --  We have a valid word between Word_Begin and Word_End.
+
+            declare
+               S : constant String := Get_Slice (Word_Begin, Word_End);
+            begin
+               --  If the word has the right prefix, and is not already
+               --  in the list, then add it to the list and point to it,
+               --  otherwise continue extending the search.
+               --
+               --  The string comparison below is correct, since both
+               --  strings are UTF-8.
+
+               if S'Length > M.Prefix'Length
+                 and then S
+                   (S'First .. S'First - 1 + M.Prefix'Length)
+                   = M.Prefix.all
+                 and then not Is_In_List
+                   (M.List,
+                    S (S'First + M.Prefix'Length .. S'Last))
+               then
+                  Found := True;
+
+                  if M.Backwards then
+                     Move_Mark (M.Buffer, M.Previous_Mark, Word_Begin);
+                  else
+                     Move_Mark (M.Buffer, M.Next_Mark, Word_End);
+                  end if;
+
+                  Append
+                    (M.List,
+                     S (S'First + M.Prefix'Length .. S'Last));
+
+                  M.Node := Last (M.List);
+               end if;
+
+               Word_Found := False;
+            end;
+         else
+            if M.Backwards then
+               M.Top_Reached := True;
+            else
+               M.Bottom_Reached := True;
+            end if;
+
+            if M.Top_Reached and then M.Bottom_Reached then
+               M.Complete := True;
+
+               if M.Node /= Null_Node then
+                  M.Node := Next (M.Node);
+               end if;
+
+               return;
+            else
+               null;
+            end if;
+         end if;
+      end loop;
+   end Extend_Completions_List;
+
    -------------
    -- Execute --
    -------------
@@ -143,177 +296,17 @@ package body Completion_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      M : Completion_Module_Access renames Completion_Module;
-
-      use String_List_Utils.String_List;
-
-      Widget : constant Gtk_Widget :=
+      M             : Completion_Module_Access renames Completion_Module;
+      Widget        : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);
-      View   : Source_View;
-      Buffer : Source_Buffer;
-
-      procedure Extend_Completions_List;
-      --  Add an item to the buffer's completion, or mark it as
-      --  complete. Place the completion node to the newly added
-      --  item, or to Null if the completion was finished.
-
-      -----------------------------
-      -- Extend_Completions_List --
-      -----------------------------
-
-      procedure Extend_Completions_List is
-         Word_Begin   : Gtk_Text_Iter;
-         Word_End     : Gtk_Text_Iter;
-         Iter_Back    : Gtk_Text_Iter;
-         Iter_Forward : Gtk_Text_Iter;
-         Aux          : Gtk_Text_Iter;
-         Success      : Boolean := True;
-         Found        : Boolean := False;
-         Word_Found   : Boolean := False;
-         Count        : Gint := 1;
-
-      begin
-         if M.Complete then
-            if M.Node = Null_Node then
-               M.Node := First (M.List);
-            else
-               M.Node := Next (M.Node);
-            end if;
-
-            return;
-         end if;
-
-         --  Loop until a new word with the right prefix is found.
-
-         Get_Iter_At_Mark (Buffer, Iter_Back,    M.Previous_Mark);
-         Get_Iter_At_Mark (Buffer, Iter_Forward, M.Next_Mark);
-
-         while not Found loop
-            --  If a boundary is reached, force the search in the other
-            --  direction, otherwise extend search in the opposite direction
-
-            if M.Top_Reached then
-               M.Backwards := False;
-            elsif M.Bottom_Reached then
-               M.Backwards := True;
-            else
-               M.Backwards := not M.Backwards;
-            end if;
-
-            --  Find a word and examine it.
-
-            Count := 0;
-
-            while not Word_Found loop
-               if M.Backwards then
-                  --  Find the previous real word, if it exists.
-
-                  Backward_Word_Start (Iter_Back, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     Copy (Iter_Back, Aux);
-                     Backward_Char (Aux, Success);
-
-                     if not Success or else Get_Char (Aux) /= '_' then
-                        Copy (Iter_Back, Word_Begin);
-                        Copy (Iter_Back, Word_End);
-                        Forward_Word_Ends (Word_End, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-
-               else
-                  --  Find the next real word.
-
-                  Forward_Word_End (Iter_Forward, Success);
-                  Count := Count + 1;
-
-                  if Success then
-                     if Get_Char (Iter_Forward) /= '_' then
-                        Copy (Iter_Forward, Word_End);
-                        Copy (Iter_Forward, Word_Begin);
-                        Backward_Word_Starts (Word_Begin, Count, Success);
-
-                        Word_Found := True;
-                     end if;
-                  else
-                     exit;
-                  end if;
-               end if;
-            end loop;
-
-            if Word_Found then
-               --  We have a valid word between Word_Begin and Word_End.
-
-               declare
-                  S : constant String := Get_Slice (Word_Begin, Word_End);
-               begin
-                  --  If the word has the right prefix, and is not already
-                  --  in the list, then add it to the list and point to it,
-                  --  otherwise continue extending the search.
-                  --
-                  --  The string comparison below is correct, since both
-                  --  strings are UTF-8.
-
-                  if S'Length > M.Prefix'Length
-                    and then S
-                      (S'First .. S'First - 1 + M.Prefix'Length)
-                      = M.Prefix.all
-                    and then not Is_In_List
-                      (M.List,
-                       S (S'First + M.Prefix'Length .. S'Last))
-                  then
-                     Found := True;
-
-                     if M.Backwards then
-                        Move_Mark (Buffer, M.Previous_Mark, Word_Begin);
-                     else
-                        Move_Mark (Buffer, M.Next_Mark, Word_End);
-                     end if;
-
-                     Append
-                       (M.List,
-                        S (S'First + M.Prefix'Length .. S'Last));
-
-                     M.Node := Last (M.List);
-                  end if;
-
-                  Word_Found := False;
-               end;
-            else
-               if M.Backwards then
-                  M.Top_Reached := True;
-               else
-                  M.Bottom_Reached := True;
-               end if;
-
-               if M.Top_Reached and then M.Bottom_Reached then
-                  M.Complete := True;
-
-                  if M.Node /= Null_Node then
-                     M.Node := Next (M.Node);
-                  end if;
-
-                  return;
-               else
-                  null;
-               end if;
-            end if;
-         end loop;
-      end Extend_Completions_List;
-
+      View          : Source_View;
+      Buffer        : Source_Buffer;
       Shell_Command : Editor_Replace_Slice;
-      Delete  : Editor_Command;
-
-      Iter    : Gtk_Text_Iter;
-      Prev    : Gtk_Text_Iter;
-      Success : Boolean;
-
-      Text    : GNAT.OS_Lib.String_Access;
+      Delete        : Editor_Command;
+      Iter          : Gtk_Text_Iter;
+      Prev          : Gtk_Text_Iter;
+      Success       : Boolean;
+      Text          : GNAT.OS_Lib.String_Access;
 
    begin
       if Widget /= null
@@ -365,7 +358,6 @@ package body Completion_Module is
          begin
             if P /= "" then
                M.Prefix := new String'(P);
-
                Move_Mark (Buffer, M.Mark, Iter);
                Move_Mark (Buffer, M.Previous_Mark, Iter);
                Move_Mark (Buffer, M.Next_Mark, Iter);
@@ -374,7 +366,6 @@ package body Completion_Module is
             else
                Reset_Completion_Data;
                return Commands.Success;
-
             end if;
          end;
       else
