@@ -11,6 +11,9 @@ New features in GPS 3.1.0
   From a reference to an entity declared in a generic, it is now possible to
   find out what instantiation of the generic is involved.
 
+- Identifier completion is now case insensitive when the language itself is
+  case insensitive.
+
 - Improved handling of tooltips in editors
   Tooltip now remains displayed while the mouse cursor stays on the hotspot
   word. Using the mousewheel to scroll now hides the tooltip.
