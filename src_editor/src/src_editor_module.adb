@@ -4335,9 +4335,9 @@ package body Src_Editor_Module is
          Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
-         Action      => "Complete identifier",
+         Action      => "Complete Identifier",
          Default_Key => "control-slash");
-      Register_Menu (Kernel, Edit, -"Complete _identifier",
+      Register_Menu (Kernel, Edit, -"Complete _Identifier",
                      Ref_Item   => -"Refill",
                      Accel_Key  => GDK_slash,
                      Accel_Mods => Control_Mask,
@@ -4386,7 +4386,7 @@ package body Src_Editor_Module is
         (Kernel      => Kernel,
          Action      => "Jump to matching delimiter",
          Default_Key => "control-apostrophe");
-      Register_Menu (Kernel, Navigate, -"Goto matching delimiter",
+      Register_Menu (Kernel, Navigate, -"Goto Matching _Delimiter",
                      Ref_Item   => -"Goto Body",
                      Callback   => null,
                      Add_Before => False,
