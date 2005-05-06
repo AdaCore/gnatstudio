@@ -23,15 +23,12 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with VFS;                        use VFS;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with File_Utils;                 use File_Utils;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with System;                     use System;
 with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Commands;                   use Commands;
 with Traces;                     use Traces;
-with Basic_Types;
-with String_Utils;               use String_Utils;
 with GPS.Intl;                 use GPS.Intl;
 
 package body GPS.Kernel.Standard_Hooks is
@@ -351,20 +348,20 @@ package body GPS.Kernel.Standard_Hooks is
          Focus             => Focus,
          Position          => Position);
    begin
-      if Enable_Navigation then
-         declare
-            Length : constant Integer := Integer'Max (0, Column_End - Column);
-            Args   : Argument_List :=
-              (new String'("Editor.edit"),
-               new String'(To_Host_Pathname (Full_Name (Filename).all)),
-               new String'(Image (Line)),
-               new String'(Image (Column)),
-               new String'(Image (Length)));
-         begin
-            Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
-            Basic_Types.Free (Args);
-         end;
-      end if;
+--        if Enable_Navigation then
+--           declare
+--           Length : constant Integer := Integer'Max (0, Column_End - Column);
+--              Args   : Argument_List :=
+--                (new String'("Editor.edit"),
+--                 new String'(To_Host_Pathname (Full_Name (Filename).all)),
+--                 new String'(Image (Line)),
+--                 new String'(Image (Column)),
+--                 new String'(Image (Length)));
+--           begin
+--           Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
+--              Basic_Types.Free (Args);
+--           end;
+--        end if;
 
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access) then
@@ -1111,6 +1108,36 @@ package body GPS.Kernel.Standard_Hooks is
       pragma Unreferenced (Data);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
+      Tmp := Execute (Command, D);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Marker_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Marker_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Marker_Hooks_Args) return Boolean
+   is
+      D   : Callback_Data'Class := Create (Script, 2);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, To_String (Data.Marker));
       Tmp := Execute (Command, D);
       Free (D);
       return Tmp;

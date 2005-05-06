@@ -89,6 +89,17 @@ package GPS.Kernel.Standard_Hooks is
          Category : String (1 .. Category_Length);
       end record;
 
+   ------------------
+   -- Marker_Hooks --
+   ------------------
+
+   Marker_Hook_Type : constant String := "marker_hooks";
+   type Marker_Hooks_Args is new Hooks_Data with record
+      Marker : Location_Marker;
+   end record;
+   type Marker_Hooks_Args_Access is access all Marker_Hooks_Args'Class;
+   --  These hooks contain a marker
+
    --------------------------
    --  File_Location_Hooks --
    --------------------------
@@ -461,5 +472,12 @@ private
       Data      : access File_Location_Hooks_Args) return Boolean;
    --  See inherited doc
 
+   function Get_Name (Data : Marker_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Marker_Hooks_Args) return Boolean;
+   --  See inherited subprograms
 
 end GPS.Kernel.Standard_Hooks;
