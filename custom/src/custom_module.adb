@@ -571,6 +571,8 @@ package body Custom_Module is
 
          Child := Node.Child;
 
+         Trace (Me, "Creating submenu with title=" & Title.all);
+
          --  If specific locations are specified, create the menu now
 
          if Before /= "" then
