@@ -75,6 +75,7 @@ with Src_Editor_Box;              use Src_Editor_Box;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Module.Markers;   use Src_Editor_Module.Markers;
 with Src_Editor_View;             use Src_Editor_View;
 with Src_Editor_View.Commands;    use Src_Editor_View.Commands;
 with String_List_Utils;           use String_List_Utils;
@@ -2287,19 +2288,12 @@ package body Src_Editor_Module is
                  ((Src.Editor,
                    Editable_Line_Type (Line),
                    Column, 0, User, False));
-
-               --  Add the location in the navigations button.
-               declare
-                  Args : Argument_List :=
-                    (new String'("Editor.edit"),
-                     new String'(Full_Name (F).all),
-                     new String'(Image (Line)),
-                     new String'(Image (Column)));
-               begin
-                  Execute_GPS_Shell_Command
-                    (User, "add_location_command", Args);
-                  Free (Args);
-               end;
+               Push_Marker_In_History
+                 (Kernel  => User,
+                  Marker  => Create_File_Marker
+                    (File   => F,
+                     Line   => Line,
+                     Column => Column));
             end if;
          end if;
       end if;
@@ -3730,6 +3724,19 @@ package body Src_Editor_Module is
             Focus      => D.Focus,
             Force      => D.Force_Reload,
             Position   => D.Position);
+
+         --  This used to be done in Open_File_Editor itself, before we call
+         --  the Hook, but then we wouldn't have access to Create_File_Marker.
+         --  Another module that deals with this hook would likely want its own
+         --  type of Marker anyway...
+         if D.Enable_Navigation then
+            Push_Marker_In_History
+              (Kernel => Kernel,
+               Marker => Create_File_Marker
+                 (File   => D.File,
+                  Line   => D.Line,
+                  Column => D.Column));
+         end if;
 
          if Source /= null then
             Edit := Source.Editor;
