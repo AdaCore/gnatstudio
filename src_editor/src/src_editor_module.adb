@@ -3979,28 +3979,6 @@ package body Src_Editor_Module is
          Action      => "Format selection",
          Default_Key => "control-Tab");
 
-      Command := new Completion_Command;
-      Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
-        (Kernel, "Complete identifier", Command,
-         -("Complete current identifier based on the contents of the editor"),
-         Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Complete identifier",
-         Default_Key => "control-slash");
-
-      Command := new Jump_To_Delimiter_Command;
-      Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
-        (Kernel, "Jump to matching delimiter", Command,
-         -"Jump to the matching delimiter ()[]{}",
-         Src_Action_Context);
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Jump to matching delimiter",
-         Default_Key => "control-apostrophe");
-
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Move_Command (Command.all).Kind := Word;
@@ -4349,6 +4327,24 @@ package body Src_Editor_Module is
                      GDK_equal, Control_Mask, Ref_Item => -"Preferences",
                      Filter => Src_Action_Context);
 
+      Command := new Completion_Command;
+      Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Complete identifier", Command,
+         -("Complete current identifier based on the contents of the editor"),
+         Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "Complete identifier",
+         Default_Key => "control-slash");
+      Register_Menu (Kernel, Edit, -"Complete _identifier",
+                     Ref_Item   => -"Refill",
+                     Accel_Key  => GDK_slash,
+                     Accel_Mods => Control_Mask,
+                     Callback   => null,
+                     Command    => Command_Access (Command),
+                     Filter     => Src_Action_Context);
+
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
@@ -4379,6 +4375,25 @@ package body Src_Editor_Module is
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
       Register_Menu (Kernel, Navigate, -"Goto _Body", "",
                      On_Goto_Body'Access, Ref_Item => -"Goto Line...");
+
+      Command := new Jump_To_Delimiter_Command;
+      Jump_To_Delimiter_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Jump to matching delimiter", Command,
+         -"Jump to the matching delimiter ()[]{}",
+         Src_Action_Context);
+      Bind_Default_Key
+        (Kernel      => Kernel,
+         Action      => "Jump to matching delimiter",
+         Default_Key => "control-apostrophe");
+      Register_Menu (Kernel, Navigate, -"Goto matching delimiter",
+                     Ref_Item   => -"Goto Body",
+                     Callback   => null,
+                     Add_Before => False,
+                     Accel_Key  => GDK_apostrophe,
+                     Accel_Mods => Control_Mask,
+                     Command    => Command_Access (Command),
+                     Filter    => Src_Action_Context);
 
       --  Toolbar buttons
 
