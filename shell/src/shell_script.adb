@@ -1797,7 +1797,11 @@ package body Shell_Script is
    procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Class_Instance) is
    begin
-      Set_Return_Value (Data, Name_From_Instance (Value));
+      if Value = null then
+         Set_Return_Value (Data, "null");
+      else
+         Set_Return_Value (Data, Name_From_Instance (Value));
+      end if;
    end Set_Return_Value;
 
    ------------------
