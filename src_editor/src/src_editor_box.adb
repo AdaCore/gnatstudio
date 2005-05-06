@@ -81,6 +81,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module;         use Src_Editor_Module;
+with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Traces;                    use Traces;
@@ -258,24 +259,16 @@ package body Src_Editor_Box is
    procedure Add_Navigation_Location
      (Source : access Source_Editor_Box_Record'Class)
    is
-      Args   : GNAT.OS_Lib.Argument_List (1 .. 5);
       Line   : Editable_Line_Type;
       Column : Positive;
    begin
       Get_Cursor_Position (Source.Source_Buffer, Line, Column);
-
-      Args (1) := new String'("Editor.edit");
-      Args (2) := new String'
-        (Full_Name (Get_Filename (Source.Source_Buffer)).all);
-      Args (3) := new String'(Editable_Line_Type'Image (Line));
-      Args (4) := new String'(Positive'Image (Column));
-      Args (5) := new String'("0");
-
-      Execute_GPS_Shell_Command (Source.Kernel, "add_location_command", Args);
-
-      for J in Args'Range loop
-         GNAT.OS_Lib.Free (Args (J));
-      end loop;
+      Push_Marker_In_History
+        (Kernel => Source.Kernel,
+         Marker => Create_File_Marker
+           (File   => Get_Filename (Source.Source_Buffer),
+            Line   => Natural (Line),
+            Column => 0));
    end Add_Navigation_Location;
 
    -----------
