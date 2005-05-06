@@ -551,6 +551,43 @@ package GPS.Kernel is
    --  attached to a hook.
    --  The default is to use <internal>
 
+   -------------
+   -- Markers --
+   -------------
+   --  The following subprograms provide the required support for representing
+   --  and storing locations in a list, so that the user can move back and
+   --  forward from places where he was before.
+   --  Location in this sense is to be taken as a broad term, since it might
+   --  represent a location in a source editor, but also a location within
+   --  a browser,...
+
+   type Location_Marker_Record is abstract tagged private;
+   type Location_Marker is access all Location_Marker_Record'Class;
+
+   function Go_To
+     (Marker : access Location_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
+   --  Move the focus in GPS to the location marked by M.
+   --  If this function returns False, it is assumed the marker is no longer
+   --  legal, and should be removed from the history.
+
+   procedure Destroy (Marker : in out Location_Marker_Record);
+   --  Free the memory used by Marker. By default, this does nothing
+
+   function To_String
+     (Marker : access Location_Marker_Record) return String is abstract;
+   --  Return a displayable string describing marker.
+   --  This string doesn't need to be unique for each marker, it is used in the
+   --  user interface to allow the user to select a specific marker.
+
+
+   procedure Push_Marker_In_History
+     (Kernel : access Kernel_Handle_Record'Class;
+      Marker : access Location_Marker_Record'Class);
+   --  Push a new marker in the list of previous locations the user has
+   --  visited. This is the basic interface for the handling of the history of
+   --  locations. It emits the hook Marker_Added_To_History.
+
    -----------
    -- Tools --
    -----------
@@ -721,6 +758,11 @@ package GPS.Kernel is
    --  Hooks with Project_Hooks_Args argument
    Project_Saved_Hook            : constant String := "project_saved";
 
+   --  Hooks with Marker_Hooks_Args argument
+   Marker_Added_In_History_Hook : constant String := "marker_added_to_history";
+   --  Called when a new marker has been added in the history. For now, this
+   --  marker isn't exported to the shell
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
@@ -816,6 +858,8 @@ private
    procedure Free (L : in out Hook_Description_Base_Access);
    package Hooks_Hash is new String_Hash
      (Hook_Description_Base_Access, Free, null);
+
+   type Location_Marker_Record is abstract tagged null record;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Database : Entities.Entities_Database;

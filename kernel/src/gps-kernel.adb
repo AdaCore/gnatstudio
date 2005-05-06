@@ -1947,4 +1947,30 @@ package body GPS.Kernel is
       return -"<internal>";
    end Get_Name;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Marker : in out Location_Marker_Record) is
+      pragma Unreferenced (Marker);
+   begin
+      null;
+   end Destroy;
+
+   ----------------------------
+   -- Push_Marker_In_History --
+   ----------------------------
+
+   procedure Push_Marker_In_History
+     (Kernel : access Kernel_Handle_Record'Class;
+      Marker : access Location_Marker_Record'Class)
+   is
+      Data : aliased Marker_Hooks_Args :=
+        (Hooks_Data with Marker => Location_Marker (Marker));
+   begin
+      Run_Hook (Kernel,
+                Marker_Added_In_History_Hook,
+                Data'Unchecked_Access,
+                Set_Busy => False);
+   end Push_Marker_In_History;
 end GPS.Kernel;
