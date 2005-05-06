@@ -32,22 +32,21 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Projects;                    use Projects;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;           use GPS.Location_View;
 with GPS.Intl;                  use GPS.Intl;
 
-with Commands;                    use Commands;
-with Commands.Locations;          use Commands.Locations;
 with Traces;                      use Traces;
-with Basic_Types;                 use Basic_Types;
 with String_Utils;                use String_Utils;
 with VFS;                         use VFS;
 with Language;                    use Language;
 
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body Navigation_Module is
 
@@ -55,21 +54,18 @@ package body Navigation_Module is
 
    Me : constant Debug_Handle := Create ("Navigation");
 
-   use Command_Queues;
+   type Location_Marker_Array is array (Natural range <>) of Location_Marker;
+   type Location_Marker_Array_Access is access Location_Marker_Array;
 
    type Navigation_Module_Record is new Module_ID_Record with record
-      --  Fields related to back/forward navigation.
+      Markers          : Location_Marker_Array_Access;
+      --  The list of markers from the history of locations
 
-      Moving_Back : Boolean := False;
-      --  This boolean indicates whether we are going backwards in the
-      --  location history.
+      Current_Marker   : Natural := 0;
+      --  The current position in Markers
 
-      Back    : List;
-      Forward : List;
-      --  The past and "future" locations.
-
-      Current_Location : Command_Access;
-      --  The currently visited location.
+      Last_Marker      : Natural := 0;
+      --  The last marker set in Markers
 
       Back_Button : Gtk.Widget.Gtk_Widget;
       Forward_Button : Gtk.Widget.Gtk_Widget;
@@ -78,9 +74,32 @@ package body Navigation_Module is
    end record;
    type Navigation_Module is access all Navigation_Module_Record'Class;
 
+   type Shell_Marker_Record is new Location_Marker_Record with record
+      Script  : Scripting_Language;
+      Command : GNAT.OS_Lib.String_Access;
+   end record;
+   type Shell_Marker is access all Shell_Marker_Record'Class;
+
+   function Create_Shell_Marker
+     (Script  : access Scripting_Language_Record'Class;
+      Command : String) return Shell_Marker;
+   --  Create a new marker associated with a shell command
+
+   function Go_To
+     (Marker : access Shell_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   procedure Destroy (Marker : in out Shell_Marker_Record);
+   function To_String (Marker : access Shell_Marker_Record) return String;
+   --  See inherited documentation
+
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Location_Marker_Record'Class, Location_Marker);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Location_Marker_Array, Location_Marker_Array_Access);
 
    procedure Destroy (Id : in out Navigation_Module_Record);
    --  Free memory associated to Id.
@@ -166,6 +185,132 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Language_Category;
    --  Returns type for block enclosing Line.
+
+   procedure On_Marker_Added_In_History
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a new marker is added in the history
+
+
+   procedure Check_Marker_History_Status
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Can_Move_Back    : out Boolean;
+      Can_Move_Forward : out Boolean);
+   --  Check whether it is possible to keep moving backward or forward in the
+   --  list of markers.
+
+   procedure Move_In_Marker_History
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Move_Back        : Boolean);
+   --  Move backward or forward in the list of markers. The effect is
+   --  immediately visible in the GPS interface
+
+   procedure Go_To_Current_Marker (Kernel : access Kernel_Handle_Record'Class);
+   --  Go to the location pointed to by the current marker in the history
+
+   --------------------------------
+   -- On_Marker_Added_In_History --
+   --------------------------------
+
+   procedure On_Marker_Added_In_History
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D : constant Marker_Hooks_Args_Access := Marker_Hooks_Args_Access (Data);
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      if Module.Markers = null then
+         Module.Markers := new Location_Marker_Array (1 .. 200);
+         Module.Current_Marker := 0;
+         Module.Last_Marker := 0;
+      end if;
+
+      Trace (Me, "Marker_Added_In_History, Current, Last="
+             & Module.Current_Marker'Img & Module.Last_Marker'Img
+             & " marker=" & To_String (D.Marker));
+
+      Module.Current_Marker := Module.Current_Marker + 1;
+      if Module.Current_Marker > Module.Markers'Last then
+         Destroy (Module.Markers (Module.Markers'First).all);
+         Unchecked_Free (Module.Markers (Module.Markers'First));
+         Module.Markers (Module.Markers'First .. Module.Markers'Last - 1) :=
+           Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
+      end if;
+      Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
+      Module.Last_Marker := Module.Current_Marker;
+      Refresh_Location_Buttons (Kernel);
+   end On_Marker_Added_In_History;
+
+   ---------------------------------
+   -- Check_Marker_History_Status --
+   ---------------------------------
+
+   procedure Check_Marker_History_Status
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Can_Move_Back    : out Boolean;
+      Can_Move_Forward : out Boolean)
+   is
+      pragma Unreferenced (Kernel);
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      Can_Move_Back := Module.Markers /= null
+        and then Module.Current_Marker > Module.Markers'First;
+      Can_Move_Forward := Module.Markers /= null
+        and then Module.Current_Marker < Module.Last_Marker;
+   end Check_Marker_History_Status;
+
+   ----------------------------
+   -- Move_In_Marker_History --
+   ----------------------------
+
+   procedure Move_In_Marker_History
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Move_Back        : Boolean)
+   is
+      pragma Unreferenced (Kernel);
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      if Move_Back then
+         if Module.Markers /= null
+           and then Module.Current_Marker > Module.Markers'First
+         then
+            Module.Current_Marker := Module.Current_Marker - 1;
+         end if;
+      else
+         if Module.Markers /= null
+           and then Module.Current_Marker < Module.Last_Marker
+         then
+            Module.Current_Marker := Module.Current_Marker + 1;
+         end if;
+      end if;
+   end Move_In_Marker_History;
+
+   --------------------------
+   -- Go_To_Current_Marker --
+   --------------------------
+
+   procedure Go_To_Current_Marker
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      if Module.Markers /= null
+        and then Module.Current_Marker >= Module.Markers'First
+        and then Module.Current_Marker <= Module.Last_Marker
+      then
+         if not Go_To (Module.Markers (Module.Current_Marker), Kernel) then
+            Destroy (Module.Markers (Module.Current_Marker).all);
+            Unchecked_Free (Module.Markers (Module.Current_Marker));
+            Module.Markers (Module.Current_Marker .. Module.Last_Marker - 1) :=
+              Module.Markers (Module.Current_Marker + 1 .. Module.Last_Marker);
+            Module.Last_Marker := Module.Last_Marker - 1;
+         end if;
+      end if;
+   end Go_To_Current_Marker;
 
    ----------------------
    -- Get_Current_Line --
@@ -305,6 +450,59 @@ package body Navigation_Module is
          return Cat_Unknown;
    end Get_Block_Type;
 
+   -----------
+   -- Go_To --
+   -----------
+
+   function Go_To
+     (Marker : access Shell_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+      Errors : Boolean;
+   begin
+      Execute_Command
+        (Script       => Marker.Script,
+         Command      => Marker.Command.all,
+         Hide_Output  => True,
+         Show_Command => False,
+         Errors       => Errors);
+      return not Errors;
+   end Go_To;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Marker : in out Shell_Marker_Record) is
+   begin
+      Free (Marker.Command);
+      Destroy (Location_Marker_Record (Marker));
+   end Destroy;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Marker : access Shell_Marker_Record) return String is
+   begin
+      return Marker.Command.all;
+   end To_String;
+
+   -------------------------
+   -- Create_Shell_Marker --
+   -------------------------
+
+   function Create_Shell_Marker
+     (Script  : access Scripting_Language_Record'Class;
+      Command : String) return Shell_Marker is
+   begin
+      return new Shell_Marker_Record'
+        (Location_Marker_Record with
+         Script  => Scripting_Language (Script),
+         Command => new String'(Command));
+   end Create_Shell_Marker;
+
    ---------------------
    -- Command_Handler --
    ---------------------
@@ -313,28 +511,12 @@ package body Navigation_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      The_Command : Generic_Location_Command;
-      N_Data : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
-      Args : Argument_List (1 .. Number_Of_Arguments (Data));
-
    begin
-      for Index in Args'Range loop
-         Args (Index) := new String'(Nth_Arg (Data, Index));
-      end loop;
-
-      Create (The_Command, Get_Kernel (Data), Args);
-
-      Free (Args);
-
-      if N_Data.Current_Location /= null then
-         Prepend (N_Data.Back, N_Data.Current_Location);
-      end if;
-
-      N_Data.Current_Location := Command_Access (The_Command);
-      Free (N_Data.Forward);
-
-      Refresh_Location_Buttons (Get_Kernel (Data));
+      Push_Marker_In_History
+        (Get_Kernel (Data),
+         Create_Shell_Marker
+           (Script => Get_Script (Data),
+            Command => Nth_Arg (Data, 1)));
    end Command_Handler;
 
    -------------
@@ -344,23 +526,10 @@ package body Navigation_Module is
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data   : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
-      Result : Command_Return_Type;
-      pragma Unreferenced (Widget, Result);
-
+      pragma Unreferenced (Widget);
    begin
-      if not Is_Empty (Data.Back) then
-
-         if Data.Current_Location /= null then
-            Prepend (Data.Forward, Data.Current_Location);
-         end if;
-
-         Data.Current_Location := Head (Data.Back);
-         Result := Execute (Data.Current_Location);
-         Next (Data.Back, Free_Data => False);
-      end if;
-
+      Move_In_Marker_History (Kernel, Move_Back => True);
+      Go_To_Current_Marker (Kernel);
       Refresh_Location_Buttons (Kernel);
 
    exception
@@ -376,22 +545,10 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Data   : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
-      Result : Command_Return_Type;
-      pragma Unreferenced (Widget, Result);
-
+      pragma Unreferenced (Widget);
    begin
-      if not Is_Empty (Data.Forward) then
-         if Data.Current_Location /= null then
-            Prepend (Data.Back, Data.Current_Location);
-         end if;
-
-         Data.Current_Location := Head (Data.Forward);
-         Result := Execute (Data.Current_Location);
-         Next (Data.Forward, Free_Data => False);
-      end if;
-
+      Move_In_Marker_History (Kernel, Move_Back => False);
+      Go_To_Current_Marker (Kernel);
       Refresh_Location_Buttons (Kernel);
 
    exception
@@ -767,6 +924,8 @@ package body Navigation_Module is
       Register_Menu
         (Kernel, Navigate, -"For_ward", Stock_Go_Forward,
          On_Forward'Access);
+      Add_Hook (Kernel, Marker_Added_In_History_Hook,
+                On_Marker_Added_In_History'Access);
 
       Append_Space (Toolbar);
 
@@ -796,12 +955,13 @@ package body Navigation_Module is
    procedure Refresh_Location_Buttons
      (Handle : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Handle);
       Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
+      Can_Move_Back, Can_Move_Forward : Boolean;
    begin
-      Set_Sensitive (Data.Back_Button, not Is_Empty (Data.Back));
-      Set_Sensitive (Data.Forward_Button, not Is_Empty (Data.Forward));
+      Check_Marker_History_Status (Handle, Can_Move_Back, Can_Move_Forward);
+      Set_Sensitive (Data.Back_Button, Can_Move_Back);
+      Set_Sensitive (Data.Forward_Button, Can_Move_Forward);
    end Refresh_Location_Buttons;
 
    -------------
@@ -810,9 +970,15 @@ package body Navigation_Module is
 
    procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
-      Free (Id.Back);
-      Destroy (Id.Current_Location);
-      Free (Id.Forward);
+      if Id.Markers /= null then
+         for M in Id.Markers'Range loop
+            if Id.Markers (M) /= null then
+               Destroy (Id.Markers (M).all);
+               Unchecked_Free (Id.Markers (M));
+            end if;
+         end loop;
+         Unchecked_Free (Id.Markers);
+      end if;
    end Destroy;
 
 end Navigation_Module;
