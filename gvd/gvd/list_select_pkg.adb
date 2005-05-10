@@ -109,6 +109,9 @@ package body List_Select_Pkg is
       Comment_Label : String) is
    begin
       Gtk.Window.Initialize (List_Select, Window_Toplevel);
+      Return_Callback.Connect
+        (List_Select, "delete_event", On_Delete_Event'Access);
+
       List_Select.Help_Text := new String'(Help_Message);
 
       Set_Policy (List_Select, False, True, False);
@@ -196,5 +199,6 @@ package body List_Select_Pkg is
          Return_Callback.To_Marshaller (On_Clist_Button_Press'Access));
 
       Set_Title (List_Select, Title);
+
    end Initialize;
 end List_Select_Pkg;
