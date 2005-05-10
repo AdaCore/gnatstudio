@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
 
 with Glib;              use Glib;
 with Gtk.Main;          use Gtk.Main;
@@ -53,7 +52,8 @@ package body List_Select_Pkg.Callbacks is
 
    function On_Clist_Button_Press
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean is
+      Event  : Gdk_Event) return Boolean
+   is
       pragma Unreferenced (Object);
    begin
       if Get_Event_Type (Event) = Gdk_2button_Press then
@@ -89,7 +89,7 @@ package body List_Select_Pkg.Callbacks is
 
    procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
       List_Select : constant List_Select_Access :=
-        List_Select_Access (Get_Toplevel (Object));
+                      List_Select_Access (Get_Toplevel (Object));
 
    begin
       Set_Text (List_Select.The_Entry, "");
@@ -107,11 +107,26 @@ package body List_Select_Pkg.Callbacks is
       pragma Unreferenced (Dummy);
 
       List_Select : constant List_Select_Access :=
-        List_Select_Access (Get_Toplevel (Object));
+                      List_Select_Access (Get_Toplevel (Object));
    begin
       Dummy := Message_Dialog
         (List_Select.Help_Text.all,
          Buttons => Button_OK);
    end On_Help_Clicked;
+
+   ---------------------
+   -- On_Delete_Event --
+   ---------------------
+
+   function On_Delete_Event
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean is
+   begin
+      Set_Text (List_Select_Access (Object).The_Entry, "");
+      Gtk.Main.Main_Quit;
+
+      --  The widget must not be destroyed here since it will still be accessed
+      --  by the subprogram that created it.
+      return True;
+   end On_Delete_Event;
 
 end List_Select_Pkg.Callbacks;
