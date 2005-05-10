@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Event;     use Gdk.Event;
 with Gtk.Arguments;
 with Gtk.Widget;
-with Gdk.Event; use Gdk.Event;
 
 package List_Select_Pkg.Callbacks is
 
@@ -43,5 +43,8 @@ package List_Select_Pkg.Callbacks is
 
    procedure On_Help_Clicked
      (Object : access Gtk_Button_Record'Class);
+
+   function On_Delete_Event
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
 
 end List_Select_Pkg.Callbacks;
