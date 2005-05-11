@@ -1,14 +1,14 @@
 \input texiplus   @c -*-texinfo-*-
 @c %**start of header
 @setfilename tutorial.info
-@settitle GNAT Programming System Tutorial
+@settitle GNAT Programming Studio Tutorial
 @syncodeindex fn cp
 
 @set GPSVersion 3.1.0
 
 @titlepage
 
-@title GNAT Programming System Tutorial
+@title GNAT Programming Studio Tutorial
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
@@ -31,9 +31,9 @@ unmodified in any copy.
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
-@top GNAT Programming System Tutorial
+@top GNAT Programming Studio Tutorial
 
-GNAT Programming System Tutorial
+GNAT Programming Studio Tutorial
 
 Version @value{GPSVersion}
 
@@ -71,7 +71,7 @@ unmodified in any copy.
 
 @noindent
 This document provides a guide through the major capabilities
-of the GNAT Programming System by working on a code example: sdc, a simple
+of the GNAT Programming Studio by working on a code example: sdc, a simple
 desktop calculator.
 
 It is important to realize that the features that you are about to
@@ -671,7 +671,7 @@ On @i{prj1} project, select the contextual menu
 @c --------------------------------------------------------------------
 
 @noindent
-This terminates our tour of GPS, the GNAT Programming System.
+This terminates our tour of GPS, the GNAT Programming Studio.
 We hope this tutorial gave you a good overview of the general capabilities
 available with GPS. A non exhaustive list of the features not mentioned in
 this document includes:
