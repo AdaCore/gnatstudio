@@ -6254,42 +6254,43 @@ Only available when the current context contains project information
 
 @table @i
 @item List all files in project
-Brings up the VCS Explorer with all the source files contained in the project.
+Bring up the VCS Explorer with all the source files contained in the project.
 
 @item Query status for project
-Queries the status for all the source files contained in the project.
+Query the status for all the source files contained in the project.
 
 @item Update project
-Updates all the source files in the project.
+Update all the source files in the project.
 
 @item List all files in project and sub-projects
-Brings up the VCS Explorer with all the source files contained in the
+Bring up the VCS Explorer with all the source files contained in the
 project and all imported sub-projects.
 
 @item Query status for project and sub-projects
-Queries the status for all the source files contained in the project
+Query the status for all the source files contained in the project
 and all imported sub-projects.
 
 @item Update project and sub-projects
-Updates all the source files in the project and all imported
+Update all the source files in the project and all imported
 sub-projects.
 
 @end table
 
-@item Hide up-to-date files
-@anchor{Hide up-to-date files}
-@cindex filter
-Only available from the VCS Explorer.
-Filter out up-to-date files, that is files that have not been modified locally
-and that do not need to be updated.
+@item Filters
+Only available from the VCS Explorer. This menu controls filtering of the
+items displayed in the list.
 
-@item Hide non registered files
-@anchor{Hide non registered files}
-@cindex filter
-Only available from the VCS Explorer.
-Filter out non registered files, that is files unknown to the version control
-system, or whose information could not be retrieved (e.g. the version control
-server is temporarily unavailable).
+@table @i
+@item Show all status
+Do not filter out any file from the list in the VCS Explorer.
+
+@item Hide all status
+Filter out all the files from the list in the VCS Explorer.
+
+@item Show <status>
+When disabled, filter out the files with the given status from the VCS
+Explorer.
+@end table
 
 @end table
 
