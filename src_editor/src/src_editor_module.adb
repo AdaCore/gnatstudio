@@ -91,7 +91,6 @@ with VFS;                         use VFS;
 with Casing_Exceptions;           use Casing_Exceptions;
 with Default_Preferences;         use Default_Preferences;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
-with Entities;                    use Entities;
 with Completion_Module;           use Completion_Module;
 
 with Gtkada.Types;                use Gtkada.Types;
@@ -2154,17 +2153,13 @@ package body Src_Editor_Module is
       Id     : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Box    : Source_Editor_Box;
-      Entity : Entity_Information;
 
    begin
       if Id.Show_Subprogram_Names then
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Entity := Compute_Parent_Entity (D);
-            if Entity /= null then
-               Show_Subprogram_Name (Box, Get_Name (Entity).all);
-            end if;
+            Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
          end if;
       end if;
 
@@ -3500,14 +3495,13 @@ package body Src_Editor_Module is
    procedure Comment_Uncomment
      (Kernel : Kernel_Handle; Comment : Boolean)
    is
-      Context    : constant Selection_Context_Access :=
+      Context      : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
 
       Area         : File_Area_Context_Access;
       File_Context : File_Selection_Context_Access;
       Start_Line   : Integer;
       End_Line     : Integer;
-
 
       use String_List_Utils.String_List;
    begin
