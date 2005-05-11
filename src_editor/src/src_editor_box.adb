@@ -226,13 +226,19 @@ package body Src_Editor_Box is
    --  Idle callback to check that the timestamp of a file hasn't changed
 
    procedure Go_To_Closest_Match
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Filename       : Virtual_File;
-      Line           : Natural;
-      Column         : Natural;
-      Entity         : Entity_Information);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : Virtual_File;
+      Line     : Natural;
+      Column   : Natural;
+      Entity   : Entity_Information);
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
+
+   function Get_Subprogram_Block
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record;
+   --  Returns the block corresponding to the subprogram enclosing Line. If no
+   --  block is found at this position an empty block is returned.
 
    ----------------------------------
    -- The contextual menu handling --
@@ -290,10 +296,10 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : access Entity_Selection_Context'Class)
    is
-      Entity          : Entity_Information;
-      Location        : File_Location;
-      L, C            : Natural;
-      Filename        : Virtual_File;
+      Entity   : Entity_Information;
+      Location : File_Location;
+      L, C     : Natural;
+      Filename : Virtual_File;
 
    begin
       if Get_Filename (Editor) = VFS.No_File then
@@ -376,18 +382,18 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Go_To_Closest_Match
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Filename       : Virtual_File;
-      Line           : Natural;
-      Column         : Natural;
-      Entity         : Entity_Information)
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : Virtual_File;
+      Line     : Natural;
+      Column   : Natural;
+      Entity   : Entity_Information)
    is
-      Length : constant Natural := Get_Name (Entity).all'Length;
-      Source : Source_Editor_Box;
-      File_Up_To_Date : Boolean;
-      L, C : Natural;
+      Length            : constant Natural := Get_Name (Entity).all'Length;
+      Source            : Source_Editor_Box;
+      File_Up_To_Date   : Boolean;
+      L, C              : Natural;
       Is_Case_Sensitive : Boolean;
-      Arg  : String_Access;
+      Arg               : String_Access;
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
@@ -531,21 +537,20 @@ package body Src_Editor_Box is
       Area          : out Gdk_Rectangle)
    is
       Line, Col, Cursor_Col : Gint;
-      Mouse_X, Mouse_Y : Gint;
-      Win_X, Win_Y     : Gint;
-      Start_Iter       : Gtk_Text_Iter;
-      End_Iter         : Gtk_Text_Iter;
-      Mask             : Gdk.Types.Gdk_Modifier_Type;
-      Win              : Gdk.Gdk_Window;
-      Context          : aliased Entity_Selection_Context;
-      Location         : Gdk_Rectangle;
-      Filename         : constant Virtual_File := Get_Filename (Data.Box);
-      Out_Of_Bounds    : Boolean;
-      Window           : Gdk.Gdk_Window;
-      Window_Width     : Gint;
-      Window_Height    : Gint;
-      Window_Depth     : Gint;
-
+      Mouse_X, Mouse_Y      : Gint;
+      Win_X, Win_Y          : Gint;
+      Start_Iter            : Gtk_Text_Iter;
+      End_Iter              : Gtk_Text_Iter;
+      Mask                  : Gdk.Types.Gdk_Modifier_Type;
+      Win                   : Gdk.Gdk_Window;
+      Context               : aliased Entity_Selection_Context;
+      Location              : Gdk_Rectangle;
+      Filename              : constant Virtual_File := Get_Filename (Data.Box);
+      Out_Of_Bounds         : Boolean;
+      Window                : Gdk.Gdk_Window;
+      Window_Width          : Gint;
+      Window_Height         : Gint;
+      Window_Depth          : Gint;
 
    begin
       Width  := 0;
@@ -911,7 +916,6 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer);
-
 
    begin
       Box.Current_Line :=
@@ -1631,11 +1635,11 @@ package body Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      C      : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (C);
-      File   : constant VFS.Virtual_File := File_Information (C);
-      Project : constant Project_Type := Get_Project_From_File
+      C          : constant File_Selection_Context_Access :=
+                     File_Selection_Context_Access (Context.Context);
+      Kernel     : constant Kernel_Handle := Get_Kernel (C);
+      File       : constant VFS.Virtual_File := File_Information (C);
+      Project    : constant Project_Type := Get_Project_From_File
         (Get_Registry (Kernel).all, File);
       Other_File : constant Virtual_File := Create
         (Other_File_Base_Name (Project, File), Project);
@@ -1673,8 +1677,8 @@ package body Src_Editor_Box is
    ------------------
 
    procedure On_Goto_Line
-     (Widget  : access GObject_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class)
+     (Widget : access GObject_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class)
    is
       Box : constant Source_Editor_Box := Source_Editor_Box (Widget);
    begin
@@ -2564,44 +2568,68 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type :=
         Src_Editor_Buffer.Editable_Line_Type'Last) return Entity_Information
    is
+      Block           : Block_Record;
+      Entity          : Entity_Information;
+      Status          : Find_Decl_Or_Body_Query_Status;
+      L               : Buffer_Line_Type;
       Normalized_Line : Editable_Line_Type := Line;
-      L      : Buffer_Line_Type;
-      New_L  : Buffer_Line_Type;
-      Block  : Block_Record;
-      Entity : Entity_Information;
-      Status : Find_Decl_Or_Body_Query_Status;
    begin
       if Normalized_Line = Editable_Line_Type'Last then
          Normalized_Line := Editor.Current_Line;
       end if;
 
+      Block := Get_Subprogram_Block (Editor, Normalized_Line);
+
       L := Get_Buffer_Line (Editor.Source_Buffer, Normalized_Line);
+
+      if Block.Name /= null then
+         Find_Declaration_Or_Overloaded
+           (Kernel      => Editor.Kernel,
+            File        => Get_Or_Create
+              (Db   => Get_Database (Editor.Kernel),
+               File => Get_Filename (Editor.Source_Buffer)),
+            Entity_Name => Block.Name.all,
+            Line        => Integer
+              (Get_Editable_Line (Editor.Source_Buffer, L) - 1),
+            Column      => 1,
+            Entity      => Entity,
+            Status      => Status);
+         return Entity;
+      else
+         return null;
+      end if;
+   end Get_Subprogram;
+
+   --------------------------
+   -- Get_Subprogram_Block --
+   --------------------------
+
+   function Get_Subprogram_Block
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
+   is
+      Empty_Block : constant Block_Record :=
+                      (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
+      L           : Buffer_Line_Type;
+      New_L       : Buffer_Line_Type;
+      Block       : Block_Record;
+   begin
+      L := Get_Buffer_Line (Editor.Source_Buffer, Line);
 
       Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => True);
 
       if Block.Block_Type = Cat_Unknown
         and then Block.Indentation_Level = 0
       then
-         return null;
+         return Empty_Block;
       end if;
 
       while L > 1 loop
          if Block.Block_Type in Enclosing_Entity_Category then
             if Block.Name /= null then
-               Find_Declaration_Or_Overloaded
-                 (Kernel      => Editor.Kernel,
-                  File        => Get_Or_Create
-                    (Db   => Get_Database (Editor.Kernel),
-                     File => Get_Filename (Editor.Source_Buffer)),
-                  Entity_Name => Block.Name.all,
-                  Line        => Integer
-                    (Get_Editable_Line (Editor.Source_Buffer, L) - 1),
-                  Column      => 1,
-                  Entity      => Entity,
-                  Status      => Status);
-               return Entity;
+               return Block;
             else
-               return null;
+               return Empty_Block;
             end if;
          end if;
 
@@ -2625,8 +2653,8 @@ package body Src_Editor_Box is
          Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
       end loop;
 
-      return null;
-   end Get_Subprogram;
+      return Empty_Block;
+   end Get_Subprogram_Block;
 
    -------------------------
    -- Get_Subprogram_Name --
@@ -2637,10 +2665,17 @@ package body Src_Editor_Box is
       Line   : Src_Editor_Buffer.Editable_Line_Type :=
         Src_Editor_Buffer.Editable_Line_Type'Last) return String
    is
-      Entity : constant Entity_Information := Get_Subprogram (Editor, Line);
+      Normalized_Line : Editable_Line_Type := Line;
+      Block           : Block_Record;
    begin
-      if Entity /= null then
-         return Get_Name (Entity).all;
+      if Normalized_Line = Editable_Line_Type'Last then
+         Normalized_Line := Editor.Current_Line;
+      end if;
+
+      Block := Get_Subprogram_Block (Editor, Normalized_Line);
+
+      if Block.Name /= null then
+         return Block.Name.all;
       else
          return "";
       end if;
