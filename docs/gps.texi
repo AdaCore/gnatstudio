@@ -3,7 +3,7 @@
 
 @c %**start of header
 @setfilename gps.info
-@settitle Using the GNAT Programming System
+@settitle Using the GNAT Programming Studio
 @setchapternewpage odd
 @syncodeindex fn cp
 
@@ -18,7 +18,7 @@
 @title{Using GPS}
 @end flushleft
 @flushright
-@titlefont{The GNAT Programming System}
+@titlefont{The GNAT Programming Studio}
 @end flushright
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
@@ -43,7 +43,7 @@ unmodified in any copy.
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
-@top Using the GNAT Programming System
+@top Using the GNAT Programming Studio
 
 Version @value{GPSVersion}
 
