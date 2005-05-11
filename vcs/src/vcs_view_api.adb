@@ -786,10 +786,8 @@ package body VCS_View_API is
    is
       Explorer : VCS_View_Access;
    begin
-      if not Explorer_Is_Open then
-         Explorer := Get_Explorer (Kernel, True, True);
-         Change_Context (Explorer, Context);
-      end if;
+      Explorer := Get_Explorer (Kernel, True, True);
+      Change_Context (Explorer, Context);
    end Open_Explorer;
 
    ------------------------
