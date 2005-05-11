@@ -3408,7 +3408,7 @@ and tool switches are read directly from that file.
 This specialized wizard is similar to the Single Project wizard, except it
 adds one extra page, the Library page. The output of the compilation of this
 project is a library (shared or static), as opposed to an executable in the
-case o the Single Project.
+case of @code{Single Project}.
 @end itemize
 
 
