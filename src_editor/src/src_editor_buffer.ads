@@ -549,10 +549,10 @@ package Src_Editor_Buffer is
 
    type Block_Record is record
       Indentation_Level : Integer := 0;
-      --  Represent the indentation level of the block.
+      --  Represent the indentation level of the block
 
       Offset_Start      : Integer := 0;
-      --  The indentation offset of the first line of the block, in characters.
+      --  The indentation offset of the first line of the block, in characters
 
       Stored_Offset     : Integer := 0;
       --  Stores the last calculated offset of this block. Mainly used to be
@@ -561,17 +561,17 @@ package Src_Editor_Buffer is
 
       First_Line        : Editable_Line_Type := 0;
       Last_Line         : Editable_Line_Type := 0;
-      --  Indicate the lines that bound the block.
+      --  Indicate the lines that bound the block
 
       Name              : String_Access;
       --  The name of the block, this is the subprogram or package name. This
       --  pointer is null for a block where name has no meaning.
 
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
-      --  Indicates the type of the block, if Indentation_Level /= 0.
+      --  Indicates the type of the block, if Indentation_Level /= 0
 
       GC                : Gdk_GC := null;
-      --  The color to use when highlighting this block.
+      --  The color to use when highlighting this block
    end record;
 
    function Get_Block
