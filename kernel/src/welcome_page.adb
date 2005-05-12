@@ -157,7 +157,7 @@ package body Welcome_Page is
         & ASCII.LF & ASCII.LF &
         (-("For more information, click on one of the buttons below, which"
           & " will launch an HTML browser. To configure the HTML browser"
-           & " under unix systems, you can go to the menu Help->Preferences"
+           & " under unix systems, you can go to the menu Edit->Preferences"
            & " and select the 'External Commands' section.")));
       Set_Line_Wrap (Label, True);
       Pack_Start (Hbox, Label);
