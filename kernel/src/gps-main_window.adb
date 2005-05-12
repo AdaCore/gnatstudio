@@ -1110,11 +1110,11 @@ package body GPS.Main_Window is
    begin
       if Info = "" then
          Set_Title (Window, GPS_Name (Window) &
-                    (-" - GNAT Programming System (project: ") &
+                    (-" - GNAT Programming Studio (project: ") &
                     Project_Name (Get_Project (Window.Kernel)) & ')');
       else
          Set_Title (Window, GPS_Name (Window) &
-                    (-" - GNAT Programming System (project: ") &
+                    (-" - GNAT Programming Studio (project: ") &
                     Project_Name (Get_Project (Window.Kernel)) &
                     ") - " & Info);
       end if;

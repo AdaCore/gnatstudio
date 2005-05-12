@@ -777,7 +777,7 @@ procedure GPS.Main is
       Help_String : constant String :=
         GPS_Name (GPS_Main) & " " & Config.Version & " (" &
         Config.Source_Date & ")" &
-        (-", the GNAT Programming System.") & LF
+        (-", the GNAT Programming Studio.") & LF
         & (-"Usage:") & LF
         & (-"   gps [options] [-Pproject-file] [source1] [source2] ...") & LF
         & ("source1, source2,...") & LF
@@ -1382,7 +1382,7 @@ procedure GPS.Main is
          -"Welcome to " & GPS_Name (GPS_Main) & " " & Config.Version &
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
-         (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
+         (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
          "(c) 2001-2005 AdaCore" & ASCII.LF);
       Free (About_Contents);
 
