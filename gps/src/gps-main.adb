@@ -81,6 +81,7 @@ with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
 with Browsers.Entities;
+with Casing_Exceptions;
 with Cpp_Module;
 with External_Editor_Module;
 with GVD_Module;
@@ -1332,6 +1333,8 @@ procedure GPS.Main is
       if Active (CPP_Trace) then
          Cpp_Module.Register_Module (GPS_Main.Kernel);
       end if;
+
+      Casing_Exceptions.Register_Module (GPS_Main.Kernel);
 
       --  Load system files
 
