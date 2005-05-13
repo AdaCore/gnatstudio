@@ -41,12 +41,6 @@
             <combo-entry label="Lower case" value="L" />
             <combo-entry label="Upper case" value="U" />
          </combo>
-         <combo label="Name" switch="-n" line="2" noswitch="D" nodigit="D" >
-            <combo-entry label="As declared" value="D" />
-            <combo-entry label="Mixed case" value="M" />
-            <combo-entry label="Lower case" value="L" />
-            <combo-entry label="Upper case" value="U" />
-         </combo>
          <combo label="Attribute" switch="-a" line="2" noswitch="M" nodigit="M"
 >
             <combo-entry label="Mixed case" value="M" />
@@ -77,8 +71,7 @@
          <check label="Assignments in statements" switch="-A3" line="4" />
          <check label="Arrow delimiters in associations" switch="-A4" line="4" />
 
-         <check label="Do not set missing end/exit labels" switch="-e" line="5"
-/>
+         <check label="Do not set missing end/exit labels" switch="-e" line="5" />
       </switches>
    </tool>
 
