@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,49 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;  use Glib;
-
-with Gdk.Event;   use Gdk.Event;
-
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Arguments;     use Gtk.Arguments;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtk.GEntry;        use Gtk.GEntry;
-with Gtk.Handlers;      use Gtk.Handlers;
-
-with GVD.Memory_View;   use GVD.Memory_View;
-with Basic_Types;       use Basic_Types;
-with Traces;            use Traces;
 with Ada.Exceptions;    use Ada.Exceptions;
 
+with Gdk.Event;         use Gdk.Event;
+with Glib;              use Glib;
+with Gtk.Arguments;     use Gtk.Arguments;
+with Gtk.GEntry;        use Gtk.GEntry;
+with Gtk.Handlers;      use Gtk.Handlers;
+with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk.Widget;        use Gtk.Widget;
+
+with Basic_Types;       use Basic_Types;
+with GVD.Memory_View;   use GVD.Memory_View;
+with Traces;            use Traces;
+
 package body Memory_View_Pkg.Callbacks is
-
-   use Gtk.Arguments;
-
-   ----------------------------------
-   -- On_Memory_View_Size_Allocate --
-   ----------------------------------
-
-   procedure On_Memory_View_Size_Allocate
-     (Object : access Gtk_Window_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      pragma Unreferenced (Params);
-
-      View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
-
-   begin
-      if Realized_Is_Set (View) then
-         Update_Display (View);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Memory_View_Size_Allocate;
 
    -------------------------------
    -- On_Address_Entry_Activate --
@@ -70,7 +45,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Entry_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
 
@@ -88,7 +63,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
 
@@ -106,7 +81,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Entry_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
 
@@ -124,7 +99,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Entry_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
 
@@ -160,7 +135,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Up (View);
 
@@ -178,7 +153,7 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+               GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Down (View);
 
@@ -197,7 +172,7 @@ package body Memory_View_Pkg.Callbacks is
       Params : GValues) return Boolean
    is
       View  : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
+                GVD_Memory_View (Get_Toplevel (Object));
       Arg1  : Gdk_Event;
       Proxy : constant C_Proxy := Get_Proxy (Nth (Params, 1));
 
@@ -257,7 +232,7 @@ package body Memory_View_Pkg.Callbacks is
    -------------------------
 
    procedure On_View_Move_Cursor
-     (Object : access Gtk_Text_Record'Class;
+     (Object : access Gtk_Text_View_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Object, Params);
@@ -281,17 +256,19 @@ package body Memory_View_Pkg.Callbacks is
       pragma Unreferenced (Params);
 
       View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
-      use type Glib.Gint;
-      use type Glib.Guint;
+               GVD_Memory_View (Get_Toplevel (Object));
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Result     : Boolean;
    begin
       if View.Values = null then
          return False;
       end if;
 
-      if Get_Selection_End_Pos (View.View)
-        = Get_Selection_Start_Pos (View.View)
-      then
+      Get_Selection_Bounds
+        (Get_Buffer (View.View), Start_Iter, End_Iter, Result);
+
+      if Result = False then
          Watch_Cursor_Location (View);
       end if;
 
@@ -353,5 +330,22 @@ package body Memory_View_Pkg.Callbacks is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Close_Clicked;
+
+   -----------------------
+   -- On_Button_Release --
+   -----------------------
+
+   function On_Button_Release
+     (Object : access Gtk_Entry_Record'Class;
+      Params : GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+      View : constant GVD_Memory_View :=
+               GVD_Memory_View (Get_Toplevel (Object));
+   begin
+      Update_Display (View);
+
+      return False;
+   end On_Button_Release;
 
 end Memory_View_Pkg.Callbacks;
