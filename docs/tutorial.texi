@@ -570,7 +570,7 @@ Click on @code{Cancel} to close the wizard.
 @noindent
 
 In the project explorer, on the project @i{sdc}, use the contextual menu
-@code{Edit project properties}.
+@code{Edit project->Properties...}.
 All the properties set in the project wizard can be found here as well.
 You can switch between pages by clicking on the tabs located along the
 left side of the window.
@@ -634,11 +634,11 @@ Click on the right arrow of @file{tokens.ads} to display the files that
 @section Project dependencies
 @noindent
 
-Back in the project explorer, on the @i{sdc} project, select the contextual
-menu @code{Project->Dependencies...}, then on the @code{Add From File},
+Back in the project explorer, on the @i{Sdc} project, select the contextual
+menu @code{Edit Project->Dependencies...}, then on the @code{Add From File},
 then open the @i{tutorial}
 directory and click on the @code{projects} subdirectory. Select the file
-@code{prj1.gpr}.
+@code{prj1.gpr}. Click on @code{Apply} to validate the change.
 
 You can see the new dependency added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
@@ -647,13 +647,13 @@ similarly open the @code{prj2} icon, you will notice that the project
 @code{prj4} is displayed twice: once as a dependency of @code{prj2}, and
 once as a dependency of @code{prj1}.
 
-GPS can also display the graph of dependencies between projects: on @i{sdc}
+GPS can also display the graph of dependencies between projects: on @i{Sdc}
 project, use the contextual menu
-@code{Show projects imported by sdc}: this will open a project hierarchy
+@code{Show projects imported by Sdc}: this will open a project hierarchy
 browser.
 
-On the @code{sdc.gpr} project, select the contextual menu
-@code{Show projects imported by sdc recursively}.
+On the @code{Sdc.gpr} project, select the contextual menu
+@code{Show projects imported by Sdc recursively}.
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
