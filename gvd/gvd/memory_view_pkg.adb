@@ -18,19 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
+with Gtk;             use Gtk;
+with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Arrow;       use Gtk.Arrow;
-with Gtk.Label;       use Gtk.Label;
 with Gtk.Box;         use Gtk.Box;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
-with Gtk.Separator;   use Gtk.Separator;
-with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.Separator;   use Gtk.Separator;
+with Gtk.Spin_Button; use Gtk.Spin_Button;
+with Gtk.Stock;       use Gtk.Stock;
+with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
+with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with GVD.Callbacks;   use GVD.Callbacks;
-with GPS.Intl;        use GPS.Intl;
+
+with GPS.Intl;                  use GPS.Intl;
+with GVD.Callbacks;             use GVD.Callbacks;
 with Memory_View_Pkg.Callbacks; use Memory_View_Pkg.Callbacks;
 
 package body Memory_View_Pkg is
@@ -73,15 +76,14 @@ package body Memory_View_Pkg is
       Arrow2       : Gtk_Arrow;
       Hseparator2  : Gtk_Hseparator;
       Hbuttonbox11 : Gtk_Hbutton_Box;
+      Adjustment   : Gtk_Adjustment;
 
    begin
       Gtk.Window.Initialize (Memory_View, Window_Toplevel);
       Set_Title (Memory_View, -"Memory View");
-      Set_Policy (Memory_View, False, True, False);
+      Set_Policy (Memory_View, True, True, False);
       Set_Position (Memory_View, Win_Pos_None);
       Set_Modal (Memory_View, False);
-      Window_Callback.Connect
-        (Memory_View, "size_allocate", On_Memory_View_Size_Allocate'Access);
 
       Gtk_New_Vbox (Vbox20, False, 0);
       Add (Memory_View, Vbox20);
@@ -264,13 +266,19 @@ package body Memory_View_Pkg is
       Set_Padding (Arrow2, 0, 0);
       Add (Memory_View.Pgdn, Arrow2);
 
-      Gtk_New (Memory_View.Scrolledwindow);
-      Set_Policy (Memory_View.Scrolledwindow, Policy_Never, Policy_Never);
-      Pack_Start (Vbox20, Memory_View.Scrolledwindow, True, True, 0);
+      Gtk_New
+        (Adjustment, 16.0, 1.0, 30.0, 1.0, 0.0, 0.0);
+      Gtk_New
+        (Memory_View.Lines_Spin, Adjustment, 0.0, 0);
+      Entry_Return_Callback.Connect
+        (Gtk_Entry (Memory_View.Lines_Spin), "button_release_event",
+         On_Button_Release'Access);
+      Pack_Start (Hbox12, Memory_View.Lines_Spin, True, True, 0);
 
-      Gtk_New (Memory_View.Viewport);
-      Set_Shadow_Type (Memory_View.Viewport, Shadow_In);
-      Add (Memory_View.Scrolledwindow, Memory_View.Viewport);
+      Gtk_New (Memory_View.Scrolledwindow);
+      Set_Policy
+        (Memory_View.Scrolledwindow, Policy_Automatic, Policy_Automatic);
+      Pack_Start (Vbox20, Memory_View.Scrolledwindow, True, True, 0);
 
       Gtk_New (Memory_View.View);
       Set_Editable (Memory_View.View, True);
@@ -281,7 +289,7 @@ package body Memory_View_Pkg is
       Return_Callback.Connect
         (Memory_View.View, "button_release_event",
          On_View_Button_Release_Event'Access);
-      Add (Memory_View.Viewport, Memory_View.View);
+      Add (Memory_View.Scrolledwindow, Memory_View.View);
 
       Gtk_New_Hseparator (Hseparator2);
       Pack_Start (Vbox20, Hseparator2, False, False, 3);
