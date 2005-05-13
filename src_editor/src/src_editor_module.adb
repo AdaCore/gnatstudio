@@ -4810,7 +4810,6 @@ package body Src_Editor_Module is
          Expand_Aliases_Entities'Access);
 
       Register_Editor_Hooks (Kernel);
-      Casing_Exceptions.Register_Module (Kernel);
 
       --  Create the module-wide GCs.
       --  We need to do that in a callback to "map"
