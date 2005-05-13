@@ -18,14 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Glib.Object;
-with Gdk.Color;             use Gdk.Color;
-with Gdk.Font;              use Gdk.Font;
+with Gtk.Text_Tag;          use Gtk.Text_Tag;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Widget;            use Gtk.Widget;
-with Memory_View_Pkg;       use Memory_View_Pkg;
+
 with Basic_Types;           use Basic_Types;
+with Memory_View_Pkg;       use Memory_View_Pkg;
 
 package GVD.Memory_View is
 
@@ -40,73 +38,53 @@ package GVD.Memory_View is
    --  Update_Display.
 
    type GVD_Memory_View_Record is new Memory_View_Record with record
-      Window : Gtk_Widget;
+      Window            : Gtk_Widget;
       --  The associated main window;
 
-      Display : Display_Type := Hex;
+      Display           : Display_Type := Hex;
       --  The current display mode.
 
-      Data : Data_Size := Byte;
+      Data              : Data_Size := Byte;
       --  The size of data to display;
 
-      Starting_Address : Long_Long_Integer := 0;
+      Starting_Address  : Long_Long_Integer := 0;
       --  The first address that is being explored.
 
-      Values : String_Access;
+      Values            : String_Access;
       --  The values that are to be shown in the window.
       --  This is a string of hexadecimal digits.
 
-      Flags : String_Access;
-      --  A string the same size as Values used to set markers on the values.
+      Flags             : String_Access;
+      --  A string of the same size as Values used to set markers on the
+      --  values.
 
-      Number_Of_Bytes : Integer := 256;
+      Number_Of_Bytes   : Integer := 256;
       --  The size of the pages that are currently stored.
 
       Number_Of_Columns : Integer := 16;
       --  The number of columns that are to be displayed.
 
-      Number_Of_Lines : Integer := 16;
-      --  The number of lines that are to be displayed.
-
-      Selection_Start : Integer;
-      Selection_End   : Integer;
-      --  These numbers refer to indexes in Values pointing to the bytes that
-      --  are currently selected.
-
-      Unit_Size : Integer := 2;
+      Unit_Size         : Integer := 2;
       --  The size, in number of elements from Values, of the current
       --  grouping unit (ie 2 for Bytes, 4 for Halfword, 8 for Word....)
 
-      Trunc : Integer;
+      Trunc             : Integer;
       --  The size of a separate element in the view (ie 2 for a Byte displayed
       --  in Hex, 3 for a Byte displayed in Decimal ...)
 
-      Cursor_Position : Gint;
-      --  Locates the cursor position within the view.
-
-      Cursor_Index : Integer;
-      --  Locates the cursor position within the values array;
-
-
       --  Visual attributes :
 
-      View_Font      : Gdk_Font;
-      --  The font displayed in the data view.
+      Default_Tag       : Gtk_Text_Tag;
+      --  Tag used for the default text
 
-      White_Color    : Gdk_Color;
-      --  The standard background color.
+      Modified_Tag      : Gtk_Text_Tag;
+      --  Tag used to display modified chunks
 
-      Highlighted    : Gdk_Color;
-      --  The background color for highlighted data.
+      Address_Tag       : Gtk_Text_Tag;
+      --  Tag used to display addresses
 
-      Selected       : Gdk_Color;
-      --  The background color for selected data.
-
-      View_Color     : Gdk_Color;
-      --  The standard foreground color.
-
-      Modified_Color : Gdk_Color;
-      --  The foreground color for modified data.
+      Editable_Tag      : Gtk_Text_Tag;
+      --  Tag used to display some text that could be modified by the user
 
    end record;
 
@@ -141,12 +119,6 @@ package GVD.Memory_View is
       Window : Gdk.Window.Gdk_Window);
    --  Initialize fonts and graphics used for this widget.
 
-   procedure Update
-     (View    : access GVD_Memory_View_Record'Class;
-      Process : Glib.Object.GObject);
-   --  Updates the dialog.
-   --  Process is the new Visual_Debugger.
-
    procedure Update_Display (View : access GVD_Memory_View_Record'Class);
    --  Refreshes the view.
 
@@ -162,6 +134,7 @@ package GVD.Memory_View is
    --  Inserts string at the current location.
 
    procedure Watch_Cursor_Location
-     (View     : access GVD_Memory_View_Record'Class);
+     (View : access GVD_Memory_View_Record'Class);
    --  Makes sure the cursor is within the editable area.
+
 end GVD.Memory_View;
