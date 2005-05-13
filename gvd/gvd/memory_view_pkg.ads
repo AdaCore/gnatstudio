@@ -18,16 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Combo; use Gtk.Combo;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Check_Button; use Gtk.Check_Button;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Viewport; use Gtk.Viewport;
-with Gtk.Text; use Gtk.Text;
+with Gtk.Spin_Button;     use Gtk.Spin_Button;
+with Gtk.Text_View;       use Gtk.Text_View;
+with Gtk.Viewport;        use Gtk.Viewport;
+with Gtk.Window;          use Gtk.Window;
 
 package Memory_View_Pkg is
 
@@ -37,7 +37,7 @@ package Memory_View_Pkg is
       Pgdn           : Gtk_Button;
       Scrolledwindow : Gtk_Scrolled_Window;
       Viewport       : Gtk_Viewport;
-      View           : Gtk_Text;
+      View           : Gtk_Text_View;
       Reset          : Gtk_Button;
       Submit         : Gtk_Button;
       Close          : Gtk_Button;
@@ -50,6 +50,7 @@ package Memory_View_Pkg is
       Address_Entry  : Gtk_Entry;
       Search_Entry   : Gtk_Entry;
       Data_Entry     : Gtk_Entry;
+      Lines_Spin     : Gtk_Spin_Button;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;
 
