@@ -2668,7 +2668,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Edit project properties",
          Action => Command,
-         Label  => "Edit project/Properties...",
+         Label  => "Edit project/Properties",
          Filter => Filter);
 
       Command := new Save_Project_Command;
@@ -2689,7 +2689,7 @@ package body Project_Viewers is
         (Kernel, "Edit project dependencies",
          Action => Command,
          Filter => Filter,
-         Label  => "Edit project/Dependencies...");
+         Label  => "Edit project/Dependencies");
 
       Command := new Add_Variable_Command;
       Register_Contextual_Menu
@@ -2775,7 +2775,6 @@ package body Project_Viewers is
          Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-
    end Register_Module;
 
 end Project_Viewers;
