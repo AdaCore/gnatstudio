@@ -3373,6 +3373,8 @@ package body GVD_Module is
       Access_Filter     := new Access_Variable_Filter;
       Subprogram_Filter := new Subprogram_Variable_Filter;
 
+      Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
+
       Filter := Action_Filter (Debugger_Filter and Printable_Filter);
       Command := new Print_Variable_Command;
       Register_Contextual_Menu
