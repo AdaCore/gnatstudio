@@ -523,8 +523,8 @@ check box.
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
 for @i{Version Control System}.
 GPS provides a generic framework for @i{VCS} which allows it to support
-new systems easily. Systems supported by default are CVS and ClearCase. Select
-@code{CVS}.
+new systems easily. Systems supported by default are CVS, ClearCase and
+Subversion. Select @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
 used to specify the project's sources. Click on the @code{Add} button,
