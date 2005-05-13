@@ -678,6 +678,7 @@ available with GPS. A non exhaustive list of the features not mentioned in
 this document includes:
 
 @itemize @bullet
+@item Documentation generation
 @item Automatic generation of body files
 @item Pretty printing
 @item Visual comparison of files
