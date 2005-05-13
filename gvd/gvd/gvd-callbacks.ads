@@ -23,13 +23,13 @@
 
 with Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
-with Gtk.Button; use Gtk.Button;
-with Gtk.Radio_Button; use Gtk.Radio_Button;
-with Gtk.List; use Gtk.List;
-with Gtk.Window; use Gtk.Window;
-with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Text; use Gtk.Text;
+with Gtk.GEntry;       use Gtk.GEntry;
+with Gtk.List;         use Gtk.List;
+with Gtk.Radio_Button; use Gtk.Radio_Button;
+with Gtk.Text_View;    use Gtk.Text_View;
+with Gtk.Window;       use Gtk.Window;
 
 package GVD.Callbacks is
 
@@ -48,10 +48,13 @@ package GVD.Callbacks is
    package Entry_Callback is new
      Gtk.Handlers.Callback (Gtk_Entry_Record);
 
+   package Entry_Return_Callback is new
+     Gtk.Handlers.Return_Callback (Gtk_Entry_Record, Boolean);
+
    package Check_Button_Callback is new
      Gtk.Handlers.Callback (Gtk_Check_Button_Record);
 
    package Text_Callback is new
-     Gtk.Handlers.Callback (Gtk_Text_Record);
+     Gtk.Handlers.Callback (Gtk_Text_View_Record);
 
 end GVD.Callbacks;
