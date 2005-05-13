@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,15 +19,11 @@
 -----------------------------------------------------------------------
 
 with Gtk.Arguments;
-with Glib.Values; use Glib.Values;
+with Glib.Values;   use Glib.Values;
 
 with Gtk.Widget; use Gtk.Widget;
 
 package Memory_View_Pkg.Callbacks is
-
-   procedure On_Memory_View_Size_Allocate
-     (Object : access Gtk_Window_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
 
    procedure On_Address_Entry_Activate
      (Object : access Gtk_Entry_Record'Class);
@@ -55,7 +51,7 @@ package Memory_View_Pkg.Callbacks is
       Params : GValues) return Boolean;
 
    procedure On_View_Move_Cursor
-     (Object : access Gtk_Text_Record'Class;
+     (Object : access Gtk_Text_View_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
    function On_View_Button_Release_Event
@@ -70,5 +66,9 @@ package Memory_View_Pkg.Callbacks is
 
    procedure On_Close_Clicked
      (Object : access Gtk_Button_Record'Class);
+
+   function On_Button_Release
+     (Object : access Gtk_Entry_Record'Class;
+      Params : GValues) return Boolean;
 
 end Memory_View_Pkg.Callbacks;
