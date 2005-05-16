@@ -27,7 +27,7 @@ package Language_Utils is
      (Lang      : access Language_Root'Class;
       File_Name : VFS.Virtual_File;
       Result    : out Construct_List);
-   --  Same as Parse_Constructs, but works on a given file.
+   --  Same as Language.Parse_Constructs, but works on a given file.
    --  Since Parse_File_Constructs calls Parse_Constructs, this function does
    --  not need to be dispatching.
 
