@@ -89,16 +89,6 @@ package Case_Handling is
       Substring : String);
    --  Remove a substring case exception from the container
 
-   procedure Load_Exceptions
-     (C         : in out Casing_Exceptions;
-      Filename  : String;
-      Read_Only : Boolean);
-   --  Load case exceptions file and set the in memory container
-
-   procedure Save_Exceptions (C : in Casing_Exceptions; Filename : String);
-   --  Save the case exceptions container into Filename. The container still
-   --  remains in memory. The read-only case exceptions are not saved.
-
    procedure Destroy (C : in out Casing_Exceptions);
    --  Destroy the case exceptions handler, release all memory associated
    --  with this object.
