@@ -33,6 +33,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Intl;                use GPS.Intl;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with Language;                use Language;
+with Language_Utils;          use Language_Utils;
 with Entities.Debug;          use Entities.Debug;
 
 package body Entities is
