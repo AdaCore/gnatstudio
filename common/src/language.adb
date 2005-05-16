@@ -24,11 +24,8 @@ with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
-with GNAT.OS_Lib;
 with String_Utils;                use String_Utils;
-with Ada.Exceptions;              use Ada.Exceptions;
 with Glib.Unicode;                use Glib, Glib.Unicode;
-with Traces;                      use Traces;
 
 package body Language is
 
@@ -509,33 +506,6 @@ package body Language is
          end loop;
       end loop;
    end Parse_Constructs;
-
-   -----------------------------
-   --  Parse_File_Constructs  --
-   -----------------------------
-
-   procedure Parse_File_Constructs
-     (Lang      : access Language_Root'Class;
-      File_Name : VFS.Virtual_File;
-      Result    : out Construct_List)
-   is
-      use GNAT.OS_Lib;
-
-      Buffer : GNAT.OS_Lib.String_Access;
-   begin
-      Buffer := VFS.Read_File (File_Name);
-
-      if Buffer /= null then
-         Parse_Constructs (Lang, Buffer.all, Result);
-         Free (Buffer);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Free (Buffer);
-   end Parse_File_Constructs;
 
    --------------------
    -- Parse_Entities --

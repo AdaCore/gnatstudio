@@ -22,7 +22,6 @@ with Ada.Strings.Maps;  use Ada.Strings.Maps;
 
 with GNAT.Regpat;
 with Basic_Types;
-with VFS;
 with Case_Handling;
 
 package Language is
@@ -512,14 +511,6 @@ package Language is
       Result : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
-
-   procedure Parse_File_Constructs
-     (Lang      : access Language_Root'Class;
-      File_Name : VFS.Virtual_File;
-      Result    : out Construct_List);
-   --  Same as Parse_Constructs, but works on a given file.
-   --  Since Parse_File_Constructs calls Parse_Constructs, this function does
-   --  not need to be dispatching.
 
    type Replace_Text_Callback is access procedure
      (Line    : Natural;
