@@ -229,13 +229,12 @@ then click on @code{Goto declaration of Next}: we're now in the package
 
 @noindent
 
-Select the menu @code{Navigate->Find/Replace...}: this will open a search
+Select the menu @code{Navigate->Find or Replace...}: this will open a search
 dialog.
 In the @code{Search for:} text entry type @file{tokens.ads}. Then
 select @code{Project explorer} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
-several contexts including the current file, the project explorer, the help
-window, ...
+several contexts including the current file, the project explorer, dot{}
 
 Now click on @code{Find}. The file @file{tokens.ads}, in directory @code{struct}
 is highlighted.
