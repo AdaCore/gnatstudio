@@ -613,7 +613,11 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Value              : String;
       Project_Changed    : in out Boolean;
+      Entry_Value        : String := "";
       Attribute_Index    : String := "");
+   --  Entry value is the value as entered into the form. We need this value to
+   --  check it against the default value that must be omitted. If Entry_Value
+   --  is not specified then Value is used instead.
    procedure Update_Attribute_Value
      (Kernel             : access Kernel_Handle_Record'Class;
       Attr               : Attribute_Description_Access;
@@ -657,6 +661,7 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Value              : String;
       Project_Changed    : in out Boolean;
+      Entry_Value        : String := "";
       Attribute_Index    : String := "")
    is
       Attribute             : constant Attribute_Pkg :=
@@ -680,7 +685,11 @@ package body Project_Properties is
             Index         => Lower_Attribute_Index);
       begin
          if Value /= Old_Value then
-            if Attr.Omit_If_Default and then Value = Default_Value then
+            if Attr.Omit_If_Default
+              and then
+                ((Entry_Value /= "" and then Entry_Value = Default_Value)
+                   or else Value = Default_Value)
+            then
                Delete_Attribute
                  (Project            => Project,
                   Scenario_Variables => Scenario_Variables,
@@ -804,6 +813,7 @@ package body Project_Properties is
                Scenario_Variables => Scenario_Variables,
                Value              => Relative_Path_Name
                  (Get_Text (Editor.Ent), Get_Text (Editor.Path_Widget)),
+               Entry_Value        => Get_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
          else
             Update_Attribute_Value
