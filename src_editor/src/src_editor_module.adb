@@ -3496,8 +3496,7 @@ package body Src_Editor_Module is
      (Kernel : Kernel_Handle; Comment : Boolean)
    is
       Context      : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-
+                       Get_Current_Context (Kernel);
       Area         : File_Area_Context_Access;
       File_Context : File_Selection_Context_Access;
       Start_Line   : Integer;
@@ -3515,9 +3514,9 @@ package body Src_Editor_Module is
          File_Context := File_Selection_Context_Access (Context);
 
          declare
-            Lang   : Language_Access;
-            File   : constant Virtual_File := File_Information (File_Context);
-            Block  : Unbounded_String := Null_Unbounded_String;
+            Lang  : Language_Access;
+            File  : constant Virtual_File := File_Information (File_Context);
+            Block : Unbounded_String := Null_Unbounded_String;
          begin
             if Context.all in File_Area_Context'Class then
                Area := File_Area_Context_Access (Context);

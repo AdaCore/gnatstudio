@@ -244,7 +244,7 @@ package GPS.Kernel is
       Entity      : out Entities.Entity_Information;
       Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Find the declaration of the given entity in the file. If multiple
-   --  entities match, an interactive dialog is open for the user
+   --  entities match, an interactive dialog is open for the user.
 
    ---------------
    -- Module ID --

@@ -91,7 +91,7 @@ with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with System; use System;
+with System;                    use System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -1334,8 +1334,7 @@ package body GPS.Kernel is
       --   - use the closest match: nothing to do.
 
       if Status = Overloaded_Entity_Found then
-         Select_Entity_Declaration
-           (Kernel, File, Entity_Name, Entity, Status);
+         Select_Entity_Declaration (Kernel, File, Entity_Name, Entity, Status);
       end if;
    end Find_Declaration_Or_Overloaded;
 

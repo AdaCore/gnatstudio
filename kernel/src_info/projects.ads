@@ -94,8 +94,8 @@ package Projects is
    -------------------
 
    function Save_Project
-     (Project       : Project_Type;
-      Report_Error  : Error_Report := null) return Boolean;
+     (Project      : Project_Type;
+      Report_Error : Error_Report := null) return Boolean;
    --  Save the project to the corresponding file.
    --  If Recursive is True, all the imported projects are saved as well.
    --  Return whether the project was modified and has been saved,

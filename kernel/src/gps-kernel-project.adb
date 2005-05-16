@@ -22,9 +22,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
 
-with Projects;           use Projects;
-with Projects.Editor;    use Projects.Editor;
-with Projects.Registry;  use Projects.Registry;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 with Basic_Types;
 with Prj;
 with Entities;
@@ -297,6 +297,10 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String);
       --  Handler called when the project parser finds an error.
 
+      ------------------
+      -- Report_Error --
+      ------------------
+
       procedure Report_Error (S : String) is
       begin
          --  No need to send to the result view, since these error messages do
@@ -327,6 +331,10 @@ package body GPS.Kernel.Project is
         (Current : String; Index : Natural; Set_Var : String) return String;
       --  Concat the command line line for the Index-nth variable and the
       --  following ones to Current, and return the result.
+
+      ------------
+      -- Concat --
+      ------------
 
       function Concat
         (Current : String; Index : Natural; Set_Var : String) return String is
