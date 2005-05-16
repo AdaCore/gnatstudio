@@ -998,6 +998,10 @@ package body Project_Explorers is
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type);
       --  Recursively process node
 
+      ------------------
+      -- Process_Node --
+      ------------------
+
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type) is
          It : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
       begin

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2005                        --
---                            AdaCore                                --
+--                     Copyright (C) 2002-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -257,15 +257,27 @@ package body Projects is
       procedure Internal_Write_Str (S : String);
       procedure Internal_Write_Eol;
 
+      -------------------------
+      -- Internal_Write_Char --
+      -------------------------
+
       procedure Internal_Write_Char (C : Character) is
       begin
          Put (File, C);
       end Internal_Write_Char;
 
+      ------------------------
+      -- Internal_Write_Str --
+      ------------------------
+
       procedure Internal_Write_Str (S : String) is
       begin
          Put (File, S);
       end Internal_Write_Str;
+
+      ------------------------
+      -- Internal_Write_Eol --
+      ------------------------
 
       procedure Internal_Write_Eol is
       begin
@@ -312,9 +324,9 @@ package body Projects is
             Create (File, Mode => Out_File, Name => Filename);
             Pretty_Print
               (Project => Project,
-               W_Char => Internal_Write_Char'Unrestricted_Access,
-               W_Eol  => Internal_Write_Eol'Unrestricted_Access,
-               W_Str  => Internal_Write_Str'Unrestricted_Access);
+               W_Char  => Internal_Write_Char'Unrestricted_Access,
+               W_Eol   => Internal_Write_Eol'Unrestricted_Access,
+               W_Str   => Internal_Write_Str'Unrestricted_Access);
             Close (File);
 
             Set_Project_Modified (Project, False);
@@ -1415,9 +1427,9 @@ package body Projects is
    -----------
 
    function Start
-     (Root_Project : Project_Type;
-      Recursive    : Boolean := True;
-      Direct_Only  : Boolean := False;
+     (Root_Project     : Project_Type;
+      Recursive        : Boolean := True;
+      Direct_Only      : Boolean := False;
       Include_Extended : Boolean := True)
       return Imported_Project_Iterator
    is
@@ -1442,22 +1454,22 @@ package body Projects is
 
       if Recursive then
          Iter := Imported_Project_Iterator'
-           (Root          => Root_Project,
-            Direct_Only   => Direct_Only,
-            Importing     => False,
-            Current_Cache => No_Project,
+           (Root             => Root_Project,
+            Direct_Only      => Direct_Only,
+            Importing        => False,
+            Current_Cache    => No_Project,
             Include_Extended => Include_Extended,
-            Current       => Root_Project.Data.Imported_Projects'Last + 1);
+            Current          => Root_Project.Data.Imported_Projects'Last + 1);
          Next (Iter);
          return Iter;
       else
          return Imported_Project_Iterator'
-           (Root          => Root_Project,
-            Direct_Only   => Direct_Only,
-            Importing     => False,
-            Current_Cache => No_Project,
+           (Root             => Root_Project,
+            Direct_Only      => Direct_Only,
+            Importing        => False,
+            Current_Cache    => No_Project,
             Include_Extended => Include_Extended,
-            Current       => Root_Project.Data.Imported_Projects'First);
+            Current          => Root_Project.Data.Imported_Projects'First);
       end if;
    end Start;
 
@@ -1536,6 +1548,10 @@ package body Projects is
 
       procedure Merge_Project (P : Project_Type);
       --  Merge the imported projects of P with the ones for Project
+
+      -------------------
+      -- Merge_Project --
+      -------------------
 
       procedure Merge_Project (P : Project_Type) is
          Index2 : Integer := Imported'First;
@@ -1687,12 +1703,12 @@ package body Projects is
       end if;
 
       Iter := Imported_Project_Iterator'
-        (Root          => Project,
-         Direct_Only   => Direct_Only,
-         Importing     => True,
-         Current_Cache => No_Project,
+        (Root             => Project,
+         Direct_Only      => Direct_Only,
+         Importing        => True,
+         Current_Cache    => No_Project,
          Include_Extended => True,   --  ??? Should this be configurable
-         Current       => Project.Data.Importing_Projects'Last + 1);
+         Current          => Project.Data.Importing_Projects'Last + 1);
 
       --  The project iself is always at index 'Last
       if not Include_Self then
@@ -1832,7 +1848,6 @@ package body Projects is
       --  ??? This doesn't support cases where the default value is defined as
       --  an expression.
 
-
       ----------------
       -- Count_Vars --
       ----------------
@@ -1843,6 +1858,10 @@ package body Projects is
          function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
             return Boolean;
          --  Increment the total number of variables
+
+         --------
+         -- Cb --
+         --------
 
          function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
             return Boolean
@@ -1931,6 +1950,10 @@ package body Projects is
             return Boolean;
          --  Add the new variable in the list if needed
 
+         --------
+         -- Cb --
+         --------
+
          function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
             return Boolean
          is
@@ -1976,8 +1999,8 @@ package body Projects is
    ---------------------------
 
    procedure Ensure_External_Value
-     (Var     : Scenario_Variable;
-      Tree    : Project_Node_Tree_Ref)
+     (Var  : Scenario_Variable;
+      Tree : Project_Node_Tree_Ref)
    is
       N : constant String := External_Reference_Of (Var);
    begin
@@ -2053,7 +2076,7 @@ package body Projects is
 
    procedure Reset (Project : in out Project_Type) is
    begin
-      Project.Data.View       := Prj.No_Project;
+      Project.Data.View := Prj.No_Project;
       --  No need to reset Project.Data.Imported_Projects, since this doesn't
       --  change when the view changes
 
@@ -2108,9 +2131,9 @@ package body Projects is
    ---------------------
 
    function Check_Full_File
-     (Tree    : Prj.Project_Tree_Ref;
-      File    : Name_Id;
-      List    : Array_Element_Id) return Array_Element_Id
+     (Tree : Prj.Project_Tree_Ref;
+      File : Name_Id;
+      List : Array_Element_Id) return Array_Element_Id
    is
       Prefix : Array_Element_Id := List;
       Str    : String_List_Id;
@@ -2311,8 +2334,8 @@ package body Projects is
    --------------------------
 
    function Is_External_Variable
-     (Var     : Prj.Tree.Project_Node_Id;
-      Tree    : Project_Node_Tree_Ref) return Boolean is
+     (Var  : Prj.Tree.Project_Node_Id;
+      Tree : Project_Node_Tree_Ref) return Boolean is
    begin
       return Kind_Of
         (Current_Term (First_Term (Expression_Of (Var, Tree), Tree), Tree),
@@ -2325,8 +2348,8 @@ package body Projects is
    ---------------------------
 
    function External_Reference_Of
-     (Var     : Prj.Tree.Project_Node_Id;
-      Tree    : Project_Node_Tree_Ref) return Types.Name_Id
+     (Var  : Prj.Tree.Project_Node_Id;
+      Tree : Project_Node_Tree_Ref) return Types.Name_Id
    is
       Expr : Project_Node_Id := Expression_Of (Var, Tree);
    begin
@@ -2526,8 +2549,8 @@ package body Projects is
    -- Build --
    -----------
 
-   function Build (Package_Name, Attribute_Name : String)
-      return Attribute_Pkg is
+   function Build
+     (Package_Name, Attribute_Name : String) return Attribute_Pkg is
    begin
       return Attribute_Pkg
         (To_Lower (Package_Name) & '#' & To_Lower (Attribute_Name));

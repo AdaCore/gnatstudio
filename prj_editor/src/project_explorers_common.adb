@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,27 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;                 use Basic_Types;
-with Pixmaps_IDE;                 use Pixmaps_IDE;
-with Pixmaps_Prj;                 use Pixmaps_Prj;
-with Glib.Convert;                use Glib.Convert;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-with Language.Unknown;            use Language.Unknown;
-with Language;                    use Language;
+with Basic_Types;               use Basic_Types;
+with Pixmaps_IDE;               use Pixmaps_IDE;
+with Pixmaps_Prj;               use Pixmaps_Prj;
+with Glib.Convert;              use Glib.Convert;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Language.Unknown;          use Language.Unknown;
+with Language;                  use Language;
 with Language_Handlers.GPS;     use Language_Handlers.GPS;
-with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with String_Utils;                use String_Utils;
-with Entities;                    use Entities;
-with GUI_Utils;                   use GUI_Utils;
-with Traces;                      use Traces;
-with Projects.Registry;           use Projects, Projects.Registry;
-with Ada.Exceptions;              use Ada.Exceptions;
-with Types;                       use Types;
-with VFS;                         use VFS;
-with Ada.Calendar;                use Ada.Calendar;
+with String_Utils;              use String_Utils;
+with Entities;                  use Entities;
+with GUI_Utils;                 use GUI_Utils;
+with Traces;                    use Traces;
+with Projects.Registry;         use Projects, Projects.Registry;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Types;                     use Types;
+with VFS;                       use VFS;
+with Ada.Calendar;              use Ada.Calendar;
 
 package body Project_Explorers_Common is
 

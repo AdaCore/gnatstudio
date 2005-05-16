@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
+--                     Copyright (C) 2004-2005                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -52,12 +52,12 @@ package Creation_Wizard is
    type Project_Wizard is access all Project_Wizard_Record'Class;
 
    procedure Gtk_New
-     (Wiz                 : out Project_Wizard;
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title               : String;
-      Show_Toc            : Boolean := True;
-      Auto_Save_On_Exit   : Boolean := True;
-      Project             : Projects.Project_Type := Projects.No_Project);
+     (Wiz               : out Project_Wizard;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title             : String;
+      Show_Toc          : Boolean := True;
+      Auto_Save_On_Exit : Boolean := True;
+      Project           : Projects.Project_Type := Projects.No_Project);
    --  Create a new project wizard, or edit an existing one if Project is
    --  specified.
    --  All pages added to the wizard must be children of
@@ -65,12 +65,12 @@ package Creation_Wizard is
    --  The project is not loaded automatically on exit;
 
    procedure Initialize
-     (Wiz                 : access Project_Wizard_Record'Class;
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title               : String;
-      Show_Toc            : Boolean := True;
-      Auto_Save_On_Exit   : Boolean := True;
-      Project             : Projects.Project_Type := Projects.No_Project);
+     (Wiz               : access Project_Wizard_Record'Class;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title             : String;
+      Show_Toc          : Boolean := True;
+      Auto_Save_On_Exit : Boolean := True;
+      Project           : Projects.Project_Type := Projects.No_Project);
    --  Initialize a new project wizard.
 
    function Run (Wiz : access Project_Wizard_Record) return String;
@@ -103,13 +103,12 @@ package Creation_Wizard is
    --  Return the widget that contains the name of the project
 
    function Add_Name_And_Location_Page
-     (Wiz : access Project_Wizard_Record'Class;
+     (Wiz                 : access Project_Wizard_Record'Class;
       Force_Relative_Dirs : Boolean := False)
       return Name_And_Location_Page_Access;
    --  Add a new page for editing the name and location of a project.
    --  If Force_Relative_Dirs is False, then an extra button is added so that
    --  the user can choose whether paths should be relative or absolute.
-
 
    -------------------
    -- Gtk interface --
@@ -120,19 +119,23 @@ package Creation_Wizard is
 
 
 private
+
    procedure Perform_Finish (Wiz : access Project_Wizard_Record);
+
    function Is_Complete
      (Page : access Name_And_Location_Page;
       Wiz  : access Wizards.Wizard_Record'Class) return Boolean;
+
    function Create_Content
      (Page : access Name_And_Location_Page;
       Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+
    procedure Generate_Project
-     (Page    : access Name_And_Location_Page;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Name_And_Location_Page;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean);
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
    --  See inherited doc
 
    type Name_And_Location_Page is new Project_Wizard_Page_Record with record

@@ -32,8 +32,8 @@ with Pango.Font;         use Pango.Font;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -118,10 +118,10 @@ package body Wizards is
    ----------------
 
    procedure Initialize
-     (Wiz       : access Wizard_Record'Class;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Title     : String;
-      Show_Toc  : Boolean := True)
+     (Wiz      : access Wizard_Record'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Title    : String;
+      Show_Toc : Boolean := True)
    is
       Highlight_Font : Pango_Font_Description;
    begin

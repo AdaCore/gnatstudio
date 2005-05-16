@@ -50,13 +50,13 @@ package body GPR_Creation is
    --  Subprograms used for the hash table
 
    package File_Htables is new HTables.Simple_HTable
-     (Header_Num => Header_Num,
-      Element    => File_Info,
+     (Header_Num   => Header_Num,
+      Element      => File_Info,
       Free_Element => Free,
-      No_Element => No_File_Info,
-      Key        => String,
-      Hash       => Hash,
-      Equal      => "=");
+      No_Element   => No_File_Info,
+      Key          => String,
+      Hash         => Hash,
+      Equal        => "=");
    use File_Htables;
 
    type Is_Related_To is array (Natural range <>, Natural range <>) of Boolean;
@@ -83,7 +83,7 @@ package body GPR_Creation is
       Attribute       : Attribute_Pkg;
       List            : String_List;
       Attribute_Index : String := "");
-   --  Create a new GPR attribute in File, with List as its value.
+   --  Create a new GPR attribute in File, with List as its value
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String_List, String_List_Access);
@@ -143,15 +143,15 @@ package body GPR_Creation is
    --  directory.
 
    procedure Generate_Withs
-     (Projects          : Project_Type_Array;
-      Root_Project      : Project_Type;
-      Related_To        : Is_Related_To;
-      Source_Dirs       : String_List;
-      Obj_Dirs          : String_List;
-      Src_Files         : File_Htables.HTable;
-      Object_Dirs       : in out Object_Directory_Info_Array;
-      Current_Project   : Integer;
-      All_Source_Dirs   : Boolean := False);
+     (Projects        : Project_Type_Array;
+      Root_Project    : Project_Type;
+      Related_To      : Is_Related_To;
+      Source_Dirs     : String_List;
+      Obj_Dirs        : String_List;
+      Src_Files       : File_Htables.HTable;
+      Object_Dirs     : in out Object_Directory_Info_Array;
+      Current_Project : Integer;
+      All_Source_Dirs : Boolean := False);
    --  Generate all the withs statements.
    --  All projects import all other projects, since we do not know how
    --  to test the source dependencies.
@@ -161,9 +161,9 @@ package body GPR_Creation is
    --  all the projects, and a Source_Files attribute is generated
 
    procedure Generate_Source_Files_List
-     (Project        : Project_Type;
-      Src_Files      : File_Htables.HTable;
-      Obj_Dir_Index  : Integer);
+     (Project       : Project_Type;
+      Src_Files     : File_Htables.HTable;
+      Obj_Dir_Index : Integer);
    --  Generate the list of source files for the given Obj_Dir
 
    function Image (Num : Integer) return String;
@@ -378,9 +378,9 @@ package body GPR_Creation is
    --------------------------------
 
    procedure Generate_Source_Files_List
-     (Project        : Project_Type;
-      Src_Files      : File_Htables.HTable;
-      Obj_Dir_Index  : Integer)
+     (Project       : Project_Type;
+      Src_Files     : File_Htables.HTable;
+      Obj_Dir_Index : Integer)
    is
       Iter  : File_Htables.Iterator;
       Info  : File_Info;

@@ -21,7 +21,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with File_Utils;                use File_Utils;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Namet;                     use Namet;
@@ -98,7 +98,7 @@ package body Projects.Editor is
    --  In normalized projects, there should be only such variable.
 
    function Length
-     (Tree : Project_Tree_Ref;
+     (Tree  : Project_Tree_Ref;
       Value : Variable_Value) return Integer;
    --  Return the number of elements in Value (1 if Value is of kind Single)
 
@@ -128,7 +128,7 @@ package body Projects.Editor is
 
    procedure For_Each_Directory_Node
      (Project : Project_Type; Action  : Node_Callback);
-   --  For each node that deals with a procedure, calls Action.
+   --  For each node that deals with a procedure, calls Action
 
    procedure Remove_Variable_Declaration
      (Tree               : Project_Node_Tree_Ref;
@@ -140,7 +140,7 @@ package body Projects.Editor is
    function Get_All_Possible_Values
      (Tree     : Project_Node_Tree_Ref;
       Variable : Project_Node_Id) return Name_Id_Array;
-   --  Return the list of all possible values for Variable.
+   --  Return the list of all possible values for Variable
 
    ----------------
    -- Attributes --
@@ -442,7 +442,7 @@ package body Projects.Editor is
       Kind    : Project_Node_Kind;
       Name    : Name_Id) return Project_Node_Id
    is
-      Decl : Project_Node_Id := First_Declarative_Item_Of
+      Decl    : Project_Node_Id := First_Declarative_Item_Of
         (Project_Declaration_Of (Project, Tree), Tree);
       Current : Project_Node_Id;
    begin
@@ -510,7 +510,7 @@ package body Projects.Editor is
       Parent : Project_Node_Id;
       Node   : Project_Node_Id)
    is
-      P    : Project_Node_Id := Parent;
+      P          : Project_Node_Id := Parent;
       Decl, Next : Project_Node_Id;
    begin
       --  ??? Should reset the list of Variables and Types if the node matches
@@ -626,7 +626,7 @@ package body Projects.Editor is
 
    function Value_Of
      (Tree : Project_Node_Tree_Ref;
-      Var : Scenario_Variable) return String_List_Iterator
+      Var  : Scenario_Variable) return String_List_Iterator
    is
       V, Expr : Project_Node_Id;
    begin
@@ -743,22 +743,22 @@ package body Projects.Editor is
    -------------------------
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return Variable_Value
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return Variable_Value
    is
-      Sep : constant Natural := Split_Package (Attribute);
+      Sep            : constant Natural := Split_Package (Attribute);
       Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
+                         String (Attribute (Sep + 1 .. Attribute'Last));
       Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
-      Pkg : Package_Id := No_Package;
-      Value : Variable_Value := Nil_Variable_Value;
-      Var : Variable_Id;
-      Arr : Array_Id;
-      Elem : Array_Element_Id;
-      N    : Name_Id;
-      Project_View : constant Project_Id := Get_View (Project);
+                         String (Attribute (Attribute'First .. Sep - 1));
+      Project_View   : constant Project_Id := Get_View (Project);
+      Pkg            : Package_Id := No_Package;
+      Value          : Variable_Value := Nil_Variable_Value;
+      Var            : Variable_Id;
+      Arr            : Array_Id;
+      Elem           : Array_Element_Id;
+      N              : Name_Id;
    begin
       if Project_View = Prj.No_Project then
          return Nil_Variable_Value;
@@ -801,20 +801,20 @@ package body Projects.Editor is
    --------------------------
 
    function Attribute_Is_Defined
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return Boolean
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return Boolean
    is
-      Sep : constant Natural := Split_Package (Attribute);
+      Sep            : constant Natural := Split_Package (Attribute);
       Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
+                         String (Attribute (Sep + 1 .. Attribute'Last));
       Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
-      Pkg : Package_Id := No_Package;
-      Var : Variable_Id;
-      Arr : Array_Id;
-      N   : Name_Id;
-      Project_View : constant Project_Id := Get_View (Project);
+                         String (Attribute (Attribute'First .. Sep - 1));
+      Project_View   : constant Project_Id := Get_View (Project);
+      Pkg            : Package_Id := No_Package;
+      Var            : Variable_Id;
+      Arr            : Array_Id;
+      N              : Name_Id;
    begin
       if Project_View = Prj.No_Project then
          return False;
@@ -859,11 +859,11 @@ package body Projects.Editor is
       Attribute_Index    : String := "";
       Prepend            : Boolean := False)
    is
-      Sep : constant Natural := Split_Package (Attribute);
-      Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
-      Pkg_Prj : constant Project_Type :=
-        Find_Project_Of_Package (Project, Pkg_Name);
+      Sep      : constant Natural := Split_Package (Attribute);
+      Pkg_Name : constant String :=
+                   String (Attribute (Attribute'First .. Sep - 1));
+      Pkg_Prj  : constant Project_Type :=
+                   Find_Project_Of_Package (Project, Pkg_Name);
    begin
       Projects.Editor.Normalize.Normalize (Pkg_Prj);
       Update_Attribute_Value_In_Scenario
@@ -991,7 +991,7 @@ package body Projects.Editor is
       Value              : String;
       Attribute_Index    : String := "")
    is
-      Sep : constant Natural := Split_Package (Attribute);
+      Sep     : constant Natural := Split_Package (Attribute);
       Pkg_Prj : Project_Type := Project;
    begin
       if Sep > Attribute'First then
@@ -1018,12 +1018,12 @@ package body Projects.Editor is
       Value              : String;
       Attribute_Index    : String := "")
    is
-      Attribute_N : Name_Id;
-      Val         : Project_Node_Id;
-      Pkg         : Project_Node_Id;
-      Rename_Prj  : Project_Node_Id := Project;
+      Attribute_N    : Name_Id;
+      Val            : Project_Node_Id;
+      Pkg            : Project_Node_Id;
+      Rename_Prj     : Project_Node_Id := Project;
       Case_Construct : Project_Node_Id;
-      Index       : Name_Id;
+      Index          : Name_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1086,11 +1086,11 @@ package body Projects.Editor is
       Attr_Index      : out Name_Id;
       Case_Construct  : out Project_Node_Id)
    is
-      Sep         : constant Natural := Split_Package (Attribute);
+      Sep            : constant Natural := Split_Package (Attribute);
       Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
+                         String (Attribute (Attribute'First .. Sep - 1));
       Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
+                         String (Attribute (Sep + 1 .. Attribute'Last));
    begin
       Attr_Name := Get_String (Attribute_Name);
 
@@ -1129,10 +1129,10 @@ package body Projects.Editor is
       Values             : Associative_Array_Values)
    is
       Rename_Prj, Pkg, Case_Construct, Val : Project_Node_Id;
-      Attr_Name, Attr_Index : Name_Id;
-      First : Project_Node_Id := Empty_Node;
-      Next  : Project_Node_Id := Empty_Node;
-      N     : Project_Node_Id;
+      Attr_Name, Attr_Index                : Name_Id;
+      First                                : Project_Node_Id := Empty_Node;
+      Next                                 : Project_Node_Id := Empty_Node;
+      N                                    : Project_Node_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1230,12 +1230,16 @@ package body Projects.Editor is
       Parent          : Project_Node_Id;
       Node, Tmp       : Project_Node_Id;
       Case_Items      : Project_Node_Array_Access :=
-        new Project_Node_Array (1 .. 100);
+                          new Project_Node_Array (1 .. 100);
       Case_Items_Last : Natural := Case_Items'First - 1;
 
       procedure Add_Item (Case_Item : Project_Node_Id);
       --  Add the declaration Node to Case_Item, in front, since the
       --  declaration necessarily occured before the case item
+
+      --------------
+      -- Add_Item --
+      --------------
 
       procedure Add_Item (Case_Item : Project_Node_Id) is
       begin
@@ -1312,7 +1316,7 @@ package body Projects.Editor is
       Attribute_Name  : Name_Id;
       Attribute_Index : Name_Id)
    is
-      Decl : Project_Node_Id := First_Declarative_Item_Of (Parent, Tree);
+      Decl     : Project_Node_Id := First_Declarative_Item_Of (Parent, Tree);
       Previous : Project_Node_Id := Empty_Node;
    begin
       while Decl /= Empty_Node loop
@@ -1389,17 +1393,17 @@ package body Projects.Editor is
       Attribute          : Attribute_Pkg;
       Attribute_Index    : String := "")
    is
-      Sep : constant Natural := Split_Package (Attribute);
-      Pkg_Name : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
+      Sep            : constant Natural := Split_Package (Attribute);
+      Pkg_Name       : constant String :=
+                         String (Attribute (Attribute'First .. Sep - 1));
       Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
-      Attribute_N : Name_Id;
-      Pkg : Project_Node_Id;
-      Pkg_Prj : constant Project_Type :=
-        Find_Project_Of_Package (Project, Pkg_Name);
+                         String (Attribute (Sep + 1 .. Attribute'Last));
+      Attribute_N    : Name_Id;
+      Pkg            : Project_Node_Id;
+      Pkg_Prj        : constant Project_Type :=
+                         Find_Project_Of_Package (Project, Pkg_Name);
       Case_Construct : Project_Node_Id;
-      Index : Name_Id := No_Name;
+      Index          : Name_Id := No_Name;
 
       procedure Delete_Attr (Case_Item : Project_Node_Id);
       --  Remove all definitions for the attribute in the case item
@@ -1548,6 +1552,10 @@ package body Projects.Editor is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each matching node for the env. variable.
 
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Project, Choice);
          C, C2 : Project_Node_Id;
@@ -1689,6 +1697,10 @@ package body Projects.Editor is
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
+
+      --------------
+      -- Callback --
+      --------------
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Project, Parent);
@@ -1978,6 +1990,10 @@ package body Projects.Editor is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
 
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Choice);
       begin
@@ -2098,6 +2114,10 @@ package body Projects.Editor is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
 
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Project, Parent, Choice);
       begin
@@ -2130,6 +2150,10 @@ package body Projects.Editor is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
 
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Project, Parent, Choice);
       begin
@@ -2161,9 +2185,9 @@ package body Projects.Editor is
    ----------------------------------
 
    procedure Add_Scenario_Variable_Values
-     (Root_Project           : Project_Type;
-      External_Var           : Scenario_Variable;
-      Values                 : Name_Id_Array)
+     (Root_Project : Project_Type;
+      External_Var : Scenario_Variable;
+      Values       : Name_Id_Array)
    is
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Type_Node, Var : Project_Node_Id;
@@ -3466,7 +3490,7 @@ package body Projects.Editor is
    is
       Project     : Project_Type;
       No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
-        (others => No_Variable);
+                      (others => No_Variable);
       Values      : Argument_List (1 .. 1);
 
    begin
@@ -3494,16 +3518,16 @@ package body Projects.Editor is
    --------------------
 
    function Create_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
+     (Registry   : Projects.Registry.Project_Registry'Class;
       Name, Path : String) return Project_Type
    is
-      Tree     : constant Project_Node_Tree_Ref := Get_Tree (Registry);
-      D       : constant String :=
-        Path & To_File_Name (Name) & Project_File_Extension;
-      Project : constant Project_Node_Id :=
-        Default_Project_Node (Tree, N_Project);
+      Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
+      D            : constant String :=
+                       Path & To_File_Name (Name) & Project_File_Extension;
+      Project      : constant Project_Node_Id :=
+                       Default_Project_Node (Tree, N_Project);
       Project_Name : Name_Id;
-      P : Project_Type;
+      P            : Project_Type;
 
    begin
       --  Adding the name of the project
@@ -3554,12 +3578,12 @@ package body Projects.Editor is
       Project           : Project_Type;
       Use_Relative_Path : Boolean)
    is
-      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
+      Tree          : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Imported_Path : constant String := Project_Path (Project);
-      Iterator : Imported_Project_Iterator := Start
+      Iterator      : Imported_Project_Iterator := Start
         (Root_Project, Recursive => True);
-      With_Clause : Project_Node_Id;
-      P : Project_Type;
+      With_Clause   : Project_Node_Id;
+      P             : Project_Type;
 
    begin
       loop

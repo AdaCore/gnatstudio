@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2004                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -269,8 +269,7 @@ package Projects is
 
    type Attribute_Pkg (<>) is private;
 
-   function Build (Package_Name, Attribute_Name : String)
-      return Attribute_Pkg;
+   function Build (Package_Name, Attribute_Name : String) return Attribute_Pkg;
    --  Build an attribute reference
 
    Source_Dirs_Attribute      : constant Attribute_Pkg;
@@ -320,10 +319,10 @@ package Projects is
      of Associative_Array_Element;
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Default        : String := "";
-      Index          : String := "") return String;
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Default   : String := "";
+      Index     : String := "") return String;
    --  Return the value for a single-string attribute.
    --  Default is returned if the attribute wasn't set by the user and
    --  has no default value.
@@ -331,16 +330,16 @@ package Projects is
    --  "Attribute" if there is no package.
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return GNAT.OS_Lib.Argument_List;
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return GNAT.OS_Lib.Argument_List;
    --  Same as above, but for an attribute whose value is a list. An empty
    --  array is returned if the attribute isn't defined.
    --  It is the responsability of the caller to free the memory.
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg) return Associative_Array;
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg) return Associative_Array;
    --  Same as above when the attribute is an associative array.
 
    function Get_Languages
@@ -398,9 +397,9 @@ package Projects is
    type Imported_Project_Iterator is private;
 
    function Start
-     (Root_Project : Project_Type;
-      Recursive    : Boolean := True;
-      Direct_Only  : Boolean := False;
+     (Root_Project     : Project_Type;
+      Recursive        : Boolean := True;
+      Direct_Only      : Boolean := False;
       Include_Extended : Boolean := True)
       return Imported_Project_Iterator;
    --  Initialize the iterator to start at Root_Project.
@@ -506,13 +505,12 @@ package Projects is
    --  current view of the project.
 
    procedure Ensure_External_Value
-     (Var     : Scenario_Variable;
-      Tree    : Prj.Tree.Project_Node_Tree_Ref);
+     (Var  : Scenario_Variable;
+      Tree : Prj.Tree.Project_Node_Tree_Ref);
    --  Make sure that an external value is defined for the variable Var. If
    --  none exists, the default value defined in the project hierarchy is used.
    --  This function can be called before a view has been computed for the
    --  project.
-
 
    ----------
    -- Data --
@@ -577,7 +575,7 @@ private
       Tree      : Prj.Tree.Project_Node_Tree_Ref;
       View_Tree : Prj.Project_Tree_Ref;
 
-      Data : Project_Type_Data_Access;
+      Data      : Project_Type_Data_Access;
       --  This is an access type for several reasons:
       --    - Hide the real contents in the body
       --    - Parameters do not have to be of type "access Project_Type", just
@@ -748,7 +746,6 @@ private
    --  (Get_Languages,...)
    Languages_Attribute        : constant Attribute_Pkg := "languages";
    Exec_Dir_Attribute         : constant Attribute_Pkg := "exec_dir";
-
 
    pragma Inline (Project_Name, Project_Path);
 end Projects;

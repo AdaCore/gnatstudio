@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -312,15 +312,15 @@ package Projects.Editor is
    --  Update_Attribute_Value_In_Scenario multiple times.
 
    function Get_Attribute_Value
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return Variable_Value;
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return Variable_Value;
    --  Internal version of Get_Attribute_Value
 
    function Attribute_Is_Defined
-     (Project        : Project_Type;
-      Attribute      : Attribute_Pkg;
-      Index          : String := "") return Boolean;
+     (Project   : Project_Type;
+      Attribute : Attribute_Pkg;
+      Index     : String := "") return Boolean;
    --  True if the attribute was defined in the project. Get_Attribute_Value
    --  will return Nil_Variable_Value either if the attribute is not defined
    --  or has a default empty value (for instance for the languages attribute)
@@ -356,7 +356,7 @@ package Projects.Editor is
 
    function Value_Of
      (Tree : Project_Node_Tree_Ref;
-      Var : Scenario_Variable) return String_List_Iterator;
+      Var  : Scenario_Variable) return String_List_Iterator;
    --  Return an iterator over the possible values of the variable.
 
 private
@@ -484,8 +484,8 @@ private
    function Create_Typed_Variable
      (Tree                         : Project_Node_Tree_Ref;
       Prj_Or_Pkg                   : Project_Node_Id;
-      Name : String;
-      Typ  : Project_Node_Id;
+      Name                         : String;
+      Typ                          : Project_Node_Id;
       Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id;
    --  Create a new variable of a specific type Typ.

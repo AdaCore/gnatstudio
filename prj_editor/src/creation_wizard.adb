@@ -18,55 +18,55 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Check_Button;      use Gtk.Check_Button;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Frame;             use Gtk.Frame;
-with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Table;             use Gtk.Table;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Window;            use Gtk.Window;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.File_Selector;  use Gtkada.File_Selector;
-with Gtkada.Handlers;       use Gtkada.Handlers;
+with Glib;                      use Glib;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Table;                 use Gtk.Table;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Projects.Editor;   use Projects, Projects.Editor;
-with Projects.Registry; use Projects.Registry;
-with Traces;            use Traces;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Traces;                    use Traces;
 
-with Wizards;          use Wizards;
-with GPS.Kernel;     use GPS.Kernel;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Intl;       use GPS.Intl;
-with File_Utils;       use File_Utils;
+with Wizards;                   use Wizards;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Intl;                  use GPS.Intl;
+with File_Utils;                use File_Utils;
 
 package body Creation_Wizard is
 
    procedure Advanced_Prj_Location
      (Widget : access Gtk_Widget_Record'Class;
       Page   : Project_Wizard_Page);
-   --  Open up a dialog to select the project location.
+   --  Open up a dialog to select the project location
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Wiz                 : out Project_Wizard;
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title               : String;
-      Show_Toc            : Boolean := True;
-      Auto_Save_On_Exit   : Boolean := True;
-      Project             : Projects.Project_Type := Projects.No_Project) is
+     (Wiz               : out Project_Wizard;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title             : String;
+      Show_Toc          : Boolean := True;
+      Auto_Save_On_Exit : Boolean := True;
+      Project           : Projects.Project_Type := Projects.No_Project) is
    begin
       Wiz := new Project_Wizard_Record;
       Initialize (Wiz, Kernel, Title, Show_Toc, Auto_Save_On_Exit, Project);
@@ -99,12 +99,12 @@ package body Creation_Wizard is
    ----------------
 
    procedure Initialize
-     (Wiz                 : access Project_Wizard_Record'Class;
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title               : String;
-      Show_Toc            : Boolean := True;
-      Auto_Save_On_Exit   : Boolean := True;
-      Project             : Projects.Project_Type := Projects.No_Project) is
+     (Wiz               : access Project_Wizard_Record'Class;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Title             : String;
+      Show_Toc          : Boolean := True;
+      Auto_Save_On_Exit : Boolean := True;
+      Project           : Projects.Project_Type := Projects.No_Project) is
    begin
       Wizards.Initialize
         (Wiz,
@@ -263,11 +263,11 @@ package body Creation_Wizard is
    ----------------------
 
    procedure Generate_Project
-     (Page    : access Name_And_Location_Page;
-      Kernel  : access Kernel_Handle_Record'Class;
+     (Page               : access Name_And_Location_Page;
+      Kernel             : access Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean)
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
    is
       Dir            : constant String := Name_As_Directory
         (Get_Text (Page.Project_Location));

@@ -90,10 +90,10 @@ package Project_Properties is
    --  over which attributes will be displayed.
 
    function Get_Current_Value
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Pkg     : String;
-      Name    : String;
-      Index   : String := "")
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pkg    : String;
+      Name   : String;
+      Index  : String := "")
       return GNAT.OS_Lib.String_List;
    --  Return the value of the attribute as currently edited.
    --  The returned value must be freed by the caller.
@@ -119,13 +119,13 @@ private
      (Editor : access Root_Attribute_Editor_Record;
       Attribute_Index : String := "") return String is abstract;
    --  Return the current value in Editor for the given attribute_index. The
-   --  latter is ignored if the attribute is in fact not indexed
+   --  latter is ignored if the attribute is in fact not indexed.
 
    function Get_Value_As_List
      (Editor          : access Root_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.OS_Lib.String_List
      is abstract;
    --  Return the current value in Editor for the given attribute_Index.
-   --  The returned value must be freed by the user
+   --  The returned value must be freed by the user.
 
 end Project_Properties;

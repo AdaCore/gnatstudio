@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                             AdaCore                               --
+--                     Copyright (C) 2004 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPR_Creation;              use GPR_Creation;
-with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel;                use GPS.Kernel;
 with Projects;                  use Projects;
 with Directory_Tree;            use Directory_Tree;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -93,7 +93,7 @@ package body Creation_Wizard.Simple is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Current : aliased String := Get_Current_Dir;
+      Current      : aliased String := Get_Current_Dir;
       Initial_Dirs : constant String_List := (1 => Current'Unchecked_Access);
    begin
       Gtk_New (Page.Dirs,

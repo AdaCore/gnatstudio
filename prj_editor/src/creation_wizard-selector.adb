@@ -18,25 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Radio_Button;         use Gtk.Radio_Button;
-with Glib.Object;              use Glib.Object;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Box;                  use Gtk.Box;
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Radio_Button;       use Gtk.Radio_Button;
+with Glib.Object;            use Glib.Object;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Box;                use Gtk.Box;
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Separator;          use Gtk.Separator;
 
-with Ada.Exceptions;           use Ada.Exceptions;
-with GPS.Intl;                 use GPS.Intl;
-with Creation_Wizard.Full;     use Creation_Wizard.Full;
-with Creation_Wizard.Adp;      use Creation_Wizard.Adp;
-with Creation_Wizard.Simple;   use Creation_Wizard.Simple;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with Traces;                   use Traces;
-with Wizards;                  use Wizards;
-with Creation_Wizard;          use Creation_Wizard;
+with Ada.Exceptions;         use Ada.Exceptions;
+with GPS.Intl;               use GPS.Intl;
+with Creation_Wizard.Full;   use Creation_Wizard.Full;
+with Creation_Wizard.Adp;    use Creation_Wizard.Adp;
+with Creation_Wizard.Simple; use Creation_Wizard.Simple;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with Traces;                 use Traces;
+with Wizards;                use Wizards;
+with Creation_Wizard;        use Creation_Wizard;
 
 package body Creation_Wizard.Selector is
 
@@ -53,11 +53,11 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Generate_Project
-     (Page    : access Wizard_Selector_Page;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Wizard_Selector_Page;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean);
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
    function Next_Page
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page;
@@ -104,11 +104,11 @@ package body Creation_Wizard.Selector is
    ----------------------
 
    procedure Generate_Project
-     (Page    : access Wizard_Selector_Page;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Wizard_Selector_Page;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean)
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
    is
       pragma Unreferenced (Page, Kernel, Scenario_Variables, Project, Changed);
    begin

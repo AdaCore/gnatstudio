@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2002-2005                       --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 pragma Warnings (On);
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
@@ -335,8 +335,8 @@ package body Projects.Registry is
    ----------------------
 
    procedure Set_Trusted_Mode
-     (Registry        : Project_Registry'Class;
-      Trusted_Mode    : Boolean) is
+     (Registry     : Project_Registry'Class;
+      Trusted_Mode : Boolean) is
    begin
       Registry.Data.Trusted_Mode := Trusted_Mode;
    end Set_Trusted_Mode;
@@ -370,7 +370,7 @@ package body Projects.Registry is
    --------------------
 
    procedure Unload_Project
-     (Registry  : Project_Registry; View_Only : Boolean := False)
+     (Registry : Project_Registry; View_Only : Boolean := False)
    is
       Project : Project_Type;
       Iter    : Project_Htable.String_Hash_Table.Iterator;
@@ -593,8 +593,8 @@ package body Projects.Registry is
    -------------------------
 
    procedure Load_Custom_Project
-     (Registry  : Project_Registry;
-      Project   : Project_Type) is
+     (Registry : Project_Registry;
+      Project  : Project_Type) is
    begin
       Registry.Data.Root := Project;
       Set_Status (Registry.Data.Root, Default);
@@ -975,6 +975,10 @@ package body Projects.Registry is
       procedure Process_List (List : Array_Element_Id);
       --  Canonicalize all the files in the given list
 
+      ------------------
+      -- Process_List --
+      ------------------
+
       procedure Process_List (List : Array_Element_Id) is
          Arr : Array_Element_Id := List;
          Str : String_List_Id;
@@ -1142,6 +1146,10 @@ package body Projects.Registry is
          Set (Registry.Data.Sources, K => File,
               E => (Project, Lang, Full_Path));
       end Record_Source;
+
+      ---------------------
+      -- File_In_Sources --
+      ---------------------
 
       function File_In_Sources (File : String) return Boolean is
       begin
@@ -1661,12 +1669,12 @@ package body Projects.Registry is
    ------------------
 
    procedure Pretty_Print
-     (Project                            : Project_Type;
-      Increment                          : Positive      := 3;
-      Minimize_Empty_Lines               : Boolean       := False;
-      W_Char                             : Prj.PP.Write_Char_Ap := null;
-      W_Eol                              : Prj.PP.Write_Eol_Ap  := null;
-      W_Str                              : Prj.PP.Write_Str_Ap  := null) is
+     (Project              : Project_Type;
+      Increment            : Positive      := 3;
+      Minimize_Empty_Lines : Boolean       := False;
+      W_Char               : Prj.PP.Write_Char_Ap := null;
+      W_Eol                : Prj.PP.Write_Eol_Ap  := null;
+      W_Str                : Prj.PP.Write_Str_Ap  := null) is
    begin
       Pretty_Print
         (Project.Node,
@@ -1974,8 +1982,8 @@ package body Projects.Registry is
    ----------------------------------
 
    function Directory_Belongs_To_Project
-     (Registry  : Project_Registry;
-      Directory : String;
+     (Registry    : Project_Registry;
+      Directory   : String;
       Direct_Only : Boolean := True) return Boolean
    is
       Belong : constant Directory_Dependency :=

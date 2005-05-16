@@ -53,8 +53,8 @@ package Projects.Registry is
    --  absolute path if it currently is a base name.
 
    procedure Set_Trusted_Mode
-     (Registry        : Project_Registry'Class;
-      Trusted_Mode    : Boolean);
+     (Registry     : Project_Registry'Class;
+      Trusted_Mode : Boolean);
    --  Set the trusted mode for the registry:
    --  If it is True, then it is assumed that no links are used in the project,
    --  and that directory names cannot match file names according to the
@@ -144,7 +144,7 @@ package Projects.Registry is
    --  the list of currently loaded tree.
 
    procedure Unload_Project
-     (Registry  : Project_Registry; View_Only : Boolean := False);
+     (Registry : Project_Registry; View_Only : Boolean := False);
    --  Reset the contents of the project registry. This should be called only
    --  if a new project is loaded, otherwise no project is accessible to the
    --  application any more.
@@ -180,12 +180,12 @@ package Projects.Registry is
    --  Return the root project of the hierarchy
 
    procedure Pretty_Print
-     (Project                            : Project_Type;
-      Increment                          : Positive      := 3;
-      Minimize_Empty_Lines               : Boolean       := False;
-      W_Char                             : Prj.PP.Write_Char_Ap := null;
-      W_Eol                              : Prj.PP.Write_Eol_Ap  := null;
-      W_Str                              : Prj.PP.Write_Str_Ap  := null);
+     (Project              : Project_Type;
+      Increment            : Positive      := 3;
+      Minimize_Empty_Lines : Boolean       := False;
+      W_Char               : Prj.PP.Write_Char_Ap := null;
+      W_Eol                : Prj.PP.Write_Eol_Ap  := null;
+      W_Str                : Prj.PP.Write_Str_Ap  := null);
    --  See Prj.PP.Pretty_Print
 
    -------------------------

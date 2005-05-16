@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                            AdaCore                                --
+--                     Copyright (C) 2004-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -193,10 +193,10 @@ package body Adp_Converter is
      (Buffer    : String_Access;
       Build_Dir : String) return String_List_Access
    is
+      Adp_Prefix  : constant String := "obj_dir";
       List, List2 : String_List_Access;
-      Adp_Prefix : constant String := "obj_dir";
-      Line : Source_Line := First_Line_Of (Buffer.all);
-      Found : Boolean;
+      Line        : Source_Line := First_Line_Of (Buffer.all);
+      Found       : Boolean;
    begin
       List := new String_List (1 .. 1);
       List (1) := new String'(Build_Dir);
@@ -320,10 +320,10 @@ package body Adp_Converter is
    ---------------
 
    function Read_File (Filename : String) return String_Access is
-      F : File_Descriptor;
-      Length : Long_Integer;
       Name_Zero : aliased constant String := Filename & ASCII.NUL;
-      Buffer : String_Access;
+      F         : File_Descriptor;
+      Length    : Long_Integer;
+      Buffer    : String_Access;
    begin
       F := Open_Read (Name_Zero'Address, Text);
       if F = Invalid_FD then

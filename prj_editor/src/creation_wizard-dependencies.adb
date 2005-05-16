@@ -18,45 +18,45 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Location_View;        use GPS.Location_View;
-with Projects;                 use Projects;
-with Projects.Editor;          use Projects.Editor;
-with Projects.Registry;        use Projects.Registry;
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
-with Gtkada.File_Selector;     use Gtkada.File_Selector;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Location_View;         use GPS.Location_View;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GPS.Intl;               use GPS.Intl;
-with Creation_Wizard.Full;     use Creation_Wizard, Creation_Wizard.Full;
-with Wizards;                  use Wizards;
-with VFS;                      use VFS;
-with File_Utils;               use File_Utils;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Glib;                     use Glib;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Button;               use Gtk.Button;
-with Gtk.Dialog;               use Gtk.Dialog;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Vbutton_Box;          use Gtk.Vbutton_Box;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
-with GUI_Utils;                use GUI_Utils;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GPS.Intl;                  use GPS.Intl;
+with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
+with Wizards;                   use Wizards;
+with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Glib;                      use Glib;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with GUI_Utils;                 use GUI_Utils;
 
 package body Creation_Wizard.Dependencies is
 
@@ -82,8 +82,8 @@ package body Creation_Wizard.Dependencies is
    --  See inherited documentation
 
    Cst_Project_Name : aliased String := "Project Name";
-   Cst_Directory : aliased String := "Directory";
-   Cst_Limited   : aliased String := "Limited with";
+   Cst_Directory    : aliased String := "Directory";
+   Cst_Limited      : aliased String := "Limited with";
 
    --  Constants for the dependency editor
    Project_Name_Column       : constant := 0;
@@ -504,14 +504,14 @@ package body Creation_Wizard.Dependencies is
      (Button : access Gtk_Widget_Record'Class;
       Page   : Project_Wizard_Page)
    is
-      P  : constant Dependency_Project_Page_Access :=
-        Dependency_Project_Page_Access (Page);
-      Dialog   : Gtk_Dialog;
-      Scrolled : Gtk_Scrolled_Window;
-      B        : Gtk_Widget;
-      Tree     : Gtk_Tree_View;
-      Model    : Gtk_Tree_Store;
-      PModel   : Gtk_Tree_Store;
+      P           : constant Dependency_Project_Page_Access :=
+                      Dependency_Project_Page_Access (Page);
+      Dialog      : Gtk_Dialog;
+      Scrolled    : Gtk_Scrolled_Window;
+      B           : Gtk_Widget;
+      Tree        : Gtk_Tree_View;
+      Model       : Gtk_Tree_Store;
+      PModel      : Gtk_Tree_Store;
       Iter, PIter : Gtk_Tree_Iter;
       pragma Unreferenced (B);
    begin
@@ -581,12 +581,12 @@ package body Creation_Wizard.Dependencies is
       Page   : Project_Wizard_Page)
    is
       pragma Unreferenced (Button);
-      B  : constant Dependency_Project_Page_Access :=
-        Dependency_Project_Page_Access (Page);
+      B     : constant Dependency_Project_Page_Access :=
+                Dependency_Project_Page_Access (Page);
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (B.Tree));
-      Wiz  : Creation_Wizard.Project_Wizard;
-      Iter : Gtk_Tree_Iter;
+                Gtk_Tree_Store (Get_Model (B.Tree));
+      Wiz   : Creation_Wizard.Project_Wizard;
+      Iter  : Gtk_Tree_Iter;
    begin
       Creation_Wizard.Gtk_New (Wiz, B.Kernel, -"Add New Project");
       Add_Full_Wizard_Pages
@@ -614,11 +614,11 @@ package body Creation_Wizard.Dependencies is
       Page   : Project_Wizard_Page)
    is
       pragma Unreferenced (Button);
-      B  : constant Dependency_Project_Page_Access :=
-        Dependency_Project_Page_Access (Page);
+      B     : constant Dependency_Project_Page_Access :=
+                Dependency_Project_Page_Access (Page);
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (B.Tree));
-      Name : constant Virtual_File := Select_File
+                Gtk_Tree_Store (Get_Model (B.Tree));
+      Name  : constant Virtual_File := Select_File
         (-"Select Project",
          Get_Current_Dir,
          File_Pattern      => "*.gpr",
@@ -627,7 +627,7 @@ package body Creation_Wizard.Dependencies is
          Use_Native_Dialog => Get_Pref (B.Kernel, Use_Native_Dialogs),
          Kind              => Open_File,
          History           => Get_History (B.Kernel));
-      Iter : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
    begin
       if Name /= VFS.No_File then
          Append (Model, Iter, Null_Iter);
@@ -647,12 +647,12 @@ package body Creation_Wizard.Dependencies is
       Page   : Project_Wizard_Page)
    is
       pragma Unreferenced (Button);
-      B  : constant Dependency_Project_Page_Access :=
-        Dependency_Project_Page_Access (Page);
+      B         : constant Dependency_Project_Page_Access :=
+                    Dependency_Project_Page_Access (Page);
       Selection : constant Gtk_Tree_Selection :=
-        Get_Selection (B.Tree);
-      Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+                    Get_Selection (B.Tree);
+      Model     : Gtk_Tree_Model;
+      Iter      : Gtk_Tree_Iter;
    begin
       Get_Selected (Selection, Model, Iter);
       if Iter /= Null_Iter then
@@ -665,20 +665,20 @@ package body Creation_Wizard.Dependencies is
    ----------------------
 
    procedure Generate_Project
-     (Page    : access Dependency_Project_Page;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Dependency_Project_Page;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean)
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
    is
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Page.Tree));
-      Iter : Gtk_Tree_Iter;
+      Model    : constant Gtk_Tree_Store :=
+                   Gtk_Tree_Store (Get_Model (Page.Tree));
+      Iter     : Gtk_Tree_Iter;
       pragma Unreferenced (Scenario_Variables);
       Imported : Imported_Project_Iterator :=
-        Start (Project, Direct_Only => True);
-      Count : Natural := 0;
-      Found : Boolean;
+                   Start (Project, Direct_Only => True);
+      Count    : Natural := 0;
+      Found    : Boolean;
    begin
       while Current (Imported) /= No_Project loop
          if Current (Imported) /= Project then
@@ -770,8 +770,8 @@ package body Creation_Wizard.Dependencies is
    is
       pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Wiz : Project_Wizard;
+               File_Selection_Context_Access (Context.Context);
+      Wiz  : Project_Wizard;
    begin
       Gtk_New (Wiz, Get_Kernel (File),
                Project           => Project_Information (File),

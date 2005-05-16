@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            AdaCore                                --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.GEntry;            use Gtk.GEntry;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with Basic_Types;           use Basic_Types;
-with Wizards;               use Wizards;
-with GPS.Kernel;          use GPS.Kernel;
-with File_Utils;            use File_Utils;
-with Project_Viewers;       use Project_Viewers;
-with Project_Properties;    use Project_Properties;
-with Projects;              use Projects;
+with Gtk.GEntry;         use Gtk.GEntry;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with Basic_Types;        use Basic_Types;
+with Wizards;            use Wizards;
+with GPS.Kernel;         use GPS.Kernel;
+with File_Utils;         use File_Utils;
+with Project_Viewers;    use Project_Viewers;
+with Project_Properties; use Project_Properties;
+with Projects;           use Projects;
 
 package body Creation_Wizard.Full is
 
@@ -41,11 +41,11 @@ package body Creation_Wizard.Full is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    procedure Update_Page (Page : access Project_Editor_Page_Wrapper);
    procedure Generate_Project
-     (Page    : access Project_Editor_Page_Wrapper;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Project_Editor_Page_Wrapper;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean);
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
    --  See inherited documentation
 
    --------------------
@@ -73,9 +73,9 @@ package body Creation_Wizard.Full is
 
    procedure Update_Page (Page : access Project_Editor_Page_Wrapper) is
       Languages : String_List := Get_Current_Value
-        (Kernel     => Get_Kernel (Page.Wiz),
-         Pkg        => "",
-         Name       => "languages");
+        (Kernel => Get_Kernel (Page.Wiz),
+         Pkg    => "",
+         Name   => "languages");
    begin
       Refresh (Page      => Page.Page,
                Widget    => Get_Content (Page),
@@ -89,16 +89,16 @@ package body Creation_Wizard.Full is
    ----------------------
 
    procedure Generate_Project
-     (Page    : access Project_Editor_Page_Wrapper;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Page               : access Project_Editor_Page_Wrapper;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Project : in out Projects.Project_Type;
-      Changed : in out Boolean)
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
    is
       Languages : String_List := Get_Current_Value
-        (Kernel     => Get_Kernel (Page.Wiz),
-         Pkg        => "",
-         Name       => "languages");
+        (Kernel => Get_Kernel (Page.Wiz),
+         Pkg    => "",
+         Name   => "languages");
    begin
       Changed := Changed or Project_Editor
         (Page               => Page.Page,
@@ -132,16 +132,16 @@ package body Creation_Wizard.Full is
 
       for E in 1 .. Attr_Count + 1 loop
          Page := Attribute_Editors_Page_Box
-           (Kernel            => Get_Kernel (Wiz),
-            Project           => No_Project,
-            Path_Widget       => Get_Path_Widget (Name_And_Loc),
-            Nth_Page          => E,
-            Context           => Context);
+           (Kernel      => Get_Kernel (Wiz),
+            Project     => No_Project,
+            Path_Widget => Get_Path_Widget (Name_And_Loc),
+            Nth_Page    => E,
+            Context     => Context);
          if Page /= null then
             Add_Page (Wiz,
-                      Page         => Page,
-                      Description  => Attribute_Editors_Page_Name (E),
-                      Toc          => Attribute_Editors_Page_Name (E));
+                      Page        => Page,
+                      Description => Attribute_Editors_Page_Name (E),
+                      Toc         => Attribute_Editors_Page_Name (E));
          end if;
       end loop;
 
