@@ -11,6 +11,10 @@ New features in GPS 3.1.0
   does a search, or jumps to a location through the Outline View or Locations
   Window. This way, it is easier to navigate back to the previous position
 
+- DC03-011 New switch: --readonly
+  This switch instructs GPS to open all files in read-only mode by default.
+  This is particularly useful when used with --debug.
+
 - BA07-005 Improved cross-references for generics
   From a reference to an entity declared in a generic, it is now possible to
   find out what instantiation of the generic is involved.
