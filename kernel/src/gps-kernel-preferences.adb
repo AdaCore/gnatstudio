@@ -501,6 +501,16 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor");
 
+      Tooltip_Timeout := Param_Spec_Int (Gnew_Int
+        (Name    => "Src-Editor-Tooltip-Timeout",
+         Minimum => 0,
+         Maximum => 10000,
+         Default => 600,
+         Blurb   => -"Time (in milliseconds) before displaying tooltips",
+         Nick    => -"Tooltips timeout"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Tooltip_Timeout), -"Editor");
+
       Highlight_Delimiters := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Highlight-Delimiters",
          Default => True,

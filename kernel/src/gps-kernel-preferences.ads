@@ -211,6 +211,7 @@ package GPS.Kernel.Preferences is
    Display_Line_Numbers      : Param_Spec_Boolean;
    Display_Subprogram_Names  : Param_Spec_Boolean;
    Display_Tooltip           : Param_Spec_Boolean;
+   Tooltip_Timeout           : Param_Spec_Int;
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
    Tab_Width                 : Param_Spec_Int;
