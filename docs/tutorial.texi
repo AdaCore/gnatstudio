@@ -661,10 +661,6 @@ Close the project browser by clicking on the @code{[x]} sign at the top right
 area of the window, or by typing @key{Ctrl-W}, or by using the menu
 @code{File->Close}.
 
-On @i{prj1} project, select the contextual menu
-@code{Remove dependency sdc -> prj1} to remove the dependency added between
-@i{sdc} and @i{prj1}.
-
 @c --------------------------------------------------------------------
 @node Epilogue
 @chapter Epilogue
