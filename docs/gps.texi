@@ -13670,6 +13670,7 @@ Options:
                        language lang
    --eval=lang:file    Execute an in-line script written in the
                        language lang
+   --readonly          Open all files in read-only mode
    --server=port       Start GPS in server mode, opening a socket on the
                        given port
    --tracelist         Output the current configuration for logs
