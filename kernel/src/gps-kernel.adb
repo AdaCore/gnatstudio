@@ -601,7 +601,6 @@ package body GPS.Kernel is
       Main_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (Handle.Main_Window);
 
-
    begin
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
@@ -867,14 +866,15 @@ package body GPS.Kernel is
          Context.Ref_Count := Context.Ref_Count - 1;
 
          if Context.Ref_Count = 0 then
-            if Context = Context.Kernel.Last_Context_For_Contextual then
-               Trace (Me, "Setting Last_Context_For_Contextual to null");
-               Context.Kernel.Last_Context_For_Contextual := null;
-            end if;
+            if Context.Kernel /= null then
+               if Context = Context.Kernel.Last_Context_For_Contextual then
+                  Trace (Me, "Setting Last_Context_For_Contextual to null");
+                  Context.Kernel.Last_Context_For_Contextual := null;
+               end if;
 
-            if Context = Context.Kernel.Current_Context then
-               Trace (Me, "Setting current_context to null");
-               Context.Kernel.Current_Context := null;
+               if Context = Context.Kernel.Current_Context then
+                  Context.Kernel.Current_Context := null;
+               end if;
             end if;
 
             Destroy (Context.all);
