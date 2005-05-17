@@ -117,6 +117,11 @@ package Src_Editor_Box is
       Writable : Boolean);
    --  Change the writable status of the editor.
 
+   procedure Read_Only_By_Default (State : Boolean := True);
+   --  If State if True, this will set the Writable state of new
+   --  Editors to False, otherwise, the writable state will be set based on
+   --  the file system flags.
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
@@ -139,7 +144,7 @@ package Src_Editor_Box is
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
    --  the editor tries to automatically set the language based on the
-   --  Filename. Otherwise, the language remains uchanged. After the file is
+   --  Filename. Otherwise, the language remains unchanged. After the file is
    --  loaded into the buffer, the buffer is syntax-highlighted if Lang is set.
    --  Filename is also stored in the Editor.
    --

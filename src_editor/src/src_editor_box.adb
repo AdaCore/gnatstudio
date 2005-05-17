@@ -286,6 +286,17 @@ package body Src_Editor_Box is
       Add_Watch (Id, Data);
    end Setup;
 
+   --------------------------
+   -- Read_Only_By_Default --
+   --------------------------
+
+   Read_Only_Set : Boolean := False;
+
+   procedure Read_Only_By_Default (State : Boolean := True) is
+   begin
+      Read_Only_Set := State;
+   end Read_Only_By_Default;
+
    ------------------------------
    -- Goto_Declaration_Or_Body --
    ------------------------------
@@ -1954,7 +1965,7 @@ package body Src_Editor_Box is
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
    begin
-      if Editor.Explicit_Writable_Set then
+      if Read_Only_Set or else Editor.Explicit_Writable_Set then
          return;
       end if;
 
@@ -1988,7 +1999,12 @@ package body Src_Editor_Box is
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
-         Check_Writable (Editor);
+
+         if Read_Only_Set then
+            Set_Writable (Editor, False);
+         else
+            Check_Writable (Editor);
+         end if;
       end if;
    end Load_File;
 
