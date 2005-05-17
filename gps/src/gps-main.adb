@@ -58,6 +58,7 @@ with Config;                    use Config;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
+with Src_Editor_Box;            use Src_Editor_Box;
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -612,7 +613,7 @@ procedure GPS.Main is
       loop
          case Getopt ("-version -help P: -server= -hide " &
                       "-debug? -debugger= -host= -target= -load= -eval= " &
-                      "-traceoff= -traceon= -tracefile= -tracelist")
+                      "-readonly -traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
             when '-' =>
@@ -681,6 +682,11 @@ procedure GPS.Main is
                   when 'e' =>
                      Free (Batch_Script);
                      Batch_Script := new String'(Parameter);
+
+                  --  --readonly
+
+                  when 'r' =>
+                     Src_Editor_Box.Read_Only_By_Default;
 
                   --  --server
 
@@ -799,6 +805,7 @@ procedure GPS.Main is
         & (-"   --eval=lang:cmd     Execute a command written in the") & LF
         & (-"                       language lang. This is executed") & LF
         & (-"                       before the --load command") & LF
+        & (-"   --readonly          Open all files in read-only mode") & LF
         & (-"   --server=port       Start GPS in server mode, opening a") & LF
         & (-"                       socket on the given port") & LF
         & (-"   --traceon=stream    Activate traces for a specific") & LF
