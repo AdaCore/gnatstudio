@@ -7243,6 +7243,10 @@ Whether the subprogram name should be displayed in the editor's status bar.
 @cindex tooltip
 Whether tool tips should be displayed automatically.
 
+@item Tooltips timeout
+@cindex tooltip timeout
+Time (in milliseconds) before displaying tooltips.
+
 @item Highlight delimiters
 @cindex highlight delimiter
 Determine whether the delimiter matching the character following the
