@@ -1064,6 +1064,8 @@ package body Src_Editor_Box is
 
       Data.Box := Source_Editor_Box (Box);
       Editor_Tooltips.New_Tooltip (Box.Source_View, Data, Box.Tooltip);
+      Editor_Tooltips.Set_Timeout
+        (Box.Tooltip, Guint32 (Get_Pref (Kernel, Tooltip_Timeout)));
 
       --  The status bar, at the bottom of the window...
 
@@ -1986,7 +1988,6 @@ package body Src_Editor_Box is
          Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
-
          Check_Writable (Editor);
       end if;
    end Load_File;
