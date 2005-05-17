@@ -102,4 +102,7 @@ package Config is
    Default_Patch_Cmd : constant String := "patch";
    --  Command used to apply a patch file.
 
+   Support_Execution_Window : constant Boolean := @EXECUTION_WINDOW@;
+   --  Whether separate debugger execution window is supported by the target.
+
 end Config;
