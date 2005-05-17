@@ -17,6 +17,7 @@ HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
 PATCH_CMD="patch"
+EXECUTION_WINDOW=True
 
 ROOT=`pwd`
 TARGET=$host
@@ -69,6 +70,7 @@ case "${host}" in
   ## Alpha (DEC) machines.
   alpha*-dec-osf* )
     machine=alpha opsys=osf1
+    EXECUTION_WINDOW=False
   ;;
 
   ## HP 9000 series 700 and 800, running HP/UX
@@ -243,6 +245,7 @@ AC_SUBST(DIFF_CMD)
 AC_SUBST(PATCH_CMD)
 AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
+AC_SUBST(EXECUTION_WINDOW)
 AC_SUBST(PYTHON_BASE)
 AC_SUBST(PYTHON_VERSION)
 AC_SUBST(PYTHON_ADA_SOURCE)

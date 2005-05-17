@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1386,6 +1386,7 @@ HOST_TYPE=Unix
 PYTHON_LIBS=""
 DIFF_CMD="diff"
 PATCH_CMD="patch"
+EXECUTION_WINDOW=True
 
 ROOT=`pwd`
 TARGET=$host
@@ -4347,6 +4348,7 @@ case "${host}" in
   ## Alpha (DEC) machines.
   alpha*-dec-osf* )
     machine=alpha opsys=osf1
+    EXECUTION_WINDOW=False
   ;;
 
   ## HP 9000 series 700 and 800, running HP/UX
@@ -4730,6 +4732,7 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 
 # Set the version number of GPS/GVD
+
 
 
 
@@ -5480,6 +5483,7 @@ s,@DIFF_CMD@,$DIFF_CMD,;t t
 s,@PATCH_CMD@,$PATCH_CMD,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
+s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t
 s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
