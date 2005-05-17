@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
+with Config;                   use Config;
 with Default_Preferences;      use Default_Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with GPS.Intl;                 use GPS.Intl;
@@ -32,9 +33,9 @@ package body GVD.Preferences is
    procedure Register_Default_Preferences
      (Prefs : access Preferences_Manager_Record'Class)
    is
-      XML_Prefix     : constant String := "Debugger-";
-      General        : constant String := -"Debugger";
-      Source_Flags   : constant Param_Flags := Param_Readable;
+      XML_Prefix   : constant String := "Debugger-";
+      General      : constant String := -"Debugger";
+      Source_Flags : constant Param_Flags := Param_Readable;
 
    begin
       Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
@@ -48,13 +49,24 @@ package body GVD.Preferences is
          Default   => False));
       Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
 
-      Execution_Window := Param_Spec_Boolean (Gnew_Boolean
-        (Name      => XML_Prefix & "Execution-Window",
-         Nick      => -"Execution window",
-         Blurb     =>
-           -("If False, the debugged program is assumed to require no input. "
-             & "If True, a separate execution window will be created"),
-         Default   => True));
+      if Support_Execution_Window then
+         Execution_Window := Param_Spec_Boolean (Gnew_Boolean
+           (Name      => XML_Prefix & "Execution-Window",
+            Nick      => -"Execution window",
+            Blurb     =>
+             -("If False, the debugged program is assumed to require no " &
+               "input. If True, a separate execution window will be created"),
+            Default   => True));
+
+      else
+         Execution_Window := Param_Spec_Boolean (Gnew_Boolean
+           (Name      => XML_Prefix & "Execution-Window",
+            Nick      => -"Execution window",
+            Blurb     => "",
+            Flags     => Source_Flags,
+            Default   => False));
+      end if;
+
       Register_Property  (Prefs, Param_Spec (Execution_Window), General);
 
       Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
