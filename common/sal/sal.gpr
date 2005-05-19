@@ -1,0 +1,32 @@
+project Sal is
+
+   for Source_Dirs use ("../src", ".");
+
+   for Source_Files use
+     ("ada_analyzer.adb",
+      "ada_analyzer.ads",
+      "basic_types.adb",
+      "basic_types.ads",
+      "case_handling.adb",
+      "case_handling.ads",
+      "generic_stack.adb",
+      "generic_stack.ads",
+      "glib-unicode.adb",
+      "glib-unicode.ads",
+      "glib.ads",
+      "htables.adb",
+      "htables.ads",
+      "indent_stack.ads",
+      "language.adb",
+      "language.ads",
+      "string_hash.adb",
+      "string_hash.ads",
+      "string_utils.adb",
+      "string_utils.ads");
+
+  for Object_Dir use "sal/obj";
+  for Library_Dir use "sal/lib";
+  for Library_Name use "common";
+  for Library_Kind use "dynamic";
+
+end Sal;
