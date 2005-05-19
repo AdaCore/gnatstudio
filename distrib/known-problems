@@ -2,7 +2,7 @@ Known Problems fixed in GPS 3.1.0
 
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
-              an error message is displaye din the debugger console such as:
+              an error message is displayed in the debugger console such as:
               /dev/ptyrd: No such file or directory.
               /proc/380269: No such file or directory.
 
