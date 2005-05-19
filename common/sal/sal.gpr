@@ -24,9 +24,9 @@ project Sal is
       "string_utils.adb",
       "string_utils.ads");
 
-  for Object_Dir use "sal/obj";
-  for Library_Dir use "sal/lib";
-  for Library_Name use "common";
+  for Object_Dir use "obj";
+  for Library_Dir use "lib";
+  for Library_Name use "gps_utils";
   for Library_Kind use "dynamic";
 
 end Sal;
