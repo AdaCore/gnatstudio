@@ -171,27 +171,38 @@ package body Completion_Module is
       Word_Found : out Boolean)
    is
       Success : Boolean := True;
-      Aux     : Gtk_Text_Iter;
-      Count   : Gint := 0;
    begin
-      while Success loop
-         Backward_Word_Start (Iter, Success);
-         Count := Count + 1;
-
-         if Success then
-            Copy (Iter, Aux);
-            Backward_Char (Aux, Success);
-
-            if not Success or else Get_Char (Aux) /= '_' then
-               Copy (Iter, Word_Begin);
-               Copy (Iter, Word_End);
-               Forward_Word_Ends (Word_End, Count, Success);
-               Word_Found := True;
-               return;
-            end if;
-         end if;
+      --  If we are in a word, move outside of the word
+      while Success and then Is_Entity_Letter (Get_Char (Iter)) loop
+         Backward_Char (Iter, Success);
       end loop;
-      Word_Found := False;
+
+      --  We are now outside a word, move until we are inside a word again.
+      while Success and then not Is_Entity_Letter (Get_Char (Iter)) loop
+         Backward_Char (Iter, Success);
+      end loop;
+
+      --  If we could not re-enter a word, it means there is no previous word.
+      if not Success then
+         Word_Found := False;
+         return;
+      end if;
+
+      Copy (Iter, Word_End);
+      Forward_Char (Word_End, Success);
+
+      --  Move back until the beginning of the word
+      while Success and then Is_Entity_Letter (Get_Char (Iter)) loop
+         Backward_Char (Iter, Success);
+      end loop;
+
+      Copy (Iter, Word_Begin);
+
+      if Success then
+         Forward_Char (Word_Begin, Success);
+      end if;
+
+      Word_Found := True;
    end Move_To_Previous_Word_Start;
 
    -----------------------------
@@ -205,23 +216,33 @@ package body Completion_Module is
       Word_Found : out Boolean)
    is
       Success : Boolean := True;
-      Count   : Gint := 0;
    begin
-      while Success loop
-         Forward_Word_End (Iter, Success);
-         Count := Count + 1;
-
-         if Success then
-            if Get_Char (Iter) /= '_' then
-               Copy (Iter, Word_End);
-               Copy (Iter, Word_Begin);
-               Backward_Word_Starts (Word_Begin, Count, Success);
-               Word_Found := True;
-               return;
-            end if;
-         end if;
+      --  If we are inside a word, move until we are outside of a word
+      while Success and then Is_Entity_Letter (Get_Char (Iter)) loop
+         Forward_Char (Iter, Success);
       end loop;
-      Word_Found := False;
+
+      --  We are now outside a word, move until we enter a word.
+      while Success and then not Is_Entity_Letter (Get_Char (Iter)) loop
+         Forward_Char (Iter, Success);
+      end loop;
+
+      --  If we have reached the end, return.
+      if not Success then
+         Word_Found := False;
+         return;
+      end if;
+
+      Copy (Iter, Word_Begin);
+
+      --  Move until the end of the word
+      while Success and then Is_Entity_Letter (Get_Char (Iter)) loop
+         Forward_Char (Iter, Success);
+      end loop;
+
+      Copy (Iter, Word_End);
+
+      Word_Found := True;
    end Move_To_Next_Word_Start;
 
    -----------------------------
