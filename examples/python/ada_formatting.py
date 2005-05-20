@@ -46,7 +46,7 @@ def align_use_clauses ():
       current_line = current_line + 1
    #end while
    if max_use_pos == 0:
-      print "No use-clauses found to align!"
+      GPS.MDI.dialog("No use-clauses found to align!")
       return
    #end if
    #print "max use_clause pos is", max_use_pos
@@ -102,7 +102,7 @@ def align_colons ():
       current_line = current_line + 1
    #end while
    if max_colon_pos == 0:
-      print "No colons found to align!"
+      GPS.MDI.dialog("No colons found to align!")
       return
    #end if
    # Python strings start at zero instead of one so we have to add one back
@@ -123,6 +123,63 @@ def align_colons ():
       current_line = current_line + 1
    #end while
 #end align_colons
+
+
+
+def align_reserved_is ():
+   """Aligns reserved word 'is' (eg in type declarations)"""
+   try:
+      current_file = GPS.current_context().file().name()
+   except:
+      GPS.MDI.dialog("Cannot get current file name")
+      return
+   #end try
+   try:
+      top_line = GPS.current_context().start_line()
+   except:
+      GPS.MDI.dialog("You must first select the intended text")
+      return
+   #end try
+   bottom_line = GPS.current_context().end_line()
+   # calculate new position for rightmost colon
+   max_pos = 0
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      pos = find(line,' is ')
+      if pos != -1:
+         left_part = line[:pos]
+         pos = len(rstrip(left_part)) + 1
+         if pos > max_pos:
+            max_pos = pos
+         #end if
+      #end if
+      current_line = current_line + 1
+   #end while
+   if max_pos == 0:
+      GPS.MDI.dialog("No reserved words 'is' found to align!")
+      return
+   #end if
+   # Python strings start at zero instead of one so we have to add one back
+   max_pos = max_pos + 1
+   #print "max pos is", max_pos
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      pos = find(line,' is ')
+      if pos != -1:
+         left_part = line[:pos]
+         right_part = line[pos+3:]
+         width = max_pos - len( rstrip(left_part) ) - 1
+         replace_line(current_file, rstrip(left_part) + blanks(width) + 'is ' + lstrip(right_part) )
+      #end if
+      current_line = current_line + 1
+   #end while
+#end align_reserved_is
+
+
 
 
 
@@ -158,6 +215,41 @@ def align_formal_params():
       return
    #end try
    bottom_line = GPS.current_context().end_line()
+
+   #line up the formal parameter names on the same starting column
+   open_paren_pos = -1  #-1 signifies "not found"
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      open_paren_pos = find(line,'(')
+      if open_paren_pos != -1:
+         paren_line = current_line
+         break;
+      #end if
+      current_line = current_line + 1
+   #end while
+   if open_paren_pos == -1:
+      print "No opening left parenthesis found!"
+      return
+   #end if
+   formal_start_column = open_paren_pos + 1
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      if current_line != paren_line:
+         #insert enough blanks to align the formal param name
+         replace_line(current_file, blanks(formal_start_column) + lstrip(line) )
+      else: #handle the procedure|function|entry too
+         left_part = line[:open_paren_pos]
+         right_part = line[open_paren_pos:]
+         width = formal_start_column - len( rstrip(left_part) ) - 1
+         replace_line(current_file, rstrip(left_part) + blanks(width) + lstrip(right_part) )
+      #end if
+      current_line = current_line + 1
+   #end while
+
    # calculate new position for rightmost colon
    max_colon_pos = 0
    current_line = top_line
@@ -176,7 +268,7 @@ def align_formal_params():
       current_line = current_line + 1
    #end while
    if max_colon_pos == 0:
-      print "No colons found to align!"
+      GPS.MDI.dialog("No colons found to align!")
       return
    #end if
    # Python strings start at zero instead of one so we have to add one back
@@ -340,7 +432,7 @@ def align_arrows ():
       current_line = current_line + 1
    #end while
    if max_arrow_pos == 0:
-      print "No '=>' symbols found to align!"
+      GPS.MDI.dialog("No arrows found to align!")
       return
    #end if
    # put a blank between the longest LHS and the arrow
@@ -417,7 +509,7 @@ def align_record_rep_clause ():
       current_line = current_line + 1
    #end while
    if max_at_pos == 0:
-      print "No reserved word 'at' found to align in representation clause!"
+      GPS.MDI.dialog("No reserved word 'at' found to align in representation clause!")
       return
    #end if
    # now line up occurrences of " at "
@@ -451,7 +543,7 @@ def align_record_rep_clause ():
       current_line = current_line + 1
    #end while
    if max_range_pos == 0:
-      print "No reserved word 'range' found to align in representation clause!"
+      GPS.MDI.dialog("No reserved word 'range' found to align in representation clause!")
       return
    #end if
    # now line up occurrences of " range "
@@ -465,6 +557,40 @@ def align_record_rep_clause ():
          right_part = line[range_pos+7:]
          width = max_range_pos - len(rstrip(left_part)) - 1
          replace_line(current_file, rstrip(left_part) + blanks(width) + ' range ' + lstrip(right_part) )
+      #end if
+      current_line = current_line + 1
+   #end while
+   # do the same for '..'
+   max_dots_pos = 0
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      dots_pos = find(line,'..')
+      if dots_pos != -1:
+         left_part = line[:dots_pos]
+         dots_pos = len(rstrip(left_part)) + 1
+         if dots_pos > max_dots_pos:
+            max_dots_pos = dots_pos
+         #end if
+      #end if
+      current_line = current_line + 1
+   #end while
+   if max_dots_pos == 0:
+      print "No '..' found to align in representation clause!"
+      return
+   #end if
+   # now line up occurrences of " .. "
+   current_line = top_line
+   while current_line <= bottom_line:
+      GPS.Editor.cursor_set_position (current_file, current_line, 0)
+      line = get_line()
+      dots_pos = find(line,'..')
+      if dots_pos != -1:
+         left_part = line[:dots_pos]
+         right_part = line[dots_pos+2:]
+         width = max_dots_pos - len(rstrip(left_part)) - 1
+         replace_line(current_file, rstrip(left_part) + blanks(width) + ' .. ' + lstrip(right_part) )
       #end if
       current_line = current_line + 1
    #end while
@@ -505,7 +631,7 @@ def align_assignments ():
       current_line = current_line + 1
    #end while
    if max_assignment_pos == 0:
-      print "No ':=' operations found to align!"
+      GPS.MDI.dialog("No assignment symbols found to align!")
       return
    #end if
    # put a blank between the longest LHS and the assignment
@@ -555,6 +681,15 @@ GPS.parse_xml ("""
      </action>
      <contextual action="Align use clauses" >
         <Title>Align/Use clauses</Title>
+     </contextual>
+
+     <action name="Align reserved is" output="none">
+        <description>Aligns reserved word 'is' in current selection</description>
+        <filter module="Source_Editor" language="ada" />
+        <shell lang="python">ada_formatting.align_reserved_is()</shell>
+     </action>
+     <contextual action="Align reserved is" >
+        <Title>Align/Reserved word 'is'</Title>
      </contextual>
 
      <action name="Align arrows" output="none">
