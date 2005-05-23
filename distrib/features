@@ -20,7 +20,7 @@ New features in GPS 3.1.0
   find out what instantiation of the generic is involved.
 
 - Identifier completion is now case insensitive when the language itself is
-  case insensitive.
+  case insensitive. Possible completions are looked for in all open editors.
 
 - Improved handling of tooltips in editors
   Tooltip now remains displayed while the mouse cursor stays on the hotspot
