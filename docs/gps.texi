@@ -1525,8 +1525,8 @@ combination (customizable through the key manager dialog) after a partial
 word: the next possible completion will be inserted in the editor. Typing this
 key again will cycle through the list of possible completions.
 
-Completions are searched in the edited source file, by first looking at the
-closest words and then looking further in the source as needed.
+Completions are searched in all currently open source files, by first looking
+at the closest words and then looking further in the source as needed.
 
 @item Delimiter highlighting
 @cindex delimiter
