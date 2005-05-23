@@ -24,11 +24,12 @@ with Glib;                      use Glib;
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Intl;                  use GPS.Intl;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -36,10 +37,17 @@ with Commands.Editor;           use Commands.Editor;
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Language;                  use Language;
+with VFS; use VFS;
+with Traces;                    use Traces;
 
 package body Completion_Module is
+
+   Me : constant Debug_Handle := Create ("Completion");
+
    use String_List_Utils.String_List;
 
    type Completion_Module_Record is new Module_ID_Record with record
@@ -48,24 +56,15 @@ package body Completion_Module is
       --  Warning : this is an UTF-8 string obtained from the buffer, and
       --  should only be compared with UTF-8 strings.
 
+      Child : Child_Iterator;
+      --  The editor we are currently testing
+
       List : String_List_Utils.String_List.List;
       --  The possible current completions. If empty, then there is no
       --  current completion operation.
 
       Node : String_List_Utils.String_List.List_Node;
       --  The current position in the completions list.
-
-      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
-      Word_Start_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The mark where the cursor was when the completion was started, and
-      --  the position of the start of the current word
-
-      Previous_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      Next_Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The marks for the current back/forward searches. We do the searches
-      --  in both direction alternatively (one match in one direction, then one
-      --  in the other direction,... so as to try and get the match closest to
-      --  the current cursor location).
 
       Top_Reached    : Boolean;
       Bottom_Reached : Boolean;
@@ -78,8 +77,25 @@ package body Completion_Module is
       Backwards : Boolean;
       --  True if the last direction searched was backwards.
 
-      Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
-      --  The buffer on which the marks are effective.
+      Buffer : Source_Buffer;
+      --  The buffer in which we are currently searching possible completions
+
+      Previous_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Next_Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The marks for the current back/forward searches. We do the searches
+      --  in both direction alternatively (one match in one direction, then one
+      --  in the other direction,... so as to try and get the match closest to
+      --  the current cursor location).
+      --  These are marks within Buffer
+
+      Insert_Buffer : Source_Buffer;
+      --  The buffer from which the user requested a completion.
+
+      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
+      Word_Start_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The mark where the cursor was when the completion was started, and
+      --  the position of the start of the current word.
+      --  These are marks within Insert_Buffer.
 
       Case_Sensitive : Boolean;
       --  Whether the current completion should be done case sensitive or not
@@ -95,6 +111,10 @@ package body Completion_Module is
    --  Add an item to the buffer's completion, or mark it as
    --  complete. Place the completion node to the newly added
    --  item, or to Null if the completion was finished.
+
+   procedure Move_To_Next_Editor;
+   --  Check whether M.Child is a valid editor (or move to the next valid
+   --  editor), in which we can search for completions.
 
    procedure Move_To_Previous_Word_Start
      (Iter       : in out Gtk_Text_Iter;
@@ -149,13 +169,18 @@ package body Completion_Module is
       Completion_Module.Backwards      := False;
 
       if Completion_Module.Mark /= null then
-         Delete_Mark (Completion_Module.Buffer, Completion_Module.Mark);
+         Delete_Mark (Completion_Module.Insert_Buffer, Completion_Module.Mark);
+         Delete_Mark
+           (Completion_Module.Insert_Buffer,
+            Completion_Module.Word_Start_Mark);
+         Completion_Module.Mark := null;
+      end if;
+
+      if Completion_Module.Previous_Mark /= null then
          Delete_Mark
            (Completion_Module.Buffer, Completion_Module.Previous_Mark);
          Delete_Mark (Completion_Module.Buffer, Completion_Module.Next_Mark);
-         Delete_Mark
-           (Completion_Module.Buffer, Completion_Module.Word_Start_Mark);
-         Completion_Module.Mark := null;
+         Completion_Module.Previous_Mark := null;
       end if;
       Completion_Module.Buffer := null;
    end Reset_Completion_Data;
@@ -334,17 +359,82 @@ package body Completion_Module is
             end if;
 
             if M.Top_Reached and then M.Bottom_Reached then
-               M.Complete := True;
+               Next (M.Child);
+               Move_To_Next_Editor;
 
-               if M.Node /= Null_Node then
-                  M.Node := Next (M.Node);
+               if M.Buffer = null then
+                  M.Complete := True;
+
+                  if M.Node /= Null_Node then
+                     M.Node := Next (M.Node);
+                  end if;
+
+                  return;
+               else
+                  Get_Iter_At_Mark (M.Buffer, Iter_Back,    M.Previous_Mark);
+                  Get_Iter_At_Mark (M.Buffer, Iter_Forward, M.Next_Mark);
                end if;
-
-               return;
             end if;
          end if;
       end loop;
    end Extend_Completions_List;
+
+   -------------------------
+   -- Move_To_Next_Editor --
+   -------------------------
+
+   procedure Move_To_Next_Editor is
+      M    : Completion_Module_Access renames Completion_Module;
+      Iter : Gtk_Text_Iter;
+      Lang : Language_Context_Access;
+      Box  : Source_Editor_Box;
+      pragma Unreferenced (Box);
+   begin
+      --  If we are currently pointing to an editor, this is a valid candidate
+      while Get (M.Child) /= null loop
+         begin
+            Box := Get_Source_Box_From_MDI (Get (M.Child));
+            exit;
+         exception
+            when Constraint_Error =>
+               null;  --  We do not have an editor
+         end;
+         Next (M.Child);
+      end loop;
+
+      if M.Previous_Mark /= null then
+         Delete_Mark (M.Buffer, M.Previous_Mark);
+         Delete_Mark (M.Buffer, M.Next_Mark);
+         M.Previous_Mark := null;
+      end if;
+
+      if Get (M.Child) /= null then
+         M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
+         Trace (Me, "MANU Testing new editor : "
+                & Full_Name (Get_Filename (M.Buffer)).all);
+
+         if Get_Language (M.Buffer) = null then
+            M.Case_Sensitive := True;
+         else
+            Lang := Get_Language_Context (Get_Language (M.Buffer));
+            M.Case_Sensitive := Lang = null or else Lang.Case_Sensitive;
+         end if;
+
+         if M.Buffer /= M.Insert_Buffer then
+            Get_Start_Iter (M.Buffer, Iter);
+         else
+            Get_Iter_At_Mark (M.Insert_Buffer, Iter, M.Mark);
+         end if;
+
+         M.Previous_Mark  := Create_Mark (M.Buffer, "", Iter);
+         M.Next_Mark      := Create_Mark (M.Buffer, "", Iter);
+         M.Top_Reached    := False;
+         M.Bottom_Reached := False;
+         M.Backwards      := True;
+      else
+         M.Buffer := null;
+      end if;
+   end Move_To_Next_Editor;
 
    -------------
    -- Execute --
@@ -354,25 +444,22 @@ package body Completion_Module is
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Context);
       M             : Completion_Module_Access renames Completion_Module;
       Widget        : constant Gtk_Widget :=
         Get_Current_Focus_Widget (Command.Kernel);
       View          : Source_View;
-      Buffer        : Source_Buffer;
       Shell_Command : Editor_Replace_Slice;
       Iter          : Gtk_Text_Iter;
       Prev          : Gtk_Text_Iter;
       Success       : Boolean;
       Text          : GNAT.OS_Lib.String_Access;
-      Lang          : Language_Context_Access;
 
    begin
       if Widget /= null
         and then Widget.all in Source_View_Record'Class
       then
          View := Source_View (Widget);
-         Buffer := Source_Buffer (Get_Buffer (View));
+         M.Insert_Buffer := Source_Buffer (Get_Buffer (View));
       else
          return Commands.Failure;
       end if;
@@ -383,24 +470,10 @@ package body Completion_Module is
          --  If the completions list is empty, that means we have to
          --  initiate the mark data and launch the first search.
 
-         End_Action (Buffer);
-
-         Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-         M.Mark            := Create_Mark (Buffer, "", Iter);
-         M.Previous_Mark   := Create_Mark (Buffer, "", Iter);
-         M.Next_Mark       := Create_Mark (Buffer, "", Iter);
-         M.Buffer          := Gtk_Text_Buffer (Buffer);
-         M.Backwards       := True;
-
-         if Get_Language (Buffer) = null then
-            M.Case_Sensitive := True;
-         else
-            Lang := Get_Language_Context (Get_Language (Buffer));
-            M.Case_Sensitive := Lang = null or else Lang.Case_Sensitive;
-         end if;
-
-         --  At this point the completion data is reset.
-         --  Get the completion suffix.
+         End_Action (M.Insert_Buffer);
+         Get_Iter_At_Mark
+           (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
+         M.Mark            := Create_Mark (M.Insert_Buffer, "", Iter);
 
          Copy (Iter, Prev);
          Backward_Char (Prev, Success);
@@ -411,7 +484,6 @@ package body Completion_Module is
 
          while Is_Entity_Letter (Get_Char (Prev)) loop
             Backward_Char (Prev, Success);
-
             exit when not Success;
          end loop;
 
@@ -419,17 +491,24 @@ package body Completion_Module is
             Forward_Char (Prev, Success);
          end if;
 
-         M.Word_Start_Mark := Create_Mark (Buffer, "", Prev);
+         M.Word_Start_Mark := Create_Mark (M.Insert_Buffer, "", Prev);
+
+         --  Prepare the first editor in which we will be searching for
+         --  possible completions. Note that the call to First_Child ensures
+         --  that we also first look in the current editor, which is what the
+         --  user would expect anyway
+         M.Child := First_Child (Get_MDI (Get_Kernel (Context.Context)));
+         Move_To_Next_Editor;
+
+         --  At this point the completion data is reset.
+         --  Get the completion suffix.
 
          declare
             P : constant String := Get_Slice (Prev, Iter);
          begin
             if P /= "" then
                M.Prefix := new String'(P);
-               Move_Mark (Buffer, M.Mark,          Iter);
-               Move_Mark (Buffer, M.Previous_Mark, Iter);
-               Move_Mark (Buffer, M.Next_Mark,     Iter);
-
+--               Move_Mark (M.Insert_Buffer, M.Mark, Iter);
                Extend_Completions_List;
             else
                Reset_Completion_Data;
@@ -446,19 +525,21 @@ package body Completion_Module is
          Text := new String'(M.Prefix.all);
       end if;
 
-      Get_Iter_At_Mark (Buffer, Prev, M.Word_Start_Mark);
-      Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+      Get_Iter_At_Mark (M.Insert_Buffer, Prev, M.Word_Start_Mark);
+      Get_Iter_At_Mark (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
       Create
         (Shell_Command,
-         Buffer,
-         Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
+         M.Insert_Buffer,
+         Get_Editable_Line
+           (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
          Natural (Get_Line_Offset (Prev) + 1),
-         Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
+         Get_Editable_Line
+           (M.Insert_Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
          Natural (Get_Line_Offset (Iter) + 1),
          Text.all,
          True);
 
-      Enqueue (Buffer, Command_Access (Shell_Command));
+      Enqueue (M.Insert_Buffer, Command_Access (Shell_Command));
       GNAT.OS_Lib.Free (Text);
 
       return Commands.Success;
