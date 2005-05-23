@@ -541,10 +541,11 @@ package body GPS.Kernel.Modules is
          Context : Selection_Context_Access) return String;
       --  Return the name of the label for C, including parent path
 
-      function Has_Explicit_Parent
+      function Parent_Is_Visible
         (C       : Contextual_Menu_Access;
          Context : Selection_Context_Access) return Boolean;
-      --  Return True if C is a submenu of an explicitly registered menu
+      --  Return True if the parent menu of C is visible (if it was registered
+      --  explicitly, we check its visibility).
 
       ---------------------
       -- Menu_Is_Visible --
@@ -570,7 +571,10 @@ package body GPS.Kernel.Modules is
          --  and then only if it isn't the last entry the contextual
          --  menu
 
-         if C.Action = null and then C.Command = null then
+         if C.Action = null
+           and then C.Command = null
+           and then not C.Is_Submenu
+         then
             Has_Following_Entry := C.Is_Submenu;
             if not Has_Following_Entry then
                C2 := C.Next;
@@ -703,11 +707,11 @@ package body GPS.Kernel.Modules is
          end if;
       end Label_Name;
 
-      -------------------------
-      -- Has_Explicit_Parent --
-      -------------------------
+      -----------------------
+      -- Parent_Is_Visible --
+      -----------------------
 
-      function Has_Explicit_Parent
+      function Parent_Is_Visible
         (C       : Contextual_Menu_Access;
          Context : Selection_Context_Access) return Boolean
       is
@@ -719,13 +723,13 @@ package body GPS.Kernel.Modules is
             C2 := Convert (User.Kernel.Contextual);
             while C2 /= null loop
                if '/' & Label_Name (C2, Context) & '/' = Parent then
-                  return True;
+                  return C2.Filter_Matched;
                end if;
                C2 := C2.Next;
             end loop;
          end if;
-         return False;
-      end Has_Explicit_Parent;
+         return True;
+      end Parent_Is_Visible;
 
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
@@ -767,7 +771,10 @@ package body GPS.Kernel.Modules is
       --  for the moment
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Action /= null or else C.Command /= null then
+         if C.Is_Submenu
+           or else C.Action  /= null
+           or else C.Command /= null
+         then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
@@ -777,7 +784,10 @@ package body GPS.Kernel.Modules is
       --  depend on the visibility of other items
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Action = null and then C.Command = null then
+         if C.Action = null
+           and then C.Command = null
+           and then not C.Is_Submenu
+         then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
@@ -786,7 +796,8 @@ package body GPS.Kernel.Modules is
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
          if C.Filter_Matched
-           and then not Has_Explicit_Parent (C, Context)
+           and then not C.Is_Submenu
+           and then Parent_Is_Visible (C, Context)
          then
             Create_Item (C, Context, Item, Full_Name);
 
