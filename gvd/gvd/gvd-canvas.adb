@@ -722,7 +722,7 @@ package body GVD.Canvas is
 
       --  Display "Close" option.
 
-      Gtk_New (Mitem, Label => -"Close" & " " & Component_Name);
+      Gtk_New (Mitem, Label => -"Close" & " " & Get_Name (Item));
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Undisplay_Item'Access),
