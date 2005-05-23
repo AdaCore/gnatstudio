@@ -796,7 +796,6 @@ package body GPS.Kernel.Modules is
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
          if C.Filter_Matched
-           and then not C.Is_Submenu
            and then Parent_Is_Visible (C, Context)
          then
             Create_Item (C, Context, Item, Full_Name);
