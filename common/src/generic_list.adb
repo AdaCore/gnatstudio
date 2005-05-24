@@ -337,7 +337,7 @@ package body Generic_List is
       Tmp     : List_Node;
 
    begin
-      if L.First = null or else L.Last.all = null then
+      if L.First = null or else L.Last = null or else L.Last.all = null then
          return;
       end if;
 
