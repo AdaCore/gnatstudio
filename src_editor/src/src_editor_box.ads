@@ -29,7 +29,6 @@
 
 with Glib;
 with Glib.Object;
-with Gdk.Rectangle;
 with Gdk.Event;
 
 with Gtk.Box;
@@ -42,7 +41,6 @@ with Gtk.Handlers;
 with Gtk.Separator;
 with Gtk.Text_Mark;
 
-with GVD.Tooltips;
 with Language;
 with Language_Handlers;
 with GPS.Kernel;
@@ -417,27 +415,6 @@ package Src_Editor_Box is
 
 private
 
-   ----------------------
-   -- Tooltip Handling --
-   ----------------------
-
-   type Editor_Tooltip_Data is record
-      Box : Source_Editor_Box;
-   end record;
-
-   procedure Draw_Tooltip
-     (Widget : access Src_Editor_View.Source_View_Record'Class;
-      Data   : in out Editor_Tooltip_Data;
-      Pixmap : out Gdk.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle);
-   --  Draw a tooltip in a text view.
-   --  See GVD.Tooltips for a complete spec of this procedure.
-
-   package Editor_Tooltips is new GVD.Tooltips
-     (Editor_Tooltip_Data, Src_Editor_View.Source_View_Record, Draw_Tooltip);
-
    type Timestamp_Check_Mode is (Checking, Check_At_Focus, Check_At_Modify);
    --  When should the source box test the timestamp of the file on disk ?
    --  - Checking: we are already asking the user whether he wants to edit
@@ -481,10 +458,6 @@ private
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-
-      Tooltip              : Editor_Tooltips.Tooltips;
-      --  Those tooltips display the value of variables pointed to by the
-      --  mouse.
 
       Writable             : Boolean := True;
 

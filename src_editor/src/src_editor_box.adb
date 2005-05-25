@@ -90,6 +90,7 @@ with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Std_Dialogs;               use Std_Dialogs;
+with GVD.Tooltips;
 
 with Commands;                  use Commands;
 with Commands.Editor;           use Commands.Editor;
@@ -112,6 +113,16 @@ package body Src_Editor_Box is
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
+
+   type Editor_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+      Box : Source_Editor_Box;
+   end record;
+   type Editor_Tooltips_Access is access all Editor_Tooltips'Class;
+   procedure Draw
+     (Tooltip : access Editor_Tooltips;
+      Pixmap  : out Gdk.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   --  See inherited documentation
 
    --------------------------
    -- Forward declarations --
@@ -536,17 +547,17 @@ package body Src_Editor_Box is
       Grab_Focus (Editor.Source_View);
    end Grab_Focus;
 
-   ------------------
-   -- Draw_Tooltip --
-   ------------------
+   ----------
+   -- Draw --
+   ----------
 
-   procedure Draw_Tooltip
-     (Widget        : access Source_View_Record'Class;
-      Data          : in out Editor_Tooltip_Data;
-      Pixmap        : out Gdk.Gdk_Pixmap;
-      Width, Height : out Glib.Gint;
-      Area          : out Gdk_Rectangle)
+   procedure Draw
+     (Tooltip : access Editor_Tooltips;
+      Pixmap  : out Gdk.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
+      Box                   : constant Source_Editor_Box := Tooltip.Box;
+      Widget                : constant Source_View := Get_View (Tooltip.Box);
       Line, Col, Cursor_Col : Gint;
       Mouse_X, Mouse_Y      : Gint;
       Win_X, Win_Y          : Gint;
@@ -556,20 +567,19 @@ package body Src_Editor_Box is
       Win                   : Gdk.Gdk_Window;
       Context               : aliased Entity_Selection_Context;
       Location              : Gdk_Rectangle;
-      Filename              : constant Virtual_File := Get_Filename (Data.Box);
+      Filename              : constant Virtual_File := Get_Filename (Box);
       Out_Of_Bounds         : Boolean;
       Window                : Gdk.Gdk_Window;
       Window_Width          : Gint;
       Window_Height         : Gint;
       Window_Depth          : Gint;
+      Width, Height         : Gint := 0;
 
    begin
-      Width  := 0;
-      Height := 0;
       Pixmap := null;
       Area   := (0, 0, 0, 0);
 
-      if not Get_Pref (Data.Box.Kernel, Display_Tooltip) then
+      if not Get_Pref (Box.Kernel, Display_Tooltip) then
          return;
       end if;
 
@@ -602,10 +612,9 @@ package body Src_Editor_Box is
       end if;
 
       Cursor_Col := Col;
-      Get_Iter_At_Line_Offset
-        (Data.Box.Source_Buffer, Start_Iter, Line, Col);
+      Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds (Start_Iter, End_Iter);
-      Get_Screen_Position (Data.Box.Source_Buffer, Start_Iter, Line, Col);
+      Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
 
       --  Compute the area surrounding the entity, relative to the pointer
       --  coordinates
@@ -633,18 +642,18 @@ package body Src_Editor_Box is
 
          Trace (Me, "Tooltip on " & Entity_Name);
          Set_Context_Information
-           (Context'Unchecked_Access, Data.Box.Kernel, Src_Editor_Module_Id);
+           (Context'Unchecked_Access, Box.Kernel, Src_Editor_Module_Id);
          Set_File_Information
            (Context      => Context'Unchecked_Access,
             File         => Filename,
-            Line         => To_Box_Line (Data.Box.Source_Buffer, Line),
+            Line         => To_Box_Line (Box.Source_Buffer, Line),
             Column       => To_Box_Column (Cursor_Col));
          Set_Entity_Information
            (Context       => Context'Unchecked_Access,
             Entity_Name   => Entity_Name,
             Entity_Column => To_Box_Column (Col));
          GPS.Kernel.Modules.Compute_Tooltip
-           (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
+           (Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
 
          if Pixmap /= null then
             Destroy (Context);
@@ -655,7 +664,7 @@ package body Src_Editor_Box is
          --  tooltip, based on cross references.
 
          Get_Declaration_Info
-           (Data.Box, Context'Unchecked_Access, Entity, Entity_Ref);
+           (Box, Context'Unchecked_Access, Entity, Entity_Ref);
 
          Destroy (Context);
 
@@ -677,7 +686,7 @@ package body Src_Editor_Box is
               & Image (Get_Line (Get_Declaration_Of (Entity)));
             Doc : constant String :=
               Get_Documentation
-                (Get_Language_Handler (Data.Box.Kernel), Entity);
+                (Get_Language_Handler (Box.Kernel), Entity);
 
             function Get_Instance return String;
             --  Return the text describing from what instance the entity is
@@ -725,7 +734,7 @@ package body Src_Editor_Box is
                Create_Pixmap_From_Text
                  (Text     => Str & ASCII.LF & "-----------------------------"
                   & Get_Instance & ASCII.LF & Doc,
-                  Font     => Get_Pref (Data.Box.Kernel, Default_Font),
+                  Font     => Get_Pref (Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
                   Pixmap   => Pixmap,
@@ -734,7 +743,7 @@ package body Src_Editor_Box is
             else
                Create_Pixmap_From_Text
                  (Text     => Str & Get_Instance,
-                  Font     => Get_Pref (Data.Box.Kernel, Default_Font),
+                  Font     => Get_Pref (Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
                   Pixmap   => Pixmap,
@@ -750,7 +759,7 @@ package body Src_Editor_Box is
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end Draw_Tooltip;
+   end Draw;
 
    -----------------
    -- To_Box_Line --
@@ -974,7 +983,6 @@ package body Src_Editor_Box is
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
-      Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
 
       if Box.Default_GC /= null then
          Unref (Box.Bg_GC);
@@ -1033,9 +1041,9 @@ package body Src_Editor_Box is
       Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
-      Data           : Editor_Tooltip_Data;
       Hbox           : Gtk_Hbox;
       Separator      : Gtk_Vseparator;
+      Tooltip        : Editor_Tooltips_Access;
 
    begin
       Glib.Object.Initialize (Box);
@@ -1073,10 +1081,12 @@ package body Src_Editor_Box is
                Box.Source_Buffer, Kernel);
       Add (Scrolling_Area, Box.Source_View);
 
-      Data.Box := Source_Editor_Box (Box);
-      Editor_Tooltips.New_Tooltip (Box.Source_View, Data, Box.Tooltip);
-      Editor_Tooltips.Set_Timeout
-        (Box.Tooltip, Guint32 (Get_Pref (Kernel, Tooltip_Timeout)));
+      Tooltip := new Editor_Tooltips;
+      Tooltip.Box := Source_Editor_Box (Box);
+      Set_Tooltip
+        (Tooltip   => Tooltip,
+         On_Widget => Box.Source_View,
+         Timeout   => Guint32 (Get_Pref (Kernel, Tooltip_Timeout)));
 
       --  The status bar, at the bottom of the window...
 
@@ -1876,8 +1886,6 @@ package body Src_Editor_Box is
 
    procedure Destroy (Box : in out Source_Editor_Box) is
    begin
-      Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
-
       --  The editor might still be floating if Load_File failed, see
       --  Create_File_Editor.
       if Flag_Is_Set (Box.Root_Container, Gtk.Object.Floating) then
