@@ -25,4 +25,5 @@ New features in GPS 3.1.0
 - Improved handling of tooltips in editors
   Tooltip now remains displayed while the mouse cursor stays on the hotspot
   word. Using the mousewheel to scroll now hides the tooltip.
+  The list of parameters for subprograms is now displayed in the tooltip.
 
