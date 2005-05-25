@@ -573,7 +573,6 @@ package body Src_Editor_Box is
       Window_Width          : Gint;
       Window_Height         : Gint;
       Window_Depth          : Gint;
-      Width, Height         : Gint := 0;
 
    begin
       Pixmap := null;
@@ -653,7 +652,7 @@ package body Src_Editor_Box is
             Entity_Name   => Entity_Name,
             Entity_Column => To_Box_Column (Col));
          GPS.Kernel.Modules.Compute_Tooltip
-           (Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
+           (Box.Kernel, Context'Unchecked_Access, Pixmap);
 
          if Pixmap /= null then
             Destroy (Context);
@@ -737,18 +736,14 @@ package body Src_Editor_Box is
                   Font     => Get_Pref (Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
-                  Pixmap   => Pixmap,
-                  Width    => Width,
-                  Height   => Height);
+                  Pixmap   => Pixmap);
             else
                Create_Pixmap_From_Text
                  (Text     => Str & Get_Instance,
                   Font     => Get_Pref (Box.Kernel, Default_Font),
                   Bg_Color => White (Get_Default_Colormap),
                   Widget   => Widget,
-                  Pixmap   => Pixmap,
-                  Width    => Width,
-                  Height   => Height);
+                  Pixmap   => Pixmap);
             end if;
          end;
 
