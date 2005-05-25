@@ -804,17 +804,28 @@ package body GUI_Utils is
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk_Widget_Record'Class;
       Pixmap     : out Gdk.Gdk_Pixmap;
-      Wrap_Width : Glib.Gint := -1)
+      Wrap_Width : Glib.Gint := -1;
+      Use_Markup : Boolean := False)
    is
       Margin : constant := 2;
       GC     : Gdk_GC;
       Layout : Pango_Layout;
       Width, Height : Gint;
    begin
+      if Text = "" then
+         Pixmap := null;
+         return;
+      end if;
+
       Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Bg_Color);
 
-      Layout := Create_Pango_Layout (Widget, Text);
+      if Use_Markup then
+         Layout := Create_Pango_Layout (Widget, "");
+         Set_Markup (Layout, Text);
+      else
+         Layout := Create_Pango_Layout (Widget, Text);
+      end if;
       Set_Font_Description (Layout, Font);
 
       if Wrap_Width /= -1 then

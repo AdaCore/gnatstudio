@@ -325,7 +325,8 @@ package GUI_Utils is
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Pixmap     : out Gdk.Gdk_Pixmap;
-      Wrap_Width : Gint := -1);
+      Wrap_Width : Gint := -1;
+      Use_Markup : Boolean := False);
    --  Create a new pixmap that contains Text. Bg_Color is used for the
    --  background of the pixmap.
    --  Widget is used to create the graphic context for the pango layout.
@@ -335,6 +336,9 @@ package GUI_Utils is
    --  Text must be a correct Utf8 text, see Glib.Convert
    --
    --  The maximal width of the text is Wrap_Width.
+   --
+   --  If Use_Markup is true, then some html markup will be taken into account
+   --  when rendering the text, for instance <b>,...
 
    -----------
    -- Menus --
