@@ -223,9 +223,7 @@ package body GVD_Module is
 
    procedure Tooltip_Handler
      (Sel_Context : access Selection_Context'Class;
-      Pixmap      : out Gdk.Gdk_Pixmap;
-      Width       : out Gint;
-      Height      : out Gint);
+      Pixmap      : out Gdk.Gdk_Pixmap);
    --  Create a pixmap suitable for a tooltip, if debugger has been initialized
 
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class);
@@ -2456,9 +2454,7 @@ package body GVD_Module is
 
    procedure Tooltip_Handler
      (Sel_Context : access Selection_Context'Class;
-      Pixmap      : out Gdk.Gdk_Pixmap;
-      Width       : out Gint;
-      Height      : out Gint)
+      Pixmap      : out Gdk.Gdk_Pixmap)
    is
       Selection : Entity_Selection_Context_Access;
       Debugger  : Visual_Debugger;
@@ -2469,8 +2465,6 @@ package body GVD_Module is
 
    begin
       Pixmap := null;
-      Width  := 0;
-      Height := 0;
 
       if Sel_Context.all not in Entity_Selection_Context'Class then
          return;
@@ -2516,8 +2510,6 @@ package body GVD_Module is
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
-               Width      => Width,
-               Height     => Height,
                Wrap_Width => Max_Tooltip_Width);
          end if;
       end;
