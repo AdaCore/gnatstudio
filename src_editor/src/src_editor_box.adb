@@ -90,7 +90,7 @@ with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Std_Dialogs;               use Std_Dialogs;
-with GVD.Tooltips;
+with Tooltips;
 
 with Commands;                  use Commands;
 with Commands.Editor;           use Commands.Editor;
@@ -114,7 +114,7 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
-   type Editor_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+   type Editor_Tooltips is new Tooltips.Pixmap_Tooltips with record
       Box : Source_Editor_Box;
    end record;
    type Editor_Tooltips_Access is access all Editor_Tooltips'Class;

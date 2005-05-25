@@ -75,7 +75,7 @@ with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                use GPS.Intl;
 with VFS;                       use VFS;
-with GVD.Tooltips;              use GVD.Tooltips;
+with Tooltips;
 
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
@@ -88,7 +88,7 @@ package body VCS_View_Pkg is
 
    Me : constant Debug_Handle := Create ("VCS_INTERFACE");
 
-   type VCS_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+   type VCS_Tooltips is new Tooltips.Pixmap_Tooltips with record
       Page : VCS_Page_Access;
    end record;
    type VCS_Tooltips_Access is access all VCS_Tooltips'Class;

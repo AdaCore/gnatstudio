@@ -84,7 +84,7 @@ with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
-with GVD.Tooltips;
+with Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Entities;
@@ -186,7 +186,7 @@ package body Project_Explorers is
    -- Tooltips --
    --------------
 
-   type Explorer_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+   type Explorer_Tooltips is new Tooltips.Pixmap_Tooltips with record
       Explorer : Project_Explorer_Access;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
