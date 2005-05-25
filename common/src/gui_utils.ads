@@ -325,8 +325,6 @@ package GUI_Utils is
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Pixmap     : out Gdk.Gdk_Pixmap;
-      Width      : out Glib.Gint;
-      Height     : out Glib.Gint;
       Wrap_Width : Gint := -1);
    --  Create a new pixmap that contains Text. Bg_Color is used for the
    --  background of the pixmap.

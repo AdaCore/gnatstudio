@@ -804,13 +804,12 @@ package body GUI_Utils is
       Bg_Color   : Gdk.Color.Gdk_Color;
       Widget     : access Gtk_Widget_Record'Class;
       Pixmap     : out Gdk.Gdk_Pixmap;
-      Width      : out Glib.Gint;
-      Height     : out Glib.Gint;
       Wrap_Width : Glib.Gint := -1)
    is
       Margin : constant := 2;
       GC     : Gdk_GC;
       Layout : Pango_Layout;
+      Width, Height : Gint;
    begin
       Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Bg_Color);
