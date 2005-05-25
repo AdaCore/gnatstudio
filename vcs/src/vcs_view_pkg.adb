@@ -25,6 +25,8 @@ with Gdk;
 with Gdk.Color;  use Gdk.Color;
 with Gdk.Event;  use Gdk.Event;
 with Gtk.Enums;
+with Gdk.Pixmap; use Gdk.Pixmap;
+with Gdk.Rectangle; use Gdk.Rectangle;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Gdk.Types;  use Gdk.Types;
 with Gdk.Window; use Gdk.Window;
@@ -73,6 +75,7 @@ with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                use GPS.Intl;
 with VFS;                       use VFS;
+with GVD.Tooltips;              use GVD.Tooltips;
 
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
@@ -83,9 +86,17 @@ with Histories;                 use Histories;
 
 package body VCS_View_Pkg is
 
-   use VCS_Explorer_Tooltips;
-
    Me : constant Debug_Handle := Create ("VCS_INTERFACE");
+
+   type VCS_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+      Page : VCS_Page_Access;
+   end record;
+   type VCS_Tooltips_Access is access all VCS_Tooltips'Class;
+   procedure Draw
+     (Tooltip : access VCS_Tooltips;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle);
+   --  See inherited documentation
 
    --------------------
    -- Local packages --
@@ -306,21 +317,20 @@ package body VCS_View_Pkg is
       Grab_Focus (Page.Tree);
    end On_Selected;
 
-   ------------------
-   -- Draw_Tooltip --
-   ------------------
+   ----------
+   -- Draw --
+   ----------
 
-   procedure Draw_Tooltip
-     (Widget : access Gtk_Tree_View_Record'Class;
-      Data   : in out VCS_Page_Access;
+   procedure Draw
+     (Tooltip : access VCS_Tooltips;
       Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Window : Gdk.Window.Gdk_Window;
       New_Window : Gdk_Window;
       Mask : Gdk_Modifier_Type;
+      Width  : Glib.Gint := 0;
+      Height : Glib.Gint := 0;
 
       X, Y      : Gint;
       Path      : Gtk_Tree_Path;
@@ -332,51 +342,50 @@ package body VCS_View_Pkg is
 
       Text      : String_Access;
    begin
-      Width  := 0;
-      Height := 0;
-
-      Window := Get_Bin_Window (Data.Tree);
+      Window := Get_Bin_Window (Tooltip.Page.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
       Get_Path_At_Pos
-        (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
+        (Tooltip.Page.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
          return;
       end if;
 
-      Get_Cell_Area (Data.Tree, Path, Column, Area);
-      Iter := Get_Iter (Data.Model, Path);
+      Get_Cell_Area (Tooltip.Page.Tree, Path, Column, Area);
+      Iter := Get_Iter (Tooltip.Page.Model, Path);
       Path_Free (Path);
 
-      if Column = Data.Status_Column then
+      if Column = Tooltip.Page.Status_Column then
          Text := new String'
            (-"Status: "
-            & Get_String (Data.Model, Iter, Status_Description_Column));
+            & Get_String
+              (Tooltip.Page.Model, Iter, Status_Description_Column));
 
-      elsif Column = Data.Log_Column then
-         if Get_Boolean (Data.Model, Iter, Has_Log_Column) then
+      elsif Column = Tooltip.Page.Log_Column then
+         if Get_Boolean (Tooltip.Page.Model, Iter, Has_Log_Column) then
             Text := new String'(-"A revision log exists for this file");
          else
             Text := new String'(-"No revision log exists for this file");
          end if;
 
-      elsif Column = Data.File_Column then
-         Text := new String'(Get_String (Data.Model, Iter, Name_Column));
+      elsif Column = Tooltip.Page.File_Column then
+         Text := new String'
+           (Get_String (Tooltip.Page.Model, Iter, Name_Column));
       end if;
 
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Data.Kernel, Default_Font),
+            Get_Pref (Tooltip.Page.Kernel, Default_Font),
             White (Get_Default_Colormap),
-            Widget,
+            Tooltip.Page.Tree,
             Pixmap,
             Width,
             Height);
          Free (Text);
       end if;
-   end Draw_Tooltip;
+   end Draw;
 
    ----------
    -- Free --
@@ -452,7 +461,6 @@ package body VCS_View_Pkg is
 
          Status_Hash.Reset (Page.Stored_Status);
          Status_Hash.Reset (Page.Cached_Status);
-         Destroy_Tooltip (Page.Tooltip);
       end loop;
 
    exception
@@ -1377,6 +1385,7 @@ package body VCS_View_Pkg is
       Selection       : Gtk_Tree_Selection;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Label           : Gtk_Label;
+      Tooltip         : VCS_Tooltips_Access;
 
    begin
       for J in 1 .. Explorer.Number_Of_Pages loop
@@ -1433,7 +1442,9 @@ package body VCS_View_Pkg is
 
       Append_Page (Explorer.Notebook, Page, Label);
 
-      New_Tooltip (Page.Tree, Page, Page.Tooltip);
+      Tooltip := new VCS_Tooltips;
+      Tooltip.Page := Page;
+      Set_Tooltip (Tooltip, Page.Tree);
 
       declare
          Status : constant Status_Array := Get_Registered_Status (Identifier);

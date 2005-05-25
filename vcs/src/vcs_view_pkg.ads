@@ -18,10 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Gdk.Pixmap;               use Gdk.Pixmap;
-with Gdk.Rectangle;            use Gdk.Rectangle;
-
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -30,8 +26,6 @@ with Gtk.Tree_View_Column;
 
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
-
-with GVD.Tooltips;
 
 with String_List_Utils;        use String_List_Utils;
 
@@ -174,24 +168,6 @@ private
    type VCS_Page_Record;
    type VCS_Page_Access is access all VCS_Page_Record;
 
-   --------------
-   -- Tooltips --
-   --------------
-
-   procedure Draw_Tooltip
-     (Widget : access Gtk_Tree_View_Record'Class;
-      Data   : in out VCS_Page_Access;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle);
-   --  Draw the tooltip. See GVD.Tooltips.
-
-   package VCS_Explorer_Tooltips is new GVD.Tooltips
-     (User_Type    => VCS_Page_Access,
-      Widget_Type  => Gtk_Tree_View_Record,
-      Draw_Tooltip => Draw_Tooltip);
-
    type Page_Status_Record is record
       Status  : File_Status;
       Display : Boolean := True;
@@ -224,8 +200,6 @@ private
 
       Log_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       --  The column corresponding to the log file indicator.
-
-      Tooltip    : VCS_Explorer_Tooltips.Tooltips;
 
       Status     : Page_Status_Array_Access;
    end record;
