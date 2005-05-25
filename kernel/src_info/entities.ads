@@ -565,7 +565,9 @@ package Entities is
 
    function Get_Type_Of
      (Entity : Entity_Information) return Entity_Information;
-   --  Return the type of the entity
+   --  Return the type of the entity. In the case of access types (for instance
+   --  access parameters), the type is read by calling
+   --  Entities.Queries.Pointed_Type.
 
    function Is_Predefined_Entity (Entity : Entity_Information) return Boolean;
    --  Whether the Entity is a predefined entity
