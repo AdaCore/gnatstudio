@@ -236,6 +236,7 @@ package body Navigation_Module is
          Unchecked_Free (Module.Markers (Module.Markers'First));
          Module.Markers (Module.Markers'First .. Module.Markers'Last - 1) :=
            Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
+         Module.Current_Marker := Module.Markers'Last;
       end if;
       Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
       Module.Last_Marker := Module.Current_Marker;
