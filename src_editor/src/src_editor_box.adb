@@ -20,7 +20,6 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -35,14 +34,9 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Gdk;                       use Gdk;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Types;
-with Gdk.Window;                use Gdk.Window;
 with Pango.Layout;              use Pango.Layout;
-with Pango.Font;                use Pango.Font;
 
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
@@ -79,18 +73,18 @@ with String_Utils;              use String_Utils;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Box.Tooltips;   use Src_Editor_Box.Tooltips;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Traces;                    use Traces;
-with Doc_Utils;                 use Doc_Utils;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Std_Dialogs;               use Std_Dialogs;
-with Tooltips;
+with Tooltips;                  use Tooltips;
 
 with Commands;                  use Commands;
 with Commands.Editor;           use Commands.Editor;
@@ -114,32 +108,9 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
-   type Editor_Tooltips is new Tooltips.Pixmap_Tooltips with record
-      Box : Source_Editor_Box;
-   end record;
-   type Editor_Tooltips_Access is access all Editor_Tooltips'Class;
-   procedure Draw
-     (Tooltip : access Editor_Tooltips;
-      Pixmap  : out Gdk.Gdk_Pixmap;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle);
-   --  See inherited documentation
-
    --------------------------
    -- Forward declarations --
    --------------------------
-
-   procedure Get_Declaration_Info
-     (Editor  : access Source_Editor_Box_Record;
-      Context : access Entity_Selection_Context'Class;
-      Entity  : out Entity_Information;
-      Ref     : out Entity_Reference);
-   --  Perform a cross-reference to the declaration of the entity located at
-   --  (Line, Column) in Editor. Fail silently when no declaration or no
-   --  entity can be located, and set File_Decl to null.
-   --  Entity is set to the entity that was found, or No_Entity_Information if
-   --  not found. It must be destroyed by the caller.
-   --  Ref is the closest reference to the entity from Context. It might not be
-   --  set if we haven't found this information
 
    function Get_Contextual_Menu
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -149,20 +120,6 @@ package body Src_Editor_Box is
       Menu         : Gtk.Menu.Gtk_Menu)
       return GPS.Kernel.Selection_Context_Access;
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
-
-   function To_Box_Line
-     (B    : Source_Buffer;
-      Line : Gint) return Natural;
-   pragma Inline (To_Box_Line);
-   --  Convert a line number in the Source Buffer to a line number in the
-   --  Source Box. This conversion is necessary because line numbers start
-   --  from 1 in the Source Box (this is the natural numbering for humans),
-   --  whereas it starts from 0 in the Source Box.
-
-   function To_Box_Column (Col : Gint) return Natural;
-   pragma Inline (To_Box_Column);
-   --  Convert a column number in the Source Buffer to a column number
-   --  in the Source Box. Same rationale as in To_Box_Line.
 
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
@@ -494,50 +451,6 @@ package body Src_Editor_Box is
       Free (Arg);
    end Go_To_Closest_Match;
 
-   --------------------------
-   -- Get_Declaration_Info --
-   --------------------------
-
-   procedure Get_Declaration_Info
-     (Editor  : access Source_Editor_Box_Record;
-      Context : access Entity_Selection_Context'Class;
-      Entity  : out Entity_Information;
-      Ref     : out Entity_Reference)
-   is
-      Status   : Find_Decl_Or_Body_Query_Status;
-      Filename : constant Virtual_File := Get_Filename (Editor);
-   begin
-      Ref := No_Entity_Reference;
-
-      if Filename = VFS.No_File then
-         Entity := null;
-         return;
-      end if;
-
-      Push_State (Editor.Kernel, Busy);
-
-      --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
-      --  ask the user interactively for the tooltips.
-      Find_Declaration
-        (Db          => Get_Database (Editor.Kernel),
-         File_Name   => Get_Filename (Editor),
-         Entity_Name => Entity_Name_Information (Context),
-         Line        => Contexts.Line_Information (Context),
-         Column      => Entity_Column_Information (Context),
-         Entity      => Entity,
-         Closest_Ref => Ref,
-         Status      => Status);
-
-      Pop_State (Editor.Kernel);
-
-   exception
-      when E : others =>
-         Pop_State (Editor.Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         Entity := null;
-   end Get_Declaration_Info;
-
    ----------------
    -- Grab_Focus --
    ----------------
@@ -546,215 +459,6 @@ package body Src_Editor_Box is
    begin
       Grab_Focus (Editor.Source_View);
    end Grab_Focus;
-
-   ----------
-   -- Draw --
-   ----------
-
-   procedure Draw
-     (Tooltip : access Editor_Tooltips;
-      Pixmap  : out Gdk.Gdk_Pixmap;
-      Area    : out Gdk.Rectangle.Gdk_Rectangle)
-   is
-      Box                   : constant Source_Editor_Box := Tooltip.Box;
-      Widget                : constant Source_View := Get_View (Tooltip.Box);
-      Line, Col, Cursor_Col : Gint;
-      Mouse_X, Mouse_Y      : Gint;
-      Win_X, Win_Y          : Gint;
-      Start_Iter            : Gtk_Text_Iter;
-      End_Iter              : Gtk_Text_Iter;
-      Mask                  : Gdk.Types.Gdk_Modifier_Type;
-      Win                   : Gdk.Gdk_Window;
-      Context               : aliased Entity_Selection_Context;
-      Location              : Gdk_Rectangle;
-      Filename              : constant Virtual_File := Get_Filename (Box);
-      Out_Of_Bounds         : Boolean;
-      Window                : Gdk.Gdk_Window;
-      Window_Width          : Gint;
-      Window_Height         : Gint;
-      Window_Depth          : Gint;
-
-   begin
-      Pixmap := null;
-      Area   := (0, 0, 0, 0);
-
-      if not Get_Pref (Box.Kernel, Display_Tooltip) then
-         return;
-      end if;
-
-      Window := Get_Window (Widget, Text_Window_Text);
-
-      Get_Geometry
-        (Window, Win_X, Win_Y, Window_Width, Window_Height, Window_Depth);
-      Get_Pointer
-        (Window, Mouse_X, Mouse_Y, Mask, Win);
-
-      if Mouse_X < Win_X
-        or else Mouse_Y < Win_Y
-        or else Win_X + Window_Width < Mouse_X
-        or else Win_Y + Window_Height < Mouse_Y
-      then
-         --  Invalid position: the cursor is outside the text, do not
-         --  display a tooltip.
-
-         return;
-      end if;
-
-      Window_To_Buffer_Coords
-        (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
-
-      if Out_Of_Bounds then
-         --  Do not display a tooltip in an invalid location,
-         --  for example after the end of a line.
-
-         return;
-      end if;
-
-      Cursor_Col := Col;
-      Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
-      Search_Entity_Bounds (Start_Iter, End_Iter);
-      Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
-
-      --  Compute the area surrounding the entity, relative to the pointer
-      --  coordinates
-
-      Get_Iter_Location (Widget, Start_Iter, Location);
-      Buffer_To_Window_Coords
-        (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
-      Area.X := Win_X - Mouse_X;
-      Area.Y := Win_Y - Mouse_Y;
-      Get_Iter_Location (Widget, End_Iter, Location);
-      Buffer_To_Window_Coords
-        (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
-      Area.Width  := Win_X - Mouse_X - Area.X + Location.Width;
-      Area.Height := Win_Y - Mouse_Y - Area.Y + Location.Height;
-
-      declare
-         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
-         Entity      : Entity_Information;
-         Entity_Ref  : Entity_Reference;
-
-      begin
-         if Entity_Name = "" then
-            return;
-         end if;
-
-         Trace (Me, "Tooltip on " & Entity_Name);
-         Set_Context_Information
-           (Context'Unchecked_Access, Box.Kernel, Src_Editor_Module_Id);
-         Set_File_Information
-           (Context      => Context'Unchecked_Access,
-            File         => Filename,
-            Line         => To_Box_Line (Box.Source_Buffer, Line),
-            Column       => To_Box_Column (Cursor_Col));
-         Set_Entity_Information
-           (Context       => Context'Unchecked_Access,
-            Entity_Name   => Entity_Name,
-            Entity_Column => To_Box_Column (Col));
-         GPS.Kernel.Modules.Compute_Tooltip
-           (Box.Kernel, Context'Unchecked_Access, Pixmap);
-
-         if Pixmap /= null then
-            Destroy (Context);
-            return;
-         end if;
-
-         --  No module wants to handle this tooltip. Default to built-in
-         --  tooltip, based on cross references.
-
-         Get_Declaration_Info
-           (Box, Context'Unchecked_Access, Entity, Entity_Ref);
-
-         Destroy (Context);
-
-         if Entity = null then
-            return;
-         end if;
-
-         Ref (Entity);
-
-         declare
-            Str : constant String :=
-              Attributes_To_String (Get_Attributes (Entity)) & ' ' &
-              (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-               Get_Full_Name (Entity, ".")
-              & ASCII.LF
-              & (-"declared at ")
-              & Base_Name (Get_Filename
-                  (Get_File (Get_Declaration_Of (Entity)))) & ':'
-              & Image (Get_Line (Get_Declaration_Of (Entity)));
-            Doc : constant String :=
-              Get_Documentation
-                (Get_Language_Handler (Box.Kernel), Entity);
-
-            function Get_Instance return String;
-            --  Return the text describing from what instance the entity is
-
-            function Get_Instance return String is
-               use Ada.Strings.Unbounded;
-               Result  : Unbounded_String;
-               Inst    : Entity_Instantiation;
-               Inst_E  : Entity_Information;
-               Inst_Of : Entity_Information;
-
-            begin
-               if Entity_Ref /= No_Entity_Reference then
-                  Inst := From_Instantiation_At (Entity_Ref);
-                  while Inst /= No_Instantiation loop
-                     Inst_E := Get_Entity (Inst);
-                     Inst_Of := Is_Instantiation_Of (Inst_E);
-                     if Inst_Of = null then
-                        Result := Result
-                          & ASCII.LF & (-"from instance at ");
-                     else
-                        Result := Result & ASCII.LF
-                          & (-"from instance of ")
-                          & Get_Name (Inst_Of).all & ':'
-                          & Base_Name (Get_Filename
-                              (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
-                          & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
-                          & ASCII.LF & "  at ";
-                     end if;
-                     Result := Result
-                       & Get_Name (Inst_E).all
-                       & ':'
-                       &  Base_Name (Get_Filename
-                         (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
-                       & Image (Get_Line (Get_Declaration_Of (Inst_E)));
-                     Inst := Generic_Parent (Inst);
-                  end loop;
-               end if;
-
-               return To_String (Result);
-            end Get_Instance;
-
-         begin
-            if Doc /= "" then
-               Create_Pixmap_From_Text
-                 (Text     => Str & ASCII.LF & "-----------------------------"
-                  & Get_Instance & ASCII.LF & Doc,
-                  Font     => Get_Pref (Box.Kernel, Default_Font),
-                  Bg_Color => White (Get_Default_Colormap),
-                  Widget   => Widget,
-                  Pixmap   => Pixmap);
-            else
-               Create_Pixmap_From_Text
-                 (Text     => Str & Get_Instance,
-                  Font     => Get_Pref (Box.Kernel, Default_Font),
-                  Bg_Color => White (Get_Default_Colormap),
-                  Widget   => Widget,
-                  Pixmap   => Pixmap);
-            end if;
-         end;
-
-         Unref (Entity);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Draw;
 
    -----------------
    -- To_Box_Line --
@@ -1038,7 +742,6 @@ package body Src_Editor_Box is
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
       Separator      : Gtk_Vseparator;
-      Tooltip        : Editor_Tooltips_Access;
 
    begin
       Glib.Object.Initialize (Box);
@@ -1076,10 +779,8 @@ package body Src_Editor_Box is
                Box.Source_Buffer, Kernel);
       Add (Scrolling_Area, Box.Source_View);
 
-      Tooltip := new Editor_Tooltips;
-      Tooltip.Box := Source_Editor_Box (Box);
       Set_Tooltip
-        (Tooltip   => Tooltip,
+        (Tooltip   => Create_Tooltips (Box),
          On_Widget => Box.Source_View,
          Timeout   => Guint32 (Get_Pref (Kernel, Tooltip_Timeout)));
 

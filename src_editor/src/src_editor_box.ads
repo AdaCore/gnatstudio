@@ -415,6 +415,20 @@ package Src_Editor_Box is
 
 private
 
+   function To_Box_Line
+     (B    : Source_Buffer;
+      Line : Glib.Gint) return Natural;
+   pragma Inline (To_Box_Line);
+   --  Convert a line number in the Source Buffer to a line number in the
+   --  Source Box. This conversion is necessary because line numbers start
+   --  from 1 in the Source Box (this is the natural numbering for humans),
+   --  whereas it starts from 0 in the Source Box.
+
+   function To_Box_Column (Col : Glib.Gint) return Natural;
+   pragma Inline (To_Box_Column);
+   --  Convert a column number in the Source Buffer to a column number
+   --  in the Source Box. Same rationale as in To_Box_Line.
+
    type Timestamp_Check_Mode is (Checking, Check_At_Focus, Check_At_Modify);
    --  When should the source box test the timestamp of the file on disk ?
    --  - Checking: we are already asking the user whether he wants to edit
