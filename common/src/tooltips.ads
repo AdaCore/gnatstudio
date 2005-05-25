@@ -43,6 +43,7 @@ package Tooltips is
    --------------
 
    type Tooltips is abstract tagged private;
+   type Tooltips_Access is access all Tooltips'Class;
    --  This type represents a tooltip creator: it can be attached to one or
    --  more widgets, and will create a tooltip (ie a graphical window to
    --  display information) automatically for them when the mouse is left for
@@ -54,12 +55,15 @@ package Tooltips is
    --  itself.
    --  It does nothing by default
 
-   function Create_Contents
-     (Tooltip : access Tooltips) return Gtk.Widget.Gtk_Widget
-     is abstract;
+   procedure Create_Contents
+     (Tooltip  : access Tooltips;
+      Contents : out Gtk.Widget.Gtk_Widget;
+      Area     : out Gdk.Rectangle.Gdk_Rectangle) is abstract;
    --  Return the widget to be displayed in the tooltip. This widget will be
    --  automatically destroyed when the tooltip is hidden.
-   --  This function should return null if the tooltip shouldn't be displayed.
+   --  This function should set Contents to null if the tooltip shouldn't be
+   --  displayed.
+   --  While the mouse button remains in Area, the tooltip remains visible.
 
    procedure Set_Tooltip
      (Tooltip   : access Tooltips;
@@ -85,8 +89,10 @@ package Tooltips is
       Area    : out Gdk.Rectangle.Gdk_Rectangle) is abstract;
    --  Create the contents of the tooltip
 
-   function Create_Contents
-     (Tooltip : access Pixmap_Tooltips) return Gtk.Widget.Gtk_Widget;
+   procedure Create_Contents
+     (Tooltip  : access Pixmap_Tooltips;
+      Contents : out Gtk.Widget.Gtk_Widget;
+      Area     : out Gdk.Rectangle.Gdk_Rectangle);
    --  See inherited documentation
 
 private

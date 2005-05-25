@@ -34,7 +34,6 @@ with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
 package body Tooltips is
-   type Tooltips_Access is access all Tooltips'Class;
 
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
@@ -108,7 +107,7 @@ package body Tooltips is
          return False;
       end if;
 
-      W := Create_Contents (Tooltip);
+      Create_Contents (Tooltip, W, Tooltip.Area);
       if W /= null then
          Gtk_New       (Tooltip.Display_Window, Window_Popup);
          Add           (Tooltip.Display_Window, W);
@@ -124,8 +123,10 @@ package body Tooltips is
    -- Create_Contents --
    ---------------------
 
-   function Create_Contents
-     (Tooltip : access Pixmap_Tooltips) return Gtk.Widget.Gtk_Widget
+   procedure Create_Contents
+     (Tooltip  : access Pixmap_Tooltips;
+      Contents : out Gtk.Widget.Gtk_Widget;
+      Area     : out Gdk.Rectangle.Gdk_Rectangle)
    is
       use type Gdk_Window;
       Pixmap        : Gdk_Pixmap;
@@ -139,9 +140,10 @@ package body Tooltips is
          Gtk_New (Pix, Pixmap, null);
          Set_Size_Request (Pix, Width, Height);
          Gdk.Pixmap.Unref (Pixmap);
-         return Gtk_Widget (Pix);
+         Contents := Gtk_Widget (Pix);
+         Area     := Tooltip.Area;
       else
-         return null;
+         Contents := null;
       end if;
    end Create_Contents;
 
