@@ -34,6 +34,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 with Gdk.Color;                 use Gdk.Color;
+with Gdk.Pixmap;                use Gdk.Pixmap;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -83,6 +84,7 @@ with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
+with GVD.Tooltips;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 with Entities;
@@ -179,6 +181,20 @@ package body Project_Explorers is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Explorer_Tooltips is new GVD.Tooltips.Pixmap_Tooltips with record
+      Explorer : Project_Explorer_Access;
+   end record;
+   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
+   procedure Draw
+     (Tooltip : access Explorer_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+   --  See inherited documentatoin
 
    -----------------------
    -- Local subprograms --
@@ -407,9 +423,6 @@ package body Project_Explorers is
    --  If Include_Project is False, then Project itself will not be included in
    --  the returned array
 
-   procedure On_Destroy (Explorer : access Gtk_Widget_Record'Class);
-   --  Called when the explorer is destroyed
-
    --------------
    -- Commands --
    --------------
@@ -590,19 +603,6 @@ package body Project_Explorers is
    end Tree_Select_Row_Cb;
 
    ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy
-     (Explorer : access Gtk_Widget_Record'Class)
-   is
-      use Project_Explorer_Tooltips;
-      Expl : constant Project_Explorer := Project_Explorer (Explorer);
-   begin
-      Destroy_Tooltip (Expl.Tooltip);
-   end On_Destroy;
-
-   ----------------
    -- Initialize --
    ----------------
 
@@ -610,12 +610,11 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      use Project_Explorer_Tooltips;
-
       Scrolled : Gtk_Scrolled_Window;
       Label    : Gtk_Label;
       H1       : Refresh_Hook;
       H2       : Project_Hook;
+      Tooltip  : Explorer_Tooltips_Access;
 
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
@@ -660,8 +659,6 @@ package body Project_Explorers is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
-      Widget_Callback.Connect
-        (Explorer, "destroy", On_Destroy'Access);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Explorer.Tree), "changed",
@@ -693,10 +690,9 @@ package body Project_Explorers is
 
       --  Initialize tooltips
 
-      New_Tooltip
-        (Explorer.Tree, Project_Explorer_Access (Explorer), Explorer.Tooltip);
-
-      Set_Timeout (Explorer.Tooltip, 250);
+      Tooltip := new Explorer_Tooltips;
+      Tooltip.Explorer := Project_Explorer_Access (Explorer);
+      Set_Tooltip (Tooltip, Explorer.Tree, 250);
    end Initialize;
 
    --------------------
@@ -1067,17 +1063,14 @@ package body Project_Explorers is
       Set (Explorer.Tree.Model, Node, Up_To_Date_Column, False);
    end Set_Directory_Node_Attributes;
 
-   ------------------
-   -- Draw_Tooltip --
-   ------------------
+   ----------
+   -- Draw --
+   ----------
 
-   procedure Draw_Tooltip
-     (Widget : access Gtkada.Tree_View.Tree_View_Record'Class;
-      Data   : in out Project_Explorer_Access;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle)
+   procedure Draw
+     (Tooltip : access Explorer_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Window     : Gdk.Window.Gdk_Window;
       New_Window : Gdk_Window;
@@ -1091,15 +1084,14 @@ package body Project_Explorers is
       Row_Found  : Boolean := False;
       Par, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
+      Width, Height : Gint := 0;
 
       Text       : String_Access;
    begin
-      Width  := 0;
-      Height := 0;
       Pixmap := null;
       Area   := (0, 0, 0, 0);
 
-      Window := Get_Bin_Window (Data.Tree);
+      Window := Get_Bin_Window (Tooltip.Explorer.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
       --  ??? By default, return immediately (Row_Found = False) since tooltips
@@ -1108,59 +1100,70 @@ package body Project_Explorers is
 
       if Active (Explorers_Tooltips) then
          Get_Path_At_Pos
-           (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
+           (Tooltip.Explorer.Tree, X, Y, Path,
+            Column, Cell_X, Cell_Y, Row_Found);
       end if;
 
       if not Row_Found then
          return;
       end if;
 
-      Get_Cell_Area (Data.Tree, Path, Column, Area);
-      Iter := Get_Iter (Data.Tree.Model, Path);
+      Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
+      Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
 
       Path_Free (Path);
 
-      Node_Type := Get_Node_Type (Data.Tree.Model, Iter);
+      Node_Type := Get_Node_Type (Tooltip.Explorer.Tree.Model, Iter);
 
       case Node_Type is
          when Project_Node | Extends_Project_Node =>
             --  Project or extended project full pathname
             Text := new String'
-              (Get_String (Data.Tree.Model, Iter, Absolute_Name_Column));
+              (Get_String
+                 (Tooltip.Explorer.Tree.Model, Iter, Absolute_Name_Column));
 
          when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
             --  Directroy full pathname and project name
             --  Get parent node which is the project name
-            Par := Parent (Data.Tree.Model, Iter);
+            Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
 
             Text := new String'
-              (Get_String (Data.Tree.Model, Iter, Absolute_Name_Column) &
+              (Get_String
+                 (Tooltip.Explorer.Tree.Model, Iter, Absolute_Name_Column) &
                ASCII.LF &
                (-"in project ") &
-               Get_String (Data.Tree.Model, Par, Base_Name_Column));
+               Get_String
+                 (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column));
 
          when File_Node =>
             --  Base filename and Project name
             --  Get grand-parent node which is the project node
-            Par := Parent (Data.Tree.Model, Parent (Data.Tree.Model, Iter));
+            Par := Parent
+              (Tooltip.Explorer.Tree.Model,
+               Parent (Tooltip.Explorer.Tree.Model, Iter));
 
             Text := new String'
-              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
-               ASCII.LF &
+              (Get_String (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column)
+               & ASCII.LF &
                (-"in project ") &
-               Get_String (Data.Tree.Model, Par, Base_Name_Column));
+               Get_String
+                 (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column));
 
          when Entity_Node =>
             --  Entity (parameters) declared at Filename:line
             --  Get grand-parent node which is the filename node
-            Par := Parent (Data.Tree.Model, Parent (Data.Tree.Model, Iter));
+            Par := Parent
+              (Tooltip.Explorer.Tree.Model,
+               Parent (Tooltip.Explorer.Tree.Model, Iter));
 
             Text := new String'
-              (Get_String (Data.Tree.Model, Iter, Base_Name_Column) &
-               ASCII.LF &
+              (Get_String (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column)
+               & ASCII.LF &
                (-"declared at ") &
-               Get_String (Data.Tree.Model, Par, Base_Name_Column) & ':' &
-               Image (Integer (Get_Int (Data.Tree.Model, Iter, Line_Column))));
+               Get_String (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column)
+               & ':' &
+               Image (Integer
+                 (Get_Int (Tooltip.Explorer.Tree.Model, Iter, Line_Column))));
 
          when others =>
             null;
@@ -1169,15 +1172,15 @@ package body Project_Explorers is
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Data.Kernel, Default_Font),
+            Get_Pref (Tooltip.Explorer.Kernel, Default_Font),
             White (Get_Default_Colormap),
-            Widget,
+            Tooltip.Explorer.Tree,
             Pixmap,
             Width,
             Height);
          Free (Text);
       end if;
-   end Draw_Tooltip;
+   end Draw;
 
    -------------------------
    -- Expand_Project_Node --

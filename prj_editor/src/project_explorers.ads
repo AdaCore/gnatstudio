@@ -28,10 +28,6 @@ with GPS.Kernel;
 with Gtk.Handlers;
 with Gtk.Box;
 with Gtkada.Tree_View;
-with GVD.Tooltips;
-with Glib;
-with Gdk.Pixmap;
-with Gdk.Rectangle;
 
 package Project_Explorers is
 
@@ -69,20 +65,6 @@ package Project_Explorers is
 private
    type Project_Explorer_Access is access all Project_Explorer_Record;
 
-   procedure Draw_Tooltip
-     (Widget : access Gtkada.Tree_View.Tree_View_Record'Class;
-      Data   : in out Project_Explorer_Access;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle);
-   --  Draw the tooltip. See GVD.Tooltips.
-
-   package Project_Explorer_Tooltips is new GVD.Tooltips
-     (User_Type    => Project_Explorer_Access,
-      Widget_Type  => Gtkada.Tree_View.Tree_View_Record,
-      Draw_Tooltip => Draw_Tooltip);
-
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree      : Gtkada.Tree_View.Tree_View;
 
@@ -91,8 +73,6 @@ private
       --  The signal for the expansion of nodes in the project view
 
       Expanding : Boolean := False;
-
-      Tooltip   : Project_Explorer_Tooltips.Tooltips;
    end record;
 
 end Project_Explorers;
