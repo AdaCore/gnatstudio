@@ -394,14 +394,11 @@ package GPS.Kernel.Modules is
    procedure Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context_Access;
-      Pixmap  : out Gdk.Gdk_Pixmap;
-      Width   : out Glib.Gint;
-      Height  : out Glib.Gint);
+      Pixmap  : out Gdk.Gdk_Pixmap);
    --  Given a context, pointing to e.g an entity, the kernel will ask
    --  each of the registered modules whether it wants to display a tooltip.
    --  The first module to set Pixmap will stop the process.
-   --  If no module wants to display a tooltip, Pixmap is set to null, and
-   --  Width and Height are set to 0.
+   --  If no module wants to display a tooltip, Pixmap is set to null.
 
    -----------
    -- Menus --

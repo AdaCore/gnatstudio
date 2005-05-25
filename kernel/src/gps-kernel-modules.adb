@@ -283,9 +283,7 @@ package body GPS.Kernel.Modules is
    procedure Compute_Tooltip
      (Kernel  : access Kernel_Handle_Record'Class;
       Context : Selection_Context_Access;
-      Pixmap  : out Gdk.Gdk_Pixmap;
-      Width   : out Gint;
-      Height  : out Gint)
+      Pixmap  : out Gdk.Gdk_Pixmap)
    is
       Current : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
@@ -295,16 +293,12 @@ package body GPS.Kernel.Modules is
 
    begin
       Pixmap := null;
-      Width  := 0;
-      Height := 0;
 
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Tooltip_Handler /= null then
             Module_List.Data (Current).Info.Tooltip_Handler
               (Context => Context,
-               Pixmap  => Pixmap,
-               Width   => Width,
-               Height  => Height);
+               Pixmap  => Pixmap);
 
             if Pixmap /= null then
                return;
