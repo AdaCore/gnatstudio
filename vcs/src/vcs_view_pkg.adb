@@ -326,11 +326,9 @@ package body VCS_View_Pkg is
       Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
       Area   : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Window : Gdk.Window.Gdk_Window;
+      Window     : Gdk.Window.Gdk_Window;
       New_Window : Gdk_Window;
-      Mask : Gdk_Modifier_Type;
-      Width  : Glib.Gint := 0;
-      Height : Glib.Gint := 0;
+      Mask       : Gdk_Modifier_Type;
 
       X, Y      : Gint;
       Path      : Gtk_Tree_Path;
@@ -380,9 +378,7 @@ package body VCS_View_Pkg is
             Get_Pref (Tooltip.Page.Kernel, Default_Font),
             White (Get_Default_Colormap),
             Tooltip.Page.Tree,
-            Pixmap,
-            Width,
-            Height);
+            Pixmap);
          Free (Text);
       end if;
    end Draw;
