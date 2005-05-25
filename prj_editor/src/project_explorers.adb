@@ -1084,7 +1084,6 @@ package body Project_Explorers is
       Row_Found  : Boolean := False;
       Par, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
-      Width, Height : Gint := 0;
 
       Text       : String_Access;
    begin
@@ -1175,9 +1174,7 @@ package body Project_Explorers is
             Get_Pref (Tooltip.Explorer.Kernel, Default_Font),
             White (Get_Default_Colormap),
             Tooltip.Explorer.Tree,
-            Pixmap,
-            Width,
-            Height);
+            Pixmap);
          Free (Text);
       end if;
    end Draw;
