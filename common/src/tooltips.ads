@@ -33,7 +33,7 @@ with Gdk.Rectangle;
 with Gtk.Main;
 with Gtk.Window;
 
-package GVD.Tooltips is
+package Tooltips is
 
    Default_Timeout : constant Glib.Guint32 := 600;
    --  The delay before a tooltip is displayed, in milliseconds)
@@ -119,4 +119,4 @@ private
    type Pixmap_Tooltips is abstract new Tooltips with null record;
    type Pixmap_Tooltips_Access is access all Pixmap_Tooltips'Class;
 
-end GVD.Tooltips;
+end Tooltips;

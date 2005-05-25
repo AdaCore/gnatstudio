@@ -33,7 +33,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
-package body GVD.Tooltips is
+package body Tooltips is
    type Tooltips_Access is access all Tooltips'Class;
 
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
@@ -298,4 +298,4 @@ package body GVD.Tooltips is
       end if;
    end Destroy_Cb;
 
-end GVD.Tooltips;
+end Tooltips;
