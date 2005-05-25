@@ -20,6 +20,7 @@
 
 with Gdk.Event;       use Gdk.Event;
 with Gdk.Pixmap;      use Gdk.Pixmap;
+with Gdk.Drawable;    use Gdk.Drawable;
 with Gdk.Rectangle;   use Gdk.Rectangle;
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Window;      use Gdk.Window;
@@ -33,140 +34,63 @@ with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Tooltips is
+   type Tooltips_Access is access all Tooltips'Class;
 
-   --------------------
-   -- Local packages --
-   --------------------
+   package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
+     (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
+      Return_Type => Boolean,
+      User_Type   => Tooltips_Access);
+   package Destroy_Handler is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
+      User_Type   => Tooltips_Access);
+   --  These need to be at library level, not in a generic, which is why we
+   --  had to have a package Generic_Tooltips.
 
-   package GVD_Tooltips_Timeout is new Timeout (Tooltips);
+   package GVD_Tooltips_Timeout is new Timeout (Tooltips_Access);
 
-   ---------------------
-   -- Local functions --
-   ---------------------
+   function Tooltip_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip : Tooltips_Access) return Boolean;
+   --  Callback for all events that will disable the tooltip
+   --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
-   function Display_Tooltip (Tooltip : Tooltips) return Boolean;
+   procedure Show_Tooltip
+     (Tooltip   : access Tooltips'Class);
+   --  Make the tooltip visible, applied to a specific widget
+
+   procedure Hide_Tooltip
+     (Tooltip   : access Tooltips'Class);
+   --  Hide the tooltip if it is currently visible
+
+   function Display_Tooltip (Tooltip : Tooltips_Access) return Boolean;
    --  Call the drawing function, then create a window which contains
    --  the pixmap, and display it.
 
-   procedure Set_Tooltip (Tooltip : Tooltips);
-   --  Begin timeout countdown.
+   procedure Destroy_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Tooltip : Tooltips_Access);
+   --  Called when Widget is destroyed
 
-   procedure Remove_Tooltip (Tooltip : Tooltips);
-   --  Cancel timeout countdown.
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure Free_User_Type is new Ada.Unchecked_Deallocation
-     (User_Type, User_Type_Access);
-   --  Free memory used by user data.
-
-   procedure Free_Tooltips is new
-     Ada.Unchecked_Deallocation (Tooltips_Record, Tooltips);
-   --  Free memory used by tooltip.
-
-   ----------------------
-   -- Tooltip_Event_Cb --
-   ----------------------
-
-   function Tooltip_Event_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip : Tooltips) return Boolean
-   is
-      pragma Unreferenced (Widget);
+   procedure Destroy (Tooltip : access Tooltips) is
+      pragma Unreferenced (Tooltip);
    begin
-      if Get_Event_Type (Event) = Motion_Notify then
-         Set_Tooltip (Tooltip);
-      elsif Tooltip.Active then
-         Remove_Tooltip (Tooltip);
-      end if;
-
-      return False;
-   end Tooltip_Event_Cb;
-
-   -----------------
-   -- Set_Timeout --
-   -----------------
-
-   procedure Set_Timeout
-     (Tooltip : in out Tooltips;
-      T       : in Glib.Guint32) is
-   begin
-      Tooltip.Timeout := T;
-
-      --  Reset the tooltip
-      Set_Tooltip (Tooltip);
-   end Set_Timeout;
-
-   -----------------
-   -- New_Tooltip --
-   -----------------
-
-   procedure New_Tooltip
-     (Widget  : access Widget_Type'Class;
-      Data    : in User_Type;
-      Tooltip : out Tooltips)
-   is
-      use type Gdk.Window.Gdk_Window;
-      Area : Gdk_Rectangle;
-
-   begin
-      Area.X := 0;
-      Area.Y := 0;
-      Area.Width := 0;
-      Area.Height := 0;
-
-      Add_Events
-        (Widget,
-         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask);
-      Tooltip := new Tooltips_Record'
-        (Timeout        => Default_Timeout,
-         Data           => new User_Type'(Data),
-         Display_Window => null,
-         Parent_Window  => Get_Window (Widget),
-         Handler_Id     => 0,
-         Active         => False,
-         Widget         => Widget_Type_Access (Widget),
-         X              => 0,
-         Y              => 0,
-         Area           => Area);
-      Tooltip_Handler.Connect
-        (Widget, "button_press_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "key_press_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "motion_notify_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "scroll_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "focus_in_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-      Tooltip_Handler.Connect
-        (Widget, "focus_out_event",
-         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-         User_Data => Tooltip);
-   end New_Tooltip;
+      null;
+   end Destroy;
 
    ---------------------
    -- Display_Tooltip --
    ---------------------
 
-   function Display_Tooltip (Tooltip : Tooltips) return Boolean is
-      use type Gdk_Window;
-      Pixmap        : Gdk_Pixmap;
-      Window        : Gdk_Window;
+   function Display_Tooltip (Tooltip : Tooltips_Access) return Boolean is
       Mask          : Gdk_Modifier_Type;
-      Pix           : Gtk_Pixmap;
-      Width, Height : Gint;
       X, Y          : Gint;
-
+      Window        : Gdk_Window;
+      W             : Gtk_Widget;
    begin
       if not Tooltip.Active then
          return False;
@@ -184,44 +108,60 @@ package body GVD.Tooltips is
          return False;
       end if;
 
-      Draw_Tooltip
-        (Tooltip.Widget,
-         Tooltip.Data.all,
-         Pixmap,
-         Width,
-         Height,
-         Tooltip.Area);
-
-      if Pixmap /= null and then Width /= 0 and then Height /= 0 then
-         Gtk_New          (Tooltip.Display_Window, Window_Popup);
-         Set_Default_Size (Tooltip.Display_Window, Width, Height);
-         Gtk_New (Pix, Pixmap, null);
-         Add (Tooltip.Display_Window, Pix);
-         Get_Pointer      (Tooltip.Parent_Window, X, Y, Mask, Window);
-         Set_UPosition    (Tooltip.Display_Window, X + 10, Y + 10);
-         Gdk.Pixmap.Unref (Pixmap);
-         Show_All (Tooltip.Display_Window);
+      W := Create_Contents (Tooltip);
+      if W /= null then
+         Gtk_New       (Tooltip.Display_Window, Window_Popup);
+         Add           (Tooltip.Display_Window, W);
+         Get_Pointer   (null, X, Y, Mask, Window);
+         Set_UPosition (Tooltip.Display_Window, X + 10, Y + 10);
+         Show_All      (Tooltip.Display_Window);
       end if;
 
       return False;
    end Display_Tooltip;
 
-   -----------------
-   -- Set_Tooltip --
-   -----------------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   procedure Set_Tooltip (Tooltip : Tooltips) is
+   function Create_Contents
+     (Tooltip : access Pixmap_Tooltips) return Gtk.Widget.Gtk_Widget
+   is
+      use type Gdk_Window;
+      Pixmap        : Gdk_Pixmap;
+      Pix           : Gtk_Pixmap;
+      Width, Height : Gint;
+   begin
+      Draw (Pixmap_Tooltips_Access (Tooltip), Pixmap, Tooltip.Area);
+
+      if Pixmap /= null then
+         Gdk.Drawable.Get_Size (Pixmap, Width, Height);
+         Gtk_New (Pix, Pixmap, null);
+         Set_Size_Request (Pix, Width, Height);
+         Gdk.Pixmap.Unref (Pixmap);
+         return Gtk_Widget (Pix);
+      else
+         return null;
+      end if;
+   end Create_Contents;
+
+   ------------------
+   -- Show_Tooltip --
+   ------------------
+
+   procedure Show_Tooltip
+     (Tooltip   : access Tooltips'Class)
+   is
       Mask   : Gdk_Modifier_Type;
       Window : Gdk_Window;
       X, Y   : Gint;
-
    begin
-      Get_Pointer (Tooltip.Parent_Window, X, Y, Mask, Window);
+      Get_Pointer (Get_Window (Tooltip.Widget), X, Y, Mask, Window);
 
       if X <= Tooltip.X + Tooltip.Area.X +
-           GRectangle_Coord (Tooltip.Area.Width)
+        GRectangle_Coord (Tooltip.Area.Width)
         and then Y <= Tooltip.Y + Tooltip.Area.Y +
-           GRectangle_Coord (Tooltip.Area.Height)
+          GRectangle_Coord (Tooltip.Area.Height)
         and then X >= Tooltip.X + Tooltip.Area.X
         and then Y >= Tooltip.Y + Tooltip.Area.Y
       then
@@ -229,7 +169,7 @@ package body GVD.Tooltips is
       end if;
 
       if Tooltip.Active then
-         Remove_Tooltip (Tooltip);
+         Hide_Tooltip (Tooltip);
       end if;
 
       Tooltip.X := X;
@@ -239,14 +179,16 @@ package body GVD.Tooltips is
       Tooltip.Active := True;
       Tooltip.Handler_Id :=
         GVD_Tooltips_Timeout.Add
-          (Tooltip.Timeout, Display_Tooltip'Access, Tooltip);
-   end Set_Tooltip;
+          (Tooltip.Timeout, Display_Tooltip'Access, Tooltips_Access (Tooltip));
+   end Show_Tooltip;
 
-   --------------------
-   -- Remove_Tooltip --
-   --------------------
+   ------------------
+   -- Hide_Tooltip --
+   ------------------
 
-   procedure Remove_Tooltip (Tooltip : Tooltips) is
+   procedure Hide_Tooltip
+     (Tooltip   : access Tooltips'Class)
+   is
       use type Gdk_Window;
    begin
       if Tooltip.Active then
@@ -259,38 +201,101 @@ package body GVD.Tooltips is
 
          Tooltip.Active := False;
       end if;
-   end Remove_Tooltip;
+   end Hide_Tooltip;
 
-   ---------------------
-   -- Destroy_Tooltip --
-   ---------------------
+   ----------------------
+   -- Tooltip_Event_Cb --
+   ----------------------
 
-   procedure Destroy_Tooltip (Tooltip : in out Tooltips) is
+   function Tooltip_Event_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip : Tooltips_Access) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      if Get_Event_Type (Event) = Motion_Notify then
+         Show_Tooltip (Tooltip);
+      elsif Tooltip.Active then
+         Hide_Tooltip (Tooltip);
+      end if;
+
+      return False;
+   end Tooltip_Event_Cb;
+
+   -----------------
+   -- Set_Tooltip --
+   -----------------
+
+   procedure Set_Tooltip
+     (Tooltip   : access Tooltips;
+      On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Timeout   : Glib.Guint32 := Default_Timeout)
+   is
+      use type Gdk.Window.Gdk_Window;
+   begin
+      if Tooltip.Widget /= null then
+         --  Tooltips can be bound to only one widget for the time being
+         raise Program_Error;
+      end if;
+
+      Tooltip.Timeout := Timeout;
+      Tooltip.Widget  := Gtk_Widget (On_Widget);
+      Add_Events
+        (On_Widget,
+         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask);
+      Tooltip_Handler.Connect
+        (On_Widget, "button_press_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "key_press_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "motion_notify_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "scroll_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "focus_in_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "focus_out_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Destroy_Handler.Connect
+        (On_Widget, "destroy",
+         Destroy_Handler.To_Marshaller (Destroy_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+   end Set_Tooltip;
+
+   ----------------
+   -- Destroy_Cb --
+   ----------------
+
+   procedure Destroy_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Tooltip : Tooltips_Access)
+   is
+      pragma Unreferenced (Widget);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Tooltips'Class, Tooltips_Access);
+      --  Free memory used by tooltip.
+      T : Tooltips_Access := Tooltip;
    begin
       if Tooltip /= null then
-         Remove_Tooltip (Tooltip);
-         Free_User_Type (Tooltip.Data);
-         Free_Tooltips (Tooltip);
+         Hide_Tooltip (Tooltip);
+         Destroy (Tooltip);
+
+         --  The following call is in fact safe, since this callback is only
+         --  called once per widget, and thus per tooltip
+         Unchecked_Free (T);
       end if;
-   end Destroy_Tooltip;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data (Tooltip : in out Tooltips; Data : in User_Type) is
-   begin
-      Free_User_Type (Tooltip.Data);
-      Tooltip.Data := new User_Type'(Data);
-   end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Tooltip : in Tooltips) return User_Type is
-   begin
-      return Tooltip.Data.all;
-   end Get_Data;
+   end Destroy_Cb;
 
 end GVD.Tooltips;

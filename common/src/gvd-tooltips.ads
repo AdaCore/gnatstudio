@@ -18,93 +18,79 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Handlers; use Gtk.Handlers;
-with Gdk.Pixmap;
-with Gdk.Window;
-with Gdk.Rectangle;
-with Gtk.Main;
-with Gdk.Event;
-with Gtk.Window;
-
 --  This package provides tooltips-like functionality. It differs from
 --  the original Gtk.Tooltips package in that the drawing function is
 --  left to the end user.
 --  The drawing function is called after the timeout period, which means
---  that dynamic tooltips can be implemented with this package.
---
---  The generic part enables the user to carry a user-defined object
---  to the drawing function.
---
---  ??? Right now, both the user data and the widget on which the tooltips
---  are set are carried to the drawing function.
---  This was done because the widget is needed by the actual drawing
---  routines in most cases, although it is not entirely useful, since a
---  user could insert a pointer to that widget within his data type.
---
---  (For an example showing the use of that package, please see
---  GVD.Text_Box.Source_Editor.Builtin)
+--  that dynamic tooltips can be implemented with this package (ie the contents
+--  of the tooltip changes at each call, possibly depending on the position of
+--  the pointer at the time the tooltip is displayed)
 
-generic
-   type User_Type (<>) is private;
-   type Widget_Type is new Gtk.Widget.Gtk_Widget_Record with private;
-   with procedure Draw_Tooltip
-     (Widget : access Widget_Type'Class;
-      Data   : in out User_Type;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Width  : out Glib.Gint;
-      Height : out Glib.Gint;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle) is <>;
-   --  Subprogram called every time a tooltip needs to be drawn.
-   --  Width and Height should either contain the size of the pixmap on exit,
-   --  or (0, 0) if no tooltip could be displayed.
-   --  It is the responsability of this function to get the coordinates of
-   --  the pointer, using Gdk.Window.Get_Pointer.
-   --  Area indicates the area of effectiveness of the tooltip: while the user
-   --  moves the mouse within this area after the tooltip was displayed, the
-   --  tooltip will remain on screen. The X, Y coordinates of the rectangle
-   --  should be relative to Widget.
+with Glib;
+with Gtk.Widget; use Gtk.Widget;
+with Gdk.Pixmap;
+with Gdk.Rectangle;
+with Gtk.Main;
+with Gtk.Window;
 
 package GVD.Tooltips is
 
    Default_Timeout : constant Glib.Guint32 := 600;
    --  The delay before a tooltip is displayed, in milliseconds)
 
-   type Tooltips_Record is private;
+   --------------
+   -- Tooltips --
+   --------------
 
-   type Tooltips is access Tooltips_Record;
+   type Tooltips is abstract tagged private;
+   --  This type represents a tooltip creator: it can be attached to one or
+   --  more widgets, and will create a tooltip (ie a graphical window to
+   --  display information) automatically for them when the mouse is left for
+   --  a while over the window.
+   --  This general form can embed any gtk widget in its window
 
-   procedure Set_Timeout
-     (Tooltip : in out Tooltips;
-      T       : in Glib.Guint32);
-   --  Set a new delay for the tooltips.
+   procedure Destroy (Tooltip : access Tooltips);
+   --  Destroy the memory occupied by the fields in Tooltip, not Tooltip
+   --  itself.
+   --  It does nothing by default
 
-   procedure New_Tooltip
-     (Widget  : access Widget_Type'Class;
-      Data    : in User_Type;
-      Tooltip : out Tooltips);
-   --  Create tooltips information for the widget.
-   --  The widget must have a window.
+   function Create_Contents
+     (Tooltip : access Tooltips) return Gtk.Widget.Gtk_Widget
+     is abstract;
+   --  Return the widget to be displayed in the tooltip. This widget will be
+   --  automatically destroyed when the tooltip is hidden.
+   --  This function should return null if the tooltip shouldn't be displayed.
 
-   procedure Set_Data
-     (Tooltip : in out Tooltips;
-      Data    : in User_Type);
-   --  Set the data associated with the tooltip.
+   procedure Set_Tooltip
+     (Tooltip   : access Tooltips;
+      On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Timeout   : Glib.Guint32 := Default_Timeout);
+   --  Bind Tooltip to the widget, so that when the mouse is left over Widget,
+   --  the tooltip is displayed.
+   --  You can attach a given tooltip to a single widget for the time being.
+   --  A Program_Error will be raised if you do not respect that.
+   --  Tooltip is automatically destroyed when the widget is destroyed.
 
-   function Get_Data (Tooltip : in Tooltips) return User_Type;
-   --  Return the data associated with the tooltip.
+   ---------------------
+   -- Pixmap_Tooltips --
+   ---------------------
 
-   procedure Destroy_Tooltip (Tooltip : in out Tooltips);
-   --  Free memory allocated to the tooltip.
+   type Pixmap_Tooltips is abstract new Tooltips with private;
+   --  This special kind of tooltips has its contents given in the form of a
+   --  pixmap.
+
+   procedure Draw
+     (Tooltip : access Pixmap_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle) is abstract;
+   --  Create the contents of the tooltip
+
+   function Create_Contents
+     (Tooltip : access Pixmap_Tooltips) return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentation
 
 private
-
-   type Widget_Type_Access is access all Widget_Type'Class;
-
-   type User_Type_Access is access User_Type;
-
-   type Tooltips_Record is record
+   type Tooltips is abstract tagged record
       Timeout : Glib.Guint32 := Default_Timeout;
       --  The delay before draw function is called.
 
@@ -112,39 +98,25 @@ private
       --  States whether tooltips should be displayed when drawing
       --  is complete.
 
-      Parent_Window : Gdk.Window.Gdk_Window;
-      --  The window which contains the tooltip.
+      Display_Window : Gtk.Window.Gtk_Window := null;
+      --  The window in which the tooltip is displayed.
 
-      Display_Window : Gtk.Window.Gtk_Window;
-      --  The window in which the tooltip will be displayed.
-
-      Handler_Id : Gtk.Main.Timeout_Handler_Id;
+      Handler_Id : Gtk.Main.Timeout_Handler_Id := 0;
       --  Reference in case handler should be blocked.
 
-      Data : User_Type_Access;
-      --  User data.
+      X, Y : Glib.Gint := 0;
+      --  The mouse coordinates associated with the last call to
+      --  Draw_Tooltip.
 
-      Widget : Widget_Type_Access;
-      --  The widget on which the tooltip is set.
-
-      X, Y : Glib.Gint;
-      --  The mouse coordinates associated with the last call to Draw_Tooltip.
-
-      Area : Gdk.Rectangle.Gdk_Rectangle;
+      Area : Gdk.Rectangle.Gdk_Rectangle := (0, 0, 0, 0);
       --  The area of efficiency for the tooltip.
       --  (See Draw_Tooltip specification for details).
+
+      Widget : Gtk.Widget.Gtk_Widget;
+      --  The widget to which the tooltip is attached.
    end record;
 
-   package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
-     (Widget_Type => Widget_Type,
-      Return_Type => Boolean,
-      User_Type   => Tooltips);
-
-   function Tooltip_Event_Cb
-     (Widget  : access Widget_Type'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Tooltip :  Tooltips) return Boolean;
-   --  Callback for all events that will disable the tooltip
-   --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
+   type Pixmap_Tooltips is abstract new Tooltips with null record;
+   type Pixmap_Tooltips_Access is access all Pixmap_Tooltips'Class;
 
 end GVD.Tooltips;
