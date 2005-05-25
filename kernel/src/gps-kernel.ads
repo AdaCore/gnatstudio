@@ -405,14 +405,12 @@ package GPS.Kernel is
 
    type Module_Tooltip_Handler is access procedure
      (Context : access Selection_Context'Class;
-      Pixmap  : out Gdk.Gdk_Pixmap;
-      Width   : out Glib.Gint;
-      Height  : out Glib.Gint);
+      Pixmap  : out Gdk.Gdk_Pixmap);
    --  Callback used every time some tooltip event happens in GPS.
    --  Context contains all the information about the context of the tooltip.
    --
    --  The first callback that will decide to handle the tooltip will set
-   --  pixmap, width and height (of the pixmap), which will stop the
+   --  pixmap, which will stop the
    --  propagation of the tooltip message (since only one module can display
    --  a tooltip at a time).
    --
