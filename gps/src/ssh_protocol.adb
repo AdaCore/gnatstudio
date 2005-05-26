@@ -70,7 +70,7 @@ package body SSH_Protocol is
    --  Regexp to match the output of ls, and extract the required fields
 
 
-   Max_Passwd_Attempts : constant := 3;
+   Max_Passwd_Attempts : constant := 2;
    --  Maximum number of attempts to enter the password
 
    type Commands_Record is record
@@ -82,6 +82,12 @@ package body SSH_Protocol is
 
       Shell_Cmd           : String_Access;
       --  Command to execute to initialize the connection
+
+      User_Name_In_Shell_Cmd : String_Access;
+      --  The substitution for %U in Shell_Cmd (this is only called if the
+      --  user name was specified explicitly by the user, and %U is replaced
+      --  with "" otherwise. Note that this part is substituted in turn, so it
+      --  can contain special characters like %u
 
       Read_File_Cmd        : String_Access;
       Inline_Read_File_Cmd : String_Access;
@@ -155,6 +161,11 @@ package body SSH_Protocol is
       Is_Open  : Boolean := False;
       Fd       : TTY_Process_Descriptor;
       Commands : Commands_Record;
+
+      Last_Connection_Attempt : Time := VFS.No_Time;
+      --  Time when we last attempted a connection, so that we avoid
+      --  asking the password over and over again when the user cancelled a
+      --  query.
    end record;
    type Generic_Connection is access all Generic_Connection_Record'Class;
 
@@ -221,10 +232,13 @@ package body SSH_Protocol is
    --  Execute command, and return its exit status.
 
    function Substitute
-     (Cmd, Local_Full_Name, Host, User : String;
+     (Cmd, Local_Full_Name : String;
+      Connection           : access Generic_Connection_Record'Class;
       Temporary_File : String := "") return String;
    --  Substitute the special variables in Cmd (%f, %F, ...)
-   --  %t is only defined if Temporary_File is not the empty string
+   --  %t is only defined if Temporary_File is not the empty string.
+   --  User_Name_Is_Explicit should be true if the user name was specified by
+   --  the user in the command.
 
    procedure Trace_Filter_Input
      (Descriptor : Process_Descriptor'Class;
@@ -293,7 +307,8 @@ package body SSH_Protocol is
             & " and the remote host is assumed to be a Unix-like system, which"
             & " can execute a /bin/sh shell. ""ssh"" itself must be found in"
             & " your PATH."),
-         Shell_Cmd        => new String'("ssh %h -C -l %u -e none -q /bin/sh"),
+         Shell_Cmd        => new String'("ssh %h -C %U -e none -q /bin/sh"),
+         User_Name_In_Shell_Cmd => new String'("-l %u"),
          Has_Shell_Prompt    => False,
          Inline_Read_File_Cmd => new String'("cat %F"),
          Read_File_Cmd       => null,
@@ -320,9 +335,10 @@ package body SSH_Protocol is
             & " files, the latter is used to transfer files in both"
             & " direction");
       Scp.Commands.Inline_Read_File_Cmd  := null;
-      Scp.Commands.Read_File_Cmd      := new String'("@scp -C -p %u@%h:%F %t");
+      Scp.Commands.Read_File_Cmd      := new String'("@scp -C -p %U%h:%F %t");
+      Scp.Commands.User_Name_In_Shell_Cmd := new String'("%u@");
       Scp.Commands.Inline_Write_File_Cmd := null;
-      Scp.Commands.Write_File_Cmd     := new String'("@scp -C -p %t %u@%h:%F");
+      Scp.Commands.Write_File_Cmd     := new String'("@scp -C -p %t %U%h:%F");
       Remote_Connections.Register_Protocol (Scp);
 
       Telnet.Commands                  := SSH.Commands;
@@ -346,7 +362,8 @@ package body SSH_Protocol is
          & " and the remote host is assumed to be a Unix-like system, which"
          & " can execute a /bin/sh shell. ""rsh"" itself must be found"
          & " in your PATH.");
-      Rsh.Commands.Shell_Cmd   := new String'("rsh -l %u %h ");
+      Rsh.Commands.Shell_Cmd   := new String'("rsh %U %h ");
+      Rsh.Commands.User_Name_In_Shell_Cmd := new String'("-l %u");
       Remote_Connections.Register_Protocol (Rsh);
 
       Rsync.Commands                       := Rsh.Commands;
@@ -359,9 +376,10 @@ package body SSH_Protocol is
          & " the modified parts of a file are send, and is therefore very"
          & " efficient when saving remote files");
       Rsync.Commands.Inline_Read_File_Cmd  := null;
-      Rsync.Commands.Read_File_Cmd     := new String'("@rsync -p %u@%h:%F %t");
+      Rsync.Commands.Read_File_Cmd     := new String'("@rsync -p %U%h:%F %t");
+      Rsync.Commands.User_Name_In_Shell_Cmd := new String'("%u@");
       Rsync.Commands.Inline_Write_File_Cmd := null;
-      Rsync.Commands.Write_File_Cmd       := new String'("@rsync %t %u@%h:%F");
+      Rsync.Commands.Write_File_Cmd       := new String'("@rsync %t %U%h:%F");
       Remote_Connections.Register_Protocol (Rsync);
 
       Ftp.Commands :=
@@ -370,6 +388,7 @@ package body SSH_Protocol is
            ("A protocol based on ftp. This keeps the connection open during"
             & " the life of GPS for efficiency reasons."),
          Shell_Cmd           => new String'("ftp %h"),
+         User_Name_In_Shell_Cmd => null,
          Has_Shell_Prompt    => True,
          Inline_Read_File_Cmd => null,
          Read_File_Cmd       => new String'("get %F %t"),
@@ -419,6 +438,7 @@ package body SSH_Protocol is
       Result   : Expect_Match;
       Response : Message_Dialog_Buttons;
       pragma Unreferenced (Response);
+
    begin
       Args := Argument_String_To_List (Cmd);
       Trace (Me, "Connecting with " & Cmd);
@@ -477,10 +497,12 @@ package body SSH_Protocol is
                   begin
                      Set_Passwd (Connection, Passwd);
                      if Passwd = "" then
+                        Trace (Me, "Interrupted password query");
                         Interrupt (Fd);
                         Is_Open := False;
                         return;
                      end if;
+
                      Send (Fd, Passwd, Add_LF => True);
 
                      if Is_Interactive_Shell
@@ -554,18 +576,25 @@ package body SSH_Protocol is
    -----------------------
 
    procedure Ensure_Connection
-     (Connection : access Generic_Connection_Record'Class) is
+     (Connection : access Generic_Connection_Record'Class)
+   is
+      Min_Delay_Between_Attempts : constant Duration := 3.0;  --  seconds
    begin
       if not Connection.Is_Open then
-         declare
-            Connect_Cmd : constant String := Substitute
-              (Connection.Commands.Shell_Cmd.all, "",
-               Get_Host (Connection), Get_User (Connection));
-         begin
-            Open_Connection
-              (Connect_Cmd, Connection, True,
-               Connection.Fd, Connection.Is_Open);
-         end;
+         if Clock - Connection.Last_Connection_Attempt >=
+           Min_Delay_Between_Attempts
+         then
+            Connection.Last_Connection_Attempt := Clock;
+
+            declare
+               Connect_Cmd : constant String := Substitute
+                 (Connection.Commands.Shell_Cmd.all, "", Connection);
+            begin
+               Open_Connection
+                 (Connect_Cmd, Connection, True,
+                  Connection.Fd, Connection.Is_Open);
+            end;
+         end if;
       end if;
    end Ensure_Connection;
 
@@ -693,12 +722,13 @@ package body SSH_Protocol is
          --  Assume the file exists, we'll make sure when we try to fetch it
          return True;
       else
+         Trace (Full_Me, "Is_Regular_File " & Local_Full_Name);
          Ensure_Connection (Connection);
-         return Send_Cmd_And_Get_Result
+         return Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
               (Connection.Commands.Is_Regular_File_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection)));
+               Connection));
       end if;
    end Is_Regular_File;
 
@@ -707,22 +737,50 @@ package body SSH_Protocol is
    ----------------
 
    function Substitute
-     (Cmd, Local_Full_Name, Host, User : String;
-      Temporary_File : String := "") return String
+     (Cmd, Local_Full_Name : String;
+      Connection           : access Generic_Connection_Record'Class;
+      Temporary_File       : String := "") return String
    is
-      Substrings : Substitution_Array :=
-        ((new String'("F"), new String'(Local_Full_Name)),
-         (new String'("f"), new String'(Base_Name (Local_Full_Name))),
-         (new String'("d"), new String'(Dir_Name (Local_Full_Name))),
-         (new String'("h"), new String'(Host)),
-         (new String'("u"), new String'(User)),
-         (new String'("t"), new String'(Temporary_File)));
+      function Sub (Param : String; Quoted : Boolean) return String;
+      --  Perform the substitution for Param
+
+      function Sub (Param : String; Quoted : Boolean) return String is
+         pragma Unreferenced (Quoted);
+      begin
+         if Param = "F" then
+            return Local_Full_Name;
+         elsif Param = "f" then
+            return Base_Name (Local_Full_Name);
+         elsif Param = "d" then
+            return Dir_Name (Local_Full_Name);
+         elsif Param = "h" then
+            return Get_Host (Connection);
+         elsif Param = "u" then
+            return Get_User (Connection);
+         elsif Param = "U" then
+            if User_Is_Specified (Connection) then
+               if Connection.Commands.User_Name_In_Shell_Cmd = null then
+                  raise Invalid_Substitution;
+               else
+                  return Substitute
+                    (Connection.Commands.User_Name_In_Shell_Cmd.all,
+                     Local_Full_Name, Connection, Temporary_File);
+               end if;
+            else
+               return "";
+            end if;
+         elsif Param = "t" then
+            return Temporary_File;
+         else
+            raise Invalid_Substitution;
+         end if;
+      end Sub;
+
       C : constant String := Substitute
         (Cmd,
          Substitution_Char => '%',
-         Substrings        => Substrings);
+         Callback          => Sub'Unrestricted_Access);
    begin
-      Free (Substrings);
       return C;
    end Substitute;
 
@@ -737,13 +795,17 @@ package body SSH_Protocol is
    is
    begin
       if Connection.Commands.Inline_Read_File_Cmd /= null then
+         Trace (Full_Me, "Read_File inline " & Local_Full_Name);
          Ensure_Connection (Connection);
-         return new String'
-           (Send_Cmd_And_Get_Result
-              (Connection, Substitute
-                 (Connection.Commands.Inline_Read_File_Cmd.all,
-                  Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection))));
+         if not Connection.Is_Open then
+            return null;
+         else
+            return new String'
+              (Send_Cmd_And_Get_Result
+                 (Connection, Substitute
+                    (Connection.Commands.Inline_Read_File_Cmd.all,
+                     Local_Full_Name, Connection)));
+         end if;
 
       elsif Connection.Commands.Read_File_Cmd /= null then
          declare
@@ -766,30 +828,35 @@ package body SSH_Protocol is
                     (Connection.Commands.Read_File_Cmd.all
                        (Connection.Commands.Read_File_Cmd'First + 1
                           .. Connection.Commands.Read_File_Cmd'Last),
-                     Local_Full_Name,
-                     Get_Host (Connection), Get_User (Connection),
+                     Local_Full_Name, Connection,
                      Temporary_Dir & Base_Tmp),
                   Connection,
                   False,
                   Pd,
-                  Success);
+                  Is_Open => Success);
                if Success then
                   Close (Pd);
+               else
+                  return null;
                end if;
 
             else
+               Trace (Full_Me, "Read_File " & Local_Full_Name);
                Ensure_Connection (Connection);
-               declare
-                  Result : constant String := Send_Cmd_And_Get_Result
-                    (Connection, Substitute
-                       (Connection.Commands.Read_File_Cmd.all,
-                        Local_Full_Name,
-                        Get_Host (Connection), Get_User (Connection),
-                        Temporary_Dir & Base_Tmp));
-                  pragma Unreferenced (Result);
-               begin
-                  null;
-               end;
+               if not Connection.Is_Open then
+                  return null;
+               else
+                  declare
+                     Result : constant String := Send_Cmd_And_Get_Result
+                       (Connection, Substitute
+                          (Connection.Commands.Read_File_Cmd.all,
+                           Local_Full_Name, Connection,
+                           Temporary_Dir & Base_Tmp));
+                     pragma Unreferenced (Result);
+                  begin
+                     null;
+                  end;
+               end if;
             end if;
 
             Result := Read_File (Temporary_Dir & Base_Tmp);
@@ -817,12 +884,13 @@ package body SSH_Protocol is
          --  Don't do anything
          null;
       else
+         Trace (Full_Me, "Delete " & Local_Full_Name);
          Ensure_Connection (Connection);
-         Success := Send_Cmd_And_Get_Result
+         Success := Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
               (Connection.Commands.Delete_File_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection)));
+               Connection));
       end if;
    end Delete;
 
@@ -840,12 +908,13 @@ package body SSH_Protocol is
          return Connection.Commands.Write_File_Cmd /= null
            or else Connection.Commands.Inline_Write_File_Cmd /= null;
       else
+         Trace (Full_Me, "Is_Writable " & Local_Full_Name);
          Ensure_Connection (Connection);
-         return Send_Cmd_And_Get_Result
+         return Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
               (Connection.Commands.Is_Writable_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection)));
+               Connection));
       end if;
    end Is_Writable;
 
@@ -863,12 +932,13 @@ package body SSH_Protocol is
          return Local_Full_Name (Local_Full_Name'Last) = '/'
            or else Local_Full_Name (Local_Full_Name'Last) = '\';
       else
+         Trace (Full_Me, "Is_Directory " & Local_Full_Name);
          Ensure_Connection (Connection);
-         return Send_Cmd_And_Get_Result
+         return Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
               (Connection.Commands.Is_Directory_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection)));
+               Connection));
       end if;
    end Is_Directory;
 
@@ -938,12 +1008,16 @@ package body SSH_Protocol is
          return VFS.No_Time;
 
       else
+         Trace (Full_Me, "Time_Stamp " & Local_Full_Name);
          Ensure_Connection (Connection);
+         if not Connection.Is_Open then
+            return VFS.No_Time;
+         end if;
 
          declare
             C : constant String := Substitute
               (Connection.Commands.Timestamp_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
+               Connection);
             Result : constant String :=
               Send_Cmd_And_Get_Result (Connection, C);
             Month  : Month_Number := 1;
@@ -1019,18 +1093,22 @@ package body SSH_Protocol is
       Pd          : TTY_Process_Descriptor;
    begin
       if Connection.Commands.Inline_Write_File_Cmd /= null then
+         Trace (Full_Me, "Write inline " & Local_Full_Name);
          Ensure_Connection (Connection);
-         declare
-            Tmp : String_Access := Read_File (Temporary_File);
-            C : constant String := Substitute
-              (Connection.Commands.Inline_Write_File_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
-            Result : constant String := Send_Cmd_And_Get_Result
-              (Connection, C, Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
-            pragma Unreferenced (Result);
-         begin
-            Free (Tmp);
-         end;
+         if Connection.Is_Open then
+            declare
+               Tmp : String_Access := Read_File (Temporary_File);
+               C : constant String := Substitute
+                 (Connection.Commands.Inline_Write_File_Cmd.all,
+                  Local_Full_Name, Connection);
+               Result : constant String := Send_Cmd_And_Get_Result
+                 (Connection, C,
+                  Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
+               pragma Unreferenced (Result);
+            begin
+               Free (Tmp);
+            end;
+         end if;
 
       elsif Connection.Commands.Write_File_Cmd /= null then
          if Connection.Commands.Write_File_Cmd
@@ -1042,7 +1120,7 @@ package body SSH_Protocol is
                     (Connection.Commands.Write_File_Cmd'First + 1
                        .. Connection.Commands.Write_File_Cmd'Last),
                   Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection),
+                  Connection,
                   Temporary_File),
                Connection,
                False,
@@ -1058,8 +1136,7 @@ package body SSH_Protocol is
                  (Connection,
                   Substitute
                     (Connection.Commands.Write_File_Cmd.all,
-                     Local_Full_Name,
-                     Get_Host (Connection), Get_User (Connection),
+                     Local_Full_Name, Connection,
                      Temporary_File));
                pragma Unreferenced (Result);
             begin
@@ -1106,29 +1183,32 @@ package body SSH_Protocol is
          null;
 
       else
+         Trace (Full_Me, "Set_Writable " & Local_Full_Name);
          Ensure_Connection (Connection);
-         if Writable then
-            declare
-               C : constant String := Substitute
-                 (Connection.Commands.Set_Writable_Cmd.all, Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection));
-               Result : constant String :=
-                 Send_Cmd_And_Get_Result (Connection, C);
-               pragma Unreferenced (Result);
-            begin
-               null;
-            end;
-         else
-            declare
-               C : constant String := Substitute
-                 (Connection.Commands.Set_Unwritable_Cmd.all, Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection));
-               Result : constant String :=
-                 Send_Cmd_And_Get_Result (Connection, C);
-               pragma Unreferenced (Result);
-            begin
-               null;
-            end;
+         if Connection.Is_Open then
+            if Writable then
+               declare
+                  C : constant String := Substitute
+                    (Connection.Commands.Set_Writable_Cmd.all, Local_Full_Name,
+                     Connection);
+                  Result : constant String :=
+                    Send_Cmd_And_Get_Result (Connection, C);
+                  pragma Unreferenced (Result);
+               begin
+                  null;
+               end;
+            else
+               declare
+                  C : constant String := Substitute
+                    (Connection.Commands.Set_Unwritable_Cmd.all,
+                     Local_Full_Name, Connection);
+                  Result : constant String :=
+                    Send_Cmd_And_Get_Result (Connection, C);
+                  pragma Unreferenced (Result);
+               begin
+                  null;
+               end;
+            end if;
          end if;
       end if;
    end Set_Writable;
@@ -1147,29 +1227,32 @@ package body SSH_Protocol is
          null;
 
       else
+         Trace (Full_Me, "Set_Readable " & Local_Full_Name);
          Ensure_Connection (Connection);
-         if Readable then
-            declare
-               C : constant String := Substitute
-                 (Connection.Commands.Set_Readable_Cmd.all, Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection));
-               Result : constant String :=
-                 Send_Cmd_And_Get_Result (Connection, C);
-               pragma Unreferenced (Result);
-            begin
-               null;
-            end;
-         else
-            declare
-               C : constant String := Substitute
-                 (Connection.Commands.Set_Unreadable_Cmd.all, Local_Full_Name,
-                  Get_Host (Connection), Get_User (Connection));
-               Result : constant String :=
-                 Send_Cmd_And_Get_Result (Connection, C);
-               pragma Unreferenced (Result);
-            begin
-               null;
-            end;
+         if Connection.Is_Open then
+            if Readable then
+               declare
+                  C : constant String := Substitute
+                    (Connection.Commands.Set_Readable_Cmd.all, Local_Full_Name,
+                     Connection);
+                  Result : constant String :=
+                    Send_Cmd_And_Get_Result (Connection, C);
+                  pragma Unreferenced (Result);
+               begin
+                  null;
+               end;
+            else
+               declare
+                  C : constant String := Substitute
+                    (Connection.Commands.Set_Unreadable_Cmd.all,
+                     Local_Full_Name, Connection);
+                  Result : constant String :=
+                    Send_Cmd_And_Get_Result (Connection, C);
+                  pragma Unreferenced (Result);
+               begin
+                  null;
+               end;
+            end if;
          end if;
       end if;
    end Set_Readable;
