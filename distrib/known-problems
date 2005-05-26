@@ -1,10 +1,15 @@
 Known Problems fixed in GPS 3.1.0
 
+- E525-008 Endless query for password when using remote files
+  Problem:    If you enter an incorrect user name or press cancel in the dialog
+              when accessing a remote file, GPS will keep asking for your
+              password, preventing you from doing anything else
+  Workaround: Kill GPS
+
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
               an error message is displayed in the debugger console such as:
               /dev/ptyrd: No such file or directory.
               /proc/380269: No such file or directory.
-
   Workaround: Disable the "Execution Window" preference in the Debugger section
 
