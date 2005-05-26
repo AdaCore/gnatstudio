@@ -54,6 +54,10 @@ package Remote_Connections is
      (Connection : access Remote_Connection_Record) return String;
    --  Return the name of the user for which this Connection was open
 
+   function User_Is_Specified
+     (Connection : access Remote_Connection_Record) return Boolean;
+   --  Whether the user name was specified explicitly by the user
+
    function Get_Host
      (Connection : access Remote_Connection_Record) return String;
    --  Return the remote host. This is not necessary a name, it could be an
@@ -183,6 +187,7 @@ package Remote_Connections is
    --  If such a connection already exists, and Force_New is false, we reuse
    --  that connection, so as to save time in the connection (and handshake for
    --  some protocols).
+   --  User can be the empty string if the default user should be used.
    --  If such a connection already exists, and Force_New is true, a new
    --  connection will be created. However, we will try and reuse the same
    --  password if possible, for user convenience.
@@ -204,8 +209,8 @@ package Remote_Connections is
       Remote_Host   : out GNAT.OS_Lib.String_Access;
       Start_Of_Path : out Integer);
    --  Parses a string starting with "protocol://user@host/dir/foo", and return
-   --  its components. If these are not specified, the current user and/or
-   --  current hostname are returned.
+   --  its components. If the user is not specified, the empty string is
+   --  returned. If the host is not specified, the current host is returned.
    --  All output parameters are set to null if URL is not a valid URL.
    --  Start_Of_Path is the index of the first character of the local file
 

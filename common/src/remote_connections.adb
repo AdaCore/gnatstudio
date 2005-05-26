@@ -106,6 +106,16 @@ package body Remote_Connections is
       end if;
    end Get_User;
 
+   -----------------------
+   -- User_Is_Specified --
+   -----------------------
+
+   function User_Is_Specified
+     (Connection : access Remote_Connection_Record) return Boolean is
+   begin
+      return Connection.Remote_User /= null;
+   end User_Is_Specified;
+
    --------------
    -- Get_Host --
    --------------
@@ -158,7 +168,9 @@ package body Remote_Connections is
       Connection.Remote_Host := new String'(Host);
 
       Free (Connection.Remote_User);
-      Connection.Remote_User := new String'(User);
+      if User /= "" then
+         Connection.Remote_User := new String'(User);
+      end if;
 
       if Passwd /= "" then
          Free (Connection.Passwd);
@@ -318,7 +330,7 @@ package body Remote_Connections is
       end loop;
 
       if At_Sign = Protocol_End or else At_Sign >= Index then
-         Remote_User := new String'(User_Login_Name);
+         Remote_User := new String'("");
       else
          Remote_User := new String'(URL (Protocol_End .. At_Sign - 1));
       end if;
