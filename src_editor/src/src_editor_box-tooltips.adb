@@ -473,7 +473,9 @@ package body Src_Editor_Box.Tooltips is
             Draw_Layout (Pixmap, GC, 2, 0, Layout1);
             Unref (Layout1);
 
-            Draw_Line   (Pixmap, GC, 0, H1 + 1, Width - 1, H1 + 1);
+            if Layout2 /= null or else Layout3 /= null then
+               Draw_Line   (Pixmap, GC, 0, H1 + 1, Width - 1, H1 + 1);
+            end if;
 
             if Layout2 /= null then
                Draw_Layout (Pixmap, GC, 2, H1 + 3, Layout2);
