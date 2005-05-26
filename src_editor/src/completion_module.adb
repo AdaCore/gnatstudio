@@ -168,7 +168,9 @@ package body Completion_Module is
       Completion_Module.Complete       := False;
       Completion_Module.Backwards      := False;
 
-      if Completion_Module.Mark /= null then
+      if Completion_Module.Mark /= null
+        and then Completion_Module.Insert_Buffer /= null
+      then
          Delete_Mark (Completion_Module.Insert_Buffer, Completion_Module.Mark);
          Delete_Mark
            (Completion_Module.Insert_Buffer,
@@ -176,13 +178,16 @@ package body Completion_Module is
          Completion_Module.Mark := null;
       end if;
 
-      if Completion_Module.Previous_Mark /= null then
+      if Completion_Module.Previous_Mark /= null
+        and then Completion_Module.Buffer /= null
+      then
          Delete_Mark
            (Completion_Module.Buffer, Completion_Module.Previous_Mark);
          Delete_Mark (Completion_Module.Buffer, Completion_Module.Next_Mark);
          Completion_Module.Previous_Mark := null;
       end if;
-      Completion_Module.Buffer := null;
+      Completion_Module.Insert_Buffer := null;
+      Completion_Module.Buffer        := null;
    end Reset_Completion_Data;
 
    ---------------------------------
@@ -410,7 +415,7 @@ package body Completion_Module is
 
       if Get (M.Child) /= null then
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
-         Trace (Me, "MANU Testing new editor : "
+         Trace (Me, "Testing new editor : "
                 & Full_Name (Get_Filename (M.Buffer)).all);
 
          if Get_Language (M.Buffer) = null then
@@ -453,24 +458,27 @@ package body Completion_Module is
       Prev          : Gtk_Text_Iter;
       Success       : Boolean;
       Text          : GNAT.OS_Lib.String_Access;
+      Buffer        : Source_Buffer;
 
    begin
       if Widget /= null
         and then Widget.all in Source_View_Record'Class
       then
          View := Source_View (Widget);
-         M.Insert_Buffer := Source_Buffer (Get_Buffer (View));
-      else
-         return Commands.Failure;
+         Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
       --  If we are not already in the middle of a completion:
 
-      if M.Mark = null then
+      if M.Mark = null or else Buffer /= M.Insert_Buffer then
          --  If the completions list is empty, that means we have to
          --  initiate the mark data and launch the first search.
+         --  End_Action calls Reset_Completion_Data, and therefore resets the
+         --  buffer to null
 
-         End_Action (M.Insert_Buffer);
+         End_Action (Buffer);
+         M.Insert_Buffer := Buffer;
+
          Get_Iter_At_Mark
            (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
          M.Mark            := Create_Mark (M.Insert_Buffer, "", Iter);
@@ -508,7 +516,6 @@ package body Completion_Module is
          begin
             if P /= "" then
                M.Prefix := new String'(P);
---               Move_Mark (M.Insert_Buffer, M.Mark, Iter);
                Extend_Completions_List;
             else
                Reset_Completion_Data;
