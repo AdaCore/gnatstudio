@@ -224,14 +224,16 @@ package body SSH_Protocol is
    function Send_Cmd_And_Get_Result
      (Connection : access Generic_Connection_Record'Class;
       Cmd        : String;
-      Cmd2       : String := "") return String;
+      Cmd2       : String := "";
+      Cmd3       : String := "") return String;
    --  Send a command, and get its output.
    --  If Cmd2 is not the empty string, it is executed also, and its output is
    --  appended to the one of Cmd
 
    function Send_Cmd_And_Get_Result
      (Connection : access Generic_Connection_Record'Class;
-      Cmd     : String) return Boolean;
+      Cmd     : String;
+      Cmd2    : String := "") return Boolean;
    --  Execute command, and return its exit status.
 
    function Substitute
@@ -610,7 +612,8 @@ package body SSH_Protocol is
    function Send_Cmd_And_Get_Result
      (Connection : access Generic_Connection_Record'Class;
       Cmd        : String;
-      Cmd2       : String := "") return String
+      Cmd2       : String := "";
+      Cmd3       : String := "") return String
    is
       Result  : Expect_Match;
       Matched : Match_Array (0 .. 0);
@@ -620,6 +623,10 @@ package body SSH_Protocol is
 
       if Cmd2 /= "" then
          Send (Connection.Fd, Cmd2, Add_LF => True);
+      end if;
+
+      if Cmd3 /= "" then
+         Send (Connection.Fd, Cmd3, Add_LF => True);
       end if;
 
       if not Connection.Commands.Has_Shell_Prompt then
@@ -649,7 +656,8 @@ package body SSH_Protocol is
 
    function Send_Cmd_And_Get_Result
      (Connection : access Generic_Connection_Record'Class;
-      Cmd     : String) return Boolean
+      Cmd        : String;
+      Cmd2       : String := "") return Boolean
    is
    begin
       if Connection.Commands.Exit_Status_Cmd = null then
@@ -657,8 +665,8 @@ package body SSH_Protocol is
       else
          declare
             Result : constant String := Send_Cmd_And_Get_Result
-              (Connection, Cmd
-               & ';' & Connection.Commands.Exit_Status_Cmd.all);
+              (Connection, Cmd, Cmd2,
+               Connection.Commands.Exit_Status_Cmd.all);
             Index : Natural := Result'First;
             Last  : Natural;
             Success : Boolean;
@@ -1115,12 +1123,14 @@ package body SSH_Protocol is
                C : constant String := Substitute
                  (Connection.Commands.Inline_Write_File_Cmd.all,
                   Local_Full_Name, Connection);
-               Result : constant String := Send_Cmd_And_Get_Result
+               Result : constant Boolean := Send_Cmd_And_Get_Result
                  (Connection, C,
                   Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
-               pragma Unreferenced (Result);
             begin
                Free (Tmp);
+               if not Result then
+                  raise Use_Error;
+               end if;
             end;
          else
             raise Use_Error;
