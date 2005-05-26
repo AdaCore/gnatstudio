@@ -38,6 +38,7 @@ with Ada.Calendar;       use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with GNAT.Calendar;      use GNAT.Calendar;
 with Ada.Exceptions;     use Ada.Exceptions;
+with Ada.IO_Exceptions;  use Ada.IO_Exceptions;
 with VFS;                use VFS;
 
 package body SSH_Protocol is
@@ -569,6 +570,8 @@ package body SSH_Protocol is
 
    exception
       when Process_Died =>
+         Trace (Me, "Timeout");
+         Set_Passwd (Connection, "");
          Close (Fd);
          Is_Open := False;
    end Open_Connection;
@@ -580,7 +583,7 @@ package body SSH_Protocol is
    procedure Ensure_Connection
      (Connection : access Generic_Connection_Record'Class)
    is
-      Min_Delay_Between_Attempts : constant Duration := 3.0;  --  seconds
+      Min_Delay_Between_Attempts : constant Duration := 10.0;  --  seconds
    begin
       if not Connection.Is_Open then
          if Clock - Connection.Last_Connection_Attempt >=
@@ -726,6 +729,13 @@ package body SSH_Protocol is
       else
          Trace (Full_Me, "Is_Regular_File " & Local_Full_Name);
          Ensure_Connection (Connection);
+
+         --  If we can't open the connection, assume the file doesn't exist.
+         --  Otherwise, GPS will always believe there is an auto-save file
+         --  available for the remote files.
+         --  On the other hand, this means that when attempting to open an
+         --  invalid remote file, GPS will try to create a new file since it
+         --  thinks it doesn't have a regular file.
          return Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
@@ -800,6 +810,7 @@ package body SSH_Protocol is
          Trace (Full_Me, "Read_File inline " & Local_Full_Name);
          Ensure_Connection (Connection);
          if not Connection.Is_Open then
+            Trace (Full_Me, "File could not be read");
             return null;
          else
             return new String'
@@ -846,6 +857,7 @@ package body SSH_Protocol is
                Trace (Full_Me, "Read_File " & Local_Full_Name);
                Ensure_Connection (Connection);
                if not Connection.Is_Open then
+                  Trace (Full_Me, "File could not be read");
                   return null;
                else
                   declare
@@ -1110,6 +1122,8 @@ package body SSH_Protocol is
             begin
                Free (Tmp);
             end;
+         else
+            raise Use_Error;
          end if;
 
       elsif Connection.Commands.Write_File_Cmd /= null then
@@ -1130,6 +1144,8 @@ package body SSH_Protocol is
                Success);
             if Success then
                Close (Pd);
+            else
+               raise Use_Error;
             end if;
 
          else
