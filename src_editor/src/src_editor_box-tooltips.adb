@@ -34,6 +34,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
+with Pango.Tabs;                use Pango.Tabs;
 
 with Tooltips;                  use Tooltips;
 with Doc_Utils;                 use Doc_Utils;
@@ -80,7 +81,10 @@ package body Src_Editor_Box.Tooltips is
    --  Return the documentation for the entity (prefixed by a LF char if not
    --  null)
 
-   function Get_Parameters (Entity : Entity_Information) return String;
+   function Get_Parameters
+     (Entity : Entity_Information;
+      Widget : access Gtk_Widget_Record'Class;
+      Font   : Pango_Font_Description) return Pango_Layout;
    --  Return the list of parameters for the entity
 
    function Get_Instance (Entity_Ref : Entity_Reference) return String;
@@ -102,25 +106,58 @@ package body Src_Editor_Box.Tooltips is
    -- Get_Parameters --
    --------------------
 
-   function Get_Parameters (Entity : Entity_Information) return String is
+   function Get_Parameters
+     (Entity : Entity_Information;
+      Widget : access Gtk_Widget_Record'Class;
+      Font   : Pango_Font_Description) return Pango_Layout
+   is
       use Ada.Strings.Unbounded;
       --  ??? Display should depend on the language
       Iter       : Subprogram_Iterator;
       Param      : Entity_Information;
       Param_Type : Entity_Information;
       Result     : Unbounded_String;
+      Longuest_Param, Longuest_Type : Gint := 0;
+      Layout     : Pango_Layout;
+      Tabs       : Pango_Tab_Array;
+      Char_Width, Char_Height : Gint;
    begin
       if Is_Subprogram (Entity) then
+         Layout := Create_Pango_Layout (Widget, "");
+         Set_Font_Description (Layout, Font);
+
+         Set_Text (Layout, "M");
+         Get_Pixel_Size (Layout, Char_Width, Char_Height);
+
          Iter := Get_Subprogram_Parameters (Subprogram => Entity);
          Result := To_Unbounded_String ("<b>Parameters:</b>");
 
          loop
             Get (Iter, Param);
             exit when Param = null;
+            Longuest_Param :=
+              Gint'Max (Longuest_Param, Gint (Get_Name (Param)'Length));
+            Longuest_Type :=
+              Gint'Max (Longuest_Type, Gint (Image (Get_Type (Iter))'Length));
+            Next (Iter);
+         end loop;
+
+         Pango_New (Tabs, Initial_Size => 3, Positions_In_Pixels => True);
+         Set_Tab (Tabs, 1, Location => (Longuest_Param + 4) * Char_Width);
+         Set_Tab
+           (Tabs, 2,
+            Location => (Longuest_Param + Longuest_Type + 6) * Char_Width);
+         Set_Tabs (Layout, Tabs);
+
+         Iter := Get_Subprogram_Parameters (Subprogram => Entity);
+         loop
+            Get (Iter, Param);
+            exit when Param = null;
 
             Result := Result & ASCII.LF & "   <b>"
-              & Get_Name (Param).all & "</b>: "
-              & Image (Get_Type (Iter)) & " ";
+              & Get_Name (Param).all & "</b>" & ASCII.HT
+              & ": " & Image (Get_Type (Iter))
+              & ASCII.HT & " ";
 
             if Get_Type (Iter) = Access_Parameter then
                Param_Type := Pointed_Type (Param);
@@ -141,9 +178,12 @@ package body Src_Editor_Box.Tooltips is
               & Get_Name (Param).all & "</b>";
          end if;
 
-         return To_String (Result);
+         Set_Markup (Layout, To_String (Result));
+
+         Free (Tabs);
+         return Layout;
       else
-         return "";
+         return null;
       end if;
    end Get_Parameters;
 
@@ -390,7 +430,6 @@ package body Src_Editor_Box.Tooltips is
             Str2 : constant String :=
               Get_Instance (Entity_Ref)
               & Get_Documentation (Box.Kernel, Entity);
-            Str3 : constant String := Get_Parameters (Entity);
             Font : constant Pango_Font_Description :=
               Get_Pref (Box.Kernel, Default_Font);
             Color : Gdk_Color;
@@ -412,15 +451,13 @@ package body Src_Editor_Box.Tooltips is
                Get_Pixel_Size (Layout2, W2, H2);
             end if;
 
-            if Str3 /= "" then
-               Layout3 := Create_Pango_Layout (Widget, "");
-               Set_Markup (Layout3, Str3);
-               Set_Font_Description (Layout3, Font);
+            Layout3 := Get_Parameters (Entity, Widget, Font);
+            if Layout3 /= null then
                Get_Pixel_Size (Layout3, W3, H3);
             end if;
 
             Width  := 4 + Gint'Max (W1, W2);
-            Height := 3 + H1 + H2;
+            Height := 6 + H1 + H2;
             Width  := Gint'Max (Width, W3);
             Height := Height + H3;
 
