@@ -126,27 +126,27 @@ package body Src_Editor_Box.Tooltips is
          Layout := Create_Pango_Layout (Widget, "");
          Set_Font_Description (Layout, Font);
 
-         Set_Text (Layout, "M");
-         Get_Pixel_Size (Layout, Char_Width, Char_Height);
-
          Iter := Get_Subprogram_Parameters (Subprogram => Entity);
          Result := To_Unbounded_String ("<b>Parameters:</b>");
 
          loop
             Get (Iter, Param);
             exit when Param = null;
-            Longuest_Param :=
-              Gint'Max (Longuest_Param, Gint (Get_Name (Param)'Length));
-            Longuest_Type :=
-              Gint'Max (Longuest_Type, Gint (Image (Get_Type (Iter))'Length));
+
+            Set_Markup (Layout, "   <b>" & Get_Name (Param).all & "</b>");
+            Get_Pixel_Size (Layout, Char_Width, Char_Height);
+            Longuest_Param := Gint'Max (Longuest_Param, Char_Width);
+
+            Set_Text (Layout, ": " & Image (Get_Type (Iter)));
+            Get_Pixel_Size (Layout, Char_Width, Char_Height);
+            Longuest_Type := Gint'Max (Longuest_Type, Char_Width);
+
             Next (Iter);
          end loop;
 
-         Pango_New (Tabs, Initial_Size => 3, Positions_In_Pixels => True);
-         Set_Tab (Tabs, 1, Location => (Longuest_Param + 4) * Char_Width);
-         Set_Tab
-           (Tabs, 2,
-            Location => (Longuest_Param + Longuest_Type + 6) * Char_Width);
+         Pango_New (Tabs, Initial_Size => 2, Positions_In_Pixels => True);
+         Set_Tab (Tabs, 0, Location => Longuest_Param + 2);
+         Set_Tab (Tabs, 1, Location => Longuest_Param + 2 + Longuest_Type);
          Set_Tabs (Layout, Tabs);
 
          Iter := Get_Subprogram_Parameters (Subprogram => Entity);
@@ -154,10 +154,9 @@ package body Src_Editor_Box.Tooltips is
             Get (Iter, Param);
             exit when Param = null;
 
-            Result := Result & ASCII.LF & "   <b>"
-              & Get_Name (Param).all & "</b>" & ASCII.HT
-              & ": " & Image (Get_Type (Iter))
-              & ASCII.HT & " ";
+            Result := Result & ASCII.LF
+              & "   <b>" & Get_Name (Param).all & "</b>" & ASCII.HT
+              & ": " & Image (Get_Type (Iter)) & ASCII.HT & " ";
 
             if Get_Type (Iter) = Access_Parameter then
                Param_Type := Pointed_Type (Param);
@@ -454,6 +453,7 @@ package body Src_Editor_Box.Tooltips is
             Layout3 := Get_Parameters (Entity, Widget, Font);
             if Layout3 /= null then
                Get_Pixel_Size (Layout3, W3, H3);
+               H3 := H3 + 5;
             end if;
 
             Width  := 4 + Gint'Max (W1, W2);
@@ -481,7 +481,7 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Layout3 /= null then
-               Draw_Layout (Pixmap, GC, 2, H1 + H2 + 3, Layout3);
+               Draw_Layout (Pixmap, GC, 2, H1 + H2 + 8, Layout3);
                Unref (Layout3);
             end if;
 
