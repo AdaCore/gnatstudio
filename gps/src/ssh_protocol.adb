@@ -154,6 +154,8 @@ package body SSH_Protocol is
    --    %h => host name
    --    %u => user name
    --    %t => temporary local file to use (only for read and write)
+   --    %U => value of User_Name_In_Shell_Cmd, only if the user name was
+   --          explicitly specified by the user, the empty string otherwise
    --  Any of these command can be left to null, and a reasonnable default is
    --  provided.
 
