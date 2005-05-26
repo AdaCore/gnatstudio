@@ -535,11 +535,12 @@ package body GPS.Kernel.Modules is
          Context : Selection_Context_Access) return String;
       --  Return the name of the label for C, including parent path
 
-      function Parent_Is_Visible
+      function Has_Explicit_Parent
         (C       : Contextual_Menu_Access;
          Context : Selection_Context_Access) return Boolean;
-      --  Return True if the parent menu of C is visible (if it was registered
-      --  explicitly, we check its visibility).
+      --  Return True if the parent menu of C was explicitly registered by the
+      --  user. In this case, C will be created only when that parent menu is
+      --  created, not before.
 
       ---------------------
       -- Menu_Is_Visible --
@@ -701,11 +702,11 @@ package body GPS.Kernel.Modules is
          end if;
       end Label_Name;
 
-      -----------------------
-      -- Parent_Is_Visible --
-      -----------------------
+      -------------------------
+      -- Has_Explicit_Parent --
+      -------------------------
 
-      function Parent_Is_Visible
+      function Has_Explicit_Parent
         (C       : Contextual_Menu_Access;
          Context : Selection_Context_Access) return Boolean
       is
@@ -717,13 +718,13 @@ package body GPS.Kernel.Modules is
             C2 := Convert (User.Kernel.Contextual);
             while C2 /= null loop
                if '/' & Label_Name (C2, Context) & '/' = Parent then
-                  return C2.Filter_Matched;
+                  return True;
                end if;
                C2 := C2.Next;
             end loop;
          end if;
-         return True;
-      end Parent_Is_Visible;
+         return False;
+      end Has_Explicit_Parent;
 
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
@@ -790,7 +791,7 @@ package body GPS.Kernel.Modules is
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
          if C.Filter_Matched
-           and then Parent_Is_Visible (C, Context)
+           and then not Has_Explicit_Parent (C, Context)
          then
             Create_Item (C, Context, Item, Full_Name);
 
