@@ -139,6 +139,7 @@ package Remote_Connections is
       Local_Full_Name : Glib.UTF8_String;
       Temporary_File  : String) is abstract;
    --  Overwrite the contents of Local_Full_Name with Contents.
+   --  Raises Use_Error if the file could not be written
 
    procedure Set_Writable
      (Connection      : access Remote_Connection_Record;

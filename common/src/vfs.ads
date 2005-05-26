@@ -169,7 +169,8 @@ package VFS is
    --  on As_UTF8.
 
    procedure Close (File : in out Writable_File);
-   --  Closes File, and write the file to disk
+   --  Closes File, and write the file to disk.
+   --  Use_Error is raised if the file could not be saved
 
    ---------------------
    -- Locale encoding --
