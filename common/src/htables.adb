@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2005                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body HTables is
 
@@ -323,7 +324,6 @@ package body HTables is
    ----------
 
    function Hash (Key : String) return Header_Num is
-
       type Uns is mod 2 ** 32;
 
       function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
@@ -339,5 +339,26 @@ package body HTables is
       return Header_Num'First +
                Header_Num'Base (Tmp mod Header_Num'Range_Length);
    end Hash;
+
+   ---------------------------
+   -- Case_Insensitive_Hash --
+   ---------------------------
+
+   function Case_Insensitive_Hash (Key : String) return Header_Num is
+      type Uns is mod 2 ** 32;
+
+      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
+      pragma Import (Intrinsic, Rotate_Left);
+
+      Tmp : Uns := 0;
+
+   begin
+      for J in Key'Range loop
+         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (To_Lower (Key (J)));
+      end loop;
+
+      return Header_Num'First +
+               Header_Num'Base (Tmp mod Header_Num'Range_Length);
+   end Case_Insensitive_Hash;
 
 end HTables;

@@ -247,4 +247,8 @@ pragma Preelaborate (HTables);
       type Header_Num is range <>;
    function Hash (Key : String) return Header_Num;
 
+   generic
+      type Header_Num is range <>;
+   function Case_Insensitive_Hash (Key : String) return Header_Num;
+
 end HTables;
