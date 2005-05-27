@@ -356,6 +356,7 @@ package Entities is
    function Get_Or_Create
      (Db           : Entities_Database;
       File         : VFS.Virtual_File;
+      Handler      : LI_Handler := null;
       LI           : LI_File := null;
       Timestamp    : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create : Boolean := True) return Source_File;
@@ -372,6 +373,7 @@ package Entities is
    function Get_Or_Create
      (Db            : Entities_Database;
       Full_Filename : String;
+      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create  : Boolean := True) return Source_File;
@@ -401,9 +403,11 @@ package Entities is
    --  Indicate that the parsed contents of File is no longer valid. All
    --  associated cross-references are removed from the table.
 
-   function Get_Predefined_File (Db : Entities_Database) return Source_File;
+   function Get_Predefined_File
+     (Db : Entities_Database;
+      Handler : access LI_Handler_Record'Class) return Source_File;
    --  Returns a special source file, which should be used for all
-   --  predefined entities of the languages
+   --  predefined entities of the languages handled by Handler.
 
    function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time;
    procedure Set_Time_Stamp
@@ -872,9 +876,9 @@ private
    ------------------------
 
    type Entity_Information_Record is tagged record
-      Shared_Name           : GNAT.OS_Lib.String_Access;
-      --  Name of the entity, this is a pointer to the name in the
-      --  matching Entity_Information_List_Access;
+      Name           : GNAT.OS_Lib.String_Access;
+      --  Name of the entity. This name contains the
+      --  proper casing for the entity.
 
       Declaration           : File_Location;
       Caller_At_Declaration : Entity_Information;
@@ -943,71 +947,39 @@ private
    --  Entities_Tries --
    ---------------------
 
+   type Header_Num is range 0 .. 336;
    type Entity_Information_List_Access is access Entity_Information_List;
+
+   type Cased_String is record
+      Str            : GNAT.OS_Lib.String_Access;
+      Case_Sensitive : Boolean;
+   end record;
+   Empty_Cased_String : constant Cased_String := (null, True);
+
+   function Hash  (S : Cased_String) return Header_Num;
+   function Equal (S1, S2 : Cased_String) return Boolean;
+   pragma Inline (Hash, Equal);
+
    type Entity_Informations_Record;
    type Entity_Informations is access Entity_Informations_Record;
    type Entity_Informations_Record is record
-      Name : GNAT.OS_Lib.String_Access;
-      --  Shared name for all the entities in the list. This is freed when
-      --  there are no more entities
-
       List : Entity_Information_List_Access;
-      --  List of all entities with the same name
-
       Next : Entity_Informations;
-      --  Use by the hash table
    end record;
-   No_Entity_Informations : constant Entity_Informations := null;
 
-   type Header_Num is range 0 .. 336;
    procedure Set_Next (E, Next : Entity_Informations);
    function Next (E : Entity_Informations) return Entity_Informations;
-   function Get_Name
-     (D : Entity_Informations) return GNAT.OS_Lib.String_Access;
-   function Hash (S : GNAT.OS_Lib.String_Access) return Header_Num;
-   function Equal (S1, S2 : GNAT.OS_Lib.String_Access) return Boolean;
+   function Get_Name (D : Entity_Informations) return Cased_String;
    procedure Destroy (D : in out Entity_Informations);
-   pragma Inline (Set_Next, Next, Get_Name, Hash, Equal, Destroy);
-   --  Required for the instantiation of the hash table
+   --  Required for the instantiation of the trie
 
-   package Shared_Entities_Hash is new HTables.Static_HTable
+   package Entities_Hash is new HTables.Static_HTable
      (Header_Num    => Header_Num,
       Elmt_Ptr      => Entity_Informations,
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => GNAT.OS_Lib.String_Access,
-      Get_Key       => Get_Name,
-      Hash          => Hash,
-      Equal         => Equal,
-      Free_Elmt_Ptr => Destroy);
-   --  Each node in the tree contains all the entities with the same name. The
-   --  name of the entities is shared, that is they do not allocate their own
-   --  string, but point to the name in the Entity_Informations record
-
-   type Unshared_Entity_Informations_Record;
-   type Unshared_Entity_Informations is
-     access Unshared_Entity_Informations_Record;
-   type Unshared_Entity_Informations_Record is record
-      List : Entity_Information_List_Access;
-      Next : Unshared_Entity_Informations;
-   end record;
-
-   procedure Set_Next (E, Next : Unshared_Entity_Informations);
-   function Next (E : Unshared_Entity_Informations)
-                  return Unshared_Entity_Informations;
-   function Get_Name
-     (D : Unshared_Entity_Informations) return GNAT.OS_Lib.String_Access;
-   procedure Destroy (D : in out Unshared_Entity_Informations);
-   --  Required for the instantiation of the trie
-
-   package Entities_Hash is new HTables.Static_HTable
-     (Header_Num    => Header_Num,
-      Elmt_Ptr      => Unshared_Entity_Informations,
-      Null_Ptr      => null,
-      Set_Next      => Set_Next,
-      Next          => Next,
-      Key           => GNAT.OS_Lib.String_Access,
+      Key           => Cased_String,
       Get_Key       => Get_Name,
       Hash          => Hash,
       Equal         => Equal,
@@ -1054,7 +1026,7 @@ private
 
       Name        : VFS.Virtual_File;
 
-      Entities    : Shared_Entities_Hash.HTable;
+      Entities    : Entities_Hash.HTable;
       --  All the entities defined in the source file. This list also contains
       --  the entities that used to be defined in this file, but no longer are,
       --  and that are kept because they are still referenced in some files.
@@ -1070,6 +1042,9 @@ private
 
       Scope_Tree_Computed : Boolean;
       --  Whether the scope tree was computed
+
+      Handler   : LI_Handler;
+      --  The handler used to compute xrefs for that file
 
       LI          : LI_File;
       --  The LI file used to parse the file. This might be left to null if

@@ -29,6 +29,7 @@ with GNAT.Heap_Sort_G;
 with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
 with File_Utils;              use File_Utils;
+with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Intl;                use GPS.Intl;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
@@ -56,7 +57,6 @@ package body Entities is
    --  ??? Comment above is obsolete and should be updated
 
    use Entities_Hash;
-   use Shared_Entities_Hash;
    use Files_HTable;
    use LI_HTable;
    use Entity_Information_Arrays;
@@ -70,10 +70,8 @@ package body Entities is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_List, Entity_Information_List_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Entity_Informations_Record, Entity_Informations);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Unshared_Entity_Informations_Record,
-      Unshared_Entity_Informations);
+     (Entity_Informations_Record,
+      Entity_Informations);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (E_Instantiation_Record, Entity_Instantiation);
 
@@ -101,7 +99,7 @@ package body Entities is
    --  The references are cleared only if Clear_References is True.
 
    procedure Remove
-     (D      : in out Shared_Entities_Hash.HTable;
+     (D      : in out Entities_Hash.HTable;
       E      : Entity_Information);
    --  Remove the information for E in the table. The entity is not Unrefed
    --  explicitly, since this call should only happen as a result of Unref
@@ -139,6 +137,7 @@ package body Entities is
      (Db            : Entities_Database;
       Full_Filename : VFS.Cst_UTF8_String_Access;
       File          : VFS.Virtual_File;
+      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create  : Boolean := True) return Source_File;
@@ -190,7 +189,7 @@ package body Entities is
    procedure Ref (Entity : Entity_Information; Reason : String) is
    begin
       if Entity /= null and then Active (Ref_Me) then
-         Trace (Ref_Me, "Ref " & Entity.Shared_Name.all & " (" & Reason & ")");
+         Trace (Ref_Me, "Ref " & Entity.Name.all & " (" & Reason & ")");
       end if;
       Ref (Entity);
    end Ref;
@@ -203,7 +202,7 @@ package body Entities is
    begin
       if Entity /= null and then Active (Ref_Me) then
          Trace
-           (Ref_Me, "Unref " & Entity.Shared_Name.all
+           (Ref_Me, "Unref " & Entity.Name.all
             & " (" & Reason & ")"
             & Entity.Ref_Count'Img & " " & Boolean'Image (Entity.Is_Valid));
       end if;
@@ -282,65 +281,45 @@ package body Entities is
       if Entity = null then
          return null;
       else
-         return Entity.Shared_Name;
+         return Entity.Name;
       end if;
    end Get_Name;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name
-     (D : Entity_Informations) return String_Access is
-   begin
-      return D.Name;
-   end Get_Name;
-
-   --------------
-   -- Set_Next --
-   --------------
-
-   procedure Set_Next (E, Next : Entity_Informations) is
-   begin
-      E.Next := Next;
-   end Set_Next;
-
-   ----------
-   -- Next --
-   ----------
-
-   function Next (E : Entity_Informations) return Entity_Informations is
-   begin
-      return E.Next;
-   end Next;
 
    ----------
    -- Hash --
    ----------
 
-   function Hash (S : GNAT.OS_Lib.String_Access) return Header_Num is
+   function Hash (S : Cased_String) return Header_Num is
    begin
-      return Hash (S.all);
+      if S.Case_Sensitive then
+         return Hash (S.Str.all);
+      else
+         --  ??? MANU Inefficient
+         return Hash (To_Lower (S.Str.all));
+      end if;
    end Hash;
 
    -----------
    -- Equal --
    -----------
 
-   function Equal (S1, S2 : GNAT.OS_Lib.String_Access) return Boolean is
+   function Equal (S1, S2 : Cased_String) return Boolean is
    begin
-      return S1.all = S2.all;
+      if S1.Case_Sensitive then
+         return S1.Str.all = S2.Str.all;
+      else
+         return Equal (S1.Str.all, S2.Str.all, S1.Case_Sensitive);
+      end if;
    end Equal;
 
    --------------
    -- Get_Name --
    --------------
 
-   function Get_Name
-     (D : Unshared_Entity_Informations) return GNAT.OS_Lib.String_Access is
+   function Get_Name (D : Entity_Informations) return Cased_String is
    begin
       if D = null then
-         return null;
+         return Empty_Cased_String;
       else
          if Active (Assert_Me) then
             Assert
@@ -348,11 +327,15 @@ package body Entities is
                D.List.Table (Entity_Information_Arrays.First).Ref_Count /= 0,
                "Entity has been freed: "
                & D.List.Table
-                 (Entity_Information_Arrays.First).Shared_Name.all);
+                 (Entity_Information_Arrays.First).Name.all);
          end if;
 
-         return D.List.Table
-           (Entity_Information_Arrays.First).Shared_Name;
+         return (Str => D.List.Table
+                   (Entity_Information_Arrays.First).Name,
+                 Case_Sensitive => not Case_Insensitive_Identifiers
+                  (D.List.Table
+                     (Entity_Information_Arrays.First)
+                        .Declaration.File.Handler));
       end if;
    end Get_Name;
 
@@ -360,7 +343,7 @@ package body Entities is
    -- Destroy --
    -------------
 
-   procedure Destroy (D : in out Unshared_Entity_Informations) is
+   procedure Destroy (D : in out Entity_Informations) is
    begin
       Unchecked_Free (D.List);
       Unchecked_Free (D);
@@ -521,17 +504,16 @@ package body Entities is
          end loop;
       end Clean_References;
 
-      Iter   : Shared_Entities_Hash.Iterator;
+      Iter   : Entities_Hash.Iterator;
       Iter2  : Entities_Hash.Iterator;
-      EIS    : Entity_Informations;
-      UEI    : Unshared_Entity_Informations;
+      UEI    : Entity_Informations;
    begin
       Get_First (File.Entities, Iter);
       loop
-         EIS := Get_Element (Iter);
-         exit when EIS = No_Entity_Informations;
+         UEI := Get_Element (Iter);
+         exit when UEI = null;
          Get_Next (File.Entities, Iter);
-         Clean_References (EIS.List, True);
+         Clean_References (UEI.List, True);
       end loop;
 
       Get_First (File.All_Entities, Iter2);
@@ -592,7 +574,7 @@ package body Entities is
       declare
          Iter   : Entities_Hash.Iterator;
          EL     : Entity_Information_List_Access;
-         UEI    : Unshared_Entity_Informations;
+         UEI    : Entity_Informations;
       begin
          Get_First (File.All_Entities, Iter);
          loop
@@ -615,20 +597,20 @@ package body Entities is
       --  Clean up .Entities field
 
       declare
-         Iter   : Shared_Entities_Hash.Iterator;
-         EIS    : Entity_Informations;
+         Iter   : Entities_Hash.Iterator;
+         UEI    : Entity_Informations;
          Entity : Entity_Information;
       begin
          Get_First (File.Entities, Iter);
          loop
-            EIS := Get_Element (Iter);
-            exit when EIS = null;
+            UEI := Get_Element (Iter);
+            exit when UEI = null;
             Get_Next (File.Entities, Iter);
 
             for J in reverse
-              Entity_Information_Arrays.First .. Last (EIS.List.all)
+              Entity_Information_Arrays.First .. Last (UEI.List.all)
             loop
-               Entity := EIS.List.Table (J);
+               Entity := UEI.List.Table (J);
                --  If the entity was still under control of File
                if Entity.Is_Valid then
                   if Entity.Ref_Count /= 1 then
@@ -687,7 +669,7 @@ package body Entities is
       Entity2 : Entity_Information;
    begin
       if Active (Ref_Me) then
-         Trace (Ref_Me, "Isolate " & Entity.Shared_Name.all);
+         Trace (Ref_Me, "Isolate " & Entity.Name.all);
       end if;
 
       Unref (Entity.Caller_At_Declaration, "caller_at_decl");
@@ -760,7 +742,7 @@ package body Entities is
       Assert (Debug_Me,
               Entity.Ref_Count /= 0,
               "Entity should no longer be referenced "
-              & Entity.Shared_Name.all & " (" & Reason & ") ");
+              & Entity.Name.all & " (" & Reason & ") ");
    end Check_Entity_Is_Valid;
 
    ------------
@@ -768,17 +750,21 @@ package body Entities is
    ------------
 
    procedure Remove
-     (D      : in out Shared_Entities_Hash.HTable;
+     (D      : in out Entities_Hash.HTable;
       E      : Entity_Information)
    is
-      EIS : constant Entity_Informations := Get (D, E.Shared_Name);
+      Str : constant Cased_String :=
+        (Str            => E.Name,
+         Case_Sensitive => not Case_Insensitive_Identifiers
+           (E.Declaration.File.Handler));
+      UEI : constant Entity_Informations := Get (D, Str);
       EL  : Entity_Information_List_Access;
    begin
-      if EIS /= No_Entity_Informations then
-         EL := EIS.List;
+      if UEI /= null then
+         EL := UEI.List;
          if Length (EL.all) = 1 then
             if EL.Table (Entity_Information_Arrays.First) = E then
-               Remove (D, E.Shared_Name);
+               Remove (D, Str);
             end if;
          else
             Remove (EL.all, E);
@@ -861,13 +847,13 @@ package body Entities is
       if Entity /= null and then Entity.Ref_Count /= Natural'Last then
          if Active (Assert_Me) then
             Assert (Assert_Me, Entity.Ref_Count > 0,
-                    "too many calls to unref for " & Entity.Shared_Name.all);
+                    "too many calls to unref for " & Entity.Name.all);
          end if;
 
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
             if Active (Ref_Me) then
-               Trace (Ref_Me, "Freeing " & Entity.Shared_Name.all
+               Trace (Ref_Me, "Freeing " & Entity.Name.all
                       & ":"
                       & Base_Name (Get_Filename (Entity.Declaration.File))
                       & Entity.Declaration.Line'Img
@@ -881,7 +867,7 @@ package body Entities is
             --  from the htable since it won't be found there.
             if Active (Debug_Me) then
                Shared := new String'
-                 (Entity.Shared_Name.all
+                 (Entity.Name.all
                   & ':' & Base_Name (Entity.Declaration.File.Name));
             end if;
 
@@ -893,8 +879,9 @@ package body Entities is
             Entity.Ref_Count := 0;
 
             if Active (Debug_Me) then
-               Entity.Shared_Name := Shared;
+               Entity.Name := Shared;
             else
+               Free (Entity.Name);
                Unchecked_Free (Entity);
             end if;
 
@@ -978,7 +965,7 @@ package body Entities is
    -- Set_Next --
    --------------
 
-   procedure Set_Next (E, Next : Unshared_Entity_Informations) is
+   procedure Set_Next (E, Next : Entity_Informations) is
    begin
       E.Next := Next;
    end Set_Next;
@@ -987,8 +974,8 @@ package body Entities is
    -- Next --
    ----------
 
-   function Next (E : Unshared_Entity_Informations)
-                  return Unshared_Entity_Informations is
+   function Next (E : Entity_Informations)
+                  return Entity_Informations is
    begin
       return E.Next;
    end Next;
@@ -1109,8 +1096,8 @@ package body Entities is
       ----------------
 
       procedure Fast_Reset (File : Source_File) is
-         Iter   : Shared_Entities_Hash.Iterator;
-         EIS    : Entity_Informations;
+         Iter   : Entities_Hash.Iterator;
+         UEI    : Entity_Informations;
          EL     : Entity_Information_List_Access;
       begin
          Get_First (File.Entities, Iter);
@@ -1121,10 +1108,10 @@ package body Entities is
          end if;
 
          loop
-            EIS := Get_Element (Iter);
-            exit when EIS = No_Entity_Informations;
+            UEI := Get_Element (Iter);
+            exit when UEI = null;
             Get_Next (File.Entities, Iter);
-            EL := EIS.List;
+            EL := UEI.List;
 
             for E in Entity_Information_Arrays.First .. Last (EL.all) loop
                if EL.Table (E) /= null then
@@ -1186,6 +1173,7 @@ package body Entities is
      (Db            : Entities_Database;
       Full_Filename : VFS.Cst_UTF8_String_Access;
       File          : VFS.Virtual_File;
+      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create  : Boolean := True) return Source_File
@@ -1212,6 +1200,8 @@ package body Entities is
          else
             F.Name         := File;
          end if;
+
+         F.Handler      := LI_Handler (Handler);
 
          S := new Source_File_Item_Record'(File => F, Next => null);
          Set (Db.Files, S);
@@ -1245,12 +1235,18 @@ package body Entities is
    function Get_Or_Create
      (Db           : Entities_Database;
       File         : VFS.Virtual_File;
+      Handler      : LI_Handler := null;
       LI           : LI_File := null;
       Timestamp    : Ada.Calendar.Time := VFS.No_Time;
-      Allow_Create : Boolean := True) return Source_File is
+      Allow_Create : Boolean := True) return Source_File
+   is
+      H : LI_Handler := Handler;
    begin
+      if H = null then
+         H := Get_LI_Handler (Db, File);
+      end if;
       return Internal_Get_Or_Create
-        (Db, Full_Name (File), File, LI, Timestamp, Allow_Create);
+        (Db, Full_Name (File), File, H, LI, Timestamp, Allow_Create);
    end Get_Or_Create;
 
    -------------------
@@ -1260,14 +1256,16 @@ package body Entities is
    function Get_Or_Create
      (Db            : Entities_Database;
       Full_Filename : String;
+      Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := VFS.No_Time;
-      Allow_Create  : Boolean := True) return Source_File is
+      Allow_Create  : Boolean := True) return Source_File
+   is
    begin
       if Is_Absolute_Path (Full_Filename) then
          return Internal_Get_Or_Create
            (Db, Full_Filename'Unrestricted_Access,
-            VFS.No_File, LI, Timestamp, Allow_Create);
+            VFS.No_File, Handler, LI, Timestamp, Allow_Create);
 
       else
          Get_Full_Path_From_File
@@ -1279,7 +1277,7 @@ package body Entities is
          if Name_Len /= 0 then
             return Internal_Get_Or_Create
               (Db, Name_Buffer (1 .. Name_Len)'Unrestricted_Access,
-               VFS.No_File, LI, Timestamp, Allow_Create);
+               VFS.No_File, Handler, LI, Timestamp, Allow_Create);
          else
             declare
                Str : aliased constant String := Normalize_Pathname
@@ -1287,7 +1285,7 @@ package body Entities is
             begin
                return Internal_Get_Or_Create
                  (Db, Str'Unrestricted_Access,
-                  VFS.No_File, LI, Timestamp, Allow_Create);
+                  VFS.No_File, Handler, LI, Timestamp, Allow_Create);
             end;
          end if;
       end if;
@@ -1355,11 +1353,15 @@ package body Entities is
       Entity           : Entity_Information;
       Check_Duplicates : Boolean)
    is
-      UEI     : Unshared_Entity_Informations;
+      UEI     : Entity_Informations;
+      Str     : constant Cased_String :=
+        (Str => Entity.Name,
+         Case_Sensitive => not Case_Insensitive_Identifiers
+           (Entity.Declaration.File.Handler));
    begin
-      UEI := Get (Entities, Entity.Shared_Name);
+      UEI := Get (Entities, Str);
       if UEI = null then
-         UEI := new Unshared_Entity_Informations_Record'
+         UEI := new Entity_Informations_Record'
            (List => new Entity_Information_List'
               (Null_Entity_Information_List),
             Next => null);
@@ -1415,20 +1417,6 @@ package body Entities is
 
       return L.File;
    end Get_Or_Create;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (D : in out Entity_Informations) is
-   begin
-      if Active (Ref_Me) then
-         Trace (Ref_Me, "Freeing shared name " & D.Name.all);
-      end if;
-      Free (D.Name);
-      Unchecked_Free (D.List);
-      Unchecked_Free (D);
-   end Destroy;
 
    --------------
    -- Set_Kind --
@@ -1685,8 +1673,12 @@ package body Entities is
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information
    is
-      EIS : Entity_Informations;
+      UEI : Entity_Informations;
       E   : Entity_Information;
+      Must_Add_To_File : Boolean := False;
+      Str     : constant Cased_String :=
+        (Str => Name'Unrestricted_Access,
+         Case_Sensitive => not Case_Insensitive_Identifiers (File.Handler));
    begin
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
       if Active (Ref_Me) then
@@ -1695,24 +1687,23 @@ package body Entities is
                 & " Line=" & Line'Img);
       end if;
 
-      EIS := Get (File.Entities, Name'Unrestricted_Access);
+      UEI := Get (File.Entities, Str);
 
-      if EIS = No_Entity_Informations then
+      if UEI = null then
          if Allow_Create then
-            EIS := new Entity_Informations_Record'
-              (Name => new String'(Name),
-               List => new Entity_Information_List'
+            UEI := new Entity_Informations_Record'
+              (List => new Entity_Information_List'
                  (Null_Entity_Information_List),
                Next => null);
-            Set (File.Entities, EIS);
+            Must_Add_To_File := True;
          end if;
       else
-         E := Find (EIS.List.all, (File, Line, Column_Type (Column)));
+         E := Find (UEI.List.all, (File, Line, Column_Type (Column)));
       end if;
 
       if E = null and then Allow_Create then
          E := new Entity_Information_Record'
-           (Shared_Name           => EIS.Name,
+           (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
             Attributes            => (others => False),
             Declaration           => (File, Line, Column_Type (Column)),
@@ -1730,7 +1721,11 @@ package body Entities is
             References            => Null_Entity_Reference_List,
             Is_Valid              => True,
             Ref_Count             => 1);
-         Append (EIS.List.all, E);
+         Append (UEI.List.all, E);
+
+         if Must_Add_To_File then
+            Set (File.Entities, UEI);
+         end if;
 
       elsif E /= null then
          if not E.Is_Valid then
@@ -1769,11 +1764,21 @@ package body Entities is
    -- Get_Predefined_File --
    -------------------------
 
-   function Get_Predefined_File (Db : Entities_Database) return Source_File is
+   function Get_Predefined_File
+     (Db : Entities_Database;
+      Handler : access LI_Handler_Record'Class) return Source_File
+   is
    begin
       if Db.Predefined_File = null then
-         Db.Predefined_File := Get_Or_Create
-           (Db, Create_From_Base ("<predefined>"), null);
+         if Case_Insensitive_Identifiers (Handler) then
+            Db.Predefined_File := Get_Or_Create
+              (Db, Create_From_Base ("<case_insensitive_predefined>"),
+               LI_Handler (Handler), null);
+         else
+            Db.Predefined_File := Get_Or_Create
+              (Db, Create_From_Base ("<case_sensitive_predefined>"),
+               LI_Handler (Handler), null);
+         end if;
       end if;
       return Db.Predefined_File;
    end Get_Predefined_File;
@@ -1849,14 +1854,11 @@ package body Entities is
    is
       F : Source_File;
       pragma Unreferenced (F);
-      H : LI_Handler;
    begin
       if File /= null then
-         H := Get_LI_Handler (File.Db, File.Name);
-
-         if H /= null then
+         if File.Handler /= null then
             F := Get_Source_Info
-              (H, File.Name, File_Has_No_LI_Report);
+              (File.Handler, File.Name, File_Has_No_LI_Report);
          end if;
       end if;
    end Update_Xref;
@@ -2005,7 +2007,9 @@ package body Entities is
    begin
       return Entity /= null
         and then Entity.Declaration.File =
-          Get_Predefined_File (Entity.Declaration.File.Db);
+          Get_Predefined_File
+            (Entity.Declaration.File.Db,
+             Entity.Declaration.File.Handler);
    end Is_Predefined_Entity;
 
    --------------
@@ -2304,7 +2308,7 @@ package body Entities is
 
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean is
    begin
-      return Entity1.Shared_Name.all < Entity2.Shared_Name.all;
+      return Entity1.Name.all < Entity2.Name.all;
    end "<";
 
    ------------------------------

@@ -46,7 +46,6 @@ package body Entities.Queries is
    --  same column.
 
    use Entities_Hash;
-   use Shared_Entities_Hash;
    use Entity_Information_Arrays;
    use Entity_Reference_Arrays;
    use Source_File_Arrays;
@@ -91,15 +90,6 @@ package body Entities.Queries is
 
    procedure Find_Any_Entity
      (Trie            : Entities_Hash.HTable;
-      File            : Source_File;
-      Line            : Integer;
-      Column          : Integer;
-      Check_Decl_Only : Boolean;
-      Distance        : in out Integer;
-      Closest         : in out Entity_Information;
-      Closest_Ref     : in out Entity_Reference);
-   procedure Find_Any_Entity
-     (Trie            : Shared_Entities_Hash.HTable;
       File            : Source_File;
       Line            : Integer;
       Column          : Integer;
@@ -258,7 +248,7 @@ package body Entities.Queries is
       Closest_Ref     : in out Entity_Reference)
    is
       Iter   : Entities_Hash.Iterator;
-      UEI    : Unshared_Entity_Informations;
+      UEI    : Entity_Informations;
    begin
       Get_First (Trie, Iter);
 
@@ -267,36 +257,6 @@ package body Entities.Queries is
          exit when UEI = null;
 
          Find (UEI.List, File, Line, Column,
-               Check_Decl_Only, Distance, Closest, Closest_Ref);
-         exit when Distance = 0;
-
-         Get_Next (Trie, Iter);
-      end loop;
-   end Find_Any_Entity;
-
-   ---------------------
-   -- Find_Any_Entity --
-   ---------------------
-
-   procedure Find_Any_Entity
-     (Trie            : Shared_Entities_Hash.HTable;
-      File            : Source_File;
-      Line            : Integer;
-      Column          : Integer;
-      Check_Decl_Only : Boolean;
-      Distance        : in out Integer;
-      Closest         : in out Entity_Information;
-      Closest_Ref     : in out Entity_Reference)
-   is
-      Iter   : Shared_Entities_Hash.Iterator;
-      EIS    : Entity_Informations;
-   begin
-      Get_First (Trie, Iter);
-      loop
-         EIS := Get_Element (Iter);
-         exit when EIS = No_Entity_Informations;
-
-         Find (EIS.List, File, Line, Column,
                Check_Decl_Only, Distance, Closest, Closest_Ref);
          exit when Distance = 0;
 
@@ -344,8 +304,9 @@ package body Entities.Queries is
    is
       Distance : Integer := Integer'Last;
       Closest  : Entity_Information;
-      EIS      : Entity_Informations;
-      UEI      : Unshared_Entity_Informations;
+      UEI      : Entity_Informations;
+      Case_Sensitive : constant Boolean := not Case_Insensitive_Identifiers
+        (Source.Handler);
    begin
       if Active (Me) then
          Trace (Me, "Find name=" & Normalized_Entity_Name
@@ -361,11 +322,12 @@ package body Entities.Queries is
            (Source, Line, Column, Check_Decl_Only, Distance, Closest,
             Closest_Ref);
       else
-         EIS := Get (Source.Entities,
-                     Normalized_Entity_Name'Unrestricted_Access);
-         if EIS /= No_Entity_Informations then
+         UEI := Get (Source.Entities,
+                     (Str => Normalized_Entity_Name'Unrestricted_Access,
+                      Case_Sensitive => Case_Sensitive));
+         if UEI /= null then
             Find
-              (EIS.List,
+              (UEI.List,
                Source, Line,
                Column, Check_Decl_Only, Distance, Closest, Closest_Ref);
             Trace (Me, "After find in entities: distance=" & Distance'Img);
@@ -373,7 +335,8 @@ package body Entities.Queries is
 
          if Distance /= 0 and then not Check_Decl_Only then
             UEI := Get (Source.All_Entities,
-                        Normalized_Entity_Name'Unrestricted_Access);
+                        (Str => Normalized_Entity_Name'Unrestricted_Access,
+                         Case_Sensitive => Case_Sensitive));
             if UEI /= null then
                Find (UEI.List,
                      Source, Line, Column, Check_Decl_Only, Distance, Closest,
@@ -479,7 +442,7 @@ package body Entities.Queries is
                 & " column=" & Column'Img);
       end if;
 
-      if Source = Get_Predefined_File (Db) then
+      if Source = Get_Predefined_File (Db, Source.Handler) then
          Entity := Get_Or_Create
            (Name         => Entity_Name,
             File         => Source,
@@ -1751,7 +1714,7 @@ package body Entities.Queries is
                Refs.Table (R).Caller := Caller;
 
                if Caller /= null then
-                  Trace (Ref_Me, "Ref " & Caller.Shared_Name.all
+                  Trace (Ref_Me, "Ref " & Caller.Name.all
                          & " since caller for a location");
                   Ref (Caller);
 
@@ -1772,22 +1735,22 @@ package body Entities.Queries is
       Update_Xref (File);
 
       declare
-         Iter : Shared_Entities_Hash.Iterator;
-         EIS  : Entity_Informations;
+         Iter : Entities_Hash.Iterator;
+         UEI  : Entity_Informations;
       begin
          Get_First (File.Entities, Iter);
 
          loop
-            EIS := Get_Element (Iter);
-            exit when EIS = No_Entity_Informations;
-            Add_To_Tree (Tree, EIS.List);
+            UEI := Get_Element (Iter);
+            exit when UEI = null;
+            Add_To_Tree (Tree, UEI.List);
             Get_Next (File.Entities, Iter);
          end loop;
       end;
 
       declare
          Iter : Entities_Hash.Iterator;
-         UEI  : Unshared_Entity_Informations;
+         UEI  : Entity_Informations;
       begin
          Get_First (File.All_Entities, Iter);
 
@@ -1842,24 +1805,24 @@ package body Entities.Queries is
             end loop;
 
             declare
-               Iter : Shared_Entities_Hash.Iterator;
-               EIS  : Entity_Informations;
+               Iter : Entities_Hash.Iterator;
+               UEI  : Entity_Informations;
             begin
                Get_First (File.Entities, Iter);
 
                loop
-                  EIS := Get_Element (Iter);
-                  exit when EIS = No_Entity_Informations;
+                  UEI := Get_Element (Iter);
+                  exit when UEI = null;
                   Process_All_Entities_Refs
                     (Line_Info, Info_For_Decl,
-                     EIS.List, Add_Deps => False);
+                     UEI.List, Add_Deps => False);
                   Get_Next (File.Entities, Iter);
                end loop;
             end;
 
             declare
                Iter : Entities_Hash.Iterator;
-               UEI  : Unshared_Entity_Informations;
+               UEI  : Entity_Informations;
             begin
                Get_First (File.All_Entities, Iter);
 
@@ -1938,7 +1901,7 @@ package body Entities.Queries is
       Length : Natural := 0;
    begin
       while E /= null loop
-         Length := Length + E.Shared_Name'Length + Separator'Length;
+         Length := Length + E.Name'Length + Separator'Length;
          Compute_Callers_And_Called (E.Declaration.File);
          Last_Not_Null := E;
          E := E.Caller_At_Declaration;
@@ -1951,7 +1914,7 @@ package body Entities.Queries is
       loop
          E := Get_Parent_Package (E);
          exit when E = null;
-         Length := Length + E.Shared_Name'Length + Separator'Length;
+         Length := Length + E.Name'Length + Separator'Length;
       end loop;
 
 
@@ -1963,9 +1926,8 @@ package body Entities.Queries is
          while E /= null loop
             Result (Index - Separator'Length + 1 .. Index) := Separator;
             Index := Index - Separator'Length;
-            Result (Index - E.Shared_Name'Length + 1 .. Index) :=
-              E.Shared_Name.all;
-            Index := Index - E.Shared_Name'Length;
+            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
+            Index := Index - E.Name'Length;
 
             E := E.Caller_At_Declaration;
          end loop;
@@ -1976,9 +1938,8 @@ package body Entities.Queries is
             exit when E = null;
             Result (Index - Separator'Length + 1 .. Index) := Separator;
             Index := Index - Separator'Length;
-            Result (Index - E.Shared_Name'Length + 1 .. Index) :=
-              E.Shared_Name.all;
-            Index := Index - E.Shared_Name'Length;
+            Result (Index - E.Name'Length + 1 .. Index) := E.Name.all;
+            Index := Index - E.Name'Length;
          end loop;
 
          return Result (Result'First .. Result'Last - 1);
@@ -2075,21 +2036,26 @@ package body Entities.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Name                  : String := "")
    is
-      EIS : Entity_Informations;
+      UEI : Entity_Informations;
    begin
       Update_Xref (File, File_Has_No_LI_Report);
 
+      Iter.Case_Sensitive :=
+        not Case_Insensitive_Identifiers (File.Handler);
+
       if Name = "" then
          Get_First (File.Entities, Iter.SIter);
-         EIS := Get_Element (Iter.SIter);
+         UEI := Get_Element (Iter.SIter);
 
          Get_First (File.All_Entities, Iter.Iter);
       else
-         EIS := Get (File.Entities, Name'Unrestricted_Access);
+         UEI := Get (File.Entities,
+                     (Str => Name'Unrestricted_Access,
+                      Case_Sensitive => Iter.Case_Sensitive));
       end if;
 
-      if EIS /= No_Entity_Informations then
-         Iter.EL := EIS.List;
+      if UEI /= null then
+         Iter.EL := UEI.List;
       end if;
 
       if Name /= "" then
@@ -2132,7 +2098,7 @@ package body Entities.Queries is
 
    procedure Next (Iter : in out Entity_Iterator) is
       EIS : Entity_Informations;
-      UEI : Unshared_Entity_Informations;
+      UEI : Entity_Informations;
    begin
       Iter.Index_In_EL := Iter.Index_In_EL + 1;
 
@@ -2155,7 +2121,9 @@ package body Entities.Queries is
             if Iter.EL = null then
                Iter.Processing_Entities := False;
                if Iter.Name /= null then
-                  UEI := Get (Iter.File.All_Entities, Iter.Name);
+                  UEI := Get (Iter.File.All_Entities,
+                              (Str => Iter.Name,
+                               Case_Sensitive => Iter.Case_Sensitive));
                else
                   UEI := Get_Element (Iter.Iter);
                end if;

@@ -31,7 +31,6 @@ package body Entities.Debug is
    Show_Timestamps      : Boolean := True;
 
    use Entities_Hash;
-   use Shared_Entities_Hash;
    use Files_HTable;
    use LI_HTable;
    use Source_File_Arrays;
@@ -53,10 +52,6 @@ package body Entities.Debug is
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump
      (Entities : Entities_Hash.HTable;
-      Full     : Boolean;
-      Name     : String);
-   procedure Dump
-     (Entities : Shared_Entities_Hash.HTable;
       Full     : Boolean;
       Name     : String);
    procedure Dump (LI        : LI_File);
@@ -541,76 +536,6 @@ package body Entities.Debug is
       end if;
 
       declare
-         Sorted : array (1 .. Count) of Unshared_Entity_Informations;
-         procedure Xchg (Op1, Op2 : Natural);
-         function Lt    (Op1, Op2 : Natural) return Boolean;
-
-         procedure Xchg (Op1, Op2 : Natural) is
-            T : constant Unshared_Entity_Informations := Sorted (Op1);
-         begin
-            Sorted (Op1) := Sorted (Op2);
-            Sorted (Op2) := T;
-         end Xchg;
-
-         function Lt (Op1, Op2 : Natural) return Boolean is
-         begin
-            if Sorted (Op1) = null then
-               return True;
-            elsif Sorted (Op2) = null then
-               return False;
-            else
-               return Get_Name (Sorted (Op1)).all <
-                 Get_Name (Sorted (Op2)).all;
-            end if;
-         end Lt;
-      begin
-         Get_First (Entities, Iter);
-         Count := Sorted'First;
-         while Get_Element (Iter) /= null loop
-            Sorted (Count) := Get_Element (Iter);
-            Count := Count + 1;
-            Get_Next (Entities, Iter);
-         end loop;
-
-         Sort (Sorted'Last, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
-         for S in Sorted'Range loop
-            Dump (Sorted (S).List.all, Full => Full, Name => "");
-         end loop;
-      end;
-
-      if not Full and then not Is_Empty and then Name /= "" then
-         Output_Line ("");
-      end if;
-   end Dump;
-
-   ----------
-   -- Dump --
-   ----------
-
-   procedure Dump
-     (Entities : Shared_Entities_Hash.HTable;
-      Full     : Boolean;
-      Name     : String)
-   is
-      Iter : Shared_Entities_Hash.Iterator;
-      Is_Empty : Boolean;
-      Count    : Natural := 0;
-   begin
-      Get_First (Entities, Iter);
-      Is_Empty := Get_Element (Iter) = No_Entity_Informations;
-
-      if Full then
-         Output_Line ("====== Entities =====");
-      elsif not Is_Empty and then Name /= "" then
-         Output ("   " & Name & "= ");
-      end if;
-
-      while Get_Element (Iter) /= null loop
-         Count := Count + 1;
-         Get_Next (Entities, Iter);
-      end loop;
-
-      declare
          Sorted : array (1 .. Count) of Entity_Informations;
          procedure Xchg (Op1, Op2 : Natural);
          function Lt    (Op1, Op2 : Natural) return Boolean;
@@ -629,7 +554,8 @@ package body Entities.Debug is
             elsif Sorted (Op2) = null then
                return False;
             else
-               return Sorted (Op1).Name.all < Sorted (Op2).Name.all;
+               return Get_Name (Sorted (Op1)).Str.all <
+                 Get_Name (Sorted (Op2)).Str.all;
             end if;
          end Lt;
       begin
