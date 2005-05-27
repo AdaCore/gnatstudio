@@ -654,7 +654,7 @@ package body CPP_Parser is
       --  Do we already have a predefined entity with this name ?
       Entity := Get_Or_Create
         (Name         => Clean_Name,
-         File         => Get_Predefined_File (Handler.Db),
+         File         => Get_Predefined_File (Handler.Db, Handler),
          Line         => Predefined_Line,
          Column       => Predefined_Column,
          Allow_Create => False);
@@ -699,7 +699,7 @@ package body CPP_Parser is
 
          Entity := Get_Or_Create
            (Name         => Clean_Name,
-            File         => Get_Predefined_File (Handler.Db),
+            File         => Get_Predefined_File (Handler.Db, Handler),
             Line         => Predefined_Line,
             Column       => Predefined_Column,
             Allow_Create => True);
@@ -831,7 +831,8 @@ package body CPP_Parser is
 
          if P /= No_Pair then
             Source := Get_Or_Create
-              (Handler.Db, F.Key (F.File_Name.First .. F.File_Name.Last));
+              (Handler.Db, F.Key (F.File_Name.First .. F.File_Name.Last),
+               Handler);
             Entity := Get_Or_Create
               (Name   => Name (Name'First .. Last),
                File   => Source,
@@ -853,8 +854,8 @@ package body CPP_Parser is
          if Success then
             Source := Get_Or_Create
               (Handler.Db,
-               Key.Key
-                 (Key.File_Name.First .. Key.File_Name.Last));
+               Key.Key (Key.File_Name.First .. Key.File_Name.Last),
+               Handler);
             Entity := Get_Or_Create
               (Name   => Name (Name'First .. Last),
                File   => Source,
@@ -877,7 +878,8 @@ package body CPP_Parser is
             if Success then
                Source := Get_Or_Create
                  (Handler.Db,
-                  Key2.Key (Key2.File_Name.First .. Key2.File_Name.Last));
+                  Key2.Key (Key2.File_Name.First .. Key2.File_Name.Last),
+                  Handler);
                Entity := Get_Or_Create
                  (Name   => Name (Name'First .. Last),
                   File   => Source,
@@ -898,7 +900,8 @@ package body CPP_Parser is
          if Success then
             Source := Get_Or_Create
               (Handler.Db,
-               Key3.Key (Key3.File_Name.First .. Key3.File_Name.Last));
+               Key3.Key (Key3.File_Name.First .. Key3.File_Name.Last),
+               Handler);
             Entity := Get_Or_Create
               (Name   => Name (Name'First .. Last),
                File   => Source,
@@ -995,7 +998,7 @@ package body CPP_Parser is
                if Is_Predefined_Entity (Entity) then
                   Real_Entity := Get_Or_Create
                     (Name         => Name (Name'First .. Last),
-                     File         => Get_Predefined_File (Handler.Db),
+                     File         => Get_Predefined_File (Handler.Db, Handler),
                      Line         => Predefined_Line,
                      Column       => Predefined_Column);
                else
@@ -1083,7 +1086,8 @@ package body CPP_Parser is
            (Name   => G.Key (G.Name.First .. G.Name.Last),
             File   => Get_Or_Create
               (Handler.Db,
-               Var.Key (Var.File_Name.First .. Var.File_Name.Last)),
+               Var.Key (Var.File_Name.First .. Var.File_Name.Last),
+               Handler),
             Line   => Var.Start_Position.Line,
             Column => Var.Start_Position.Column);
          Add_Reference
@@ -1199,7 +1203,8 @@ package body CPP_Parser is
    is
       Dep : constant Source_File := Get_Or_Create
         (Handler.Db,
-         Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last));
+         Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+         Handler);
    begin
       Add_Depends_On (Source, Dep, Explicit_Dependency => True);
    end Parse_IU_Table;
@@ -1377,7 +1382,8 @@ package body CPP_Parser is
 
          if P /= No_Pair then
             S := Get_Or_Create
-              (Handler.Db, M.Key (M.File_Name.First .. M.File_Name.Last));
+              (Handler.Db, M.Key (M.File_Name.First .. M.File_Name.Last),
+               Handler);
             Add_Reference
               (Entity   => Entity,
                Location => (File   => S,
@@ -1552,7 +1558,8 @@ package body CPP_Parser is
          Entity := Get_Or_Create
            (Name   => D.Key (D.Name.First .. D.Name.Last),
             File   => Get_Or_Create
-              (Handler.Db, D.Key (D.File_Name.First .. D.File_Name.Last)),
+              (Handler.Db, D.Key (D.File_Name.First .. D.File_Name.Last),
+               Handler),
             Line   => D.Start_Position.Line,
             Column => D.Start_Position.Column);
 
@@ -1901,8 +1908,8 @@ package body CPP_Parser is
          if P /= No_Pair then
             S := Get_Or_Create
               (Handler.Db,
-               FD_Tab.Key
-                 (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last));
+               FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+               Handler);
 
             Decl := Get_Or_Create
               (Name   => Name,
@@ -2040,7 +2047,8 @@ package body CPP_Parser is
 
       if Body_Found then
          Source := Get_Or_Create
-           (Handler.Db, F.Key (F.File_Name.First .. F.File_Name.Last));
+           (Handler.Db, F.Key (F.File_Name.First .. F.File_Name.Last),
+            Handler);
 
          Add_Reference
            (Entity   => Entity,
@@ -2097,7 +2105,8 @@ package body CPP_Parser is
            C.Key (C.File_Name.First  .. C.File_Name.Last)
          then
             S := Get_Or_Create
-              (Handler.Db, C.Key (C.File_Name.First  .. C.File_Name.Last));
+              (Handler.Db, C.Key (C.File_Name.First  .. C.File_Name.Last),
+               Handler);
          end if;
 
          if Entity = null then
@@ -2206,7 +2215,8 @@ package body CPP_Parser is
 
                Ref_Source := Get_Or_Create
                  (Handler.Db,
-                  R.Key (R.File_Name.First .. R.File_Name.Last));
+                  R.Key (R.File_Name.First .. R.File_Name.Last),
+                  Handler);
 
                --  An undefined entity ?
                if R.Referred_Symbol = UD then
@@ -2607,7 +2617,8 @@ package body CPP_Parser is
          S := Get_Or_Create
            (Handler.Db,
             File => Get_Filename (Source),
-            LI   => Get_Or_Create (Handler.Db, TO_File_Name, Project));
+            LI   => Get_Or_Create (Handler.Db, TO_File_Name, Project),
+            Handler => LI_Handler (Handler));
          Set_Time_Stamp (Get_LI (S), File_Time_Stamp (TO_File_Name));
          Set_Time_Stamp (S, Time_Stamp_From_DB (Project, Get_Filename (S)));
       end if;
@@ -2653,6 +2664,7 @@ package body CPP_Parser is
       Source := Get_Or_Create
         (Db   => Handler.Db,
          File => Source_Filename,
+         Handler => LI_Handler (Handler),
          LI   => null);
       if Source = null then
          if File_Has_No_LI_Report /= null then
