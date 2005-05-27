@@ -118,12 +118,16 @@ package body Browsers.Call_Graph is
      (Filter  : access Container_Entity_Filter;
       Context : access Selection_Context'Class) return Boolean;
 
-   type Entity_Calls_Command is new Interactive_Command with null record;
+   type Entity_Calls_Command is new Interactive_Command with record
+      To_Browser : Boolean := True;
+   end record;
    function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Entity_Called_By_Command is new Interactive_Command with null record;
+   type Entity_Called_By_Command is new Interactive_Command with record
+      To_Browser : Boolean := True;
+   end record;
    function Execute
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -252,7 +256,9 @@ package body Browsers.Call_Graph is
 
    type Examine_Callback is record
       --  The following three fields are only set for graphical callbacks
+      Kernel         : Kernel_Handle;
       Browser        : Call_Graph_Browser;
+      Entity         : Entity_Information;
       Item           : Entity_Item;
       Link_From_Item : Boolean;
    end record;
@@ -273,21 +279,23 @@ package body Browsers.Call_Graph is
    type Examine_Ancestors_Data_Access is access Examine_Ancestors_Idle_Data;
 
    procedure Examine_Entity_Call_Graph
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      To_Browser : Boolean);
    --  Display the call graph for the node.
 
    procedure Examine_Entity_Call_Graph_Iterator
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Entity   : Entity_Information;
-      Callback : Examine_Callback;
-      Execute  : Execute_Callback);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      Callback   : Examine_Callback;
+      Execute    : Execute_Callback);
    --  Same as Examine_Entity_Call_Graph, but calls Execute for each matching
    --  entity.
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      To_Browser : Boolean);
    --  Display the list of subprograms that call Entity.
 
    procedure Examine_Ancestors_Call_Graph_Iterator
@@ -365,6 +373,13 @@ package body Browsers.Call_Graph is
       Ref         : Entity_Reference;
       Is_Renaming : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
+
+   procedure Insert_In_Locations_View
+     (Cb          : Examine_Callback;
+      Entity      : Entity_Information;
+      Ref         : Entity_Reference;
+      Is_Renaming : Boolean);
+   --  Add an entry in locations window to show the call graph for Entity.
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Data_Access);
    --  Called when the idle loop is destroyed.
@@ -673,10 +688,10 @@ package body Browsers.Call_Graph is
    ----------------------------------------
 
    procedure Examine_Entity_Call_Graph_Iterator
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Entity   : Entity_Information;
-      Callback : Examine_Callback;
-      Execute  : Execute_Callback)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      Callback   : Examine_Callback;
+      Execute    : Execute_Callback)
    is
       Rename : Entity_Information;
       Iter   : Calls_Iterator;
@@ -742,22 +757,32 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      To_Browser : Boolean)
    is
       Child_Browser : MDI_Child;
       Cb            : Examine_Callback;
    begin
       --  Create the browser if it doesn't exist
-      Child_Browser := Open_Call_Graph_Browser (Kernel);
-      Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+      if To_Browser then
+         Child_Browser := Open_Call_Graph_Browser (Kernel);
+         Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
 
-      --  Look for an existing item corresponding to entity
-      Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+         --  Look for an existing item corresponding to entity
+         Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+      end if;
 
       Cb.Link_From_Item := True;
+      Cb.Kernel         := Kernel_Handle (Kernel);
+      Cb.Entity         := Entity;
+      Ref (Entity);
 
-      if not Children_Shown (Cb.Item) then
+      if not To_Browser then
+         Examine_Entity_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Insert_In_Locations_View'Access);
+
+      elsif not Children_Shown (Cb.Item) then
          Set_Children_Shown (Cb.Item, True);
          Examine_Entity_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
@@ -768,11 +793,15 @@ package body Browsers.Call_Graph is
 
       --  We need to do a layout in all cases, so that the newly added item
       --  is put at a correct place.
-      Layout (Cb.Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Cb.Browser));
-      Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
+      if To_Browser then
+         Layout (Cb.Browser, Force => False);
+         Refresh_Canvas (Get_Canvas (Cb.Browser));
+         Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
-      Redraw_Title_Bar (Cb.Item);
+         Redraw_Title_Bar (Cb.Item);
+      end if;
+
+      Unref (Cb.Entity);
 
    exception
       when E : others =>
@@ -798,6 +827,7 @@ package body Browsers.Call_Graph is
       begin
          Destroy (Data.Iter);
          Unref (Data.Entity);
+         Unref (Data.Callback.Entity);
 
          if Data.Callback.Browser /= null then
             Pop_State (Get_Kernel (Data.Callback.Browser));
@@ -934,7 +964,7 @@ package body Browsers.Call_Graph is
             Data.all'Address);
       end if;
 
-      if Background_Mode and then Callback.Browser /= null then
+      if Background_Mode then
          Ancestor_Commands.Create
            (C, -"Called by", Data, Examine_Ancestors_Call_Graph_Idle'Access);
          Launch_Background_Command
@@ -948,6 +978,52 @@ package body Browsers.Call_Graph is
          Destroy_Idle (Data);
       end if;
    end Examine_Ancestors_Call_Graph_Iterator;
+
+   ------------------------------
+   -- Insert_In_Locations_View --
+   ------------------------------
+
+   procedure Insert_In_Locations_View
+     (Cb          : Examine_Callback;
+      Entity      : Entity_Information;
+      Ref         : Entity_Reference;
+      Is_Renaming : Boolean)
+   is
+      type Access_Cst_String is access constant String;
+      Name : constant GNAT.OS_Lib.String_Access := Get_Name (Cb.Entity);
+      Loc  : constant File_Location := Get_Location (Ref);
+      Category1 : aliased constant String := Name.all & " calls";
+      Category2 : aliased constant String := Name.all & " called by";
+      Category  : Access_Cst_String;
+   begin
+      if Cb.Link_From_Item then
+         Category := Category1'Unchecked_Access;
+      else
+         Category := Category2'Unchecked_Access;
+      end if;
+
+      if Is_Renaming then
+         Insert_Location
+           (Cb.Kernel,
+            Category  => Category.all,
+            File      => Get_Filename (Get_File (Loc)),
+            Line      => Get_Line (Loc),
+            Column    => Get_Column (Loc),
+            Length    => Name'Length,
+            Highlight => True,
+            Text      => "(renaming)");
+      else
+         Insert_Location
+           (Cb.Kernel,
+            Category  => Category.all,
+            File      => Get_Filename (Get_File (Loc)),
+            Line      => Get_Line (Loc),
+            Column    => Get_Column (Loc),
+            Length    => Name'Length,
+            Highlight => True,
+            Text      => Get_Name (Entity).all);
+      end if;
+   end Insert_In_Locations_View;
 
    -------------------------
    -- Add_Entity_And_Link --
@@ -1000,7 +1076,7 @@ package body Browsers.Call_Graph is
       Line := 2;
 
       if Cb.Link_From_Item then
-         New_Cb := Build (Get_Kernel (Get_Browser (Child)), Cb.Item, Loc);
+         New_Cb := Build (Cb.Kernel, Cb.Item, Loc);
 
          loop
             Get_Line (Child.Refs, Line, 1, Callback, Text);
@@ -1058,28 +1134,37 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Entity_Information)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Entity     : Entity_Information;
+      To_Browser : Boolean)
    is
       Child_Browser : MDI_Child;
       Cb            : Examine_Callback;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      --  Create the browser if it doesn't exist
-      Child_Browser := Open_Call_Graph_Browser (Kernel);
-      Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
-
-      --  Look for an existing item corresponding to entity
-      Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
-      Set_Parents_Shown (Cb.Item, True);
-      Redraw_Title_Bar (Cb.Item);
-
       Cb.Link_From_Item := False;
+      Cb.Entity := Entity;
+      Cb.Kernel := Kernel_Handle (Kernel);
+      Ref (Entity);
 
-      Examine_Ancestors_Call_Graph_Iterator
-        (Kernel, Entity, Cb, Add_Entity_And_Link'Access,
-         Background_Mode => True);
+      --  Create the browser if it doesn't exist
+      if To_Browser then
+         Child_Browser := Open_Call_Graph_Browser (Kernel);
+         Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+
+         --  Look for an existing item corresponding to entity
+         Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+         Set_Parents_Shown (Cb.Item, True);
+         Redraw_Title_Bar (Cb.Item);
+         Examine_Ancestors_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Add_Entity_And_Link'Access,
+            Background_Mode => True);
+      else
+         Examine_Ancestors_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Insert_In_Locations_View'Access,
+            Background_Mode => True);
+      end if;
 
    exception
       when E : others =>
@@ -1333,7 +1418,8 @@ package body Browsers.Call_Graph is
      (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Ancestors_Call_Graph
-        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity);
+        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity,
+         To_Browser => True);
    end Examine_Ancestors_Call_Graph;
 
    -------------------------------
@@ -1344,7 +1430,8 @@ package body Browsers.Call_Graph is
      (Item : access Arrow_Item_Record'Class) is
    begin
       Examine_Entity_Call_Graph
-        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity);
+        (Get_Kernel (Get_Browser (Item)), Entity_Item (Item).Entity,
+         To_Browser => True);
    end Examine_Entity_Call_Graph;
 
    ------------------------
@@ -1407,7 +1494,8 @@ package body Browsers.Call_Graph is
          Node_Entity := Get_Entity (Entity);
 
          if Node_Entity /= null then
-            Examine_Entity_Call_Graph (Kernel, Node_Entity);
+            Examine_Entity_Call_Graph
+              (Kernel, Node_Entity, To_Browser => True);
          end if;
       end if;
 
@@ -1527,7 +1615,8 @@ package body Browsers.Call_Graph is
 
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Entity     : constant Entity_Information := Get_Data (Data, 1);
-      Cb         : constant Examine_Callback := (null, null, False);
+      Cb         : constant Examine_Callback :=
+        (null, null, null, null, False);
       Filter     : Reference_Kind_Filter;
 
    begin
@@ -1586,7 +1675,8 @@ package body Browsers.Call_Graph is
             Background_Mode => False);
 
       elsif Command = "called_by_browser" then
-         Examine_Ancestors_Call_Graph (Kernel, Entity);
+         Examine_Ancestors_Call_Graph
+           (Kernel, Entity, To_Browser => True);
 
       elsif Command = "dump" then
          Dump (Entity, Full => False, Name => "");
@@ -1677,7 +1767,6 @@ package body Browsers.Call_Graph is
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Entity      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
       Node_Entity : Entity_Information;
@@ -1687,7 +1776,8 @@ package body Browsers.Call_Graph is
 
       if Node_Entity /= null then
          --  ??? Should check that Decl.Kind is a subprogram
-         Examine_Entity_Call_Graph (Get_Kernel (Entity), Node_Entity);
+         Examine_Entity_Call_Graph
+           (Get_Kernel (Entity), Node_Entity, Command.To_Browser);
       else
          Insert (Get_Kernel (Entity),
                  -"No call graph available for "
@@ -1717,7 +1807,6 @@ package body Browsers.Call_Graph is
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context.Context);
       Info : Entity_Information;
@@ -1726,7 +1815,8 @@ package body Browsers.Call_Graph is
       Info := Get_Entity (Entity);
 
       if Info /= null then
-         Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+         Examine_Ancestors_Call_Graph
+           (Get_Kernel (Entity), Info, Command.To_Browser);
       else
          Insert (Get_Kernel (Entity),
                  -"No information found for the file "
@@ -2031,16 +2121,34 @@ package body Browsers.Call_Graph is
 
       Filter  := new Container_Entity_Filter;
       Command := new Entity_Calls_Command;
+      Entity_Calls_Command (Command.all).To_Browser := False;
       Register_Contextual_Menu
         (Kernel, "Entity calls",
          Label  => "References/%e calls",
          Filter => Filter,
          Action => Command);
 
+      Command := new Entity_Calls_Command;
+      Entity_Calls_Command (Command.all).To_Browser := True;
+      Register_Contextual_Menu
+        (Kernel, "Entity calls in browser",
+         Label  => "References/%e calls (in browser)",
+         Filter => Filter,
+         Action => Command);
+
       Command := new Entity_Called_By_Command;
+      Entity_Called_By_Command (Command.all).To_Browser := False;
       Register_Contextual_Menu
         (Kernel, "Entity called by",
          Label  => "References/%e is called by",
+         Filter => Filter,
+         Action => Command);
+
+      Command := new Entity_Called_By_Command;
+      Entity_Called_By_Command (Command.all).To_Browser := True;
+      Register_Contextual_Menu
+        (Kernel, "Entity called by in browser",
+         Label  => "References/%e is called by (in browser)",
          Filter => Filter,
          Action => Command);
 
