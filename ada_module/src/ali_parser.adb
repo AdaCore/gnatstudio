@@ -32,8 +32,6 @@ with File_Utils;                use File_Utils;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -175,24 +173,31 @@ package body ALI_Parser is
    --  Parse an ALI file and adds its information into the structure
 
    procedure Process_Units
-     (LI : LI_File; New_ALI : ALIs_Record; Sunits : out Unit_To_Sfile_Table);
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
+      New_ALI : ALIs_Record; Sunits : out Unit_To_Sfile_Table);
    --  Get a handle for all the units in New_ALI
 
-   function Process_Unit (LI : LI_File; Id : Unit_Id) return Source_File;
+   function Process_Unit
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
+      Id      : Unit_Id) return Source_File;
    --  Return a handle to the file matching Id.
 
    procedure Process_Sdep
-     (LI      : LI_File;
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
       Dep_Id  : Sdep_Id;
       Sunits  : Unit_To_Sfile_Table;
       Sfile   : in out Source_Dependency);
    --  Return a handle to a specific file dependency (Dep).
 
    procedure Process_Sdeps
-     (LI               : LI_File;
-      New_ALI          : ALIs_Record;
-      Sunits           : Unit_To_Sfile_Table;
-      Sfiles           : out Sdep_To_Sfile_Table);
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
+      New_ALI : ALIs_Record;
+      Sunits  : Unit_To_Sfile_Table;
+      Sfiles  : out Sdep_To_Sfile_Table);
    --  Get a handle for all the units dependencies
 
    procedure Process_Withs_For_Unit
@@ -377,7 +382,11 @@ package body ALI_Parser is
    -- Process_Unit --
    ------------------
 
-   function Process_Unit (LI : LI_File; Id : Unit_Id) return Source_File is
+   function Process_Unit
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
+      Id      : Unit_Id) return Source_File
+   is
       Base_Name     : constant String :=
         Locale_To_UTF8 (Get_String (Units.Table (Id).Sfile));
       File          : Source_File;
@@ -388,6 +397,7 @@ package body ALI_Parser is
       File := Get_Or_Create
         (Db            => Get_Database (LI),
          Full_Filename => Base_Name,
+         Handler       => Handler,
          LI            => LI);
       Set_Time_Stamp (File, VFS.No_Time);
 
@@ -402,7 +412,8 @@ package body ALI_Parser is
    -------------------
 
    procedure Process_Units
-     (LI      : LI_File;
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
       New_ALI : ALIs_Record;
       Sunits  : out Unit_To_Sfile_Table) is
    begin
@@ -414,7 +425,8 @@ package body ALI_Parser is
            or else Units.Table (Current_Unit_Id).Sfile /=
               Units.Table (Current_Unit_Id - 1).Sfile
          then
-            Sunits (Current_Unit_Id) := Process_Unit (LI, Current_Unit_Id);
+            Sunits (Current_Unit_Id) :=
+              Process_Unit (Handler, LI, Current_Unit_Id);
          end if;
       end loop;
    end Process_Units;
@@ -424,7 +436,8 @@ package body ALI_Parser is
    ------------------
 
    procedure Process_Sdep
-     (LI      : LI_File;
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
       Dep_Id  : Sdep_Id;
       Sunits  : Unit_To_Sfile_Table;
       Sfile   : in out Source_Dependency)
@@ -454,6 +467,7 @@ package body ALI_Parser is
       Sfile := (Get_Or_Create
                   (Db            => Get_Database (LI),
                    Full_Filename => Base_Name,
+                   Handler       => Handler,
                    LI            => L),
                 Is_Separate => Is_Separate,
                 Is_Unit     => False);
@@ -468,13 +482,14 @@ package body ALI_Parser is
    -------------------
 
    procedure Process_Sdeps
-     (LI      : LI_File;
+     (Handler : access LI_Handler_Record'Class;
+      LI      : LI_File;
       New_ALI : ALIs_Record;
       Sunits  : Unit_To_Sfile_Table;
       Sfiles  : out Sdep_To_Sfile_Table) is
    begin
       for Dep_Id in New_ALI.First_Sdep .. New_ALI.Last_Sdep loop
-         Process_Sdep (LI, Dep_Id, Sunits, Sfiles (Dep_Id));
+         Process_Sdep (Handler, LI, Dep_Id, Sunits, Sfiles (Dep_Id));
       end loop;
    end Process_Sdeps;
 
@@ -664,12 +679,10 @@ package body ALI_Parser is
          Read, Written : aliased Natural;
       begin
          if Name_Buffer (1) = '"' then
-            To_Lower (Name_Buffer (2 .. Name_Len - 1));
             Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
               (Name_Buffer (2 .. Name_Len - 1),
                Read'Unchecked_Access, Written'Unchecked_Access));
          else
-            To_Lower (Name_Buffer (1 .. Name_Len));
             Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
               (Name_Buffer (1 .. Name_Len),
                Read'Unchecked_Access, Written'Unchecked_Access));
@@ -875,8 +888,8 @@ package body ALI_Parser is
                            or else Xref_Entity.Table (Entity).Col = Column)
                then
                   return Get_Or_Create
-                    (Name => Locale_To_UTF8 (To_Lower
-                        (Get_String (Xref_Entity.Table (Entity).Entity))),
+                    (Name => Locale_To_UTF8
+                       (Get_String (Xref_Entity.Table (Entity).Entity)),
                      File => Sfiles (File_Num).File,
                      Line => Integer (Line),
                      Column => Integer (Xref_Entity.Table (Entity).Col));
@@ -904,8 +917,8 @@ package body ALI_Parser is
                            or else Xref.Table (Ref).Col = Column)
                then
                   return Get_Or_Create
-                    (Name => Locale_To_UTF8 (To_Lower
-                        (Get_String (Xref_Entity.Table (Entity).Entity))),
+                    (Name => Locale_To_UTF8
+                        (Get_String (Xref_Entity.Table (Entity).Entity)),
                      File => Sfiles (Xref_Section.Table (Sect).File_Num).File,
                      Line => Integer (Xref_Entity.Table (Entity).Line),
                      Column => Integer (Xref_Entity.Table (Entity).Col));
@@ -990,9 +1003,9 @@ package body ALI_Parser is
       if Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity /= No_Name then
          Parent := Get_Or_Create
            (Name   => Locale_To_UTF8
-              (To_Lower (Get_String
-                 (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity))),
-            File   => Get_Predefined_File (Get_Database (LI)),
+              (Get_String
+                 (Xref_Entity.Table (Xref_Ent).Tref_Standard_Entity)),
+            File   => Get_Predefined_File (Get_Database (LI), Handler),
             Line   => Predefined_Line,
             Column => Predefined_Column);
       else
@@ -1092,8 +1105,8 @@ package body ALI_Parser is
    begin
       Get_Imported_Projects (Get_Project (LI), Imported_Projects);
 
-      Process_Units (LI, New_ALI, Sunits);
-      Process_Sdeps (LI, New_ALI, Sunits, Sfiles);
+      Process_Units (Handler, LI, New_ALI, Sunits);
+      Process_Sdeps (Handler, LI, New_ALI, Sunits, Sfiles);
 
       --  We do not want to generate xref information if we are parsing the
       --  LI file for a separate unit, since such ALI files can only exist when
@@ -1494,6 +1507,7 @@ package body ALI_Parser is
         (Db           => Handler.Db,
          File         => Source_Filename,
          LI           => null,
+         Handler      => LI_Handler (Handler),
          Allow_Create => False);
       if Source /= null
         and then Get_LI (Source) /= null
@@ -1556,6 +1570,7 @@ package body ALI_Parser is
            (Db           => Handler.Db,
             File         => Source_Filename,
             LI           => LI,
+            Handler      => LI_Handler (Handler),
             Allow_Create => False);
       else
          return Source;
