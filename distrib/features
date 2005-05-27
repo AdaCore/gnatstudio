@@ -20,6 +20,8 @@ New features in GPS 3.1.0
   This switch instructs GPS to open all files in read-only mode by default.
   This is particularly useful when used with --debug.
 
+- D825-010 Call graph can now be displayed in the Locations window
+
 - BA07-005 Improved cross-references for generics
   From a reference to an entity declared in a generic, it is now possible to
   find out what instantiation of the generic is involved.
