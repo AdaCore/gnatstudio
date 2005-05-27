@@ -2608,17 +2608,22 @@ package body Src_Editor_Module is
          --  Do not create the file if we know we won't be able to save it
          --  anyway (for instance a remote file for which we couldn't establish
          --  the connection)
-         Writable := Write_File (File);
-         Is_Writable := Writable /= Invalid_File;
 
-         if Writable /= Invalid_File then
-            begin
-               Close (Writable);
-               Delete (File);
-            exception
-               when Use_Error =>
-                  Is_Writable := False;
-            end;
+         if File = VFS.No_File then
+            Is_Writable := True;
+         else
+            Writable := Write_File (File);
+            Is_Writable := Writable /= Invalid_File;
+
+            if Writable /= Invalid_File then
+               begin
+                  Close (Writable);
+                  Delete (File);
+               exception
+                  when Use_Error =>
+                     Is_Writable := False;
+               end;
+            end if;
          end if;
 
          if Is_Writable then
