@@ -127,22 +127,28 @@ package body Src_Editor_Box.Tooltips is
          Set_Font_Description (Layout, Font);
 
          Iter := Get_Subprogram_Parameters (Subprogram => Entity);
-         Result := To_Unbounded_String ("<b>Parameters:</b>");
 
-         loop
-            Get (Iter, Param);
-            exit when Param = null;
+         Get (Iter, Param);
 
-            Set_Markup (Layout, "   <b>" & Get_Name (Param).all & "</b>");
-            Get_Pixel_Size (Layout, Char_Width, Char_Height);
-            Longuest_Param := Gint'Max (Longuest_Param, Char_Width);
+         if Param = null then
+            Result := To_Unbounded_String ("<b>(No parameter)</b>");
 
-            Set_Text (Layout, ": " & Image (Get_Type (Iter)));
-            Get_Pixel_Size (Layout, Char_Width, Char_Height);
-            Longuest_Type := Gint'Max (Longuest_Type, Char_Width);
+         else
+            Result := To_Unbounded_String ("<b>Parameters:</b>");
 
-            Next (Iter);
-         end loop;
+            while Param /= null loop
+               Set_Markup (Layout, "   <b>" & Get_Name (Param).all & "</b>");
+               Get_Pixel_Size (Layout, Char_Width, Char_Height);
+               Longuest_Param := Gint'Max (Longuest_Param, Char_Width);
+
+               Set_Text (Layout, ": " & Image (Get_Type (Iter)));
+               Get_Pixel_Size (Layout, Char_Width, Char_Height);
+               Longuest_Type := Gint'Max (Longuest_Type, Char_Width);
+
+               Next (Iter);
+               Get (Iter, Param);
+            end loop;
+         end if;
 
          Pango_New (Tabs, Initial_Size => 2, Positions_In_Pixels => True);
          Set_Tab (Tabs, 0, Location => Longuest_Param + 2);
