@@ -76,8 +76,9 @@ package body Entities is
      (E_Instantiation_Record, Entity_Instantiation);
 
    function String_Hash is new HTables.Hash (HTable_Header);
-
    function Hash is new HTables.Hash (Header_Num);
+   function Case_Insensitive_Hash
+      is new HTables.Case_Insensitive_Hash (Header_Num);
 
    function Find
      (E : Dependency_List; File : Source_File)
@@ -294,8 +295,7 @@ package body Entities is
       if S.Case_Sensitive then
          return Hash (S.Str.all);
       else
-         --  ??? MANU Inefficient
-         return Hash (To_Lower (S.Str.all));
+         return Case_Insensitive_Hash (S.Str.all);
       end if;
    end Hash;
 
