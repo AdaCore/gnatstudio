@@ -34,7 +34,6 @@ with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
 package body Tooltips is
-
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
       Return_Type => Boolean,
@@ -110,6 +109,14 @@ package body Tooltips is
          Get_Pointer   (null, X, Y, Mask, Window);
          Set_UPosition (Tooltip.Display_Window, X + 10, Y + 10);
          Show_All      (Tooltip.Display_Window);
+
+         Add_Watch
+           (Tooltip_Handler.Connect
+              (Get_Focus (Gtk_Window (Get_Toplevel (Tooltip.Widget))),
+               "focus_out_event",
+               Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+               User_Data => Tooltip),
+            Object => Tooltip.Display_Window);
       end if;
 
       return False;
@@ -248,6 +255,10 @@ package body Tooltips is
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
         (On_Widget, "key_press_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltips_Access (Tooltip));
+      Tooltip_Handler.Connect
+        (On_Widget, "key_release_event",
          Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltips_Access (Tooltip));
       Tooltip_Handler.Connect
