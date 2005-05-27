@@ -103,10 +103,6 @@ package body Tooltips is
          Tooltip.Display_Window := null;
       end if;
 
-      if not Has_Focus_Is_Set (Tooltip.Widget) then
-         return False;
-      end if;
-
       Create_Contents (Tooltip, W, Tooltip.Area);
       if W /= null then
          Gtk_New       (Tooltip.Display_Window, Window_Popup);
