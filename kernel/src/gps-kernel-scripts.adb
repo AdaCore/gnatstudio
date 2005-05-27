@@ -956,13 +956,19 @@ package body GPS.Kernel.Scripts is
 
          begin
             if File = null then
-               Source := Get_Predefined_File (Get_Database (Kernel));
+               --  ??? MANU Don't know what Handler to pass here, since we do
+               --  not have enough information to recognize the context.
+               Source := Get_Predefined_File
+                 (Get_Database (Kernel),
+                  Get_LI_Handler (Get_Database (Kernel), Get_File (F)));
                L      := Predefined_Line;
                C      := Predefined_Column;
             else
                F := Get_Data (File);
                Free (File);
-               Source := Get_Or_Create (Get_Database (Kernel), Get_File (F));
+               Source := Get_Or_Create
+                 (Get_Database (Kernel), Get_File (F),
+                  Get_LI_Handler (Get_Database (Kernel), Get_File (F)));
             end if;
 
             Find_Declaration_Or_Overloaded

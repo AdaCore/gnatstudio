@@ -471,7 +471,10 @@ package body GPS.Kernel.Contexts is
            (Kernel      => Get_Kernel (Context),
             File        => Get_Or_Create
               (Db   => Get_Database (Get_Kernel (Context)),
-               File => File_Information (Context)),
+               File => File_Information (Context),
+               Handler => Get_LI_Handler
+                 (Get_Database (Get_Kernel (Context)),
+                  File_Information (Context))),
             Entity_Name => Entity_Name_Information (Context),
             Line        => Line_Information (Context),
             Column      => Entity_Column_Information (Context),
