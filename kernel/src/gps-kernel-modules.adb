@@ -1449,6 +1449,7 @@ package body GPS.Kernel.Modules is
       C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
       if Menu.Name.all /= "" and then C /= null then
+         Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
          GNAT.OS_Lib.Free (C.Name);
          --  ??? Can't free label for now.
          --  Unchecked_Free (C.Label);
@@ -1457,7 +1458,6 @@ package body GPS.Kernel.Modules is
          C.all := Menu.all;
          Previous := Menu;
          Unchecked_Free (Previous);
-         Trace (Me, "Contextual menu already registered: " & Menu.Name.all);
       else
          if Kernel.Contextual /= System.Null_Address then
             C := Convert (Kernel.Contextual);
