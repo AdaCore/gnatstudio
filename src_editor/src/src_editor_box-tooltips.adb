@@ -464,7 +464,7 @@ package body Src_Editor_Box.Tooltips is
 
             Width  := 4 + Gint'Max (W1, W2);
             Height := 6 + H1 + H2;
-            Width  := Gint'Max (Width, W3);
+            Width  := Gint'Max (Width, W3 + 4);
             Height := Height + H3;
 
             Gdk_New (GC, Get_Window (Widget));
