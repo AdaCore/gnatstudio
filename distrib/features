@@ -24,11 +24,15 @@ New features in GPS 3.1.0
   From a reference to an entity declared in a generic, it is now possible to
   find out what instantiation of the generic is involved.
 
-- Identifier completion is now case insensitive when the language itself is
-  case insensitive. Possible completions are looked for in all open editors.
+- Improved identifier completion
+  Completion is now case insensitive when the language itself is
+  case insensitive.
+  Possible completions are looked for in all open editors.
 
 - Improved handling of tooltips in editors
   Tooltip now remains displayed while the mouse cursor stays on the hotspot
   word. Using the mousewheel to scroll now hides the tooltip.
   The list of parameters for subprograms is now displayed in the tooltip.
+  Tooltips now show information about generics instantiations.
+  They also show the proper casing of Ada entities, instead of lower cases only
 
