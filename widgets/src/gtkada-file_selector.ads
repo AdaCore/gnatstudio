@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                Copyright (C) 2001-2003 ACT-Europe                 --
+--                  Copyright (C) 2001-2005 AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -104,7 +104,7 @@ package Gtkada.File_Selector is
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History  := null) return VFS.Virtual_File;
    --  Create a file selection dialog, display it, and return the selected file
-   --  if any, or return a VFS.No_File is the user cancelled the dialog.
+   --  if any, or return a VFS.No_File if the user cancelled the dialog.
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
