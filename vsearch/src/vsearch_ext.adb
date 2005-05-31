@@ -589,12 +589,14 @@ package body Vsearch_Ext is
 
    procedure Create_Context (Vsearch : access Vsearch_Extended_Record'Class) is
       use Widget_List;
-      Data : constant Search_Module_Data := Find_Module
-        (Vsearch.Kernel, Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Data           : constant Search_Module_Data :=
+                         Find_Module
+                           (Vsearch.Kernel,
+                            Get_Text (Get_Entry (Vsearch.Context_Combo)));
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
-      All_Occurences : constant Boolean := Get_Active
-        (Vsearch.Search_All_Check);
-      Options : Search_Options;
+      All_Occurences : constant Boolean :=
+                         Get_Active (Vsearch.Search_All_Check);
+      Options        : Search_Options;
    begin
       Free (Vsearch.Last_Search_Context);
 
@@ -950,7 +952,7 @@ package body Vsearch_Ext is
    -------------------------
 
    procedure Set_First_Next_Mode
-     (Vsearch : access Vsearch_Extended_Record'Class;
+     (Vsearch   : access Vsearch_Extended_Record'Class;
       Find_Next : Boolean)
    is
       Box : Gtk_Box;
