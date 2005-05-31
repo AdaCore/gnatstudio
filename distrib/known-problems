@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.1.0
 
+- E516-016 problem with project dependencies browser
+  Problem:    A Constraint Error is raised when asking for a project 
+              dependencies on the depency graph after this project dependency 
+              with the root project has been removed.
+              
 - E512-009 Search does not work in untitled window
   Problem:    Performing a "Current File" search does not work when the current 
               file is a new file not yet saved on disk. The action is actually
