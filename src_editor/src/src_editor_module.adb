@@ -883,7 +883,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Inst   : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_File_Class (Kernel));
+                 Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info   : constant File_Info := Get_Data (Inst);
    begin
       Name_Parameters (Data, File_Search_Parameters);
