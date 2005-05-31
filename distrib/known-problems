@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E521-009 Search does not work in untitled window
+  Problem:    Performing a "Current File" search does not work when the current 
+              file is a new file not yet saved on disk. The action is actually
+              performed on the last opened editor whose file exists on disk
+              (if any).
+
 - E525-008 Endless query for password when using remote files
   Problem:    If you enter an incorrect user name or press cancel in the dialog
               when accessing a remote file, GPS will keep asking for your
