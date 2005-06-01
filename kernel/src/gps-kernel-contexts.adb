@@ -459,7 +459,8 @@ package body GPS.Kernel.Contexts is
      (Context : access Entity_Selection_Context)
       return Entities.Entity_Information
    is
-      Status   : Find_Decl_Or_Body_Query_Status;
+      Status : Find_Decl_Or_Body_Query_Status;
+      File   : Source_File;
 
    begin
       if Context.Entity = null
@@ -467,14 +468,20 @@ package body GPS.Kernel.Contexts is
         and then Has_Line_Information (Context)
         and then Has_File_Information (Context)
       then
+         File := Get_Or_Create
+           (Db   => Get_Database (Get_Kernel (Context)),
+            File => File_Information (Context),
+            Handler => Get_LI_Handler
+              (Get_Database (Get_Kernel (Context)),
+               File_Information (Context)));
+
+         if File = null then
+            return null;
+         end if;
+
          Find_Declaration_Or_Overloaded
            (Kernel      => Get_Kernel (Context),
-            File        => Get_Or_Create
-              (Db   => Get_Database (Get_Kernel (Context)),
-               File => File_Information (Context),
-               Handler => Get_LI_Handler
-                 (Get_Database (Get_Kernel (Context)),
-                  File_Information (Context))),
+            File        => File,
             Entity_Name => Entity_Name_Information (Context),
             Line        => Line_Information (Context),
             Column      => Entity_Column_Information (Context),
