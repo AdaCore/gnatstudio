@@ -722,7 +722,7 @@ package body GVD.Canvas is
 
       --  Display "Close" option.
 
-      Gtk_New (Mitem, Label => -"Close" & " " & Component_Name);
+      Gtk_New (Mitem, Label => -"Close" & " " & Get_Name (Item));
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Undisplay_Item'Access),
@@ -736,96 +736,88 @@ package body GVD.Canvas is
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      --  Display a separator
-
-      Gtk_New (Mitem);
-      Append (Canvas.Item_Contextual_Menu, Mitem);
-
-      Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (Hide_All'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
-
-      Gtk_New (Mitem, Label => -"Show all " & Component_Name);
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (Show_All'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
-
-      --  Display a separator
-
-      Gtk_New (Mitem);
-      Append (Canvas.Item_Contextual_Menu, Mitem);
-
       if Is_A_Variable (Item) then
+         --  Display a separator
+
+         Gtk_New (Mitem);
+         Append (Canvas.Item_Contextual_Menu, Mitem);
+
+         Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (Hide_All'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
+
+         Gtk_New (Mitem, Label => -"Show all " & Component_Name);
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (Show_All'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
+
+         --  Display a separator
+
+         Gtk_New (Mitem);
+         Append (Canvas.Item_Contextual_Menu, Mitem);
+
          Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
-      else
-         Gtk_New (Mitem, Label => -"Clone");
-      end if;
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (Clone_Component'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (Clone_Component'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"View memory at address of "
-               & Krunch (Component_Name));
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (View_Into_Memory'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
+         Gtk_New (Mitem, Label => -"View memory at address of "
+                  & Krunch (Component_Name));
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (View_Into_Memory'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      if Is_A_Variable (Item) then
          Gtk_New (Mitem, Label => -"Set Value of " & Krunch (Component_Name));
-      else
-         Gtk_New (Mitem, Label => -"Set Value");
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (Set_Value'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
       end if;
-
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (Set_Value'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
-      Set_Sensitive (Mitem, Is_A_Variable (Item));
 
       Gtk_New (Mitem, Label => -"Update Value");
       Item_Handler.Connect
@@ -841,138 +833,140 @@ package body GVD.Canvas is
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      --  Display a separator
-      Gtk_New (Mitem);
-      Append (Canvas.Item_Contextual_Menu, Mitem);
+      if Is_A_Variable (Item) then
+         --  Display a separator
+         Gtk_New (Mitem);
+         Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Submenu);
-      Gtk_New (Mitem, Label => -"Display");
-      Set_Submenu (Mitem, Gtk_Widget (Submenu));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
+         Gtk_New (Submenu);
+         Gtk_New (Mitem, Label => -"Display");
+         Set_Submenu (Mitem, Gtk_Widget (Submenu));
+         Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
-      Set_Active (Radio, Get_Display_Mode (Item) = Value);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
+         Set_Active (Radio, Get_Display_Mode (Item) = Value);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Display_Mode'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Show Type");
-      Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Type_Only,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Show Type");
+         Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Display_Mode'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Type_Only,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Show Value + Type");
-      Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Type_Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Show Value + Type");
+         Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Display_Mode'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Type_Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      --  Display a separator
-      Gtk_New (Mitem);
-      Append (Submenu, Mitem);
+         --  Display a separator
+         Gtk_New (Mitem);
+         Append (Submenu, Mitem);
 
-      Gtk_New (Radio, Widget_SList.Null_List, -"Default");
-      Set_Active (Radio, Get_Format (Item) = Default_Format);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Format'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Default_Format,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Widget_SList.Null_List, -"Default");
+         Set_Active (Radio, Get_Format (Item) = Default_Format);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Format'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Decimal");
-      Set_Active (Radio, Get_Format (Item) = Decimal);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Format'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Decimal,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Decimal");
+         Set_Active (Radio, Get_Format (Item) = Decimal);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Format'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Decimal,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Hexadecimal");
-      Set_Active (Radio, Get_Format (Item) = Hexadecimal);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Format'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Hexadecimal,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Hexadecimal");
+         Set_Active (Radio, Get_Format (Item) = Hexadecimal);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Format'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Hexadecimal,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Octal");
-      Set_Active (Radio, Get_Format (Item) = Octal);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Format'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Octal,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Octal");
+         Set_Active (Radio, Get_Format (Item) = Octal);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Format'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Octal,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
 
-      Gtk_New (Radio, Group (Radio), -"Binary");
-      Set_Active (Radio, Get_Format (Item) = Binary);
-      Item_Handler.Connect
-        (Radio, "activate",
-         Item_Handler.To_Marshaller (Change_Format'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value,
-                      Format         => Binary,
-                      Zoom           => 100));
-      Append (Submenu, Radio);
+         Gtk_New (Radio, Group (Radio), -"Binary");
+         Set_Active (Radio, Get_Format (Item) = Binary);
+         Item_Handler.Connect
+           (Radio, "activate",
+            Item_Handler.To_Marshaller (Change_Format'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => GVD_Canvas (Canvas),
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Binary,
+                         Zoom           => 100));
+         Append (Submenu, Radio);
+      end if;
 
       --  Display a separator
 
@@ -983,7 +977,6 @@ package body GVD.Canvas is
 
       Gtk_New (Check, "Auto refresh");
       Set_Active (Check, Get_Auto_Refresh (Display_Item (Item)));
-
       Item_Handler.Connect
         (Check, "activate",
          Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access),
