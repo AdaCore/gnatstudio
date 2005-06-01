@@ -20,7 +20,6 @@
 
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 
