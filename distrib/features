@@ -1,6 +1,10 @@
 This file lists a summary of the new features introduced in GPS.
 For more details, please see the documentation.
 
+New features in GPS 3.0.1
+
+- E521-002 Progress bar when using multi-language build
+
 New features in GPS 3.0.0
 
 - E409-001 Support for Subversion revision system
@@ -80,8 +84,15 @@ New features in GPS 3.0.0
 
 - DB13-008 Support for Ada 2005 constructs in the editor
 
+- DA19-003 It is now possible to add a <dependency> between a field switch
+  and a check button switch when defining tool switches
+
 - DA15-001 Separators can be added in contextual menus, and the order of
   entries can be specified through XML files
+
+- DA14-014 New on-the-fly casing support has been added to GPS
+
+- D902-011 Spark plug-in
 
 - D806-001 Desktop saved whenever a new project is loaded
 
@@ -91,11 +102,6 @@ New features in GPS 3.0.0
 
 - New "clean" Menu items in "Build" for cleaning up artifacts of
   compilation.
-
-- DA19-003 It is now possible to add a <dependency> between a field switch
-  and a check button switch when defining tool switches
-
-- DA14-014 New on-the-fly casing support has been added to GPS
 
 - The MDI no longer supports the Unmaximized (aka "window in window" mode).
 
