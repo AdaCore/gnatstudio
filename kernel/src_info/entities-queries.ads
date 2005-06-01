@@ -22,9 +22,9 @@ with VFS;
 
 package Entities.Queries is
 
-   ---------------------------------------
-   -- Goto Declaration<-> Body requests --
-   ---------------------------------------
+   --------------------------------------
+   -- Goto Declaration<->Body requests --
+   --------------------------------------
 
    type Find_Decl_Or_Body_Query_Status is
      (Entity_Not_Found,
@@ -136,11 +136,12 @@ package Entities.Queries is
       Filter                : Reference_Kind_Filter := Real_References_Filter);
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
-   --  if In_File is specified, then only the references in that file will be
+   --  If In_File is specified, then only the references in that file will be
    --  returned. This is also more efficient. Alternatively, In_Scope can be
    --  specified to limit the list of references to the ones that appear
    --  in the scope of In_Scope.
-   --  End_Line can specify a range of lines
+   --  If Filter is specified, only references whose kind is not filtered will
+   --  be returned.
    --  Source files with no LI file are reported through File_Has_No_LI_Report.
    --  You must destroy the iterator when you are done with it, to avoid
    --  memory leaks.
