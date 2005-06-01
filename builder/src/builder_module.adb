@@ -367,6 +367,7 @@ package body Builder_Module is
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access
    is
+      pragma Unreferenced (Syntax);
       Project_Str    : String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
