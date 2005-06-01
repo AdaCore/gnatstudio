@@ -37,7 +37,6 @@
 
 with Glib;
 with Glib.Object;
-with Gtk.Paned;
 with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
@@ -181,7 +180,6 @@ private
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
       Source           : GVD.Text_Box.Source_Editor.Source_Editor;
       Asm              : GVD.Text_Box.Asm_Editor.Asm_Editor;
-      Source_Asm_Pane  : Gtk.Paned.Gtk_Paned;
 
       Mode             : View_Mode := GVD.Code_Editors.Source;
 
