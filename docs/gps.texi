@@ -6434,8 +6434,8 @@ You may want to provide an alternate implementation by e.g. installing a
 set of Unix tools such as cygwin (@url{http://www.cygwin.com}).
 
 The 3-file comparison tool is based on the text command @command{diff3},
-available on all Unix systems. Under Windows, this tool is available as
-part of cygwin.
+available on all Unix systems. Under Windows, this tool is not shipped
+with GPS. It is available as part of cygwin, for example.
 
 When querying a visual comparison in GPS, the user area will show, side by
 side, editors for the files involved in the comparison. The reference file is
