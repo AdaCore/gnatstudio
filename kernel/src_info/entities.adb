@@ -1196,12 +1196,12 @@ package body Entities is
          F.Ref_Count    := 1;
 
          if File = VFS.No_File then
-            F.Name         := Create (Full_Filename => Full_Filename.all);
+            F.Name := Create (Full_Filename => Full_Filename.all);
          else
-            F.Name         := File;
+            F.Name := File;
          end if;
 
-         F.Handler      := LI_Handler (Handler);
+         F.Handler := LI_Handler (Handler);
 
          S := new Source_File_Item_Record'(File => F, Next => null);
          Set (Db.Files, S);
@@ -1245,8 +1245,13 @@ package body Entities is
       if H = null then
          H := Get_LI_Handler (Db, File);
       end if;
-      return Internal_Get_Or_Create
-        (Db, Full_Name (File), File, H, LI, Timestamp, Allow_Create);
+
+      if H = null then
+         return null;
+      else
+         return Internal_Get_Or_Create
+           (Db, Full_Name (File), File, H, LI, Timestamp, Allow_Create);
+      end if;
    end Get_Or_Create;
 
    -------------------
