@@ -5,6 +5,8 @@ New features in GPS 3.0.1
 
 - E521-002 Progress bar when using multi-language build
 
+- C620-018 Non relevant contextual menus removed from debugger canvas
+
 New features in GPS 3.0.0
 
 - E409-001 Support for Subversion revision system
