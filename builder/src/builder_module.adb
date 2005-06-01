@@ -410,13 +410,8 @@ package body Builder_Module is
             R_Tmp (K) := new String'(Base_Name (File));
          end if;
 
-         if Syntax = GNAT_Syntax then
-            --  ??? Until gprmake supports the -d option, only do this for
-            --  gnatmake
-
-            K := K + 1;
-            R_Tmp (K) := new String'("-d");
-         end if;
+         K := K + 1;
+         R_Tmp (K) := new String'("-d");
 
          Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
       end;
