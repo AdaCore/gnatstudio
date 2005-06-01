@@ -6424,14 +6424,18 @@ Open a view of the current source editor.
 @noindent
 
 The visual comparison, available either from the VCS menus or from the Tools
-menu, provide a way to display graphically differences between two files,
-or two different versions of the same file.
+menu, provide a way to display graphically differences between two or three 
+files, or two different versions of the same file.
 
-This tool is based on the standard text command @command{diff}, available
-on all Unix systems. Under Windows, a default implementation is provided
-with GPS, called @command{gnudiff.exe}. You may want to provide an alternate
-implementation by e.g. installing a set of Unix tools such as cygwin
-(@url{http://www.cygwin.com}).
+The 2-file comparison tool is based on the standard text command 
+@command{diff}, available on all Unix systems. Under Windows, a default 
+implementation is provided with GPS, called @command{gnudiff.exe}. 
+You may want to provide an alternate implementation by e.g. installing a
+set of Unix tools such as cygwin (@url{http://www.cygwin.com}).
+
+The 3-file comparison tool is based on the text command @command{diff3},
+available on all Unix systems. Under Windows, this tool is available as
+part of cygwin.
 
 When querying a visual comparison in GPS, the user area will show, side by
 side, editors for the files involved in the comparison. The reference file is
