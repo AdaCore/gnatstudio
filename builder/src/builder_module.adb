@@ -160,14 +160,13 @@ package body Builder_Module is
 
    function Compute_Arguments
      (Kernel         : Kernel_Handle;
-      Syntax         : Command_Syntax;
       Project        : Project_Type;
       Path           : String;
       File           : Virtual_File;
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access;
-   --  Compute the make arguments following the right Syntax
-   --  (gnatmake / make), given a Project and File name.
+   --  Compute the make arguments compatible with gnatmake/gprmake
+   --  given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
    --
    --  If File is No_File, then all files of the project will be recompiled.
@@ -360,14 +359,12 @@ package body Builder_Module is
 
    function Compute_Arguments
      (Kernel         : Kernel_Handle;
-      Syntax         : Command_Syntax;
       Project        : Project_Type;
       Path           : String;
       File           : Virtual_File;
       Compile_Only   : Boolean := False;
       Unique_Project : Boolean := False) return Argument_List_Access
    is
-      pragma Unreferenced (Syntax);
       Project_Str    : String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
@@ -613,7 +610,7 @@ package body Builder_Module is
                         Use_Initial_Value => True)
                        & new String'(Base_Name (F)));
                else
-                  Args := Compute_Arguments (Kernel, Syntax, Prj, "", F);
+                  Args := Compute_Arguments (Kernel, Prj, "", F);
                end if;
             end;
 
@@ -657,7 +654,7 @@ package body Builder_Module is
 
          else
             Args := Compute_Arguments
-              (Kernel, Syntax, Project, "", File,
+              (Kernel, Project, "", File,
                Unique_Project => not Main_Units);
          end if;
 
@@ -802,7 +799,6 @@ package body Builder_Module is
       Common_Args     : Argument_List_Access;
       Args            : Argument_List_Access;
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
-      Syntax          : Command_Syntax;
       Shadow_Path     : String_Access;
       Compilable_File : Virtual_File := File;
 
@@ -857,7 +853,6 @@ package body Builder_Module is
          return;
 
       elsif Lang = "ada" then
-         Syntax := GNAT_Syntax;
          Cmd    := new String'
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
@@ -882,7 +877,6 @@ package body Builder_Module is
             return;
          end if;
 
-         Syntax      := Make_Syntax;
          Cmd         := new String'("gprmake");
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
@@ -972,7 +966,6 @@ package body Builder_Module is
       else
          Args := Compute_Arguments
            (Kernel,
-            Syntax,
             Prj,
             Shadow_Path.all,
             Compilable_File,
