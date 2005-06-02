@@ -28,7 +28,6 @@ with Glib.Properties;     use Glib.Properties;
 with Gdk.Types;           use Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
-with Gdk.Property;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
@@ -41,7 +40,6 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Selection;       use Gtk.Selection;
 with Gtk.Arguments;       use Gtk.Arguments;
-with Gtk.Handlers;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
@@ -57,7 +55,6 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 package body Interactive_Consoles is
 
-   Me : constant Debug_Handle := Create ("Interactive_Consoles");
    package Console_Idle is new Gtk.Main.Idle (Interactive_Console);
 
    -----------------------
@@ -83,11 +80,6 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Handler for the "key_press_event" signal.
-
-   procedure Paste_Clipboard_Handler
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Handler for the "paste_clipboard" signal.
 
    procedure Selection_Received_Handler
      (Widget : access Gtk_Widget_Record'Class;
@@ -249,22 +241,10 @@ package body Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
+      pragma Unreferenced (Event);
       Console : constant Interactive_Console := Interactive_Console (Object);
-      Success : Boolean;
    begin
       Console.Button_Press := True;
-
-      if Get_Button (Event) = 2 then
-         --  Paste mouse selection
-         Success := Gtk.Selection.Convert
-           (Console.View,
-            Selection => Selection_Primary,
-            Target    => Gdk.Property.Atom_Intern ("STRING", True));
-
-         if Success then
-            return True;
-         end if;
-      end if;
 
       return False;
 
@@ -299,38 +279,6 @@ package body Interactive_Consoles is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
-
-   -----------------------------
-   -- Paste_Clipboard_Handler --
-   -----------------------------
-
-   procedure Paste_Clipboard_Handler
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      pragma Unreferenced (Params);
-      Console : constant Interactive_Console := Interactive_Console (Object);
-      Success : Boolean;
-
-   begin
-      --  Retrieve the clipboard's content and stop the signal
-
-      Success := Gtk.Selection.Convert
-        (Console.View,
-         Selection => Gdk.Property.Atom_Intern ("CLIPBOARD"),
-         Target    => Gdk.Property.Atom_Intern ("STRING", True));
-
-      if Success then
-         Gtk.Handlers.Emit_Stop_By_Name (Console.View, "paste_clipboard");
-      else
-         Trace (Me, "Cannot retrieve the clipboard's content");
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Paste_Clipboard_Handler;
 
    --------------------------------
    -- Selection_Received_Handler --
@@ -784,12 +732,6 @@ package body Interactive_Consoles is
         (Console.Buffer, "mark_set",
          Cb => Mark_Set_Handler'Access,
          Slot_Object => Console);
-
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Console.View, "paste_clipboard",
-         Paste_Clipboard_Handler'Access,
-         Gtk_Widget (Console),
-         After => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Console.View, "button_release_event",
