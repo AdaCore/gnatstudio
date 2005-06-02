@@ -45,6 +45,8 @@ above, with a few additional steps:
   GNAT sources (preferably sources as recent as the GPS sources used), e.g.
   gcc/gcc/ada from the gcc CVS HEAD sources available at gcc.gnu.org
 
+- You need to use the CVS version of GtkAda matching GPS sources (same date/tag)
+
 - If you are building using GNAT 3.15, you need to apply the patch
   distrib/gps-1.0-gnat-3.15a1.diff
   This step isn't needed if you are using GCC 3.4 or GNAT 5
