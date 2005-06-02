@@ -1,12 +1,19 @@
 Known Problems fixed in GPS 3.1.0
 
-- E516-016 problem with project dependencies browser
-  Problem:    A Constraint Error is raised when asking for a project 
-              dependencies on the depency graph after this project dependency 
+- E525-012 Pasting in the consoles
+  Problem:    When using the system-defined method for pasting the clipboard
+              (ie ctrl-v under Windows, or middle-button press under Unix) in
+              the GPS consoles, the text is always appended at the end of the
+              line.
+  Workaround: Use the menu Edit->Paste or its associated key binding.
+
+- E516-016 Problem with project dependencies browser
+  Problem:    A Constraint Error is raised when asking for a project
+              dependencies on the depency graph after this project dependency
               with the root project has been removed.
-              
+
 - E512-009 Search does not work in untitled window
-  Problem:    Performing a "Current File" search does not work when the current 
+  Problem:    Performing a "Current File" search does not work when the current
               file is a new file not yet saved on disk. The action is actually
               performed on the last opened editor whose file exists on disk
               (if any).
