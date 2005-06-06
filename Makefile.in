@@ -39,4 +39,9 @@ install-strip: install-common
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
 
-.PHONY: install install-common install-strip
+test: force
+	@cd scripts; ./testsuites
+
+.PHONY: install install-common install-strip test force
+
+force:
