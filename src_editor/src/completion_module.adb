@@ -150,6 +150,7 @@ package body Completion_Module is
       pragma Unreferenced (Module);
    begin
       Reset_Completion_Data;
+      Completion_Module := null;
    end Destroy;
 
    ---------------------------
@@ -158,6 +159,10 @@ package body Completion_Module is
 
    procedure Reset_Completion_Data is
    begin
+      if Completion_Module = null then
+         return;
+      end if;
+
       GNAT.OS_Lib.Free (Completion_Module.Prefix);
 
       String_List_Utils.String_List.Free (Completion_Module.List);
@@ -288,6 +293,10 @@ package body Completion_Module is
       Found        : Boolean := False;
       Word_Found   : Boolean := False;
    begin
+      if M = null then
+         return;
+      end if;
+
       if M.Complete then
          if M.Node = Null_Node then
             M.Node := First (M.List);
@@ -395,6 +404,10 @@ package body Completion_Module is
       Box  : Source_Editor_Box;
       pragma Unreferenced (Box);
    begin
+      if M = null then
+         return;
+      end if;
+
       --  If we are currently pointing to an editor, this is a valid candidate
       while Get (M.Child) /= null loop
          begin
@@ -461,6 +474,10 @@ package body Completion_Module is
       Buffer        : Source_Buffer;
 
    begin
+      if M = null then
+         return Commands.Failure;
+      end if;
+
       if Widget /= null
         and then Widget.all in Source_View_Record'Class
       then
