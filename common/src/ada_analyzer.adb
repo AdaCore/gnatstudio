@@ -396,7 +396,7 @@ package body Ada_Analyzer is
                   return Tok_Delta;
                end if;
 
-            elsif S (2 .. S'Last) = "idgits" then
+            elsif S (2 .. S'Last) = "igits" then
                return Tok_Digits;
             elsif S (2 .. S'Last) = "o" then
                return Tok_Do;
