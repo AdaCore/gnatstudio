@@ -603,7 +603,7 @@ package body Completion_Module is
                      Accel_Key  => GDK_slash,
                      Accel_Mods => Control_Mask,
                      Callback   => null,
-                     Command    => Command_Access (Command),
+                     Command    => Command,
                      Filter     => Src_Action_Context);
    end Register_Module;
 
