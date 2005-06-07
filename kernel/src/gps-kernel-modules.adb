@@ -164,15 +164,15 @@ package body GPS.Kernel.Modules is
      (User : Contextual_Menu_User_Data; Menu : Gtk_Menu);
    --  Destroy the contextual menu that was created before
 
-   type Non_Interactive_Action is record
+   type Interactive_Action is record
       Kernel  : Kernel_Handle;
-      Command : Command_Access;
+      Command : Interactive_Command_Access;
       Filter  : Action_Filter;
    end record;
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Non_Interactive_Action);
+      Command : Interactive_Action);
    --  Execute a single command.
 
    procedure Menu_Button_Press
@@ -181,7 +181,7 @@ package body GPS.Kernel.Modules is
    --  Create a menu using the data in Factory.
 
    package Command_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Non_Interactive_Action);
+     (Glib.Object.GObject_Record, Interactive_Action);
 
    package Menu_Factory_Callback is
    new Gtk.Handlers.User_Callback
@@ -201,13 +201,13 @@ package body GPS.Kernel.Modules is
 
    procedure Map_Menu
      (Item : access GObject_Record'Class;
-      Command : Non_Interactive_Action);
+      Command : Interactive_Action);
    --  Called when a registered menu is displayed, so that we can check whether
    --  it should be made sensitive or not
 
    procedure Unmap_Menu
      (Item    : access GObject_Record'Class;
-      Command : Non_Interactive_Action);
+      Command : Interactive_Action);
    --  Called when a registered menu is hidden
 
    ---------------
@@ -982,7 +982,7 @@ package body GPS.Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Command_Access := null;
+      Command     : Interactive_Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -1006,14 +1006,18 @@ package body GPS.Kernel.Modules is
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Non_Interactive_Action)
+      Command : Interactive_Action)
    is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel_Handle (Widget));
    begin
       if Context /= null and then Filter_Matches (Command.Filter, Context) then
+         Ref (Context);
          Launch_Background_Command
-           (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
+           (Kernel_Handle (Widget),
+            Create_Proxy
+              (Command.Command, (null, Context, null, null, null)),
+            Destroy_On_Exit => False,
             Active => True, Show_Bar => True, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
@@ -1039,7 +1043,7 @@ package body GPS.Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Command_Access := null;
+      Command     : Interactive_Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -1072,7 +1076,6 @@ package body GPS.Kernel.Modules is
          end loop;
          return Output (Output'First .. Index - 1);
       end Cleanup;
-
 
       Item  : Gtk_Menu_Item;
       Image : Gtk_Image_Menu_Item;
@@ -1123,7 +1126,7 @@ package body GPS.Kernel.Modules is
            (Item, "activate", Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel),
-                            Command_Access (Action.Command),
+                            Action.Command,
                             Action.Filter));
          if Action.Filter /= null then
             if Menu_Filter = null then
@@ -1158,7 +1161,7 @@ package body GPS.Kernel.Modules is
 
    procedure Unmap_Menu
      (Item    : access GObject_Record'Class;
-      Command : Non_Interactive_Action)
+      Command : Interactive_Action)
    is
       pragma Unreferenced (Item);
    begin
@@ -1175,7 +1178,7 @@ package body GPS.Kernel.Modules is
 
    procedure Map_Menu
      (Item    : access GObject_Record'Class;
-      Command : Non_Interactive_Action)
+      Command : Interactive_Action)
    is
    begin
       if Command.Kernel.Last_Context_For_Contextual = null then
@@ -1303,7 +1306,7 @@ package body GPS.Kernel.Modules is
    procedure Register_Button
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
-      Command : Command_Access := null;
+      Command : Interactive_Command_Access := null;
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "")
    is
@@ -1332,7 +1335,7 @@ package body GPS.Kernel.Modules is
    procedure Register_Button
      (Kernel   : access Kernel_Handle_Record'Class;
       Stock_Id : String;
-      Command  : Command_Access := null;
+      Command  : Interactive_Command_Access := null;
       Tooltip  : String := "")
    is
       Button  : Gtk_Button;
