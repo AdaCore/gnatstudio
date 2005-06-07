@@ -32,6 +32,20 @@ package GDT.JNI_Functions is
       Java_GpsJni_analyzeAdaSourceInt,
       "Java_com_adacore_gdt_study_gpsjni_GpsJni_analyseAdaSourceInt");
 
+   procedure Java_GpsJni_indentAdaBufferInt
+     (Env               : JNIEnv;
+      This              : Jobject;
+      Buffer            : Jstring;
+      Line_From         : Jint;
+      Line_To           : Jint;
+      Callback_Object   : Jobject;
+      Callback_Class    : Jclass;
+      Callback_Function : JString);
+   pragma Export
+     (C,
+      Java_GpsJni_indentAdaBufferInt,
+      "Java_com_adacore_gdt_study_gpsjni_GpsJni_indentAdaBufferInt");
+
    function Java_ConstructAccess_getSlocStartInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
    pragma Export

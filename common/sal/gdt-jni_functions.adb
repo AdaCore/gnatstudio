@@ -90,6 +90,72 @@ package body GDT.JNI_Functions is
       return Jint (To_Integer (Constructs_Stored.all'Address));
    end Java_GpsJni_analyzeAdaSourceInt;
 
+   ------------------------------------
+   -- Java_GpsJni_indentAdaBufferInt --
+   ------------------------------------
+
+   procedure Java_GpsJni_indentAdaBufferInt
+     (Env               : JNIEnv;
+      This              : Jobject;
+      Buffer            : Jstring;
+      Line_From         : Jint;
+      Line_To           : Jint;
+      Callback_Object   : Jobject;
+      Callback_Class    : Jclass;
+      Callback_Function : Jstring)
+   is
+      pragma Unreferenced (This);
+
+      C_Str : constant Interfaces.C.Strings.chars_ptr :=
+         GetStringUTFChars (Env, Buffer);
+      Ada_Str : constant String := Value (C_Str);
+
+      Id : JMethodID;
+      C_Function : constant Interfaces.C.Strings.chars_ptr :=
+        GetStringUTFChars (Env, Callback_Function);
+      C_Profile  : Interfaces.C.Strings.chars_ptr :=
+        New_String ("(IIILjava/lang/String;)V");
+
+      procedure Callback
+         (Line    : Natural;
+          First   : Natural;
+          Last    : Natural;
+          Replace : String)
+      is
+         C_Replace    : Interfaces.C.Strings.chars_ptr :=
+           New_String (Replace);
+         Java_Replace : Jstring := NewStringUTF (Env, C_Replace);
+      begin
+         CallVoidMethodIIIS
+           (Env,
+            Callback_Object,
+            Id,
+            Jint (Line),
+            Jint (First),
+            Jint (Last),
+            Java_Replace);
+         Free (C_Replace);
+      end Callback;
+
+   begin
+      Id := GetMethodID
+        (Env,
+         Callback_Class,
+         C_Function,
+         C_Profile);
+
+      Analyze_Ada_Source
+        (Buffer            => Ada_Str,
+         Indent_Params     => Default_Indent_Parameters,
+         Format            => True,
+         From              => Integer (Line_From),
+         To                => Integer (Line_To),
+         Replace           => Callback'Unrestricted_Access);
+
+      ReleaseStringUTFChars (Env, Callback_Function, C_Function);
+      Free (C_Profile);
+   end Java_GpsJni_indentAdaBufferInt;
+
    ------------------------------------------
    -- Java_ConstructAccess_getSlocStartInt --
    ------------------------------------------
