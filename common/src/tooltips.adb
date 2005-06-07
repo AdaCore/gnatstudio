@@ -33,6 +33,9 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Window;      use Gtk.Window;
 with Ada.Unchecked_Deallocation;
 
+with Traces;            use Traces;
+with Ada.Exceptions;    use Ada.Exceptions;
+
 package body Tooltips is
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
@@ -103,6 +106,7 @@ package body Tooltips is
       end if;
 
       Create_Contents (Tooltip, W, Tooltip.Area);
+
       if W /= null then
          Gtk_New       (Tooltip.Display_Window, Window_Popup);
          Add           (Tooltip.Display_Window, W);
@@ -120,6 +124,13 @@ package body Tooltips is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception"
+                & Exception_Information (E));
+
+         return False;
    end Display_Tooltip;
 
    ---------------------
@@ -226,6 +237,12 @@ package body Tooltips is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception"
+                & Exception_Information (E));
+      return False;
    end Tooltip_Event_Cb;
 
    -----------------
@@ -305,6 +322,11 @@ package body Tooltips is
          --  called once per widget, and thus per tooltip
          Unchecked_Free (T);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception"
+                & Exception_Information (E));
    end Destroy_Cb;
 
 end Tooltips;
