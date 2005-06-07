@@ -4256,7 +4256,7 @@ package body Src_Editor_Module is
          Text        => -"_Close",
          Stock_Image => Stock_Close,
          Callback    => null,
-         Command     => Commands.Command_Access (Command),
+         Command     => Command,
          Accel_Key   => GDK_LC_w,
          Accel_Mods  => Control_Mask);
 
@@ -4272,7 +4272,7 @@ package body Src_Editor_Module is
          Parent_Path => File,
          Text        => -"Close _All",
          Callback    => null,
-         Command     => Commands.Command_Access (Command),
+         Command     => Command,
          Ref_Item    => -"Close",
          Add_Before  => False);
 
@@ -4365,7 +4365,7 @@ package body Src_Editor_Module is
                      Parent_Path => Navigate,
                      Text        => -"Goto _Line...",
                      Stock_Image => Stock_Jump_To,
-                     Command     => Command_Access (Command),
+                     Command     => Command,
                      Callback    => null,
                      Accel_Key   => GDK_G,
                      Accel_Mods  => Control_Mask,
@@ -4391,8 +4391,8 @@ package body Src_Editor_Module is
                      Add_Before => False,
                      Accel_Key  => GDK_apostrophe,
                      Accel_Mods => Control_Mask,
-                     Command    => Command_Access (Command),
-                     Filter    => Src_Action_Context);
+                     Command    => Command,
+                     Filter     => Src_Action_Context);
 
       --  Toolbar buttons
 
