@@ -123,7 +123,7 @@ with Gtk.Selection;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Commands; use Commands;
-with Commands.Interactive;
+with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
 with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 
@@ -443,7 +443,7 @@ package GPS.Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Command_Access := null;
+      Command     : Interactive_Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -467,7 +467,7 @@ package GPS.Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
-      Command     : Command_Access := null;
+      Command     : Interactive_Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -502,7 +502,7 @@ package GPS.Kernel.Modules is
    procedure Register_Button
      (Kernel  : access Kernel_Handle_Record'Class;
       Text    : String;
-      Command : Command_Access := null;
+      Command : Interactive_Command_Access := null;
       Image   : Gtk.Image.Gtk_Image := null;
       Tooltip : String := "");
    --  Add a button at the end of the toolbar.
@@ -510,7 +510,7 @@ package GPS.Kernel.Modules is
    procedure Register_Button
      (Kernel   : access Kernel_Handle_Record'Class;
       Stock_Id : String;
-      Command  : Command_Access := null;
+      Command  : Interactive_Command_Access := null;
       Tooltip  : String := "");
    --  Same as above but with a stock button
 
