@@ -289,11 +289,11 @@ package body GPS.Menu is
         (Kernel, -"Cut to Clipboard", Command,
          -"Cut the current selection to the clipboard");
       Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
-                     null, Command_Access (Command),
+                     null, Command,
                      GDK_Delete, Shift_Mask,
                      Ref_Item => -"Preferences");
       Register_Button
-        (Kernel, Stock_Cut, Command_Access (Command), -"Cut To Clipboard");
+        (Kernel, Stock_Cut, Command, -"Cut To Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -302,11 +302,11 @@ package body GPS.Menu is
         (Kernel, -"Copy to Clipboard", Command,
          -"Copy the current selection to the clipboard");
       Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
-                     null, Command_Access (Command),
+                     null, Command,
                      GDK_Insert, Control_Mask,
                      Ref_Item => -"Preferences");
       Register_Button
-        (Kernel, Stock_Copy, Command_Access (Command), -"Copy To Clipboard");
+        (Kernel, Stock_Copy, Command, -"Copy To Clipboard");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -315,11 +315,11 @@ package body GPS.Menu is
         (Kernel, -"Paste From Clipboard", Command,
          -"Paste the contents of the clipboard into the current text area");
       Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
-                     null, Command_Access (Command),
+                     null, Command,
                      GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
       Register_Button
-        (Kernel, Stock_Paste, Command_Access (Command),
+        (Kernel, Stock_Paste, Command,
          -"Paste From Clipboard");
    end Register_Common_Menus;
 
