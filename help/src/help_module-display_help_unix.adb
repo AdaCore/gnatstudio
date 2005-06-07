@@ -40,8 +40,8 @@ is
       new String'("netscape"),
       new String'("opera"),
       new String'("nautilus"),
-      new String'("konqueror"));
-
+      new String'("konqueror"),
+      new String'("open"));
 
    function Get_Command (Browser : String) return Argument_List_Access;
    --  return the command to execute to open the specific browser. Parameter
