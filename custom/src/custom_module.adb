@@ -464,7 +464,7 @@ package body Custom_Module is
                Register_Button
                  (Kernel,
                   Title.all,
-                  Command_Access (Command.Command),
+                  Command.Command,
                   Image);
             end if;
 
