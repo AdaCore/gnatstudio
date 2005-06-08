@@ -25,6 +25,7 @@ with Gdk.Rectangle;   use Gdk.Rectangle;
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
+with Glib.Properties; use Glib.Properties;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Main;        use Gtk.Main;
@@ -230,7 +231,11 @@ package body Tooltips is
    is
       pragma Unreferenced (Widget);
    begin
-      if Get_Event_Type (Event) = Motion_Notify then
+      if Get_Event_Type (Event) = Motion_Notify
+        and then Get_Property
+          (Gtk_Window (Get_Toplevel (Tooltip.Widget)),
+           Has_Toplevel_Focus_Property)
+      then
          Show_Tooltip (Tooltip);
       elsif Tooltip.Active then
          Hide_Tooltip (Tooltip);
