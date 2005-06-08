@@ -61,27 +61,11 @@ package body VCS_Module is
 
    Auto_Detect  : constant String := "None";
 
-   type VCS_Module_ID_Record is new Module_ID_Record with record
-      VCS_List : Argument_List_Access;
-      --  The list of all VCS systems recognized by the kernel
-
-      Explorer : VCS_View_Access;
-      --  The VCS Explorer
-
-      Explorer_Child : MDI_Child;
-      --  The child containing the VCS Explorer
-   end record;
-   type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
-
-   procedure Destroy (Module : in out VCS_Module_ID_Record);
-   --  Free the memory occupied by Module
-
    type Has_VCS_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Has_VCS_Filter;
       Context : access Selection_Context'Class) return Boolean;
    --  True when the current context is associated with a known VCS
-
 
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -219,7 +203,8 @@ package body VCS_Module is
    begin
       if Command = "supported_systems" then
          declare
-            Systems : constant Argument_List := Get_VCS_List (VCS_Module_ID);
+            Systems : constant Argument_List := Get_VCS_List
+              (Module_ID (VCS_Module_ID));
          begin
             Set_Return_Value_As_List (Data);
             for S in Systems'Range loop
@@ -240,6 +225,7 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record) is
    begin
       Free (Module.VCS_List);
+      Unref (Module.Menu_Context);
    end Destroy;
 
    ------------------
@@ -252,8 +238,7 @@ package body VCS_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      M : constant VCS_Module_ID_Access :=
-            VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
       Explorer : VCS_View_Access;
       pragma Unreferenced (Explorer);
    begin
@@ -356,7 +341,7 @@ package body VCS_Module is
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       Register_Module
-        (Module                  => VCS_Module_ID,
+        (Module                  => Module_ID (VCS_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
@@ -819,8 +804,7 @@ package body VCS_Module is
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_View_Access
    is
-      M : constant VCS_Module_ID_Access :=
-            VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
       if M.Explorer = null then
          Gtk_New (M.Explorer, Kernel);
@@ -854,8 +838,7 @@ package body VCS_Module is
    -----------------------
 
    procedure Hide_VCS_Explorer is
-      M : constant VCS_Module_ID_Access :=
-            VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
       if M.Explorer = null
         or else M.Explorer_Child = null
@@ -873,8 +856,7 @@ package body VCS_Module is
    ----------------------
 
    function Explorer_Is_Open return Boolean is
-      M : constant VCS_Module_ID_Access :=
-            VCS_Module_ID_Access (VCS_Module_ID);
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
    begin
       return M.Explorer /= null
         and then M.Explorer_Child /= null;
