@@ -377,6 +377,8 @@ package body VCS_View_API is
          return;
       end if;
 
+      --  See comments for VCS_Module_ID.Menu_Context.
+
       if VCS_Module_ID.Menu_Context /= null then
          GPS.Kernel.Unref (VCS_Module_ID.Menu_Context);
       end if;
