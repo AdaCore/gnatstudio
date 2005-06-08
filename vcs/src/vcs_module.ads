@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,15 +20,39 @@
 
 --  This package defines the GPS module for communication with VCS.
 
-with GPS.Kernel; use GPS.Kernel;
-with GNAT.OS_Lib;
+with GPS.Kernel;   use GPS.Kernel;
 
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with Gtkada.MDI;   use Gtkada.MDI;
 with VCS_View_Pkg; use VCS_View_Pkg;
 
 package VCS_Module is
 
-   VCS_Module_ID   : Module_ID;
    VCS_Module_Name : constant String := "VCS_Interface";
+
+   type VCS_Module_ID_Record is new Module_ID_Record with record
+      VCS_List : Argument_List_Access;
+      --  The list of all VCS systems recognized by the kernel
+
+      Explorer : VCS_View_Access;
+      --  The VCS Explorer
+
+      Explorer_Child : MDI_Child;
+      --  The child containing the VCS Explorer
+
+      Menu_Context : Selection_Context_Access;
+      --  This is the context associated to the current contextual menu.
+      --  It is Ref'ed when creating the contextual menu, and Unref'ed only
+      --  when creating another contextual menu. This is to make sure the
+      --  context is always valid when performing the callbacks associated to
+      --  the contextual menu.
+   end record;
+   type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
+
+   VCS_Module_ID   : VCS_Module_ID_Access;
+
+   procedure Destroy (Module : in out VCS_Module_ID_Record);
+   --  Free the memory occupied by Module
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
