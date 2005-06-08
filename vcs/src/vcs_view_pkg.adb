@@ -1155,7 +1155,7 @@ package body VCS_View_Pkg is
             Set_Context_Information
               (Context,
                Kernel,
-               VCS_Module_ID);
+               Module_ID (VCS_Module_ID));
             Set_File_Information (Context, File => First_File);
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
             VCS_Contextual_Menu
@@ -1347,7 +1347,7 @@ package body VCS_View_Pkg is
 
       declare
          VCS_List : constant GNAT.OS_Lib.Argument_List :=
-           Get_VCS_List (VCS_Module_ID);
+           Get_VCS_List (Module_ID (VCS_Module_ID));
       begin
          for J in VCS_List'Range loop
             Page := Get_Page_For_Identifier
@@ -1424,7 +1424,7 @@ package body VCS_View_Pkg is
         (Explorer.Kernel,
          Page.Tree,
          Explorer,
-         VCS_Module_ID,
+         Module_ID (VCS_Module_ID),
          Context_Func'Access);
 
       Set_Column_Types (Page);
@@ -1536,7 +1536,7 @@ package body VCS_View_Pkg is
                First := Create (String_List.Head (Files));
 
                Set_Context_Information
-                 (Context, Explorer.Kernel, VCS_Module_ID);
+                 (Context, Explorer.Kernel, Module_ID (VCS_Module_ID));
                Set_File_Information (Context, File => First);
 
                Set_Current_Context

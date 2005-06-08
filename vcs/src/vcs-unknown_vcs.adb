@@ -331,7 +331,7 @@ package body VCS.Unknown_VCS is
    begin
       --  ??? Where should this be unregistered. Memory leak otherwise.
       Register_VCS_Identifier (Identify_VCS'Access);
-      Register_VCS (VCS_Module_ID, "");
+      Register_VCS (Module_ID (VCS_Module_ID), "");
 
       --  ??? Where is this freed. Memory leak
       Unknown_VCS_Reference := new Unknown_VCS_Record;
