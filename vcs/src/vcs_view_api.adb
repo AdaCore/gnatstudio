@@ -377,6 +377,15 @@ package body VCS_View_API is
          return;
       end if;
 
+      --  See comments for VCS_Module_ID.Menu_Context.
+
+      if VCS_Module_ID.Menu_Context /= null then
+         GPS.Kernel.Unref (VCS_Module_ID.Menu_Context);
+      end if;
+
+      VCS_Module_ID.Menu_Context := Context;
+      GPS.Kernel.Ref (VCS_Module_ID.Menu_Context);
+
       Actions := Get_Identified_Actions (Ref);
 
       if Context /= null
@@ -807,7 +816,7 @@ package body VCS_View_API is
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
-         if Get_Creator (Context) = VCS_Module_ID then
+         if Get_Creator (Context) = Module_ID (VCS_Module_ID) then
             Explorer := Get_Explorer (Kernel, False);
             List := Get_Selected_Files (Explorer);
          else
@@ -1322,7 +1331,7 @@ package body VCS_View_API is
 
       Kernel := Get_Kernel (Context);
 
-      if Get_Creator (Context) = VCS_Module_ID then
+      if Get_Creator (Context) = Module_ID (VCS_Module_ID) then
          Explorer := Get_Explorer (Kernel, False);
          return Get_Current_Ref (Explorer);
 
