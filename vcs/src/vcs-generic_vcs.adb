@@ -1129,8 +1129,7 @@ package body VCS.Generic_VCS is
          Ref.Annotations_Parser := Parse_Status_Parser
            (Find_Tag (Child, "annotations_parser"));
 
-
-         Register_VCS (VCS_Module_ID, Name);
+         Register_VCS (Module_ID (VCS_Module_ID), Name);
 
          Ref.Kernel := Kernel_Handle (Kernel);
 

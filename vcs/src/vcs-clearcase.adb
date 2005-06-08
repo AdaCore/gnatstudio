@@ -49,7 +49,6 @@ with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with VFS;                       use VFS;
 
-
 package body VCS.ClearCase is
 
    use String_List;
@@ -1740,7 +1739,7 @@ package body VCS.ClearCase is
       VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel
         := Kernel_Handle (Kernel);
 
-      Register_VCS (VCS_Module_ID, ClearCase_Identifier);
+      Register_VCS (Module_ID (VCS_Module_ID), ClearCase_Identifier);
 
       --  ??? Need to adapt this to the ClearCase terminology.
       Actions :=
