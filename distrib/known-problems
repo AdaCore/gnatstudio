@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 3.0.1
+
+- E606-010 GPS freezes or crashes when using some VCS items.
+  Problem:    When using the integrated VCS menus that require an intermediate
+              dialog (for instance "View specific revision history"), GPS might
+              crash or freeze, or become unstable.
+  Workaround: No known workaround.
+
 Known Problems fixed in GPS 3.0.0
 
 - E501-006 Cross-references unavailable on Windows when source drag-and-dropped
