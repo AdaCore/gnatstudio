@@ -211,8 +211,9 @@ done by the functions Process and Next (at line 30).
 Click around line 30, move the mouse over @code{Process} and let a tool tip
 appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
 gives information about the kind of entity and the location (file and line) of
-the declaration of this procedure, as well as documentation for this function,
-as extracted from the comments surrounding the procedure declaration.
+the declaration of this procedure, the profile of the parameters, and
+documentation for this function, as extracted from the comments surrounding
+the procedure declaration.
 
 Do the same for @code{Next} (@code{global function tokens.next declared at
 tokens.ads:15}).
@@ -385,7 +386,7 @@ Close the execution window.
 @noindent
 Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @i{sdc} at line 8, select the contextual menu
-@code{References->Sdc calls}: this will open a new window titled
+@code{References->Sdc calls (in browser)}: this will open a new window titled
 @i{Call graph browser}.
 
 Click on the right arrow of @code{Process} (one of the first items on
