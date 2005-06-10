@@ -1,10 +1,16 @@
 Known Problems fixed in GPS 3.0.1
 
+- E610-015 Confusing output of gnatclean commands
+  Problem:    When using one of the Build->Clean menus, the output displayed
+              in the Messages window can be confusing, and does not include
+              the gnatclean command performed.
+  Workaround: This is just a confusion in the display that can be ignored
+
 - E606-010 GPS freezes or crashes when using some VCS items.
   Problem:    When using the integrated VCS menus that require an intermediate
               dialog (for instance "View specific revision history"), GPS might
               crash or freeze, or become unstable.
-  Workaround: No known workaround.
+  Workaround: Avoid using VCS menus with intermediate dialogs
 
 - E610-003 No gprmake distributed with GPS
   Problem:    No gprmake is distributed with GPS 3.0.0
