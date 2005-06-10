@@ -1,31 +1,32 @@
 <?xml version="1.0"?>
 <Clean-project>
   <action name="build-clean-root-project">
-    <shell>Project.scenario_variables_cmd_line -X</shell>
-    <external>gnatclean "%PPs" %1</external>
+    <shell output="none">Project.scenario_variables_cmd_line -X</shell>
+    <shell>echo gnatclean "%PPs" %1</shell>
+    <external>gnatclean "%PPs" %2</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
-  <menu action="build-clean-root-project"
-        after="Make">
+  <menu action="build-clean-root-project" after="Make">
     <title>/Build/C_lean/_Root Project</title>
   </menu>
   <action name="build-clean-all-root-project">
-    <shell>Project.scenario_variables_cmd_line -X</shell>
-    <external>gnatclean -r "%PPs" %1</external>
+    <shell output="none">Project.scenario_variables_cmd_line -X</shell>
+    <shell>echo gnatclean -r "%PPs" %1</shell>
+    <external>gnatclean -r "%PPs" %2</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
-  <menu action="build-clean-all-root-project"
-        after="Clean">
+  <menu action="build-clean-all-root-project" after="Clean">
     <title>/Build/C_lean/_All</title>
   </menu>
 
   <action name="build-clean-subproject">
-    <shell>Project.scenario_variables_cmd_line -X</shell>
-    <external>gnatclean "%pps" %1</external>
+    <shell output="none">Project.scenario_variables_cmd_line -X</shell>
+    <shell>echo gnatclean "%pps" %1</shell>
+    <external>gnatclean "%pps" %2</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
     <shell output="none">MDIWindow.raise_window %1</shell>
