@@ -6,6 +6,10 @@ Known Problems fixed in GPS 3.0.1
               crash or freeze, or become unstable.
   Workaround: No known workaround.
 
+- E610-003 No gprmake distributed with GPS
+  Problem:    No gprmake is distributed with GPS 3.0.0
+  Workaround: Use the gprmake that comes with GNAT or with GPS 2.1.1
+
 Known Problems fixed in GPS 3.0.0
 
 - E501-006 Cross-references unavailable on Windows when source drag-and-dropped
