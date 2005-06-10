@@ -20,9 +20,16 @@
 
 --  This package handles the GUI part of the task manager.
 
+with Glib; use Glib;
+
+with Gdk.GC;     use Gdk.GC;
+with Gdk.Pixmap; use Gdk.Pixmap;
+
 with Gtk.Box;                  use Gtk.Box;
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+
+with Pango.Layout;             use Pango.Layout;
 
 with Ada.Unchecked_Deallocation;
 
@@ -68,6 +75,16 @@ private
       Lines   : Iter_Array_Access;
 
       Dialog  : Gtk_Widget := null;
+
+      Progress_Background_GC : Gdk_GC;
+      Progress_Foreground_GC : Gdk_GC;
+      Progress_Text_GC       : Gdk_GC;
+      Progress_Template      : Gdk_Pixmap;
+
+      Progress_Width         : Gint;
+      Progress_Height        : Gint;
+
+      Progress_Layout        : Pango_Layout;
    end record;
 
 end Task_Manager.GUI;
