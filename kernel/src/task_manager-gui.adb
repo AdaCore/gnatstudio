@@ -23,6 +23,10 @@ with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Gdk.Color;                use Gdk.Color;
+with Gdk.Drawable;             use Gdk.Drawable;
+with Gdk.Pixmap;               use Gdk.Pixmap;
+with Gdk.GC;                   use Gdk.GC;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Image;                use Gtk.Image;
@@ -35,13 +39,14 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Style;                use Gtk.Style;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Enums;                use Gtk.Enums;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Intl;                 use GPS.Intl;
 
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
@@ -49,7 +54,6 @@ with Commands;                 use Commands;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
-
 package body Task_Manager.GUI is
 
    ---------------------
@@ -98,6 +102,11 @@ package body Task_Manager.GUI is
      (Object : access GObject_Record'Class;
       Params : GValues);
    --  Callback for a "destroy" signal.
+
+   procedure On_View_Realize
+     (Object : access GObject_Record'Class;
+      Params : GValues);
+   --  Callback for a "realize" signal. Initializes the graphical components.
 
    procedure On_View_Selection_Changed
      (Object : access GObject_Record'Class;
@@ -426,6 +435,68 @@ package body Task_Manager.GUI is
    end Interrupt_Command;
 
    ---------------------
+   -- On_View_Realize --
+   ---------------------
+
+   procedure On_View_Realize
+     (Object : access GObject_Record'Class;
+      Params : GValues)
+   is
+      pragma Unreferenced (Params);
+
+      Color   : Gdk_Color;
+      Iface   : constant Task_Manager_Interface :=
+        Task_Manager_Interface (Object);
+      Success : Boolean;
+
+   begin
+      Iface.Progress_Width := 100;
+      Iface.Progress_Height := 15;
+      --  ??? should find a better computation for these constants
+
+      Gdk_New (Iface.Progress_Background_GC, Get_Window (Iface));
+      Gdk_New (Iface.Progress_Foreground_GC, Get_Window (Iface));
+      Gdk_New (Iface.Progress_Text_GC, Get_Window (Iface));
+      Set_Foreground (Iface.Progress_Text_GC, Black (Get_Default_Colormap));
+
+      Color := Parse ("#cccccc");
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground (Iface.Progress_Background_GC, Color);
+      else
+         Set_Foreground
+           (Iface.Progress_Background_GC, Black (Get_Default_Colormap));
+      end if;
+
+      Color := Parse ("#aaaaff");
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground (Iface.Progress_Foreground_GC, Color);
+      else
+         Set_Foreground
+           (Iface.Progress_Foreground_GC, White (Get_Default_Colormap));
+      end if;
+
+      Iface.Progress_Layout := Create_Pango_Layout (Iface);
+      Set_Font_Description
+        (Iface.Progress_Layout,
+         Get_Font_Description (Get_Default_Style));
+
+      Gdk_New
+        (Iface.Progress_Template,
+         Get_Window (Iface),
+         Iface.Progress_Width,
+         Iface.Progress_Height);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_View_Realize;
+
+   ---------------------
    -- On_View_Destroy --
    ---------------------
 
@@ -434,8 +505,15 @@ package body Task_Manager.GUI is
       Params : GValues)
    is
       pragma Unreferenced (Params);
+      Iface : constant Task_Manager_Interface :=
+        Task_Manager_Interface (Object);
    begin
-      Task_Manager_Interface (Object).Manager.GUI := null;
+      Iface.Manager.GUI := null;
+      Unref (Iface.Progress_Foreground_GC);
+      Unref (Iface.Progress_Background_GC);
+      Unref (Iface.Progress_Text_GC);
+      Gdk.Drawable.Unref (Iface.Progress_Template);
+      Unref (Iface.Progress_Layout);
 
    exception
       when E : others =>
@@ -649,6 +727,13 @@ package body Task_Manager.GUI is
 
          Name_String := new String'(Name (Command));
 
+         Fraction := Gdouble (Progress.Current) / Gdouble (Progress.Total);
+
+         if Manager.Queues (Index).Total > 1 then
+            Fraction := (Fraction + Gdouble (Manager.Queues (Index).Done))
+              / Gdouble (Manager.Queues (Index).Total);
+         end if;
+
          if View /= null then
             Set
               (View.Tree.Model, View.Lines (Index), Command_Name_Column,
@@ -670,9 +755,54 @@ package body Task_Manager.GUI is
                        -(To_Lower (Manager.Queues (Index).Status'Img)));
             end case;
 
-            Set
-              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
-               Progress_String.all);
+            --  Create the pixbuf showing the progress.
+
+            if View.Progress_Layout /= null then
+               declare
+                  Pix           : Gdk_Pixbuf;
+                  Layout_Width,
+                  Layout_Height : Gint;
+               begin
+                  Draw_Rectangle
+                    (View.Progress_Template,
+                     View.Progress_Background_GC,
+                     True, 0, 0,
+                     View.Progress_Width,
+                     View.Progress_Height);
+
+                  Draw_Rectangle
+                    (View.Progress_Template,
+                     View.Progress_Foreground_GC,
+                     True, 0, 0,
+                     Gint (Gdouble (View.Progress_Width) * Fraction),
+                     View.Progress_Height);
+
+                  Set_Text
+                    (View.Progress_Layout,
+                     Natural'Image (Natural (Fraction * 100.0)) & "%");
+
+                  Get_Pixel_Size
+                    (View.Progress_Layout, Layout_Width, Layout_Height);
+
+                  Draw_Layout
+                    (Drawable => View.Progress_Template,
+                     GC       => View.Progress_Text_GC,
+                     X        => (View.Progress_Width - Layout_Width) / 2,
+                     Y        => 0,
+                     Layout   => View.Progress_Layout);
+
+                  Pix := Get_From_Drawable
+                    (Pix, View.Progress_Template,
+                     Get_Default_Colormap, 0, 0, 0, 0,
+                     View.Progress_Width,
+                     View.Progress_Height);
+
+                  Set
+                    (View.Tree.Model, View.Lines (Index),
+                     Command_Progress_Column,
+                     C_Proxy (Pix));
+               end;
+            end if;
          end if;
 
          if Manager.Queues (Index).Bar /= null then
@@ -682,13 +812,6 @@ package body Task_Manager.GUI is
 
             if Progress.Total <= 0 then
                Progress.Total := 1;
-            end if;
-
-            Fraction := Gdouble (Progress.Current) / Gdouble (Progress.Total);
-
-            if Manager.Queues (Index).Total > 1 then
-               Fraction := (Fraction + Gdouble (Manager.Queues (Index).Done))
-                 / Gdouble (Manager.Queues (Index).Total);
             end if;
 
             Set_Fraction (Manager.Queues (Index).Bar, Fraction);
@@ -740,9 +863,9 @@ package body Task_Manager.GUI is
       Gtk_New (Col);
       Set_Resizable (Col, True);
       Set_Title (Col, -"Progress");
-      Gtk_New (Text_Rend);
-      Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Text_Rend, "text", Command_Progress_Column);
+      Gtk_New (Pixbuf_Rend);
+      Pack_Start (Col, Pixbuf_Rend, False);
+      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Command_Progress_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
@@ -756,7 +879,7 @@ package body Task_Manager.GUI is
         (Icon_Column             => Gdk.Pixbuf.Get_Type,
          Command_Name_Column     => GType_String,
          Command_Status_Column   => GType_String,
-         Command_Progress_Column => GType_String);
+         Command_Progress_Column => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
 
    -------------
@@ -809,6 +932,13 @@ package body Task_Manager.GUI is
         (View,
          "destroy",
          On_View_Destroy'Access,
+         GObject (View),
+         After => False);
+
+      Object_Callback.Object_Connect
+        (View,
+         "realize",
+         On_View_Realize'Access,
          GObject (View),
          After => False);
 
