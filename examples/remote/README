@@ -1,0 +1,13 @@
+Before using this example, you need to do the following modifications in the
+script called my_ssh:
+- set the value of the local_dir variable to the root project dir on your
+  local machine. Note that the directory must be exactly the same as the
+  one used by GPS when it invokes gnatmake
+- set the value of the remote_dir variable to the root project dir on your
+  remote machine
+
+In GPS, you need to set the field "Project -> Edit Project Properties 
+-> General -> Tools Host" to your remote machine name and the
+"Edit -> Preferences -> External Command -> Remote Shell" field to 
+"bash /directory/my_ssh".
+
