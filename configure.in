@@ -103,6 +103,10 @@ case "${host}" in
     PRINT_CMD="a2ps"
   ;;
 
+  powerpc-*-darwin* )
+    machine=powerpc opsys=darwin
+  ;;
+
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \
