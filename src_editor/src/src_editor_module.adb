@@ -21,6 +21,7 @@
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.IO_Exceptions;           use Ada.IO_Exceptions;
 
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
@@ -2590,25 +2591,47 @@ package body Src_Editor_Module is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
       File_Exists : constant Boolean := Is_Regular_File (File);
-
+      Writable    : Writable_File;
+      Is_Writable : Boolean;
    begin
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
 
-      if File_Exists or else Create_New then
+      if File_Exists then
          Gtk_New (Editor, Kernel_Handle (Kernel));
+         Load_File (Editor, File,
+                    Force_Focus => True,
+                    Success     => Success);
 
-         if File_Exists then
-            Load_File (Editor, File,
-                       Force_Focus => True,
-                       Success     => Success);
+         if not Success then
+            Destroy (Editor);
+            Editor := null;
+         end if;
 
-            if not Success then
-               Destroy (Editor);
-               Editor := null;
-            end if;
+      elsif Create_New then
+         --  Do not create the file if we know we won't be able to save it
+         --  anyway (for instance a remote file for which we couldn't establish
+         --  the connection)
 
+         if File = VFS.No_File then
+            Is_Writable := True;
          else
+            Writable := Write_File (File);
+            Is_Writable := Writable /= Invalid_File;
+
+            if Writable /= Invalid_File then
+               begin
+                  Close (Writable);
+                  Delete (File);
+               exception
+                  when Use_Error =>
+                     Is_Writable := False;
+               end;
+            end if;
+         end if;
+
+         if Is_Writable then
+            Gtk_New (Editor, Kernel_Handle (Kernel));
             Load_Empty_File (Editor, File, Get_Language_Handler (Kernel));
          end if;
       end if;
