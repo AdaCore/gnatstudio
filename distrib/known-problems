@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.1
 
+- E606-006 Open From Project dialog is slower than in previous versions
+  Problem:    This dialog now takes longer to open than with previous versions
+              of GPS.
+  Workaround: None
+
 - E610-015 Confusing output of gnatclean commands
   Problem:    When using one of the Build->Clean menus, the output displayed
               in the Messages window can be confusing, and does not include
