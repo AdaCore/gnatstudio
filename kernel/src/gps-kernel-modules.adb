@@ -556,7 +556,10 @@ package body GPS.Kernel.Modules is
          --  and then only if it isn't the last entry the contextual
          --  menu
 
-         if C.Action = null and then C.Command = null then
+         if C.Action = null
+            and then C.Command = null
+            and then not C.Is_Submenu
+         then
             Has_Following_Entry := C.Is_Submenu;
             if not Has_Following_Entry then
                C2 := C.Next;
@@ -752,7 +755,10 @@ package body GPS.Kernel.Modules is
       --  for the moment
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Action /= null or else C.Command /= null then
+         if C.Is_Submenu
+            or else C.Action /= null
+            or else C.Command /= null
+         then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
@@ -762,7 +768,10 @@ package body GPS.Kernel.Modules is
       --  depend on the visibility of other items
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Action = null and then C.Command = null then
+         if C.Action = null
+            and then C.Command = null
+            and then not C.Is_Submenu
+         then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
