@@ -13766,8 +13766,8 @@ variable.
    @item $HOME/.gps
 @cindex Windows
 @cindex HOME
-GPS state directory. Defaults to C:\.gps under Windows systems if HOME is not
-defined.
+GPS state directory. Defaults to C:\.gps under Windows systems if HOME or
+USERPROFILE environment variables are not defined.
 
    @item $HOME/.gps/log
 @cindex log
