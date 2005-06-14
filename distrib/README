@@ -16,12 +16,3 @@ GPS (using doinstall).
 
 Optionally, you might want to setup the environment variable GPS_DOC_PATH
 to point to new doc directories. See the GPS documentation for more details.
-
-RUNNING GPS ON MAC OS X
-
-The current version of GPS on Mac OS X requires an X11 server. Such a server
-is distributed with Mac OS X Panther and Mac OS X Tiger. 
-
-Additionally, if you are launching GPS from a standard Terminal, you need to
-specify the display on which to launch GPS, by doing
-   export DISPLAY=:0
