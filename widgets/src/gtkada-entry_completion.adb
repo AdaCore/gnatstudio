@@ -42,6 +42,7 @@ with Gtkada.Handlers;        use Gtkada.Handlers;
 with String_Utils;           use String_Utils;
 with Ada.Exceptions;         use Ada.Exceptions;
 with Traces;                 use Traces;
+with Generic_List;
 with Ada.Unchecked_Deallocation;
 
 package body Gtkada.Entry_Completion is
@@ -64,6 +65,8 @@ package body Gtkada.Entry_Completion is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Completions_Factory'Class, Completions_Factory_Access);
+
+   package String_List is new Generic_List (String_Access);
 
    -------------
    -- Gtk_New --
@@ -205,7 +208,7 @@ package body Gtkada.Entry_Completion is
    procedure Selection_Changed (The_Entry : access Gtk_Widget_Record'Class) is
       Ent   : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
       Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
+      Iter, Children  : Gtk_Tree_Iter;
 
    begin
       Get_Selected
@@ -218,7 +221,14 @@ package body Gtkada.Entry_Completion is
 
       if Iter /= Null_Iter then
          Set_Text (Get_Entry (Ent), Get_String (Model, Iter, 0));
-         Ent.Completion_Index := Integer (Get_Int (Model, Iter, 1));
+         Ent.Completion_Index := 0;
+         Children := Get_Iter_First (Ent.List);
+         while Children /= Null_Iter
+           and then Children /= Iter
+         loop
+            Ent.Completion_Index := Ent.Completion_Index + 1;
+            Next (Ent.List, Children);
+         end loop;
          Grab_Focus (Get_Entry (Ent));
       end if;
    end Selection_Changed;
@@ -300,6 +310,18 @@ package body Gtkada.Entry_Completion is
       --  index Start_At, and found before End_At.
       --  Integer'Last is returned if no completion was found.
 
+      procedure Append
+        (User_Text       : String;
+         Index           : Integer;
+         Compl_Access    : in out String_Access;
+         Has_Description : in out Boolean;
+         Matched         : in out String_List.List);
+      --  Append a new entry in the list of possible completions.
+      --  Compl_Access becomes the longest common prefix for all possible
+      --  completions.
+      --  Has_Description is set to True if at least one of the entries had a
+      --  completion.
+
       -------------------
       -- Next_Matching --
       -------------------
@@ -333,6 +355,64 @@ package body Gtkada.Entry_Completion is
          return Integer'Last;
       end Next_Matching;
 
+      ------------
+      -- Append --
+      ------------
+
+      procedure Append
+        (User_Text       : String;
+         Index           : Integer;
+         Compl_Access    : in out String_Access;
+         Has_Description : in out Boolean;
+         Matched         : in out String_List.List)
+      is
+         use String_List;
+         Choice : constant String :=
+           Completion (GEntry.Completions.all, Index);
+         Descr : constant String :=
+           Description (GEntry.Completions.all, Index);
+         Current : Integer;
+         Tmp     : String_Access;
+         Node    : List_Node := First (Matched);
+         Iter    : Gtk_Tree_Iter;
+      begin
+         while Node /= Null_Node loop
+            if Data (Node).all = Choice then
+               return;
+            end if;
+            Node := Next (Node);
+         end loop;
+
+         Prepend (Matched, new String'(Choice));
+
+         Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
+         Set (GEntry.List, Iter, 0, Choice);
+         Set (GEntry.List, Iter, 1, Gint (Index));
+         if Descr /= "" then
+            Set (GEntry.List, Iter, 2, Descr);
+            Has_Description := True;
+         end if;
+
+         if Compl_Access = null then
+            Compl_Access := new String'
+              (Choice (Choice'First + User_Text'Length .. Choice'Last));
+         else
+            --  Search for the longer common prefix in all the completions
+            Current := Compl_Access'First;
+            while Current <= Compl_Access'Last
+              and then Compl_Access (Current) = Choice
+              (Current - Compl_Access'First + Choice'First + User_Text'Length)
+            loop
+               Current := Current + 1;
+            end loop;
+
+            Tmp := new String'
+              (Compl_Access (Compl_Access'First .. Current - 1));
+            Free (Compl_Access);
+            Compl_Access := Tmp;
+         end if;
+      end Append;
+
       Has_Description : Boolean := False;
 
    begin
@@ -342,15 +422,17 @@ package body Gtkada.Entry_Completion is
          declare
             T                     : constant String :=
               Get_Text (Get_Entry (GEntry));
-            Compl_Access, Tmp     : String_Access;
-            Index, S, First_Index : Integer;
+            Compl_Access          : String_Access;
+            S, First_Index        : Integer;
+            Col                   : Gint;
+            Matched               : String_List.List;
             Iter                  : Gtk_Tree_Iter;
-            Col                   : constant Gint := Freeze_Sort (GEntry.List);
 
          begin
             --  If there is no current series of tab (ie the user has pressed a
             --  key other than tab since the last tab).
             if GEntry.Completion_Index = Integer'Last then
+               Col := Freeze_Sort (GEntry.List);
                Clear (GEntry.List);
                GEntry.Last_Position := Integer
                  (Get_Position (Get_Entry (GEntry)));
@@ -359,59 +441,13 @@ package body Gtkada.Entry_Completion is
                --  At least one match
                if First_Index /= Integer'Last then
                   S := First_Index;
-
-                  declare
-                     Compl : constant String :=
-                       Completion (GEntry.Completions.all, S);
-                     Descr : constant String :=
-                       Description (GEntry.Completions.all, S);
-                  begin
-                     Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
-                     Set (GEntry.List, Iter, 0, Compl);
-                     Set (GEntry.List, Iter, 1, Gint (S));
-                     if Descr /= "" then
-                        Set (GEntry.List, Iter, 2, Descr);
-                        Has_Description := True;
-                     end if;
-                     Compl_Access := new String'
-                       (Compl (Compl'First + T'Length .. Compl'Last));
-                  end;
+                  Append (T, S, Compl_Access, Has_Description, Matched);
 
                   loop
                      S := Next_Matching (T, S + 1);
                      exit when S = Integer'Last;
 
-                     declare
-                        Compl : constant String :=
-                          Completion (GEntry.Completions.all, S);
-                        Descr : constant String :=
-                          Description (GEntry.Completions.all, S);
-                     begin
-                        Append
-                          (GEntry.List, Iter => Iter, Parent => Null_Iter);
-                        Set (GEntry.List, Iter, 0, Compl);
-                        Set (GEntry.List, Iter, 1, Gint (S));
-                        if Descr /= "" then
-                           Set (GEntry.List, Iter, 2, Descr);
-                           Has_Description := True;
-                        end if;
-
-                        --  Search for the longer common prefix in all the
-                        --  completions
-                        Index := Compl_Access'First;
-                        while Index <= Compl_Access'Last
-                          and then Compl_Access (Index) =
-                          Compl (Index - Compl_Access'First
-                                 + Compl'First + T'Length)
-                        loop
-                           Index := Index + 1;
-                        end loop;
-                     end;
-
-                     Tmp := new String'
-                       (Compl_Access (Compl_Access'First .. Index - 1));
-                     Free (Compl_Access);
-                     Compl_Access := Tmp;
+                     Append (T, S, Compl_Access, Has_Description, Matched);
                   end loop;
 
                   --  Do we have a common prefix for all the possible choices ?
@@ -421,25 +457,31 @@ package body Gtkada.Entry_Completion is
                   end if;
 
                   Free (Compl_Access);
+                  String_List.Free (Matched);
 
-                  First_Index := Positive'First - 1;
+                  First_Index := -1;
                   Set_Visible (Get_Column (GEntry.View, 1), Has_Description);
                end if;
 
+               Thaw_Sort (GEntry.List, Col);
+
             --  Else we display the next possible match
             else
-               First_Index := Next_Matching
-                 (T (T'First .. GEntry.Last_Position),
-                  GEntry.Completion_Index + 1);
-
-               if First_Index = Integer'Last then
-                  Delete_Text (Get_Entry (GEntry),
-                               Gint (GEntry.Last_Position), -1);
+               First_Index := GEntry.Completion_Index + 1;
+               if Gint (First_Index) >= N_Children (GEntry.List) then
+                  First_Index := -1;
                end if;
 
-               if First_Index /= Integer'Last then
-                  Set_Text (Get_Entry (GEntry),
-                            Completion (GEntry.Completions.all, First_Index));
+               if First_Index = -1 then
+                  Delete_Text (Get_Entry (GEntry),
+                               Gint (GEntry.Last_Position), -1);
+               else
+                  Set_Text
+                    (Get_Entry (GEntry),
+                     Get_String (GEntry.List,
+                                 Nth_Child
+                                  (GEntry.List, Null_Iter, Gint (First_Index)),
+                                 0));
                   Set_Position (Get_Entry (GEntry), -1);
                end if;
             end if;
@@ -448,23 +490,19 @@ package body Gtkada.Entry_Completion is
 
             --  Select the corresponding line in the list of completions
             Unselect_All (Get_Selection (GEntry.View));
-            Iter := Get_Iter_First (GEntry.List);
-            while Iter /= Null_Iter loop
-               if Get_Int (GEntry.List, Iter, 1) =
-                 Gint (GEntry.Completion_Index)
-               then
-                  Select_Iter (Get_Selection (GEntry.View), Iter);
-               end if;
 
-               Next (GEntry.List, Iter);
-            end loop;
-
-            Thaw_Sort (GEntry.List, Col);
+            if First_Index /= Integer'Last
+              and then First_Index /= -1
+            then
+               Iter := Nth_Child (GEntry.List, Null_Iter, Gint (First_Index));
+               Select_Iter (Get_Selection (GEntry.View), Iter);
+            end if;
          end;
 
          return True;
 
       elsif Get_Key_Val (Event) /= GDK_Return then
+         Unselect_All (Get_Selection (GEntry.View));
          GEntry.Completion_Index := Integer'Last;
       end if;
 
@@ -485,10 +523,17 @@ package body Gtkada.Entry_Completion is
    function Current_Completion
      (The_Entry : access Gtkada_Entry_Record) return Natural is
    begin
-      if The_Entry.Completion_Index = Integer'Last then
+      if The_Entry.Completion_Index = Integer'Last
+        or else The_Entry.Completion_Index = -1
+      then
          return 0;
       else
-         return The_Entry.Completion_Index;
+         return Natural
+           (Get_Int (The_Entry.List,
+                     Nth_Child (The_Entry.List,
+                                Null_Iter,
+                                Gint (The_Entry.Completion_Index)),
+                     1));
       end if;
    end Current_Completion;
 
