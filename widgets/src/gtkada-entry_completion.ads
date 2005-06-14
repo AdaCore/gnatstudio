@@ -138,9 +138,10 @@ private
       --  The iterator over all possible completions
 
       Last_Position    : Integer;
+
       Completion_Index : Integer := Integer'Last;
-      --  The index, in Completions, of the last string inserted. 0 if no
-      --  completion has been attempted yet.
+      --  The index in the Tree_View of the current completion. This is set to
+      --  Integer'Last if there have been no completion attempted yet.
 
       View             : Gtk.Tree_View.Gtk_Tree_View;
       List             : Gtk.Tree_Store.Gtk_Tree_Store;
