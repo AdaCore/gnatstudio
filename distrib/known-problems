@@ -21,6 +21,12 @@ Known Problems fixed in GPS 3.0.1
   Problem:    No gprmake is distributed with GPS 3.0.0
   Workaround: Use the gprmake that comes with GNAT or with GPS 2.1.1
 
+- E525-008 Endless query for password when using remote files
+  Problem:    If you enter an incorrect user name or press cancel in the dialog
+              when accessing a remote file, GPS will keep asking for your
+              password, preventing you from doing anything else
+  Workaround: Kill GPS
+
 Known Problems fixed in GPS 3.0.0
 
 - E501-006 Cross-references unavailable on Windows when source drag-and-dropped
