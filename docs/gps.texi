@@ -248,6 +248,7 @@ Python FAQ
 Environment
 * Command Line Options::
 * Environment Variables::
+* Running GPS on Mac OS X::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -6424,12 +6425,12 @@ Open a view of the current source editor.
 @noindent
 
 The visual comparison, available either from the VCS menus or from the Tools
-menu, provide a way to display graphically differences between two or three 
+menu, provide a way to display graphically differences between two or three
 files, or two different versions of the same file.
 
-The 2-file comparison tool is based on the standard text command 
-@command{diff}, available on all Unix systems. Under Windows, a default 
-implementation is provided with GPS, called @command{gnudiff.exe}. 
+The 2-file comparison tool is based on the standard text command
+@command{diff}, available on all Unix systems. Under Windows, a default
+implementation is provided with GPS, called @command{gnudiff.exe}.
 You may want to provide an alternate implementation by e.g. installing a
 set of Unix tools such as cygwin (@url{http://www.cygwin.com}).
 
@@ -13647,6 +13648,7 @@ Connection closed by foreign host.
 @menu
 * Command Line Options::
 * Environment Variables::
+* Running GPS on Mac OS X::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -13753,6 +13755,23 @@ Same as @code{GPS_STARTUP_LD_LIBRARY_PATH} but for the @code{LD_LIBRARY_PATH}
 variable.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Running GPS on Mac OS X
+@section Running GPS on Mac OS X
+@cindex Mac OS
+@c --------------------------------------------------------------------
+
+@noindent
+The current version of GPS on Mac OS X requires an X11 server. Such a server
+is distributed with Mac OS X Panther and Mac OS X Tiger.
+
+Additionally, if you are launching GPS from a standard Terminal, you need to
+specify the display on which to launch GPS, by typing:
+
+@code{export DISPLAY=:0}
+
+before launching GPS.
 
 @c --------------------------------------------------------------------
 @node Files
