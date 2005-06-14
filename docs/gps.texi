@@ -13773,6 +13773,8 @@ specify the display on which to launch GPS, by typing:
 
 before launching GPS.
 
+Note: GPS does not support files with line endings in CR.
+
 @c --------------------------------------------------------------------
 @node Files
 @section Files
