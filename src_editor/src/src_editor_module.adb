@@ -3025,27 +3025,13 @@ package body Src_Editor_Module is
       Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
-      --  Remove duplicate entries in both arrays
-      for L2 in List2'Range loop
-         for L in List1'Range loop
-            if List1 (L) = List2 (L2) then
-               List2 (L2) := VFS.No_File;
-               exit;
-            end if;
-         end loop;
-      end loop;
-
-      for L1 in List1'Range loop
-         for L in List1'First .. L1 - 1 loop
-            if List1 (L) = List1 (L1) then
-               List1 (L1) := VFS.No_File;
-               exit;
-            end if;
-         end loop;
-      end loop;
-
+      List1 := Get_Source_Files
+        (Project   => Get_Project (Kernel), Recursive => True);
       Compl.File1 := List1;
+
+      List2 := Get_Predefined_Source_Files (Get_Registry (Kernel).all);
       Compl.File2 := List2;
+
       Set_Completions (Open_File_Entry, Compl);
 
       Pop_State (Kernel);
