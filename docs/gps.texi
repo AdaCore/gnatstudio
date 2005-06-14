@@ -248,6 +248,7 @@ Python FAQ
 Environment
 * Command Line Options::
 * Environment Variables::
+* Running GPS on Mac OS X::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -13643,6 +13644,7 @@ Connection closed by foreign host.
 @menu
 * Command Line Options::
 * Environment Variables::
+* Running GPS on Mac OS X::
 * Files::
 * Reporting Suggestions and Bugs::
 * Solving Problems::
@@ -13748,6 +13750,23 @@ Same as @code{GPS_STARTUP_LD_LIBRARY_PATH} but for the @code{LD_LIBRARY_PATH}
 variable.
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Running GPS on Mac OS X
+@section Running GPS on Mac OS X
+@cindex Mac OS
+@c --------------------------------------------------------------------
+
+@noindent
+The current version of GPS on Mac OS X requires an X11 server. Such a server
+is distributed with Mac OS X Panther and Mac OS X Tiger.
+
+Additionally, if you are launching GPS from a standard Terminal, you need to
+specify the display on which to launch GPS, by typing:
+
+@code{export DISPLAY=:0}
+
+before launching GPS.
 
 @c --------------------------------------------------------------------
 @node Files
