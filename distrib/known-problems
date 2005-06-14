@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.1
 
+- Contextual menu entries sometimes not visible
+  Problem:    If you start the debugger, it happens that the Debug/ contextual
+              menu is not visible the first time it is displayed.
+  Woraround:  Display the contextual menu a second time
+
 - E606-006 Open From Project dialog is slower than in previous versions
   Problem:    This dialog now takes longer to open than with previous versions
               of GPS.
