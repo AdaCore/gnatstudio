@@ -296,8 +296,9 @@ package body GPS.Kernel.Timeout is
          end if;
 
          if Host = Windows then
-            --  ??? Should remove this kludge and the one in
-            --  commands-external.adb
+            --  ??? Should remove this kludge, the one in
+            --  commands-external.adb, and the one in
+            --  GVD.Proc_Utils.Open_Processes
 
             declare
                Real_Args : GNAT.OS_Lib.Argument_List (1 .. 2);
