@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.0.1
 
+- E615-002 "Attach" window not filled properly under Windows.
+  Problem:    Under Windows, the menu Debug->Debug->Attach... returns an empty
+              window.
+  Workaround: Use the command "winps" from the Windows command prompt to find
+              the process number.
+
 - Contextual menu entries sometimes not visible
   Problem:    If you start the debugger, it happens that the Debug/ contextual
               menu is not visible the first time it is displayed.
