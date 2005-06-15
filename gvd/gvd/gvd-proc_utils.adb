@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2002-2005                      --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,7 +108,6 @@ package body GVD.Proc_Utils is
    --------------------
 
    procedure Open_Processes (Handle : out Process_Handle) is
-      Command_Index : Integer := Exec_Command'First;
       Args          : Argument_List_Access;
       Match         : Expect_Match := 0;
 
@@ -116,32 +115,35 @@ package body GVD.Proc_Utils is
       Handle := new Process_Record;
       Handle.Descriptor := new TTY_Process_Descriptor;
 
-      Skip_To_Char (Exec_Command, Command_Index, ' ');
-      Args := Argument_String_To_List
-        (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
+      if Host = Windows then
+         Args := new Argument_List'
+           (1 => new String'("/c "),
+            2 => new String'(Get_Pref (GVD_Prefs, List_Processes)));
 
-      declare
-         New_Args : Argument_List (Args'First .. Args'Last + 1);
-      begin
-         New_Args (Args'First .. Args'Last) := Args.all;
-         New_Args (New_Args'Last) := new String'
-           (Get_Pref (GVD_Prefs, List_Processes));
+         Non_Blocking_Spawn (Handle.Descriptor.all, "cmd", Args.all);
+
+      else
+         declare
+            New_Args : Argument_List_Access :=
+              Argument_String_To_List (Exec_Command);
+         begin
+            Args := new Argument_List'
+              (New_Args.all
+               & (1 => new String'(Get_Pref (GVD_Prefs, List_Processes))));
+            Free (New_Args);
+         end;
 
          Non_Blocking_Spawn
-           (Handle.Descriptor.all,
-            Exec_Command (Exec_Command'First .. Command_Index - 1),
-            New_Args);
-         Expect (Handle.Descriptor.all, Match, "\n");
+           (Handle.Descriptor.all, Args (Args'First).all,
+            Args (Args'First + 1 .. Args'Last));
+      end if;
 
-         for J in New_Args'Range loop
-            Free (New_Args (J));
-         end loop;
-      end;
-
+      Expect (Handle.Descriptor.all, Match, "\n");
       Free (Args);
 
    exception
-      when Process_Died => null;
+      when Process_Died =>
+         Free (Args);
    end Open_Processes;
 
    procedure Open_Processes (Handle : out Process_Handle; Host : String) is
