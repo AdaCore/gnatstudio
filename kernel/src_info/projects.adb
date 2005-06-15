@@ -1581,8 +1581,15 @@ package body Projects is
             Index := Index - 1;
          end loop;
 
-         Include (Index) := True;
-         Index := Index - 1;
+         --  We must check that Index is different from 0 which is the case
+         --  when name is not in the list of imported anymore. This can happen
+         --  when playing with project dependencies and the dependency
+         --  graph.
+
+         if Index >= Imported'First then
+            Include (Index) := True;
+            Index := Index - 1;
+         end if;
 
          while Index >= Imported'First loop
             Parent := Get_Project_From_Name
