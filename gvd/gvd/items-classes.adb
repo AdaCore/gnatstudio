@@ -26,8 +26,6 @@ with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 
 with Items.Records;       use Items.Records;
-with Default_Preferences; use Default_Preferences;
-with GVD.Preferences;     use GVD.Preferences;
 
 package body Items.Classes is
 
@@ -181,6 +179,9 @@ package body Items.Classes is
    procedure Paint
      (Item    : in out Class_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0)
    is
       Current_Y : Gint := Y + Item.Border_Spacing;
@@ -193,21 +194,21 @@ package body Items.Classes is
                  and then not Is_Valid (Item.Child))
       then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+           (Pixmap, Context.GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Left_Border, Y + Item.Border_Spacing);
          return;
       end if;
 
       if not Item.Visible then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Hidden_Pixmap,
+           (Pixmap, Context.GC, Context.Hidden_Pixmap,
             Context.Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.Selection_GC,
             Filled => True,
             X      => X,
@@ -225,8 +226,8 @@ package body Items.Classes is
          then
             --  Do not add Left_Border to X, since each of the ancestor is
             --  itself a Class_Type and will already draw it.
-            Paint (Item.Ancestors (A).all, Context, X + Item.Border_Spacing,
-                   Current_Y);
+            Paint (Item.Ancestors (A).all, Context, Pixmap, Lang, Mode,
+                   X + Item.Border_Spacing, Current_Y);
             Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
 
             if Item.Ancestors (A).Child /= null
@@ -235,7 +236,7 @@ package body Items.Classes is
                Set_Line_Attributes
                  (Context.GC, Line_Width => 0, Line_Style => Line_On_Off_Dash,
                   Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
-               Draw_Line (Context.Pixmap, Context.GC,
+               Draw_Line (Pixmap, Context.GC,
                           X + Item.Border_Spacing,
                           Current_Y,
                           X + Item.Width - Item.Border_Spacing,
@@ -250,14 +251,14 @@ package body Items.Classes is
       end loop;
 
       if Get_Height (Item.Child.all) > 2 * Item.Border_Spacing then
-         Paint (Item.Child.all, Context, X + Left_Border
+         Paint (Item.Child.all, Context, Pixmap, Lang, Mode, X + Left_Border
                 + Item.Border_Spacing, Current_Y);
       end if;
 
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.GC,
             Filled => False,
             X      => X,
@@ -274,6 +275,8 @@ package body Items.Classes is
    procedure Size_Request
      (Item           : in out Class_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
@@ -286,7 +289,9 @@ package body Items.Classes is
       if Item.Visible then
          for A in Item.Ancestors'Range loop
             if Item.Ancestors (A) /= null then
-               Size_Request (Item.Ancestors (A).all, Context, Hide_Big_Items);
+               Size_Request
+                 (Item.Ancestors (A).all, Context, Lang, Mode,
+                  Hide_Big_Items);
 
                --  If we don't have an null record
                if Item.Ancestors (A).Height /= 0 then
@@ -306,7 +311,7 @@ package body Items.Classes is
             end if;
          end loop;
 
-         Size_Request (Item.Child.all, Context, Hide_Big_Items);
+         Size_Request (Item.Child.all, Context, Lang, Mode, Hide_Big_Items);
 
          Total_Width :=
            Gint'Max (Total_Width, Get_Width (Item.Child.all)) + Left_Border;
@@ -319,7 +324,7 @@ package body Items.Classes is
            + 2 * Item.Border_Spacing;
 
          if Hide_Big_Items
-           and then Item.Height > Get_Pref (GVD_Prefs, Big_Item_Height)
+           and then Item.Height > Context.Big_Item_Height
          then
             Item.Visible := False;
          end if;

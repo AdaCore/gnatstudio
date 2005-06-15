@@ -176,10 +176,15 @@ private
    procedure Paint
      (Item    : in out Record_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Record_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name
      (Item : access Record_Type;

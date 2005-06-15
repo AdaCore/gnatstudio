@@ -23,9 +23,6 @@ with Glib;            use Glib;
 with Gdk.Drawable;    use Gdk.Drawable;
 with Pango.Layout;    use Pango.Layout;
 with Language;        use Language;
-with Default_Preferences; use Default_Preferences;
-with GVD.Preferences; use GVD.Preferences;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Repeats is
 
@@ -137,6 +134,9 @@ package body Items.Repeats is
    procedure Paint
      (Item    : in out Repeat_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
       Str : constant String :=
@@ -150,14 +150,14 @@ package body Items.Repeats is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+           (Pixmap, Context.GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.Selection_GC,
             Filled => True,
             X      => X,
@@ -166,22 +166,20 @@ package body Items.Repeats is
             Height => Item.Height);
       end if;
 
-      Set_Text (Context.Layout, Str);
-      Set_Font_Description
-        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
+      Set_Text (Context.Text_Layout, Str);
       Draw_Layout
-        (Drawable => Context.Pixmap,
+        (Drawable => Pixmap,
          GC       => Context.GC,
          X        => X + Border_Spacing,
          Y        => Y + Border_Spacing,
-         Layout   => Context.Layout);
+         Layout   => Context.Text_Layout);
 
-      Paint (Item.Value.all, Context,
+      Paint (Item.Value.all, Context, Pixmap, Lang, Mode,
              X + Item.Repeat_Str_Width, Y + Border_Spacing);
 
       --  Draw a border
       Draw_Rectangle
-        (Context.Pixmap,
+        (Pixmap,
          Context.GC,
          Filled => False,
          X      => X,
@@ -197,6 +195,8 @@ package body Items.Repeats is
    procedure Size_Request
      (Item           : in out Repeat_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
       Str : constant String :=
@@ -205,12 +205,10 @@ package body Items.Repeats is
       if not Item.Valid then
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       else
-         Size_Request (Item.Value.all, Context, Hide_Big_Items);
-
-         Set_Text (Context.Layout, Str);
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
-         Get_Pixel_Size (Context.Layout, Item.Repeat_Str_Width, Item.Height);
+         Size_Request (Item.Value.all, Context, Lang, Mode, Hide_Big_Items);
+         Set_Text (Context.Text_Layout, Str);
+         Get_Pixel_Size
+           (Context.Text_Layout, Item.Repeat_Str_Width, Item.Height);
          Item.Width :=
            Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
          Item.Height := Gint'Max (Item.Value.Height, Item.Height)

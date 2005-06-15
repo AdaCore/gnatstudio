@@ -132,10 +132,15 @@ private
    procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
    function Get_Component_Name
      (Item : access Simple_Type;
@@ -178,6 +183,9 @@ private
    procedure Paint
      (Item    : in out Access_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
    function Structurally_Equivalent
      (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
@@ -207,9 +215,14 @@ private
    procedure Size_Request
      (Item           : in out Debugger_Output_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
    procedure Paint (Item    : in out Debugger_Output_Type;
                     Context : Drawing_Context;
+                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Lang    : Language.Language_Access;
+                    Mode    : Display_Mode;
                     X, Y    : Glib.Gint := 0);
    procedure Reset_Recursive (Item : access Debugger_Output_Type);
    function Structurally_Equivalent

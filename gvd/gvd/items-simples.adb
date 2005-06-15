@@ -28,9 +28,6 @@ with Pango.Layout;    use Pango.Layout;
 
 with Basic_Types;     use Basic_Types;
 with String_Utils;    use String_Utils;
-with Default_Preferences; use Default_Preferences;
-with GVD.Preferences; use GVD.Preferences;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Simples is
 
@@ -43,6 +40,9 @@ package body Items.Simples is
    procedure Paint_Simple
      (Item    : in out Simple_Type'Class;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       GC      : Gdk_GC;
       X, Y    : Gint := 0);
    --  Paint a simple type or one of its children
@@ -129,6 +129,9 @@ package body Items.Simples is
    procedure Paint_Simple
      (Item    : in out Simple_Type'Class;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       GC      : Gdk_GC;
       X, Y    : Gint := 0)
    is
@@ -144,14 +147,14 @@ package body Items.Simples is
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap
-           (Context.Pixmap, Text_GC, Context.Unknown_Pixmap,
+           (Pixmap, Text_GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Border_Spacing, Y2);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.Selection_GC,
             Filled => True,
             X      => X,
@@ -164,32 +167,28 @@ package body Items.Simples is
          Text_GC := Context.Modified_GC;
       end if;
 
-      if Show_Type (Context.Mode)
+      if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
-         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Drawable => Context.Pixmap,
+           (Drawable => Pixmap,
             GC       => Text_GC,
             X        => X,
             Y        => Y2,
-            Layout   => Context.Layout);
-         Get_Pixel_Size (Context.Layout, W, H);
+            Layout   => Context.Type_Layout);
+         Get_Pixel_Size (Context.Type_Layout, W, H);
          Y2 := Y2 + H;
       end if;
 
-      if Show_Value (Context.Mode) then
-         Set_Text (Context.Layout, Item.Value.all);
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
+      if Show_Value (Mode) then
+         Set_Text (Context.Text_Layout, Item.Value.all);
          Draw_Layout
-           (Drawable => Context.Pixmap,
+           (Drawable => Pixmap,
             GC       => Text_GC,
             X        => X,
             Y        => Y2,
-            Layout   => Context.Layout);
+            Layout   => Context.Text_Layout);
       end if;
    end Paint_Simple;
 
@@ -200,10 +199,13 @@ package body Items.Simples is
    procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
    begin
-      Paint_Simple (Item, Context, Context.GC, X, Y);
+      Paint_Simple (Item, Context, Pixmap, Lang, Mode, Context.GC, X, Y);
    end Paint;
 
    ------------------
@@ -213,6 +215,8 @@ package body Items.Simples is
    procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
       pragma Unreferenced (Hide_Big_Items);
@@ -224,22 +228,18 @@ package body Items.Simples is
       Item.Width := Unknown_Width;
       Item.Height := 0;
 
-      if Show_Type (Context.Mode)
+      if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
-         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
-         Get_Pixel_Size (Context.Layout, W, H);
+         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
+         Get_Pixel_Size (Context.Type_Layout, W, H);
          Item.Width  := Gint'Max (W, Item.Width);
          Item.Height := H;
       end if;
 
-      if Show_Value (Context.Mode) then
-         Set_Text (Context.Layout, Item.Value.all);
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
-         Get_Pixel_Size (Context.Layout, W, H);
+      if Show_Value (Mode) then
+         Set_Text (Context.Text_Layout, Item.Value.all);
+         Get_Pixel_Size (Context.Text_Layout, W, H);
          Item.Width := Gint'Max (W, Item.Width);
          Item.Height := Item.Height + H;
       end if;
@@ -408,9 +408,12 @@ package body Items.Simples is
    procedure Paint
      (Item    : in out Access_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0) is
    begin
-      Paint_Simple (Item, Context, Context.Xref_GC, X, Y);
+      Paint_Simple (Item, Context, Pixmap, Lang, Mode, Context.Xref_GC, X, Y);
    end Paint;
 
    -----------------------
@@ -483,15 +486,15 @@ package body Items.Simples is
    procedure Size_Request
      (Item           : in out Debugger_Output_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
-      pragma Unreferenced (Hide_Big_Items);
+      pragma Unreferenced (Hide_Big_Items, Lang, Mode);
    begin
       if Item.Valid and then Item.Value /= null then
-         Set_Text (Context.Layout, Item.Value.all);
-         Set_Font_Description
-           (Context.Layout, Get_Pref_Font (GVD_Prefs, Default_Style));
-         Get_Pixel_Size (Context.Layout, Item.Width, Item.Height);
+         Set_Text (Context.Text_Layout, Item.Value.all);
+         Get_Pixel_Size (Context.Text_Layout, Item.Width, Item.Height);
       else
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       end if;
@@ -504,8 +507,12 @@ package body Items.Simples is
    procedure Paint
      (Item    : in out Debugger_Output_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
+      pragma Unreferenced (Lang, Mode);
       Text_GC    : Gdk_GC;
       Line       : Gint := Y;
       Line_Start : Positive;
@@ -519,14 +526,14 @@ package body Items.Simples is
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+           (Pixmap, Context.GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.GC,
             Filled => True,
             X      => X,
@@ -537,9 +544,6 @@ package body Items.Simples is
 
       Line_Start := Item.Value'First;
 
-      Set_Font_Description
-        (Context.Layout, Get_Pref_Font (GVD_Prefs, Default_Style));
-
       for J in Item.Value'Range loop
          if Item.Value (J) = ASCII.LF then
             if Item.Value (Line_Start) = Line_Highlighted then
@@ -548,14 +552,15 @@ package body Items.Simples is
                Text_GC := Context.GC;
             end if;
 
-            Set_Text (Context.Layout, Item.Value (Line_Start + 1 .. J - 1));
+            Set_Text
+              (Context.Text_Layout, Item.Value (Line_Start + 1 .. J - 1));
             Draw_Layout
-              (Drawable => Context.Pixmap,
+              (Drawable => Pixmap,
                GC       => Text_GC,
                X        => X,
                Y        => Line,
-               Layout   => Context.Layout);
-            Get_Pixel_Size (Context.Layout, W, H);
+               Layout   => Context.Text_Layout);
+            Get_Pixel_Size (Context.Text_Layout, W, H);
             Line := Line + H;
             Line_Start := J + 1;
          end if;
@@ -568,13 +573,13 @@ package body Items.Simples is
       end if;
 
       Set_Text
-        (Context.Layout, Item.Value (Line_Start + 1 .. Item.Value'Last));
+        (Context.Text_Layout, Item.Value (Line_Start + 1 .. Item.Value'Last));
       Draw_Layout
-        (Drawable => Context.Pixmap,
+        (Drawable => Pixmap,
          GC       => Text_GC,
          X        => X,
          Y        => Line,
-         Layout   => Context.Layout);
+         Layout   => Context.Text_Layout);
    end Paint;
 
    ---------------

@@ -134,6 +134,7 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
+      Context        : Drawing_Context;
       Variable_Name : String;
       Auto_Refresh  : Boolean := True);
    --  Item.Entity must have been parsed already.
@@ -209,12 +210,6 @@ package body Display_Items is
       Component : Generic_Type_Access);
    --  Change the visibility status of a specific component in the item
 
-   function Create_Drawing_Context
-     (Item : access Display_Item_Record'Class)
-     return Drawing_Context;
-   --  Return a graphic context that can be used to display the contents of
-   --  the item
-
    function Is_Alias_Of
      (Item : access Display_Item_Record'Class;
       Id   : String;
@@ -253,6 +248,8 @@ package body Display_Items is
       Link_From      : Display_Item := null;
       Link_Name      : String := "")
    is
+      Context     : constant Drawing_Context :=
+        Get_Item_Context (GVD_Canvas (Debugger.Data_Canvas));
       Entity      : Generic_Type_Access := Default_Entity;
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
@@ -379,7 +376,7 @@ package body Display_Items is
       Set_Valid (Item.Entity, Value_Found);
       Item.Id := Id;
 
-      Display_Items.Initialize (Item, Variable_Name, Auto_Refresh);
+      Display_Items.Initialize (Item, Context, Variable_Name, Auto_Refresh);
 
       if Link_From /= null then
          Item.Is_Dereference := True;
@@ -405,10 +402,13 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
+      Context       : Drawing_Context;
       Variable_Name : String;
       Auto_Refresh  : Boolean := True)
    is
       use type Gdk.GC.Gdk_GC;
+      Lang          : constant Language.Language_Access :=
+        Get_Language (Item.Debugger.Debugger);
    begin
       Item.Name          := new String'(Variable_Name);
       Item.Auto_Refresh  := Auto_Refresh;
@@ -424,12 +424,14 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Create_Drawing_Context (Item),
+         Context,
+         Lang,
+         Mode           => Item.Mode,
          Hide_Big_Items => Get_Pref (GVD_Prefs, Hide_Big_Items));
 
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
-         Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
+         Size_Request (Item.Entity.all, Context, Lang, Item.Mode);
       end if;
 
       Constraint_Size (Item.Entity.all);
@@ -489,7 +491,9 @@ package body Display_Items is
       Alloc_Width  : Gint;
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
-      Context : constant Box_Drawing_Context :=
+      Context     : constant Drawing_Context :=
+        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+      Box_Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
       W, H : Gint;
       Layout : Pango_Layout;
@@ -531,7 +535,7 @@ package body Display_Items is
       if Item.Auto_Refresh then
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Context.Thaw_Bg_GC,
+            GC     => Box_Context.Thaw_Bg_GC,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -541,7 +545,7 @@ package body Display_Items is
       else
          Draw_Rectangle
            (Pixmap (Item),
-            GC     => Context.Freeze_Bg_GC,
+            GC     => Box_Context.Freeze_Bg_GC,
             Filled => True,
             X      => 0,
             Y      => Title_Height,
@@ -551,7 +555,7 @@ package body Display_Items is
 
       Draw_Rectangle
         (Pixmap (Item),
-         GC     => Context.Grey_GC,
+         GC     => Box_Context.Grey_GC,
          Filled => True,
          X      => 0,
          Y      => 0,
@@ -570,7 +574,7 @@ package body Display_Items is
 
       Draw_Line
         (Pixmap (Item),
-         GC     => Context.Black_GC,
+         GC     => Box_Context.Black_GC,
          X1     => 0,
          Y1     => Title_Height,
          X2     => Alloc_Width - 1,
@@ -578,7 +582,7 @@ package body Display_Items is
 
       Draw_Layout
         (Drawable => Pixmap (Item),
-         GC       => Context.Black_GC,
+         GC       => Box_Context.Black_GC,
          X        => Spacing,
          Y        => Spacing,
          Layout   => Layout);
@@ -589,30 +593,35 @@ package body Display_Items is
 
       --  Second button
 
-      Set_Clip_Mask (Context.Black_GC, Context.Close_Mask);
+      Set_Clip_Mask (Box_Context.Black_GC, Box_Context.Close_Mask);
       Set_Clip_Origin
-        (Context.Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
-      Get_Size (Context.Close_Pixmap, W, H);
+        (Box_Context.Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
+      Get_Size (Box_Context.Close_Pixmap, W, H);
       Draw_Pixmap
         (Pixmap (Item),
-         GC     => Context.Black_GC,
-         Src    => Context.Close_Pixmap,
+         GC     => Box_Context.Black_GC,
+         Src    => Box_Context.Close_Pixmap,
          Xsrc   => 0,
          Ysrc   => 0,
          Xdest  => Alloc_Width - Buttons_Size - Spacing,
          Ydest  => Spacing,
          Width  => W,
          Height => H);
-      Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
-      Set_Clip_Origin (Context.Black_GC, 0, 0);
+      Set_Clip_Mask (Box_Context.Black_GC, Null_Pixmap);
+      Set_Clip_Origin (Box_Context.Black_GC, 0, 0);
 
       if Item.Entity /= null then
          Paint
            (Item.Entity.all,
-            Create_Drawing_Context (Item),
-            X => Border_Spacing,
-            Y => Title_Height + Border_Spacing);
+            Context,
+            Pixmap => Pixmap (Item),
+            Lang   => Get_Language (Item.Debugger.Debugger),
+            Mode   => Item.Mode,
+            X      => Border_Spacing,
+            Y      => Title_Height + Border_Spacing);
       end if;
+
+      Unref (Layout);
    end Update_Display;
 
    ----------------------
@@ -620,17 +629,19 @@ package body Display_Items is
    ----------------------
 
    procedure Update_Component
-     (Item : access Display_Item_Record'Class;
+     (Item      : access Display_Item_Record'Class;
       Component : Generic_Type_Access := null)
    is
-      Context : constant Box_Drawing_Context :=
+      Context     : constant Drawing_Context :=
+        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+      Box_Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
    begin
       if not Get_Selected (Component) then
          if Item.Auto_Refresh then
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Context.Thaw_Bg_GC,
+               GC     => Box_Context.Thaw_Bg_GC,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -640,7 +651,7 @@ package body Display_Items is
          else
             Draw_Rectangle
               (Pixmap (Item),
-               GC     => Context.Freeze_Bg_GC,
+               GC     => Box_Context.Freeze_Bg_GC,
                Filled => True,
                X      => Get_X (Component.all),
                Y      => Get_Y (Component.all),
@@ -651,9 +662,12 @@ package body Display_Items is
 
       Paint
         (Component.all,
-         Create_Drawing_Context (Item),
-         X => Get_X (Component.all),
-         Y => Get_Y (Component.all));
+         Context,
+         Pixmap => Pixmap (Item),
+         Lang   => Get_Language (Item.Debugger.Debugger),
+         Mode   => Item.Mode,
+         X      => Get_X (Component.all),
+         Y      => Get_Y (Component.all));
    end Update_Component;
 
    -----------------
@@ -767,7 +781,10 @@ package body Display_Items is
      (Item             : access Display_Item_Record'Class;
       Was_Visible      : Boolean := False;
       Hide_Big         : Boolean := False;
-      Redisplay_Canvas : Boolean := True) is
+      Redisplay_Canvas : Boolean := True)
+   is
+      Context     : constant Drawing_Context :=
+        Get_Item_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
    begin
       --  Update graphically.
       --  Note that we should not change the visibility status of item
@@ -775,7 +792,9 @@ package body Display_Items is
 
       Size_Request
         (Item.Entity.all,
-         Create_Drawing_Context (Item),
+         Context,
+         Lang           => Get_Language (Item.Debugger.Debugger),
+         Mode           => Item.Mode,
          Hide_Big_Items => not Was_Visible and then Hide_Big);
 
       Constraint_Size (Item.Entity.all);
@@ -1735,52 +1754,5 @@ package body Display_Items is
    begin
       return Item.Format;
    end Get_Format;
-
-   ----------------------------
-   -- Create_Drawing_Context --
-   ----------------------------
-
-   function Create_Drawing_Context
-     (Item : access Display_Item_Record'Class) return Drawing_Context is
-   begin
-      return Create_Drawing_Context
-        (Canvas => Item.Debugger.Data_Canvas,
-         Pixmap => Pixmap (Item),
-         Mode   => Item.Mode,
-         Lang   => Get_Language (Item.Debugger.Debugger));
-   end Create_Drawing_Context;
-
-   ----------------------------
-   -- Create_Drawing_Context --
-   ----------------------------
-
-   function Create_Drawing_Context
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mode   : Items.Display_Mode := Value;
-      Lang   : Language.Language_Access := null) return Drawing_Context
-   is
-      D : Drawing_Context := Get_Item_Context (GVD_Canvas (Canvas));
-   begin
-      D.Pixmap := Pixmap;
-      D.Mode := Mode;
-      D.Lang := Lang;
-      D.Layout := Create_Pango_Layout (Canvas);
-      return D;
-   end Create_Drawing_Context;
-
-   ------------------------------------
-   -- Create_Tooltip_Drawing_Context --
-   ------------------------------------
-
-   function Create_Tooltip_Drawing_Context
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap) return Drawing_Context
-   is
-      D : Drawing_Context := Get_Tooltip_Context (GVD_Canvas (Canvas));
-   begin
-      D.Pixmap := Pixmap;
-      return D;
-   end Create_Tooltip_Drawing_Context;
 
 end Display_Items;

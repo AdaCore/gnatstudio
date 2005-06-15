@@ -27,9 +27,6 @@ with Language;     use Language;
 with Pango.Layout; use Pango.Layout;
 
 with Basic_Types;         use Basic_Types;
-with Default_Preferences; use Default_Preferences;
-with GVD.Preferences;     use GVD.Preferences;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 with Items.Repeats; use Items.Repeats;
 
@@ -569,6 +566,9 @@ package body Items.Arrays is
    procedure Paint
      (Item    : in out Array_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
@@ -592,21 +592,21 @@ package body Items.Arrays is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+           (Pixmap, Context.GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
 
       if not Item.Visible then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Hidden_Pixmap,
+           (Pixmap, Context.GC, Context.Hidden_Pixmap,
             Context.Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.Selection_GC,
             Filled => True,
             X      => X,
@@ -615,40 +615,35 @@ package body Items.Arrays is
             Height => Item.Height);
       end if;
 
-      if Show_Type (Context.Mode)
+      if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
-         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Drawable => Context.Pixmap,
+           (Drawable => Pixmap,
             GC       => Context.GC,
             X        => X,
             Y        => Current_Y,
-            Layout   => Context.Layout);
-         Get_Pixel_Size (Context.Layout, W, H);
+            Layout   => Context.Type_Layout);
+         Get_Pixel_Size (Context.Type_Layout, W, H);
          Current_Y := Current_Y + H;
       end if;
 
-      if Show_Value (Context.Mode) then
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
-
+      if Show_Value (Mode) then
          for V in Item.Values'Range loop
             Set_Text
-              (Context.Layout, Index_String
+              (Context.Text_Layout, Index_String
                (Item, Item.Values (V).Index, Item.Num_Dimensions)
                & ASCII.HT & " => ");
             Draw_Layout
-              (Drawable => Context.Pixmap,
+              (Drawable => Pixmap,
                GC       => Context.GC,
                X        => X,
                Y        => Current_Y,
-               Layout   => Context.Layout);
+               Layout   => Context.Text_Layout);
 
             Paint
-              (Item.Values (V).Value.all, Context,
+              (Item.Values (V).Value.all, Context, Pixmap, Lang, Mode,
                X + Left_Border + Border_Spacing + Item.Index_Width,
                Current_Y);
             Current_Y :=
@@ -658,7 +653,7 @@ package body Items.Arrays is
 
       --  Draw a border
       Draw_Rectangle
-        (Context.Pixmap,
+        (Pixmap,
          Context.GC,
          Filled => False,
          X      => X,
@@ -674,6 +669,8 @@ package body Items.Arrays is
    procedure Size_Request
      (Item           : in out Array_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
@@ -699,34 +696,31 @@ package body Items.Arrays is
       end if;
 
       if Item.Visible then
-         if Show_Type (Context.Mode)
+         if Show_Type (Mode)
            and then Item.Type_Name /= null
          then
-            Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-            Set_Font_Description
-              (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
-            Get_Pixel_Size (Context.Layout, Total_Width, Total_Height);
+            Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
+            Get_Pixel_Size (Context.Type_Layout, Total_Width, Total_Height);
             Item.Type_Height := Total_Height;
          else
             Item.Type_Height := 0;
          end if;
 
-         if Show_Value (Context.Mode) then
+         if Show_Value (Mode) then
             Item.Index_Width := 20;  --  minimal width
-            Set_Font_Description
-              (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
             if Item.Values /= null then
                for V in Item.Values'Range loop
                   Set_Text
-                    (Context.Layout, Index_String
+                    (Context.Text_Layout, Index_String
                      (Item, Item.Values (V).Index, Item.Num_Dimensions)
                      & ASCII.HT & " => ");
-                  Get_Pixel_Size (Context.Layout, W, H);
+                  Get_Pixel_Size (Context.Text_Layout, W, H);
                   Item.Index_Width := Gint'Max (Item.Index_Width, W);
 
                   Size_Request
-                    (Item.Values (V).Value.all, Context, Hide_Big_Items);
+                    (Item.Values (V).Value.all, Context, Lang, Mode,
+                     Hide_Big_Items);
                   Total_Width  :=
                     Gint'Max (Total_Width, Item.Values (V).Value.Width);
                   Total_Height := Total_Height + Item.Values (V).Value.Height;
@@ -745,7 +739,7 @@ package body Items.Arrays is
 
          --  Hide big items for efficiency
          if Hide_Big_Items
-           and then Item.Height > Get_Pref (GVD_Prefs, Big_Item_Height)
+           and then Item.Height > Context.Big_Item_Height
          then
             Item.Visible := False;
          end if;

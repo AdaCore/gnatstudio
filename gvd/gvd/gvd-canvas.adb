@@ -35,6 +35,9 @@ with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Pango.Layout;        use Pango.Layout;
+with Pango.Enums;         use Pango.Enums;
+with Pango.Font;          use Pango.Font;
 
 with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.Handlers;        use Gtkada.Handlers;
@@ -436,6 +439,24 @@ package body GVD.Canvas is
       Set_Foreground (C.Item_Context.Selection_GC,
                       Get_Pref (GVD_Prefs, Selected_Item_Color));
       C.Tooltip_Context.Selection_GC := C.Item_Context.Selection_GC;
+
+      if C.Item_Context.Text_Layout /= null then
+         Unref (C.Item_Context.Text_Layout);
+         Unref (C.Item_Context.Type_Layout);
+      end if;
+
+      C.Item_Context.Line_Height := To_Pixels
+        (Get_Size (Get_Pref (GVD_Prefs, Default_Font)));
+
+      C.Item_Context.Big_Item_Height := Get_Pref (GVD_Prefs, Big_Item_Height);
+
+      C.Item_Context.Text_Layout := Create_Pango_Layout (Canvas);
+      Set_Font_Description
+        (C.Item_Context.Text_Layout, Get_Pref (GVD_Prefs, Default_Font));
+
+      C.Item_Context.Type_Layout := Create_Pango_Layout (Canvas);
+      Set_Font_Description
+        (C.Item_Context.Type_Layout, Get_Pref (GVD_Prefs, Type_Font));
 
       --  The drawing context for the boxes
 

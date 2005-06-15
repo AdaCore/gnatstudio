@@ -22,7 +22,6 @@ with Glib;                           use Glib;
 with Glib.Object;                    use Glib.Object;
 with Gdk.Color;                      use Gdk.Color;
 with Gdk.Pixbuf;                     use Gdk.Pixbuf;
-with Gdk.Pixmap;                     use Gdk.Pixmap;
 with Gdk.Types;                      use Gdk.Types;
 with Gdk.Types.Keysyms;              use Gdk.Types.Keysyms;
 with Gdk.Window;                     use Gdk.Window;
@@ -52,7 +51,6 @@ with Gtkada.MDI;                     use Gtkada.MDI;
 with Histories;                      use Histories;
 with List_Select_Pkg;                use List_Select_Pkg;
 with Display_Items;                  use Display_Items;
-with Items;                          use Items;
 with Breakpoints_Editor;             use Breakpoints_Editor;
 with GVD.Canvas;                     use GVD.Canvas;
 with GVD.Code_Editors;               use GVD.Code_Editors;
@@ -2460,8 +2458,6 @@ package body GVD_Module is
       Debugger  : Visual_Debugger;
       Kernel    : Kernel_Handle;
       Value     : Basic_Types.String_Access;
-      Context   : Items.Drawing_Context;
-      pragma Unreferenced (Context);
 
    begin
       Pixmap := null;
@@ -2500,9 +2496,6 @@ package body GVD_Module is
          end if;
 
          if Value.all /= "" then
-            Context := Create_Tooltip_Drawing_Context
-              (Debugger.Data_Canvas, Null_Pixmap);
-
             Create_Pixmap_From_Text
               (Text       => Value.all,
                Font       =>

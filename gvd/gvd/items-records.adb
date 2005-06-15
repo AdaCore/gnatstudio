@@ -22,15 +22,10 @@ with GNAT.IO;  use GNAT.IO;
 
 with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
-with Pango.Enums;  use Pango.Enums;
-with Pango.Font;   use Pango.Font;
 with Pango.Layout; use Pango.Layout;
 
 with Language;               use Language;
 with Basic_Types;            use Basic_Types;
-with Default_Preferences;    use Default_Preferences;
-with GVD.Preferences;        use GVD.Preferences;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body Items.Records is
 
@@ -387,6 +382,9 @@ package body Items.Records is
    procedure Paint
      (Item    : in out Record_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Gint := 0)
    is
       procedure Print_Field_Name (F : Integer);
@@ -404,14 +402,14 @@ package body Items.Records is
       procedure Print_Field_Name (F : Integer) is
          use Gdk;
       begin
-         Set_Text (Context.Layout,
+         Set_Text (Context.Text_Layout,
                    Item.Fields (F).Name.all & ASCII.HT & " => ");
          Draw_Layout
-           (Drawable => Context.Pixmap,
+           (Drawable => Pixmap,
             GC       => Context.GC,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
-            Layout   => Context.Layout);
+            Layout   => Context.Text_Layout);
       end Print_Field_Name;
 
       W, H : Gint;
@@ -421,7 +419,7 @@ package body Items.Records is
 
       if not Item.Valid then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Unknown_Pixmap,
+           (Pixmap, Context.GC, Context.Unknown_Pixmap,
             Context.Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
@@ -434,14 +432,14 @@ package body Items.Records is
 
       if not Item.Visible then
          Display_Pixmap
-           (Context.Pixmap, Context.GC, Context.Hidden_Pixmap,
+           (Pixmap, Context.GC, Context.Hidden_Pixmap,
             Context.Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.Selection_GC,
             Filled => True,
             X      => X,
@@ -450,31 +448,26 @@ package body Items.Records is
             Height => Item.Height);
       end if;
 
-      if Show_Type (Context.Mode)
+      if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
-         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
          Draw_Layout
-           (Drawable => Context.Pixmap,
+           (Drawable => Pixmap,
             GC       => Context.GC,
             X        => X + Left_Border + Item.Border_Spacing,
             Y        => Current_Y,
-            Layout   => Context.Layout);
-         Get_Pixel_Size (Context.Layout, W, H);
+            Layout   => Context.Type_Layout);
+         Get_Pixel_Size (Context.Type_Layout, W, H);
          Current_Y := Current_Y + H;
       end if;
-
-      Set_Font_Description
-        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
       for F in Item.Fields'Range loop
          --  not a variant part ?
 
          if Item.Fields (F).Value /= null then
             Paint
-              (Item.Fields (F).Value.all, Context,
+              (Item.Fields (F).Value.all, Context, Pixmap, Lang, Mode,
                X + Left_Border + Item.Border_Spacing
                + Item.Gui_Fields_Width,
                Current_Y);
@@ -489,8 +482,8 @@ package body Items.Records is
             for V in Item.Fields (F).Variant_Part'Range loop
                if Item.Fields (F).Variant_Part (V).Valid then
                   Paint
-                    (Item.Fields (F).Variant_Part (V).all, Context,
-                     X + Left_Border + Item.Border_Spacing
+                    (Item.Fields (F).Variant_Part (V).all, Context, Pixmap,
+                     Lang, Mode, X + Left_Border + Item.Border_Spacing
                      + Item.Gui_Fields_Width,
                      Current_Y);
                   if Item.Fields (F).Variant_Part (V).Num_Fields > 0 then
@@ -506,7 +499,7 @@ package body Items.Records is
       --  Draw a border
       if Item.Border_Spacing /= 0 then
          Draw_Rectangle
-           (Context.Pixmap,
+           (Pixmap,
             Context.GC,
             Filled => False,
             X      => X,
@@ -523,12 +516,13 @@ package body Items.Records is
    procedure Size_Request
      (Item           : in out Record_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
       H : Gint;
       Largest_Name : String_Access := null;
-      Line_Height  : Gint;
 
    begin
       if not Item.Valid then
@@ -545,25 +539,17 @@ package body Items.Records is
          return;
       end if;
 
-      if Show_Type (Context.Mode)
+      if Show_Type (Mode)
         and then Item.Type_Name /= null
       then
-         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
-         Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
-         Get_Pixel_Size (Context.Layout, Total_Width, Total_Height);
+         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
+         Get_Pixel_Size (Context.Type_Layout, Total_Width, Total_Height);
          Item.Type_Height := Total_Height;
       else
          Item.Type_Height := 0;
       end if;
 
-      Set_Font_Description
-        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
-
       if Item.Visible then
-         Line_Height := To_Pixels
-           (Get_Size (Get_Pref (GVD_Prefs, Default_Font)));
-
          for F in Item.Fields'Range loop
             if Largest_Name = null
               or else Item.Fields (F).Name.all'Length > Largest_Name'Length
@@ -575,7 +561,8 @@ package body Items.Records is
 
             if Item.Fields (F).Value /= null then
                Size_Request
-                 (Item.Fields (F).Value.all, Context, Hide_Big_Items);
+                 (Item.Fields (F).Value.all, Context, Lang, Mode,
+                  Hide_Big_Items);
 
                Total_Width  :=
                  Gint'Max (Total_Width, Item.Fields (F).Value.Width);
@@ -583,7 +570,7 @@ package body Items.Records is
                --  Keep at least enough space to print the field name
 
                Item.Fields (F).Value.Height := Gint'Max
-                 (Item.Fields (F).Value.Height, Line_Height);
+                 (Item.Fields (F).Value.Height, Context.Line_Height);
                Total_Height := Total_Height + Item.Fields (F).Value.Height;
             end if;
 
@@ -593,8 +580,8 @@ package body Items.Records is
                for V in Item.Fields (F).Variant_Part'Range loop
                   if Item.Fields (F).Variant_Part (V).Valid then
                      Size_Request
-                       (Item.Fields (F).Variant_Part (V).all, Context,
-                        Hide_Big_Items);
+                       (Item.Fields (F).Variant_Part (V).all, Context, Lang,
+                        Mode, Hide_Big_Items);
                      Total_Width  := Gint'Max
                        (Total_Width,
                         Item.Fields (F).Variant_Part (V).Width);
@@ -609,12 +596,13 @@ package body Items.Records is
            (Item.Fields'Length - 1) * Line_Spacing;
 
          if Largest_Name = null then
-            Set_Text (Context.Layout, " => ");
+            Set_Text (Context.Text_Layout, " => ");
          else
-            Set_Text (Context.Layout, Largest_Name.all & ASCII.HT & " => ");
+            Set_Text
+              (Context.Text_Layout, Largest_Name.all & ASCII.HT & " => ");
          end if;
 
-         Get_Pixel_Size (Context.Layout, Item.Gui_Fields_Width, H);
+         Get_Pixel_Size (Context.Text_Layout, Item.Gui_Fields_Width, H);
 
          --  Keep enough space for the border (Border_Spacing on each side)
          Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
@@ -622,7 +610,7 @@ package body Items.Records is
          Item.Height := Total_Height + 2 * Item.Border_Spacing;
 
          if Hide_Big_Items
-           and then Item.Height > Get_Pref (GVD_Prefs, Big_Item_Height)
+           and then Item.Height > Context.Big_Item_Height
          then
             Item.Visible := False;
          end if;

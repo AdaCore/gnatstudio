@@ -26,8 +26,6 @@ with GVD.Process;
 with Gdk.Event;
 with Basic_Types;
 with Gtkada.Canvas;
-with Language;
-with Gdk.Pixmap;
 with Debugger;
 
 package Display_Items is
@@ -175,23 +173,6 @@ package Display_Items is
    --  It also warns the canvas that the item has changed.
    --  If Hide_Big_Items, then components higher than a specific limit are
    --  forced to hidden state.
-
-   function Create_Drawing_Context
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mode   : Items.Display_Mode := Items.Value;
-      Lang   : Language.Language_Access := null) return Items.Drawing_Context;
-   --  Return a graphic context that can be used to display an item.
-   --  The item will be drawn on Pixmap. Mode indicates which information
-   --  should be displayed, and Lang is provided to get type information
-   --  when needed (it can null if only the Value is displayed).
-   --  The fonts are automatically scrolled to match the current zoom level.
-
-   function Create_Tooltip_Drawing_Context
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap) return Items.Drawing_Context;
-   --  Return a context suitable to use to display tooltips. The fonts are
-   --  not scaled with the zoom level.
 
 private
 

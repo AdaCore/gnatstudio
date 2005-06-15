@@ -103,11 +103,11 @@ package Items is
       Hidden_Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Hidden_Mask    : Gdk.Bitmap.Gdk_Bitmap;
 
-      Layout         : Pango.Layout.Pango_Layout;
+      Text_Layout    : Pango.Layout.Pango_Layout;
+      Type_Layout    : Pango.Layout.Pango_Layout;
 
-      Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
-      Mode         : Display_Mode;
-      Lang         : Language.Language_Access;
+      Line_Height     : Glib.Gint;
+      Big_Item_Height : Glib.Gint;
    end record;
    --  This structure contains all the information needed to draw items on
    --  the canvas.
@@ -143,6 +143,9 @@ package Items is
    procedure Paint
      (Item    : in out Generic_Type;
       Context : Drawing_Context;
+      Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+      Lang    : Language.Language_Access;
+      Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0) is abstract;
    --  Paint the item on the pixmap, that will be used to show the item in the
    --  canvas.
@@ -154,6 +157,8 @@ package Items is
    procedure Size_Request
      (Item           : in out Generic_Type;
       Context        : Drawing_Context;
+      Lang           : Language.Language_Access;
+      Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False) is abstract;
    --  Compute the size that Item needs to display itself on the screen.
    --  The two fields Width and Height are initialized by this function.
@@ -289,7 +294,7 @@ package Items is
 
    function Get_Type_Name
      (Item    : access Generic_Type;
-      Context : Drawing_Context)
+      Lang    : Language.Language_Access)
      return String;
    --  Return the type of Item.
    --  If the type has not been evaluated yet (lazy evaluation), this is done

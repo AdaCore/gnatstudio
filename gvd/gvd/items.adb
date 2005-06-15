@@ -221,7 +221,7 @@ package body Items is
 
    function Get_Type_Name
      (Item    : access Generic_Type;
-      Context : Drawing_Context)
+      Lang    : Language.Language_Access)
      return String is
    begin
       if Item.Type_Name = null then
@@ -237,7 +237,7 @@ package body Items is
          declare
             Entity_Start, Default_Start : Positive;
             Debugger : constant Debugger_Access :=
-              Get_Debugger (Language_Debugger_Access (Context.Lang));
+              Get_Debugger (Language_Debugger_Access (Lang));
          begin
             Entity_Start := Item.Type_Name'First + Unknown_Type_Prefix'Length;
 
