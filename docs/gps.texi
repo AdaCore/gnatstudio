@@ -10248,6 +10248,24 @@ context is specified in hide_in, then the widget to edit this
 attribute will not be shown. The goal is to keep the graphical
 interface simple.
 
+@item @code{disable_if_not_set} (a boolean, default value: "false")
+
+If this attribute is set to "true", the editor for this attribute will be
+greyed out if the attribute is not explicitly set in the project. In most cases,
+this is not needed, since the default value of the attribute can be used to leave
+the editor active at all time. However, when the value of the attribute is
+automatically computed depending on other attributes, the default value cannot be
+easily specified in the XML file, and in this case it might be easier to grey out
+the editor. An extra check box is displayed next to the attribute so that the user
+can choose to activate the editor and add the attribute to the project.
+
+@item @code{disable} (a space-separated list of attribute names, default: "")
+
+This is a list of attribute whose editor should be greyed out if the current
+attribute is specified. This only works if both the current attribute and the 
+referenced attributes have their @code{disable_if_not_set} attribute set to "true".
+This can be used to have mutually exclusive attributes present in the editor
+
 @end itemize
 
 
@@ -10277,6 +10295,11 @@ project's location, where @code{"."} will represent the project's directory).
 As a special case, if default is surrounded by parenthesis, no normalization
 takes place, so that you can later on test whether the user is still using
 the default value or not).
+
+A special case if when @code{default} is set to "project source files". In this
+case, this is automatically replaced by the known list of source files for the
+project. This doesn't work from the project wizard, since the list of source files
+hasn't been computed at that stage.
 
 @item @code{type} (one of "", "file", "directory", default "")
 
