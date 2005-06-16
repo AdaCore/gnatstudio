@@ -25,14 +25,14 @@ with JNI; use JNI;
 
 package GDT.JNI_Functions is
 
-   function Java_GpsJni_analyzeAdaSourceInt
+   function Java_GPSJni_analyzeAdaSourceInt
      (Env : JNIEnv; This : Jobject; Str : Jstring) return Jint;
    pragma Export
      (C,
       Java_GpsJni_analyzeAdaSourceInt,
-      "Java_com_adacore_gdt_study_gpsjni_GpsJni_analyseAdaSourceInt");
+      "Java_com_adacore_gdt_study_gpsjni_GPSJni_analyseAdaSourceInt");
 
-   procedure Java_GpsJni_indentAdaBufferInt
+   procedure Java_GPSJni_indentAdaBufferInt
      (Env               : JNIEnv;
       This              : Jobject;
       Buffer            : Jstring;
@@ -44,7 +44,7 @@ package GDT.JNI_Functions is
    pragma Export
      (C,
       Java_GpsJni_indentAdaBufferInt,
-      "Java_com_adacore_gdt_study_gpsjni_GpsJni_indentAdaBufferInt");
+      "Java_com_adacore_gdt_study_gpsjni_GPSJni_indentAdaBufferInt");
 
    function Java_ConstructAccess_getSlocStartInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;

@@ -65,7 +65,7 @@ package body GDT.JNI_Functions is
    -- Java_GpsJni_parseConstructsInt --
    ------------------------------------
 
-   function Java_GpsJni_analyzeAdaSourceInt
+   function Java_GPSJni_analyzeAdaSourceInt
      (Env : JNIEnv;
       This : Jobject;
       Str : Jstring)
@@ -88,13 +88,13 @@ package body GDT.JNI_Functions is
       ReleaseStringUTFChars (Env, Str, C_Str);
 
       return Jint (To_Integer (Constructs_Stored.all'Address));
-   end Java_GpsJni_analyzeAdaSourceInt;
+   end Java_GPSJni_analyzeAdaSourceInt;
 
    ------------------------------------
    -- Java_GpsJni_indentAdaBufferInt --
    ------------------------------------
 
-   procedure Java_GpsJni_indentAdaBufferInt
+   procedure Java_GPSJni_indentAdaBufferInt
      (Env               : JNIEnv;
       This              : Jobject;
       Buffer            : Jstring;
@@ -154,7 +154,7 @@ package body GDT.JNI_Functions is
 
       ReleaseStringUTFChars (Env, Callback_Function, C_Function);
       Free (C_Profile);
-   end Java_GpsJni_indentAdaBufferInt;
+   end Java_GPSJni_indentAdaBufferInt;
 
    ------------------------------------------
    -- Java_ConstructAccess_getSlocStartInt --
