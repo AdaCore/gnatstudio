@@ -252,4 +252,29 @@ private
    procedure Destroy (Id : in out Source_Editor_Module_Record);
    --  Free the memory used by the module.
 
+   ----------
+   -- Misc --
+   ----------
+   --  These utilities are needed by child packages
+
+   function Find_Mark (Identifier : String) return Mark_Identifier_Record;
+   --  Find the mark corresponding to Identifier, or return an empty
+   --  record.
+
+   function Open_File
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : VFS.Virtual_File := VFS.No_File;
+      Create_New : Boolean := True;
+      Focus      : Boolean := True;
+      Force      : Boolean := False;
+      Position   : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Default) return Source_Box;
+   --  Open a file and return the handle associated with it.
+   --  If Add_To_MDI is set to True, the box will be added to the MDI window.
+   --  If Focus is True, the box will be raised if it is in the MDI.
+   --  See Create_File_Exitor.
+   --  Position indicates the position to give to the editor in the MDI.
+   --  If Force is true, then the file is reloaded without asking confirmation
+   --  from the user
+
 end Src_Editor_Module;
