@@ -902,18 +902,28 @@ package body Project_Properties is
       Project_Changed    : in out Boolean)
    is
       Relative : constant Boolean :=
-                   Get_Paths_Type (Project) = Projects.Relative
-                 or else (Get_Paths_Type (Project) = From_Pref
-                          and then Get_Pref
-                            (Editor.Kernel, Generate_Relative_Paths));
+         Get_Paths_Type (Project) = Projects.Relative
+         or else (Get_Paths_Type (Project) = From_Pref
+                  and then Get_Pref (Editor.Kernel, Generate_Relative_Paths));
       Iter     : Gtk_Tree_Iter;
    begin
       if Editor.Ent /= null then
-         if Relative
+         Trace (Me, "MANU Saving attribute, Relative="
+                & Relative'Img);
+         if Editor.Attribute.Base_Name_Only then
+            Update_Attribute_Value
+              (Attr               => Editor.Attribute,
+               Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Value              => Base_Name (Get_Text (Editor.Ent)),
+               Project_Changed    => Project_Changed);
+
+         elsif Relative
            and then Editor.Attribute.Non_Index_Type.Typ /=
              Attribute_As_String
-             and then not Editor.Attribute.Base_Name_Only
          then
+            Trace (Me, "MANU Convert to relative "
+                   & Editor.Attribute.Name.all);
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
@@ -922,6 +932,7 @@ package body Project_Properties is
                  (Get_Text (Editor.Ent), Get_Text (Editor.Path_Widget)),
                Entry_Value        => Get_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
+
          else
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
@@ -4011,7 +4022,6 @@ package body Project_Properties is
          Project_Renamed_Or_Moved : Boolean)
          return Boolean
       is
-         Changed  : Boolean := False;
          Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
       begin
          --  If we are moving the project through the GUI, then we need to
@@ -4021,23 +4031,19 @@ package body Project_Properties is
             Relative := False;
          end if;
 
-         --  Convert the paths if necessary
+         --  Memorize the setup for relative paths. We do not do the path
+         --  conversion ourselves, since each attribute editor will take into
+         --  account this setting when it saves the project.
+
          if Relative /= Paths_Are_Relative (Kernel, Project) then
             if Relative then
                Set_Paths_Type (Project, Projects.Relative);
             else
                Set_Paths_Type (Project, Absolute);
             end if;
-
-            Changed := Convert_Paths (Project                => Project,
-                                      Use_Relative_Paths     => Relative,
-                                      Update_With_Statements => True);
-            if Changed then
-               Trace (Me, "Paths have changed relative/absolute");
-            end if;
          end if;
 
-         return Changed;
+         return False;
       end Process_General_Page;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -4152,6 +4158,12 @@ package body Project_Properties is
                         Free (Curr);
                      end;
 
+                     --  First generate for the global page, so that the
+                     --  relative paths option is updated appropriately
+                     Changed := Changed
+                       or Process_General_Page
+                        (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
+
                      if Editor.XML_Pages /= null then
                         for X in Editor.XML_Pages'Range loop
                            Tmp_Project := Current (Prj_Iter);
@@ -4168,10 +4180,6 @@ package body Project_Properties is
                            end if;
                         end loop;
                      end if;
-
-                     Changed := Changed
-                       or Process_General_Page
-                        (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
 
                      --  Modify each projects
 
