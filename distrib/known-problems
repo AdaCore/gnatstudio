@@ -37,6 +37,11 @@ Known Problems fixed in GPS 3.0.1
   Problem:    No gprmake is distributed with GPS 3.0.0
   Workaround: Use the gprmake that comes with GNAT or with GPS 2.1.1
 
+- E531-023 Crash when displaying current value of an array in the debugger
+  Problem:    If you select "Display <var>" while in the debugger, and the structure
+              contains arrays or strings with ASCII.NUL characters, GPS crashes
+  Workaround: Use "Print <var>" instead
+
 - E525-008 Endless query for password when using remote files
   Problem:    If you enter an incorrect user name or press cancel in the dialog
               when accessing a remote file, GPS will keep asking for your
