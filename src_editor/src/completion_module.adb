@@ -539,7 +539,7 @@ package body Completion_Module is
                return Commands.Success;
             end if;
          end;
-      else
+      elsif M.Buffer /= null then
          Extend_Completions_List;
       end if;
 
@@ -550,7 +550,8 @@ package body Completion_Module is
       end if;
 
       Get_Iter_At_Mark (M.Insert_Buffer, Prev, M.Word_Start_Mark);
-      Get_Iter_At_Mark (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
+      Get_Iter_At_Mark
+        (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
       Create
         (Shell_Command,
          M.Insert_Buffer,
