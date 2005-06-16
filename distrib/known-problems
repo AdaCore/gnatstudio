@@ -7,11 +7,6 @@ Known Problems fixed in GPS 3.1.0
   Workaround: Edit projects.xml in the GPS installation to remove the base_file_name
               attribute
 
-- E531-023 Crash when displaying current value of an array in the debugger
-  Problem:    If you select "Display <var>" while in the debugger, and the structure
-              contains arrays or strings with ASCII.NUL characters, GPS crashes
-  Workaround: Use "Print <var>" instead
-
 - E525-012 Pasting in the consoles
   Problem:    When using the system-defined method for pasting the clipboard
               (ie ctrl-v under Windows, or middle-button press under Unix) in
