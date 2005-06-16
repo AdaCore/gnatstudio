@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.IO;         use GNAT.IO;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib;            use Glib;
 with Gdk.Drawable;    use Gdk.Drawable;
@@ -46,6 +47,38 @@ package body Items.Simples is
       GC      : Gdk_GC;
       X, Y    : Gint := 0);
    --  Paint a simple type or one of its children
+
+   function Quote_Non_Printable_Characters (Str : String) return String;
+   --  Protect non-printable characters in the string
+
+   ------------------------------------
+   -- Quote_Non_Printable_Characters --
+   ------------------------------------
+
+   function Quote_Non_Printable_Characters (Str : String) return String is
+      Output : String (1 .. Str'Length * 4);
+      Index  : Integer := Output'First;
+   begin
+      for S in Str'Range loop
+         if not Is_Graphic (Str (S)) then
+            declare
+               Img : constant String :=
+                 Integer'Image (Character'Pos (Str (S)));
+            begin
+               Output (Index) := '[';
+               Output (Index + 1) := Img (Img'Last - 1);
+               Output (Index + 2) := Img (Img'Last);
+               Output (Index + 3) := ']';
+               Index := Index + 4;
+            end;
+         else
+            Output (Index) := Str (S);
+            Index := Index + 1;
+         end if;
+      end loop;
+      return Output (Output'First .. Index - 1);
+   end Quote_Non_Printable_Characters;
+
 
    ---------------------
    -- New_Simple_Type --
@@ -78,7 +111,7 @@ package body Items.Simples is
          Free (Item.Value);
       end if;
 
-      Item.Value := new String'(Value);
+      Item.Value := new String'(Quote_Non_Printable_Characters (Value));
       Item.Valid := True;
    end Set_Value;
 
