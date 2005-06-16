@@ -205,6 +205,30 @@
         <string type="directory" default="." />
     </project_attribute>
 
+    <!--  Source files -->
+
+    <project_attribute
+        name="source_list_file"
+        editor_page="Source files"
+        description="Name of a file that contains the list of source files for this project. The names should appear one per line. The names should not include any directory information, since this is taken from the list of source directories. This attribute is ignored if an explicit list of sources is given."
+        disable_if_not_set="true"
+        disable="source_files"
+        hide_in="wizard"
+        label="Source list file">
+        <string type="file" default="" />
+    </project_attribute>
+
+    <project_attribute
+        name="source_files"
+        editor_page="Source files"
+        list="true"
+        base_name_only="true"
+        disable_if_not_set="true"
+        disable="source_list_file"
+        hide_in="wizard"
+        description="List of source files for this project. These are the base name of the files, and should not include any directory information. This attribute is not compatible with Source List File.">
+        <string type="file" default="project source files" />
+    </project_attribute>
 
     <!--  Object directories -->
 
