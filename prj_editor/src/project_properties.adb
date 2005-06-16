@@ -151,6 +151,17 @@ package body Project_Properties is
       Base_Name_Only       : Boolean := False;
       Case_Sensitive_Index : Boolean := False;
       Editor               : Attribute_Editor;
+
+      Disable_If_Not_Set   : Boolean := False;
+      --  If True, the project attribute needs to be explicitly specified by
+      --  the user, or the editor is greyed out (a check button is also shown
+      --  to allow the edition of the attribute)
+
+      Disable              : GNAT.OS_Lib.String_Access;
+      --  Space-separated list of attributes that are disabled when this
+      --  attribute is set. This assumes that Disable_If_Not_Set is True,
+      --  otherwise nothing happens.
+
       case Indexed is
          when True =>
             Index_Attribute : GNAT.OS_Lib.String_Access;
@@ -237,6 +248,10 @@ package body Project_Properties is
       Project   : Project_Type;
       Attribute : Attribute_Description_Access;
       --  Description of the attribute
+
+      Active_Check : Gtk_Check_Button;
+      --  Set if the editor is not always activated, and this indicates the
+      --  state of the editor in this case.
    end record;
 
    procedure Create_Widget_Attribute
@@ -497,6 +512,11 @@ package body Project_Properties is
      (Editor : Properties_Editor) return GNAT.OS_Lib.String_List;
    --  Return the list of languages currently set in the editor
 
+   procedure Toggle_Sensitive
+     (Check  : access Gtk_Widget_Record'Class;
+      Attr   : Attribute_Description_Access);
+   --  Toggle the sensitivity state of an editor
+
    function Create_General_Page
      (Editor  : access Properties_Editor_Record'Class;
       Project : Project_Type;
@@ -552,6 +572,20 @@ package body Project_Properties is
    --  what is set in the project or the editor currently. This is used to
    --  reflect the value the attribute has if not specified in the project.
    --  This implies Ignore_Editor
+
+   function Attribute_Exists
+     (Attr               : Attribute_Description_Access;
+      Project            : Project_Type;
+      Attribute_Index    : String := "") return Boolean;
+   --  Return True if Attr was explicitly defined in Project.
+
+   procedure Delete_Attribute_Value
+     (Attr               : Attribute_Description_Access;
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project_Changed    : in out Boolean;
+      Attribute_Index    : String := "");
+   --  Remove the declaration for Attr in Project.
 
    procedure Customize
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -650,6 +684,79 @@ package body Project_Properties is
          Unchecked_Free (Ed.Current_Values);
       end if;
    end On_Indexed_Editor_Destroy;
+
+   ----------------------
+   -- Attribute_Exists --
+   ----------------------
+
+   function Attribute_Exists
+     (Attr               : Attribute_Description_Access;
+      Project            : Project_Type;
+      Attribute_Index    : String := "") return Boolean
+   is
+      Lower_Attribute_Index : String := Attribute_Index;
+      Result : Boolean;
+   begin
+      if not Attr.Case_Sensitive_Index then
+         To_Lower (Lower_Attribute_Index);
+      end if;
+
+      if not Attr.Is_List then
+         Result := Get_Attribute_Value
+           (Project   => Project,
+            Attribute => Build (Package_Name   => Attr.Pkg.all,
+                                Attribute_Name => Attr.Name.all),
+            Default   => "@@",
+            Index     => Lower_Attribute_Index) /= "@@";
+         return Result;
+
+      else
+         declare
+            Current : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
+              (Project   => Project,
+               Attribute => Build (Package_Name   => Attr.Pkg.all,
+                                   Attribute_Name => Attr.Name.all),
+               Index     => Lower_Attribute_Index);
+         begin
+            Result := Current'Length /= 0;
+            Free (Current);
+            return Result;
+         end;
+      end if;
+   end Attribute_Exists;
+
+   ----------------------------
+   -- Delete_Attribute_Value --
+   ----------------------------
+
+   procedure Delete_Attribute_Value
+     (Attr               : Attribute_Description_Access;
+      Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Project_Changed    : in out Boolean;
+      Attribute_Index    : String := "")
+   is
+      Attribute             : constant Attribute_Pkg :=
+        Build (Attr.Pkg.all, Attr.Name.all);
+      Lower_Attribute_Index : String := Attribute_Index;
+   begin
+      if not Attr.Case_Sensitive_Index then
+         To_Lower (Lower_Attribute_Index);
+      end if;
+
+      if Attribute_Exists (Attr, Project, Attribute_Index) then
+         Trace (Me, "Project changed since attribute "
+                & Attr.Pkg.all & "'" & Attr.Name.all
+                & " was removed");
+
+         Delete_Attribute
+           (Project            => Project,
+            Scenario_Variables => Scenario_Variables,
+            Attribute          => Attribute,
+            Attribute_Index    => Lower_Attribute_Index);
+         Project_Changed := True;
+      end if;
+   end Delete_Attribute_Value;
 
    ----------------------------
    -- Update_Attribute_Value --
@@ -1379,6 +1486,9 @@ package body Project_Properties is
         and then (N.Child.Tag.all = "index"
                   or else N.Child.Tag.all = "specialized_index");
       Hide_In : constant String := Get_Attribute (N, "hide_in");
+      Disable_If_Not_Set : constant String :=
+        Get_Attribute (N, "disable_if_not_set", "false");
+      Disable : constant String := Get_Attribute (N, "disable");
       Child   : Node_Ptr;
 
       procedure Parse_Indexed_Type (Value : String);
@@ -1453,6 +1563,9 @@ package body Project_Properties is
       A.Base_Name_Only := Base = "true" or else Omit = "1";
       A.Case_Sensitive_Index :=
         Case_Sensitive_Index = "true" or else Case_Sensitive_Index = "1";
+      A.Disable_If_Not_Set := Disable_If_Not_Set = "true"
+        or else Disable_If_Not_Set = "1";
+      A.Disable := new String'(Disable);
 
       if Indexed then
          Child := N.Child;
@@ -2892,6 +3005,23 @@ package body Project_Properties is
 
             if Attr_Type.Default.all = "" then
                return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+            elsif Attr_Type.Default.all = "project source files" then
+               if Project = Projects.No_Project then
+                  return GNAT.OS_Lib.String_List'(1 .. 0 => null);
+               else
+                  declare
+                     Files : File_Array_Access :=
+                       Get_Source_Files (Project, Recursive => False);
+                     Result : GNAT.OS_Lib.String_List (Files'Range);
+                  begin
+                     for R in Result'Range loop
+                        Result (R) := new String'(Full_Name (Files (R)).all);
+                     end loop;
+                     Unchecked_Free (Files);
+                     return Result;
+                  end;
+               end if;
+
             else
                --  Workaround fatal crash in GNAT
                declare
@@ -3237,9 +3367,12 @@ package body Project_Properties is
    is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
+      Vbox   : Gtk_Box;
       Align  : Gtk_Alignment;
       Event  : Gtk_Event_Box;
+      Check  : Gtk_Check_Button;
       Find   : Natural;
+      Exists : Boolean := True;
    begin
       if Attr.Hide_In /= null then
          Find := Index (Attr.Hide_In.all, Context);
@@ -3257,6 +3390,25 @@ package body Project_Properties is
 
       Gtk_New_Hbox (Box, Homogeneous => False);
 
+      if Attr.Label /= null or else Attr.Disable_If_Not_Set then
+         Gtk_New_Hbox (Vbox, Homogeneous => False);
+         Pack_Start (Box, Vbox, Expand => False, Fill => False);
+      end if;
+
+      if Attr.Disable_If_Not_Set then
+         Exists := Attribute_Exists (Attr, Project, Attribute_Index => "");
+
+         Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
+                  Xscale => 0.0, Yscale => 0.0);
+         Set_Border_Width (Align, 0);
+         Pack_Start (Vbox, Align, Expand => False, Fill => False);
+         Gtk_New (Check, "");
+         Add (Align, Check);
+         Set_Active (Check, Exists);
+         Attribute_Handler.Connect
+           (Check, "toggled", Toggle_Sensitive'Access, Attr);
+      end if;
+
       if Attr.Label /= null then
          --  Put the label inside an event box, so that we can associate it
          --  with a tooltip. Put the event box inside the box, so that the
@@ -3266,7 +3418,7 @@ package body Project_Properties is
          Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
                   Xscale => 0.0, Yscale => 0.0);
          Set_Border_Width (Align, 0);
-         Pack_Start (Box, Align, Expand => False, Fill => True);
+         Pack_Start (Vbox, Align, Expand => False, Fill => False);
          Gtk_New (Event);
          Add (Align, Event);
          Gtk_New (Label, Attr.Label.all & ':');
@@ -3304,11 +3456,85 @@ package body Project_Properties is
          then
             Set_Tip (Get_Tooltips (Kernel), Attr.Editor, Attr.Description.all);
          end if;
+
+         Attr.Editor.Active_Check := Check;
+         Set_Sensitive (Attr.Editor, Exists);
       end if;
 
       Widget := Gtk_Widget (Box);
       Expandable := Attr.Indexed or else Attr.Is_List;
    end Create_Widget_Attribute;
+
+   ----------------------
+   -- Toggle_Sensitive --
+   ----------------------
+
+   procedure Toggle_Sensitive
+     (Check  : access Gtk_Widget_Record'Class;
+      Attr   : Attribute_Description_Access)
+   is
+      Active : constant Boolean := Get_Active (Gtk_Check_Button (Check));
+      Pkg_Start, Pkg_End, Name_Start, Index : Natural;
+      Attr2  : Attribute_Description_Access;
+      Page   : Attribute_Page;
+   begin
+      if Attr.Editor /= null
+        and then Active /= Is_Sensitive (Attr.Editor)
+      then
+         Set_Sensitive (Attr.Editor, Active);
+
+         if Active and then Attr.Disable /= null then
+            Index := Attr.Disable'First;
+            while Index <= Attr.Disable'Last loop
+               Pkg_Start := Index;
+               while Index <= Attr.Disable'Last
+                 and then Attr.Disable (Index) /= ' '
+                 and then Attr.Disable (Index) /= '.'
+               loop
+                  Index := Index + 1;
+               end loop;
+
+               if Index <= Attr.Disable'Last
+                 and then Attr.Disable (Index) = '.'
+               then
+                  Name_Start := Index + 1;
+                  Pkg_End    := Index - 1;
+
+                  while Index <= Attr.Disable'Last
+                    and then Attr.Disable (Index) /= ' '
+                  loop
+                     Index := Index + 1;
+                  end loop;
+
+               else
+                  Name_Start := Pkg_Start;
+                  Pkg_End    := Pkg_Start - 1;
+               end if;
+
+               for P in Properties_Module_ID.Pages'Range loop
+                  Page := Properties_Module_ID.Pages (P);
+                  for S in Page.Sections'Range loop
+                     for A in Page.Sections (S).Attributes'Range loop
+                        Attr2 := Page.Sections (S).Attributes (A);
+                        if Attr2.Name.all =
+                          Attr.Disable (Name_Start .. Index - 1)
+                          and then Attr2.Pkg.all =
+                            Attr.Disable (Pkg_Start  .. Pkg_End)
+                        then
+                           if Attr2.Editor /= null
+                             and then Attr2.Editor.Active_Check /= null
+                           then
+                              Set_Active (Attr2.Editor.Active_Check, False);
+                           end if;
+                           exit;
+                        end if;
+                     end loop;
+                  end loop;
+               end loop;
+            end loop;
+         end if;
+      end if;
+   end Toggle_Sensitive;
 
    ----------------
    -- Initialize --
@@ -3514,9 +3740,18 @@ package body Project_Properties is
             if Attr.Editor = null then
                Trace (Me, "No editor created for "
                       & Attr.Pkg.all & "'" & Attr.Name.all);
-            else
+            elsif Is_Sensitive (Attr.Editor) then
                Generate_Project
                  (Attr.Editor, Project, Scenario_Variables, Changed);
+            else
+               --  The editor is insensitive, which means the user doesn't
+               --  want to use that attribute
+               Delete_Attribute_Value
+                 (Project            => Project,
+                  Attr               => Attr,
+                  Attribute_Index    => "",
+                  Scenario_Variables => Scenario_Variables,
+                  Project_Changed    => Changed);
             end if;
          end loop;
       end loop;
