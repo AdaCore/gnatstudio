@@ -5,21 +5,21 @@ Known Problems fixed in GPS 3.0.1
               dependencies on the depency graph after this project dependency
               with the root project has been removed.
 
-- E615-002 "Attach" window not filled properly under Windows.
+- E615-002 "Attach" window not filled properly under Windows
   Problem:    Under Windows, the menu Debug->Debug->Attach... returns an empty
               window.
-  Workaround: Use the command "winps" from the Windows command prompt to find
-              the process number.
+  Workaround: Execute the command "winps" from the Build->Run->Custom... menu
+              to find the process number, or the windows task manager.
 
-- Contextual menu entries sometimes not visible
-  Problem:    If you start the debugger, it happens that the Debug/ contextual
-              menu is not visible the first time it is displayed.
+- Debugger contextual menu not displayed the first time
+  Problem:    If you start the debugger, the "Debug" contextual menu is not
+              displayed the first time.
   Woraround:  Display the contextual menu a second time
 
-- E606-006 Open From Project dialog is slower than in previous versions
-  Problem:    This dialog now takes longer to open than with previous versions
-              of GPS.
-  Workaround: None
+- E606-006 Open From Project dialog is slower
+  Problem:    This dialog takes longer to open in GPS 3.0.0 than with previous
+              versions of GPS.
+  Workaround: Use the command Editor.edit <file> from the GPS shell
 
 - E610-015 Confusing output of gnatclean commands
   Problem:    When using one of the Build->Clean menus, the output displayed
@@ -27,7 +27,7 @@ Known Problems fixed in GPS 3.0.1
               the gnatclean command performed.
   Workaround: This is just a confusion in the display that can be ignored
 
-- E606-010 GPS freezes or crashes when using some VCS items.
+- E606-010 GPS freezes or crashes when using some VCS items
   Problem:    When using the integrated VCS menus that require an intermediate
               dialog (for instance "View specific revision history"), GPS might
               crash or freeze, or become unstable.
@@ -38,15 +38,17 @@ Known Problems fixed in GPS 3.0.1
   Workaround: Use the gprmake that comes with GNAT or with GPS 2.1.1
 
 - E531-023 Crash when displaying current value of an array in the debugger
-  Problem:    If you select "Display <var>" while in the debugger, and the structure
-              contains arrays or strings with ASCII.NUL characters, GPS crashes
+  Problem:    If you select "Display <var>" while in the debugger, and the
+              structure contains arrays or strings with ASCII.NUL characters,
+              GPS crashes.
   Workaround: Use "Print <var>" instead
 
 - E525-008 Endless query for password when using remote files
   Problem:    If you enter an incorrect user name or press cancel in the dialog
               when accessing a remote file, GPS will keep asking for your
-              password, preventing you from doing anything else
-  Workaround: Kill GPS
+              password, preventing you from doing anything else, and requiring
+              to kill GPS manually.
+  Workaround: Enter a correct user name
 
 Known Problems fixed in GPS 3.0.0
 
