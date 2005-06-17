@@ -1,9 +1,15 @@
 Known Problems fixed in GPS 3.0.1
 
+- E607-006 Cannot select all styles for some fonts under Windows
+  Problem:    Under Windows, it is not possible to select all styles for some
+              fonts (e.g. lucida console bold).
+  Workaround: Use a font which is recognized, or do not use the missing style
+
 - E516-016 Problem with project dependencies browser
-  Problem:    A Constraint Error is raised when asking for a project
-              dependencies on the depency graph after this project dependency
-              with the root project has been removed.
+  Problem:    An internal error is detected when asking for dependencies of a
+              project in the project browser, after its dependency with the
+              root project has been removed.
+  Workaround: Close the project browser to take into account dependency changes
 
 - E615-002 "Attach" window not filled properly under Windows
   Problem:    Under Windows, the menu Debug->Debug->Attach... returns an empty
