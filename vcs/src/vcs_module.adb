@@ -223,7 +223,6 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record) is
    begin
       Free (Module.VCS_List);
-      Unref (Module.Menu_Context);
    end Destroy;
 
    ------------------
