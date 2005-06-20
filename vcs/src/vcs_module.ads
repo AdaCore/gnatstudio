@@ -39,13 +39,6 @@ package VCS_Module is
 
       Explorer_Child : MDI_Child;
       --  The child containing the VCS Explorer
-
-      Menu_Context : Selection_Context_Access;
-      --  This is the context associated to the current contextual menu.
-      --  It is Ref'ed when creating the contextual menu, and Unref'ed only
-      --  when creating another contextual menu. This is to make sure the
-      --  context is always valid when performing the callbacks associated to
-      --  the contextual menu.
    end record;
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
 
