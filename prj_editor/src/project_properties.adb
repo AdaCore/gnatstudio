@@ -289,7 +289,8 @@ package body Project_Properties is
       Toplevel        : access Gtk.Window.Gtk_Window_Record'Class;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
-      Attribute_Index : String) return String;
+      Attribute_Index : String;
+      Project_Path    : String) return String;
    --  Ask the user (through a dialog) for a new value for the attribute.
    --  If the attribute is a list, this queries the value for one of the
    --  elements in the list.
@@ -463,8 +464,8 @@ package body Project_Properties is
    --  Create the widget used to edit an indexed attribute.
 
    function Edit_Indexed_Attribute
-     (Editor  : access Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean;
+     (Editor       : access Gtk_Widget_Record'Class;
+      Event        : Gdk.Event.Gdk_Event) return Boolean;
    --  Called when double-clicking on the value of an indexed attribute, and
    --  open a dialog to edit its value (that dialog contains one the standard
    --  widgets like combo boxes,... depending on the type of the attribute)
@@ -2117,7 +2118,8 @@ package body Project_Properties is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
       Value : constant String := Create_Attribute_Dialog
         (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
-         Ed.Project, Ed.Attribute, Attribute_Index => "");
+         Ed.Project, Ed.Attribute, Attribute_Index => "",
+         Project_Path => Get_Text (Ed.Path_Widget));
       Iter  : Gtk_Tree_Iter;
    begin
       if Value /= "" then
@@ -2481,7 +2483,8 @@ package body Project_Properties is
       Toplevel        : access Gtk.Window.Gtk_Window_Record'Class;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
-      Attribute_Index : String) return String
+      Attribute_Index : String;
+      Project_Path    : String) return String
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -2527,11 +2530,23 @@ package body Project_Properties is
                Current : constant String := Get_Current_Value
                  (Project, Description, Index => Attribute_Index);
             begin
-               File := Select_File
-                 (Parent => Gtk_Window (Toplevel),
-                  Base_Directory => Dir_Name (Current),
-                  Default_Name   => Base_Name (Current),
-                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+               --  Not set yet, the directory should default to the project
+               --  directory (E617-011)
+               if Current = "" then
+                  File := Select_File
+                    (Parent            => Gtk_Window (Toplevel),
+                     Base_Directory    => Project_Path,
+                     Default_Name      => "",
+                     Use_Native_Dialog =>
+                       Get_Pref (Kernel, Use_Native_Dialogs));
+               else
+                  File := Select_File
+                    (Parent            => Gtk_Window (Toplevel),
+                     Base_Directory    => Dir_Name (Current),
+                     Default_Name      => Base_Name (Current),
+                     Use_Native_Dialog =>
+                       Get_Pref (Kernel, Use_Native_Dialogs));
+               end if;
                if File /= VFS.No_File then
                   return Full_Name (File).all;
                else
@@ -2540,11 +2555,24 @@ package body Project_Properties is
             end;
 
          when Attribute_As_Directory =>
-            return Select_Directory
-              (Parent => Gtk_Window (Toplevel),
-               Base_Directory => Get_Current_Value
-                 (Project, Description, Index => Attribute_Index),
-               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+            declare
+               Current : constant String := Get_Current_Value
+                 (Project, Description, Index => Attribute_Index);
+            begin
+               if Current = "" then
+                  return Select_Directory
+                    (Parent            => Gtk_Window (Toplevel),
+                     Base_Directory    => Project_Path,
+                     Use_Native_Dialog =>
+                       Get_Pref (Kernel, Use_Native_Dialogs));
+               else
+                  return Select_Directory
+                    (Parent            => Gtk_Window (Toplevel),
+                     Base_Directory    => Current,
+                     Use_Native_Dialog =>
+                       Get_Pref (Kernel, Use_Native_Dialogs));
+               end if;
+            end;
 
          when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
             Gtk_New (Dialog,
@@ -3062,8 +3090,8 @@ package body Project_Properties is
    ----------------------------
 
    function Edit_Indexed_Attribute
-     (Editor : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Boolean
+     (Editor       : access Gtk_Widget_Record'Class;
+      Event        : Gdk.Event.Gdk_Event) return Boolean
    is
       Ed        : constant Indexed_Attribute_Editor :=
                     Indexed_Attribute_Editor (Editor);
@@ -3148,7 +3176,8 @@ package body Project_Properties is
                            Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
                            Project         => Ed.Project,
                            Description     => Ed.Attribute,
-                           Attribute_Index => Attribute_Index);
+                           Attribute_Index => Attribute_Index,
+                           Project_Path    => Get_Text (Ed.Path_Widget));
                      begin
                         if Value /= "" then
                            Set (Ed.Model, Iter, 1, Value);
