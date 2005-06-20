@@ -909,8 +909,6 @@ package body Project_Properties is
       Iter     : Gtk_Tree_Iter;
    begin
       if Editor.Ent /= null then
-         Trace (Me, "MANU Saving attribute, Relative="
-                & Relative'Img);
          if Editor.Attribute.Base_Name_Only then
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
@@ -923,8 +921,6 @@ package body Project_Properties is
            and then Editor.Attribute.Non_Index_Type.Typ /=
              Attribute_As_String
          then
-            Trace (Me, "MANU Convert to relative "
-                   & Editor.Attribute.Name.all);
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
