@@ -509,11 +509,15 @@ package body Task_Manager.GUI is
         Task_Manager_Interface (Object);
    begin
       Iface.Manager.GUI := null;
-      Unref (Iface.Progress_Foreground_GC);
-      Unref (Iface.Progress_Background_GC);
-      Unref (Iface.Progress_Text_GC);
-      Gdk.Drawable.Unref (Iface.Progress_Template);
-      Unref (Iface.Progress_Layout);
+
+      --  If the graphics constants have been initialized, free them
+      if Iface.Progress_Layout /= null then
+         Unref (Iface.Progress_Foreground_GC);
+         Unref (Iface.Progress_Background_GC);
+         Unref (Iface.Progress_Text_GC);
+         Gdk.Drawable.Unref (Iface.Progress_Template);
+         Unref (Iface.Progress_Layout);
+      end if;
 
    exception
       when E : others =>
