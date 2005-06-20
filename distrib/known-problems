@@ -1,11 +1,18 @@
 Known Problems fixed in GPS 3.1.0
 
+- E617-006 Casing problem in the executable name when editing projects
+  Problem:    If you use file names with upper cases in your project, GPS will
+              convert these names to lower case in the project file when you
+              specify an executable name for this main unit
+  Workaround: manually edit your project file, or edit projects.xml to specify
+              that the index is case sensitive for "executable"
+
 - E606-009 Local_Pragma_File project property always saved as a base file name
   Problem:    When you edit the project properties, the location of the pragma
               file is always saved as a base name, instead of a relative or
               absolute path.
-  Workaround: Edit projects.xml in the GPS installation to remove the base_file_name
-              attribute
+  Workaround: Edit projects.xml in the GPS installation to remove the
+              base_file_name attribute
 
 - E525-012 Pasting in the consoles
   Problem:    When using the system-defined method for pasting the clipboard
