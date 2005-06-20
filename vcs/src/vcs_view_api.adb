@@ -377,15 +377,6 @@ package body VCS_View_API is
          return;
       end if;
 
-      --  See comments for VCS_Module_ID.Menu_Context.
-
-      if VCS_Module_ID.Menu_Context /= null then
-         GPS.Kernel.Unref (VCS_Module_ID.Menu_Context);
-      end if;
-
-      VCS_Module_ID.Menu_Context := Context;
-      GPS.Kernel.Ref (VCS_Module_ID.Menu_Context);
-
       Actions := Get_Identified_Actions (Ref);
 
       if Context /= null
@@ -2426,6 +2417,10 @@ package body VCS_View_API is
            (Protect (String_List.Head (Status.Working_Revision)));
       end if;
 
+      --  Ref the Context, so that it doesn't get destroyed while displaying
+      --  the input
+      GPS.Kernel.Ref (Context);
+
       declare
          Str : constant String :=
            Execute_GPS_Shell_Command
@@ -2442,6 +2437,11 @@ package body VCS_View_API is
          end if;
       end;
 
+      declare
+         The_Context : Selection_Context_Access := Context;
+      begin
+         GPS.Kernel.Unref (The_Context);
+      end;
       Free (Revision);
       String_List.Free (Files);
 
@@ -2536,6 +2536,10 @@ package body VCS_View_API is
            (Protect (Head (Status.Working_Revision)));
       end if;
 
+      --  Ref the Context, so that it doesn't get destroyed while displaying
+      --  the input
+      GPS.Kernel.Ref (Context);
+
       if One_Rev then
          Str := new String'
            (Execute_GPS_Shell_Command
@@ -2552,6 +2556,12 @@ package body VCS_View_API is
                & " ""Revision 1=" & Revision_1.all & """"
                & " ""Revision 2=" & Revision_2.all & """"));
       end if;
+
+      declare
+         The_Context : Selection_Context_Access := Context;
+      begin
+         GPS.Kernel.Unref (The_Context);
+      end;
 
       if One_Rev then
          if Str'Length /= 0 then
