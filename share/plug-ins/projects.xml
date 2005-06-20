@@ -275,6 +275,7 @@
        editor_page="Main files"
        editor_section="Executable names"
        description="Name of the executable generated when compiling each of the main units"
+       case_sensitive_index="true"
        label="">
        <index attribute="main">
           <string default="(same as main unit, minus extension)"/>
