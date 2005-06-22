@@ -171,6 +171,10 @@ package body Src_Editor_Buffer is
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
 
+   procedure On_Destroy (Data : System.Address; Buffer : System.Address);
+   pragma Convention (C, On_Destroy);
+   --  Called when a source buffer is being destroyed
+
    procedure Line_Highlights_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "Line_Highlights_Changed" signal.
@@ -1157,6 +1161,7 @@ package body Src_Editor_Buffer is
          end loop;
       end Free;
    begin
+      Trace (Me, "Destroying Buffer");
 
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
@@ -2122,6 +2127,16 @@ package body Src_Editor_Buffer is
    end Initialize_Hook;
 
    ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Data : System.Address; Buffer : System.Address) is
+      pragma Unreferenced (Data, Buffer);
+   begin
+      Trace (Me, "Source_Buffer destroyed");
+   end On_Destroy;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -2180,6 +2195,8 @@ package body Src_Editor_Buffer is
       Buffer.Queue := New_Queue;
 
       --  And finally, connect ourselves to the interesting signals
+
+      Weak_Ref (Buffer, On_Destroy'Access);
 
       Buffer_Callback.Connect
         (Buffer, "changed", Changed_Handler'Access, After => True);
