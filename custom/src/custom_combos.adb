@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -40,7 +41,6 @@ with GUI_Utils;                 use GUI_Utils;
 with Gtk.List;                  use Gtk.List;
 
 package body Custom_Combos is
-
    Id_Cst            : aliased constant String := "id";
    Position_Cst      : aliased constant String := "position";
    Label_Cst         : aliased constant String := "label";
@@ -245,7 +245,9 @@ package body Custom_Combos is
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (D, 1, Get_Instance (Data.Combo));
+            Set_Nth_Arg (D, 1,
+                         Get_Instance (Get_Script (Data.On_Selected.all),
+                                       Data.Combo));
             Set_Nth_Arg (D, 2, Text);
             Tmp := Execute (Data.On_Selected, D);
             Free (D);
@@ -268,12 +270,12 @@ package body Custom_Combos is
    begin
       if Combo_Text /= "" and then Subprogram /= null then
          declare
-            D : Callback_Data'Class := Create
-              (Get_Script (Subprogram.all), Arguments_Count => 2);
+            S : constant Scripting_Language := Get_Script (Subprogram.all);
+            D : Callback_Data'Class := Create (S, Arguments_Count => 2);
             Tmp : Boolean;
             pragma Unreferenced (Tmp);
          begin
-            Set_Nth_Arg (D, 1, Get_Instance (Combo));
+            Set_Nth_Arg (D, 1, Get_Instance (S, Combo));
             Set_Nth_Arg (D, 2, Combo_Text);
             Tmp := Execute (Subprogram, D);
             Free (D);
@@ -322,8 +324,7 @@ package body Custom_Combos is
             User_Data   => On_Changed,
             After       => True);
 
-
-         Set_Data (Instance, Gtk_Widget (Combo));
+         Set_Data (Instance, GObject (Combo));
       end if;
       return Combo;
    end Create_Combo;
@@ -358,12 +359,12 @@ package body Custom_Combos is
      (Button    : access Gtk_Widget_Record'Class;
       User_Data : Subprogram_Type)
    is
-      D : Callback_Data'Class := Create
-        (Get_Script (User_Data.all), Arguments_Count => 1);
+      S : constant Scripting_Language := Get_Script (User_Data.all);
+      D : Callback_Data'Class := Create (S, Arguments_Count => 1);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Set_Nth_Arg (D, 1, Get_Instance (Button));
+      Set_Nth_Arg (D, 1, Get_Instance (S, Button));
       Tmp := Execute (User_Data, D);
       Free (D);
    end On_Button_Clicked;
@@ -388,7 +389,7 @@ package body Custom_Combos is
          if Widget = null then
             Set_Error_Msg (Data, -"Component not found: " & Nth_Arg (Data, 2));
          else
-            Set_Return_Value (Data, Get_Instance (Widget));
+            Set_Return_Value (Data, Get_Instance (Get_Script (Data), Widget));
          end if;
 
       elsif Command = "get_by_pos" then
@@ -397,15 +398,14 @@ package body Custom_Combos is
          if Widget = null then
             Set_Error_Msg (Data, -"Component not found: " & Nth_Arg (Data, 2));
          else
-            Inst := Get_Instance (Widget);
+            Inst := Get_Instance (Get_Script (Data), Widget);
             if Inst /= null then
                Set_Return_Value (Data, Inst);
             else
                Inst := New_Instance
                  (Get_Script (Data), Get_GUI_Class (Kernel));
-               Set_Data (Inst, Widget);
+               Set_Data (Inst, GObject (Widget));
                Set_Return_Value (Data, Inst);
-               Free (Inst);
             end if;
          end if;
 
@@ -416,7 +416,7 @@ package body Custom_Combos is
               Nth_Arg (Data, 2, Get_GUI_Class (Kernel));
          begin
             Append_Widget (Get_Toolbar (Kernel),
-                           Gtk_Widget'(Get_Data (EntInst)),
+                           Gtk_Widget (GObject'(Get_Data (EntInst))),
                            Tooltip_Text => Nth_Arg (Data, 3, ""));
             Free (EntInst);
          end;
@@ -447,20 +447,20 @@ package body Custom_Combos is
       elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
          Add_Combo_Entry
-           (Combo       => Custom_Combo (Gtk_Widget'(Get_Data (Inst))),
+           (Combo       => Custom_Combo (GObject'(Get_Data (Inst))),
             Label       => Nth_Arg (Data, 2),
             On_Selected => Nth_Arg (Data, 3, null));
 
       elsif Command = "remove" then
          Name_Parameters (Data, Remove_Args);
          Remove_Combo_Item
-           (Combo => Custom_Combo (Gtk_Widget'(Get_Data (Inst))),
+           (Combo => Custom_Combo (GObject'(Get_Data (Inst))),
             Label => Nth_Arg (Data, 2));
 
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
          Clear_Items
-           (Get_List (Custom_Combo (Gtk_Widget'(Get_Data (Inst))).Combo),
+           (Get_List (Custom_Combo (GObject'(Get_Data (Inst))).Combo),
             0, -1);
 
       elsif Command = "get_text" then
@@ -468,12 +468,12 @@ package body Custom_Combos is
          Set_Return_Value
            (Data,
             Get_Text (Get_Entry (Custom_Combo
-                                   (Gtk_Widget'(Get_Data (Inst))).Combo)));
+                                   (GObject'(Get_Data (Inst))).Combo)));
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Text_Args);
          Set_Text
-           (Get_Entry (Custom_Combo (Gtk_Widget'(Get_Data (Inst))).Combo),
+           (Get_Entry (Custom_Combo (GObject'(Get_Data (Inst))).Combo),
             Nth_Arg (Data, 2));
       end if;
 
@@ -496,7 +496,7 @@ package body Custom_Combos is
          Name_Parameters (Data, Create_Button_Args);
          Gtk_New (Button, Nth_Arg (Data, 3));
          Set_Name (Button, Nth_Arg (Data, 2));
-         Set_Data (Inst, Gtk_Widget (Button));
+         Set_Data (Inst, GObject (Button));
          Show_All (Button);
          Subprogram_Callback.Connect
            (Button, "clicked", On_Button_Clicked'Access,
@@ -504,7 +504,7 @@ package body Custom_Combos is
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Button_Text_Args);
-         Set_Property (Gtk_Button (Gtk_Widget'(Get_Data (Inst))),
+         Set_Property (Gtk_Button (GObject'(Get_Data (Inst))),
                        Gtk.Button.Label_Property,
                        Nth_Arg (Data, 2));
       end if;
