@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
@@ -859,7 +860,8 @@ package body Custom_Module is
    begin
       if M.On_Activate /= null then
          declare
-            Inst : constant Class_Instance := Get_Instance (M);
+            Inst : constant Class_Instance :=
+              Get_Instance (Get_Script (M.On_Activate.all), M);
             C : Callback_Data'Class := Create
               (Get_Script (Inst), Arguments_Count => 1);
             Tmp : Boolean;
@@ -902,10 +904,10 @@ package body Custom_Module is
             if Menu = null then
                Set_Error_Msg (Data, -"No such menu: " & Path);
             else
-               Inst := Get_Instance (Widget => Menu);
+               Inst := Get_Instance (Get_Script (Data), Widget => Menu);
                if Inst = null then
                   Inst := New_Instance (Get_Script (Data), Menu_Class);
-                  Set_Data (Inst, Widget => Gtk_Widget (Menu));
+                  Set_Data (Inst, Widget => GObject (Menu));
                end if;
 
                Set_Return_Value (Data, Inst);
@@ -931,7 +933,7 @@ package body Custom_Module is
                Ref_Item    => Nth_Arg (Data, 3, ""),
                Add_Before  => Nth_Arg (Data, 4, True));
             Inst := New_Instance (Get_Script (Data), Menu_Class);
-            Set_Data (Inst, Widget => Gtk_Widget (Menu));
+            Set_Data (Inst, Widget => GObject (Menu));
             Set_Return_Value (Data, Inst);
          end;
 
@@ -939,7 +941,8 @@ package body Custom_Module is
          Name_Parameters (Data, Menu_Rename_Params);
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            W    : constant Gtk_Widget     := Get_Data (Inst);
+            W    : constant Gtk_Widget     :=
+              Gtk_Widget (GObject'(Get_Data (Inst)));
             Menu : constant Gtk_Menu_Item  := Gtk_Menu_Item (W);
             Label : Gtk_Accel_Label;
          begin
