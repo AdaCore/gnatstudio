@@ -31,6 +31,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glib;                      use Glib;
+with Glib.Object;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -775,11 +776,12 @@ package body GPS.Main_Window is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
+      use Glib.Object;
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       MDI_Window_Class : constant Class_Type :=
         New_Class (Kernel, "MDIWindow");
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, MDI_Window_Class);
-      Child  : constant MDI_Child := MDI_Child (Gtk_Widget'(Get_Data (Inst)));
+      Child  : constant MDI_Child := MDI_Child (GObject'(Get_Data (Inst)));
       Widget : Gtk_Widget;
       Result : Class_Instance;
    begin
@@ -845,21 +847,19 @@ package body GPS.Main_Window is
             end loop;
 
             Result := New_Instance (Get_Script (Data), MDI_Window_Class);
-            Set_Data (Result, Gtk_Widget (Child2));
+            Set_Data (Result, GObject (Child2));
             Set_Return_Value (Data, Result);
-            Free (Result);
          end;
 
       elsif Command = "get_child" then
          Widget := Get_Widget (Child);
-         Result := Get_Instance (Widget);
+         Result := Get_Instance (Get_Script (Data), Widget);
          if Result /= null then
             Set_Return_Value (Data, Result);
          else
             Result := New_Instance (Get_Script (Data), Get_GUI_Class (Kernel));
-            Set_Data (Result, Widget);
+            Set_Data (Result, GObject (Widget));
             Set_Return_Value (Data, Result);
-            Free (Result);
          end if;
       end if;
 
@@ -874,6 +874,7 @@ package body GPS.Main_Window is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
+      use Glib.Object;
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       MDI_Window_Class : Class_Type;
       Child  : MDI_Child;
@@ -904,7 +905,9 @@ package body GPS.Main_Window is
             Name_Parameters (Data, Get_By_Child_Cmd_Parameters);
             Child := Find_MDI_Child
               (Get_MDI (Kernel),
-               Widget => Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))));
+               Widget => Gtk_Widget
+                 (GObject'
+                    (Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))))));
          else
             Child := Get_Focus_Child (Get_MDI (Kernel));
          end if;
@@ -914,9 +917,8 @@ package body GPS.Main_Window is
          else
             MDI_Window_Class := New_Class (Kernel, "MDIWindow");
             Inst := New_Instance (Get_Script (Data), MDI_Window_Class);
-            Set_Data (Inst, Gtk_Widget (Child));
+            Set_Data (Inst, GObject (Child));
             Set_Return_Value (Data, Inst);
-            Free (Inst);
          end if;
 
       elsif Command = "dialog" then
