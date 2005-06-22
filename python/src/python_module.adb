@@ -25,6 +25,7 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Types;             use Gtkada.Types;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with Histories;                use Histories;
@@ -49,6 +50,7 @@ with Interactive_Consoles;
 with HTables;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with System.Address_Image;
 
 package body Python_Module is
 
@@ -270,7 +272,7 @@ package body Python_Module is
    --  Both do not have the same value: Python itself can do its own ref/decref
    --  internally, and we are not aware of these. On the other hand, Nth_Arg
    --  will return a newly allocated pointer, which needs to be freed when
-   --  Free is called, even though the pyhon object itself might still exists.
+   --  Free is called, even though the python object itself might still exists.
 
    function New_Instance
      (Script : access Python_Scripting_Record;
@@ -303,6 +305,18 @@ package body Python_Module is
      (Instance     : in out Python_Class_Instance_Record;
       Free_Pointer : out Boolean);
    procedure Ref (Instance : access Python_Class_Instance_Record);
+   procedure Print_Refcount
+     (Instance : access Python_Class_Instance_Record; Msg : String);
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record;
+      Widget   : Glib.Object.GObject);
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record)
+      return Glib.Object.GObject;
+   function Get_Instance
+     (Script : access Python_Scripting_Record;
+      Widget : access Glib.Object.GObject_Record'Class)
+      return Class_Instance;
    --  See doc from inherited subprogram
 
    ------------------
@@ -397,6 +411,12 @@ package body Python_Module is
    --  Return the name of the attribute used to store user data in class
    --  instances
 
+   procedure On_Widget_Data_Destroyed (Obj : PyObject);
+   --  Called when the widget associated with Obj is destroyed.
+
+   package PyObject_User_Data is new Glib.Object.User_Data
+     (Data_Type => PyObject);
+
    -------------------
    -- GPS_Data_Attr --
    -------------------
@@ -482,7 +502,7 @@ package body Python_Module is
    is
       Errors  : aliased Boolean;
       Result : PyObject;
-      pragma Unreferenced (Result, User_Data);
+      pragma Unreferenced (User_Data);
    begin
       Result := Run_Command
         (Interpreter  => Python_Module_Id.Script.Interpreter,
@@ -491,6 +511,7 @@ package body Python_Module is
          Show_Command => False,
          Hide_Output  => False,
          Errors       => Errors'Unchecked_Access);
+      Py_XDECREF (Result);
 
       --  Preserve the focus on the console after interactive execution
       Grab_Focus (Get_View (Console));
@@ -1458,7 +1479,7 @@ package body Python_Module is
          Trace (Me, "Raised invalid_parameter");
 
          if not Callback.Has_Return_Value
-           or else  Callback.Return_Value /= null
+           or else Callback.Return_Value /= null
          then
             PyErr_SetString
               (Handler.Script.GPS_Invalid_Arg, Exception_Message (E));
@@ -1545,7 +1566,7 @@ package body Python_Module is
       Class : PyClassObject;
       Ignored : Integer;
       Bases   : PyObject := null;
-      S       : chars_ptr;
+      S       : Interfaces.C.Strings.chars_ptr;
       pragma Unreferenced (Ignored);
    begin
       PyDict_SetItemString
@@ -1554,12 +1575,57 @@ package body Python_Module is
       if Base /= No_Class then
          Bases := Create_Tuple
            ((1 => Lookup_Class_Object (Script.GPS_Module, Get_Name (Base))));
+      else
+         --  Would be nice to derive from the object class, so that we can
+         --  override __new__. For some reason, this raises a Storage_Error
+         --  later on when we call PyClass_Name on such a class...
+         --  Since object is a <type> and not a class, it is likely that
+         --  PyClass_Name is no longer appropriate...
+         --  See http://www.cafepy.com/article/python_types_and_objects/
+         --     python_types_and_objects.html#id2514298
+         --  We also need to modify the implementation of Is_Subclass, so this
+         --  is quite an implementation effort.
+         --
+         --  The goal in overriding __new__ is so that we can have
+         --     GPS.EditorBuffer (file)
+         --  return an existing instance if the file is already associated with
+         --  a python instance... This isn't doable through __init__
+
+--           declare
+--              Module : constant PyObject :=
+--                PyImport_ImportModule ("__builtin__");
+--              Dict, Obj : PyObject;
+--           begin
+--              if Module = null
+--                or else Module = Py_None
+--              then
+--                 Trace (Me, "MANU ERROR 1");
+--                 raise Constraint_Error;
+--              end if;
+--
+--              Dict := PyModule_GetDict (Module);
+--              if Dict = null or else Dict = Py_None then
+--                 Trace (Me, "MANU ERROR 2");
+--                 raise Constraint_Error;
+--              end if;
+--
+--              Obj := PyDict_GetItemString (Dict, "object");
+--              if Obj = null or else Obj = Py_None then
+--                 Trace (Me, "MANU ERROR 3");
+--                 raise Constraint_Error;
+--              end if;
+--
+--              Py_XINCREF (Obj);
+--              Bases := Create_Tuple ((1 => Obj));
+--           end;
+         null;
       end if;
 
       Class := PyClass_New
         (Bases => Bases,
          Dict  => Dict,
          Name  => PyString_FromString (Name));
+
       S := New_String (Name);
       Ignored := PyModule_AddObject (Script.GPS_Module, S, Class);
       Free (S);
@@ -1579,7 +1645,6 @@ package body Python_Module is
    is
       E : aliased Boolean;
       Result : PyObject;
-      pragma Unreferenced (Result);
    begin
       if Script.Blocked then
          Errors := True;
@@ -1591,6 +1656,7 @@ package body Python_Module is
             Hide_Output  => Hide_Output,
             Show_Command => Show_Command,
             Errors       => E'Unchecked_Access);
+         Py_XDECREF (Result);
          Errors := E;
       end if;
    end Execute_Command;
@@ -1634,6 +1700,7 @@ package body Python_Module is
       Errors             : access Boolean) return Boolean
    is
       Obj : PyObject;
+      Result : Boolean;
    begin
       if Script.Blocked then
          Errors.all := True;
@@ -1642,11 +1709,13 @@ package body Python_Module is
       else
          Obj := Run_Command
            (Script.Interpreter, Command, Console, False, Hide_Output, Errors);
-         return Obj /= null
+         Result := Obj /= null
            and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
                      or else
                        (PyString_Check (Obj)
                         and then PyString_AsString (Obj) = "true"));
+         Py_XDECREF (Obj);
+         return Result;
       end if;
    end Execute_Command;
 
@@ -2059,9 +2128,7 @@ package body Python_Module is
          Script  => Data.Script,
          Counter => 1,
          Data    => Item);
-
       Py_INCREF (Item);
-
       return Inst;
 
    exception
@@ -2310,8 +2377,10 @@ package body Python_Module is
       if Data.Return_As_List then
          Num := PyList_Append (Data.Return_Value, Obj);
       else
+         --  Do not increase the ref_count of Obj here. Data is now in charge
+         --  of freeing it when appropriate, and the caller isn't supposed to
+         --  do a further call to Py_DECREF.
          Setup_Return_Value (Data);
-         Py_INCREF (Obj);
          Data.Return_Value := Obj;
       end if;
    end Set_Return_Value;
@@ -2326,16 +2395,18 @@ package body Python_Module is
    is
       Klass : constant PyObject := Lookup_Class_Object
         (Script.GPS_Module, Get_Name (Class));
+      Inst : Class_Instance;
    begin
       if Klass = null then
          return null;
       end if;
 
-      return new Python_Class_Instance_Record'
+      Inst := new Python_Class_Instance_Record'
         (Class_Instance_Record with
          Script  => Python_Scripting (Script),
          Counter => 1,
          Data    => PyInstance_NewRaw (Klass, null));
+      return Inst;
    end New_Instance;
 
    --------------
@@ -2439,6 +2510,114 @@ package body Python_Module is
       Py_DECREF (Data);
    end Set_Data;
 
+   ------------------------------
+   -- On_Widget_Data_Destroyed --
+   ------------------------------
+
+   procedure On_Widget_Data_Destroyed (Obj : PyObject) is
+   begin
+      --  Called when the associated widget is destroyed
+      Trace (Me, "On_Widget_Data_Destroyed");
+      PyObject_SetAttrString (Obj, "__GPS_Widget", null);
+      Py_DECREF (Obj);
+   end On_Widget_Data_Destroyed;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record;
+      Widget   : GObject)
+   is
+      CData : PyObject;
+   begin
+      if Widget = null then
+         PyObject_SetAttrString (Instance.Data, "__GPS_Widget", null);
+      else
+         --  The goal here is the following: we want the instance to be
+         --  associated with the widget for as long as the widget exists. This
+         --  way, no matter in which scope the user has associated user data
+         --  with the widget, he will always get it.
+         --  For instance:
+         --     e = GPS.Menu.get ("foo")
+         --     e.data = "bar"
+         --     e = None
+         --     GPS.Menu.get ("foo").data    --  still contains "bar"
+         --  If the widget is destroyed, we decref the instance so as to
+         --  possibly free memory. In all cases, the instance's Data should no
+         --  longer be the widget. This way, if the user keeps trying to apply
+         --  operations to that instance, he will get errors because there are
+         --  no widget associated.
+         --  The instance cannot be destroyed as long as the widget exists,
+         --  since the latter holds a ref to it.
+
+         CData := PyCObject_FromVoidPtr (Widget.all'Address, null);
+         PyObject_SetAttrString
+           (Instance.Data, "__GPS_Widget", CData);
+         Py_DECREF (CData);
+
+         Py_INCREF (Instance.Data);
+         PyObject_User_Data.Set
+           (Widget, Instance.Data, "GPS-script-instance",
+            On_Destroyed => On_Widget_Data_Destroyed'Access);
+      end if;
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record)
+      return GObject
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, GObject);
+      Item : constant PyObject := PyObject_GetAttrString
+        (Instance.Data, "__GPS_Widget");
+      Result : System.Address;
+   begin
+      if Item = null then
+         return null;
+      end if;
+
+      if not PyCObject_Check (Item) then
+         Py_DECREF (Item);
+         raise Invalid_Data;
+      end if;
+
+      Result := PyCObject_AsVoidPtr (Item);
+      Py_DECREF (Item);
+
+      return Convert (Result);
+   end Get_Data;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Script : access Python_Scripting_Record;
+      Widget : access GObject_Record'Class)
+      return Class_Instance
+   is
+      Obj : PyObject;
+      Inst : Class_Instance;
+   begin
+      Obj := PyObject_User_Data.Get (Widget, "GPS-script-instance");
+      Inst := new Python_Class_Instance_Record'
+        (Class_Instance_Record with
+         Script  => Python_Scripting (Script),
+         Counter => 1,
+         Data    => Obj);
+      Py_INCREF (Obj);
+      return Inst;
+   exception
+      when Gtkada.Types.Data_Error =>
+         return null;
+   end Get_Instance;
+
    --------------------
    -- Primitive_Free --
    --------------------
@@ -2447,6 +2626,7 @@ package body Python_Module is
      (Instance     : in out Python_Class_Instance_Record;
       Free_Pointer : out Boolean) is
    begin
+      Assert (Me, Instance.Counter > 0, "Instance has negative counter");
       Py_DECREF (Instance.Data);
       Instance.Counter := Instance.Counter - 1;
       Free_Pointer := Instance.Counter = 0;
@@ -2458,9 +2638,23 @@ package body Python_Module is
 
    procedure Ref (Instance : access Python_Class_Instance_Record) is
    begin
-      Instance.Counter := Instance.Counter + 1;
       Py_INCREF (Instance.Data);
+      Instance.Counter := Instance.Counter + 1;
    end Ref;
+
+   --------------------
+   -- Print_Refcount --
+   --------------------
+
+   procedure Print_Refcount
+     (Instance : access Python_Class_Instance_Record; Msg : String) is
+   begin
+      Print_Refcount (Instance.Data, Msg & "(inst="
+                      & System.Address_Image (Instance.all'Address)
+                      & " count=" & Instance.Counter'Img & ")");
+      Assert (Me, Instance.Counter <= Get_Refcount (Instance.Data),
+              "Instance has counter > data.refcount");
+   end Print_Refcount;
 
    -------------
    -- Nth_Arg --
