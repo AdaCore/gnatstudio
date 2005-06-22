@@ -30,6 +30,7 @@ with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
+with Gtkada.Types;              use Gtkada.Types;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -129,6 +130,14 @@ package body Shell_Script is
    procedure Primitive_Free
      (Instance     : in out Shell_Class_Instance_Record;
       Free_Pointer : out Boolean);
+   procedure Print_Refcount
+     (Instance : access Shell_Class_Instance_Record; Msg : String);
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record;
+      Widget   : Glib.Object.GObject);
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record)
+      return Glib.Object.GObject;
    --  See doc from inherited subprogram
 
    procedure Internal_Free
@@ -140,6 +149,9 @@ package body Shell_Script is
      (Shell_Class_Instance, Free_Instance);
    use Instances_List;
    --  ??? Would be faster to use a hash-table...
+
+   package Widget_User_Data is new Glib.Object.User_Data
+     (Data_Type => Shell_Class_Instance);
 
    ---------------------
    -- Shell_scripting --
@@ -214,6 +226,10 @@ package body Shell_Script is
    function Get_Kernel
      (Script : access Shell_Scripting_Record)
       return Kernel_Handle;
+   function Get_Instance
+     (Script : access Shell_Scripting_Record;
+      Widget : access Glib.Object.GObject_Record'Class)
+      return Class_Instance;
    --  See doc from inherited subprograms
 
    function New_Instance
@@ -1914,6 +1930,56 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
+      Widget   : Glib.Object.GObject) is
+   begin
+      if Widget = null then
+         Set_Data (Instance, No_Class, System.Null_Address);
+      else
+         Set_Data (Instance, No_Class, Widget.all'Address);
+         Ref (Instance);
+         Widget_User_Data.Set
+           (Widget, Shell_Class_Instance (Instance), "GPS-shell-instance");
+      end if;
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record)
+      return Glib.Object.GObject
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, GObject);
+   begin
+      return Convert (Get_Data (Instance, No_Class));
+   end Get_Data;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Script : access Shell_Scripting_Record;
+      Widget : access Glib.Object.GObject_Record'Class)
+      return Class_Instance
+   is
+      pragma Unreferenced (Script);
+   begin
+      return Class_Instance
+        (Widget_User_Data.Get (Widget, "GPS-shell-instance"));
+   exception
+      when Gtkada.Types.Data_Error =>
+         return null;
+   end Get_Instance;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record;
       Class    : Class_Type;
       Value    : String)
    is
@@ -1966,6 +2032,18 @@ package body Shell_Script is
       --  anyway.
       Free_Pointer := False;
    end Primitive_Free;
+
+   --------------------
+   -- Print_Refcount --
+   --------------------
+
+   procedure Print_Refcount
+     (Instance : access Shell_Class_Instance_Record; Msg : String)
+   is
+      pragma Unreferenced (Instance, Msg);
+   begin
+      null;
+   end Print_Refcount;
 
    ---------------------
    -- Execute_Command --
