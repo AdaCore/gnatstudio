@@ -781,9 +781,7 @@ package body Task_Manager.GUI is
                      Gint (Gdouble (View.Progress_Width) * Fraction),
                      View.Progress_Height);
 
-                  Set_Text
-                    (View.Progress_Layout,
-                     Natural'Image (Natural (Fraction * 100.0)) & "%");
+                  Set_Text (View.Progress_Layout, Progress_String.all);
 
                   Get_Pixel_Size
                     (View.Progress_Layout, Layout_Width, Layout_Height);
