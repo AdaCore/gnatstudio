@@ -4383,6 +4383,7 @@ case "${host}" in
 
   powerpc-*-darwin* )
     machine=powerpc opsys=darwin
+    STRIP_CR=True
   ;;
 
   ## Suns
