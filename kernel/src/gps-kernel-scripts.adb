@@ -22,7 +22,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
-with Gtkada.Types;         use Gtkada.Types;
 with Gtk.Widget;           use Gtk.Widget;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Actions; use GPS.Kernel.Actions;
@@ -138,21 +137,10 @@ package body GPS.Kernel.Scripts is
    procedure On_Destroy_Context (Value : System.Address);
    pragma Convention (C, On_Destroy_Context);
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Gtk_Widget);
-   --  Called when Widget is destroyed, to break its associated with a
-   --  Class_Instance
-
-   procedure On_Widget_Data_Destroyed (Inst : Class_Instance);
-   --  Called when the widget associated with Inst is destroyed
-
    procedure On_Console_Destroy
      (Console : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type);
    --  Called when an interactive console is destroyed
-
-   package Widget_User_Data is new Glib.Object.User_Data
-     (Data_Type => Class_Instance);
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -678,11 +666,12 @@ package body GPS.Kernel.Scripts is
       Script := Get_Script (Instance);
       Class  := Get_File_Class (Get_Kernel (Script));
       Value  := Get_Data (Instance, Class);
-      Ent    := Convert (Value);
 
       if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
+
+      Ent    := Convert (Value);
 
       return Ent.all;
    end Get_Data;
@@ -1459,8 +1448,9 @@ package body GPS.Kernel.Scripts is
    is
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Subprogram_Type);
-      Instance : constant Class_Instance := Get_Instance (Console);
       On_Input : constant Subprogram_Type := Convert (User_Data);
+      Instance : constant Class_Instance :=
+        Get_Instance (Get_Script (On_Input.all), Console);
       C : Callback_Data'Class := Create (Get_Script (On_Input.all), 2);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
@@ -1480,7 +1470,8 @@ package body GPS.Kernel.Scripts is
      (Console    : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type)
    is
-      Inst  : constant Class_Instance := Get_Instance (Console);
+      Inst  : constant Class_Instance :=
+        Get_Instance (Get_Script (Subprogram.all), Console);
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
    begin
       if Script /= null then
@@ -1526,7 +1517,7 @@ package body GPS.Kernel.Scripts is
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
-            Set_Data (Inst, Widget => Gtk_Widget (Console));
+            Set_Data (Inst, Widget => GObject (Console));
 
             if Console /= null then
                if On_Input /= null then
@@ -1546,14 +1537,14 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Console_Write_Args);
          if Get_Data (Inst) /= null then
             Insert
-              (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+              (Interactive_Console (GObject'(Get_Data (Inst))),
                Text   => Nth_Arg (Data, 2),
                Add_LF => False);
          end if;
 
       elsif Command = "clear" then
          if Get_Data (Inst) /= null then
-            Clear (Interactive_Console (Gtk_Widget'(Get_Data (Inst))));
+            Clear (Interactive_Console (GObject'(Get_Data (Inst))));
          end if;
 
       elsif Command = "flush" then
@@ -1567,7 +1558,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "read" then
          if Get_Data (Inst) /= null then
             Set_Return_Value
-              (Data, Read (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+              (Data, Read (Interactive_Console (GObject'(Get_Data (Inst))),
                            Whole_Line => False));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
@@ -1576,7 +1567,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "readline" then
          if Get_Data (Inst) /= null then
             Set_Return_Value
-              (Data, Read (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+              (Data, Read (Interactive_Console (GObject'(Get_Data (Inst))),
                            Whole_Line => True));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
@@ -2671,83 +2662,6 @@ package body GPS.Kernel.Scripts is
       return Scripting_Data (Kernel.Scripts).GUI_Class;
    end Get_GUI_Class;
 
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance) return Gtk.Widget.Gtk_Widget
-   is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type := Get_GUI_Class (Get_Kernel (Script));
-   begin
-      if not Is_Subclass (Script, Instance, Class) then
-         raise Invalid_Data;
-      else
-         return Convert (Get_Data (Instance, Class));
-      end if;
-   end Get_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Widget   : Gtk.Widget.Gtk_Widget)
-   is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Class  : constant Class_Type := Get_GUI_Class (Get_Kernel (Script));
-   begin
-      if not Is_Subclass (Script, Instance, Class) then
-         raise Invalid_Data;
-      elsif Widget /= null then
-         Ref (Instance);
-
-         --  Nothing to do when the instance is destroyed. The instance is
-         --  destroyed only when the widget itself has already been destroyed,
-         --  since the latter keeps a ref to the instance.
-         Set_Data
-           (Instance,
-            Class      => Class,
-            Value      => Widget.all'Address,
-            On_Destroy => null);
-         Widget_User_Data.Set
-           (Widget, Instance, "GPS-script-instance",
-            On_Destroyed => On_Widget_Data_Destroyed'Access);
-      else
-         Set_Data (Instance,
-                   Class => Class,
-                   Value => System.Null_Address);
-      end if;
-   end Set_Data;
-
-   ------------------------------
-   -- On_Widget_Data_Destroyed --
-   ------------------------------
-
-   procedure On_Widget_Data_Destroyed (Inst : Class_Instance) is
-   begin
-      if Inst /= null then
-         Set_Data (Inst, Widget => null);
-         Free (Inst);
-      end if;
-   end On_Widget_Data_Destroyed;
-
-   ------------------
-   -- Get_Instance --
-   ------------------
-
-   function Get_Instance
-     (Widget   : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Class_Instance is
-   begin
-      return Widget_User_Data.Get (Widget, "GPS-script-instance");
-   exception
-      when Gtkada.Types.Data_Error =>
-         return null;
-   end Get_Instance;
-
    -------------------------
    -- GUI_Command_Handler --
    -------------------------
@@ -2755,8 +2669,8 @@ package body GPS.Kernel.Scripts is
    procedure GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : constant Class_Instance := Nth_Arg
-        (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+      Class : constant Class_Type := Get_GUI_Class (Get_Kernel (Data));
+      Inst : constant Class_Instance := Nth_Arg (Data, 1, Class);
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
@@ -2766,23 +2680,24 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Set_Sensitive_Parameters);
          declare
             Value : constant Boolean := Nth_Arg (Data, 2, True);
-            W     : constant Gtk_Widget := Get_Data (Inst);
+            W     : constant Gtk_Widget := Gtk_Widget
+              (GObject'(Get_Data (Inst)));
          begin
             Set_Sensitive (W, Value);
          end;
 
       elsif Command = "destroy" then
          if Get_Data (Inst) /= null then
-            Destroy (Get_Data (Inst));
+            Destroy (Gtk_Widget (GObject'(Get_Data (Inst))));
          end if;
 
       elsif Command = "hide" then
-         Set_Child_Visible (Get_Data (Inst), False);
-         Hide (Get_Data (Inst));
+         Set_Child_Visible (Gtk_Widget (GObject'(Get_Data (Inst))), False);
+         Hide (Gtk_Widget (GObject'(Get_Data (Inst))));
 
       elsif Command = "show" then
-         Set_Child_Visible (Get_Data (Inst), True);
-         Show (Get_Data (Inst));
+         Set_Child_Visible (Gtk_Widget (GObject'(Get_Data (Inst))), True);
+         Show (Gtk_Widget (GObject'(Get_Data (Inst))));
       end if;
 
       Free (Inst);

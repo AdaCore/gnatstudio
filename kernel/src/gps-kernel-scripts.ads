@@ -287,7 +287,11 @@ package GPS.Kernel.Scripts is
    --  replace the current return value.
    --
    --  When storing a Class_Instance, the Callback_Data takes control of the
-   --  instance, and will be in charge of freeing it.
+   --  instance, and will be in charge of freeing it. Therefore, the code
+   --  would look like:
+   --    Inst := <any call that creates the instance>  (New_Instance (...))
+   --    Set_Return_Value (Data, Inst);
+   --    --  No call to Free (Inst), this is an error
 
    procedure Set_Return_Value_Key
      (Data : in out Callback_Data; Key : String; Append : Boolean := False)
@@ -380,6 +384,21 @@ package GPS.Kernel.Scripts is
    --  instance, then we couldn't have a class with multiple ancestors, each
    --  expecting its own user data set in the constructor
 
+   procedure Set_Data
+     (Instance : access Class_Instance_Record;
+      Widget   : Glib.Object.GObject) is abstract;
+   function Get_Data
+     (Instance : access Class_Instance_Record)
+      return Glib.Object.GObject is abstract;
+   function Get_Instance
+     (Script : access Scripting_Language_Record;
+      Widget : access Glib.Object.GObject_Record'Class)
+      return Class_Instance is abstract;
+   --  Associate an instance and a widget. The two are then closely associated:
+   --  The instance will exists as long as the widget itself exists so that we
+   --  always get the user data stored in the instance every time we work with
+   --  the same widget.
+
    procedure Primitive_Free
      (Instance     : in out Class_Instance_Record;
       Free_Pointer : out Boolean)
@@ -399,6 +418,10 @@ package GPS.Kernel.Scripts is
    --  doesn't destroy the object while the instance is stored in some data
    --  structure in the program.
    --  By default, this does nothing
+
+   procedure Print_Refcount
+     (Instance : access Class_Instance_Record; Msg : String) is abstract;
+   --  Debug only: print the reference counting for this instance
 
    -------------------------
    -- Scripting languages --
@@ -696,25 +719,6 @@ package GPS.Kernel.Scripts is
    function Get_GUI_Class
      (Kernel : access Kernel_Handle_Record'Class) return Class_Type;
    --  Return the class to use for GUI elements. This encapsulate a Gtk_Widget
-
-   function Get_Data (Instance : Class_Instance) return Gtk.Widget.Gtk_Widget;
-   --  Get the object stored in Instance
-
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Widget   : Gtk.Widget.Gtk_Widget);
-   --  Set the data stored in the instance. The two are then closely
-   --  associated: the instance will exist for the whole life of the widget,
-   --  and will always be used when that widget is referenced, so that users
-   --  can associated user data with the instance.
-   --  However, it is possible for the widget to be destroyed while the
-   --  instance is still in use. No protection exists or is desirable against
-   --  that.
-
-   function Get_Instance
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Class_Instance;
-   --  Return the instance that was associated with the widget, if any.
 
    -------------------------
    -- File_Location_Class --
