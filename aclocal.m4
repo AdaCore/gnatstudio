@@ -106,7 +106,8 @@ AC_DEFUN(AM_PATH_PYTHON,
 
    if test -d ${PYTHON_BASE}/lib/python2.4 ; then
       PYTHON_VERSION=2.4
-      PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+      PYTHON_DIR=${PYTHON_BASE}/lib/
+      # PYTHON_LIBS=-lpthread
    elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
       PYTHON_VERSION=2.3
       PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config

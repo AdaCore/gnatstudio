@@ -2968,7 +2968,8 @@ fi
 
    if test -d ${PYTHON_BASE}/lib/python2.4 ; then
       PYTHON_VERSION=2.4
-      PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
+      PYTHON_DIR=${PYTHON_BASE}/lib/
+      # PYTHON_LIBS=-lpthread
    elif test -d ${PYTHON_BASE}/lib/python2.3 ; then
       PYTHON_VERSION=2.3
       PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
@@ -4425,11 +4426,11 @@ case "${host}" in
                 opsys=sol2-4
                 ;;
       *-sunos5.5* | *-solaris2.5* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm"
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
                 opsys=sol2-5
                 ;;
       *-sunos5* | *-solaris* )
-		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm"
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm ${PYTHON_LIBS}"
                 opsys=sol2-5
                 ;;
       *-linux-gnu* )
@@ -4443,7 +4444,7 @@ case "${host}" in
   ia64-*-* )
     case "${host}" in
       *-linux-gnu* )
-	PYTHON_LIBS="-ldl -lutil"
+	PYTHON_LIBS="-ldl -lutil ${PYTHON_LIBS}"
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
@@ -4469,7 +4470,7 @@ case "${host}" in
 
 	# If we do not link with -Wl,-export-dynamic, commands like
 	# "import time" will raise errors in the interpreter
-	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm"
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm ${PYTHON_LIBS}"
 	;;
 
       *-sco3.2v4* )             opsys=sco4  ;;
