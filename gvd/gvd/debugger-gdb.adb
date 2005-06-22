@@ -89,7 +89,7 @@ package body Debugger.Gdb is
 
    File_Name_Pattern         : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
-              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)\r?$", Multiple_Lines);
+              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
    File_Name_Pattern2        : constant Pattern_Matcher :=
