@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 
 #undef DEBUG
+//  #define DEBUG
 
 PyObject * ada_Py_InitModule4
     (char *name, PyMethodDef *methods,
@@ -50,12 +51,10 @@ int ada_pyget_refcount (PyObject* obj) {
 }
 
 void ada_py_print_refcount (PyObject* obj, char* msg) {
-#ifdef DEBUG
   if (obj) {
     printf ("DEBUG %s obj=%p (%s) refcont=%d\n",
 	    msg, obj, obj->ob_type->tp_name, obj->ob_refcnt);
   }
-#endif
 }
 
 void ada_py_incref (PyObject* obj) {
@@ -206,7 +205,8 @@ PyObject* ada_py_true() {
 }
 
 PyObject* ada_pyclass_name(PyClassObject* obj) {
-  return obj->cl_name;
+//  return PyObject_GetAttrString (obj, "__name__");
+   return obj->cl_name;
 }
 
 
