@@ -1168,7 +1168,6 @@ package body Src_Editor_Buffer is
    begin
       Trace (Me, "Destroying Buffer widget="
              & System.Address_Image (Buffer.all'Address));
-
       Buffer.In_Destruction := True;
 
       --  We do not free memory associated to Buffer.Current_Command, since
