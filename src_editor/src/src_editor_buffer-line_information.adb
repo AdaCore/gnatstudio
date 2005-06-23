@@ -342,6 +342,10 @@ package body Src_Editor_Buffer.Line_Information is
       Columns_Config : Columns_Config_Access;
       Column         : Integer := -1;
    begin
+      if Buffer.In_Destruction then
+         return;
+      end if;
+
       --  Browse through existing columns and try to match Identifier
 
       Columns_Config := Buffer.Editable_Line_Info_Columns;
@@ -1007,7 +1011,6 @@ package body Src_Editor_Buffer.Line_Information is
             Expand_Lines (Bottom_Line);
          end if;
 
-
          for J in reverse Start + Number .. Buffer_Lines'Last loop
             Buffer_Lines (J) := Buffer_Lines (J - Number);
 
@@ -1168,6 +1171,10 @@ package body Src_Editor_Buffer.Line_Information is
       Result      : Boolean := True;
       Buffer_Line : Buffer_Line_Type;
    begin
+      if Buffer.In_Destruction then
+         return;
+      end if;
+
       Buffer.Modifying_Real_Lines := True;
 
       Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line_At_Blanks) - 1);
