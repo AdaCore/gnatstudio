@@ -101,7 +101,14 @@ package body Commands.Editor is
 
    procedure Free (X : in out Hide_Editable_Lines_Type) is
    begin
-      if not Get_Deleted (X.Mark) then
+      --  We do not want to free marks when the buffer is being destroyed,
+      --  because, in this case, the reference count for Buffer is set to 0,
+      --  and it therefore not possible to emit a signal using this buffer,
+      --  and Delete_Mark has the side effect of emitting a signal on the
+      --  buffer
+      if not Get_Deleted (X.Mark)
+        and then not In_Destruction_Is_Set (X.Buffer)
+      then
          Delete_Mark (X.Buffer, X.Mark);
       end if;
    end Free;
