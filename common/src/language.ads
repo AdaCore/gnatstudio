@@ -443,12 +443,24 @@ package Language is
      (Category : Language.Language_Category) return String;
    --  Return the external name to display in GUIs for a given category.
 
+   type Construct_Visibility is
+     (Visibility_Private,
+      Visibility_Protected,
+      Visibility_Public);
+   --  Represents the visibility of a construct from the enclosing entity.
+
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
    type Construct_Information is record
       Category       : Language_Category;
       --  Define the kind of construct
+
+      Is_Declaration : Boolean;
+      --  Is this a declaration (e.g function specification) ?
+
+      Visibility     : Construct_Visibility := Visibility_Public;
+      --  Is the construct public, private or protected ?
 
       Name           : Basic_Types.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token.
@@ -470,9 +482,6 @@ package Language is
 
       Sloc_End       : Source_Location;
       --  Location of end of the construct
-
-      Is_Declaration : Boolean;
-      --  Is this a declaration (e.g function specification) ?
 
       Prev, Next     : Construct_Access;
       --  Links to the previous and the next construct info
