@@ -41,7 +41,6 @@ with Pango.Layout;              use Pango.Layout;
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Clipboard;             use Gtk.Clipboard;
-with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Drawing_Area;          use Gtk.Drawing_Area;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -51,13 +50,10 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -663,22 +659,7 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Object, Params);
-      Child_Box : Source_Editor_Box;
    begin
-      --  If the editor was primary, look for other editors with this buffer,
-      --  and give the Primary attribute to one of them.
-
-      if Box.Primary then
-         Child_Box := Find_Other_Editor
-           (Box.Kernel,
-            Gtk_Text_View (Box.Source_View),
-            Gtk_Text_Buffer (Box.Source_Buffer));
-
-         if Child_Box /= null then
-            Child_Box.Primary := True;
-         end if;
-      end if;
-
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
@@ -689,7 +670,6 @@ package body Src_Editor_Box is
       end if;
 
       Delete (Box.Source_View);
-      Unref (Box.Source_Buffer);
 
       --  Remove the idle handler if it was registered
       if Box.Check_Timestamp_Registered then
@@ -744,14 +724,12 @@ package body Src_Editor_Box is
       Separator      : Gtk_Vseparator;
 
    begin
-      Glib.Object.Initialize (Box);
+      Initialize_Vbox (Box, Homogeneous => False);
 
       Box.Kernel := Kernel;
 
-      Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
-
       Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box.Root_Container, Hbox, Expand => True, Fill => True);
+      Pack_Start (Box, Hbox, Expand => True, Fill => True);
 
       Gtk_New (Drawing_Area);
       Set_Size_Request (Drawing_Area, 1, -1);
@@ -767,17 +745,22 @@ package body Src_Editor_Box is
 
       if Source = null then
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
-         Box.Primary := True;
       else
          Box.Source_Buffer := Source;
       end if;
 
-      Ref (Box.Source_Buffer);
       Gtk_New (Box.Source_View,
                Scrolling_Area,
                Drawing_Area,
                Box.Source_Buffer, Kernel);
+
       Add (Scrolling_Area, Box.Source_View);
+
+      if Source = null then
+         --  The newly created buffer is now under the responsability of the
+         --  view.
+         Unref (Box.Source_Buffer);
+      end if;
 
       Set_Tooltip
         (Tooltip   => Create_Tooltips (Box),
@@ -788,7 +771,7 @@ package body Src_Editor_Box is
 
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_Etched_In);
-      Pack_Start (Box.Root_Container, Frame, Expand => False, Fill => False);
+      Pack_Start (Box, Frame, Expand => False, Fill => False);
 
       Gtk_New_Hbox (Box.Label_Box, Homogeneous => False, Spacing => 2);
       Add (Frame, Box.Label_Box);
@@ -1576,61 +1559,6 @@ package body Src_Editor_Box is
       end if;
    end Create_New_View;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Box : in out Source_Editor_Box) is
-   begin
-      --  The editor might still be floating if Load_File failed, see
-      --  Create_File_Editor.
-      if Flag_Is_Set (Box.Root_Container, Gtk.Object.Floating) then
-         Sink (Box.Root_Container);
-      else
-         Unref (Box.Root_Container);
-      end if;
-      Box := null;
-   end Destroy;
-
-   ------------
-   -- Attach --
-   ------------
-
-   procedure Attach
-     (Box    : access Source_Editor_Box_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class) is
-   begin
-      Add (Parent, Box.Root_Container);
-
-      --  When detaching the Root_Container, the Root_Container is Ref'ed to
-      --  avoid its automatic destruction (see procedure Detach below). This
-      --  implies that we need to Unref it each time we attach it, except for
-      --  the first time (or we might end up destroying the Root_Container, as
-      --  it has never been Ref'ed).
-
-      if Box.Never_Attached then
-         Box.Never_Attached := False;
-      else
-         Unref (Box.Root_Container);
-      end if;
-   end Attach;
-
-   ------------
-   -- Detach --
-   ------------
-
-   procedure Detach (Box : access Source_Editor_Box_Record) is
-      Parent : constant Gtk_Container :=
-        Gtk_Container (Get_Parent (Box.Root_Container));
-   begin
-      --  Increment the reference counter before detaching the Root_Container
-      --  from the parent widget, to make sure it is not automatically
-      --  destroyed by gtk.
-
-      Ref (Box.Root_Container);
-      Remove (Parent, Box.Root_Container);
-   end Detach;
-
    ----------------
    -- Get_Kernel --
    ----------------
@@ -1641,17 +1569,6 @@ package body Src_Editor_Box is
    begin
       return Box.Kernel;
    end Get_Kernel;
-
-   -----------------------
-   -- Needs_To_Be_Saved --
-   -----------------------
-
-   function Needs_To_Be_Saved
-     (Editor : access Source_Editor_Box_Record)
-      return Boolean is
-   begin
-      return Editor.Primary and then Needs_To_Be_Saved (Editor.Source_Buffer);
-   end Needs_To_Be_Saved;
 
    ------------------
    -- Get_Filename --

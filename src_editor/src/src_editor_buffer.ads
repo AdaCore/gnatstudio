@@ -379,22 +379,6 @@ package Src_Editor_Buffer is
    --  If Update is true, the internal timestamp is also updated, so that a
    --  second call to this function will always return False.
 
-   procedure Ref (Buffer : access Source_Buffer_Record);
-   --  Should be called every time that a view is showing Buffer
-
-   procedure Unref (Buffer : access Source_Buffer_Record);
-   --  Should be called whenever a view showing Buffer is about to be deleted.
-   --  If it was the last reference on Buffer, then free the memory associated
-   --  to Buffer.
-
-   function Get_Ref_Count
-     (Buffer : access Source_Buffer_Record) return Integer;
-   --  Return the number of times the buffer was referenced.
-
-   function Get_Total_Ref_Count
-     (Buffer : access Source_Buffer_Record) return Integer;
-   --  Return the total number of times the buffer was referenced.
-
    procedure Add_Controls (Buffer : access Source_Buffer_Record);
    --  Connect the Undo/Redo buttons to the queue containing the buffer
    --  commands. This MUST be called every time that the Buffer.Queue
@@ -404,6 +388,10 @@ package Src_Editor_Buffer is
    --  Disconnect the Undo/Redo buttons from the queue containing the buffer
    --  commands. This MUST be called every time that the Buffer.Queue
    --  pointer is modified and the controls actually refer to Queue.
+
+   procedure Register_View
+     (Buffer : access Source_Buffer_Record; Add : Boolean);
+   --  Register or Unregister a view for the buffer.
 
    -------------------
    -- Buffer Status --
@@ -904,11 +892,8 @@ private
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 
-      References : Integer := 0;
+      Number_Of_Views : Integer := 0;
       --  The number of objects viewing the buffer.
-
-      Total_References : Integer := 0;
-      --  The total number of times the buffer was referenced.
 
       Modified_Auto : Boolean := False;
       --  Whether the buffer has been modified since last auto save.

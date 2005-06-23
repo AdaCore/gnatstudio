@@ -859,8 +859,12 @@ package body Src_Editor_Module is
       Kernel : constant Kernel_Handle :=
         Get_Kernel (Source_Box (Widget).Editor);
    begin
-      --  ??? How come we need to access this low-level information ?
-      return Get_Ref_Count (Get_Buffer (Source_Box (Widget).Editor)) = 1
+      --  We cannot delete the last remaining view if the buffer has to be
+      --  saved and the user cancelled the action.
+      --  The call to Needs_To_Be_Saved will return False if the box is not the
+      --  last view, so that we always authorize closing the other views
+
+      return Needs_To_Be_Saved (Get_Buffer (Source_Box (Widget).Editor))
         and then not Save_MDI_Children
           (Kernel,
            Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
@@ -1160,6 +1164,7 @@ package body Src_Editor_Module is
       Editor : Source_Editor_Box;
       Box    : Source_Box;
       Child  : MDI_Child;
+      Num    : Natural;
    begin
       if Current = null then
          return null;
@@ -1170,7 +1175,7 @@ package body Src_Editor_Module is
       begin
          Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
-         Attach (Editor, Box);
+         Pack_Start (Box, Editor);
 
          Child := new Editor_Child_Record;
          Initialize (Child, Box, All_Buttons);
@@ -1188,9 +1193,17 @@ package body Src_Editor_Module is
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Set_Focus_Child (Child);
 
+         --  Find the first free view number
+         Num := 2;
+         while Find_MDI_Child_By_Name
+           (Get_MDI (Kernel), Base_Name (Title) & " <" & Image (Num) & ">") /=
+           null
+         loop
+            Num := Num + 1;
+         end loop;
+
          declare
-            Im : constant String := Image
-              (Get_Total_Ref_Count (Get_Buffer (Editor)));
+            Im : constant String := Image (Num);
          begin
             Set_Title
               (Child,
@@ -1239,10 +1252,10 @@ package body Src_Editor_Module is
    begin
       case Mode is
          when Query =>
-            return Needs_To_Be_Saved (Box);
+            return Needs_To_Be_Saved (Get_Buffer (Box));
 
          when Action =>
-            if Needs_To_Be_Saved (Box) then
+            if Needs_To_Be_Saved (Get_Buffer (Box)) then
                Save_To_File (Box, Success => Success);
                return Success;
             else
@@ -1371,7 +1384,7 @@ package body Src_Editor_Module is
 
       if Editor /= null then
          Gtk_New (Box, Editor);
-         Attach (Editor, Box);
+         Add (Box, Editor);
 
          Child := new Editor_Child_Record;
          Initialize (Child, Box, All_Buttons);

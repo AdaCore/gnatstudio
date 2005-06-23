@@ -29,6 +29,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
+with System.Address_Image;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -171,10 +172,6 @@ package body Src_Editor_Buffer is
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
 
-   procedure On_Destroy (Data : System.Address; Buffer : System.Address);
-   pragma Convention (C, On_Destroy);
-   --  Called when a source buffer is being destroyed
-
    procedure Line_Highlights_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "Line_Highlights_Changed" signal.
@@ -248,8 +245,9 @@ package body Src_Editor_Buffer is
       To     : Gtk_Text_Iter);
    --  Remove all highlighting tags for the given region
 
-   procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class);
-   --  Free memory associated to Buffer
+   procedure Buffer_Destroy (Data : System.Address; Buf : System.Address);
+   pragma Convention (C, Buffer_Destroy);
+   --  Called when the buffer is being destroyed.
 
    function Automatic_Save (Buffer : Source_Buffer) return Boolean;
    --  Handle automatic save of the buffer, using a timeout
@@ -1141,7 +1139,13 @@ package body Src_Editor_Buffer is
    -- Buffer_Destroy --
    --------------------
 
-   procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
+   procedure Buffer_Destroy (Data : System.Address; Buf : System.Address) is
+      Stub : Source_Buffer_Record;
+      pragma Unreferenced (Data);
+      pragma Warnings (Off, Stub);
+
+      Buffer : constant Source_Buffer := Source_Buffer
+        (Get_User_Data (Buf, Stub));
 
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X.
@@ -1160,8 +1164,10 @@ package body Src_Editor_Buffer is
             Unchecked_Free (X (J).Info);
          end loop;
       end Free;
+
    begin
-      Trace (Me, "Destroying Buffer");
+      Trace (Me, "Destroying Buffer widget="
+             & System.Address_Image (Buffer.all'Address));
 
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
@@ -2127,16 +2133,6 @@ package body Src_Editor_Buffer is
    end Initialize_Hook;
 
    ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Data : System.Address; Buffer : System.Address) is
-      pragma Unreferenced (Data, Buffer);
-   begin
-      Trace (Me, "Source_Buffer destroyed");
-   end On_Destroy;
-
-   ----------------
    -- Initialize --
    ----------------
 
@@ -2196,7 +2192,7 @@ package body Src_Editor_Buffer is
 
       --  And finally, connect ourselves to the interesting signals
 
-      Weak_Ref (Buffer, On_Destroy'Access);
+      Weak_Ref (Buffer, Buffer_Destroy'Access);
 
       Buffer_Callback.Connect
         (Buffer, "changed", Changed_Handler'Access, After => True);
@@ -3965,50 +3961,19 @@ package body Src_Editor_Buffer is
       return Result;
    end Check_Timestamp;
 
-   ---------
-   -- Ref --
-   ---------
+   -------------------
+   -- Register_View --
+   -------------------
 
-   procedure Ref (Buffer : access Source_Buffer_Record) is
+   procedure Register_View
+     (Buffer : access Source_Buffer_Record; Add : Boolean) is
    begin
-      Buffer.References := Buffer.References + 1;
-      Buffer.Total_References := Buffer.Total_References + 1;
-   end Ref;
-
-   -----------
-   -- Unref --
-   -----------
-
-   procedure Unref (Buffer : access Source_Buffer_Record) is
-   begin
-      Buffer.References := Buffer.References - 1;
-
-      if Buffer.References = 0 then
-         Buffer_Destroy (Buffer);
+      if Add then
+         Buffer.Number_Of_Views := Buffer.Number_Of_Views + 1;
+      else
+         Buffer.Number_Of_Views := Buffer.Number_Of_Views - 1;
       end if;
-   end Unref;
-
-   -------------------------
-   -- Get_Total_Ref_Count --
-   -------------------------
-
-   function Get_Total_Ref_Count
-     (Buffer : access Source_Buffer_Record)
-      return Integer is
-   begin
-      return Buffer.Total_References;
-   end Get_Total_Ref_Count;
-
-   -------------------
-   -- Get_Ref_Count --
-   -------------------
-
-   function Get_Ref_Count
-     (Buffer : access Source_Buffer_Record)
-      return Integer is
-   begin
-      return Buffer.References;
-   end Get_Ref_Count;
+   end Register_View;
 
    ------------------
    -- Add_Controls --
@@ -4109,7 +4074,11 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
       return Boolean is
    begin
-      return Get_Status (Buffer) = Modified;
+      --  We never need to save the multiple views, only the last remaining one
+      --  Note that this is different from the Modified attribute for the
+      --  buffer.
+      return Buffer.Number_Of_Views = 1
+        and then Get_Status (Buffer) = Modified;
    end Needs_To_Be_Saved;
 
    ----------------

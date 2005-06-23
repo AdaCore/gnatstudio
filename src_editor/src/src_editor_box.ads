@@ -32,7 +32,6 @@ with Glib.Object;
 with Gdk.Event;
 
 with Gtk.Box;
-with Gtk.Container;
 with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Menu;
@@ -57,7 +56,7 @@ with Ada.Unchecked_Deallocation;
 
 package Src_Editor_Box is
 
-   type Source_Editor_Box_Record is new Glib.Object.GObject_Record
+   type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record
      with private;
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
@@ -81,18 +80,6 @@ package Src_Editor_Box is
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
    --  to add another parameter?
-
-   procedure Destroy (Box : in out Source_Editor_Box);
-   --  Destroy the given Source_Editor_Box, then set it to null.
-
-   procedure Attach
-     (Box    : access Source_Editor_Box_Record;
-      Parent : access Gtk.Container.Gtk_Container_Record'Class);
-   --  Attach Box to the given Parent, if possible.
-
-   procedure Detach
-     (Box : access Source_Editor_Box_Record);
-   --  Detach Box of its Parent, if possible.
 
    function Get_Kernel
      (Box : access Source_Editor_Box_Record) return GPS.Kernel.Kernel_Handle;
@@ -123,11 +110,6 @@ package Src_Editor_Box is
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
-
-   function Needs_To_Be_Saved
-     (Editor : access Source_Editor_Box_Record)
-      return Boolean;
-   --  Tell if the Editor's buffer is in a non-saved state.
 
    function Get_Filename
      (Editor : access Source_Editor_Box_Record) return VFS.Virtual_File;
@@ -449,13 +431,11 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Frames_Array, Frames_Array_Access);
 
-   type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
+   type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel               : GPS.Kernel.Kernel_Handle;
 
       Timestamp_Mode       : Timestamp_Check_Mode := Check_At_Focus;
 
-      Root_Container       : Gtk.Box.Gtk_Box;
-      Never_Attached       : Boolean := True;
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
 
@@ -496,14 +476,6 @@ private
       --  source buffer.
 
       Buffer_Info_Frames   : Frames_Array_Access := null;
-
-      Primary              : Boolean := False;
-      --  Indicates whether the box is the primary editor of Source_Buffer.
-      --  Only the primary editor needs to be saved.
-      --  When closing a Primary editor, other editors will be looked up
-      --  and another editor becomes Primary.
-      --  This attribute is used mainly for determining whether the user
-      --  should be prompted for saving the contents.
 
       Check_Timestamp_Registered : Boolean := False;
       Check_Timestamp_Id         : Gtk.Main.Idle_Handler_Id;

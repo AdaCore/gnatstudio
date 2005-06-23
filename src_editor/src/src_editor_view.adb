@@ -71,6 +71,7 @@ with Language;                    use Language;
 with Config;
 
 package body Src_Editor_View is
+   Me : constant Debug_Handle := Create ("Editor_View");
 
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
@@ -156,6 +157,9 @@ package body Src_Editor_View is
    --  It performs various operations that can not be done before the widget
    --  is mapped, such as creating GCs associated to the left border window
    --  for instance.
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed.
 
    procedure Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -1190,6 +1194,17 @@ package body Src_Editor_View is
                 "Unexpected exception: " & Exception_Information (E));
    end Map_Cb;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
+      V : constant Source_View := Source_View (View);
+   begin
+      Trace (Me, "Source_View is being destroyed");
+      Register_View (Source_Buffer (Get_Buffer (V)), Add => False);
+   end On_Destroy;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1234,6 +1249,8 @@ package body Src_Editor_View is
       View.Scroll := Scroll;
       View.Area   := Area;
 
+      Register_View (Buffer, Add => True);
+
       Set_Events
         (Area,
          Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
@@ -1276,6 +1293,7 @@ package body Src_Editor_View is
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
 
+      Widget_Callback.Connect (View, "destroy", On_Destroy'Access);
       Widget_Callback.Connect
         (View, "realize",
          Marsh => Widget_Callback.To_Marshaller (Realize_Cb'Access),
@@ -1344,11 +1362,10 @@ package body Src_Editor_View is
          User_Data => Source_View (View),
          After     => True);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
+      Gtkada.Handlers.Return_Callback.Connect
         (View,
          "delete_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
-         View,
          After => False);
 
       if Host = Windows then
