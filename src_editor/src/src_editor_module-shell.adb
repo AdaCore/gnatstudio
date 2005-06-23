@@ -44,15 +44,20 @@ with VFS;                       use VFS;
 with Traces;                    use Traces;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with System;                    use System;
+with System.Address_Image;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Handlers;
 
 package body Src_Editor_Module.Shell is
+   Me : constant Debug_Handle := Create ("Editor.Shell");
+
    Filename_Cst          : aliased constant String := "filename";
    Line_Cst              : aliased constant String := "line";
    Col_Cst               : aliased constant String := "column";
@@ -148,6 +153,72 @@ package body Src_Editor_Module.Shell is
      (Child   : access Gtk_Widget_Record'Class;
       Triplet : Child_Triplet_Access);
    --  Called when synchronized editor Child in Triplet is deleted.
+
+   procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the EditorBuffer class
+
+   function Create_Editor_Buffer
+     (Script : access Scripting_Language_Record'Class;
+      Buffer : Source_Buffer) return Class_Instance;
+   function Get_Buffer (Buffer : Class_Instance) return Source_Buffer;
+   --  Manipulation of instances of the EditorBuffer class.
+   --  Result of Create_Editor_Buffer must be freed unless you assign it to
+   --  a Callback_Data
+
+   pragma Unreferenced (Get_Buffer);
+
+   --------------------------
+   -- Create_Editor_Buffer --
+   --------------------------
+
+   function Create_Editor_Buffer
+     (Script : access Scripting_Language_Record'Class;
+      Buffer : Source_Buffer) return Class_Instance
+   is
+      Inst  : Class_Instance;
+   begin
+      if Buffer = null then
+         return null;
+      else
+         Inst := Get_Instance (Script, Buffer);
+         if Inst = null then
+            Inst := New_Instance
+              (Script, New_Class (Get_Kernel (Script), "EditorBuffer"));
+            Set_Data (Inst, GObject (Buffer));
+            Trace (Me, "Creating EditorBuffer buffer="
+                   & System.Address_Image (Buffer.all'Address)
+                   & " C_widget="
+                   & System.Address_Image (Get_Object (Buffer))
+                   & " instance="
+                   & System.Address_Image (Inst.all'Address));
+         else
+            Ref (Inst);
+            Trace (Me, "Create_Editor_Buffer: Reuse existing instance");
+         end if;
+         return Inst;
+      end if;
+   end Create_Editor_Buffer;
+
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer (Buffer : Class_Instance) return Source_Buffer is
+      Script : Scripting_Language;
+      Class  : Class_Type;
+   begin
+      if Buffer = null then
+         return null;
+      else
+         Script := Get_Script (Buffer);
+         Class  := New_Class (Get_Kernel (Script), "EditorBuffer");
+         if not Is_Subclass (Script, Buffer, Class) then
+            raise Invalid_Data;
+         end if;
+
+         return Source_Buffer (GObject'(Get_Data (Buffer)));
+      end if;
+   end Get_Buffer;
 
    ---------------------
    -- On_Delete_Child --
@@ -443,7 +514,7 @@ package body Src_Editor_Module.Shell is
 
                elsif Command = "create_mark" then
                   declare
-                     Box         : Source_Box;
+                     Box         : Source_Editor_Box;
                      Child       : MDI_Child;
                      Mark_Record : Mark_Identifier_Record;
                   begin
@@ -459,10 +530,10 @@ package body Src_Editor_Module.Shell is
                      Mark_Record.Length := Length;
 
                      if Child /= null then
-                        Box := Source_Box (Get_Widget (Child));
+                        Box := Source_Editor_Box (Get_Widget (Child));
                         Mark_Record.Mark :=
                           Create_Mark
-                            (Get_Buffer (Box.Editor),
+                            (Get_Buffer (Box),
                              Editable_Line_Type (Line),
                              Column);
                      else
@@ -486,14 +557,14 @@ package body Src_Editor_Module.Shell is
          declare
             Current_Line_Only : constant Boolean := Nth_Arg (Data, 1, False);
             Child : constant MDI_Child := Find_Current_Editor (Kernel);
-            Box   : Source_Box;
+            Box   : Source_Editor_Box;
          begin
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
-               if not Get_Editable (Get_View (Box.Editor))
+               if not Get_Editable (Get_View (Box))
                  or else not Do_Indentation
-                   (Get_Buffer (Box.Editor), Current_Line_Only)
+                   (Get_Buffer (Box), Current_Line_Only)
                then
                   Set_Error_Msg (Data, -"Could not indent selection");
                end if;
@@ -503,21 +574,21 @@ package body Src_Editor_Module.Shell is
       elsif Command = "indent_buffer" then
          declare
             Child    : constant MDI_Child := Find_Current_Editor (Kernel);
-            Box      : Source_Box;
+            Box      : Source_Editor_Box;
             Buffer   : Source_Buffer;
             From, To : Gtk_Text_Iter;
 
          begin
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
-               Buffer := Get_Buffer (Box.Editor);
+               Box := Source_Editor_Box (Get_Widget (Child));
+               Buffer := Get_Buffer (Box);
 
                Get_Start_Iter (Buffer, From);
                Get_End_Iter (Buffer, To);
 
-               if not Get_Editable (Get_View (Box.Editor))
+               if not Get_Editable (Get_View (Box))
                  or else not Do_Indentation
-                   (Get_Buffer (Box.Editor), From, To)
+                   (Get_Buffer (Box), From, To)
                then
                   Set_Error_Msg (Data, -"Could not indent buffer");
                end if;
@@ -527,14 +598,14 @@ package body Src_Editor_Module.Shell is
       elsif Command = "refill" then
          declare
             Child : constant MDI_Child := Find_Current_Editor (Kernel);
-            Box   : Source_Box;
+            Box   : Source_Editor_Box;
 
          begin
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
-               if not Get_Editable (Get_View (Box.Editor))
-                 or else not Do_Refill (Get_Buffer (Box.Editor))
+               if not Get_Editable (Get_View (Box))
+                 or else not Do_Refill (Get_Buffer (Box))
                then
                   Set_Error_Msg (Data, -"Could not refill buffer");
                end if;
@@ -586,7 +657,7 @@ package body Src_Editor_Module.Shell is
                   Last_Line  := Last_Line + 1;
                end if;
 
-               Buffer := Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+               Buffer := Get_Buffer (Source_Editor_Box (Get_Widget (Child)));
 
                if Is_Valid_Position
                  (Buffer, Gint (First_Line - 1), Gint (Start_Column - 1))
@@ -624,19 +695,19 @@ package body Src_Editor_Module.Shell is
             else
                declare
                   Child : MDI_Child;
-                  Box   : Source_Box;
+                  Box   : Source_Editor_Box;
                begin
                   Child := Find_Editor (Kernel, Filename);
 
                   if Child = null then
                      Set_Error_Msg (Data, -"file not open");
                   else
-                     Box := Source_Box (Get_Widget (Child));
+                     Box := Source_Editor_Box (Get_Widget (Child));
 
                      if Command = "redo" then
-                        Redo (Box.Editor);
+                        Redo (Box);
                      elsif Command = "undo" then
-                        Undo (Box.Editor);
+                        Undo (Box);
                      end if;
                   end if;
                end;
@@ -656,13 +727,13 @@ package body Src_Editor_Module.Shell is
             if Child /= null then
                Raise_Child (Child);
                Set_Focus_Child (Child);
-               Grab_Focus (Source_Box (Get_Widget (Child)).Editor);
+               Grab_Focus (Source_Editor_Box (Get_Widget (Child)));
 
                --  If the Length is null, we set the length to 1, otherwise
                --  the cursor is not visible.
 
                Scroll_To_Mark
-                 (Source_Box (Get_Widget (Child)).Editor,
+                 (Source_Editor_Box (Get_Widget (Child)),
                   Mark_Record.Mark,
                   Mark_Record.Length);
 
@@ -703,7 +774,7 @@ package body Src_Editor_Module.Shell is
             then
                Delete_Mark
                  (Get_Buffer
-                    (Source_Box (Get_Widget (Child)).Editor),
+                    (Source_Editor_Box (Get_Widget (Child))),
                   Mark_Record.Mark);
             end if;
 
@@ -744,7 +815,7 @@ package body Src_Editor_Module.Shell is
             Set_Return_Value
               (Data,
                Get_Chars
-                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Editable_Line_Type (Line),
                   Natural (Column),
                   Before, After));
@@ -758,13 +829,13 @@ package body Src_Editor_Module.Shell is
             Text   : constant String  := Nth_Arg (Data, 4);
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
-            Editor : constant Source_Box := Open_File
+            Editor : constant Source_Editor_Box := Open_File
               (Kernel, Create (File, Kernel), Create_New => False);
          begin
             if Editor /= null then
-               if Get_Writable (Editor.Editor) then
+               if Get_Writable (Editor) then
                   Replace_Slice
-                    (Get_Buffer (Editor.Editor),
+                    (Get_Buffer (Editor),
                      Text,
                      Editable_Line_Type (Line), Natural (Column),
                      Before, After);
@@ -788,7 +859,7 @@ package body Src_Editor_Module.Shell is
             Column : Positive;
          begin
             if Child /= null then
-               Buffer := Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
+               Buffer := Get_Buffer (Source_Editor_Box (Get_Widget (Child)));
 
                Get_Cursor_Position (Buffer, Line, Column);
                Insert (Buffer, Line, Column, Text);
@@ -812,7 +883,7 @@ package body Src_Editor_Module.Shell is
             else
                if Child /= null then
                   Buffer := Get_Buffer
-                    (Source_Box (Get_Widget (Child)).Editor);
+                    (Source_Editor_Box (Get_Widget (Child)));
                end if;
 
                if Command = "get_line" then
@@ -871,7 +942,7 @@ package body Src_Editor_Module.Shell is
             else
                Set_Return_Value
                  (Data,
-                  Get_Last_Line (Source_Box (Get_Widget (Child)).Editor));
+                  Get_Last_Line (Source_Editor_Box (Get_Widget (Child))));
             end if;
          end;
 
@@ -900,33 +971,33 @@ package body Src_Editor_Module.Shell is
                   Set_Return_Value
                     (Data,
                      Get_Block_Start
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                elsif Command = "block_get_end" then
                   Set_Return_Value
                     (Data,
                      Get_Block_End
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                elsif Command = "block_get_name" then
                   Set_Return_Value
                     (Data,
                      Get_Block_Name
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                elsif Command = "block_get_type" then
                   Set_Return_Value
                     (Data,
                      Get_Block_Type
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                elsif Command = "block_get_level" then
                   Set_Return_Value
                     (Data,
                      Get_Block_Level
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                else
                   --  subprogram_name
                   Set_Return_Value
                     (Data,
                      Get_Subprogram_Name
-                       (Source_Box (Get_Widget (Child)).Editor, Line));
+                       (Source_Editor_Box (Get_Widget (Child)), Line));
                end if;
             end if;
          end;
@@ -951,7 +1022,7 @@ package body Src_Editor_Module.Shell is
                begin
                   Get_Cursor_Position
                     (Get_Buffer
-                       (Source_Box (Get_Widget (Child)).Editor), Line, Column);
+                       (Source_Editor_Box (Get_Widget (Child))), Line, Column);
 
                   if Command = "cursor_get_line" then
                      Set_Return_Value (Data, Integer (Line));
@@ -985,7 +1056,7 @@ package body Src_Editor_Module.Shell is
                   declare
                      Chars : constant String :=
                        Get_Chars
-                         (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                         (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                           Line);
                   begin
                      --  Set the column to 1, if line is empty we want to set
@@ -1007,7 +1078,7 @@ package body Src_Editor_Module.Shell is
                end if;
 
                Set_Cursor_Position
-                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                   Line, Column);
             end if;
          end;
@@ -1019,7 +1090,7 @@ package body Src_Editor_Module.Shell is
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
          begin
             Scroll_To_Cursor_Location
-              (Get_View (Source_Box (Get_Widget (Child)).Editor),
+              (Get_View (Source_Editor_Box (Get_Widget (Child))),
                Center => True);
          end;
 
@@ -1033,7 +1104,7 @@ package body Src_Editor_Module.Shell is
          begin
             if Child /= null then
                A := Src_Editor_Buffer.Get_String
-                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
 
                Set_Return_Value (Data, A.all);
 
@@ -1078,14 +1149,14 @@ package body Src_Editor_Module.Shell is
             if Child /= null then
                if To_File /= VFS.No_File then
                   Save_To_File
-                    (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                    (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                      To_File,
                      Result,
                      True);
 
                else
                   Save_To_File
-                    (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                    (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
                      File,
                      Result,
                      False);
@@ -1126,7 +1197,7 @@ package body Src_Editor_Module.Shell is
             Line        : constant Integer := Nth_Arg (Data, 2);
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
-            Box         : Source_Box;
+            Box         : Source_Editor_Box;
             Mark_Record : Mark_Identifier_Record;
             Highlight_Category : Natural := 0;
          begin
@@ -1138,7 +1209,7 @@ package body Src_Editor_Module.Shell is
             end if;
 
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
                if Line >= 0 and then Number > 0 then
                   --  Create a new mark record and insert it in the list.
@@ -1150,7 +1221,7 @@ package body Src_Editor_Module.Shell is
                   Mark_Record.Length := 0;
                   Mark_Record.Mark :=
                     Add_Blank_Lines
-                      (Get_Buffer (Box.Editor),
+                      (Get_Buffer (Box),
                        Editable_Line_Type (Line),
                        Highlight_Category, "", Number);
                   Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
@@ -1168,7 +1239,7 @@ package body Src_Editor_Module.Shell is
               Find_Mark (Identifier);
             Child       : MDI_Child;
             Number      : Integer := 0;
-            Box         : Source_Box;
+            Box         : Source_Editor_Box;
          begin
             Child := Find_Editor (Kernel, Mark_Record.File);
 
@@ -1177,10 +1248,10 @@ package body Src_Editor_Module.Shell is
             end if;
 
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
                Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
-                 (Get_Buffer (Box.Editor), Mark_Record.Mark, Number);
+                 (Get_Buffer (Box), Mark_Record.Mark, Number);
             else
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
@@ -1192,19 +1263,19 @@ package body Src_Editor_Module.Shell is
               Create (Nth_Arg (Data, 1), Kernel);
             Line        : constant Integer := Nth_Arg (Data, 2, 0);
             Child       : MDI_Child;
-            Box         : Source_Box;
+            Box         : Source_Editor_Box;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
                if Line = 0 then
                   Src_Editor_Buffer.Line_Information.Fold_All
-                    (Get_Buffer (Box.Editor));
+                    (Get_Buffer (Box));
                else
                   Src_Editor_Buffer.Line_Information.Fold_Block
-                    (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+                    (Get_Buffer (Box), Editable_Line_Type (Line));
                end if;
             else
                Set_Error_Msg (Data, -"file not found or not open");
@@ -1217,19 +1288,19 @@ package body Src_Editor_Module.Shell is
               Create (Nth_Arg (Data, 1), Kernel);
             Line        : constant Integer := Nth_Arg (Data, 2, 0);
             Child       : MDI_Child;
-            Box         : Source_Box;
+            Box         : Source_Editor_Box;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
                if Line = 0 then
                   Src_Editor_Buffer.Line_Information.Fold_All
-                    (Get_Buffer (Box.Editor));
+                    (Get_Buffer (Box));
                else
                   Src_Editor_Buffer.Line_Information.Unfold_Line
-                    (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+                    (Get_Buffer (Box), Editable_Line_Type (Line));
                end if;
             else
                Set_Error_Msg (Data, -"file not found or not open");
@@ -1241,15 +1312,15 @@ package body Src_Editor_Module.Shell is
             Filename    : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
             Color       : constant String := Nth_Arg (Data, 2);
-            Box         : Source_Box;
+            Box         : Source_Editor_Box;
             Child       : MDI_Child;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
                Modify_Base
-                 (Get_View (Box.Editor), State_Normal, Parse (Color));
+                 (Get_View (Box), State_Normal, Parse (Color));
             end if;
          end;
 
@@ -1271,8 +1342,8 @@ package body Src_Editor_Module.Shell is
                Triplet := new Child_Triplet'(Child_1, Child_2, null);
 
                Set_Synchronized_Editor
-                 (Get_View (Source_Box (Get_Widget (Child_1)).Editor),
-                  Get_View (Source_Box (Get_Widget (Child_2)).Editor));
+                 (Get_View (Source_Editor_Box (Get_Widget (Child_1))),
+                  Get_View (Source_Editor_Box (Get_Widget (Child_2))));
 
                if Number_Of_Arguments (Data) > 2 then
                   declare
@@ -1284,15 +1355,15 @@ package body Src_Editor_Module.Shell is
                      if Child_3 /= null then
                         Set_Synchronized_Editor
                           (Get_View
-                             (Source_Box (Get_Widget (Child_2)).Editor),
+                             (Source_Editor_Box (Get_Widget (Child_2))),
                            Get_View
-                             (Source_Box (Get_Widget (Child_3)).Editor));
+                             (Source_Editor_Box (Get_Widget (Child_3))));
 
                         Set_Synchronized_Editor
                           (Get_View
-                             (Source_Box (Get_Widget (Child_3)).Editor),
+                             (Source_Editor_Box (Get_Widget (Child_3))),
                            Get_View
-                             (Source_Box (Get_Widget (Child_1)).Editor));
+                             (Source_Editor_Box (Get_Widget (Child_1))));
                      end if;
 
                      Triplet (3) := Child_3;
@@ -1300,8 +1371,8 @@ package body Src_Editor_Module.Shell is
 
                else
                   Set_Synchronized_Editor
-                    (Get_View (Source_Box (Get_Widget (Child_2)).Editor),
-                     Get_View (Source_Box (Get_Widget (Child_1)).Editor));
+                    (Get_View (Source_Editor_Box (Get_Widget (Child_2))),
+                     Get_View (Source_Editor_Box (Get_Widget (Child_1))));
                end if;
 
                for C in Triplet'Range loop
@@ -1348,11 +1419,70 @@ package body Src_Editor_Module.Shell is
             Child := Find_Editor (Kernel, Filename);
 
             if Child /= null then
-               Set_Writable (Source_Box (Get_Widget (Child)).Editor, Write);
+               Set_Writable (Source_Editor_Box (Get_Widget (Child)), Write);
             end if;
          end;
       end if;
    end Edit_Command_Handler;
+
+   -----------------
+   -- Buffer_Cmds --
+   -----------------
+
+   procedure Buffer_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
+      EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
+      Inst         : Class_Instance;
+      Buffer       : Source_Buffer;
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -("Cannot build instances of EditorBuffer."
+                                & " Use EditorBuffer.get() instead"));
+
+      elsif Command = "get" then
+         declare
+            File_Inst : constant Class_Instance := Nth_Arg
+              (Data, 1, Get_File_Class (Kernel),
+               Default => null, Allow_Null => True);
+            File : Virtual_File;
+            Child : MDI_Child;
+         begin
+            if File_Inst = null then
+               Child := Find_Current_Editor (Kernel);
+            else
+               File := Get_File (Get_Data (File_Inst));
+               Child := Find_Editor (Kernel, File);
+            end if;
+
+            if Child = null then
+               Set_Error_Msg (Data, -"No matching editor");
+            else
+               Set_Return_Value
+                 (Data, Create_Editor_Buffer
+                    (Get_Script (Data),
+                     Get_Buffer (Get_Source_Box_From_MDI (Child))));
+            end if;
+         end;
+
+      elsif Command = "file" then
+         Inst := Nth_Arg (Data, 1, EditorBuffer);
+         Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
+         if Buffer = null then
+            Set_Error_Msg (Data, "No associated buffer");
+         else
+            Set_Return_Value
+              (Data, Create_File (Get_Script (Data), Get_Filename (Buffer)));
+         end if;
+         Free (Inst);
+
+      else
+         Inst := Nth_Arg (Data, 1, EditorBuffer);
+         Set_Error_Msg (Data, -"Command not implemented yet: " & Command);
+         Free (Inst);
+      end if;
+   end Buffer_Cmds;
 
    -----------------------
    -- Register_Commands --
@@ -1361,190 +1491,175 @@ package body Src_Editor_Module.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Editor_Class       : constant Class_Type := New_Class (Kernel, "Editor");
+      Editor_Class   : constant Class_Type := New_Class (Kernel, "Editor");
+--        EditorLocation : constant Class_Type :=
+--          New_Class (Kernel, "EditorLocation");
+      EditorBuffer : constant Class_Type :=
+        New_Class (Kernel, "EditorBuffer");
    begin
+      --  EditorLocation
+
+      --  EditorBuffer
+
       Register_Command
-        (Kernel, "edit",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Minimum_Args  => 1,
-         Maximum_Args  => 6,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "create_mark",
-         Minimum_Args  => 1,
-         Maximum_Args  => 4,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "get", 0, 1, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
-        (Kernel, "highlight",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
+        (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "add_blank_lines",
-         Minimum_Args  => 3,
-         Maximum_Args  => 4,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "current_view", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "remove_blank_lines",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "views", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_fold",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "close", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_unfold",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "save", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "unhighlight",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
+        (Kernel, "characters_count", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "highlight_range",
-         Minimum_Args  => 2,
-         Maximum_Args  => 5,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
+        (Kernel, "select", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "unhighlight_range",
-         Minimum_Args  => 2,
-         Maximum_Args  => 5,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
+        (Kernel, "selection_start", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "register_highlighting",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
+        (Kernel, "selection_end", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "set_background_color",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "copy", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "goto_mark",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "cut", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "delete_mark",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get_chars",
-         Minimum_Args  => 1,
-         Maximum_Args  => 5,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get_line",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get_column",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "create_mark", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get_file",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "get_last_line",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_get_start",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "is_modified", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_get_end",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_fold", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_get_name",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_end_line", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_get_type",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_start_line", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_get_level",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_level", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "subprogram_name",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_type", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "cursor_get_line",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "block_unfold", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "apply_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "remove_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "get_overlays", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "has_overlay", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
+         EditorBuffer);
+      Register_Command
+        (Kernel, "subprogram_name", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "get_chars", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "insert_text", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "delete_text", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "indent", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "refill", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+
+      --  The old Editor class
+      Register_Command
+        (Kernel, "edit", 1, 6, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "create_mark", 1, 4, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "highlight", 2, 3,
+         Line_Highlighting.Edit_Command_Handler'Access, Editor_Class, True);
+      Register_Command
+        (Kernel, "add_blank_lines", 3, 4, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "remove_blank_lines", 1, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_fold", 1, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_unfold", 1, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "unhighlight", 2, 3,
+         Line_Highlighting.Edit_Command_Handler'Access, Editor_Class, True);
+      Register_Command
+        (Kernel, "highlight_range", 2, 5,
+         Line_Highlighting.Edit_Command_Handler'Access, Editor_Class, True);
+      Register_Command
+        (Kernel, "unhighlight_range", 2, 5,
+         Line_Highlighting.Edit_Command_Handler'Access, Editor_Class, True);
+      Register_Command
+        (Kernel, "register_highlighting", 2, 3,
+         Line_Highlighting.Edit_Command_Handler'Access, Editor_Class, True);
+      Register_Command
+        (Kernel, "set_background_color", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "goto_mark", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "delete_mark", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "get_chars", 1, 5, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "get_line", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "get_column", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "get_file", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
+      Register_Command
+        (Kernel, "get_last_line", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_get_start", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_get_end", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_get_name", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_get_type", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "block_get_level", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "subprogram_name", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
+      Register_Command
+        (Kernel, "cursor_get_line", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
         (Kernel, "cursor_get_column",
          Minimum_Args  => 1,
@@ -1677,14 +1792,12 @@ package body Src_Editor_Module.Shell is
          Maximum_Args => 3,
          Class        => Get_File_Class (Kernel),
          Handler      => Current_Search_Command_Handler'Access);
-
       Register_Command
         (Kernel, "search",
          Minimum_Args => 1,
          Maximum_Args => 5,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Search_Command_Handler'Access);
-
       Register_Command
         (Kernel, "set_synchronized_scrolling",
          Minimum_Args  => 2,
@@ -1706,7 +1819,6 @@ package body Src_Editor_Module.Shell is
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
-
       Register_Command
         (Kernel, "set_writable",
          Minimum_Args  => 2,
