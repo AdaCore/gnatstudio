@@ -57,6 +57,7 @@ with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GUI_Utils;                 use GUI_Utils;
 with GPS.Intl;                  use GPS.Intl;
@@ -107,6 +108,11 @@ package body Src_Editor_Box is
    --------------------------
    -- Forward declarations --
    --------------------------
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean;
+   --  Callback for the "delete_event" signal.
 
    function Get_Contextual_Menu
      (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -162,15 +168,6 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Callback to be called when the view receives the "toggle_overwrite"
    --  signal.
-
-   procedure Initialize_Box
-     (Box    : access Source_Editor_Box_Record;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Source : Source_Buffer := null;
-      Lang   : Language.Language_Access);
-   --  Perform the initialization of the given editor box. If Source_Buffer
-   --  is null, then a new buffer will automatically be created. Otherwise,
-   --  the editor creates a new editor for the same Source_Buffer.
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
@@ -706,12 +703,12 @@ package body Src_Editor_Box is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Toggle_Overwrite;
 
-   --------------------
-   -- Initialize_Box --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Initialize_Box
-     (Box    : access Source_Editor_Box_Record;
+   procedure Initialize
+     (Box    : access Source_Editor_Box_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle;
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
@@ -803,6 +800,12 @@ package body Src_Editor_Box is
 
       Object_Return_Callback.Object_Connect
         (Event_Box, "button_press_event", On_Goto_Line_Func'Access, Box);
+
+      Gtkada.Handlers.Return_Callback.Connect
+        (Box,
+         "delete_event",
+         Delete_Callback'Access,
+         After => False);
 
       --  Modified file area...
       Gtk_New_Vseparator (Separator);
@@ -906,7 +909,7 @@ package body Src_Editor_Box is
          Object          => Box,
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
-   end Initialize_Box;
+   end Initialize;
 
    ---------------
    -- Key_Press --
@@ -1506,6 +1509,36 @@ package body Src_Editor_Box is
       end if;
    end Execute;
 
+   ---------------------
+   -- Delete_Callback --
+   ---------------------
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+      Kernel : constant Kernel_Handle :=
+        Get_Kernel (Source_Editor_Box (Widget));
+   begin
+      --  We cannot delete the last remaining view if the buffer has to be
+      --  saved and the user cancelled the action.
+      --  The call to Needs_To_Be_Saved will return False if the box is not the
+      --  last view, so that we always authorize closing the other views
+
+      return Needs_To_Be_Saved (Get_Buffer (Source_Editor_Box (Widget)))
+        and then not Save_MDI_Children
+          (Kernel,
+           Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
+           Force => False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Delete_Callback;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1516,20 +1549,8 @@ package body Src_Editor_Box is
       Lang   : Language.Language_Access := null) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Kernel, Lang);
+      Initialize (Box, Kernel, null, Lang);
    end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Box    : access Source_Editor_Box_Record;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Lang   : Language.Language_Access) is
-   begin
-      Initialize_Box (Box, Kernel, Lang => Lang);
-   end Initialize;
 
    ---------------------
    -- Create_New_View --
@@ -1541,13 +1562,10 @@ package body Src_Editor_Box is
       Source : access Source_Editor_Box_Record) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize_Box
+      Initialize
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
       Box.Writable := Source.Writable;
-
-      --  ??? Is this really useful ?
-      Set_Filename (Box.Source_Buffer, Get_Filename (Source));
 
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 

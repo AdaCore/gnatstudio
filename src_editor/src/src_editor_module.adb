@@ -139,14 +139,6 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
 
-   procedure Gtk_New
-     (Box : out Source_Box; Editor : Source_Editor_Box);
-   --  Create a new source box.
-
-   procedure Initialize
-     (Box : access Source_Box_Record'Class; Editor : Source_Editor_Box);
-   --  Internal initialization function.
-
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
@@ -341,7 +333,7 @@ package body Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box) return Source_Box;
+      Current : Source_Editor_Box) return Source_Editor_Box;
    --  Create a new view for Current and add it in the MDI.
    --  The current editor is the focus child in the MDI.
    --  If Add is True, the Box is added to the MDI.
@@ -351,11 +343,6 @@ package body Src_Editor_Module is
    --  Create a new view for the current editor and add it in the MDI.
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.
-
-   function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean;
-   --  Callback for the "delete_event" signal.
 
    procedure File_Edited_Cb
      (Kernel : access Kernel_Handle_Record'Class;
@@ -547,10 +534,10 @@ package body Src_Editor_Module is
    function Get_File_Identifier (Child  : MDI_Child) return VFS.Virtual_File is
    begin
       if Child /= null
-        and then Get_Widget (Child).all in Source_Box_Record'Class
+        and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
       then
          return Get_File_Identifier
-           (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+           (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
       else
          return VFS.No_File;
       end if;
@@ -563,9 +550,9 @@ package body Src_Editor_Module is
    function Get_Filename (Child : MDI_Child) return VFS.Virtual_File is
    begin
       if Child /= null
-        and then Get_Widget (Child).all in Source_Box_Record'Class
+        and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
       then
-         return Get_Filename (Source_Box (Get_Widget (Child)).Editor);
+         return Get_Filename (Source_Editor_Box (Get_Widget (Child)));
       else
          return VFS.No_File;
       end if;
@@ -627,7 +614,7 @@ package body Src_Editor_Module is
 
       use Mark_Identifier_List;
 
-      Box         : Source_Box;
+      Box         : Source_Editor_Box;
       Child       : MDI_Child;
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
@@ -639,7 +626,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Box := Source_Box (Get_Widget (Child));
+         Box := Source_Editor_Box (Get_Widget (Child));
          Remove_From_List (Id.Unopened_Files, Full_Name (File).all);
 
          Node := First (Id.Stored_Marks);
@@ -656,7 +643,7 @@ package body Src_Editor_Module is
                      Line   => Mark_Record.Line,
                      Mark   =>
                        Create_Mark
-                         (Get_Buffer (Box.Editor),
+                         (Get_Buffer (Box),
                           Editable_Line_Type (Mark_Record.Line),
                           Mark_Record.Column),
                      Column => Mark_Record.Column,
@@ -696,7 +683,7 @@ package body Src_Editor_Module is
       D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
-      Box   : Source_Box;
+      Box   : Source_Editor_Box;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
@@ -705,18 +692,18 @@ package body Src_Editor_Module is
 
          exit when Child = null;
 
-         if Get_Widget (Child).all in Source_Box_Record'Class then
-            Box := Source_Box (Get_Widget (Child));
+         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
+            Box := Source_Editor_Box (Get_Widget (Child));
 
             if D.File = VFS.No_File
-              or else D.File = Get_Filename (Box.Editor)
+              or else D.File = Get_Filename (Box)
             then
                Dummy := Check_Timestamp_And_Reload
-                 (Box.Editor,
+                 (Box,
                   Interactive   => False,
                   Always_Reload => False);
 
-               Check_Writable (Box.Editor);
+               Check_Writable (Box);
             end if;
          end if;
 
@@ -740,7 +727,7 @@ package body Src_Editor_Module is
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
       Added       : Boolean := False;
-      Box         : Source_Box;
+      Box         : Source_Editor_Box;
       Child       : MDI_Child;
 
    begin
@@ -759,14 +746,14 @@ package body Src_Editor_Module is
               and then Mark_Record.Line /= 0
             then
                Child := Find_Editor (Kernel, Mark_Record.File);
-               Box := Source_Box (Get_Widget (Child));
+               Box := Source_Editor_Box (Get_Widget (Child));
 
                Mark_Record.Line :=
                  Natural (Src_Editor_Buffer.Line_Information.Get_Line
-                            (Get_Buffer (Box.Editor), Mark_Record.Mark));
+                            (Get_Buffer (Box), Mark_Record.Mark));
                Mark_Record.Column :=
                  Src_Editor_Buffer.Line_Information.Get_Column
-                   (Get_Buffer (Box.Editor), Mark_Record.Mark);
+                   (Get_Buffer (Box), Mark_Record.Mark);
 
                Set_Data
                  (Node,
@@ -847,36 +834,6 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end Cursor_Stopped_Cb;
 
-   ---------------------
-   -- Delete_Callback --
-   ---------------------
-
-   function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Kernel : constant Kernel_Handle :=
-        Get_Kernel (Source_Box (Widget).Editor);
-   begin
-      --  We cannot delete the last remaining view if the buffer has to be
-      --  saved and the user cancelled the action.
-      --  The call to Needs_To_Be_Saved will return False if the box is not the
-      --  last view, so that we always authorize closing the other views
-
-      return Needs_To_Be_Saved (Get_Buffer (Source_Box (Widget).Editor))
-        and then not Save_MDI_Children
-          (Kernel,
-           Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
-           Force => False);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Delete_Callback;
-
    ------------------------
    -- File_Edit_Callback --
    ------------------------
@@ -919,7 +876,7 @@ package body Src_Editor_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
-      Src    : Source_Box := null;
+      Src    : Source_Editor_Box;
       File   : Glib.String_Ptr;
       F      : Virtual_File;
       Str    : Glib.String_Ptr;
@@ -964,7 +921,7 @@ package body Src_Editor_Module is
 
             if Src /= null then
                Dummy := File_Edit_Callback
-                 ((Src.Editor,
+                 ((Src,
                    Editable_Line_Type (Line),
                    Column, 0, User, False));
                Push_Marker_In_History
@@ -1042,8 +999,8 @@ package body Src_Editor_Module is
       Editor       : Source_Editor_Box;
 
    begin
-      if Widget.all in Source_Box_Record'Class then
-         Editor := Source_Box (Widget).Editor;
+      if Widget.all in Source_Editor_Box_Record'Class then
+         Editor := Source_Editor_Box (Widget);
 
          declare
             Filename : constant String :=
@@ -1097,7 +1054,7 @@ package body Src_Editor_Module is
       if Child = null then
          return null;
       else
-         return Source_Box (Get_Widget (Child)).Editor;
+         return Source_Editor_Box (Get_Widget (Child));
       end if;
    end Get_Source_Box_From_MDI;
 
@@ -1108,32 +1065,9 @@ package body Src_Editor_Module is
    function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child is
    begin
-      return Find_MDI_Child_By_Tag (Get_MDI (Kernel), Source_Box_Record'Tag);
+      return Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Source_Editor_Box_Record'Tag);
    end Find_Current_Editor;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Box    : out Source_Box;
-      Editor : Source_Editor_Box) is
-   begin
-      Box := new Source_Box_Record;
-      Initialize (Box, Editor);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Box    : access Source_Box_Record'Class;
-      Editor : Source_Editor_Box) is
-   begin
-      Gtk.Box.Initialize_Hbox (Box);
-      Box.Editor := Editor;
-   end Initialize;
 
    ---------------------------
    -- Update_Cache_On_Focus --
@@ -1159,10 +1093,9 @@ package body Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box) return Source_Box
+      Current : Source_Editor_Box) return Source_Editor_Box
    is
       Editor : Source_Editor_Box;
-      Box    : Source_Box;
       Child  : MDI_Child;
       Num    : Natural;
    begin
@@ -1174,11 +1107,9 @@ package body Src_Editor_Module is
          Title : constant Virtual_File := Get_Filename (Current);
       begin
          Create_New_View (Editor, Kernel, Current);
-         Gtk_New (Box, Editor);
-         Pack_Start (Box, Editor);
 
          Child := new Editor_Child_Record;
-         Initialize (Child, Box, All_Buttons);
+         Initialize (Child, Editor, All_Buttons);
          Child := Put
            (Kernel, Child,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
@@ -1210,16 +1141,9 @@ package body Src_Editor_Module is
                Full_Name (Title).all & " <" & Im & ">",
                Base_Name (Title) & " <" & Im & ">");
          end;
-
-         Gtkada.Handlers.Return_Callback.Object_Connect
-           (Box,
-            "delete_event",
-            Delete_Callback'Access,
-            Gtk_Widget (Box),
-            After => False);
       end;
 
-      return Box;
+      return Editor;
    end New_View;
 
    procedure New_View
@@ -1227,7 +1151,7 @@ package body Src_Editor_Module is
    is
       Current : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Box     : Source_Box;
+      Box     : Source_Editor_Box;
       pragma Unreferenced (Box);
 
    begin
@@ -1247,8 +1171,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Kernel);
       Success        : Boolean;
-      Containing_Box : constant Source_Box := Source_Box (Child);
-      Box            : constant Source_Editor_Box := Containing_Box.Editor;
+      Box            : constant Source_Editor_Box := Source_Editor_Box (Child);
    begin
       case Mode is
          when Query =>
@@ -1346,12 +1269,11 @@ package body Src_Editor_Module is
       Focus      : Boolean := True;
       Force      : Boolean := False;
       Position   : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Default) return Source_Box
+        Gtkada.MDI.Position_Default) return Source_Editor_Box
    is
       No_Name : constant String := -"Untitled";
       MDI     : constant MDI_Window := Get_MDI (Kernel);
       Editor  : Source_Editor_Box;
-      Box     : Source_Box;
       Child   : MDI_Child;
       Dummy   : Boolean;
       Id      : constant Source_Editor_Module :=
@@ -1367,13 +1289,13 @@ package body Src_Editor_Module is
 
          if Child /= null then
             Dummy := Check_Timestamp_And_Reload
-              (Source_Box (Get_Widget (Child)).Editor,
+              (Source_Editor_Box (Get_Widget (Child)),
                Interactive   => False,
                Always_Reload => Force);
 
             Raise_Child (Child, Focus);
 
-            return Source_Box (Get_Widget (Child));
+            return Source_Editor_Box (Get_Widget (Child));
          end if;
       end if;
 
@@ -1383,11 +1305,8 @@ package body Src_Editor_Module is
       --  to the MDI to handle
 
       if Editor /= null then
-         Gtk_New (Box, Editor);
-         Add (Box, Editor);
-
          Child := new Editor_Child_Record;
-         Initialize (Child, Box, All_Buttons);
+         Initialize (Child, Editor, All_Buttons);
          Child := Put
            (Kernel, Child,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
@@ -1430,7 +1349,7 @@ package body Src_Editor_Module is
                while The_Child /= null loop
                   if The_Child /= Child
                     and then Get_Widget (The_Child).all in
-                    Source_Box_Record'Class
+                    Source_Editor_Box_Record'Class
                     and then Get_Filename (The_Child) = VFS.No_File
                   then
                      declare
@@ -1481,13 +1400,6 @@ package body Src_Editor_Module is
             end;
          end if;
 
-         Gtkada.Handlers.Return_Callback.Object_Connect
-           (Box,
-            "delete_event",
-            Delete_Callback'Access,
-            Gtk_Widget (Box),
-            After => False);
-
          if File /= VFS.No_File then
             Add_To_Recent_Menu (Kernel, File);
          end if;
@@ -1499,7 +1411,7 @@ package body Src_Editor_Module is
             Mode   => Error);
       end if;
 
-      return Box;
+      return Editor;
    end Open_File;
 
    -----------------------
@@ -1553,7 +1465,7 @@ package body Src_Editor_Module is
          return;
       end if;
 
-      Source := Source_Box (Get_Widget (Child)).Editor;
+      Source := Source_Editor_Box (Get_Widget (Child));
 
       declare
          Old_Name : constant Virtual_File := Get_Filename (Source);
@@ -1802,7 +1714,7 @@ package body Src_Editor_Module is
    procedure On_New_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Editor : Source_Box;
+      Editor : Source_Editor_Box;
       pragma Unreferenced (Widget, Editor);
    begin
       Editor := Open_File (Kernel, File => VFS.No_File);
@@ -2373,7 +2285,7 @@ package body Src_Editor_Module is
       Child       : MDI_Child;
       No_Location : Boolean := False;
       Column      : Integer := D.Column;
-      Source      : Source_Box;
+      Source      : Source_Editor_Box;
       Edit        : Source_Editor_Box;
       Tmp         : Boolean;
       pragma Unreferenced (Tmp);
@@ -2386,7 +2298,7 @@ package body Src_Editor_Module is
 
             exit when Child = null;
 
-            if Get_Widget (Child).all in Source_Box_Record'Class
+            if Get_Widget (Child).all in Source_Editor_Box_Record'Class
               and then Get_Filename (Child) = D.File
             then
                Close_Child (Child);
@@ -2423,7 +2335,7 @@ package body Src_Editor_Module is
          end if;
 
          if Source /= null then
-            Edit := Source.Editor;
+            Edit := Source;
          end if;
 
          if Column = 0 then
@@ -2462,17 +2374,17 @@ package body Src_Editor_Module is
       if Child /= null then
          if D.Info'First = 0 then
             Create_Line_Information_Column
-              (Source_Box (Get_Widget (Child)).Editor,
+              (Source_Editor_Box (Get_Widget (Child)),
                D.Identifier,
                D.Every_Line);
 
          elsif D.Info'Length = 0 then
             Remove_Line_Information_Column
-              (Source_Box (Get_Widget (Child)).Editor, D.Identifier);
+              (Source_Editor_Box (Get_Widget (Child)), D.Identifier);
 
          else
             Add_File_Information
-              (Source_Box (Get_Widget (Child)).Editor, D.Identifier, D.Info);
+              (Source_Editor_Box (Get_Widget (Child)), D.Identifier, D.Info);
          end if;
          return True;
       end if;
@@ -2555,9 +2467,8 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      C : constant Source_Box := Source_Box (Child);
    begin
-      return Default_Factory (Kernel, C.Editor);
+      return Default_Factory (Kernel, Source_Editor_Box (Child));
    end Default_Factory;
 
    -----------------------------
@@ -2575,10 +2486,10 @@ package body Src_Editor_Module is
    begin
       if W.all in Source_View_Record'Class then
          W := Get_Parent (W);
-         while W.all not in Source_Box_Record'Class loop
+         while W.all not in Source_Editor_Box_Record'Class loop
             W := Get_Parent (W);
          end loop;
-         Box := Source_Box (W).Editor;
+         Box := Source_Editor_Box (W);
 
          case Special is
             when 'l' =>
@@ -3290,9 +3201,9 @@ package body Src_Editor_Module is
 
             exit when Child = null;
 
-            if Get_Widget (Child).all in Source_Box_Record'Class then
+            if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
                Refresh_Side_Column
-                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
             end if;
 
             Next (Iter);
@@ -3421,8 +3332,8 @@ package body Src_Editor_Module is
       Child := Get (Iter);
 
       while Child /= null loop
-         if Get_Widget (Child).all in Source_Box_Record'Class then
-            Editor := Source_Box (Get_Widget (Child)).Editor;
+         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
+            Editor := Source_Editor_Box (Get_Widget (Child));
 
             Source := Get_Buffer (Editor);
 
@@ -3457,8 +3368,8 @@ package body Src_Editor_Module is
          Child := Get (Iter);
 
          exit when Child = null
-           or else (Get_Widget (Child).all in Source_Box_Record'Class
-                    and then Source_Box (Get_Widget (Child)).Editor =
+           or else (Get_Widget (Child).all in Source_Editor_Box_Record'Class
+                    and then Source_Editor_Box (Get_Widget (Child)) =
                       Source_Editor_Box (Editor));
          Next (Iter);
       end loop;

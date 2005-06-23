@@ -23,7 +23,6 @@ with Glib;               use Glib;
 with Gdk.GC;
 with Gdk.Color;          use Gdk.Color;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
-with Gtk.Box;            use Gtk.Box;
 with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
@@ -131,11 +130,6 @@ package Src_Editor_Module is
    --  Return the color to use for post-it notes
 
 private
-
-   type Source_Box_Record is new Gtk_Hbox_Record with record
-      Editor : Src_Editor_Box.Source_Editor_Box;
-   end record;
-   type Source_Box is access all Source_Box_Record'Class;
 
    ------------------------
    -- Editors Hash-table --
@@ -268,7 +262,7 @@ private
       Focus      : Boolean := True;
       Force      : Boolean := False;
       Position   : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Default) return Source_Box;
+        Gtkada.MDI.Position_Default) return Src_Editor_Box.Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  If Focus is True, the box will be raised if it is in the MDI.

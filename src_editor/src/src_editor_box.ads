@@ -68,10 +68,13 @@ package Src_Editor_Box is
    --  (see procedure Destroy below).
 
    procedure Initialize
-     (Box    : access Source_Editor_Box_Record;
+     (Box    : access Source_Editor_Box_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle;
+      Source : Source_Buffer := null;
       Lang   : Language.Language_Access);
-   --  Initialize the newly created Source_Editor_Box.
+   --  Perform the initialization of the given editor box. If Source_Buffer
+   --  is null, then a new buffer will automatically be created. Otherwise,
+   --  the editor creates a new editor for the same Source_Buffer.
 
    procedure Create_New_View
      (Box    : out Source_Editor_Box;
