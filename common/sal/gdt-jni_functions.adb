@@ -276,6 +276,21 @@ package body GDT.JNI_Functions is
       end if;
    end Java_ConstructAccess_getNameInt;
 
+    ------------------------------------------
+   -- Java_ConstructAccess_getVisibilityInt --
+   -------------------------------------------
+
+   function Java_ConstructAccess_getVisibilityInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint
+   is
+      pragma Unreferenced (This);
+      Construct : constant Construct_Access_Ptr := Construct_Access_Ptr
+        (Construct_Information_Conversion.To_Pointer
+           (To_Address (Integer_Address (Addr))));
+   begin
+      return Jint (Construct_Visibility'Pos (Construct.Visibility));
+   end Java_ConstructAccess_getVisibilityInt;
+
    ------------------------------------
    -- Java_ConstructList_getFirstInt --
    ------------------------------------

@@ -88,6 +88,13 @@ package GDT.JNI_Functions is
       Java_ConstructAccess_getNameInt,
       "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getNameInt");
 
+   function Java_ConstructAccess_getVisibilityInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
+   pragma Export
+     (C,
+      Java_ConstructAccess_getVisibilityInt,
+      "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getVisibilityInt");
+
    function Java_ConstructList_getFirstInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
    pragma Export
