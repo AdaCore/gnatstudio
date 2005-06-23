@@ -1169,6 +1169,8 @@ package body Src_Editor_Buffer is
       Trace (Me, "Destroying Buffer widget="
              & System.Address_Image (Buffer.all'Address));
 
+      Buffer.In_Destruction := True;
+
       --  We do not free memory associated to Buffer.Current_Command, since
       --  this command is already freed when freeing Buffer.Queue.
 
@@ -1222,9 +1224,6 @@ package body Src_Editor_Buffer is
       Unchecked_Free (Buffer.Line_Data);
 
       Reset_Completion_Data;
-
-      Delete_Mark (Buffer, Buffer.First_Highlight_Mark);
-      Delete_Mark (Buffer, Buffer.Last_Highlight_Mark);
    end Buffer_Destroy;
 
    ---------------------
@@ -5425,5 +5424,15 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Cursor_Set_Explicitely > 0;
    end Position_Set_Explicitely;
+
+   ---------------------------
+   -- In_Destruction_Is_Set --
+   ---------------------------
+
+   function In_Destruction_Is_Set
+     (Buffer : access Source_Buffer_Record'Class) return Boolean is
+   begin
+      return Buffer.In_Destruction;
+   end In_Destruction_Is_Set;
 
 end Src_Editor_Buffer;
