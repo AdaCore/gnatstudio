@@ -280,6 +280,12 @@ package body Ada_Analyzer is
 
       Sloc_Name           : Source_Location;
       --  Source location for the name of this entity, if relevant
+
+      Visibility          : Construct_Visibility := Visibility_Public;
+      --  Is the token public or private ?
+
+      Visibility_Section  : Construct_Visibility := Visibility_Public;
+      --  Are we on the public or on the private section of the token ?
    end record;
    --  Extended information for a token
 
@@ -306,7 +312,7 @@ package body Ada_Analyzer is
 
    function Get_Token
      (Str : String; Prev_Token : Token_Type) return Token_Type
-  is
+   is
       S : String (Str'Range);
    begin
       --  First convert Str to lower case for the token parser below
@@ -1353,6 +1359,8 @@ package body Ada_Analyzer is
 
             Constructs.Last := Constructs.Current;
 
+            Constructs.Current.Visibility := Value.Visibility;
+
             if Value.Tagged_Type then
                Constructs.Current.Category := Cat_Class;
             elsif Value.Record_Type then
@@ -1406,7 +1414,6 @@ package body Ada_Analyzer is
                      Constructs.Current.Category := Cat_Simple_Block;
                   when Tok_Exception =>
                      Constructs.Current.Category := Cat_Exception_Handler;
-
                   when others =>
                      Constructs.Current.Category := Cat_Unknown;
                end case;
@@ -1475,6 +1482,7 @@ package body Ada_Analyzer is
          Temp.Sloc.Line   := Line_Count;
          Temp.Sloc.Column := Prec - Start_Of_Line + 1;
          Temp.Sloc.Index  := Prec;
+         Temp.Visibility  := Top_Token.Visibility_Section;
 
          if Callback /= null then
             if Callback
@@ -1916,6 +1924,10 @@ package body Ada_Analyzer is
                  or else Top_Token.Token /= Tok_Select
                then
                   Num_Spaces := Num_Spaces - Indent_Level;
+               end if;
+
+               if Reserved = Tok_Private then
+                  Top_Token.Visibility_Section := Visibility_Private;
                end if;
 
                if Reserved = Tok_When then
@@ -3068,6 +3080,7 @@ package body Ada_Analyzer is
                   Val.Ident_Len   := Str_Len;
                   Val.Sloc_Name   := Val.Sloc;
                   Val.Declaration := True;
+                  Val.Visibility  := Top_Token.Visibility_Section;
                   Push (Tokens, Val);
                end;
             end if;
