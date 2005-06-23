@@ -4243,6 +4243,10 @@ package body Src_Editor_Buffer is
    is
       The_Line : Buffer_Line_Type;
    begin
+      if Editor.In_Destruction then
+         return;
+      end if;
+
       if Line = 0 then
          Highlight_Range (Editor, Id, 0, 1, 1, True);
 
