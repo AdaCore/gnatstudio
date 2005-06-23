@@ -670,6 +670,10 @@ package Src_Editor_Buffer is
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
+   function In_Destruction_Is_Set
+     (Buffer : access Source_Buffer_Record'Class) return Boolean;
+   --  Similar to Gtk.Object.In_Destruction_Is_Set.
+
 private
 
    procedure Get_Cursor_Position
@@ -1028,6 +1032,9 @@ private
 
       Cursor_Set_Explicitely : Natural := 0;
       --  > 0 when the cursor position has been set explicitely in the code
+
+      In_Destruction : Boolean := False;
+      --  Indicates whether the buffer is currently being destroyed.
    end record;
 
 end Src_Editor_Buffer;
