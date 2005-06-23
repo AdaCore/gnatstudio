@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -89,7 +89,9 @@ begin
            Image (Info.Sloc_Start.Column) & ", ");
       Put ("Last => " &
            Image (Info.Sloc_End.Line) & ":" &
-           Image (Info.Sloc_End.Column));
+           Image (Info.Sloc_End.Column) & ", ");
+      Put ("Visibility => " &
+        Construct_Visibility'Image (Info.Visibility));
       New_Line;
       Info := Info.Next;
    end loop;
