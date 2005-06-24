@@ -956,6 +956,8 @@ package body Shell_Script is
       if Class /= No_Class then
          if Command = Constructor_Method then
             Cmd := new String'(Get_Name (Class));
+         elsif Command = Destructor_Method then
+            Cmd := new String'(Get_Name (Class) & ".__delete");
          else
             Cmd := new String'(Get_Name (Class) & "." & Command);
             --  First parameter is always the instance
