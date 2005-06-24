@@ -722,14 +722,15 @@ package body Language.Custom is
 
       Construct.all :=
         (Category,
-         N,
-         P,
-         Sloc_Start,
-         Sloc_Entity,
-         Sloc_End,
-         Is_Declaration,
-         Prev,
-         Next);
+         Is_Declaration => Is_Declaration,
+         Visibility     => Visibility_Public,
+         Name           => N,
+         Profile        => P,
+         Sloc_Start     => Sloc_Start,
+         Sloc_Entity    => Sloc_Entity,
+         Sloc_End       => Sloc_End,
+         Prev           => Prev,
+         Next           => Next);
    end Set_Construct;
 
    ------------------
