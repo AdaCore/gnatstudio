@@ -2424,4 +2424,39 @@ package body Src_Editor_Box is
       end if;
    end Set_Writable;
 
+   ---------------
+   -- Get_Views --
+   ---------------
+
+   function Get_Views (Buffer : Source_Buffer) return Views_Array is
+      Iter  : Child_Iterator := First_Child (Get_MDI (Get_Kernel (Buffer)));
+      Box   : Source_Editor_Box;
+      Count : Natural := 0;
+   begin
+      while Get (Iter) /= null loop
+         Count := Count + 1;
+         Next (Iter);
+      end loop;
+
+      declare
+         Result : Views_Array (1 .. Count);
+      begin
+         Count := 1;
+         Iter  := First_Child (Get_MDI (Get_Kernel (Buffer)));
+         while Get (Iter) /= null loop
+            if Get_Widget (Get (Iter)).all in
+              Source_Editor_Box_Record'Class
+            then
+               Box := Source_Editor_Box (Get_Widget (Get (Iter)));
+               if Get_Filename (Box) = Get_Filename (Buffer) then
+                  Result (Count) := Box;
+                  Count := Count + 1;
+               end if;
+            end if;
+            Next (Iter);
+         end loop;
+         return Result (Result'First .. Count - 1);
+      end;
+   end Get_Views;
+
 end Src_Editor_Box;

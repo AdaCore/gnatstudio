@@ -110,6 +110,15 @@ package Src_Editor_Box is
    --  Editors to False, otherwise, the writable state will be set based on
    --  the file system flags.
 
+   -----------
+   -- Views --
+   -----------
+
+   type Views_Array is array (Natural range <>) of Source_Editor_Box;
+
+   function Get_Views (Buffer : Source_Buffer) return Views_Array;
+   --  Return the list of views for this buffer
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
