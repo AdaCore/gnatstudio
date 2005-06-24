@@ -551,7 +551,11 @@ package GPS.Kernel.Scripts is
    --------------------------
 
    GPS_Shell_Name : constant String := "Shell";
-   Constructor_Method : constant String;
+   Constructor_Method  : constant String;
+   Addition_Method     : constant String;
+   Substraction_Method : constant String;
+   Comparison_Method   : constant String;
+   Destructor_Method   : constant String;
 
    procedure Initialize
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -608,6 +612,19 @@ package GPS.Kernel.Scripts is
    --  should initialize the fields. Its first parameter is the instance, the
    --  second, third,... are the parameters passed to the constructor.
    --  The constructor shouldn't return any value through Set_Return_Value.
+   --
+   --  If Command is Addition_Method, this is a function that should take one
+   --  argument in addition to the instance, and return a new instance. This
+   --  handles statemetns like "inst + 1", although the second argument can be
+   --  of any type (you can even handle multiple types in your implementation)
+   --
+   --  Subscription_Method is similar to Addition_Method.
+   --
+   --  Comparison_Method is a function that takes a second parameter, and
+   --  returns -1 if the first is less than the second, 0 if they are equal,
+   --  and 1 if the first is greater than the second.
+   --
+   --  Destructor_Method is called just before the instance is destroyed
    --
    --  Description of the new command must be put in the file
    --  shell_commands.xml, which is read dynamically when generating the
@@ -842,7 +859,11 @@ package GPS.Kernel.Scripts is
    --  Create a new context
 
 private
-   Constructor_Method : constant String := "<@constructor@>";
+   Constructor_Method  : constant String := "<@constructor@>";
+   Addition_Method     : constant String := "+";
+   Substraction_Method : constant String := "-";
+   Comparison_Method   : constant String := "<=>";
+   Destructor_Method   : constant String := "<@destructor@>";
 
    type Class_Type is record
       Name : GNAT.OS_Lib.String_Access;
