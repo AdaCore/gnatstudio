@@ -1144,6 +1144,7 @@ package body Codefix.Text_Manager is
         (Category        => Cat_Unknown,
          Name            => null,
          Profile         => null,
+         Visibility      => Visibility_Public,
          Sloc_Start      => (0, 0, 0),
          Sloc_Entity     => (0, 0, 0),
          Sloc_End        => (0, 0, 0),
