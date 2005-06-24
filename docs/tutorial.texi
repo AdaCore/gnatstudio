@@ -533,8 +533,8 @@ and select the @code{struct} directory, then click on @code{OK} to validate.
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
 
-Click on @code{Browse}, then click on @code{obj}, and finally click on
-@code{OK}.
+Click on the first @code{Browse} button, then click on
+@code{obj}, and finally click on @code{OK}.
 
 Click on @code{Forward}: this is the main units selection, used mainly for
 building executables and debugging.
@@ -560,10 +560,12 @@ command line, and change @code{-gnatf} to @code{-gnat}, the
 @code{Full errors} check box is unselected; now type @code{a} to get
 @code{-gnata}, and notice that @code{Enable assertions} is now selected.
 
-Click on @code{Forward}: voila, we've created a project similar to the one
-used in this tutorial.
+We've now created a project similar to the one used in this tutorial.
 
 Click on @code{Cancel} to close the wizard.
+
+Clicking on @code{Apply} instead would have created the project file
+and loaded it in GPS.
 
 @node Project properties
 @section Project properties
