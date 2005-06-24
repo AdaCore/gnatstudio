@@ -109,6 +109,21 @@ GPS.parse_xml ("""
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
+
+    <Categories>
+      <Category>
+        <Name>class</Name>
+        <Pattern>^\s*class\s+([\w_][\w\d_]+)\s*:</Pattern>
+        <Index>1</Index>
+        <Icon>package_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>procedure</Name>
+        <Pattern>^\s*def\s+([\w_][\w\d_]+)\s*\([^\)]*\)\s*:</Pattern>
+        <Index>1</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+    </Categories>
   </Language>
 
   <filter_and name="Python file">
