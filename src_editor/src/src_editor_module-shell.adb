@@ -44,9 +44,10 @@ with VFS;                       use VFS;
 with Traces;                    use Traces;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with System;                    use System;
-with System.Address_Image;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
+with System;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -59,8 +60,10 @@ package body Src_Editor_Module.Shell is
    Me : constant Debug_Handle := Create ("Editor.Shell");
 
    Filename_Cst          : aliased constant String := "filename";
+   File_Cst              : aliased constant String := "file";
    Line_Cst              : aliased constant String := "line";
    Col_Cst               : aliased constant String := "column";
+   Buffer_Cst            : aliased constant String := "buffer";
    Length_Cst            : aliased constant String := "length";
    Pattern_Cst           : aliased constant String := "pattern";
    Case_Cst              : aliased constant String := "case_sensitive";
@@ -79,6 +82,10 @@ package body Src_Editor_Module.Shell is
    End_Column_Cst        : aliased constant String := "end_column";
    Writable_Cst          : aliased constant String := "writable";
    Position_Cst          : aliased constant String := "position";
+   Start_Cst             : aliased constant String := "start";
+   End_Cst               : aliased constant String := "end";
+   Count_Cst             : aliased constant String := "count";
+   Location_Cst          : aliased constant String := "location";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -157,15 +164,247 @@ package body Src_Editor_Module.Shell is
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
 
+   procedure Location_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the EditorLocation class
+
+   procedure Mark_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for EditorMark class
+
    function Create_Editor_Buffer
      (Script : access Scripting_Language_Record'Class;
       Buffer : Source_Buffer) return Class_Instance;
-   function Get_Buffer (Buffer : Class_Instance) return Source_Buffer;
    --  Manipulation of instances of the EditorBuffer class.
    --  Result of Create_Editor_Buffer must be freed unless you assign it to
    --  a Callback_Data
 
-   pragma Unreferenced (Get_Buffer);
+   function Create_Editor_View
+     (Script : access Scripting_Language_Record'Class;
+      View   : Source_Editor_Box) return Class_Instance;
+   --  Return an instance of EditorView encapsulating View. Result must be
+   --  freed unless you assign it to a Callback_Data.
+
+   function Create_Editor_Mark
+     (Script : access Scripting_Language_Record'Class;
+      Mark   : Gtk_Text_Mark) return Class_Instance;
+   --  Return an instance of EditorMark encapsulating Mark
+
+   type Location_Info is record
+      Buffer : Source_Buffer;
+      Line   : Gint;
+      Offset : Gint;
+   end record;
+   type Location_Info_Access is access Location_Info;
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Location_Info_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (Location_Info_Access, System.Address);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Location_Info, Location_Info_Access);
+
+   procedure On_Location_Info_Destroyed (Info : System.Address);
+   pragma Convention (C, On_Location_Info_Destroyed);
+   --  Called when an instance of EditorLocation is destroyed
+
+   procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address);
+   pragma Convention (C, On_Buffer_Destroyed_For_Location);
+   --  Called when the buffer stored in an instance of EditorLocation is
+   --  destroyed
+
+   procedure Set_Location_Data
+     (EditorLoc : Class_Type;
+      Inst      : Class_Instance;
+      Buffer    : Source_Buffer;
+      Line      : Gint;
+      Offset    : Gint);
+   --  Set the data stored in the instance in EditorLocation
+
+   function Create_Editor_Location
+     (Script   : access Scripting_Language_Record'Class;
+      Location : Gtk_Text_Iter) return Class_Instance;
+   --  Return an instance of EditorLocation
+
+   procedure Get_Location
+     (Iter    : out Gtk_Text_Iter;
+      Data    : Callback_Data'Class;
+      Arg     : Positive;
+      Default : Gtk_Text_Iter);
+   --  Return the iter stored in the Arg-th parameter.
+   --  Buffer is set to null if there is no such parameter or it doesn't
+   --  contain a valid location.
+
+   procedure Get_Mark
+     (Mark   : out Gtk_Text_Mark;
+      Data   : in out Callback_Data'Class;
+      Arg    : Positive);
+   --  Return the mark stored in the Arg-th parameter.
+   --  Set Mark to null if it wasn't a valid instance
+
+   procedure Get_Buffer
+     (Buffer : in out Source_Buffer;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive);
+   --  Set the Buffer variable appropriately, or null if the buffer could
+   --  not be found or is no longer valid.
+   --  If the buffer is no longer valid, null is returned and an error msg is
+   --  set in Data.
+
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   procedure Get_Buffer
+     (Buffer : in out Source_Buffer;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive)
+   is
+      EditorBuffer : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorBuffer");
+      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
+   begin
+      Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
+      Free (Inst);
+      if Buffer = null then
+         Set_Error_Msg (Data, "No associated buffer");
+      end if;
+   end Get_Buffer;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   procedure Get_Location
+     (Iter    : out Gtk_Text_Iter;
+      Data    : Callback_Data'Class;
+      Arg     : Positive;
+      Default : Gtk_Text_Iter)
+   is
+      Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorLocation");
+      Loc_Inst : Class_Instance;
+      Info     : Location_Info_Access;
+   begin
+      Loc_Inst := Nth_Arg
+        (Data, Arg, Class, Allow_Null => True, Default => null);
+      if Loc_Inst = null then
+         Copy (Source => Default, Dest => Iter);
+      else
+         Info := Convert (Get_Data (Loc_Inst, Class));
+         if Info.Buffer = null then
+            Copy (Source => Default, Dest => Iter);
+         else
+            Get_Iter_At_Line_Offset
+              (Info.Buffer, Iter,
+               Line_Number => Info.Line,
+               Char_Offset => Info.Offset);
+         end if;
+      end if;
+   end Get_Location;
+
+   ------------------------
+   -- Create_Editor_Mark --
+   ------------------------
+
+   function Create_Editor_Mark
+     (Script : access Scripting_Language_Record'Class;
+      Mark   : Gtk_Text_Mark) return Class_Instance
+   is
+      Inst  : Class_Instance;
+   begin
+      Inst := Get_Instance (Script, Mark);
+      if Inst = null then
+         Inst := New_Instance
+           (Script, New_Class (Get_Kernel (Script), "EditorMark"));
+         Set_Data (Inst, GObject (Mark));
+      else
+         Ref (Inst);
+      end if;
+      return Inst;
+   end Create_Editor_Mark;
+
+   --------------
+   -- Get_Mark --
+   --------------
+
+   procedure Get_Mark
+     (Mark   : out Gtk_Text_Mark;
+      Data   : in out Callback_Data'Class;
+      Arg    : Positive)
+   is
+      EditorMark : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorMark");
+      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
+   begin
+      Mark := Gtk_Text_Mark (GObject'(Get_Data (Inst)));
+      Free (Inst);
+      if Mark = null then
+         Set_Error_Msg (Data, "No associated mark");
+      end if;
+   end Get_Mark;
+
+   --------------------------------
+   -- On_Location_Info_Destroyed --
+   --------------------------------
+
+   procedure On_Location_Info_Destroyed (Info : System.Address) is
+      Inf : Location_Info_Access := Convert (Info);
+   begin
+      Unchecked_Free (Inf);
+   end On_Location_Info_Destroyed;
+
+   --------------------------------------
+   -- On_Buffer_Destroyed_For_Location --
+   --------------------------------------
+
+   procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address) is
+      pragma Unreferenced (Obj);
+      Inf : constant Location_Info_Access := Convert (Data);
+   begin
+      Inf.Buffer := null;
+   end On_Buffer_Destroyed_For_Location;
+
+   -----------------------
+   -- Set_Location_Data --
+   -----------------------
+
+   procedure Set_Location_Data
+     (EditorLoc : Class_Type;
+      Inst      : Class_Instance;
+      Buffer    : Source_Buffer;
+      Line      : Gint;
+      Offset    : Gint)
+   is
+      Info : constant Location_Info_Access := new Location_Info'
+        (Buffer => Buffer, Line => Line, Offset => Offset);
+   begin
+      Set_Data
+        (Inst,
+         Class      => EditorLoc,
+         Value      => Convert (Info),
+         On_Destroy => On_Location_Info_Destroyed'Access);
+      Weak_Ref (Buffer, On_Buffer_Destroyed_For_Location'Access,
+                Convert (Info));
+   end Set_Location_Data;
+
+   ----------------------------
+   -- Create_Editor_Location --
+   ----------------------------
+
+   function Create_Editor_Location
+     (Script   : access Scripting_Language_Record'Class;
+      Location : Gtk_Text_Iter) return Class_Instance
+   is
+      EditorLoc : constant Class_Type :=
+        New_Class (Get_Kernel (Script), "EditorLocation");
+      Inst : constant Class_Instance := New_Instance (Script, EditorLoc);
+   begin
+      Set_Location_Data
+        (EditorLoc, Inst, Source_Buffer (Get_Buffer (Location)),
+         Get_Line (Location), Get_Line_Offset (Location));
+      return Inst;
+   end Create_Editor_Location;
 
    --------------------------
    -- Create_Editor_Buffer --
@@ -185,40 +424,37 @@ package body Src_Editor_Module.Shell is
             Inst := New_Instance
               (Script, New_Class (Get_Kernel (Script), "EditorBuffer"));
             Set_Data (Inst, GObject (Buffer));
-            Trace (Me, "Creating EditorBuffer buffer="
-                   & System.Address_Image (Buffer.all'Address)
-                   & " C_widget="
-                   & System.Address_Image (Get_Object (Buffer))
-                   & " instance="
-                   & System.Address_Image (Inst.all'Address));
          else
             Ref (Inst);
-            Trace (Me, "Create_Editor_Buffer: Reuse existing instance");
          end if;
          return Inst;
       end if;
    end Create_Editor_Buffer;
 
-   ----------------
-   -- Get_Buffer --
-   ----------------
+   ------------------------
+   -- Create_Editor_View --
+   ------------------------
 
-   function Get_Buffer (Buffer : Class_Instance) return Source_Buffer is
-      Script : Scripting_Language;
-      Class  : Class_Type;
+   function Create_Editor_View
+     (Script : access Scripting_Language_Record'Class;
+      View   : Source_Editor_Box) return Class_Instance
+   is
+      Inst : Class_Instance;
    begin
-      if Buffer = null then
+      if View = null then
          return null;
       else
-         Script := Get_Script (Buffer);
-         Class  := New_Class (Get_Kernel (Script), "EditorBuffer");
-         if not Is_Subclass (Script, Buffer, Class) then
-            raise Invalid_Data;
+         Inst := Get_Instance (Script, View);
+         if Inst = null then
+            Inst := New_Instance
+              (Script, New_Class (Get_Kernel (Script), "EditorView"));
+            Set_Data (Inst, GObject (View));
+         else
+            Ref (Inst);
          end if;
-
-         return Source_Buffer (GObject'(Get_Data (Buffer)));
+         return Inst;
       end if;
-   end Get_Buffer;
+   end Create_Editor_View;
 
    ---------------------
    -- On_Delete_Child --
@@ -1432,57 +1668,360 @@ package body Src_Editor_Module.Shell is
    procedure Buffer_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
-      EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
-      Inst         : Class_Instance;
-      Buffer       : Source_Buffer;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
+      Buffer    : Source_Buffer;
+      Child     : MDI_Child;
+      Box       : Source_Editor_Box;
+      File      : Virtual_File;
+      File_Inst : Class_Instance;
+      Success   : Boolean;
+      Iter      : Gtk_Text_Iter;
+      pragma Unreferenced (Success);
+
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -("Cannot build instances of EditorBuffer."
                                 & " Use EditorBuffer.get() instead"));
 
       elsif Command = "get" then
-         declare
-            File_Inst : constant Class_Instance := Nth_Arg
-              (Data, 1, Get_File_Class (Kernel),
-               Default => null, Allow_Null => True);
-            File : Virtual_File;
-            Child : MDI_Child;
-         begin
-            if File_Inst = null then
-               Child := Find_Current_Editor (Kernel);
-            else
-               File := Get_File (Get_Data (File_Inst));
-               Child := Find_Editor (Kernel, File);
-            end if;
+         File_Inst := Nth_Arg
+           (Data, 1, Get_File_Class (Kernel),
+            Default => null, Allow_Null => True);
 
-            if Child = null then
-               Set_Error_Msg (Data, -"No matching editor");
-            else
-               Set_Return_Value
-                 (Data, Create_Editor_Buffer
-                    (Get_Script (Data),
-                     Get_Buffer (Get_Source_Box_From_MDI (Child))));
-            end if;
-         end;
+         if File_Inst = null then
+            Child := Find_Current_Editor (Kernel);
+         else
+            File := Get_File (Get_Data (File_Inst));
+            Child := Find_Editor (Kernel, File);
+         end if;
+
+         if Child = null then
+            Box := Open_File (Get_Kernel (Data), File);
+         else
+            Box := Get_Source_Box_From_MDI (Child);
+         end if;
+
+         Set_Return_Value
+           (Data, Create_Editor_Buffer
+              (Get_Script (Data), Get_Buffer (Box)));
 
       elsif Command = "file" then
-         Inst := Nth_Arg (Data, 1, EditorBuffer);
-         Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
-         if Buffer = null then
-            Set_Error_Msg (Data, "No associated buffer");
-         else
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
             Set_Return_Value
               (Data, Create_File (Get_Script (Data), Get_Filename (Buffer)));
          end if;
-         Free (Inst);
+
+      elsif Command = "current_view" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Child := Find_Editor (Get_Kernel (Data), Get_Filename (Buffer));
+            Set_Return_Value
+              (Data, Create_Editor_View
+                 (Get_Script (Data), Source_Editor_Box (Get_Widget (Child))));
+         end if;
+
+      elsif Command = "views" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Return_Value_As_List (Data);
+            declare
+               Views : constant Views_Array := Get_Views (Buffer);
+            begin
+               for V in Views'Range loop
+                  Set_Return_Value
+                    (Data, Create_Editor_View (Get_Script (Data), Views (V)));
+               end loop;
+            end;
+         end if;
+
+      elsif Command = "close" then
+         Name_Parameters (Data, (1 => Force_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            declare
+               Views : constant Views_Array := Get_Views (Buffer);
+            begin
+               for V in Views'Range loop
+                  Close (Get_MDI (Get_Kernel (Data)), Views (V),
+                         Force => Nth_Arg (Data, 2, False));
+               end loop;
+            end;
+         end if;
+
+      elsif Command = "save" then
+         Name_Parameters (Data, (1 => Interactive_Cst'Access,
+                                 2 => File_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            File_Inst := Nth_Arg (Data, 3, Get_File_Class (Kernel),
+                                  Default => null, Allow_Null => True);
+            if File_Inst = null then
+               File := Get_File (Get_Data (File_Inst));
+            else
+               File := Get_Filename (Buffer);
+            end if;
+
+            Success := Save_MDI_Children
+              (Get_Kernel (Data),
+               Children => (1 => Find_Editor
+                              (Get_Kernel (Data), Get_Filename (Buffer))),
+               Force    => not Nth_Arg (Data, 2, False));
+         end if;
+
+      elsif Command = "characters_count" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Return_Value (Data, Integer (Get_Char_Count (Buffer)));
+         end if;
+
+      elsif Command = "lines_count" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Return_Value (Data, Integer (Get_Line_Count (Buffer)));
+         end if;
+
+      elsif Command = "select" then
+         Name_Parameters (Data, (1 => Start_Cst'Access,
+                                 2 => End_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            declare
+               Iter1, Iter2 : Gtk_Text_Iter;
+            begin
+               Get_Start_Iter (Buffer, Iter1);
+               Get_Location (Iter1, Data, 2, Default => Iter1);
+
+               Get_End_Iter (Buffer, Iter2);
+               Get_Location (Iter2, Data, 3, Default => Iter2);
+
+               if Get_Buffer (Iter1) = Get_Buffer (Iter2)
+                 and then Get_Buffer (Iter1) = Gtk_Text_Buffer (Buffer)
+               then
+                  Select_Region
+                    (Buffer,
+                     Start_Line   => Get_Line (Iter1),
+                     Start_Column => Get_Line_Offset (Iter1),
+                     End_Line     => Get_Line (Iter2),
+                     End_Column   => Get_Line_Offset (Iter2));
+               end if;
+            end;
+         end if;
+
+      elsif Command = "selection_start"
+        or else Command = "selection_end"
+      then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            declare
+               Mark, Cursor   : Gtk_Text_Mark;
+               IMark, ICursor : Gtk_Text_Iter;
+               Mark_First     : Boolean;
+            begin
+               Mark   := Get_Selection_Bound (Buffer);
+               Cursor := Get_Insert (Buffer);
+               Get_Iter_At_Mark (Buffer, IMark, Mark);
+               Get_Iter_At_Mark (Buffer, ICursor, Cursor);
+
+               if Command = "selection_start" then
+                  Mark_First := Compare (IMark, ICursor) <= 0;
+               else
+                  Mark_First := Compare (IMark, ICursor) > 0;
+               end if;
+
+               if Mark_First then
+                  Set_Return_Value
+                    (Data, Create_Editor_Location
+                       (Get_Script (Data), IMark));
+               else
+                  Set_Return_Value
+                    (Data, Create_Editor_Location
+                       (Get_Script (Data), ICursor));
+               end if;
+            end;
+         end if;
+
+      elsif Command = "beginning_of_buffer" then
+         Get_Buffer (Buffer, Data, 1);
+         Get_Start_Iter (Buffer, Iter);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = "end_of_buffer" then
+         Get_Buffer (Buffer, Data, 1);
+         Get_End_Iter (Buffer, Iter);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
 
       else
-         Inst := Nth_Arg (Data, 1, EditorBuffer);
-         Set_Error_Msg (Data, -"Command not implemented yet: " & Command);
-         Free (Inst);
+         Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
    end Buffer_Cmds;
+
+   -------------------
+   -- Location_Cmds --
+   -------------------
+
+   procedure Location_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      EditorLoc : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorLocation");
+      Buffer          : Source_Buffer;
+      Inst            : Class_Instance;
+      Iter, Iter2     : Gtk_Text_Iter;
+      Success         : Boolean;
+      Count           : Gint;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, (1 => Buffer_Cst'Access,
+                                 2 => Line_Cst'Access,
+                                 3 => Col_Cst'Access));
+         Inst := Nth_Arg (Data, 1, EditorLoc);
+         Get_Buffer (Buffer, Data, 2);
+         Set_Location_Data
+           (EditorLoc,
+            Inst,
+            Buffer,
+            Line   => Gint (Integer'(Nth_Arg (Data, 3))) - 1,
+            Offset => Gint (Integer'(Nth_Arg (Data, 4))) - 1);
+         Free (Inst);
+
+      elsif Command = Comparison_Method then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Get_Location (Iter2, Data, 2, Default => Iter);
+         if Get_Buffer (Iter) /= Get_Buffer (Iter2) then
+            Set_Error_Msg (Data, -"EditorLocation not in the same buffer");
+         else
+            Set_Return_Value (Data, Integer (Compare (Iter, Iter2)));
+         end if;
+
+      elsif Command = "line" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value (Data, Integer (Get_Line (Iter)) + 1);
+
+      elsif Command = "column" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value (Data, Integer (Get_Line_Offset (Iter)) + 1);
+
+      elsif Command = "offset" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value (Data, Integer (Get_Offset (Iter)));
+
+      elsif Command = "buffer" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value
+           (Data, Create_Editor_Buffer (Get_Script (Data),
+                                        Source_Buffer (Get_Buffer (Iter))));
+
+      elsif Command = "beginning_of_line" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Line_Offset (Iter, 0);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = "end_of_line" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Forward_To_Line_End (Iter, Success);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = "forward_char" then
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Forward_Chars (Iter, Gint (Integer'(Nth_Arg (Data, 2, 1))), Success);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = Addition_Method then
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Forward_Chars (Iter, Gint (Integer'(Nth_Arg (Data, 2))), Success);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = Substraction_Method then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         begin
+            --  The second argument is an integer ?
+            Count := Gint (Integer'(Nth_Arg (Data, 2)));
+            Forward_Chars (Iter, -Count, Success);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         exception
+            when Invalid_Parameter =>
+               --  The second argument is another location ?
+               Get_Location (Iter2, Data, 2, Default => Iter);
+               if Get_Buffer (Iter2) /= Get_Buffer (Iter) then
+                  Set_Error_Msg (Data, -"Locations not in the same buffer");
+               else
+                  Set_Return_Value
+                    (Data,
+                      Integer (Get_Offset (Iter) - Get_Offset (Iter2)));
+               end if;
+         end;
+
+      elsif Command = "forward_word" then
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Forward_Word_Ends (Iter,
+                            Count  => Gint (Integer'(Nth_Arg (Data, 2, 1))),
+                            Result => Success);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = "forward_line" then
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Forward_Lines (Iter,
+                        Count  => Gint (Integer'(Nth_Arg (Data, 2, 1))),
+                        Result => Success);
+         Set_Return_Value
+           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+
+      elsif Command = "create_mark" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value
+           (Data, Create_Editor_Mark
+              (Get_Script (Data),
+               Create_Mark (Get_Buffer (Iter), Where => Iter)));
+      end if;
+   end Location_Cmds;
+
+   ---------------
+   -- Mark_Cmds --
+   ---------------
+
+   procedure Mark_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Mark : Gtk_Text_Mark;
+      Iter : Gtk_Text_Iter;
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, "Cannot create an EditorMark directly");
+      elsif Command = Destructor_Method then
+         Trace (Me, "MANU Deleting mark");
+         Get_Mark (Mark, Data, 1);
+         if Mark /= null then
+            Unref (Mark);
+         end if;
+      elsif Command = "location" then
+         Get_Mark (Mark, Data, 1);
+         if Mark /= null then
+            Get_Iter_At_Mark (Get_Buffer (Mark), Iter, Mark);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end if;
+      elsif Command = "move" then
+         Name_Parameters (Data, (1 => Location_Cst'Access));
+         Get_Mark (Mark, Data, 1);
+         if Mark /= null then
+            Get_Location (Iter, Data, 2, Default => Iter);
+            Move_Mark (Get_Buffer (Mark), Mark, Iter);
+         end if;
+      end if;
+   end Mark_Cmds;
 
    -----------------------
    -- Register_Commands --
@@ -1492,12 +2031,51 @@ package body Src_Editor_Module.Shell is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Editor_Class   : constant Class_Type := New_Class (Kernel, "Editor");
---        EditorLocation : constant Class_Type :=
---          New_Class (Kernel, "EditorLocation");
-      EditorBuffer : constant Class_Type :=
-        New_Class (Kernel, "EditorBuffer");
+      EditorLoc  : constant Class_Type := New_Class (Kernel, "EditorLocation");
+      EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
+      EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
+--      EditorView   : constant Class_Type := New_Class (Kernel, "EditorView");
    begin
       --  EditorLocation
+
+      Register_Command
+        (Kernel, Constructor_Method, 3, 3, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, Comparison_Method, 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, Addition_Method, 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, Substraction_Method, 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "column", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "offset", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "buffer", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "beginning_of_line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "end_of_line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "forward_char", 0, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "forward_word", 0, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "forward_line", 0, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "create_mark", 0, 0, Location_Cmds'Access, EditorLoc);
+
+      --  EditorMark
+
+      Register_Command
+        (Kernel, Constructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
+      Register_Command
+        (Kernel, Destructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
+      Register_Command
+        (Kernel, "location", 0, 0, Mark_Cmds'Access, EditorMark);
+      Register_Command (Kernel, "move", 1, 1, Mark_Cmds'Access, EditorMark);
 
       --  EditorBuffer
 
@@ -1508,15 +2086,22 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
+        (Kernel, "beginning_of_buffer",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "end_of_buffer", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
         (Kernel, "current_view", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "views", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "close", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "save", 0, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "save", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "characters_count", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "lines_count", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "select", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -1661,47 +2246,23 @@ package body Src_Editor_Module.Shell is
         (Kernel, "cursor_get_line", 1, 1, Edit_Command_Handler'Access,
          Editor_Class, True);
       Register_Command
-        (Kernel, "cursor_get_column",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "cursor_get_column", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "cursor_set_position",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "cursor_set_position", 2, 3, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "cursor_center",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "cursor_center", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "get_buffer",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "get_buffer", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "save_buffer",
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "save_buffer", 1, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "replace_text",
-         Minimum_Args  => 4,
-         Maximum_Args  => 6,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "replace_text", 4, 6, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
         (Kernel, "indent",
          Minimum_Args  => Indent_Cmd_Parameters'Length - 1,
@@ -1710,70 +2271,38 @@ package body Src_Editor_Module.Shell is
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
       Register_Command
-        (Kernel, "indent_buffer",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "indent_buffer", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "refill",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "refill", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "cut",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "cut", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "copy",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "copy", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "paste",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "paste", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "select_all",
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "select_all", 0, 0, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "select_text",
-         Minimum_Args  => 2,
-         Maximum_Args  => 4,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "select_text", 2, 4, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "insert_text",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "insert_text", 1, 1, Edit_Command_Handler'Access,
+         Editor_Class, True);
       Register_Command
-        (Kernel, "undo",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "undo", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
       Register_Command
-        (Kernel, "redo",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "redo", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
       Register_Command
-        (Kernel, "close",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "close", 1, 1, Edit_Command_Handler'Access, Editor_Class,
+         True);
       Register_Command
         (Kernel, "save",
          Maximum_Args  => Save_Cmd_Parameters'Length,
