@@ -1538,6 +1538,14 @@ package body Python_Module is
       else
          if Command = Constructor_Method then
             Def := Create_Method_Def ("__init__", First_Level'Access);
+         elsif Command = Addition_Method then
+            Def := Create_Method_Def ("__add__", First_Level'Access);
+         elsif Command = Substraction_Method then
+            Def := Create_Method_Def ("__sub__", First_Level'Access);
+         elsif Command = Comparison_Method then
+            Def := Create_Method_Def ("__cmp__", First_Level'Access);
+         elsif Command = Destructor_Method then
+            Def := Create_Method_Def ("__del__", First_Level'Access);
          else
             Def := Create_Method_Def (Command, First_Level'Access);
          end if;
@@ -2517,7 +2525,8 @@ package body Python_Module is
    procedure On_Widget_Data_Destroyed (Obj : PyObject) is
    begin
       --  Called when the associated widget is destroyed
-      Trace (Me, "On_Widget_Data_Destroyed");
+      Trace (Me, "On_Widget_Data_Destroyed python_obj="
+             & System.Address_Image (Obj.all'Address));
       PyObject_SetAttrString (Obj, "__GPS_Widget", null);
       Py_DECREF (Obj);
    end On_Widget_Data_Destroyed;
