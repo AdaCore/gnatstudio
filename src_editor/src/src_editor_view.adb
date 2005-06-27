@@ -1637,6 +1637,22 @@ package body Src_Editor_View is
          Within_Margin => 0.1, Xalign => 0.5, Yalign => 0.5);
    end Center_Cursor;
 
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
+
+   procedure Get_Cursor_Position
+     (View : access Source_View_Record'Class;
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+   begin
+      if Has_Focus_Is_Set (View) then
+         Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
+      else
+         Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
+      end if;
+   end Get_Cursor_Position;
+
    -----------------------------
    -- Window_To_Buffer_Coords --
    -----------------------------

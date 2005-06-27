@@ -33,6 +33,7 @@ with Pango.Font;
 
 with Gtk.Drawing_Area;
 with Gtk.Text_View;
+with Gtk.Text_Iter;
 with Gtk.Scrolled_Window;
 with Gtk.Main;
 
@@ -137,6 +138,11 @@ package Src_Editor_View is
    procedure Save_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Save the cursor position
+
+   procedure Get_Cursor_Position
+     (View : access Source_View_Record'Class;
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the cursor location in that view.
 
 private
 
