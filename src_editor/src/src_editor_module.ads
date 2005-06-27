@@ -105,6 +105,14 @@ package Src_Editor_Module is
       return Gtkada.MDI.MDI_Child;
    --  Return the MDI child containing Editor
 
+   function New_View
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Current : Src_Editor_Box.Source_Editor_Box)
+      return Src_Editor_Box.Source_Editor_Box;
+   --  Create a new view for Current and add it in the MDI.
+   --  The current editor is the focus child in the MDI.
+   --  If Add is True, the Box is added to the MDI.
+
    ---------------------
    -- Automatic saves --
    ---------------------

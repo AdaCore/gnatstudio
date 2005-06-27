@@ -331,13 +331,6 @@ package body Src_Editor_Module is
       return Selection_Context_Access;
    --  Same as above.
 
-   function New_View
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box) return Source_Editor_Box;
-   --  Create a new view for Current and add it in the MDI.
-   --  The current editor is the focus child in the MDI.
-   --  If Add is True, the Box is added to the MDI.
-
    procedure New_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
@@ -746,14 +739,20 @@ package body Src_Editor_Module is
               and then Mark_Record.Line /= 0
             then
                Child := Find_Editor (Kernel, Mark_Record.File);
-               Box := Source_Editor_Box (Get_Widget (Child));
+               --  All views might have been destroyed already.
+               --  ??? We should in fact do this update when the mark itself
+               --  is destroyed (through a weak_ref), instead of when the
+               --  buffer is destroyed. That would work in more cases.
+               if Child /= null then
+                  Box := Source_Editor_Box (Get_Widget (Child));
 
-               Mark_Record.Line :=
-                 Natural (Src_Editor_Buffer.Line_Information.Get_Line
-                            (Get_Buffer (Box), Mark_Record.Mark));
-               Mark_Record.Column :=
-                 Src_Editor_Buffer.Line_Information.Get_Column
-                   (Get_Buffer (Box), Mark_Record.Mark);
+                  Mark_Record.Line :=
+                    Natural (Src_Editor_Buffer.Line_Information.Get_Line
+                               (Get_Buffer (Box), Mark_Record.Mark));
+                  Mark_Record.Column :=
+                    Src_Editor_Buffer.Line_Information.Get_Column
+                      (Get_Buffer (Box), Mark_Record.Mark);
+               end if;
 
                Set_Data
                  (Node,
