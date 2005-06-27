@@ -3149,12 +3149,20 @@ package body Src_Editor_Buffer is
       Column := Positive (Get_Line_Offset (Iter) + 1);
    end Get_Cursor_Position;
 
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
+
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Iter   : out Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
    end Get_Cursor_Position;
+
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;

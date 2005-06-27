@@ -156,6 +156,12 @@ package Src_Editor_Buffer is
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the current cursor position. Such a query should rather be done
+   --  on the specific view in which you are interested
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
       Line   : out Gint;
       Column : out Gint);
    --  Return the current cursor position
@@ -681,11 +687,6 @@ package Src_Editor_Buffer is
    --  Similar to Gtk.Object.In_Destruction_Is_Set.
 
 private
-
-   procedure Get_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
-      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Return the current editable cursor position
 
    procedure Get_Cursor_Position
      (Buffer : Source_Buffer;
