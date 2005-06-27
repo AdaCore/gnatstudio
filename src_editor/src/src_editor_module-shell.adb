@@ -41,6 +41,7 @@ with GPS.Intl;                  use GPS.Intl;
 with String_Utils;              use String_Utils;
 with Casing_Exceptions;         use Casing_Exceptions;
 with VFS;                       use VFS;
+with Language;                  use Language;
 with Traces;                    use Traces;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -51,13 +52,14 @@ with System;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
+with Gtk.Clipboard;             use Gtk.Clipboard;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Handlers;
 
 package body Src_Editor_Module.Shell is
-   Me : constant Debug_Handle := Create ("Editor.Shell");
+--   Me : constant Debug_Handle := Create ("Editor.Shell");
 
    Filename_Cst          : aliased constant String := "filename";
    File_Cst              : aliased constant String := "file";
@@ -86,6 +88,9 @@ package body Src_Editor_Module.Shell is
    End_Cst               : aliased constant String := "end";
    Count_Cst             : aliased constant String := "count";
    Location_Cst          : aliased constant String := "location";
+   From_Cst              : aliased constant String := "from";
+   To_Cst                : aliased constant String := "to";
+   Text_Cst              : aliased constant String := "text";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -235,6 +240,22 @@ package body Src_Editor_Module.Shell is
    --  Buffer is set to null if there is no such parameter or it doesn't
    --  contain a valid location.
 
+   procedure Get_Locations
+     (Iter1   : out Gtk_Text_Iter;
+      Iter2   : out Gtk_Text_Iter;
+      Buffer  : in out Source_Buffer;
+      Data    : in out Callback_Data'Class;
+      Arg1    : Positive;
+      Arg2    : Positive;
+      Compensate_Last_Iter : Boolean := True);
+   --  Get the two location arguments from Data, defaulting to resp. the
+   --  beginning and end of the buffer.
+   --  Buffer is reset to null in case of errors, or if it was null when
+   --  Get_Locations was called.
+   --  If Compensate_Last_Iter is True, then the highest iterator is moved one
+   --  additional character. This is used for gtk+ commands that take two
+   --  iterators, since they stop to operate just before the last iterator.
+
    procedure Get_Mark
      (Mark   : out Gtk_Text_Mark;
       Data   : in out Callback_Data'Class;
@@ -302,6 +323,50 @@ package body Src_Editor_Module.Shell is
          end if;
       end if;
    end Get_Location;
+
+   -------------------
+   -- Get_Locations --
+   -------------------
+
+   procedure Get_Locations
+     (Iter1   : out Gtk_Text_Iter;
+      Iter2   : out Gtk_Text_Iter;
+      Buffer  : in out Source_Buffer;
+      Data    : in out Callback_Data'Class;
+      Arg1    : Positive;
+      Arg2    : Positive;
+      Compensate_Last_Iter : Boolean := True)
+   is
+      Success : Boolean;
+   begin
+      if Buffer /= null then
+         Get_Start_Iter (Buffer, Iter1);
+         Get_Location (Iter1, Data, Arg1, Default => Iter1);
+
+         Get_End_Iter (Buffer, Iter2);
+         Get_Location (Iter2, Data, Arg2, Default => Iter2);
+
+         if Get_Buffer (Iter1) /= Get_Buffer (Iter2)
+           or else Get_Buffer (Iter1) /= Gtk_Text_Buffer (Buffer)
+         then
+            Set_Error_Msg (Data, -"Locations are not in the correct buffer");
+            Buffer := null;
+         elsif Compensate_Last_Iter then
+            --  All operations that take two iterators stop just before the
+            --  second one. This is harder to use in scripts, though, so we
+            --  compensate for that here.
+            if Compare (Iter1, Iter2) <= 0 then
+               if not Is_End (Iter2) then
+                  Forward_Char (Iter2, Success);
+               end if;
+            else
+               if not Is_End (Iter1) then
+                  Forward_Char (Iter1, Success);
+               end if;
+            end if;
+         end if;
+      end if;
+   end Get_Locations;
 
    ------------------------
    -- Create_Editor_Mark --
@@ -807,6 +872,23 @@ package body Src_Editor_Module.Shell is
             end if;
          end;
 
+      elsif Command = "refill" then
+         declare
+            Child : constant MDI_Child := Find_Current_Editor (Kernel);
+            Box   : Source_Editor_Box;
+
+         begin
+            if Child /= null then
+               Box := Source_Editor_Box (Get_Widget (Child));
+
+               if not Get_Editable (Get_View (Box))
+                 or else not Do_Refill (Get_Buffer (Box))
+               then
+                  Set_Error_Msg (Data, -"Could not refill buffer");
+               end if;
+            end if;
+         end;
+
       elsif Command = "indent_buffer" then
          declare
             Child    : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -827,23 +909,6 @@ package body Src_Editor_Module.Shell is
                    (Get_Buffer (Box), From, To)
                then
                   Set_Error_Msg (Data, -"Could not indent buffer");
-               end if;
-            end if;
-         end;
-
-      elsif Command = "refill" then
-         declare
-            Child : constant MDI_Child := Find_Current_Editor (Kernel);
-            Box   : Source_Editor_Box;
-
-         begin
-            if Child /= null then
-               Box := Source_Editor_Box (Get_Widget (Child));
-
-               if not Get_Editable (Get_View (Box))
-                 or else not Do_Refill (Get_Buffer (Box))
-               then
-                  Set_Error_Msg (Data, -"Could not refill buffer");
                end if;
             end if;
          end;
@@ -1675,7 +1740,7 @@ package body Src_Editor_Module.Shell is
       File      : Virtual_File;
       File_Inst : Class_Instance;
       Success   : Boolean;
-      Iter      : Gtk_Text_Iter;
+      Iter, Iter2 : aliased Gtk_Text_Iter;
       pragma Unreferenced (Success);
 
    begin
@@ -1785,27 +1850,14 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, (1 => Start_Cst'Access,
                                  2 => End_Cst'Access));
          Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3, False);
          if Buffer /= null then
-            declare
-               Iter1, Iter2 : Gtk_Text_Iter;
-            begin
-               Get_Start_Iter (Buffer, Iter1);
-               Get_Location (Iter1, Data, 2, Default => Iter1);
-
-               Get_End_Iter (Buffer, Iter2);
-               Get_Location (Iter2, Data, 3, Default => Iter2);
-
-               if Get_Buffer (Iter1) = Get_Buffer (Iter2)
-                 and then Get_Buffer (Iter1) = Gtk_Text_Buffer (Buffer)
-               then
-                  Select_Region
-                    (Buffer,
-                     Start_Line   => Get_Line (Iter1),
-                     Start_Column => Get_Line_Offset (Iter1),
-                     End_Line     => Get_Line (Iter2),
-                     End_Column   => Get_Line_Offset (Iter2));
-               end if;
-            end;
+            Select_Region
+              (Buffer,
+               Start_Line   => Get_Line (Iter),
+               Start_Column => Get_Line_Offset (Iter),
+               End_Line     => Get_Line (Iter2),
+               End_Column   => Get_Line_Offset (Iter2));
          end if;
 
       elsif Command = "selection_start"
@@ -1843,15 +1895,137 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "beginning_of_buffer" then
          Get_Buffer (Buffer, Data, 1);
-         Get_Start_Iter (Buffer, Iter);
-         Set_Return_Value
-           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         if Buffer /= null then
+            Get_Start_Iter (Buffer, Iter);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end if;
 
       elsif Command = "end_of_buffer" then
          Get_Buffer (Buffer, Data, 1);
-         Get_End_Iter (Buffer, Iter);
-         Set_Return_Value
-           (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         if Buffer /= null then
+            Get_End_Iter (Buffer, Iter);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end if;
+
+      elsif Command = "is_modified" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Set_Return_Value (Data, Get_Status (Buffer) = Modified);
+         end if;
+
+      elsif Command = "get_chars" then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+         if Buffer /= null then
+            Set_Return_Value
+              (Data, Get_Text
+                 (Buffer       => Buffer,
+                  Start_Line   =>
+                    Editable_Line_Type (Get_Line (Iter) + 1),
+                  Start_Column =>
+                    Integer (Get_Line_Offset (Iter) + 1),
+                  End_Line     =>
+                    Editable_Line_Type (Get_Line (Iter2) + 1),
+                  End_Column   =>
+                    Integer (Get_Line_Offset (Iter2) + 1)));
+         end if;
+
+      elsif Command = "insert" then
+         Name_Parameters
+           (Data, (1 => Location_Cst'Access, 2 => Text_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Get_Location (Iter, Data, 2, Default => Iter);
+            if Get_Buffer (Iter) = Gtk_Text_Buffer (Buffer) then
+               Insert (Buffer, Iter, Nth_Arg (Data, 3));
+            else
+               Set_Error_Msg (Data, -"Location is not in the same buffer");
+            end if;
+         end if;
+
+      elsif Command = "delete" then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+         if Buffer /= null then
+            Delete (Buffer, Iter, Iter2);
+         end if;
+
+      elsif Command = "copy"
+        or else Command = "cut"
+      then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+         if Buffer /= null then
+            External_End_Action (Buffer);
+            Select_Region
+              (Buffer,
+               Start_Line   => Get_Line (Iter),
+               Start_Column => Get_Line_Offset (Iter),
+               End_Line     => Get_Line (Iter2),
+               End_Column   => Get_Line_Offset (Iter2));
+            if Command = "copy" then
+               Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
+            else
+               Cut_Clipboard
+                 (Buffer, Gtk.Clipboard.Get, Default_Editable => True);
+            end if;
+         end if;
+
+      elsif Command = "paste" then
+         Name_Parameters (Data, (1 => Location_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Location (Iter, Data, 2, Default => Iter);
+         if Get_Buffer (Iter) /= Gtk_Text_Buffer (Buffer) then
+            Set_Error_Msg (Data, -"Location is not in the same buffer");
+         elsif Buffer /= null then
+            Place_Cursor (Buffer, Iter);
+            Paste_Clipboard (Buffer, Gtk.Clipboard.Get);
+         end if;
+
+      elsif Command = "blocks_fold" then
+         Name_Parameters (Data, (1 => Line_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Fold_All (Buffer);
+         end if;
+
+      elsif Command = "blocks_unfold" then
+         Name_Parameters (Data, (1 => Line_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Unfold_All (Buffer);
+         end if;
+
+      elsif Command = "indent" then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+         if Buffer /= null then
+            if not Do_Indentation (Buffer, Iter, Iter2) then
+               Set_Error_Msg (Data, -"Error while indenting");
+            end if;
+         end if;
+
+      elsif Command = "refill" then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
+         if Buffer /= null then
+            Select_Region
+              (Buffer,
+               Start_Line   => Get_Line (Iter),
+               Start_Column => Get_Line_Offset (Iter),
+               End_Line     => Get_Line (Iter2),
+               End_Column   => Get_Line_Offset (Iter2));
+            if not Do_Refill (Buffer) then
+               Set_Error_Msg (Data, -"Error while refilling buffer");
+            end if;
+         end if;
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
@@ -1872,6 +2046,8 @@ package body Src_Editor_Module.Shell is
       Iter, Iter2     : Gtk_Text_Iter;
       Success         : Boolean;
       Count           : Gint;
+      Char            : Character;
+      Block           : Block_Record;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Buffer_Cst'Access,
@@ -1985,6 +2161,76 @@ package body Src_Editor_Module.Shell is
            (Data, Create_Editor_Mark
               (Get_Script (Data),
                Create_Mark (Get_Buffer (Iter), Where => Iter)));
+
+      elsif Command = "char_after" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Char := Get_Char (Iter);
+         if Char = ASCII.NUL then
+            Set_Error_Msg (Data, "Invalid buffer position");
+         else
+            Set_Return_Value (Data, Char & "");
+         end if;
+
+      elsif Command = "block_fold" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Fold_Block (Source_Buffer (Get_Buffer (Iter)),
+                     Editable_Line_Type (Get_Line (Iter)));
+
+      elsif Command = "block_unfold" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Unfold_Line (Source_Buffer (Get_Buffer (Iter)),
+                      Editable_Line_Type (Get_Line (Iter)));
+
+      elsif Command = "block_end_line" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Buffer_Line_Type (Get_Line (Iter)));
+         Set_Return_Value (Data, Integer (Block.Last_Line));
+
+      elsif Command = "block_start_line" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Buffer_Line_Type (Get_Line (Iter)));
+         Set_Return_Value (Data, Integer (Block.First_Line));
+
+      elsif Command = "block_level" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Buffer_Line_Type (Get_Line (Iter)));
+         Set_Return_Value (Data, Block.Indentation_Level);
+
+      elsif Command = "block_type" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Buffer_Line_Type (Get_Line (Iter)));
+         Set_Return_Value (Data, Language_Category'Image (Block.Block_Type));
+
+      elsif Command = "block_name" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Buffer_Line_Type (Get_Line (Iter)));
+         if Block.Name = null then
+            Set_Return_Value (Data, "");
+         else
+            Set_Return_Value (Data, Block.Name.all);
+         end if;
+
+      elsif Command = "subprogram_name" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Block := Get_Subprogram_Block
+           (Source_Buffer (Get_Buffer (Iter)),
+            Editable_Line_Type (Get_Line (Iter)));
+         if Block.Name = null then
+            Set_Return_Value (Data, "");
+         else
+            Set_Return_Value (Data, Block.Name.all);
+         end if;
+
       end if;
    end Location_Cmds;
 
@@ -2001,7 +2247,6 @@ package body Src_Editor_Module.Shell is
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "Cannot create an EditorMark directly");
       elsif Command = Destructor_Method then
-         Trace (Me, "MANU Deleting mark");
          Get_Mark (Mark, Data, 1);
          if Mark /= null then
             Unref (Mark);
@@ -2066,6 +2311,22 @@ package body Src_Editor_Module.Shell is
         (Kernel, "forward_line", 0, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "create_mark", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "char_after", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_fold", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_unfold", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_end_line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_start_line", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_level", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_type", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "subprogram_name", 0, 0, Location_Cmds'Access, EditorLoc);
 
       --  EditorMark
 
@@ -2111,7 +2372,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "copy", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "cut", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "cut", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -2119,52 +2380,43 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "create_mark", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
         (Kernel, "is_modified", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_fold", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "blocks_fold", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "block_end_line", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "block_start_line", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "block_level", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "block_type", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "block_unfold", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "apply_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "remove_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "get_overlays", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "has_overlay", 2, 2, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
-         EditorBuffer);
-      Register_Command
-        (Kernel, "subprogram_name", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "blocks_unfold", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "apply_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "remove_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "get_overlays", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "has_overlay", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
+--           EditorBuffer);
       Register_Command
         (Kernel, "get_chars", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "insert_text", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "insert", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "delete_text", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "delete", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "indent", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "refill", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+
+
+      --  EditorView
+      --        Register_Command
+--          (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       --  The old Editor class
       Register_Command
