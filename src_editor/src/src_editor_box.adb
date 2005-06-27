@@ -195,12 +195,6 @@ package body Src_Editor_Box is
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
 
-   function Get_Subprogram_Block
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record;
-   --  Returns the block corresponding to the subprogram enclosing Line. If no
-   --  block is found at this position an empty block is returned.
-
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -2234,7 +2228,7 @@ package body Src_Editor_Box is
          Normalized_Line := Editor.Current_Line;
       end if;
 
-      Block := Get_Subprogram_Block (Editor, Normalized_Line);
+      Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
 
       L := Get_Buffer_Line (Editor.Source_Buffer, Normalized_Line);
 
@@ -2256,62 +2250,6 @@ package body Src_Editor_Box is
       end if;
    end Get_Subprogram;
 
-   --------------------------
-   -- Get_Subprogram_Block --
-   --------------------------
-
-   function Get_Subprogram_Block
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
-   is
-      Empty_Block : constant Block_Record :=
-                      (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
-      L           : Buffer_Line_Type;
-      New_L       : Buffer_Line_Type;
-      Block       : Block_Record;
-   begin
-      L := Get_Buffer_Line (Editor.Source_Buffer, Line);
-
-      Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => True);
-
-      if Block.Block_Type = Cat_Unknown
-        and then Block.Indentation_Level = 0
-      then
-         return Empty_Block;
-      end if;
-
-      while L > 1 loop
-         if Block.Block_Type in Enclosing_Entity_Category then
-            if Block.Name /= null then
-               return Block;
-            else
-               return Empty_Block;
-            end if;
-         end if;
-
-         if Block.First_Line > 1 then
-            New_L :=
-              Get_Buffer_Line (Editor.Source_Buffer, Block.First_Line - 1);
-
-            --  At this point, we have to check that we are not stuck on
-            --  the same line, this can happen when block information is not
-            --  up-to-date.
-
-            if New_L < L then
-               L := New_L;
-            else
-               L := L - 1;
-            end if;
-         else
-            exit;
-         end if;
-
-         Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
-      end loop;
-
-      return Empty_Block;
-   end Get_Subprogram_Block;
-
    -------------------------
    -- Get_Subprogram_Name --
    -------------------------
@@ -2328,7 +2266,7 @@ package body Src_Editor_Box is
          Normalized_Line := Editor.Current_Line;
       end if;
 
-      Block := Get_Subprogram_Block (Editor, Normalized_Line);
+      Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
 
       if Block.Name /= null then
          return Block.Name.all;

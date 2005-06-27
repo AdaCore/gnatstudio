@@ -5438,4 +5438,59 @@ package body Src_Editor_Buffer is
       return Buffer.In_Destruction;
    end In_Destruction_Is_Set;
 
+   --------------------------
+   -- Get_Subprogram_Block --
+   --------------------------
+
+   function Get_Subprogram_Block
+     (Editor : access Source_Buffer_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record
+   is
+      Empty_Block : constant Block_Record :=
+                      (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
+      L           : Buffer_Line_Type;
+      New_L       : Buffer_Line_Type;
+      Block       : Block_Record;
+   begin
+      L := Get_Buffer_Line (Editor, Line);
+
+      Block := Get_Block (Editor, L, Force_Compute => True);
+
+      if Block.Block_Type = Cat_Unknown
+        and then Block.Indentation_Level = 0
+      then
+         return Empty_Block;
+      end if;
+
+      while L > 1 loop
+         if Block.Block_Type in Enclosing_Entity_Category then
+            if Block.Name /= null then
+               return Block;
+            else
+               return Empty_Block;
+            end if;
+         end if;
+
+         if Block.First_Line > 1 then
+            New_L := Get_Buffer_Line (Editor, Block.First_Line - 1);
+
+            --  At this point, we have to check that we are not stuck on
+            --  the same line, this can happen when block information is not
+            --  up-to-date.
+
+            if New_L < L then
+               L := New_L;
+            else
+               L := L - 1;
+            end if;
+         else
+            exit;
+         end if;
+
+         Block := Get_Block (Editor, L, Force_Compute => False);
+      end loop;
+
+      return Empty_Block;
+   end Get_Subprogram_Block;
+
 end Src_Editor_Buffer;

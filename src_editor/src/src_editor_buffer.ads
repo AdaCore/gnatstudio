@@ -572,6 +572,12 @@ package Src_Editor_Buffer is
    --  are not up-to-date, the latest known block at this line will be
    --  returned.
 
+   function Get_Subprogram_Block
+     (Editor : access Source_Buffer_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Block_Record;
+   --  Returns the block corresponding to the subprogram enclosing Line. If no
+   --  block is found at this position an empty block is returned.
+
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
