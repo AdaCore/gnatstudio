@@ -177,6 +177,10 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for EditorMark class
 
+   procedure View_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for EditorView class
+
    function Create_Editor_Buffer
      (Script : access Scripting_Language_Record'Class;
       Buffer : Source_Buffer) return Class_Instance;
@@ -271,6 +275,32 @@ package body Src_Editor_Module.Shell is
    --  not be found or is no longer valid.
    --  If the buffer is no longer valid, null is returned and an error msg is
    --  set in Data.
+
+   procedure Get_Box
+     (Box    : in out Source_Editor_Box;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive);
+   --  Return the view stored in Data
+
+   -------------
+   -- Get_Box --
+   -------------
+
+   procedure Get_Box
+     (Box    : in out Source_Editor_Box;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive)
+   is
+      EditorView : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorView");
+      Inst   : constant Class_Instance := Nth_Arg (Data, Arg, EditorView);
+   begin
+      Box := Source_Editor_Box (GObject'(Get_Data (Inst)));
+      Free (Inst);
+      if Box = null then
+         Set_Error_Msg (Data, "No associated view");
+      end if;
+   end Get_Box;
 
    ----------------
    -- Get_Buffer --
@@ -2268,6 +2298,93 @@ package body Src_Editor_Module.Shell is
       end if;
    end Mark_Cmds;
 
+   ---------------
+   -- View_Cmds --
+   ---------------
+
+   procedure View_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      EditorView : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorView");
+      Inst       : Class_Instance;
+      Box        : Source_Editor_Box;
+      Buffer     : Source_Buffer;
+      Iter       : Gtk_Text_Iter;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, (1 => Buffer_Cst'Access));
+         Inst := Nth_Arg (Data, 1, EditorView);
+         Get_Buffer (Buffer, Data, 2);
+         if Buffer /= null then
+            declare
+               Views : constant Views_Array := Get_Views (Buffer);
+            begin
+               Box := New_View (Get_Kernel (Data), Views (Views'First));
+               Set_Data (Inst, GObject (Box));
+               Free (Inst);
+            end;
+         end if;
+
+      elsif Command = "buffer" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Set_Return_Value
+              (Data, Create_Editor_Buffer
+                 (Get_Script (Data), Get_Buffer (Box)));
+         end if;
+
+      elsif Command = "set_read_only" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Set_Writable (Box, Nth_Arg (Data, 2, True));
+         end if;
+
+      elsif Command = "is_read_only" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Set_Return_Value (Data, Get_Writable (Box));
+         end if;
+
+      elsif Command = "center" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Get_Cursor_Position (Get_View (Box), Iter);
+            Get_Location (Iter, Data, 2, Default => Iter);
+
+            if not Scroll_To_Iter
+              (Get_View (Box),
+               Iter  => Iter,
+               Within_Margin => 0.1,
+               Use_Align      => False,
+               Xalign         => 0.5,
+               Yalign         => 0.5)
+            then
+               Set_Error_Msg (Data, -"Cannot scroll the view");
+            end if;
+         end if;
+
+      elsif Command = "goto" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Get_Location (Iter, Data, 2, Default => Iter);
+            Set_Cursor_Location
+              (Box,
+               Line        => Editable_Line_Type (Get_Line (Iter) + 1),
+               Column      => Integer (Get_Line_Offset (Iter) + 1),
+               Force_Focus => False);
+         end if;
+
+      elsif Command = "cursor" then
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Get_Cursor_Position (Get_View (Box), Iter);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end if;
+      end if;
+   end View_Cmds;
+
    -----------------------
    -- Register_Commands --
    -----------------------
@@ -2275,11 +2392,12 @@ package body Src_Editor_Module.Shell is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Editor_Class   : constant Class_Type := New_Class (Kernel, "Editor");
       EditorLoc  : constant Class_Type := New_Class (Kernel, "EditorLocation");
+      Editor_Class : constant Class_Type := New_Class (Kernel, "Editor");
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
---      EditorView   : constant Class_Type := New_Class (Kernel, "EditorView");
+      EditorView   : constant Class_Type :=
+        New_Class (Kernel, "EditorView", Get_GUI_Class (Kernel));
    begin
       --  EditorLocation
 
@@ -2411,12 +2529,31 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "refill", 2, 2, Buffer_Cmds'Access, EditorBuffer);
 
-
       --  EditorView
-      --        Register_Command
---          (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+
+      Register_Command
+        (Kernel, Constructor_Method, 1, 1, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel, "buffer", 0, 0, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel, "set_read_only", 0, 1, View_Cmds'Access, EditorView);
+      Register_Command
+        (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "goto", 1, 1, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
+
+      --  Searching
+
+      Register_Command
+        (Kernel, "search", 1, 3, File_Search_Command_Handler'Access,
+         Get_File_Class (Kernel));
+      Register_Command
+        (Kernel, "search_next", 1, 3, Current_Search_Command_Handler'Access,
+         Get_File_Class (Kernel));
+      Register_Command
+        (Kernel, "search", 1, 5, Project_Search_Command_Handler'Access,
+         Get_Project_Class (Kernel));
 
       --  The old Editor class
       Register_Command
@@ -2556,57 +2693,20 @@ package body Src_Editor_Module.Shell is
         (Kernel, "close", 1, 1, Edit_Command_Handler'Access, Editor_Class,
          True);
       Register_Command
-        (Kernel, "save",
-         Maximum_Args  => Save_Cmd_Parameters'Length,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "save", 0, 0, Edit_Command_Handler'Access, Editor_Class,
+         True);
       Register_Command
-        (Kernel, "search",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Search_Command_Handler'Access);
+        (Kernel, "set_synchronized_scrolling", 2, 3,
+         Edit_Command_Handler'Access, Editor_Class, True);
       Register_Command
-        (Kernel, "search_next",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_File_Class (Kernel),
-         Handler      => Current_Search_Command_Handler'Access);
+        (Kernel, "add_case_exception", 1, 1,
+         Edit_Command_Handler'Access, Editor_Class, True);
       Register_Command
-        (Kernel, "search",
-         Minimum_Args => 1,
-         Maximum_Args => 5,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Search_Command_Handler'Access);
+        (Kernel, "remove_case_exception", 1, 1,
+         Edit_Command_Handler'Access, Editor_Class, True);
       Register_Command
-        (Kernel, "set_synchronized_scrolling",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_case_exception",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
-      Register_Command
-        (Kernel, "remove_case_exception",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
-      Register_Command
-        (Kernel, "set_writable",
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Editor_Class,
-         Static_Method => True,
-         Handler       => Edit_Command_Handler'Access);
+        (Kernel, "set_writable", 2, 2, Edit_Command_Handler'Access,
+         Editor_Class, True);
    end Register_Commands;
 
 end Src_Editor_Module.Shell;
