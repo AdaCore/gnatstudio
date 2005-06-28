@@ -2,7 +2,7 @@
 @input texiplus
 
 @set GPS
-@set GPSVersion 3.0.0
+@set GPSVersion 3.0.1
 
 @c %**start of header
 @setfilename gps_pg.info
