@@ -91,6 +91,7 @@ package body Src_Editor_Module.Shell is
    From_Cst              : aliased constant String := "from";
    To_Cst                : aliased constant String := "to";
    Text_Cst              : aliased constant String := "text";
+   Read_Only_Cst         : aliased constant String := "read_only";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -1779,6 +1780,7 @@ package body Src_Editor_Module.Shell is
                                 & " Use EditorBuffer.get() instead"));
 
       elsif Command = "get" then
+         Name_Parameters (Data, (1 => File_Cst'Access));
          File_Inst := Nth_Arg
            (Data, 1, Get_File_Class (Kernel),
             Default => null, Allow_Null => True);
@@ -2192,7 +2194,7 @@ package body Src_Editor_Module.Shell is
               (Get_Script (Data),
                Create_Mark (Get_Buffer (Iter), Where => Iter)));
 
-      elsif Command = "char_after" then
+      elsif Command = "get_char" then
          Get_Location (Iter, Data, 1, Default => Iter);
          Char := Get_Char (Iter);
          if Char = ASCII.NUL then
@@ -2335,6 +2337,7 @@ package body Src_Editor_Module.Shell is
          end if;
 
       elsif Command = "set_read_only" then
+         Name_Parameters (Data, (1 => Read_Only_Cst'Access));
          Get_Box (Box, Data, 1);
          if Box /= null then
             Set_Writable (Box, Nth_Arg (Data, 2, True));
@@ -2430,7 +2433,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "create_mark", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
-        (Kernel, "char_after", 0, 0, Location_Cmds'Access, EditorLoc);
+        (Kernel, "get_char", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_fold", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
@@ -2441,6 +2444,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "block_start_line", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_level", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "block_name", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "block_type", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
@@ -2493,10 +2498,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "cut", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
-        (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "is_modified", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
