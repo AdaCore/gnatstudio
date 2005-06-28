@@ -2545,6 +2545,448 @@ highlight_category, style_category and warning_category reference the colors to 
      <description>Return a list of all the registered socket identifiers. These strings can be used to instantiate GPS.Socket.</description>
    </shell_doc>
 
+  <!--#################################################################
+      ### EditorLocation
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorLocation">
+     <description>This class represents a location in a specific editor buffer. This location is not updated when the buffer changes, but will keep pointing to
+the same line/column even if new lines are added in the buffer. This location is no longer valid when the buffer itself is destroyed, and the use of any of these subprograms will raise an exception.</description>
+     <see_also name="GPS.EditorMark" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.__init__">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <param name="buffer">The instance of GPS.EditorBuffer</param>
+     <param name="line">An integer</param>
+     <param name="column">An integer</param>
+     <description>Initializes a new instance. Creating two instances at the same location will not return the same instance of GPS.EditorLocation, and therefore any user data you have stored in the location will not be available in the second instance</description>
+     <example lang="python">
+         ed  = GPS.EditorBuffer (GPS.File ("a.adb"))
+         loc = GPS.EditorLocation (ed, line=4, column=5)
+         loc.data = "MY OWN DATA"
+         loc2 = GPS.EditorLocation (ed, line=4, column=5)
+         # loc2.data is not defined at this point 
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.__cmp__">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <param name="location">An instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Internal subprogram used to implement the comparison of two locations. It returns -1, 0, or 1 depending on whether the first location is before, equal or after the second one. This is more conveniently used through the usual &lt;, == and &gt; operators in most languages</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.__add__">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <param name="count">An integer</param>
+     <return>An instance of GPS.EditorLocation</return>
+     <description>Return a new location located count characters after self. If count is negative, this moves backward in the buffer. It is more conveniently used through the standard + operator in python</description>
+     <example lang="python">
+         ed   = GPS.EditorBuffer (GPS.File ("a.adb"))
+         loc  = GPS.EditorLocation (ed, line=4, column=5)
+         loc2 = loc + 3 
+     </example>
+     <see_also name="GPS.EditorLocation.__sub__"/>
+     <see_also name="GPS.EditorLocation.forward_char"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.__sub__">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <param name="count">An integer or another instance of GPS.EditorLocation</param>
+     <return>A new instance of GPS.EditorLocation</return>
+     <description>Return a new location located count characters before self, if count is an integer. If count is negative, moves forward instead. If count is another location, it returns the number of characters between the two locations. This function is more conveniently used through the standard - operator in python.</description> 
+     <see_also name="GPS.EditorLocation.__add__" />
+     <see_also name="GPS.EditorLocation.forward_char" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.beginning_of_line">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>A new instance of GPS.EditorLocation</return>
+     <description>Return a location located at the beginning of the line on which self is.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.end_of_line">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>A new instance of GPS.EditorLocation</return>
+     <description>Return a location located at the end of the line on which self is.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_end_line">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Return the last line of the block surrounding the location. The definition of a block depends on the specific language of the source file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_name">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>A string</return>
+     <description>Return the name of the bock surrounding the location. The definition of a block depends on the specific language of the source file</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_fold">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <description>Fold the block containing the location, ie make it invisible on the screen, except for its first line. Clicking on the icon next to this first line will unfold the block and make it visible to the user</description>
+     <see_also name="GPS.EditorLocation.block_unfold" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_unfold">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <description>Unfold the block containing the location, ie make it visible any information that was hidden as a result of running GPS.EditorLocation.block_fold</description>
+     <see_also name="GPS.EditorLocation.block_fold" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_level">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Return the nesting level of the block surrounding the location. The definition of a block depends on the specific programming language</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_start_line">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Return the first line of the block surrounding the location. The definition of a block depends on the programming language</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.block_type">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>A string</return>
+     <description>Return the type of the block surrounding the location. This type indicates whether the block is a subprogram, an if statement,...</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.buffer">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An instance of GPS.EditorBuffer</return>
+     <description>Return the buffer in which the location is found</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.line">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Return the line of the location</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.column">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An integer</return>
+     <description>Return the column of the location</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.get_char">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>A character</return>
+     <description>Return the character at that location in the buffer. An exception is raised when trying to read past the end of the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.create_mark">
+     <param name="self">The instance of GPS.EditorLocation</param>
+     <return>An instance of GPS.EditorMark</return>
+     <description>Create a mark at that location in the buffer. The mark will stay permanently at that location, and follows if the buffer is modified</description>
+     <example lang="python">
+         buffer = GPS.EditorBuffer (GPS.File ("a.adb"))
+         loc = GPS.EditorLocation (buffer, 3, 4)
+         mark = loc.create_mark ()
+         buffer.insert (loc, "text")
+         loc = mark.location()
+         # loc.column() is now 8
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.forward_char">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="count">An integer</param>
+      <return>A new instance of GPS.EditorLocation</return>
+      <description>Return a new location located count characters after self. If count is negative, the location is moved backward instead</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.forward_word">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="count">An integer</param>
+      <return>A new instance of GPS.EditorLocation</return>
+      <description>Return a new location located count words after self. If count is negative, the location is moved backward instead. The definition of a word depends on the language used</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.forward_line">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="count">An integer</param>
+      <return>A new instance of GPS.EditorLocation</return>
+      <description>Return a new location located count lines after self. The location is moved back to the beginning of the line</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.offset">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <return>An integer</return>
+      <description>Return the offset of the location in the buffer, ie the number of characters from the beginning of the buffer to the location</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.subprogram_name">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <return>A string</return>
+      <description>Return the name of the subprogram enclosing the location</description>
+  </shell_doc>
+
+  <!--#################################################################
+      ### EditorMark class
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorMark">
+      <description>This class represents a specific location in an open editor. As opposed to the GPS.EditorLocation class, the exact location is updated whenever the buffer is modified. For instance, if you add a line before the mark, then the mark is moved one line forward as well, so that it still points to the same character in the buffer. These marks are automatically destroyed whenever the buffer is destroyed</description>
+      <see_also name="GPS.EditorLocation" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorMark.__init__">
+     <description>This subprogram will always raise an exception, thus preventing the direct creation of a mark. Instead, you should use GPS.EditorLocation.create_mark() to create such a mark</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorMark.__del__">
+      <param name="self">An instance of GPS.EditorMark</param>
+      <description>This subprogram is called automatically when the instance is unreferenced or goes out of scope. The physical mark inserted in the buffer is destroyed as a result</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorMark.location">
+      <param name="self">An instance of GPS.EditorMark</param>
+      <return>An instance of GPS.EditorLocation</return>
+      <description>Returns the current location of the mark. This location will vary depending on the changes that take place in the buffer</description>
+      <example lang="python">
+         ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+         loc = GPS.EditorLocation (ed, 3, 5)
+         mark = loc.create_mark()
+         # ...
+         loc = mark.location()
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorMark.move">
+       <param name="self">An instance of GPS.EditorMark</param>
+       <param name="location">An instance of GPS.EditorLocation</param>
+       <description>Moves the mark to a new location in the buffer. This is slightly less expensive that destroying the mark and creating a new one through GPS.EditorLocation.create_mark, although the result is the same</description>
+  </shell_doc>
+
+  <!--#################################################################
+      ### EditorBuffer class
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorBuffer">
+     <description>This class represents the physical contents of a file. It is always associated with at least one view (a GPS.EditorView instance), which makes it visible to the user. The contents of the file can be manipulated through this class</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.__init__">
+     <description>This function prevents the direct creation of instances of EditorBuffer. Use GPS.EditorBuffer.get instead</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.get">
+      <param name="file">An instance of GPS.File</param>
+      <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared will all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user)</description>
+      <example lang="python">
+          ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+          ed.data = "whatever"
+          # ... Whatever, including modifying ed
+          ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+          data = ed.data   # "whatever"
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.file">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An instance of GPS.File</return>
+       <description>Returns the name of the file edited in this buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.current_view">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An instance of GPS.EditorView</return>
+       <description>Returns the last view used for this buffer, ie the last view that had the focus and through which the user might have edited the buffer's contents</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.views">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>A list of GPS.EditorView instances</return>
+       <description>Returns the list of all views currently editing the buffer. There is always at least one such view. When the last view is destroyed, the buffer itself is destroyed</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.close">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="force" default="False">A boolean</param>
+       <description>Closes the editor and all its views. If the buffer has been modified and not saved, a dialog is open asking the user whether to save. If force is True, do not save and do not ask the user. All changes are lost</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.characters_count">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An integer</return>
+       <description>Returns the total number of characters in the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.lines_count">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An integer</return>
+       <description>Returns the total number of lines in the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.select">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+       <description>Selects an area in the buffer. The boundaries are included in the selection. The order of the boundaries is irrelevant</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.selection_start">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An instance of GPS.EditorLocation</return>
+       <description>Return the start of the selection. This will always be located before the end of the selection, no matter the order of parameters given to GPS.EditorBuffer.select</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.selection_end">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>An instance of GPS.EditorLocation</return>
+       <description>Return the end of the selection. This will always be located after the start of the selection, no matter the order of parameters given to GPS.EditorBuffer.select</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.copy">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+       <description>Copy the given range of text into the clipboard, so that it can be further pasted into other applications or other parts of GPS</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.cut">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+       <description>Copy the given range of text into the clipboard, so that it can be further pasted into other applications or other parts of GPS. The text is removed from the edited buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.paste">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="location">An instance of GPS.EditorLocation</param>
+       <description>Paste the contents of the clipboard at the given location in the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.is_modified">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <return>A boolean</return>
+       <description>Tests whether the buffer has been modified since it was last open or saved</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.blocks_fold">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Folds all the blocks in all the views of the buffer. Block folding is a language-dependent feature, whereby one can hide part of the source code temporarily, by keeping only the first line of the block (for instance the first line of a subprogram body, the rest is hidden). A small icon is displayed to the left of the first line so that it can be unfolded later on</description>
+       <see_also name="GPS.EditorBuffer.blocks_unfold" />
+       <see_also name="GPS.EditorLocation.block_fold" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.blocks_unfold">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Unfolds all the blocks that were previously folded in the buffer, ie make the whole source code visible. This is a language dependent feature</description>
+       <see_also name="GPS.EditorBuffer.blocks_fold" />
+       <see_also name="GPS.EditorLocation.block_unfold" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.get_chars">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+       <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+       <return>A string</return>
+       <description>Returns the contents of the buffer between the two locations given in parameter. Modifying the returned value has no effect on the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.insert">
+    <param name="self">An instance of GPS.EditorBuffer</param>
+    <param name="location">An instance of GPS.EditorLocation</param>
+    <param name="text">A string</param>
+    <description>Inserts some text in the buffer</description>
+    <see_also name="GPS.EditorBuffer.delete" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.delete">
+    <param name="self">An instance of GPS.EditorBuffer</param>
+    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+    <description>Delete the given range of text from the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.indent">
+    <param name="self">An instance of GPS.EditorBuffer</param>
+    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+    <description>Recompute the indentation of the given range of text. This feature is language-dependent</description>
+  </shell_doc>
+       
+  <shell_doc name="GPS.EditorBuffer.refill">
+    <param name="self">An instance of GPS.EditorBuffer</param>
+    <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
+    <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+    <description>Refill the given range of text, ie cut long lines if necessary so that they fit in the limit specified in the GPS preferences</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.beginning_of_buffer">
+     <param name="self">An instance of GPS.EditorBuffer</param>
+     <return>An instance of GPS.EditorLocation</return>
+     <description>Returns a location pointing to the first character in the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.end_of_buffer">
+     <param name="self">An instance of GPS.EditorBuffer</param>
+     <return>An instance of GPS.EditorLocation</return>
+     <description>Returns a location pointing to the last character in the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.save">
+     <param name="self">An instance of GPS.EditorBuffer</param>
+     <param name="interactive" default="True">A boolean</param>
+     <param name="to_file" default="Same file as edited by the buffer">An instance of GPS.File</param>
+     <description>Saves the buffer to the given file. If interactive is true, a dialog is open to ask for confirmation from the user first, which gives him a chance to cancel the saving</description>
+  </shell_doc>
+
+  <!--#################################################################
+      ### EditorView class
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorView">
+     <description>One view of an editor, ie the visible part through which users can modify text files. A given GPS.EditorBuffer can be associated with multiple views. Closing the last view associated with a buffer will also close the buffer</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.__init__">
+      <param name="self">An instance of GPS.EditorView</param>
+      <param name="buffer">An instance of GPS.EditorBuffer</param>
+      <description>This constructor is called implicitly whenever you create a new view. It creates a new view for the given buffer, and is automatically inserted into the GPS MDI</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.buffer">
+      <param name="self">An instance of GPS.EditorView</param>
+      <return>An instance of GPS.EditorBuffer</return>
+      <description>Returns the buffer to which the view is attached. Editing the text of the file should be done through this instance</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.is_read_only">
+      <param name="self">An instance of GPS.EditorView</param>
+      <return>A boolean</return>
+      <description>Whether the view is editable or not. It is possible that some views of a buffer are editable when others are not</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.set_read_only">
+      <param name="self">An instance of GPS.EditorView</param>
+      <param name="read_only" default="True">A boolean</param>
+      <description>Indicates whether the user should be able to edit interactively through this view. If the parameter is set to False, no edit operation is allowed in this view</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.center">
+      <param name="self">An instance of GPS.EditorView</param>
+      <param name="location" default="location of cursor">An instance of GPS.EditorLocation</param>
+      <description>Scrolls the view so that the location is centered</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.goto">
+      <param name="self">An instance of GPS.EditorView</param>
+      <param name="location">An instance of GPS.EditorLocation</param>
+      <description>Moves the cursor at the given location. Each view of a particular buffer has its own cursor position, which is where characters typed by the user will be inserted</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorView.cursor">
+      <param name="self">An instance of GPS.EditorView</param>
+      <return>An instance of GPS.EditorLocation</return>
+      <description>Return the current location of the cursor in this view</description>
+  </shell_doc>
+ 
 
   <!--#################################################################
     ####   Menu class
