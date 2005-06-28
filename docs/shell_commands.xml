@@ -2680,8 +2680,9 @@ the same line/column even if new lines are added in the buffer. This location is
 
   <shell_doc name="GPS.EditorLocation.create_mark">
      <param name="self">The instance of GPS.EditorLocation</param>
+     <param name="name" default="">A string</param>
      <return>An instance of GPS.EditorMark</return>
-     <description>Create a mark at that location in the buffer. The mark will stay permanently at that location, and follows if the buffer is modified</description>
+     <description>Create a mark at that location in the buffer. The mark will stay permanently at that location, and follows if the buffer is modified. If the name is specified, this creates a named mark, which can be retrieved through a call to GPS.EditorBuffer.get_mark. If a mark with the same name already exists, it is moved to the new location, and then returned</description>
      <example lang="python">
          buffer = GPS.EditorBuffer (GPS.File ("a.adb"))
          loc = GPS.EditorLocation (buffer, 3, 4)
@@ -2690,6 +2691,7 @@ the same line/column even if new lines are added in the buffer. This location is
          loc = mark.location()
          # loc.column() is now 8
      </example>
+     <see_also name="GPS.EditorBuffer.get_mark" />
   </shell_doc>
 
   <shell_doc name="GPS.EditorLocation.forward_char">
@@ -2730,7 +2732,7 @@ the same line/column even if new lines are added in the buffer. This location is
       #################################################################-->
 
   <shell_doc name="GPS.EditorMark">
-      <description>This class represents a specific location in an open editor. As opposed to the GPS.EditorLocation class, the exact location is updated whenever the buffer is modified. For instance, if you add a line before the mark, then the mark is moved one line forward as well, so that it still points to the same character in the buffer. These marks are automatically destroyed whenever the buffer is destroyed</description>
+      <description>This class represents a specific location in an open editor. As opposed to the GPS.EditorLocation class, the exact location is updated whenever the buffer is modified. For instance, if you add a line before the mark, then the mark is moved one line forward as well, so that it still points to the same character in the buffer. These marks are automatically destroyed whenever the buffer is destroyed, or if you explicitly call GPS.EditorMark.Delete</description>
       <see_also name="GPS.EditorLocation" />
   </shell_doc>
 
@@ -2738,9 +2740,9 @@ the same line/column even if new lines are added in the buffer. This location is
      <description>This subprogram will always raise an exception, thus preventing the direct creation of a mark. Instead, you should use GPS.EditorLocation.create_mark() to create such a mark</description>
   </shell_doc>
 
-  <shell_doc name="GPS.EditorMark.__del__">
+  <shell_doc name="GPS.EditorMark.delete">
       <param name="self">An instance of GPS.EditorMark</param>
-      <description>This subprogram is called automatically when the instance is unreferenced or goes out of scope. The physical mark inserted in the buffer is destroyed as a result</description>
+      <description>Delets the physical mark from the buffer. All instances referencing the same mark will no longer be valid</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorMark.location">
@@ -2935,6 +2937,23 @@ the same line/column even if new lines are added in the buffer. This location is
      <param name="interactive" default="True">A boolean</param>
      <param name="to_file" default="Same file as edited by the buffer">An instance of GPS.File</param>
      <description>Saves the buffer to the given file. If interactive is true, a dialog is open to ask for confirmation from the user first, which gives him a chance to cancel the saving</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.get_mark">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <param name="name">A string</param>
+      <return>An instance of GPS.EditorMark</return>
+      <description>Check whether there is a mark with that name in the buffer, and return it. An exception is raised if there is no such mark</description>
+      <see_also name="GPS.EditorLocation.create_mark" />
+      <example lang="python">
+         ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+         loc = GPS.EditorLocation (ed, 4, 5)
+         mark = loc.create_mark ("name")
+         mark.data = "whatever"
+         # .. anything else
+         mark = ed.get_mark ("name")
+         # mark.data is still "whatever"
+      </example>
   </shell_doc>
 
   <!--#################################################################
