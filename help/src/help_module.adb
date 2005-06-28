@@ -316,62 +316,83 @@ package body Help_Module is
                      or else Get_Attribute (Tmp, "real_name", "") = Full_Name)
          then
             Child := Tmp.Child;
+
             while Child /= null loop
                if Child.Tag.all = "description" then
-                  Descr := Descr & ASCII.LF & Child.Value.all;
+                  Descr := Descr
+                    & "<tr><td colspan='3'>" & Child.Value.all & "</td></tr>";
 
                elsif Child.Tag.all = "param" then
-                  if Params /= Null_Unbounded_String then
-                     Params := Params & ASCII.LF;
-                  end if;
-
                   Params := Params
-                    & Get_Attribute (Child, "name") & ':'
-                    & ASCII.HT;
+                    & "<tr><td class=""name"">"
+                    & Get_Attribute (Child, "name") & "</td>";
 
                   declare
                      Default : constant String := Get_Attribute
                        (Child, "default", "@@");
                   begin
                      if Default /= "@@" then
-                        Params := Params & "(default=""" & Default & """) ";
+                        Params := Params
+                          & "<td class=""default"">(default="""
+                          & Default & """)</td>";
+                     else
+                        Params := Params & "<td>Mandatory</td>";
                      end if;
                   end;
-                  Params := Params & Child.Value.all;
+                  Params := Params
+                    & "<td class=""descr"">" & Child.Value.all & "</td></tr>";
 
                elsif Child.Tag.all = "return" then
                   Returns := To_Unbounded_String
-                    ("returns" & ASCII.HT & Child.Value.all);
+                    ("</tr><td class=""return"">Returns</td>"
+                     & "<td colspan=""2"" class=""descr"">"
+                     & Child.Value.all
+                     & "</td></tr>");
 
                elsif Child.Tag.all = "see_also" then
-                  if See_Also /= Null_Unbounded_String then
-                     See_Also := See_Also & ASCII.LF;
-                  end if;
-                  See_Also := See_Also & ASCII.LF
-                    & "See also: " & Get_Attribute (Child, "name", "");
+                  See_Also := See_Also
+                    & "<tr><td class='seeAlso'>"
+                    & Get_Attribute (Child, "name", "")
+                    & "</td></tr>";
 
                elsif Child.Tag.all = "example" then
                   if Equal
                     (Get_Attribute (Child, "lang", GPS_Shell_Name),
                      Language, False)
                   then
-                     Example := Example & ASCII.LF & ASCII.LF
-                       & "Example:"
-                       & Child.Value.all;
+                     Example := Example &
+                     "<tr><td colspan='3' class='title'>Example</td></tr>"
+                       & "<tr><td colspan='3' class='example'>"
+                       & Child.Value.all & "</td></tr>";
                   end if;
                end if;
 
                Child := Child.Next;
             end loop;
 
-            if Params /= Null_Unbounded_String
-              and then Returns /= Null_Unbounded_String
-            then
-               Params := Params & ASCII.LF;
+            Params := Params & Returns;
+
+            if Params /= Null_Unbounded_String then
+               Params :=
+                 "<tr><td colspan='3' class='title'>Parameters</td></tr>"
+                 & Params;
             end if;
 
-            return To_String
-              (Params & Returns & ASCII.LF & Descr & See_Also & Example);
+            if See_Also /= Null_Unbounded_String then
+               See_Also :=
+                 "<tr><td colspan='3' class='title'>See also</td></tr>"
+                 & See_Also;
+            end if;
+
+            if Descr /= Null_Unbounded_String then
+               Descr :=
+                 "<tr><td class='title' colspan='3'>Description</td></tr>"
+                   & Descr;
+            end if;
+
+            return To_String ("<table class='description'>"
+                              & Params & Descr & See_Also & Example
+                              & "</table>");
          end if;
 
          Tmp := Tmp.Next;
