@@ -97,6 +97,7 @@ table.description .name    { font-family: "Courier New", "Courier";
 table.description .return  { font-style: italic; }
 table.description .default { font-family: "Courier New", "Courier"; }
 table.description td.seeAlso { font-family: "Courier New", "Courier"; }
+table.description .obsolescent { color: red }
 </style>
 </head><body bgcolor="#f0f0f8">
 %s
