@@ -410,6 +410,7 @@ package body Src_Editor_Module.Shell is
       Inst  : Class_Instance;
    begin
       Inst := Get_Instance (Script, Mark);
+      Ref (Mark);
       if Inst = null then
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "EditorMark"));
@@ -435,6 +436,13 @@ package body Src_Editor_Module.Shell is
    begin
       Mark := Gtk_Text_Mark (GObject'(Get_Data (Inst)));
       Free (Inst);
+
+      if Mark /= null and then Get_Buffer (Mark) = null then
+         --  The buffer was destroyed, so we might as well destroy the mark
+         --  reference we have kept in this instance
+         Mark := null;
+      end if;
+
       if Mark = null then
          Set_Error_Msg (Data, "No associated mark");
       end if;
@@ -1770,6 +1778,7 @@ package body Src_Editor_Module.Shell is
       Box       : Source_Editor_Box;
       File      : Virtual_File;
       File_Inst : Class_Instance;
+      Mark      : Gtk_Text_Mark;
       Success   : Boolean;
       Iter, Iter2 : aliased Gtk_Text_Iter;
       pragma Unreferenced (Success);
@@ -2059,6 +2068,19 @@ package body Src_Editor_Module.Shell is
             end if;
          end if;
 
+      elsif Command = "get_mark" then
+         Name_Parameters (Data, (2 => Name_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            Mark := Get_Mark (Buffer, Nth_Arg (Data, 2));
+            if Mark /= null then
+               Set_Return_Value
+                 (Data, Create_Editor_Mark (Get_Script (Data), Mark));
+            else
+               Set_Error_Msg (Data, -"No such mark");
+            end if;
+         end if;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2076,6 +2098,7 @@ package body Src_Editor_Module.Shell is
       Buffer          : Source_Buffer;
       Inst            : Class_Instance;
       Iter, Iter2     : Gtk_Text_Iter;
+      Mark            : Gtk_Text_Mark;
       Success         : Boolean;
       Count           : Gint;
       Char            : Character;
@@ -2188,11 +2211,23 @@ package body Src_Editor_Module.Shell is
            (Data, Create_Editor_Location (Get_Script (Data), Iter));
 
       elsif Command = "create_mark" then
+         Name_Parameters (Data, (1 => Name_Cst'Access));
          Get_Location (Iter, Data, 1, Default => Iter);
-         Set_Return_Value
-           (Data, Create_Editor_Mark
-              (Get_Script (Data),
-               Create_Mark (Get_Buffer (Iter), Where => Iter)));
+
+         if Nth_Arg (Data, 2, "") /= "" then
+            Mark := Get_Mark (Get_Buffer (Iter), Nth_Arg (Data, 2));
+         end if;
+
+         if Mark = null then
+            Mark := Create_Mark
+              (Get_Buffer (Iter),
+               Mark_Name => Nth_Arg (Data, 2, ""),
+               Where     => Iter);
+         else
+            Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
+         end if;
+
+         Set_Return_Value (Data, Create_Editor_Mark (Get_Script (Data), Mark));
 
       elsif Command = "get_char" then
          Get_Location (Iter, Data, 1, Default => Iter);
@@ -2282,6 +2317,11 @@ package body Src_Editor_Module.Shell is
          Get_Mark (Mark, Data, 1);
          if Mark /= null then
             Unref (Mark);
+         end if;
+      elsif Command = "delete" then
+         Get_Mark (Mark, Data, 1);
+         if Mark /= null then
+            Delete_Mark (Get_Buffer (Mark), Mark);
          end if;
       elsif Command = "location" then
          Get_Mark (Mark, Data, 1);
@@ -2431,7 +2471,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "forward_line", 0, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
-        (Kernel, "create_mark", 0, 0, Location_Cmds'Access, EditorLoc);
+        (Kernel, "create_mark", 0, 1, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "get_char", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
@@ -2457,6 +2497,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, Constructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, Destructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
+      Register_Command
+        (Kernel, "delete", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, "location", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command (Kernel, "move", 1, 1, Mark_Cmds'Access, EditorMark);
@@ -2498,6 +2540,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "cut", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "get_mark", 1, 1, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
 --          (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
