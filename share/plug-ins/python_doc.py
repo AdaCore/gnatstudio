@@ -64,13 +64,40 @@ class XMLTextDoc (pydoc.TextDoc):
        Help_Wrapper.set_current_class (object)
        return pydoc.TextDoc.document(self, object, name, *args)
 
+class XMLHtmlRepr (pydoc.HTMLRepr):
+   def escape (self, text):
+       text = "&amp;".join (text.split ('&'))
+       text = "&lt; ".join (text.split ('< '))
+       text = "&lt;,".join (text.split ('<, '))
+       text = "&gt; ".join (text.split ('> '))
+       text = "&gt;,".join (text.split ('>,'))
+       return text
+
 class XMLHtmlDoc (pydoc.HTMLDoc):
+    pydoc.HTMLDoc._repr_instance = XMLHtmlRepr()
+    pydoc.HTMLDoc.escape = pydoc.HTMLDoc._repr_instance.escape
+    pydoc.HTMLDoc.repr   = pydoc.HTMLDoc._repr_instance.repr
+
     def page (self, title, contents):
        return '''
 <!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head><title>%s</title>
 <style>
-dd {width: 800px}</style>
+body         { background-color:#f0f0f8;
+               font-family: Tahoma, helvetica, arial;
+               width: 1000px;  }
+table.description            { border: 1px solid black;
+                               width: 100%% }
+table.description td.title   { background-color: #dddddd;
+                               text-align: center; }
+table.description td.example { font-family: "Courier New", "Courier";
+                               background-color: #cccccc; }
+table.description .name    { font-family: "Courier New", "Courier";
+                        font-weight: bold; }
+table.description .return  { font-style: italic; }
+table.description .default { font-family: "Courier New", "Courier"; }
+table.description td.seeAlso { font-family: "Courier New", "Courier"; }
+</style>
 </head><body bgcolor="#f0f0f8">
 %s
 </body></html>''' % (title, contents)
