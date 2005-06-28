@@ -315,7 +315,8 @@ package body Gtkada.Entry_Completion is
          Index           : Integer;
          Compl_Access    : in out String_Access;
          Has_Description : in out Boolean;
-         Matched         : in out String_List.List);
+         Matched         : in out String_List.List;
+         Descr_Matched   : in out String_List.List);
       --  Append a new entry in the list of possible completions.
       --  Compl_Access becomes the longest common prefix for all possible
       --  completions.
@@ -364,7 +365,8 @@ package body Gtkada.Entry_Completion is
          Index           : Integer;
          Compl_Access    : in out String_Access;
          Has_Description : in out Boolean;
-         Matched         : in out String_List.List)
+         Matched         : in out String_List.List;
+         Descr_Matched   : in out String_List.List)
       is
          use String_List;
          Choice : constant String :=
@@ -373,17 +375,22 @@ package body Gtkada.Entry_Completion is
            Description (GEntry.Completions.all, Index);
          Current : Integer;
          Tmp     : String_Access;
-         Node    : List_Node := First (Matched);
+         Node       : List_Node := First (Matched);
+         Descr_Node : List_Node := First (Descr_Matched);
          Iter    : Gtk_Tree_Iter;
       begin
          while Node /= Null_Node loop
-            if Data (Node).all = Choice then
+            if Data (Node).all = Choice
+              and then Data (Descr_Node).all = Descr
+            then
                return;
             end if;
             Node := Next (Node);
+            Descr_Node := Next (Descr_Node);
          end loop;
 
          Prepend (Matched, new String'(Choice));
+         Prepend (Descr_Matched, new String'(Descr));
 
          Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
          Set (GEntry.List, Iter, 0, Choice);
@@ -426,6 +433,7 @@ package body Gtkada.Entry_Completion is
             S, First_Index        : Integer;
             Col                   : Gint;
             Matched               : String_List.List;
+            Descr_Matched         : String_List.List;
             Iter                  : Gtk_Tree_Iter;
 
          begin
@@ -441,13 +449,15 @@ package body Gtkada.Entry_Completion is
                --  At least one match
                if First_Index /= Integer'Last then
                   S := First_Index;
-                  Append (T, S, Compl_Access, Has_Description, Matched);
+                  Append (T, S, Compl_Access, Has_Description,
+                          Matched, Descr_Matched);
 
                   loop
                      S := Next_Matching (T, S + 1);
                      exit when S = Integer'Last;
 
-                     Append (T, S, Compl_Access, Has_Description, Matched);
+                     Append (T, S, Compl_Access, Has_Description,
+                             Matched, Descr_Matched);
                   end loop;
 
                   --  Do we have a common prefix for all the possible choices ?
@@ -458,6 +468,7 @@ package body Gtkada.Entry_Completion is
 
                   Free (Compl_Access);
                   String_List.Free (Matched);
+                  String_List.Free (Descr_Matched);
 
                   First_Index := -1;
                   Set_Visible (Get_Column (GEntry.View, 1), Has_Description);
