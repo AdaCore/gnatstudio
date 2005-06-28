@@ -3099,7 +3099,8 @@ package body Ada_Analyzer is
 
          elsif Prev_Token = Tok_Apostrophe
            and then (Token = Tok_Delta or else Token = Tok_Digits
-                     or else Token = Tok_Range or else Token = Tok_Access)
+                     or else Token = Tok_Mod or else Token = Tok_Range
+                     or else Token = Tok_Access)
          then
             --  This token should not be considered as a reserved word
 
