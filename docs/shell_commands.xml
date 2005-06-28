@@ -8,6 +8,50 @@
   -->
 
 <docs>
+  <shell_doc name="GPS">
+     <description>This package groups all the classes and functions exported by the GNAT Programming System.
+These functions are made available through various programming languages (Python and the GPS shell at the moment). The documentation in this package is mostly oriented towards Python, but it can also be used as a reference for the GPS shell.
+
+Functions description
+=====================
+
+For all functions, the list of parameters is given. The first parameter will often be called "self", and refers to the instance of the class to which the method applies. In Python, the parameter is generally put before the method's name,
+as in
+     self.method (arg1, arg2)
+Although it could also be called as in
+     method (self, arg1, arg2)
+
+For all other parameters, their name and type are specified. An additional default value is given when the parameter is optional. If no default value is specified, the parameter is mandatory and should always be specified. The name of the parameter is relevant if you chose to use Python's named parameters feature, as
+in
+     self.method (arg1="value1", arg2="value2")
+which makes the call slightly more readable. The method above would be defined with three parameters in this documentation (resp. "self", "arg1" and "arg2").
+
+Some examples are also provides for several functions, to help clarify the use of the function.
+
+User data in instances
+======================
+
+A very useful feature of python is that all class instances can be associated with any number of user data fields. For example, if you create an instance of
+the class GPS.EditorBuffer, you can associate two fields "field1" and "field2" to it (the names and number are purely for demonstration purposes, and you can use your own), as in
+      ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+      ed.field1 = "value1"
+      ed.field2 = 2
+
+GPS takes great care for most classes of always returning the same python instance for a given GUI object. For instance, if you were to get another instance of GPS.EditorBuffer for the same file as above, you would in fact receive the same Python instance, and thus the two fields are available to you, as in:
+      ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+      # ed.field1 is still "value1"
+
+This is a very convenient way to store your own data associated with the various objects exported by GPS. These data will cease to exist when the GPS object itself is destroyed (for instance when the editor is closed in the example above).
+
+Hooks
+=====
+
+In a lot of cases, you will need to connect to specific hooks exported by GPS to be aware of events happening in GPS (loading of a file, closing a file,...). These hooks and their use are described in the GPS manual.
+
+</description>
+  </shell_doc>
+
+
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->
