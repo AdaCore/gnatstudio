@@ -307,6 +307,7 @@ package body Help_Module is
       Tmp     : Node_Ptr := XML_Doc_File.Child;
       Descr, Params, Returns, See_Also, Example : Unbounded_String;
       Child   : Node_Ptr;
+      Obsolescent : Unbounded_String;
    begin
       Tmp := XML_Doc_File.Child;
 
@@ -315,12 +316,18 @@ package body Help_Module is
            and then (Get_Attribute (Tmp, "name", "") = Full_Name
                      or else Get_Attribute (Tmp, "real_name", "") = Full_Name)
          then
-            Child := Tmp.Child;
+            Child       := Tmp.Child;
+            Obsolescent := Null_Unbounded_String;
 
             while Child /= null loop
                if Child.Tag.all = "description" then
                   Descr := Descr
                     & "<tr><td colspan='3'>" & Child.Value.all & "</td></tr>";
+
+               elsif Child.Tag.all = "obsolescent" then
+                  Obsolescent := To_Unbounded_String
+                    ("<tr><td colspan='3' class='obsolescent'>"
+                     & "This is obsolescent</td></tr>");
 
                elsif Child.Tag.all = "param" then
                   Params := Params
@@ -391,7 +398,8 @@ package body Help_Module is
             end if;
 
             return To_String ("<table class='description'>"
-                              & Params & Descr & See_Also & Example
+                              & Obsolescent
+                              & Params & Descr & Example & See_Also
                               & "</table>");
          end if;
 
