@@ -1066,9 +1066,11 @@ The new paths are added in front, so that they have priorities over previously d
 
   <shell_doc name="GPS.Editor">
       <description>Interface to all editor-related commands</description>
+      <obsolescent />
   </shell_doc>
 
   <shell_doc name="GPS.Editor.edit">
+      <obsolescent />
       <param name="filename">A string</param>
       <param name="line" default="1">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -1084,6 +1086,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.create_mark">
+      <obsolescent />
       <param name="filename">A string</param>
       <param name="line" default="1">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -1095,6 +1098,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.highlight">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1103,6 +1107,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.add_blank_lines">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="start_line">An integer</param>
       <param name="number_of_lines">An integer</param>
@@ -1111,24 +1116,28 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.remove_blank_lines">
+      <obsolescent />
       <param name="mark">A string</param>
       <param name="number" default="0">An integer</param>
       <description>Remove blank lines located at mark. If number is specified, remove only the number first lines</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_fold">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line" default="">An integer</param>
       <description>Fold the block around line. If line is not specified, fold all blocks in the file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_unfold">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line" default="">An integer</param>
       <description>Unfold the block around line. If line is not specified, unfold all blocks in the file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.unhighlight">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1137,6 +1146,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.highlight_range">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1146,6 +1156,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.unhighlight_range">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1155,6 +1166,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.register_highlighting">
+      <obsolescent />
       <param name="category">A string</param>
       <param name="color">A string</param>
       <param name="speedbar" default="False">A boolean</param>
@@ -1162,24 +1174,28 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
   </shell_doc>
 
   <shell_doc name="GPS.Editor.set_background_color">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="color">A string</param>
       <description>Set the background color for the editors for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.goto_mark">
+      <obsolescent />
       <param name="identifier">A string</param>
       <description>Jump to the location of the mark corresponding to identifier</description>
       <see_also name="GPS.Editor.create_mark"/>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.delete_mark">
+      <obsolescent />
       <param name="identifier">A string</param>
       <description>Delete the mark corresponding to identifier</description>
       <see_also name="GPS.Editor.create_mark"/>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_chars">
+      <obsolescent />
       <param name="filename">A string</param>
       <param name="line" default="0">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -1191,30 +1207,35 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_line">
+      <obsolescent />
       <param name="mark">An identifier</param>
       <return>An integer</return>
       <description>Returns the current line of mark</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_column">
+      <obsolescent />
       <param name="mark">An identifier</param>
       <return>An integer</return>
       <description>Returns the current column of mark</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_file">
+      <obsolescent />
       <param name="mark">An identifier</param>
       <return>A file</return>
       <description>Returns the current file of mark</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_last_line">
+      <obsolescent />
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns the number of the last line in file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_get_start">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
@@ -1222,6 +1243,7 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_get_end">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
@@ -1229,6 +1251,7 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_get_name">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
@@ -1236,6 +1259,7 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_get_type">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
@@ -1243,6 +1267,7 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.block_get_level">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
@@ -1250,6 +1275,7 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.subprogram_name">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
@@ -1257,18 +1283,21 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.cursor_get_line">
+      <obsolescent />
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor line number</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.cursor_get_column">
+      <obsolescent />
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor column number</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.cursor_set_position">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -1276,22 +1305,26 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.cursor_center">
+      <obsolescent />
       <param name="file">A string</param>
       <description>Scroll the view to center cursor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.get_buffer">
+      <obsolescent />
       <param name="file">A string</param>
       <description>Returns the text contained in the current buffer for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.save_buffer">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="to_file" default="">A string</param>
       <description>Saves the text contained in the current buffer for file. If to_file is specified, the file will be saved as to_file, and the buffer status will not be modified</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.replace_text">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <param name="column">An integer</param>
@@ -1302,35 +1335,43 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.indent">
+      <obsolescent />
       <param name="current_line_only" default="False">A boolean</param>
       <description>Indent the selection (or the current line if requested) in current editor. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.indent_buffer">
+      <obsolescent />
       <description>Indent the current editor. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.refill">
+      <obsolescent />
       <description>Refill selected (or current) editor lines. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.cut">
+      <obsolescent />
       <description>Cut the selection in the current editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.copy">
+      <obsolescent />
       <description>Copy the selection in the current editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.paste">
+      <obsolescent />
       <description>Paste the selection in the current editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.select_all">
+      <obsolescent />
       <description>Select the whole editor contents</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.select_text">
+      <obsolescent />
       <param name="first_line">An integer</param>
       <param name="last_line">An integer</param>
       <param name="start_column" default="1">An integer</param>
@@ -1339,38 +1380,45 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.insert_text">
+      <obsolescent />
       <param name="text">A string</param>
       <description>Insert a text in the current editor at the cursor position</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.undo">
+      <obsolescent />
       <param name="file">A string</param>
       <description>Undo the last edition command for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.redo">
+      <obsolescent />
       <param name="file">A string</param>
       <description>Redo the last undone edition command for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.close">
+      <obsolescent />
       <param name="file">A string</param>
       <description>Close all file editors for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.set_writable">
+      <obsolescent />
       <param name="file">A string</param>
       <param name="writable">A boolean</param>
       <description>Change the Writable status for the editors for file</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.save">
+      <obsolescent />
       <param name="interactive" default="True">A boolean</param>
       <param name="all" default="True">A boolean</param>
       <description>Save current or all files. If interactive is true, then prompt before each save. If all is true, then all files are saved</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.set_synchronized_scrolling">
+      <obsolescent />
        <param name="file1">A string</param>
        <param name="file2">A string</param>
        <param name="file3" default="">A string</param>
@@ -1378,11 +1426,13 @@ If the line and column are not specified, then the current selection is returned
   </shell_doc>
 
   <shell_doc name="GPS.Editor.add_case_exception">
+      <obsolescent />
        <param name="name">A string</param>
        <description>Add name into the case exception dictionary</description>
   </shell_doc>
 
   <shell_doc name="GPS.Editor.remove_case_exception">
+      <obsolescent />
        <param name="name">A string</param>
        <description>Remove name from the case exception dictionary</description>
   </shell_doc>
