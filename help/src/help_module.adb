@@ -225,8 +225,10 @@ package body Help_Module is
 
    function Get_Shell_Documentation
      (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
-      Language, Full_Name : String) return String;
-   --  Return the documentation for Entity, as read in the XML file
+      Language, Full_Name : String;
+      HTML_Format : Boolean) return String;
+   --  Return the documentation for Entity, as read in the XML file.
+   --  The documentation is formated in HTML if HTML_Format is True
 
    function Initialize_XML_Doc
      (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr;
@@ -302,7 +304,8 @@ package body Help_Module is
 
    function Get_Shell_Documentation
      (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
-      Language, Full_Name : String) return String
+      Language, Full_Name : String;
+      HTML_Format : Boolean) return String
    is
       Tmp     : Node_Ptr := XML_Doc_File.Child;
       Descr, Params, Returns, See_Also, Example : Unbounded_String;
@@ -321,86 +324,101 @@ package body Help_Module is
 
             while Child /= null loop
                if Child.Tag.all = "description" then
-                  Descr := Descr
-                    & "<tr><td colspan='3'>" & Child.Value.all & "</td></tr>";
+                  if HTML_Format then
+                     Descr := Descr & "<tr><td colspan='3'>"
+                       & Child.Value.all & "</td></tr>";
+                  else
+                     Descr := Descr & Child.Value.all;
+                  end if;
 
                elsif Child.Tag.all = "obsolescent" then
-                  Obsolescent := To_Unbounded_String
-                    ("<tr><td colspan='3' class='obsolescent'>"
-                     & "This is obsolescent</td></tr>");
+                  if HTML_Format then
+                     Obsolescent := To_Unbounded_String
+                       ("<tr><td colspan='3' class='obsolescent'>"
+                        & "This is obsolescent</td></tr>");
+                  end if;
 
                elsif Child.Tag.all = "param" then
-                  Params := Params
-                    & "<tr><td class=""name"">"
-                    & Get_Attribute (Child, "name") & "</td>";
+                  if HTML_Format then
+                     Params := Params
+                       & "<tr><td class=""name"">"
+                       & Get_Attribute (Child, "name") & "</td>";
+                  else
+                     Params := Params & ASCII.LF
+                        & Get_Attribute (Child, "name") & ASCII.HT;
+                  end if;
 
                   declare
                      Default : constant String := Get_Attribute
                        (Child, "default", "@@");
                   begin
                      if Default /= "@@" then
-                        Params := Params
-                          & "<td class=""default"">(default="""
-                          & Default & """)</td>";
-                     else
-                        Params := Params & "<td>Mandatory</td>";
+                        if HTML_Format then
+                           Params := Params
+                             & "<td class='default'>(default="""
+                             & Default & """)</td>";
+                        else
+                           Params := Params & Default & ASCII.HT;
+                        end if;
+                     elsif HTML_Format then
+                        Params :=
+                          Params & "<td class='default'>Mandatory</td>";
                      end if;
                   end;
-                  Params := Params
-                    & "<td class=""descr"">" & Child.Value.all & "</td></tr>";
+
+                  if HTML_Format then
+                     Params :=
+                       Params & "<td>" & Child.Value.all & "</td></tr>";
+                  else
+                     Params := Params & Child.Value.all;
+                  end if;
 
                elsif Child.Tag.all = "return" then
-                  Returns := To_Unbounded_String
-                    ("</tr><td class=""return"">Returns</td>"
-                     & "<td colspan=""2"" class=""descr"">"
-                     & Child.Value.all
-                     & "</td></tr>");
+                  if HTML_Format then
+                     Returns := To_Unbounded_String
+                       ("</tr><td class=""return"">Returns</td>"
+                        & "<td colspan='2' class=""descr"">"
+                        & Child.Value.all
+                        & "</td></tr>");
+                  else
+                     Returns :=
+                       To_Unbounded_String ("Returns " & Child.Value.all);
+                  end if;
 
                elsif Child.Tag.all = "see_also" then
-                  See_Also := See_Also
-                    & "<tr><td class='seeAlso'>"
-                    & Get_Attribute (Child, "name", "")
-                    & "</td></tr>";
+                  if HTML_Format then
+                     See_Also := See_Also
+                       & "<tr><td class='header'>See also</td>"
+                       & "<td class='seeAlso' colspan='2'>"
+                       & Get_Attribute (Child, "name", "")
+                       & "</td></tr>";
+                  end if;
 
                elsif Child.Tag.all = "example" then
                   if Equal
                     (Get_Attribute (Child, "lang", GPS_Shell_Name),
                      Language, False)
                   then
-                     Example := Example &
-                     "<tr><td colspan='3' class='title'>Example</td></tr>"
-                       & "<tr><td colspan='3' class='example'>"
-                       & Child.Value.all & "</td></tr>";
+                     if HTML_Format then
+                        Descr := Descr
+                          & "<tr><td colspan='3' class='example'>"
+                          & Child.Value.all & "</td></tr>";
+                     else
+                        Example := Example & ASCII.LF & Child.Value.all;
+                     end if;
                   end if;
                end if;
 
                Child := Child.Next;
             end loop;
 
-            Params := Params & Returns;
-
-            if Params /= Null_Unbounded_String then
-               Params :=
-                 "<tr><td colspan='3' class='title'>Parameters</td></tr>"
-                 & Params;
+            if HTML_Format then
+               return To_String
+                 (Obsolescent & Params & Returns & Descr & Example & See_Also);
+            else
+               return To_String
+                 (Params & Returns & ASCII.LF & Descr & ASCII.LF & Example);
             end if;
-
-            if See_Also /= Null_Unbounded_String then
-               See_Also :=
-                 "<tr><td colspan='3' class='title'>See also</td></tr>"
-                 & See_Also;
-            end if;
-
-            if Descr /= Null_Unbounded_String then
-               Descr :=
-                 "<tr><td class='title' colspan='3'>Description</td></tr>"
-                   & Descr;
-            end if;
-
-            return To_String ("<table class='description'>"
-                              & Obsolescent
-                              & Params & Descr & Example & See_Also
-                              & "</table>");
          end if;
 
          Tmp := Tmp.Next;
@@ -472,7 +490,8 @@ package body Help_Module is
          declare
             Doc : constant String := Get_Shell_Documentation
               (Get_Data (Get_Data (Inst, Help_Module_ID.Help_Class)),
-               Get_Name (Get_Script (Data)), Nth_Arg (Data, 2));
+               Get_Name (Get_Script (Data)), Nth_Arg (Data, 2),
+               HTML_Format => Nth_Arg (Data, 3, False));
          begin
             if Doc /= "" then
                Set_Return_Value (Data, Doc);
@@ -1178,7 +1197,7 @@ package body Help_Module is
          Command       => "getdoc",
          Class         => Help_Module_ID.Help_Class,
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Maximum_Args  => 2,
          Handler       => Command_Handler'Access);
       Register_Command
         (Kernel,
