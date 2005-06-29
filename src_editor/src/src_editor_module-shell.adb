@@ -59,7 +59,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Handlers;
 
 package body Src_Editor_Module.Shell is
---   Me : constant Debug_Handle := Create ("Editor.Shell");
+   Me : constant Debug_Handle := Create ("Editor.Shell");
 
    Filename_Cst          : aliased constant String := "filename";
    File_Cst              : aliased constant String := "file";
@@ -2315,12 +2315,18 @@ package body Src_Editor_Module.Shell is
          Set_Error_Msg (Data, "Cannot create an EditorMark directly");
       elsif Command = Destructor_Method then
          Get_Mark (Mark, Data, 1);
-         if Mark /= null then
-            Unref (Mark);
+         if Mark /= null
+           and then Get_Name (Mark) = ""
+         then
+            --  Do not delete named marks, since we can still access them
+            --  through get_mark() anyway
+            Trace (Me, "Deleting unnamed mark");
+            Delete_Mark (Get_Buffer (Mark), Mark);
          end if;
       elsif Command = "delete" then
          Get_Mark (Mark, Data, 1);
          if Mark /= null then
+            Trace (Me, "Deleting mark");
             Delete_Mark (Get_Buffer (Mark), Mark);
          end if;
       elsif Command = "location" then
