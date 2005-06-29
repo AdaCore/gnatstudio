@@ -10,41 +10,309 @@
 import GPS, pydoc, os, inspect, pydoc, sys, re
 from string import rstrip, lstrip, expandtabs
 
-def generate_doc (entity):
-  """Generate the documentation for a python entity dynamically.
-     Return the name of the HTML file that was created.
-     The documentation is generated in the object directory of the root
-     project"""
-  home_dir = GPS.get_home_dir()
-  name = home_dir + os.sep + entity.__name__ + ".html"
-  if not os.path.isfile (name) or os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
-     GPS.set_busy()
-     cwd = os.getcwd()
-     os.chdir (home_dir)
-     pydoc.writedoc (entity)
-     os.chdir (cwd)
-     GPS.unset_busy()
-  return name
+#####################################################################
+##  The following classes provide a nice way to display HTML documentation.
+##  They are mostly useful for the GPS module, although they are expected to
+##  work on other modules as well
+#####################################################################
 
+class DocGenerator:
+   def __init__ (self):
+      self.work_dir = "/tmp/pythondor"
 
-def browse_doc (entity):
-  """Open a browser for the documentation relative to the specified entity"""
-  ## Use a hook, so that users can substitute their internal browser if they wish
-  GPS.Hook ("html_action_hook").run (GPS.File (generate_doc (entity)), 1, "")
+   def classesindex (self, module_name, classes):
+      """Return the index of classes for the module, in HTML format"""
 
-## Create a default menu for the python documentation
-GPS.parse_xml("""
-  <documentation_file>
-       <shell lang="python">python_doc.browse_doc(GPS)</shell>
-       <descr>GPS'extensions for Python</descr>
-       <menu before="About">/Help/Python extensions</menu>
-       <category>Scripts</category>
-    </documentation_file>""")
+      output = "<h2>Module <strong>" + module_name + \
+        "</strong></h2><div id='classesIndex'><ul>\n" + \
+        " <li><i><a href='file://""" + self.filename_for_module(module_name) + "'>Module description</a></li>\n" + \
+        " <li><i><a href='file://""" + self.filename_for_global(module_name) + "'>Global routines</a></i></li>\n"
+      for c in classes:
+         output += "  <li><a href='file://" + self.filename_for_class (c[0]) + "'>" + c[0] + "</a></li>\n"
+      return output + "</ul></div>\n"
+
+   def classcontents (self, name, object):
+      """Return an HTML description of the class contents"""
+
+      methods = inspect.getmembers (object, inspect.isroutine)
+      output  = "<h2>Methods in <strong>" + name + "</strong></h2>\n<div id='classMethods'><ul>\n"
+      for m in methods:
+         if self.is_visible_entity (m[0]):
+            output += " <li><a href='#" + self.anchor_name (m[0]) + "'>" + m[0] + "</a></li>\n";
+      return output + "</ul></div>\n"
+
+   def global_routines (self, name, routines):
+      """Return an HTML list of the global routines"""
+      output = "<h2>Global routines in <strong>" + name + "</strong></h2>\n<div id='classMethods'><ul>\n"
+      for r in routines:
+          if self.is_visible_entity (r[0]):
+              output += "  <li><a href='#" + self.anchor_name (r[0]) + "'>" + r[0]
+      return output + "</ul></div>\n"
+
+   def setup_links (self, module_name, text):
+      """Replace all links like module_name.<...> by hyperlinks"""
+
+      pattern = re.compile (module_name + r'\.(\w+)(\.(\w+))?')
+      here = 0
+      result = []
+      linked_module = "<a href='" + self.filename_for_module (module_name) + "'>" + module_name + "</a>."
+
+      while True:
+         match = pattern.search (text, here)
+         if not match: break
+         start, end = match.span ()
+         result.append (text[here:start])
+
+         name1, foo, name2 = match.groups()
+         if foo:
+            result.append (linked_module + "<a href='" + self.filename_for_class (name1) + "'>" + name1 \
+              + "</a>.<a href='" + self.filename_for_class (name1) + "#" + self.anchor_name (name2) + "'>" + name2 + "</a>")
+         else:
+            result.append (linked_module + "<a href='" + self.filename_for_class (name1) + "'>" + name1 + "</a>")
+
+         here = end
+      result.append (text[here:])
+      return ''.join (result)
+                           
+   def get_documentation (self, object):
+      """Return the documentation for the object. This can easily be overriden if
+         the documentation is dynamic for instance (a result of a method's call"""
+      return inspect.getdoc (object) or inspect.getcomments (object)
+
+   def get_formated_documentation (self, module_name, object):
+      """Same as get_documentation, except new lines that should be protected
+         are also protected in the output of get_formated_documentation"""
+      doc = self.get_documentation (object) or ""
+      doc = "&amp;".join (doc.split ('&'))
+      doc = "&lt; ".join (doc.split ('< '))
+      doc = "&lt;,".join (doc.split ('<, '))
+      doc = "&gt; ".join (doc.split ('> '))
+      doc = "&gt;,".join (doc.split ('>,'))
+      doc = "<p>\n".join (doc.split ("\n\n"))
+
+      return self.setup_links (module_name, doc)
+
+   def full_name (self, object):
+      """Return the fully qualified name of object"""
+      module = inspect.getmodule (object)
+      if module == None:
+         module = ""
+      else:
+         module = module.__name__ + "."
+
+      try:
+         c = object.im_class.__name__ + "."
+      except:
+         c = ""
+
+      return module + c + object.__name__
+
+   def documentation (self, module_name, object, document_members = 1):
+      """Return the HTML documentation for the object"""
+
+      doc = self.get_formated_documentation (module_name, object)
+      output = "<div class='documentation'><h1>" + object.__name__ + \
+          "</h1>\n<table class='description'>" + doc
+
+      if inspect.isclass (object):
+        mro     = inspect.getmro (object)
+        if len (mro) > 1:
+           output += "<tr><td colspan='3' class='title'>Inheritance tree</td></tr>" \
+              + "<tr><td colspan='3'><ul>\n"
+           for base in mro:
+               output += "  <li>" + self.full_name (base) + "</li>\n"
+           output += "</ul></td></tr>"
+
+      output += "</table>\n"
+
+      if document_members == 1:
+         attrs   = inspect.classify_class_attrs (object)
+         methods = inspect.getmembers (object, inspect.isroutine)
+         for m in methods:
+           for a in attrs:
+             if a[0] == m[0]:
+                output += "<a name='" + self.anchor_name (m[0]) + "'/>\n" + \
+                   "<table class='description'><caption>" + m[0]
+
+                if a[2] != object:
+                   output += " (inherited " + a[1] + " from " \
+                     + self.full_name (a[2]) \
+                     + ")"
+                else:
+                   if a[1] == 'static method':
+                      output += " (static method)"
+                   elif a[1] == 'class method':
+                      output += " (class method)"
+
+                output += "</caption>" \
+                   + self.get_formated_documentation (module_name, m[1]) \
+                   + "</table>\n"
+
+      return output + "</div>\n"
+
+   def is_visible_entity (self, name):
+      """Whether the entity is visible and should be documented"""
+      if name in ['__builtins__', '__doc__', '__file__', '__path__',
+                  '__module__', '__name__']: return 0
+      # Private names are hidden, but special names are displayed.
+      if name.startswith('__') and name.endswith('__'): return 1
+      return not name.startswith('_')
+
+   def html_header (self, module_name):
+      """Return the HTML header to use for generated files"""
+
+      return "<html><head><title>Module " + module_name + \
+           "</title><style type='text/css'>\n" + \
+           self.style_sheet () + "\n</style></head><body>\n"
+
+   def style_sheet (self):
+      """Return the style sheet to use for the generated files"""
+
+      return """
+body              { background-color: white;
+                    width: 1000px;
+                    font-family: tahoma, helvetica; }
+div.menu          { width: 200px;
+                    top:   8px;
+                    float: left;
+                    padding: 0px;
+                    margin: 0px;
+                    margin-left: 3px; }
+div.menu h2       { background: #369;
+                    color: white;
+                    font-size: small;
+                    margin: 1em 0 0 0;
+                    padding: 2px; }
+div.menu div      { border: 1px solid #369;
+                    border-top-width: 0px;
+                    padding: 5px;
+                    background: #EEE;
+                    font-size: small;
+                    margin-bottom: 15px; }
+div.menu ul       { color: #369;
+                    margin: 3px 0px 0px 20px;
+                    padding: 0px }
+div.menu li       { margin-top: 3px; }
+div.documentation { position: relative;
+                    top: 8px;
+                    margin-left: 210px;
+                    height: 100% }
+div.documentation h1 { font-size: x-large;
+                       text-align: center }
+div.documentation h2 { font-size: large;
+                       font-weight: bold;
+                       background-color: #369;
+                       color: white;
+                       text-align: center; }
+table.description            { border: 1px solid black;
+                               width: 100% }
+table.description caption     { background-color: #369;
+                                width: 100%;
+                                font-size: large;
+                                font-weight: bold;
+                                margin-top: 20px;
+                                color: white;
+                                white-space: pre;
+                                text-align: center; }
+table.description .title   { background-color: #dddddd; }
+table.description td.header   { font-style: italic; }
+table.description td.example { font-family: "Courier New", "Courier";
+                               background-color: #cccccc; }
+table.description .name    { font-family: "Courier New", "Courier";
+                             font-weight: bold; }
+table.description .return  { font-style: italic; }
+table.description .default { font-family:   "Courier New", "Courier"; }
+table.description td.seeAlso { font-family: "Courier New", "Courier"; }
+table.description .obsolescent { color: red }
+.example                       { white-space: pre }
+"""
+
+   def html_footer (self):
+      """Return the HTML footer to use for generated files"""
+
+      return """</body></html>"""
+
+   def filename_for_class (self, class_name):
+      """Return the file name that contains the documentation for class_name"""
+
+      return self.work_dir + "/" + class_name.lower() + ".html"
+
+   def filename_for_global (self, module_name):
+      """Return the file name to use to document the global routines"""
+
+      return self.work_dir + "/" + module_name.lower() + "_Globals.html"
+
+   def filename_for_module (self, module_name):
+      """Return the file name to use for the module description"""
+      return self.work_dir + "/" + module_name.lower() + "_Module.html";
+
+   def anchor_name (self, method_name):
+      """Return the name of the anchor used for that method"""
+
+      return method_name.lower()
+
+   def docmodule (self, module):
+      classes  = inspect.getmembers (module, inspect.isclass)
+      routines = inspect.getmembers (module, inspect.isroutine)
+
+      try: os.mkdir (self.work_dir)
+      except:pass
+
+      ## Generate the module documentation
+      f = file (self.filename_for_module (module.__name__), "w")
+      f.write (self.html_header(module.__name__))
+      f.write ("<div class='menu'>\n")
+      f.write (self.classesindex (module.__name__, classes))
+      f.write ("</div>\n")
+      f.write (self.documentation (module.__name__, module, 0))
+      f.write (self.html_footer())
+      f.close()
+
+      ## Generate the documentation for each global routine
+      f = file (self.filename_for_global (module.__name__), "w")
+      f.write (self.html_header (module.__name__))
+      f.write ("<div class='menu'>\n")
+      f.write (self.classesindex (module.__name__, classes))
+      f.write (self.global_routines (module.__name__, routines))
+      f.write ("</div><div class='documentation'>\n")
+      for r in routines:
+         if self.is_visible_entity (r[0]):
+            f.write ("<a name='" + self.anchor_name (r[0]) + "'/>\n" + \
+                "<h2 class='routine'>" + r[0] + "</h2>\n" + \
+               self.get_formated_documentation (module.__name__, r[1]))
+      f.write ("</div>")
+      f.write (self.html_footer ())
+      f.close ()
+
+      ## Generate the documentation for each class
+      for c in classes:
+         f = file (self.filename_for_class (c[0]), "w")
+         f.write (self.html_header(module.__name__))
+         f.write ("<div class='menu'>\n")
+         f.write (self.classesindex (module.__name__, classes))
+         f.write (self.classcontents (c[0], c[1]))
+         f.write ("</div>\n")
+         f.write (self.documentation (module.__name__, c[1]))
+         f.write (self.html_footer())
+         f.close ()
+
+      return self.filename_for_module (module.__name__)
+
+class GPSDocGenerator (DocGenerator):
+    """Class specifically setup to dynamically create the documentation for GPS's exported objects"""
+
+    def __init__ (self, work_dir):
+        self.work_dir = work_dir 
+        self.wrapper  = Help_Wrapper ()
+
+    def get_documentation (self, object):
+        Help_Wrapper.set_current_class (object)
+        return self.wrapper.getdoc (object)
 
 #####################################################################
 ##  No user-callable function below this point.
 ##  The following functions and classes are called implicitely whenever
-##  you do a help() command
+##  you do a help() command, and override the behavior of pydoc.py
 #####################################################################
 
 def subst_spaces(matchobj):
@@ -139,9 +407,9 @@ class Help_Wrapper:
             ## name of the entity -- if it was exported from GPS
             doc=object.__doc__
             if doc:
-               static_doc = self.doc.getdoc (doc)
+               static_doc = self.doc.getdoc (doc, 1)
                if static_doc:
-                  return static_doc
+                  return "<table class='description'>" + static_doc + "</table>"
                return doc
          except:
             pass
@@ -166,7 +434,7 @@ class Help_Wrapper:
          else:
             name = module + Help_Wrapper.current_class + object.__name__
 
-         return self.doc.getdoc (name);
+         return "<table class='description'>" + self.doc.getdoc (name, 1) + "</table>"
       except:
          return __oldgetdoc__(object)
 
@@ -194,4 +462,48 @@ pydoc.help          = help
 pydoc.writedoc      = writedoc
 pydoc.text          = XMLTextDoc()
 pydoc.html          = XMLHtmlDoc()
+
+
+####################################################################
+## User accessible methods
+####################################################################
+
+docgen = GPSDocGenerator (GPS.get_home_dir() + "/generated_doc")
+
+def generate_doc (entity):
+  """Generate the documentation for a python entity dynamically.
+     Return the name of the HTML file that was created.
+     The documentation is generated in the object directory of the root
+     project"""
+  GPS.set_busy()
+
+  ## Generate the documentation for our own module
+  name = docgen.docmodule (entity)
+
+  ## These comment lines are for use through pydoc
+  #home_dir = GPS.get_home_dir()
+  #name = home_dir + os.sep + entity.__name__ + ".html"
+  #if not os.path.isfile (name) or os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
+  #   cwd = os.getcwd()
+  #   os.chdir (home_dir)
+  #   pydoc.writedoc (entity)
+  #   os.chdir (cwd)
+
+  GPS.unset_busy()
+  return name
+
+def browse_doc (entity):
+  """Open a browser for the documentation relative to the specified entity"""
+  ## Use a hook, so that users can substitute their internal browser if they wish
+  GPS.Hook ("html_action_hook").run (GPS.File (generate_doc (entity)), 1, "")
+
+## Create a default menu for the python documentation
+GPS.parse_xml("""
+  <documentation_file>
+       <shell lang="python">python_doc.browse_doc(GPS)</shell>
+       <descr>GPS'extensions for Python</descr>
+       <menu before="About">/Help/Python extensions</menu>
+       <category>Scripts</category>
+    </documentation_file>""")
+
 
