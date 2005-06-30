@@ -1368,13 +1368,7 @@ procedure GPS.Main is
 
       --  Create a hook for when GPS is started
 
-      Register_Hook
-        (GPS_Main.Kernel, GPS_Started_Hook,
-         -("Hook called when GPS has started, and its main window has been"
-           & " fully displayed on the screen. It isn't recommended to do any"
-           & " direct graphical action before this hook has been called, so it"
-           & " is recommended that in most cases your start scripts connect to"
-           & " this hook"));
+      Register_Hook (GPS_Main.Kernel, GPS_Started_Hook);
 
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the
