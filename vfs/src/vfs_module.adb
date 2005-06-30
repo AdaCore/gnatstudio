@@ -256,7 +256,7 @@ package body VFS_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
+      --  Command : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
 
@@ -266,15 +266,15 @@ package body VFS_Module is
          Module_Name => VFS_Module_Name,
          Priority    => Default_Priority);
 
-      Command := new Delete_Command;
-      Register_Contextual_Menu
-        (Kernel, "Delete file",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Explorer_File_Node"));
-      Register_Contextual_Menu
-        (Kernel, "Delete directory recursively",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Explorer_Directory_Node"));
+      --  Command := new Delete_Command;
+      --  Register_Contextual_Menu
+      --    (Kernel, "Delete file",
+      --     Action => Command,
+      --     Filter => Lookup_Filter (Kernel, "Explorer_File_Node"));
+      --  Register_Contextual_Menu
+      --    (Kernel, "Delete directory recursively",
+      --     Action => Command,
+      --     Filter => Lookup_Filter (Kernel, "Explorer_Directory_Node"));
 
       Register_Command
         (Kernel, "pwd",
