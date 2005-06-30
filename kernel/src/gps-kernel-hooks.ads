@@ -185,7 +185,6 @@ package GPS.Kernel.Hooks is
    procedure Create_Hook_Type
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name        : String;
-      Description      : String;
       Profile          : Hook_Type;
       Run_Hook_Handler : GPS.Kernel.Scripts.Module_Command_Function);
    --  Create a new type of hooks with a specific kind of parameters. This
@@ -202,7 +201,6 @@ package GPS.Kernel.Hooks is
    procedure Register_Hook
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
-      Description : String;
       Type_Name   : String := "");
    --  Register a new hook in the kernel.
    --  Type_Name described the type of parameters for that hook. This should be

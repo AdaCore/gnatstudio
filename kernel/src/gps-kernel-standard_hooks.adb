@@ -29,7 +29,6 @@ with System;                     use System;
 with Gdk.Pixbuf;                 use Gdk.Pixbuf;
 with Commands;                   use Commands;
 with Traces;                     use Traces;
-with GPS.Intl;                 use GPS.Intl;
 
 package body GPS.Kernel.Standard_Hooks is
 
@@ -1152,107 +1151,56 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Create_Hook_Type
         (Kernel, Open_File_Hook_Type,
-        -("Common type for all hooks related to opening files." & ASCII.LF
-          & "Arguments are the following: (hook_name, file, line, column,"
-          & " column_end,"
-          & " enable_navigation, new_file, force_reload, [focus])" & ASCII.LF
-          & "Do not confuse with " & File_Edited_Hook & " which signals that"
-          & " a file has just been opened."),
          Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Open_File_Action_Hook,
-         -("Hook called when a file needs to be opened or closed"),
-         Type_Name => Open_File_Hook_Type);
+      Register_Hook (Kernel, Open_File_Action_Hook,
+                     Type_Name => Open_File_Hook_Type);
 
       Create_Hook_Type
         (Kernel, String_Hook_Type,
-         -("Common type for all hooks that take a single string as an"
-           & " argument"),
          Hook_With_Args, String_Hook_Handler'Access);
 
       Create_Hook_Type
         (Kernel, Project_Hook_Type,
-         -("Common type for all hooks that take a single project as an"
-           & " argument"),
          Hook_With_Args, Project_Hook_Handler'Access);
 
       Create_Hook_Type
         (Kernel, Before_Exit_Hook_Type,
-         -("Hook type called before GPS exits." & ASCII.LF
-           & "Argument is the following: (hook_name)"),
          Hook_With_Args_And_Return, Before_Exit_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Before_Exit_Action_Hook,
-         -("Hook called when GPS is about to exit"),
-         Type_Name => Before_Exit_Hook_Type);
+      Register_Hook (Kernel, Before_Exit_Action_Hook,
+                     Type_Name => Before_Exit_Hook_Type);
 
       Create_Hook_Type
         (Kernel, File_Line_Hook_Type,
-         -("Common type for all hooks displaying information on the side of"
-           & " editors." & ASCII.LF
-           & "Arguments are the following: (hook_name, identifier, file, info,"
-           & " stick_to_data, every_line, normalize)"),
-          Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, File_Line_Action_Hook,
-         -("Hook called to request the display of new information on the side"
-           & " of the editors"),
-         Type_Name => File_Line_Hook_Type);
+         Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
+      Register_Hook (Kernel, File_Line_Action_Hook,
+                     Type_Name => File_Line_Hook_Type);
 
       Create_Hook_Type
         (Kernel, Location_Hook_Type,
-         -("Common type for all hooks displaying information on the side of"
-           & " location window." & ASCII.LF
-           & "Arguments are the following: (hook_name, identifier, category,"
-           & " file, line,"
-           & " column, message)"),
          Hook_With_Args_And_Return, Location_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Location_Action_Hook,
-         -("Hook called to request the display of new information on the side"
-           & " of the location window"),
-         Type_Name => Location_Hook_Type);
+      Register_Hook (Kernel, Location_Action_Hook,
+                     Type_Name => Location_Hook_Type);
 
       Create_Hook_Type
         (Kernel, Html_Hook_Type,
-         -("Common type for all hooks displaying HTML files." & ASCII.LF
-           & "Arguments are the following: (hook_name, file,"
-           & " enable_navigation, anchor)"),
          Hook_With_Args_And_Return, Html_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Html_Action_Hook,
-         -("Hook called to request the display of HTML files"),
-         Type_Name => Html_Hook_Type);
+      Register_Hook (Kernel, Html_Action_Hook,
+                     Type_Name => Html_Hook_Type);
 
       Create_Hook_Type
         (Kernel, Diff_Hook_Type,
-         -("Common type for all hooks displaying comparison window." & ASCII.LF
-           & "Arguments are the following: (hook_name,"
-           & " orig_file, ref_file, diff_file)"),
          Hook_With_Args_And_Return, Diff_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Diff_Action_Hook,
-         -("Hook called to request the display of the comparison window"),
-         Type_Name => Diff_Hook_Type);
+      Register_Hook (Kernel, Diff_Action_Hook,
+                     Type_Name => Diff_Hook_Type);
 
       Create_Hook_Type
         (Kernel, File_Hook_Type,
-         -("Common type for all hooks that take a single file as parameter"
-           & ASCII.LF
-           & "Arguments are the following: (hook_name, file)"),
          Hook_With_Args, File_Run_Hook_Handler'Access);
       Create_Hook_Type
         (Kernel, Context_Hook_Type,
-         -("Common type for all hooks that take a context as parameter"
-           & ASCII.LF
-           & "Arguments are the following: (hook_name, context)"),
          Hook_With_Args, Context_Run_Hook_Handler'Access);
-
       Create_Hook_Type
         (Kernel, File_Location_Hook_Type,
-         -("Common type for all hooks that take a location in a source file as"
-           & " parameter." & ASCII.LF
-           & "Arguments are the following: (hook_name, file, line, column)"),
          Hook_With_Args, Location_Changed_Hook_Handler'Access);
    end Register_Action_Hooks;
 

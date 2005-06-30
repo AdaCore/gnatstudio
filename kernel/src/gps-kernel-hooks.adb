@@ -44,7 +44,6 @@ package body GPS.Kernel.Hooks is
      (1 => Name_Cst'Access);
    Add_Hook_Args : constant Cst_Argument_List :=
      (1 => Function_Cst'Access);
-   Name_Args     : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Register_Hook_Args : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Descr_Cst'Access, 3 => Type_Cst'Access);
 
@@ -59,7 +58,6 @@ package body GPS.Kernel.Hooks is
    type Hook_Description is new Hook_Description_Base with record
       Name            : String_Access;
       Funcs           : Hooks_List.List;
-      Description     : GNAT.OS_Lib.String_Access;
       Command_Handler : Module_Command_Function;
       Profile         : Hook_Type;
    end record;
@@ -173,8 +171,6 @@ package body GPS.Kernel.Hooks is
    function Get_Or_Create_Hook
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name            : String;
-      Description     : String := "";
-      Type_Name       : String := "";
       Command_Handler : Module_Command_Function := null;
       Profile         : Hook_Type := Unknown;
       Is_Hook_Type    : Boolean := False)
@@ -408,46 +404,18 @@ package body GPS.Kernel.Hooks is
    function Get_Or_Create_Hook
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name            : String;
-      Description     : String := "";
-      Type_Name       : String := "";
       Command_Handler : Module_Command_Function := null;
       Profile         : Hook_Type := Unknown;
       Is_Hook_Type    : Boolean := False)
       return Hook_Description_Access
    is
-      function Get_Description return String_Access;
-      --  Return the description to use for this hook
-
-      function Get_Description return String_Access is
-      begin
-         if not Is_Hook_Type then
-            if Type_Name = "" then
-               return new String'
-                 (Description & ASCII.LF
-                  & (-"This hook doesn't take any argument"));
-            else
-               return new String'
-                 (Description & ASCII.LF
-                  & (-"This hook is of type """) & Type_Name
-                  & (-""" -- see Hook.describe_type"));
-            end if;
-         elsif Description /= "" then
-            return new String'(Description);
-         end if;
-
-         return null;
-      end Get_Description;
-
       Info : Hook_Description_Access :=
         Hook_Description_Access (Get (Kernel.Hooks, Name));
-      Descr : String_Access;
    begin
       if Info = null then
-         Descr := Get_Description;
          Info := new Hook_Description'
            (Funcs           => Null_List,
             Name            => new String'(Name),
-            Description     => Descr,
             Profile         => Profile,
             Command_Handler => Command_Handler);
 
@@ -472,15 +440,6 @@ package body GPS.Kernel.Hooks is
 
       elsif Info.Profile = Unknown then
          Info.Profile := Profile;
-
-         if Description /= "" then
-            Free (Info.Description);
-            Info.Description := Get_Description;
-         end if;
-
-      elsif Description /= "" then
-         Free (Info.Description);
-         Info.Description := Get_Description;
       end if;
 
       return Info;
@@ -519,7 +478,6 @@ package body GPS.Kernel.Hooks is
    procedure Create_Hook_Type
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Type_Name        : String;
-      Description      : String;
       Profile          : Hook_Type;
       Run_Hook_Handler : GPS.Kernel.Scripts.Module_Command_Function)
    is
@@ -529,7 +487,6 @@ package body GPS.Kernel.Hooks is
       Info := Get_Or_Create_Hook
         (Kernel,
          Name            => Type_Name,
-         Description     => Description,
          Command_Handler => Run_Hook_Handler,
          Profile         => Profile,
          Is_Hook_Type    => True);
@@ -585,11 +542,10 @@ package body GPS.Kernel.Hooks is
    procedure Register_Hook
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name        : String;
-      Description : String;
       Type_Name   : String := "")
    is
       Info : constant Hook_Description_Access := Get_Or_Create_Hook
-        (Kernel, Name, Description, Type_Name,
+        (Kernel, Name,
          Get_Command_Handler (Kernel, Type_Name),
          Profile => Get_Type_Profile (Kernel, Type_Name));
    begin
@@ -1083,102 +1039,35 @@ package body GPS.Kernel.Hooks is
    begin
       Create_Hook_Type
         (Kernel, "",
-         "Common type for all hooks with no parameters",
          Hook_Without_Args,
          Default_Command_Handler'Access);
       Create_Hook_Type
         (Kernel, "general",
-         "Common type for all hooks created from a scripting language",
          Hook_With_Shell_Args,
          General_Command_Handler'Access);
-      Register_Hook
-        (Kernel, Preferences_Changed_Hook,
-         -("Hook called when the value of some of the preferences"
-           & " changes. Modules should refresh themselves dynamically."));
-      Register_Hook
-        (Kernel, Contextual_Menu_Open_Hook,
-         -("Hook called just before a contextual menu is created. It is called"
-           & " before any of the filters is evaluated, and can be used to"
-           & " precomputed data shared by multiple filters to speed up the"
-           & " computation. Use GPS.contextual_context() to get the context of"
-           & " the contextual menu and store precomputed data in it."
-           & ASCII.LF
-           & "See also the " & Contextual_Menu_Close_Hook));
-      Register_Hook
-        (Kernel, Contextual_Menu_Close_Hook,
-         -("Hook called just before a contextual menu is destroyed. At this"
-           & " time, the value returned by GPS.contextual_context() is still"
-           & " the one used in " & Contextual_Menu_Open_Hook
-           & ", and therefore you can still"
-           & " reference the data you stored in the context. This hook is"
-           & " called even if no action was selected by the user. However,"
-           & " it is always called before the action is executed, since the"
-           & " menu itself is closed first"));
-      Register_Hook
-        (Kernel, Search_Reset_Hook,
-         -("Hook called when the current search pattern is reset or changed"
-           & " by the user, or when the current search is no longer possible"
-           & " because the setup of GPS has changed"));
-      Register_Hook
-        (Kernel, Search_Functions_Changed_Hook,
-         -"Hook called when the list of registered search functions changes");
-      Register_Hook
-        (Kernel, Search_Regexps_Changed_Hook,
-         -("Hook called when a new regexp has been added to the list of"
-           & " predefined search patterns"));
-      Register_Hook
-        (Kernel, Variable_Changed_Hook,
-         -("Hook called when one of the scenario variables has been renamed,"
-           & " removed or when one of its possible values has changed"));
-      Register_Hook
-        (Kernel, Project_View_Changed_Hook,
-         -("Hook called when the project view has been changed, for instance"
-           & " because one of the environment variables has changed. This"
-           & " means that the list of directories, files or switches might"
-           & " now be different"));
-      Register_Hook
-        (Kernel, Project_Changed_Hook,
-         -("Hook called when the project has changed. A new project has been"
-           & " loaded, and all previous settings and caches are now"
-           & " obsolete."));
-      Register_Hook
-        (Kernel, Project_Saved_Hook,
-         -("Hook called when a project is saved to disk. It is called for each"
-           & " project in the hierarchy"),
-         Type_Name => Project_Hook_Type);
-      Register_Hook
-        (Kernel, Context_Changed_Hook,
-         -("Hook called when the current context changes in GPS, ie a new file"
-           & " is selected, or a new entity, or a new window,..."),
-         Type_Name => "context_hooks");
-      Register_Hook
-        (Kernel, File_Edited_Hook,
-         -("Hook called when a file editor has been opened for a file that"
-           & " wasn't already opened before. Do not confuse with "
-           & Open_File_Action_Hook & " which is used to request the"
-           & " opening of a file"),
-         Type_Name => "file_hooks");
-      Register_Hook
-        (Kernel, File_Closed_Hook,
-         -("Hook called when the last editor for a file has been closed"),
-         Type_Name => "file_hooks");
-      Register_Hook
-        (Kernel, File_Changed_On_Disk_Hook,
-         -("Hook called when some external action has changed the contents"
-           & " of a file on the disk, such as a VCS operation. The parameter"
-           & " might be a directory instead of a file, indicating that any"
-           & " file in that directory might have changed"),
-         Type_Name => "file_hooks");
-      Register_Hook
-        (Kernel, Compilation_Finished_Hook,
-         -("Hook called when a compile operation has finished. The parameter"
-           & " indicates what file has just been compiled if GPS was compiling"
-           & " a single file"),
-         Type_Name => "file_hooks");
-      Register_Hook
-        (Kernel, Source_Lines_Revealed_Hook,
-         -"Hook called when a range of line becomes visible on the screen",
-         Type_Name => "context_hooks");
+      Register_Hook (Kernel, Preferences_Changed_Hook);
+      Register_Hook (Kernel, Contextual_Menu_Open_Hook);
+      Register_Hook (Kernel, Contextual_Menu_Close_Hook);
+      Register_Hook (Kernel, Search_Reset_Hook);
+      Register_Hook (Kernel, Search_Functions_Changed_Hook);
+      Register_Hook (Kernel, Search_Regexps_Changed_Hook);
+      Register_Hook (Kernel, Variable_Changed_Hook);
+      Register_Hook (Kernel, Project_View_Changed_Hook);
+      Register_Hook (Kernel, Project_Changed_Hook);
+      Register_Hook (Kernel, Project_Saved_Hook,
+                     Type_Name => Project_Hook_Type);
+      Register_Hook (Kernel, Context_Changed_Hook,
+                     Type_Name => "context_hooks");
+      Register_Hook (Kernel, File_Edited_Hook,
+                     Type_Name => "file_hooks");
+      Register_Hook (Kernel, File_Closed_Hook,
+                     Type_Name => "file_hooks");
+      Register_Hook (Kernel, File_Changed_On_Disk_Hook,
+                     Type_Name => "file_hooks");
+      Register_Hook (Kernel, Compilation_Finished_Hook,
+                     Type_Name => "file_hooks");
+      Register_Hook (Kernel, Source_Lines_Revealed_Hook,
+                     Type_Name => "context_hooks");
 
       Register_Command
         (Kernel, Constructor_Method,
@@ -1199,37 +1088,26 @@ package body GPS.Kernel.Hooks is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "register",
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Class        => Hook_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class         => Hook_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "list",
-         Class        => Hook_Class,
+         Class         => Hook_Class,
          Static_Method => True,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "describe",
-         Class        => Hook_Class,
-         Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "describe_functions",
          Class        => Hook_Class,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "list_types",
-         Class        => Hook_Class,
+         Class         => Hook_Class,
          Static_Method => True,
-         Handler     => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "describe_type",
-         Class        => Hook_Class,
-         Static_Method => True,
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Default_Command_Handler'Access);
+         Handler       => Default_Command_Handler'Access);
    end Register_Standard_Hooks;
 
    -------------
@@ -1421,10 +1299,10 @@ package body GPS.Kernel.Hooks is
          Name_Parameters (Data, Register_Hook_Args);
          declare
             Name  : constant String := Nth_Arg (Data, 1);
-            Descr : constant String := Nth_Arg (Data, 2);
-            Typ   : constant String := Nth_Arg (Data, 3, "");
+--              Descr : constant String := Nth_Arg (Data, 2);
+            Typ   : constant String := Nth_Arg (Data, 2, "");
          begin
-            Register_Hook (Get_Kernel (Data), Name, Descr, Typ);
+            Register_Hook (Get_Kernel (Data), Name, Typ);
          end;
 
       elsif Command = "list" then
@@ -1453,14 +1331,6 @@ package body GPS.Kernel.Hooks is
             end loop;
          end;
 
-      elsif Command = "describe" then
-         Info := Get_Data (Data, 1);
-         if Info.Description /= null then
-            Set_Return_Value (Data, Info.Description.all);
-         else
-            Set_Return_Value (Data, "");
-         end if;
-
       elsif Command = "describe_functions" then
          Info := Get_Data (Data, 1);
          declare
@@ -1476,25 +1346,6 @@ package body GPS.Kernel.Hooks is
                  (Data, Get_Name (Hooks_List.Data (Iter).all));
                Iter := Hooks_List.Next (Iter);
             end loop;
-         end;
-
-      elsif Command = "describe_type" then
-         Name_Parameters (Data, Name_Args);
-         declare
-            Name : constant String := Nth_Arg (Data, 1);
-            Info : constant Hook_Description_Access :=
-              Hook_Description_Access
-                (Get (Get_Kernel (Data).Hooks, Type_Prefix & Name));
-         begin
-            if Info = null then
-               Set_Error_Msg (Data, "No such hook type: " & Name);
-            else
-               if Info.Description /= null then
-                  Set_Return_Value (Data, Info.Description.all);
-               else
-                  Set_Return_Value (Data, "");
-               end if;
-            end if;
          end;
 
       elsif Command = "list_types" then
@@ -1608,7 +1459,6 @@ package body GPS.Kernel.Hooks is
    begin
       Free (Hook.Name);
       Free (Hook.Funcs);
-      Free (Hook.Description);
    end Free;
 
 end GPS.Kernel.Hooks;
