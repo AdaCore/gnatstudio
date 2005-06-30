@@ -54,10 +54,223 @@ the class GPS.EditorBuffer, you can associate two fields "field1" and "field2" t
 In a lot of cases, you will need to connect to specific hooks exported by GPS to be aware of events happening in GPS (loading of a file, closing a file,...). These hooks and their use are described in the GPS manual. </description>
   </shell_doc>
 
+  <!--#################################################################
+      ### Hooks
+      #################################################################-->
+
+  <shell_doc name="@hooks_list@">
+     <description>GPS defines a number of hooks which are called when specific events occur in GPS. Using the hooks is fully described in the GPS user manual.</description>
+     <example lang="python">
+Here is a small example, where the function on_gps_started is called
+when the GPS window is fully visible to the user:
+     import GPS
+     def on_gps_started (hook):
+        pass
+     GPS.Hook ("gps_started").add (on_gps_started)
+</example>
+     <description>The list of parameters for the hooks is described for each hook below. The first parameter is always the name of the hook, so that the same function can be used for multiple hooks if necessary</description>
+     <description>There are two categories of hooks: the standard hooks and the action hooks. The former return nothing, the latter return a boolean indicating whether your callback was able to perform the requested action. They are used to override some of GPS's internal behavior</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ preferences_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the value of some of the preferences changes. Modules should refresh themselves dynamically</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ contextual_menu_open">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called just before a contextual menu is created. It is called before any of the filters is evaluated, and can be used to precomputed data shared by multiple filters to speed up the computation. Use GPS.contextual_context() to get the context of the contextual menu and store precomputed data in it.</description>
+     <see_also name="contextual_menu_close hook" />
+  </shell_doc>
+
+  <shell_doc name="@hook@ contextual_menu_close">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called just before a contextual menu is destroyed. At this time, the value returned by GPS.contextual_context() is still the one used in the hook contextual_menu_open, and therefore you can still reference the data you stored in the context. This hook is called even if no action was selected by the user. However, it is always called before the action is executed, since the menu itself is closed first.</description>
+     <see_also name="contextual_menu_open hook" />
+  </shell_doc>
+
+  <shell_doc name="@hook@ search_reset">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the current search pattern is reset or changed by the user, or when the current search is no longer possible because the setup of GPS has changed.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ search_functions_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the list of registered search functions changes.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ search_regexps_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when a new regexp has been added to the list of predefined search patterns</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ variable_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when one of the scenario variables has been renamed, removed or when one of its possible values has changed.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ project_view_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the project view has been changed, for instance because one of the environment variables has changed. This means that the list of directories, files or switches might now be different.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ project_changed">
+     <param namae="hook">A string, the name of the hook</param>
+     <description>Hook called when the project has changed. A new project has been loaded, and all previous settings and caches are now obsolete.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ project_saved">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="project">An instance of GPS.Project</param>
+     <description>Hook called when a project is saved to disk. It is called for each project in the hierarchy</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ context_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="context">An instance of GPS.Context</param>
+     <description>Hook called when the current context changes in GPS, ie a new file is selected, or a new entity, or a new window,...</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ source_lines_revealed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="context">An instance of GPS.Context</param>
+     <description>Hook called when a range of line becomes visible on the screen</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ file_edited">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called when a file editor has been opened for a file that wasn't already opened before. Do not confuse with the hook open_file_action, which is used to request the opening of a file.</description>
+     <see_also name="open_file_action hook" />
+  </shell_doc>
+
+  <shell_doc name="@hook@ file_closed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called when the last editor for a file has been closed</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ file_saved">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called whenever a file has been saved</description>
+  </shell_doc>
+  
+  <shell_doc name="@hook@ file_changed_on_disk">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called when some external action has changed the contents of a file on the disk, such as a VCS operation. The parameter might be a directory instead of a file, indicating that any file in that directory might have changed</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ compilation_finished">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called when a compile operation has finished. The parameter indicates what file has just been compiled if GPS was compiling a single file</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ open_file_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="line">An integer</param>
+     <param name="column">An integer</param>
+     <param name="column_end">An integer</param>
+     <param name="enable_navigation">A boolean</param>
+     <param name="new_file">A boolean</param>
+     <param name="force_reload">A boolean</param>
+     <param name="focus" default="False">A boolean</param>
+     <return>A boolean</return>
+     <description>This hook is called when GPS needs to open a file. You can connect to this hook if you want to have your own editor open, instead of the internal editor of GPS. Your function should return 1 if it did open the file, 0 if the next function connected to this hook should be called.
+The file should be opened directly at line and column. If column_end is not 0, the given range should be highlighted if possible. The enable_navigation parameter is set to True if the new location should be added to the history list, so that the user can navigate forward and backward across previous locations. new_file is set to True if a new file should be created when file is not found. If set to False, nothing should be done. force_reload is set to true if the file should be reloaded from the disk, discarding any change the user might have done. focus is set to true if the open editor should be given the keyboard focus</description>
+     <see_also name="file_edited hook" />
+  </shell_doc>
+
+  <shell_doc name="@hook@ before_exit_action_hook" >
+     <param name="hook">A string, the name of the hook</param>
+     <return>A boolean</return>
+     <description>This hook is called when GPS is about to exit. If it returns 0, this exit will be prevented (it is recommended that you display a dialog to explain why, in such a case)</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ file_line_action_hook" >
+     <param name="hook">A string, the name of the hook</param>
+     <param name="identifier">A string</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="every_line">A boolean</param>
+     <param name="normalize">A boolean</param>
+     <return>A boolean</return>
+     <description>Hook called to request the display of new information on the side of the editors. It isn't expected that you connect to this hook, but you might want to run it yourself to ask GPS to display some information on the side of its editors</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ location_action_hook" >
+     <param name="hook">A string, the name of the hook</param>
+     <param name="identifier">A string</param>
+     <param name="category">A string</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="line">An integer</param>
+     <param name="column">An integer</param>
+     <param name="message">A string</param>
+     <return>A boolean</return>
+     <description>Hook called to request the display of new information on the side of the location window</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ html_action_hook" >
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="enable_navigation">A boolean</param>
+     <param name="anchor">A string</param>
+     <return>A boolean</return>
+     <description>Hook called to request the display of HTML files. It is generally useful if you want to open an HTML file, and let GPS handle it in the usual manner</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ diff_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="orig_file">An instance of GPS.File</param>
+     <param name="ref_file">An instance of GPS.File</param>
+     <param name="diff_file">An instance of GPS.File</param>
+     <return>A boolean</return>
+     <description>Hook called to request the display of the comparison window</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ location_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <param name="line">An integer</param>
+     <param name="column">An integer</param>
+     <description>Hook called when the location in the current editor has changed, and the cursor has stopped moving.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ word_added">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="file">An instance of GPS.File</param>
+     <description>Hook called when a word has been added in the editor</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ gps_started">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when GPS is fully loaded, and its window is visible to the user.
+It isn't recommended to do any direct graphical action before this hook has been called, so it is recommended that in most cases your start scripts connect to this hook.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ debugger_started">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when a new debugger has been started</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ marker_added_to_history">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when a new marker is added to the history list of previous locations, where the user can navigate back and forward</description>
+  </shell_doc>
 
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->
+
+  <shell_doc name="GPS.__run_hook__">
+      <description>Internal function used for the support of hooks</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.exit">
+      <description>Exit GPS, asking for confirmation if any file is currently modified and unsaved</description>
+  </shell_doc>
 
   <shell_doc name="GPS.get_system_dir">
      <return>The install directory for GPS</return>
@@ -2222,7 +2435,6 @@ This command returns the output of the process up to the point where regexp matc
       <param name="...">Any number of parameters to pass to the hook.
 The specific list depends on the hook type</param>
       <description>Run the hook. This will call all the functions that attached to that hook</description>
-      <see_also name="GPS.Hook.describe_type()" />
   </shell_doc>
 
   <shell_doc name="GPS.Hook.add">
@@ -2243,21 +2455,14 @@ The specific list depends on the hook type</param>
 
   <shell_doc name="GPS.Hook.register">
       <param name="name">A string, the name of the hook to create</param>
-      <param name="description">A string, the description of the hook</param>
       <param name="type" default="">A string, the type of the hook. See GPS.Hook.list_types()</param>
-      <description>Defines a new hook. This hook can take any number of parameters, the default is none. The type and number of parameters is called the type of the hook, and this is described by the" optional third parameter. The value of this parameter should be either the empty string for a hook that doesn't take any parameter. Or it could be one of the predefined types exported by GPS itself (see list_hook_types). Finally, it could be the word ""generic"" if this is a new type of hook purely defined for this scripting language</description>
+      <description>Defines a new hook. This hook can take any number of parameters, the default is none. The type and number of parameters is called the type of the hook, and this is described by the" optional second parameter. The value of this parameter should be either the empty string for a hook that doesn't take any parameter. Or it could be one of the predefined types exported by GPS itself (see list_hook_types). Finally, it could be the word ""generic"" if this is a new type of hook purely defined for this scripting language</description>
   </shell_doc>
 
   <shell_doc name="GPS.Hook.list">
       <return>A list of strings</return>
       <description>List all defined hooks. See also run_hook, register_hook and add_hook</description>
       <see_also name="GPS.Hook.list_types" />
-  </shell_doc>
-
-  <shell_doc name="GPS.Hook.describe">
-      <param name="self">The instance of GPS.Hook</param>
-      <return>A string</return>
-      <description>Describe a hook, when it is executed, and what are the expected arguments</description>
   </shell_doc>
 
   <shell_doc name="GPS.Hook.describe_functions">
@@ -2270,12 +2475,6 @@ The specific list depends on the hook type</param>
      <return>A list of strings</return>
      <description>List all defined type hooks</description>
      <see_also name="GPS.Hook.register"/>
-  </shell_doc>
-
-  <shell_doc name="GPS.Hook.describe_type">
-     <param name="name">A string, the name of the hook type</param>
-     <return>A string</return>
-     <description>Describe a hook type and what are the expected arguments. Remember that all hooks get the hook name as the first parameter, in addition to the parameters described by this function.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -2841,6 +3040,11 @@ the same line/column even if new lines are added in the buffer. This location is
 
   <shell_doc name="GPS.EditorMark.__init__">
      <description>This subprogram will always raise an exception, thus preventing the direct creation of a mark. Instead, you should use GPS.EditorLocation.create_mark() to create such a mark</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorMark.__del__">
+     <param name="self">An instance of GPS.EditorMark</param>
+     <description>This subprogram is automatically called whenever self is unreferenced by Python, and will destroy the physical mark in the buffer if the mark is unnamed, since there is no way to access it anyway afterward</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorMark.delete">
