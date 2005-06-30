@@ -496,7 +496,8 @@ package body Help_Module is
             if Doc /= "" then
                Set_Return_Value (Data, Doc);
             else
-               Set_Error_Msg (Data, "");
+               Set_Error_Msg
+                 (Data, "No documentation for " & Nth_Arg (Data, 2));
             end if;
          end;
 
