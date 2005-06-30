@@ -20,13 +20,22 @@ class DocGenerator:
    def __init__ (self):
       self.work_dir = "/tmp/pythondor"
 
+   def special_entries (self, module_name):
+      """Return a list of tuples (name, url, generator) for special entries
+         to add to the classes index for the module"""
+
+      return [('Module description', 'file://' + self.filename_for_module (module_name), DocGenerator.doc_module),
+              ('Global routines', 'file://' + self.filename_for_global (module_name), DocGenerator.doc_global_routines)]
+
    def classesindex (self, module_name, classes):
       """Return the index of classes for the module, in HTML format"""
 
       output = "<h2>Module <strong>" + module_name + \
-        "</strong></h2><div id='classesIndex'><ul>\n" + \
-        " <li><i><a href='file://""" + self.filename_for_module(module_name) + "'>Module description</a></li>\n" + \
-        " <li><i><a href='file://""" + self.filename_for_global(module_name) + "'>Global routines</a></i></li>\n"
+        "</strong></h2><div id='classesIndex'><ul>\n"
+
+      for s in self.special_entries (module_name):
+         output += " <li><i><a href='" + s[1] + "'>" + s[0] + "</a></i></li>\n"
+
       for c in classes:
          output += "  <li><a href='file://" + self.filename_for_class (c[0]) + "'>" + c[0] + "</a></li>\n"
       return output + "</ul></div>\n"
@@ -137,16 +146,15 @@ class DocGenerator:
                 if a[2] != object:
                    output += " (inherited " + a[1] + " from " \
                      + self.full_name (a[2]) \
-                     + ")"
+                     + ")</caption></table>"
                 else:
                    if a[1] == 'static method':
                       output += " (static method)"
                    elif a[1] == 'class method':
                       output += " (class method)"
-
-                output += "</caption>" \
-                   + self.get_formated_documentation (module_name, m[1]) \
-                   + "</table>\n"
+                   output += "</caption>" \
+                      + self.get_formated_documentation (module_name, m[1]) \
+                      + "</table>\n"
 
       return output + "</div>\n"
 
@@ -251,24 +259,9 @@ table.description .obsolescent { color: red }
 
       return method_name.lower()
 
-   def docmodule (self, module):
-      classes  = inspect.getmembers (module, inspect.isclass)
+   def doc_global_routines (self, module, classes):
+      """Generate the documentation for the global routines"""
       routines = inspect.getmembers (module, inspect.isroutine)
-
-      try: os.mkdir (self.work_dir)
-      except:pass
-
-      ## Generate the module documentation
-      f = file (self.filename_for_module (module.__name__), "w")
-      f.write (self.html_header(module.__name__))
-      f.write ("<div class='menu'>\n")
-      f.write (self.classesindex (module.__name__, classes))
-      f.write ("</div>\n")
-      f.write (self.documentation (module.__name__, module, 0))
-      f.write (self.html_footer())
-      f.close()
-
-      ## Generate the documentation for each global routine
       f = file (self.filename_for_global (module.__name__), "w")
       f.write (self.html_header (module.__name__))
       f.write ("<div class='menu'>\n")
@@ -278,13 +271,27 @@ table.description .obsolescent { color: red }
       for r in routines:
          if self.is_visible_entity (r[0]):
             f.write ("<a name='" + self.anchor_name (r[0]) + "'/>\n" + \
-                "<h2 class='routine'>" + r[0] + "</h2>\n" + \
-               self.get_formated_documentation (module.__name__, r[1]))
+               "<table class='description'><caption>" + r[0] + "</caption>\n" \
+               + self.get_formated_documentation (module.__name__, r[1]) \
+               + "</table>")
       f.write ("</div>")
       f.write (self.html_footer ())
       f.close ()
 
-      ## Generate the documentation for each class
+   def doc_module (self, module, classes):
+      """Generate the documentation for the module itself"""
+      classes  = inspect.getmembers (module, inspect.isclass)
+      f = file (self.filename_for_module (module.__name__), "w")
+      f.write (self.html_header(module.__name__))
+      f.write ("<div class='menu'>\n")
+      f.write (self.classesindex (module.__name__, classes))
+      f.write ("</div>\n")
+      f.write (self.documentation (module.__name__, module, 0))
+      f.write (self.html_footer())
+      f.close()
+
+   def doc_classes (self, module, classes):
+      """Generate the documentation for all classes in the module"""
       for c in classes:
          f = file (self.filename_for_class (c[0]), "w")
          f.write (self.html_header(module.__name__))
@@ -295,6 +302,15 @@ table.description .obsolescent { color: red }
          f.write (self.documentation (module.__name__, c[1]))
          f.write (self.html_footer())
          f.close ()
+
+   def html_documentation (self, module):
+      try: os.mkdir (self.work_dir)
+      except:pass
+
+      classes  = inspect.getmembers (module, inspect.isclass)
+      self.doc_classes (module, classes)
+      for e in self.special_entries (module.__name__):
+         e[2] (self, module, classes)
 
       return self.filename_for_module (module.__name__)
 
@@ -307,7 +323,35 @@ class GPSDocGenerator (DocGenerator):
 
     def get_documentation (self, object):
         Help_Wrapper.set_current_class (object)
-        return self.wrapper.getdoc (object)
+        return self.wrapper.getdoc_from_gps (object)
+
+    def filename_for_hooks (self, module_name):
+        """Return the file name to use for the hooks description"""
+        return self.work_dir + "/" + module_name.lower() + "_Hooks.html"
+
+    def doc_hooks (self, module, classes):
+        """Generate the documentation for hooks"""
+        f = file (self.filename_for_hooks (module.__name__), "w")
+        f.write (self.html_header (module.__name__))
+        f.write ("<div class='menu'>\n")
+        f.write (self.classesindex (module.__name__, classes))
+        f.write ("</div><div class='documentation'><table class='description'>\n")
+        f.write (self.get_formated_documentation (module.__name__, "@hooks_list@"))
+
+        f.write ("</table>")
+        for hook in GPS.Hook.list():
+          f.write ("<table class='description'>\n")
+          f.write ("  <caption>" + hook + "</caption>\n")
+          f.write (self.get_formated_documentation (module.__name__, "@hook@ " + hook))
+          f.write ("</table>")
+
+        f.write ("</div>\n" + self.html_footer ())
+        f.close ()
+
+    def special_entries (self, module_name):
+        return DocGenerator.special_entries (self, module_name) + \
+            [('Hooks', 'file://' + self.filename_for_hooks (module_name),
+               GPSDocGenerator.doc_hooks)]
 
 #####################################################################
 ##  No user-callable function below this point.
@@ -400,7 +444,17 @@ class Help_Wrapper:
          Help_Wrapper.current_class = ""
    set_current_class = staticmethod (set_current_class)
 
-   def getdoc (self, object): 
+   def getdoc_from_gps (self, object): 
+      try:
+
+         ## If we directly have a string, use it as the name to look up in the
+         ## XML file
+
+         if type (object) == type (""):
+            return self.doc.getdoc (object, 1)
+      except:
+         return ""
+
       try:
          try:
             ## The __doc__ string for static methods is the fully qualified
@@ -409,7 +463,7 @@ class Help_Wrapper:
             if doc:
                static_doc = self.doc.getdoc (doc, 1)
                if static_doc:
-                  return "<table class='description'>" + static_doc + "</table>"
+                  return static_doc
                return doc
          except:
             pass
@@ -434,9 +488,13 @@ class Help_Wrapper:
          else:
             name = module + Help_Wrapper.current_class + object.__name__
 
-         return "<table class='description'>" + self.doc.getdoc (name, 1) + "</table>"
+         return self.doc.getdoc (name, 1)
       except:
          return __oldgetdoc__(object)
+
+   def getdoc (self, object):
+       """Same as getdoc_from_gps, but the result is encapsulated in a <table>"""
+       return "<table class='description'>" + self.getdoc_from_gps (object) + "</table>"
 
 def writedoc(thing, forceload=0):
    """Wrapper around pydoc.writedoc to limit the number of times an XML file
@@ -478,7 +536,7 @@ def generate_doc (entity):
   GPS.set_busy()
 
   ## Generate the documentation for our own module
-  name = docgen.docmodule (entity)
+  name = docgen.html_documentation (entity)
 
   ## These comment lines are for use through pydoc
   #home_dir = GPS.get_home_dir()
