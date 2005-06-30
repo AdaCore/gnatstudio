@@ -919,6 +919,8 @@ package body Navigation_Module is
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
 
+      Register_Hook (Kernel, Marker_Added_In_History_Hook);
+
       Register_Menu
         (Kernel, Navigate, -"Bac_k", Stock_Go_Back,
          On_Back'Access);
