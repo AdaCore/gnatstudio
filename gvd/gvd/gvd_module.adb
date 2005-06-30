@@ -3557,9 +3557,7 @@ package body GVD_Module is
 
       --  Hooks
 
-      Register_Hook
-        (Kernel, Debugger_Started,
-         -("Hook called when a new debugger has been started."));
+      Register_Hook (Kernel, Debugger_Started);
 
       Init_Graphics;
    end Register_Module;
