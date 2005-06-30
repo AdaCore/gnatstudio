@@ -22,7 +22,6 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Intl;                  use GPS.Intl;
 with Entities;                    use Entities;
 with Src_Editor_Box;              use Src_Editor_Box;
 with Src_Editor_Module;           use Src_Editor_Module;
@@ -140,19 +139,14 @@ package body Src_Editor_Buffer.Hooks is
    begin
       Create_Hook_Type
         (Kernel, Simple_Editor_Hook_Type,
-         -("Common type for all hooks related to source editors." & ASCII.LF
-           & "Arguments are the following: (file)" & ASCII.LF),
          Hook_With_Args, Simple_Editor_Run_Hook_Handler'Access);
 
       Register_Hook
         (Kernel, Location_Changed_Hook,
-         -("Hook called when the location in the current editor has changed,"
-           & " and the cursor has stopped moving."),
          Type_Name => Get_Name (Hook));
 
       Register_Hook
         (Kernel, Word_Added_Hook,
-         -("Hook called when a word has been added in the editor"),
          Type_Name => Simple_Editor_Hook_Type);
    end Register_Editor_Hooks;
 
