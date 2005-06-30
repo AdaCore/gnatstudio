@@ -732,7 +732,7 @@ package body Python_Module is
       --  registered
 
       Python_Module_Id.Script.GPS_Module := Py_InitModule
-        (GPS_Module_Name, Doc => "Interface with the GPS environment");
+        (GPS_Module_Name);
 
       --  Register functions used to provide support for hiding the output
       --  of commands
