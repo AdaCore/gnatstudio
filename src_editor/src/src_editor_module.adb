@@ -2533,8 +2533,7 @@ package body Src_Editor_Module is
             After => False);
 
          File_Callback.Connect
-           (Child, "destroy", On_Editor_Destroy'Access,
-            User_Data => Title);
+           (Child, "destroy", On_Editor_Destroy'Access, User_Data => Title);
       end;
 
       return Box;
