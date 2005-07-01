@@ -181,6 +181,16 @@ when the GPS window is fully visible to the user:
      <return>A boolean</return>
      <description>This hook is called when GPS needs to open a file. You can connect to this hook if you want to have your own editor open, instead of the internal editor of GPS. Your function should return 1 if it did open the file, 0 if the next function connected to this hook should be called.
 The file should be opened directly at line and column. If column_end is not 0, the given range should be highlighted if possible. The enable_navigation parameter is set to True if the new location should be added to the history list, so that the user can navigate forward and backward across previous locations. new_file is set to True if a new file should be created when file is not found. If set to False, nothing should be done. force_reload is set to true if the file should be reloaded from the disk, discarding any change the user might have done. focus is set to true if the open editor should be given the keyboard focus</description>
+     <example lang="python">
+    GPS.Hook ('open_file_action_hook').run (
+              GPS.File ("gps-kernel.ads"),
+              322, # line
+              5,   # column
+              9,   # column_end
+              1,   # enable_navigation
+              1,   # new_file
+              0)   # force_reload
+     </example>
      <see_also name="file_edited hook" />
   </shell_doc>
 
@@ -2848,6 +2858,48 @@ highlight_category, style_category and warning_category reference the colors to 
    </shell_doc>
 
   <!--#################################################################
+      ### EditorOverlay
+      #################################################################-->
+
+  <shell_doc name="GPS.EditorOverlay">
+     <description>This class represents properties that can be applied to one or more ranges of text. This can be used to change the display properties of the text (colors, fonts,...) or store any user-specific attributes that can be retrieved later. GPS itself uses overlays to do syntax highlighting. If two or more overlays are applied to the same range of text, the final colors and fonts of the text depends on the priorities of these overlays and the order in which they were applied to the buffer.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorOverlay.__init__">
+     <description>This subprogram is used to prevent the direct creation of overlays. Overlays need to be created through GPS.EditorBuffer.create_overlay</description>
+     <see_also name="GPS.EditorBuffer.create_overlay" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorOverlay.set_property">
+      <param name="self">An instance of GPS.EditorOverlay</param>
+      <param name="name">A string</param>
+      <param name="value">A string or a boolean, depending on the property</param>
+      <description>This function is used to change some of the predefined properties of the overlay. These are mostly used to change the visual rendering of the text,... The following attribute names are currently recognized:
+
+    - &lt;b&gt;foreground&lt;/b&gt;(value is a string with the color name): Change the foreground color of the text.
+
+    - &lt;b&gt;background&lt;/b&gt;(value is a string with the color name): Change the background color of the text.
+
+    - &lt;b&gt;font&lt;/b&gt;(value is a string with the font name): Changes the font of the text
+
+    - &lt;b&gt;weight&lt;/b&gt;(value is a string, one of "light", "normal" and "bold"
+
+    - &lt;b&gt;style&lt;/b&gt;(value is a string, one of "normal", "oblique" and "italic"
+
+    - &lt;b&gt;editable&lt;/b&gt;(value is a boolean): Indicates whether this range of text is editable or not
+
+The set of predefined attributes is fixed. However, overlays are especially useful to store your own user data in the usual python manner, which you can retrieve later. This can be used to mark specially specific ranges of text which you want to be able to find easily later on, even if the buffer has been modified since then (see GPS.EditorLocation.forward_overlay)
+    </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorOverlay.get_property">
+      <param name="self">An instance of GPS.EditorOverlay</param>
+      <param name="name">A string</param>
+      <return>A string or a boolean, depending on the property</return>
+      <description>This subprogram is used to retrieve one of the predefined properties of the overlay. This list of these properties is described for GPS.EditorOverlay.set_property</description>
+  </shell_doc>
+
+  <!--#################################################################
       ### EditorLocation
       #################################################################-->
 
@@ -3027,6 +3079,34 @@ the same line/column even if new lines are added in the buffer. This location is
       <param name="self">The instance of GPS.EditorLocation</param>
       <return>A string</return>
       <description>Return the name of the subprogram enclosing the location</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.get_overlays">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <return>A list of GPS.EditorOverlay instances</return>
+      <description>This function returns the list of all the overlays that apply at this specific location. The color and font of the text is composed through the contents of these overlays.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.has_overlay">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="overlay">An instance of GPS.EditorOverlay</param>
+      <return>A boolean</return>
+      <description>This function returns True if the given overlay applies to the character at that location</description>
+  </shell_doc>
+ 
+  <shell_doc name="GPS.EditorLocation.forward_overlay">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="overlay" default="">An instance of GPS.EditorOverlay</param>
+      <return>An instance of GPS.EditorLocation</return>
+      <description>Moves to the next change in the list of overlays applying to the character. If overlay is specified, go to the next change for this specific overlay (ie the next beginning or end of range where it applies). If there are no more changes, the location is left at the end of the buffer.</description>
+      <see_also name="GPS.EditorLocation.backward_overlay" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorLocation.backward_overlay">
+      <param name="self">The instance of GPS.EditorLocation</param>
+      <param name="overlay" default="">An instance of GPS.EditorOverlay</param>
+      <return>An instance of GPS.EditorLocation</return>
+      <description>Same as GPS.EditorLocation.forward_overlay, but moves backward instead. If there are no more changes, the location is left at the beginning of the buffer.</description>
   </shell_doc>
 
   <!--#################################################################
@@ -3262,6 +3342,31 @@ the same line/column even if new lines are added in the buffer. This location is
          # mark.data is still "whatever"
       </example>
   </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.create_overlay">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <param name="name" default="">A string</param>
+      <return>An instance of GPS.EditorOverlay</return>
+      <description>Create a new overlay. Properties can be set on this overlay, which can then be applied to one or more ranges of text to changes its visual rqendering or to associate user data with it. If name is specified, this function will return an existing overlay with the same name in this buffer if any can be found. If the name is not specified, a new overlay is created. Changing the properties of an existing overlay results in an immediate graphical update of the views associated with the buffer.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.apply_overlay">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <param name="overlay">An instance of GPS.EditorOverlay</param>
+      <param name="from" default="begining of buffer">An instance of GPS.EditorLocation</param>
+      <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+      <description>Applies the overlay to the given range of text. This immediately changes the rendering of the text based on the properties of the overlay</description>
+      <see_also name="GPS.EditorBuffer.remove_overlay" />
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.remove_overlay">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <param name="overlay">An instance of GPS.EditorOverlay</param>
+      <param name="from" default="begining of buffer">An instance of GPS.EditorLocation</param>
+      <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
+      <description>Removes all instances of the overlay in the given range of text. It isn't an error if the overlay is not applied to any of the character in the range, it just has no effect in that case.</description>
+      <see_also name="GPS.EditorBuffer.apply_overlay" />
+   </shell_doc>
 
   <!--#################################################################
       ### EditorView class
