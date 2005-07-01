@@ -287,9 +287,20 @@
 @set COMPILATION
 
 @c ACT specific stuff starts here
-@c Add some room between page text and footer
 @tex
+%% Add some room between page text and footer
 \gdef\pagebody#1{\vbox to\pageheight{\boxmaxdepth=\maxdepth #1}\vskip 5mm}
+
+%% Provision for printing manuals: set PDF link color to black
+%% Use the following command line to generate PDF for printing:
+%% pdftex '\let\forprinting=1\input document.texi'
+\ifx\forprinting\undefined
+ \message{Generating PDF/DVI for display}
+ \relax
+\else
+ \message{Generating PDF for printing (links are in black)}
+ \global\let\linkcolor=\Black
+\fi
 @end tex
 
 @c Suppress black markers in overfull hboxes
