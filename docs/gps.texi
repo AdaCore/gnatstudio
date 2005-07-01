@@ -8,7 +8,7 @@
 @syncodeindex fn cp
 
 @set GPS
-@set GPSVersion 3.0.1
+@set GPSVersion 3.0.2
 
 @set python
 
