@@ -1140,6 +1140,10 @@ package body Src_Editor_Module is
                Full_Name (Title).all & " <" & Im & ">",
                Base_Name (Title) & " <" & Im & ">");
          end;
+
+         File_Callback.Connect
+           (Child, "destroy", On_Editor_Destroy'Access,
+            User_Data => Title);
       end;
 
       return Editor;
