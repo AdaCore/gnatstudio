@@ -2531,6 +2531,10 @@ package body Src_Editor_Module is
             Delete_Callback'Access,
             Gtk_Widget (Box),
             After => False);
+
+         File_Callback.Connect
+           (Child, "destroy", On_Editor_Destroy'Access,
+            User_Data => Title);
       end;
 
       return Box;
