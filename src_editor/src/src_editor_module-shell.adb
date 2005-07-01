@@ -51,11 +51,16 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with Glib.Convert;              use Glib.Convert;
+with Glib.Properties;           use Glib.Properties;
 with Glib.Object;               use Glib.Object;
+with Gdk.Color;                 use Gdk.Color;
+with Pango.Enums;               use Pango.Enums;
 with Gtk.Clipboard;             use Gtk.Clipboard;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 with Gtk.Handlers;
 
 package body Src_Editor_Module.Shell is
@@ -92,6 +97,8 @@ package body Src_Editor_Module.Shell is
    To_Cst                : aliased constant String := "to";
    Text_Cst              : aliased constant String := "text";
    Read_Only_Cst         : aliased constant String := "read_only";
+   Value_Cst             : aliased constant String := "value";
+   Overlay_Cst           : aliased constant String := "overlay";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -181,6 +188,16 @@ package body Src_Editor_Module.Shell is
    procedure View_Cmds
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for EditorView class
+
+   procedure Overlay_Cmds
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for EditorOverlay class
+
+   function Create_Editor_Overlay
+     (Script : access Scripting_Language_Record'Class;
+      Tag    : Gtk_Text_Tag) return Class_Instance;
+   --  Manipulation of instances of the EditorOverlay class.
+   --  Result must be freed unless you assign it to a Callback_Data
 
    function Create_Editor_Buffer
      (Script : access Scripting_Language_Record'Class;
@@ -277,6 +294,13 @@ package body Src_Editor_Module.Shell is
    --  If the buffer is no longer valid, null is returned and an error msg is
    --  set in Data.
 
+   procedure Get_Overlay
+     (Tag    : in out Gtk_Text_Tag;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive;
+      Allow_Null : Boolean := False);
+   --  Get the EditorOverlay stored in Data
+
    procedure Get_Box
      (Box    : in out Source_Editor_Box;
       Data   : in out Callback_Data'Class;
@@ -322,6 +346,32 @@ package body Src_Editor_Module.Shell is
          Set_Error_Msg (Data, "No associated buffer");
       end if;
    end Get_Buffer;
+
+   -----------------
+   -- Get_Overlay --
+   -----------------
+
+   procedure Get_Overlay
+     (Tag    : in out Gtk_Text_Tag;
+      Data   : in out Callback_Data'Class;
+      Arg : Positive;
+      Allow_Null : Boolean := False)
+   is
+      EditorOverlay : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorOverlay");
+      Inst   : Class_Instance;
+   begin
+      Inst := Nth_Arg (Data, Arg, EditorOverlay, Allow_Null => Allow_Null);
+      if Inst = null then
+         Tag := null;
+      else
+         Tag := Gtk_Text_Tag (GObject'(Get_Data (Inst)));
+         Free (Inst);
+         if Tag = null and then not Allow_Null then
+            Set_Error_Msg (Data, "No associated overlay");
+         end if;
+      end if;
+   end Get_Overlay;
 
    ------------------
    -- Get_Location --
@@ -399,6 +449,27 @@ package body Src_Editor_Module.Shell is
       end if;
    end Get_Locations;
 
+   ---------------------------
+   -- Create_Editor_Overlay --
+   ---------------------------
+
+   function Create_Editor_Overlay
+     (Script : access Scripting_Language_Record'Class;
+      Tag    : Gtk_Text_Tag) return Class_Instance
+   is
+      Inst  : Class_Instance;
+   begin
+      Inst := Get_Instance (Script, Tag);
+      if Inst = null then
+         Inst := New_Instance
+           (Script, New_Class (Get_Kernel (Script), "EditorOverlay"));
+         Set_Data (Inst, GObject (Tag));
+      else
+         Ref (Inst);
+      end if;
+      return Inst;
+   end Create_Editor_Overlay;
+
    ------------------------
    -- Create_Editor_Mark --
    ------------------------
@@ -410,8 +481,8 @@ package body Src_Editor_Module.Shell is
       Inst  : Class_Instance;
    begin
       Inst := Get_Instance (Script, Mark);
-      Ref (Mark);
       if Inst = null then
+         Ref (Mark);
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "EditorMark"));
          Set_Data (Inst, GObject (Mark));
@@ -1780,6 +1851,7 @@ package body Src_Editor_Module.Shell is
       File_Inst : Class_Instance;
       Mark      : Gtk_Text_Mark;
       Success   : Boolean;
+      Tag       : Gtk_Text_Tag;
       Iter, Iter2 : aliased Gtk_Text_Iter;
       pragma Unreferenced (Success);
 
@@ -2081,6 +2153,54 @@ package body Src_Editor_Module.Shell is
             end if;
          end if;
 
+      elsif Command = "create_overlay" then
+         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            declare
+               Name : constant String := Nth_Arg (Data, 2, "");
+            begin
+               if Name /= "" then
+                  Tag := Lookup (Get_Tag_Table (Buffer), Name);
+               end if;
+
+               if Tag = null then
+                  Gtk_New (Tag, Name);
+                  Add (Get_Tag_Table (Buffer), Tag);
+               end if;
+
+               Set_Return_Value
+                 (Data, Create_Editor_Overlay (Get_Script (Data), Tag));
+            end;
+         end if;
+
+      elsif Command = "apply_overlay" then
+         Name_Parameters (Data, (1 => Overlay_Cst'Access,
+                                 2 => From_Cst'Access,
+                                 3 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 3, 4);
+         if Buffer /= null then
+            Get_Overlay (Tag, Data, 2);
+            if Tag /= null then
+               Apply_Tag (Buffer, Tag, Iter, Iter2);
+            end if;
+         end if;
+
+      elsif Command = "remove_overlay" then
+         Name_Parameters (Data, (1 => Overlay_Cst'Access,
+                                 2 => From_Cst'Access,
+                                 3 => To_Cst'Access));
+         Get_Buffer (Buffer, Data, 1);
+         Get_Locations (Iter, Iter2, Buffer, Data, 3, 4);
+         if Buffer /= null then
+            Get_Overlay (Tag, Data, 2);
+            if Tag /= null then
+               Remove_Tag (Buffer, Tag, Iter, Iter2);
+            end if;
+         end if;
+
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2298,6 +2418,58 @@ package body Src_Editor_Module.Shell is
             Set_Return_Value (Data, Block.Name.all);
          end if;
 
+      elsif Command = "get_overlays" then
+         Get_Location (Iter, Data, 1, Default => Iter);
+         Set_Return_Value_As_List (Data);
+         declare
+            use Gtk.Text_Tag.Text_Tag_List;
+            List : GSlist := Get_Tags (Iter);
+            Iterator : GSlist := List;
+         begin
+            while Iterator /= Null_List loop
+               Set_Return_Value
+                 (Data, Create_Editor_Overlay
+                    (Get_Script (Data), Get_Data (Iterator)));
+               Iterator := Next (Iterator);
+            end loop;
+            Free (List);
+         end;
+
+      elsif Command = "has_overlay" then
+         Name_Parameters (Data, (1 => Overlay_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         declare
+            Tag : Gtk_Text_Tag;
+         begin
+            Get_Overlay (Tag, Data, 2);
+            if Tag /= null then
+               Set_Return_Value (Data, Has_Tag (Iter, Tag));
+            end if;
+         end;
+
+      elsif Command = "forward_overlay" then
+         Name_Parameters (Data, (1 => Overlay_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         declare
+            Tag : Gtk_Text_Tag;
+         begin
+            Get_Overlay (Tag, Data, 2, Allow_Null => True);
+            Forward_To_Tag_Toggle (Iter, Tag, Success);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end;
+
+      elsif Command = "backward_overlay" then
+         Name_Parameters (Data, (1 => Overlay_Cst'Access));
+         Get_Location (Iter, Data, 1, Default => Iter);
+         declare
+            Tag : Gtk_Text_Tag;
+         begin
+            Get_Overlay (Tag, Data, 2, Allow_Null => True);
+            Backward_To_Tag_Toggle (Iter, Tag, Success);
+            Set_Return_Value
+              (Data, Create_Editor_Location (Get_Script (Data), Iter));
+         end;
       end if;
    end Location_Cmds;
 
@@ -2434,6 +2606,149 @@ package body Src_Editor_Module.Shell is
       end if;
    end View_Cmds;
 
+   ------------------
+   -- Overlay_Cmds --
+   ------------------
+
+   procedure Overlay_Cmds
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Tag        : Gtk_Text_Tag;
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg
+           (Data,
+            -("Cannot create instances directly, "
+              & " use EditorBuffer.create_overlay()"));
+
+      elsif Command = "get_property" then
+         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Get_Overlay (Tag, Data, 1);
+         if Tag /= null then
+            declare
+               Name : constant String := Nth_Arg (Data, 2);
+               Color : Gdk_Color;
+               W     : Weight;
+               S     : Style;
+            begin
+               if Name = "foreground" then
+                  Color := Get_Property (Tag, Foreground_Gdk_Property);
+                  Set_Return_Value (Data, To_String (Color));
+
+               elsif Name = "background" then
+                  Color := Get_Property (Tag, Background_Gdk_Property);
+                  Set_Return_Value (Data, To_String (Color));
+
+               elsif Name = "font" then
+                  Set_Return_Value
+                    (Data, Get_Property (Tag, Font_Property));
+
+               elsif Name = "weight" then
+                  W := Get_Property (Tag, Weight_Property);
+                  case W is
+                     when Pango_Weight_Ultralight .. Pango_Weight_Light =>
+                        Set_Return_Value (Data, "light");
+                     when Pango_Weight_Normal .. Pango_Weight_Medium =>
+                        Set_Return_Value (Data, "normal");
+                     when others =>
+                        Set_Return_Value (Data, "bold");
+                  end case;
+
+               elsif Name = "style" then
+                  S := Get_Property (Tag, Gtk.Text_Tag.Style_Property);
+                  case S is
+                     when Pango_Style_Normal =>
+                        Set_Return_Value (Data, "normal");
+                     when Pango_Style_Oblique =>
+                        Set_Return_Value (Data, "oblique");
+                     when Pango_Style_Italic =>
+                        Set_Return_Value (Data, "italic");
+                  end case;
+
+               elsif Name = "editable" then
+                  Set_Return_Value
+                    (Data, Get_Property (Tag, Editable_Property));
+
+               else
+                  Set_Error_Msg (Data, -"Invalid property");
+               end if;
+            end;
+         end if;
+
+      elsif Command = "set_property" then
+         Name_Parameters (Data, (1 => Name_Cst'Access, 2 => Value_Cst'Access));
+         Get_Overlay (Tag, Data, 1);
+         if Tag /= null then
+            declare
+               Name : constant String := Nth_Arg (Data, 2);
+            begin
+               if Name = "foreground" then
+                  Set_Property
+                    (Tag, Foreground_Property, String'(Nth_Arg (Data, 3)));
+
+               elsif Name = "background" then
+                  Set_Property
+                    (Tag, Background_Property, String'(Nth_Arg (Data, 3)));
+
+               elsif Name = "font" then
+                  Set_Property
+                    (Tag, Font_Property, String'(Nth_Arg (Data, 3)));
+
+               elsif Name = "weight" then
+                  declare
+                     Value : constant String := Nth_Arg (Data, 3);
+                  begin
+                     if Value = "light" then
+                        Set_Property
+                          (Tag, Weight_Property, Pango_Weight_Light);
+                     elsif Value = "normal" then
+                        Set_Property
+                          (Tag, Weight_Property, Pango_Weight_Normal);
+                     elsif Value = "bold" then
+                        Set_Property
+                          (Tag, Weight_Property, Pango_Weight_Bold);
+                     else
+                        Set_Error_Msg
+                          (Data, -"Invalid weight: use light, normal or bold");
+                     end if;
+                  end;
+
+               elsif Name = "style" then
+                  declare
+                     Value : constant String := Nth_Arg (Data, 3);
+                  begin
+                     if Value = "normal" then
+                        Set_Property
+                          (Tag, Gtk.Text_Tag.Style_Property,
+                           Pango_Style_Normal);
+                     elsif Value = "oblique" then
+                        Set_Property
+                          (Tag, Gtk.Text_Tag.Style_Property,
+                           Pango_Style_Oblique);
+                     elsif Value = "italic" then
+                        Set_Property
+                          (Tag, Gtk.Text_Tag.Style_Property,
+                           Pango_Style_Italic);
+                     else
+                        Set_Error_Msg
+                          (Data,
+                           -"Invalid style, use normal, oblique, italic");
+                     end if;
+                  end;
+
+               elsif Name = "editable" then
+                  Set_Property
+                    (Tag, Editable_Property, Boolean'(Nth_Arg (Data, 3)));
+
+               else
+                  Set_Error_Msg (Data, -"Invalid property");
+               end if;
+            end;
+         end if;
+
+      end if;
+   end Overlay_Cmds;
+
    -----------------------
    -- Register_Commands --
    -----------------------
@@ -2447,7 +2762,18 @@ package body Src_Editor_Module.Shell is
       EditorMark   : constant Class_Type := New_Class (Kernel, "EditorMark");
       EditorView   : constant Class_Type :=
         New_Class (Kernel, "EditorView", Get_GUI_Class (Kernel));
+      EditorOverlay : constant Class_Type :=
+        New_Class (Kernel, "EditorOverlay");
    begin
+      --  EditorOverlay
+
+      Register_Command
+        (Kernel, Constructor_Method, 0, 0, Overlay_Cmds'Access, EditorOverlay);
+      Register_Command
+        (Kernel, "get_property", 1, 1, Overlay_Cmds'Access, EditorOverlay);
+      Register_Command
+        (Kernel, "set_property", 2, 2, Overlay_Cmds'Access, EditorOverlay);
+
       --  EditorLocation
 
       Register_Command
@@ -2496,6 +2822,14 @@ package body Src_Editor_Module.Shell is
         (Kernel, "block_type", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "subprogram_name", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "get_overlays", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "has_overlay", 1, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "forward_overlay", 0, 1, Location_Cmds'Access, EditorLoc);
+      Register_Command
+        (Kernel, "backward_overlay", 0, 1, Location_Cmds'Access, EditorLoc);
 
       --  EditorMark
 
@@ -2515,6 +2849,12 @@ package body Src_Editor_Module.Shell is
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "get", 0, 1, Buffer_Cmds'Access, EditorBuffer, True);
+      Register_Command
+        (Kernel, "create_overlay",  0, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "apply_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -2548,10 +2888,6 @@ package body Src_Editor_Module.Shell is
         (Kernel, "paste", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "get_mark", 1, 1, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "is_modified", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -2559,17 +2895,13 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "blocks_unfold", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
+--          (Kernel, "undo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
+--          (Kernel, "redo", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+--        Register_Command
 --          (Kernel, "add_gap", 3, 3, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
 --          (Kernel, "remove_gap", 1, 2, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "apply_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "remove_overlay", 3, 3, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "get_overlays", 1, 1, Buffer_Cmds'Access, EditorBuffer);
---        Register_Command
---          (Kernel, "has_overlay", 2, 2, Buffer_Cmds'Access, EditorBuffer);
 --        Register_Command
 --          (Kernel, "synchronize_scrolling", 1, 2, Buffer_Cmds'Access,
 --           EditorBuffer);
