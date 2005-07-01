@@ -107,7 +107,8 @@ package body GDT.JNI_Functions is
       pragma Unreferenced (This);
 
       C_Str : constant Interfaces.C.Strings.chars_ptr :=
-         GetStringUTFChars (Env, Buffer);
+        GetStringUTFChars (Env, Buffer);
+
       Ada_Str : constant String := Value (C_Str);
 
       Id : JMethodID;
@@ -143,7 +144,6 @@ package body GDT.JNI_Functions is
          Callback_Class,
          C_Function,
          C_Profile);
-
       Analyze_Ada_Source
         (Buffer            => Ada_Str,
          Indent_Params     => Default_Indent_Parameters,
@@ -270,13 +270,13 @@ package body GDT.JNI_Functions is
            (To_Address (Integer_Address (Addr))));
    begin
       if Construct.Name = null then
-         return NewStringUTF (Env, New_String ("-"));
+         return NewStringUTF (Env, New_String ("<no name>"));
       else
          return NewStringUTF (Env, New_String (Construct.Name.all));
       end if;
    end Java_ConstructAccess_getNameInt;
 
-    ------------------------------------------
+   -------------------------------------------
    -- Java_ConstructAccess_getVisibilityInt --
    -------------------------------------------
 
@@ -290,6 +290,25 @@ package body GDT.JNI_Functions is
    begin
       return Jint (Construct_Visibility'Pos (Construct.Visibility));
    end Java_ConstructAccess_getVisibilityInt;
+
+   ----------------------------------------
+   -- Java_ConstructAccess_getProfileInt --
+   ----------------------------------------
+
+   function Java_ConstructAccess_getProfileInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jstring
+   is
+      pragma Unreferenced (This);
+      Construct : constant Construct_Access_Ptr := Construct_Access_Ptr
+        (Construct_Information_Conversion.To_Pointer
+           (To_Address (Integer_Address (Addr))));
+   begin
+      if Construct.Profile = null then
+         return NewStringUTF (Env, New_String (""));
+      else
+         return NewStringUTF (Env, New_String (Construct.Profile.all));
+      end if;
+   end Java_ConstructAccess_getProfileInt;
 
    ------------------------------------
    -- Java_ConstructList_getFirstInt --
