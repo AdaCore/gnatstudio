@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 3.0.2
+
+- E701-005 Crash/Freeze when closing a New View of an editor
+  Problem:    When using multiple views of an editor, if the original view
+              is closed before any of the other views, GPS might become
+              unstable when closing the other views.
+  Workaround: Always close the new views before closing the original view.
+
 Known Problems fixed in GPS 3.0.1
 
 - E607-006 Cannot select all styles for some fonts under Windows
