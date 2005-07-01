@@ -17,9 +17,11 @@
 @flushleft
 @title{Using GPS}
 @end flushleft
+@sp 1
 @flushright
 @titlefont{The GNAT Programming System}
 @end flushright
+@sp 2
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
