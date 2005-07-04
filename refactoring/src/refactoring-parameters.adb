@@ -90,6 +90,16 @@ package body Refactoring.Parameters is
       Line   : Integer;
       Column : Integer) return Command_Return_Type
    is
+      --  File needs to be open for get_chars to work, unfortunately
+      Args2  : Argument_List_Access :=
+        new Argument_List'
+          (new String'(Full_Name (File).all),
+           new String'("0"),
+           new String'("0"));
+      Found  : constant String := Execute_GPS_Shell_Command
+        (Kernel, "Editor.edit", Args2.all);
+      pragma Unreferenced (Found);
+
       Args : Argument_List_Access :=
         new Argument_List'
           (new String'(Full_Name (File).all),
@@ -97,12 +107,6 @@ package body Refactoring.Parameters is
            new String'(Integer'Image (Column)),
            new String'("0"),       --  before
            new String'("100000")); --  after
-
-      --  File needs to be open for get_chars to work, unfortunately
-      Found  : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.edit", Args (Args'First .. Args'First));
-      pragma Unreferenced (Found);
-
       Chars  : constant String := Execute_GPS_Shell_Command
         (Kernel, "Editor.get_chars", Args.all);
       Param : Entity_Information;
@@ -149,6 +153,7 @@ package body Refactoring.Parameters is
 
    begin
       Free (Args);
+      Free (Args2);
 
       Skip_Word   (Chars, First);
       Skip_Blanks (Chars, First);
