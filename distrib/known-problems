@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E701-005 Crash/Freeze when closing a New View of an editor
+  Problem:    When using multiple views of an editor, if the original view
+              is closed before any of the other views, GPS might become
+              unstable when closing the other views.
+  Workaround: Always close the new views before closing the original view
+
 - E617-006 Casing problem in the executable name when editing projects
   Problem:    If you use file names with upper cases in your project, GPS will
               convert these names to lower case in the project file when you
@@ -19,7 +25,7 @@ Known Problems fixed in GPS 3.1.0
               (ie ctrl-v under Windows, or middle-button press under Unix) in
               the GPS consoles, the text is always appended at the end of the
               line.
-  Workaround: Use the menu Edit->Paste or its associated key binding.
+  Workaround: Use the menu Edit->Paste or its associated key binding
 
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
