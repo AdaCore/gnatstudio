@@ -763,6 +763,7 @@ package body Outline_View is
       Outline : Outline_View_Access;
       File    : Virtual_File;
       Child   : MDI_Child;
+      Module  : constant Module_ID := Get_Creator (D.Context);
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
@@ -770,7 +771,9 @@ package body Outline_View is
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
 
-         if D.Context.all in File_Selection_Context'Class
+         if Module /= null
+            and then Get_Name (Module) = "Source_Editor"
+            and then D.Context.all in File_Selection_Context'Class
            and then Has_File_Information
              (File_Selection_Context_Access (D.Context))
          then
