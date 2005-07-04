@@ -57,6 +57,11 @@ package body Tooltips is
    --  Callback for all events that will disable the tooltip
    --  e.g: focus_in/focus_out/motion_notify/button_clicked/key_press
 
+   function Leave_Notify_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Tooltip : Tooltips_Access) return Boolean;
+   --  Called when the mouse leaves the tooltip window
+
    procedure Show_Tooltip
      (Tooltip   : access Tooltips'Class);
    --  Make the tooltip visible, applied to a specific widget
@@ -115,6 +120,11 @@ package body Tooltips is
          Set_UPosition (Tooltip.Display_Window, X + 10, Y + 10);
          Show_All      (Tooltip.Display_Window);
 
+         Add_Events (Tooltip.Display_Window, Leave_Notify_Mask);
+         Tooltip_Handler.Connect
+           (Tooltip.Display_Window, "leave_notify_event",
+            Leave_Notify_Cb'Access, User_Data => Tooltip);
+
          Add_Watch
            (Tooltip_Handler.Connect
               (Get_Focus (Gtk_Window (Get_Toplevel (Tooltip.Widget))),
@@ -133,6 +143,20 @@ package body Tooltips is
 
          return False;
    end Display_Tooltip;
+
+   ---------------------
+   -- Leave_Notify_Cb --
+   ---------------------
+
+   function Leave_Notify_Cb
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Tooltip : Tooltips_Access) return Boolean
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Hide_Tooltip (Tooltip);
+      return False;
+   end Leave_Notify_Cb;
 
    ---------------------
    -- Create_Contents --
