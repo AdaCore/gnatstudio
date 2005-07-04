@@ -23,6 +23,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 with GPS.Intl;             use GPS.Intl;
@@ -32,7 +33,7 @@ with Traces;                 use Traces;
 with VFS;                    use VFS;
 with Refactoring.Performers; use Refactoring.Performers;
 with Histories;              use Histories;
-with Commands.Interactive;   use Commands.Interactive;
+with Commands.Interactive;   use Commands, Commands.Interactive;
 
 with Glib;                   use Glib;
 with Gtk.Box;                use Gtk.Box;
@@ -51,6 +52,14 @@ package body Refactoring.Rename is
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Auto_Compile_Hist      : constant History_Key := "refactor_auto_compile";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
+
+   Name_Cst               : aliased constant String := "name";
+
+   type Rename_Entity_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Rename_Entity_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called for "Rename Entity" menu
 
    type Renaming_Performer_Record (New_Name_Length : Natural)
      is new Refactor_Performer_Record with record
@@ -81,6 +90,10 @@ package body Refactoring.Rename is
       Kernel : access Kernel_Handle_Record'Class;
       Entity : Entity_Information);
    --  Create a new dialog for renaming entities
+
+   procedure Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handling of shell commands
 
    -------------
    -- Gtk_New --
@@ -242,5 +255,55 @@ package body Refactoring.Rename is
          Destroy (Dialog);
          return Failure;
    end Execute;
+
+   ----------------------------
+   -- Entity_Command_Handler --
+   ----------------------------
+
+   procedure Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+   begin
+      if Command = "rename" then
+         Name_Parameters (Data, (1 => Name_Cst'Access));
+         declare
+            Entity   : constant Entity_Information := Get_Data (Data, 1);
+            New_Name : constant String := Nth_Arg (Data, 2);
+            Refactor : constant Renaming_Performer :=
+              new Renaming_Performer_Record'
+                (Refactor_Performer_Record with
+                 New_Name_Length => New_Name'Length,
+                 New_Name        => New_Name,
+                 Auto_Save       => False);
+         begin
+            Get_All_Locations
+              (Get_Kernel (Data),
+               Entity,
+               Refactor,
+               Auto_Compile    => False,
+               Background_Mode => False);
+         end;
+      end if;
+   end Entity_Command_Handler;
+
+   --------------------------
+   -- Register_Refactoring --
+   --------------------------
+
+   procedure Register_Refactoring
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      C : constant Interactive_Command_Access := new Rename_Entity_Command;
+   begin
+      Register_Contextual_Menu
+        (Kernel,
+         Name  => "Rename entity",
+         Label => "Refactoring/Rename %e",
+         Filter => Lookup_Filter (Kernel, "Entity"),
+         Action => C);
+      Register_Command
+        (Kernel, "rename", 1, 1, Entity_Command_Handler'Access,
+         Get_Entity_Class (Kernel));
+   end Register_Refactoring;
 
 end Refactoring.Rename;

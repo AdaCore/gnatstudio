@@ -18,14 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Commands.Interactive; use Commands, Commands.Interactive;
-
 package Refactoring.Rename is
 
-   type Rename_Entity_Command is new Interactive_Command with null record;
-   function Execute
-     (Command : access Rename_Entity_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called for "Rename Entity" menu
+   procedure Register_Refactoring
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the shell commands and menus
 
 end Refactoring.Rename;
