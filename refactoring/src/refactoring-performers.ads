@@ -50,7 +50,8 @@ package Refactoring.Performers is
      (Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity                : Entities.Entity_Information;
       On_Completion         : access Refactor_Performer_Record'Class;
-      Auto_Compile          : Boolean := False);
+      Auto_Compile          : Boolean := False;
+      Background_Mode       : Boolean := True);
    --  Get all the locations in which Entity is referenced.
    --  In Errors, this procedure returns the list of files that are not
    --  up-to-date in the LI structure. References inside these files are still

@@ -31,13 +31,12 @@ with Traces;                use Traces;
 with Commands.Generic_Asynchronous;
 
 package body Refactoring.Performers is
-
    use Location_Arrays;
    use File_Arrays;
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with
       record
-         No_LI_List          : File_Arrays.Instance;
+         No_LI_List : File_Arrays.Instance := File_Arrays.Empty_Instance;
       end record;
    type Renaming_Error is access all Renaming_Error_Record'Class;
    procedure Error
@@ -65,6 +64,10 @@ package body Refactoring.Performers is
       Result  : out Command_Return_Type);
    --  Find the next location, and stores it in Data
 
+   procedure On_End_Of_Search (Data : in out Get_Locations_Data);
+   --  Called when all the related files have been searched and the refactoring
+   --  should be performed
+
    ----------
    -- Free --
    ----------
@@ -79,9 +82,11 @@ package body Refactoring.Performers is
       Free (Data.Errors.No_LI_List);
       Free (Data.Stale_LI_List);
       Destroy (Data.Iter);
-      Free (Data.On_Completion.all);
+      if Data.On_Completion /= null then
+         Free (Data.On_Completion.all);
+         Unchecked_Free (Data.On_Completion);
+      end if;
       Unchecked_Free (Data.Errors);
-      Unchecked_Free (Data.On_Completion);
    end Free;
 
    ----------
@@ -112,11 +117,13 @@ package body Refactoring.Performers is
      (Kernel                : access Kernel_Handle_Record'Class;
       Entity                : Entity_Information;
       On_Completion         : access Refactor_Performer_Record'Class;
-      Auto_Compile          : Boolean := False)
+      Auto_Compile          : Boolean := False;
+      Background_Mode       : Boolean := True)
    is
       pragma Unreferenced (Auto_Compile);
       Data : Get_Locations_Data;
       C    : Get_Locations_Commands.Generic_Asynchronous_Command_Access;
+      Result : Command_Return_Type;
    begin
       Data.On_Completion     := Refactor_Performer (On_Completion);
       Data.Kernel            := Kernel_Handle (Kernel);
@@ -137,8 +144,16 @@ package body Refactoring.Performers is
          (Running,
           Get_Current_Progress (Data.Iter.all),
           Get_Total_Progress   (Data.Iter.all)));
-      Launch_Background_Command
-        (Kernel, Command_Access (C), True, True, "Refactoring");
+      if Background_Mode then
+         Launch_Background_Command
+           (Kernel, Command_Access (C), True, True, "Refactoring");
+      else
+         loop
+            Result := Execute (C);
+            exit when Result /= Execute_Again;
+         end loop;
+         On_End_Of_Search (Data);
+      end if;
 
    exception
       when E : others =>
@@ -146,6 +161,29 @@ package body Refactoring.Performers is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end Get_All_Locations;
+
+   ----------------------
+   -- On_End_Of_Search --
+   ----------------------
+
+   procedure On_End_Of_Search (Data : in out Get_Locations_Data) is
+   begin
+      Pop_State (Data.Kernel);
+
+      if Confirm_Files
+        (Data.Kernel, Data.Errors.No_LI_List, Data.Stale_LI_List)
+      then
+         Push_State (Data.Kernel, Busy);
+         Execute
+           (Data.On_Completion,
+            Data.Kernel,
+            Data.Entity,
+            Data.Refs,
+            Data.Errors.No_LI_List,
+            Data.Stale_LI_List);
+         Pop_State (Data.Kernel);
+      end if;
+   end On_End_Of_Search;
 
    ------------------------
    -- Find_Next_Location --
@@ -160,22 +198,7 @@ package body Refactoring.Performers is
       Source : Source_File;
    begin
       if At_End (Data.Iter.all) then
-         Pop_State (Data.Kernel);
-
-         if Confirm_Files
-           (Data.Kernel, Data.Errors.No_LI_List, Data.Stale_LI_List)
-         then
-            Push_State (Data.Kernel, Busy);
-            Execute
-              (Data.On_Completion,
-               Data.Kernel,
-               Data.Entity,
-               Data.Refs,
-               Data.Errors.No_LI_List,
-               Data.Stale_LI_List);
-            Pop_State (Data.Kernel);
-         end if;
-
+         On_End_Of_Search (Data);
          Result := Success;
 
       elsif Ref /= No_Entity_Reference then
