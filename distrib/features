@@ -5,9 +5,10 @@ New features in GPS 3.1.0
 
 - New refactoring module: Rename entity, Name parameters in call
 
-- Improved documentation for Python Extensions
+- New python API for interacting with the editors
+  See EditorBuffer, EditorView, ...
 
-- New python API for interacting with the editors (see EditorBuffer, EditorView,...)
+- Improved documentation for Python Extensions
 
 - E510-024 Editing specific list of source files for projects
 
