@@ -67,6 +67,7 @@ package body Outline_View is
 --   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
+   Outline_View_Module_Name : constant String := "Outline_View";
 
    Outline_View_Font                : Param_Spec_Font;
    Outline_View_Profiles            : Param_Spec_Boolean;
@@ -772,7 +773,8 @@ package body Outline_View is
          Outline := Outline_View_Access (Get_Widget (Child));
 
          if Module /= null
-            and then Get_Name (Module) = "Source_Editor"
+            and then (Get_Name (Module) = "Source_Editor"
+                      or else Get_Name (Module) = Outline_View_Module_Name)
             and then D.Context.all in File_Selection_Context'Class
            and then Has_File_Information
              (File_Selection_Context_Access (D.Context))
@@ -797,7 +799,6 @@ package body Outline_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Outline_View_Module_Name : constant String := "Outline_View";
       Tools : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
    begin
