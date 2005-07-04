@@ -1797,6 +1797,16 @@ package body Entities is
       return Is_Subprogram_Entity (Entity.Kind.Kind);
    end Is_Subprogram;
 
+   -------------------------------
+   -- Is_Primitive_Operation_Of --
+   -------------------------------
+
+   function Is_Primitive_Operation_Of
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      return Entity.Primitive_Op_Of;
+   end Is_Primitive_Operation_Of;
+
    -------------
    -- Destroy --
    -------------

@@ -579,6 +579,11 @@ package Entities is
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean;
    --  sort two entities alphabetically
 
+   function Is_Primitive_Operation_Of
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the entity for which Entity is a primitive operation, or null
+   --  if Entity is not a primitive operation (aka method) for any type.
+
    ----------------------
    -- Setting entities --
    ----------------------
