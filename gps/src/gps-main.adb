@@ -125,7 +125,7 @@ procedure GPS.Main is
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
    Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", On);
-   Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
+   Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", On);
    Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
    Call_Graph_Trace       : constant Debug_Handle :=
      Create ("MODULE.Call_Graph", On);
