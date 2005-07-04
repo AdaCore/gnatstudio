@@ -21,7 +21,6 @@
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with Refactoring.Rename;    use Refactoring.Rename;
-with Commands.Interactive;  use Commands.Interactive;
 
 package body Refactoring_Module is
 
@@ -33,18 +32,9 @@ package body Refactoring_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Refactoring_Module_Id : Module_ID;
-      C : constant Interactive_Command_Access := new Rename_Entity_Command;
    begin
-      Register_Module
-        (Refactoring_Module_Id,
-         Kernel,
-         "refactoring");
-      Register_Contextual_Menu
-        (Kernel,
-         Name  => "Rename entity",
-         Label => "Refactoring/Rename %e",
-         Filter => Lookup_Filter (Kernel, "Entity"),
-         Action => C);
+      Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
+      Refactoring.Rename.Register_Refactoring (Kernel);
    end Register_Module;
 
 end Refactoring_Module;
