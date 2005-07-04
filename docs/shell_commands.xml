@@ -155,7 +155,7 @@ when the GPS window is fully visible to the user:
      <param name="file">An instance of GPS.File</param>
      <description>Hook called whenever a file has been saved</description>
   </shell_doc>
-  
+
   <shell_doc name="@hook@ file_changed_on_disk">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
@@ -2920,7 +2920,7 @@ the same line/column even if new lines are added in the buffer. This location is
          loc = GPS.EditorLocation (ed, line=4, column=5)
          loc.data = "MY OWN DATA"
          loc2 = GPS.EditorLocation (ed, line=4, column=5)
-         # loc2.data is not defined at this point 
+         # loc2.data is not defined at this point
      </example>
   </shell_doc>
 
@@ -2939,7 +2939,7 @@ the same line/column even if new lines are added in the buffer. This location is
      <example lang="python">
          ed   = GPS.EditorBuffer (GPS.File ("a.adb"))
          loc  = GPS.EditorLocation (ed, line=4, column=5)
-         loc2 = loc + 3 
+         loc2 = loc + 3
      </example>
      <see_also name="GPS.EditorLocation.__sub__"/>
      <see_also name="GPS.EditorLocation.forward_char"/>
@@ -2949,7 +2949,7 @@ the same line/column even if new lines are added in the buffer. This location is
      <param name="self">The instance of GPS.EditorLocation</param>
      <param name="count">An integer or another instance of GPS.EditorLocation</param>
      <return>A new instance of GPS.EditorLocation</return>
-     <description>Return a new location located count characters before self, if count is an integer. If count is negative, moves forward instead. If count is another location, it returns the number of characters between the two locations. This function is more conveniently used through the standard - operator in python.</description> 
+     <description>Return a new location located count characters before self, if count is an integer. If count is negative, moves forward instead. If count is another location, it returns the number of characters between the two locations. This function is more conveniently used through the standard - operator in python.</description>
      <see_also name="GPS.EditorLocation.__add__" />
      <see_also name="GPS.EditorLocation.forward_char" />
   </shell_doc>
@@ -3093,7 +3093,7 @@ the same line/column even if new lines are added in the buffer. This location is
       <return>A boolean</return>
       <description>This function returns True if the given overlay applies to the character at that location</description>
   </shell_doc>
- 
+
   <shell_doc name="GPS.EditorLocation.forward_overlay">
       <param name="self">The instance of GPS.EditorLocation</param>
       <param name="overlay" default="">An instance of GPS.EditorOverlay</param>
@@ -3299,7 +3299,7 @@ the same line/column even if new lines are added in the buffer. This location is
     <param name="to" default="end of buffer">An instance of GPS.EditorLocation</param>
     <description>Recompute the indentation of the given range of text. This feature is language-dependent</description>
   </shell_doc>
-       
+
   <shell_doc name="GPS.EditorBuffer.refill">
     <param name="self">An instance of GPS.EditorBuffer</param>
     <param name="from" default="beginning of buffer">An instance of GPS.EditorLocation</param>
@@ -3417,7 +3417,7 @@ the same line/column even if new lines are added in the buffer. This location is
       <return>An instance of GPS.EditorLocation</return>
       <description>Return the current location of the cursor in this view</description>
   </shell_doc>
- 
+
 
   <!--#################################################################
     ####   Menu class
@@ -3470,4 +3470,25 @@ If ref and add_before are specified, they specify the name of another item in th
      <param name="name">A string</param>
      <description>Change the name of a menu. The first underscore character seen in name will be used as the keyboard shortcut to access this menu from now on. If you actually want to insert an underscore in the name, you need to double it</description>
   </shell_doc>
+
+  <!--#################################################################
+      ### XMLViewer class
+      #################################################################-->
+
+  <shell_doc name="GPS.XMLViewer">
+     <description>This class represents Tree-based views for XML files</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.XMLViewer.__init__">
+      <param name="self">An instance of GPS.XMLViewer</param>
+      <param name="name">A string</param>
+      <description>Create a new XMLViewer, with the given name</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.XMLViewer.parse">
+      <param name="self">An instance of GPS.XMLViewer</param>
+      <param name="file">An XML file</param>
+     <description>Adds the contents of an XML file (in the format of a gnatmetric result) to the XMLViewer</description>
+  </shell_doc>
+
 </docs>
