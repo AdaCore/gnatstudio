@@ -1,7 +1,7 @@
 #!/bin/sh
 # .gps_wrapper
 #
-# Copyright 2002-2003 by ACT Europe.
+# Copyright 2002-2005 by AdaCore
 
 prog=`basename $0`
 root=`dirname $0`
