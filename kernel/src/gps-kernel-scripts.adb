@@ -2417,15 +2417,15 @@ package body GPS.Kernel.Scripts is
       if Context = null then
          Trace (Me, "Null context passed to Create_Context");
          return null;
+      elsif Context.all in File_Area_Context'Class then
+         return Create_Area_Context
+           (Script, File_Area_Context_Access (Context));
       elsif Context.all in Entity_Selection_Context'Class then
          return Create_Entity_Context
            (Script, Entity_Selection_Context_Access (Context));
       elsif Context.all in File_Selection_Context'Class then
          return Create_File_Context
            (Script, File_Selection_Context_Access (Context));
-      elsif Context.all in File_Area_Context'Class then
-         return Create_Area_Context
-           (Script, File_Area_Context_Access (Context));
       else
          Trace (Me, "Context type is not supported by GPS");
          return Get_Or_Create_Context
