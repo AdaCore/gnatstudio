@@ -2189,6 +2189,44 @@ replace all unnamed parameters by named parameters, as in:
    Call (Param1 => 1, Param2 => 2);
 @end smallexample
 
+@item Extract Method
+This refactoring is used to move some code from one place to a separate subprogram. The
+goal is to simplify the original subprogram, by moving part of its code elsewhere.
+GPS takes care of finding which parameters the new subprogram should have, whether they
+should be "in", "in out" or "out" parameter, and whether the new subprogram should be a
+procedure or a function. It also replaces in the original subprogram by a call to the
+new subprogram.
+
+@smallexample
+   procedure Proc (Param1 : Integer) is
+      Local1 : Integer;
+   begin
+      Local1 := Param1;        --  line 4
+      Local1 := Local1 + 1;    --  line 5
+      Local1 := Local1 + 4;
+   end Proc;
+
+When lines 4 and 5 are extracted, we get:
+
+   function New_Method (Param1 : Integer) return Integer is
+      Local1 : Integer;
+   begin
+      Local1 := Param1;        --  line 4
+      Local1 := Local1 + 1;    --  line 5
+      return Local1;
+   end New_Method;
+
+   procedure Proc (Param1 : Integer) is
+      Local1 : Integer;
+   begin
+      Local1 := New_Method (Param1);
+      Local1 := Local1 + 4;
+   end Proc; 
+@end smallexample
+
+The above example is obviously not very useful, but shows that GPS knows how to find which
+parameters should be transfered to the new subprogram.
+
 @end table
 
 @c --------------------------------------------------------------------------
