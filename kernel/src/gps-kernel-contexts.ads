@@ -134,6 +134,13 @@ package GPS.Kernel.Contexts is
       End_Line   : out Integer);
    --  Return the area information in Context.
 
+   type Is_Area_Context is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Is_Area_Context;
+      Context : access Selection_Context'Class) return Boolean;
+   --  Filter that checks that the user has clicked on a subprogram entity.
+   --  This can be used for contextual menus for instance
+
    ---------------------
    -- Message_Context --
    ---------------------

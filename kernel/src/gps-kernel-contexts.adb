@@ -68,6 +68,19 @@ package body GPS.Kernel.Contexts is
    ------------------------------
 
    function Filter_Matches_Primitive
+     (Filter  : access Is_Area_Context;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Context.all in File_Area_Context'Class;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
       Ctxt    : access GPS.Kernel.Selection_Context'Class)
       return Boolean
