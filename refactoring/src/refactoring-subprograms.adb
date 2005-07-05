@@ -454,28 +454,31 @@ package body Refactoring.Subprograms is
          Method_Body => Method_Body,
          Method_Call => Method_Call);
 
-      Delete_Text
-        (Kernel      => Kernel,
-         In_File     => File,
-         Line_Start  => Line_Start,
-         Line_End    => Line_End);
-      Insert_Text
-        (Kernel     => Kernel,
-         In_File    => File,
-         Line       => Line_Start,
-         Column     => 1,
-         Text       => To_String (Method_Call),
-         Indent     => True);
+      if Method_Body /= Null_Unbounded_String then
+         Delete_Text
+           (Kernel      => Kernel,
+            In_File     => File,
+            Line_Start  => Line_Start,
+            Line_End    => Line_End);
+         Insert_Text
+           (Kernel     => Kernel,
+            In_File    => File,
+            Line       => Line_Start,
+            Column     => 1,
+            Text       => To_String (Method_Call),
+            Indent     => True);
 
-      Insert_New_Method
-        (Kernel      => Kernel,
-         In_File     => File,
-         Before_Line => Line_Start,
-         Options     => Options,
-         Method_Decl => To_String (Method_Decl),
-         Method_Body => To_String (Method_Body));
-
-      return Success;
+         Insert_New_Method
+           (Kernel      => Kernel,
+            In_File     => File,
+            Before_Line => Line_Start,
+            Options     => Options,
+            Method_Decl => To_String (Method_Decl),
+            Method_Body => To_String (Method_Body));
+         return Success;
+      else
+         return Failure;
+      end if;
    end Extract_Method;
 
    -------------
