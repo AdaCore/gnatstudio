@@ -3333,8 +3333,8 @@ the same line/column even if new lines are added in the buffer. This location is
   <shell_doc name="GPS.EditorBuffer.save">
      <param name="self">An instance of GPS.EditorBuffer</param>
      <param name="interactive" default="True">A boolean</param>
-     <param name="to_file" default="Same file as edited by the buffer">An instance of GPS.File</param>
-     <description>Saves the buffer to the given file. If interactive is true, a dialog is open to ask for confirmation from the user first, which gives him a chance to cancel the saving</description>
+     <param name="file" default="Same file as edited by the buffer">An instance of GPS.File</param>
+     <description>Saves the buffer to the given file. If interactive is true, a dialog is open to ask for confirmation from the user first, which gives him a chance to cancel the saving. "interactive" is ignored if file is specified.</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.get_mark">
