@@ -31,11 +31,13 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel;            use GPS.Kernel;
 with Gtk.Box;               use Gtk.Box;
+with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
+with Histories;             use Histories;
 with Language;              use Language;
 with Language_Handlers.GPS; use Language_Handlers.GPS;
 with String_Utils;          use String_Utils;
@@ -69,6 +71,11 @@ package body Refactoring.Subprograms is
    use Parameter_Arrays;
    use Entity_Information_Arrays;
 
+   type Extract_Method_Options is record
+      Use_In_Keyword : Boolean;
+   end record;
+   --  The option to configure the output of the Extract Method refactoring
+
    procedure Generate_Extracted_Method
      (Kernel     : access Kernel_Handle_Record'Class;
       Name       : String;
@@ -77,16 +84,18 @@ package body Refactoring.Subprograms is
       File       : VFS.Virtual_File;
       Line_Start : Natural;
       Line_End   : Natural;
+      Options    : Extract_Method_Options;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String);
    --  Generate the code of the new method
 
    function Extract_Method
-     (Kernel               : access Kernel_Handle_Record'Class;
-      File                 : VFS.Virtual_File;
+     (Kernel              : access Kernel_Handle_Record'Class;
+      File                : VFS.Virtual_File;
       Line_Start, Line_End : Integer;
-      Method_Name          : String) return Command_Return_Type;
+      Method_Name         : String;
+      Options             : Extract_Method_Options) return Command_Return_Type;
    --  Extract a method
 
    procedure Command_Handler
@@ -230,6 +239,7 @@ package body Refactoring.Subprograms is
       File       : VFS.Virtual_File;
       Line_Start : Natural;
       Line_End   : Natural;
+      Options    : Extract_Method_Options;
       Method_Decl : out Unbounded_String;
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String)
@@ -291,7 +301,7 @@ package body Refactoring.Subprograms is
                   Decl := Decl & "out ";
                elsif Params.Table (P).PType = In_Out_Parameter then
                   Decl := Decl & "in out ";
-               else
+               elsif Options.Use_In_Keyword then
                   Decl := Decl & "in ";
                end if;
 
@@ -553,7 +563,8 @@ package body Refactoring.Subprograms is
      (Kernel               : access Kernel_Handle_Record'Class;
       File                 : VFS.Virtual_File;
       Line_Start, Line_End : Integer;
-      Method_Name          : String) return Command_Return_Type
+      Method_Name          : String;
+      Options              : Extract_Method_Options) return Command_Return_Type
    is
       Ref_Iter : Entity_Reference_Iterator;
       Iter     : Entity_Iterator;
@@ -661,6 +672,7 @@ package body Refactoring.Subprograms is
          File        => File,
          Line_Start  => Line_Start,
          Line_End    => Line_End,
+         Options     => Options,
          Method_Decl => Method_Decl,
          Method_Body => Method_Body,
          Method_Call => Method_Call);
@@ -700,11 +712,14 @@ package body Refactoring.Subprograms is
       File : constant VFS.Virtual_File := File_Information
         (File_Selection_Context_Access (Context.Context));
       Line_Start, Line_End : Integer;
+      Options : Extract_Method_Options;
 
       Dialog : Gtk_Dialog;
       Ent    : Gtk_Entry;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
+      Check  : Gtk_Check_Button;
+
       Result : Command_Return_Type := Failure;
       pragma Unreferenced (Button);
 
@@ -722,17 +737,26 @@ package body Refactoring.Subprograms is
       Set_Activates_Default (Ent, True);
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => False);
 
+      Gtk_New (Check, -"Use ""in"" keyword");
+      Pack_Start (Get_Vbox (Dialog), Check, Expand => False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Get_Kernel (Context.Context)).all,
+         Key           => "Refactoring_Use_In_Keyword",
+         Default_Value => False);
+
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
+         Options := (Use_In_Keyword => Get_Active (Check));
+
          Get_Area
            (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
          Result := Extract_Method
            (Get_Kernel (Context.Context),
-            File, Line_Start, Line_End, Get_Text (Ent));
+            File, Line_Start, Line_End, Get_Text (Ent), Options);
       end if;
 
       Destroy (Dialog);
@@ -754,7 +778,8 @@ package body Refactoring.Subprograms is
       Method_Name : constant String  := Nth_Arg (Data, 4, "New_Method");
    begin
       if Extract_Method
-        (Get_Kernel (Data), Create (File), Line_Start, Line_End, Method_Name)
+        (Get_Kernel (Data), Create (File), Line_Start, Line_End, Method_Name,
+         Options => (Use_In_Keyword => True))
         /= Success
       then
          Set_Error_Msg (Data, "Couldn't extract method");
