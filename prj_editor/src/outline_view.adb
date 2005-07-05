@@ -661,6 +661,8 @@ package body Outline_View is
          end loop;
       end if;
 
+      Free (Constructs);
+
       Expand_All (Outline.Tree);
 
       Pop_State (Outline.Kernel);
