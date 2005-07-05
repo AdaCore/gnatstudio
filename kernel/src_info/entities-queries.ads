@@ -229,6 +229,9 @@ package Entities.Queries is
    function Image (Kind : Parameter_Type) return String;
    --  Return a string suitable for display
 
+   function Is_Parameter (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity is a parameter for a subprogram
+
    ------------------
    -- Dependencies --
    ------------------

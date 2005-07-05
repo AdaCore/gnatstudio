@@ -2456,4 +2456,28 @@ package body Entities.Queries is
       end if;
    end Destroy;
 
+   ------------------
+   -- Is_Parameter --
+   ------------------
+
+   function Is_Parameter (Entity : Entity_Information) return Boolean is
+      Caller : constant Entity_Information :=
+        Get_Caller (Declaration_As_Reference (Entity));
+      Param_Iter : Subprogram_Iterator;
+      Param      : Entity_Information;
+   begin
+      if Caller /= null then
+         Param_Iter := Get_Subprogram_Parameters (Caller);
+         loop
+            Get (Param_Iter, Param);
+            exit when Param = null;
+            if Param = Entity then
+               return True;
+            end if;
+            Next (Param_Iter);
+         end loop;
+      end if;
+      return False;
+   end Is_Parameter;
+
 end Entities.Queries;
