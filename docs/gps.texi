@@ -2190,12 +2190,13 @@ replace all unnamed parameters by named parameters, as in:
 @end smallexample
 
 @item Extract Method
-This refactoring is used to move some code from one place to a separate subprogram. The
-goal is to simplify the original subprogram, by moving part of its code elsewhere.
-GPS takes care of finding which parameters the new subprogram should have, whether they
-should be "in", "in out" or "out" parameter, and whether the new subprogram should be a
-procedure or a function. It also replaces in the original subprogram by a call to the
-new subprogram.
+This refactoring is used to move some code from one place to a separate
+subprogram. The goal is to simplify the original subprogram, by moving part of
+its code elsewhere.
+GPS takes care of finding which parameters the new subprogram should have,
+whether they should be "in", "in out" or "out" parameters, and whether the
+new subprogram should be a procedure or a function. It also replaces the code
+in the original subprogram by a call to the new subprogram.
 
 @smallexample
    procedure Proc (Param1 : Integer) is
@@ -2224,8 +2225,8 @@ When lines 4 and 5 are extracted, we get:
    end Proc; 
 @end smallexample
 
-The above example is obviously not very useful, but shows that GPS knows how to find which
-parameters should be transfered to the new subprogram.
+The above example, albeit trivial, shows in particular that GPS knows how
+to find which parameters should be transfered to the new subprogram.
 
 @end table
 
