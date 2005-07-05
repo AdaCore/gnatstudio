@@ -80,6 +80,9 @@ package String_Utils is
    --  Currently, a word is defined as any string made of alphanumeric
    --  character or underscore.
 
+   function Lines_Count (Text : String) return Natural;
+   --  Return the number of lines in Text
+
    function Blank_Slice
      (Count     : Integer;
       Use_Tabs  : Boolean := False;

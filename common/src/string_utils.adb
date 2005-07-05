@@ -28,6 +28,21 @@ with Glib.Unicode;            use Glib, Glib.Unicode;
 package body String_Utils is
 
    -----------------
+   -- Lines_Count --
+   -----------------
+
+   function Lines_Count (Text : String) return Natural is
+      Count : Natural := 1;
+   begin
+      for T in Text'Range loop
+         if Text (T) = ASCII.LF then
+            Count := Count + 1;
+         end if;
+      end loop;
+      return Count;
+   end Lines_Count;
+
+   -----------------
    -- Blank_Slice --
    -----------------
 
