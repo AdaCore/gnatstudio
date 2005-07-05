@@ -1853,7 +1853,6 @@ package body Src_Editor_Module.Shell is
       Success   : Boolean;
       Tag       : Gtk_Text_Tag;
       Iter, Iter2 : aliased Gtk_Text_Iter;
-      pragma Unreferenced (Success);
 
    begin
       if Command = Constructor_Method then
@@ -1935,16 +1934,18 @@ package body Src_Editor_Module.Shell is
             File_Inst := Nth_Arg (Data, 3, Get_File_Class (Kernel),
                                   Default => null, Allow_Null => True);
             if File_Inst = null then
-               File := Get_File (Get_Data (File_Inst));
-            else
                File := Get_Filename (Buffer);
+               Success := Save_MDI_Children
+                 (Get_Kernel (Data),
+                  Children => (1 => Find_Editor
+                                 (Get_Kernel (Data), Get_Filename (Buffer))),
+                  Force    => not Nth_Arg (Data, 2, False));
+            else
+               File := Get_File (Get_Data (File_Inst));
+               Save_To_File (Buffer,
+                             Filename => File,
+                             Success  => Success);
             end if;
-
-            Success := Save_MDI_Children
-              (Get_Kernel (Data),
-               Children => (1 => Find_Editor
-                              (Get_Kernel (Data), Get_Filename (Buffer))),
-               Force    => not Nth_Arg (Data, 2, False));
          end if;
 
       elsif Command = "characters_count" then
