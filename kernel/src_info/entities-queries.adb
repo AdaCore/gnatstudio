@@ -1586,7 +1586,6 @@ package body Entities.Queries is
                Start_Of_Scope := Get_Start_Of_Scope_In_File
                  (Entity, File, Force_Spec => True);
                if Start_Of_Scope /= No_File_Location then
-                  Trace (Me, "MANU Adding to tree " & Get_Name (Entity).all);
                   Add_To_Tree
                        (Tree           => Tree,
                         Entity         => Entity,
