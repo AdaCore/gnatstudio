@@ -18,20 +18,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Commands.Interactive;   use Commands, Commands.Interactive;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Commands.Interactive;  use Commands, Commands.Interactive;
 with Dynamic_Arrays;
-with Entities.Queries;       use Entities, Entities.Queries;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel;             use GPS.Kernel;
-with Language;               use Language;
-with Language_Handlers.GPS;  use Language_Handlers.GPS;
-with String_Utils;           use String_Utils;
-with Traces;                 use Traces;
-with VFS;                    use VFS;
+with Entities.Queries;      use Entities, Entities.Queries;
+with Glib;                  use Glib;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
+with GPS.Kernel;            use GPS.Kernel;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Dialog;            use Gtk.Dialog;
+with Gtk.GEntry;            use Gtk.GEntry;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Stock;             use Gtk.Stock;
+with Gtk.Widget;            use Gtk.Widget;
+with Language;              use Language;
+with Language_Handlers.GPS; use Language_Handlers.GPS;
+with String_Utils;          use String_Utils;
+with Traces;                use Traces;
+with VFS;                   use VFS;
 
 package body Refactoring.Subprograms is
 
@@ -691,12 +700,44 @@ package body Refactoring.Subprograms is
       File : constant VFS.Virtual_File := File_Information
         (File_Selection_Context_Access (Context.Context));
       Line_Start, Line_End : Integer;
+
+      Dialog : Gtk_Dialog;
+      Ent    : Gtk_Entry;
+      Button : Gtk_Widget;
+      Label  : Gtk_Label;
+      Result : Command_Return_Type := Failure;
+      pragma Unreferenced (Button);
+
    begin
-      Get_Area
-        (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
-      return Extract_Method
-        (Get_Kernel (Context.Context),
-         File, Line_Start, Line_End, "New_Method");
+      Gtk_New (Dialog,
+               Title  => -"Extract Method",
+               Parent => Get_Current_Window (Get_Kernel (Context.Context)),
+               Flags  => Modal);
+      Gtk_New (Label, -"Name of the new subprogram:");
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+      Gtk_New (Ent);
+      Set_Text (Ent, -"New_Method");
+      Select_Region (Ent, 0, -1);
+      Set_Activates_Default (Ent, True);
+      Pack_Start (Get_Vbox (Dialog), Ent, Expand => False);
+
+      Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Get_Area
+           (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
+         Result := Extract_Method
+           (Get_Kernel (Context.Context),
+            File, Line_Start, Line_End, Get_Text (Ent));
+      end if;
+
+      Destroy (Dialog);
+
+      return Result;
    end Execute;
 
    ---------------------
