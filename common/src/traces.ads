@@ -218,7 +218,12 @@ package Traces is
    --  "UNEXPECTED_EXCEPTION"
    --  All unexpected exceptions are logged in this handle
 
+   --  "TESTSUITE"
+   --  Things that should be activated only while running the testsuites. This
+   --  includes for instance special shell commands,...
+
    Exception_Handle : Debug_Handle;
+   Testsuite_Handle : Debug_Handle;
 
 private
    type File_Type_Access is access Ada.Text_IO.File_Type;

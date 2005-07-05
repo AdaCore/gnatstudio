@@ -772,4 +772,5 @@ package body Traces is
 
 begin
    Exception_Handle := Create ("UNEXPECTED_EXCEPTION", Default => On);
+   Testsuite_Handle := Create ("TESTSUITE", Default => Off);
 end Traces;
