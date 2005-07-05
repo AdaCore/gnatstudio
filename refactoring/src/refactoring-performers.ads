@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 
 with GPS.Kernel;
 with Entities;
+with VFS;
 
 package Refactoring.Performers is
 
@@ -57,5 +58,44 @@ package Refactoring.Performers is
    --  up-to-date in the LI structure. References inside these files are still
    --  included though.
    --  On_Completion is automatically freed when the refactoring is finished.
+
+   ----------------------
+   -- Editor interface --
+   ----------------------
+
+   procedure Insert_Text
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      In_File         : VFS.Virtual_File;
+      Line            : Integer;
+      Column          : Integer := 1;
+      Text            : String;
+      Indent          : Boolean;
+      Replaced_Length : Integer := 0);
+   --  Insert some text in a source file.
+   --  If Indent is True, the text is indented automatically.
+   --  Replaced_Length is the number of characters that should first be removed
+   --  to be replaced by Text.
+
+   procedure Delete_Text
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line_Start : Integer;
+      Line_End   : Integer);
+   --  Delete a range of text
+
+   function Get_Text
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      From_File  : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Length     : Integer) return String;
+   --  Get the contents of From_File
+
+   function Get_Initial_Value
+     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity      : Entities.Entity_Information) return String;
+   --  Get, from the source, the initial value given to a variable, ie the
+   --  value set when the variable was declared, as in
+   --       A, B : Integer := 2;
 
 end Refactoring.Performers;

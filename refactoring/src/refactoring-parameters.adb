@@ -29,6 +29,7 @@ with VFS;                   use VFS;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with GPS.Intl;              use GPS.Intl;
+with Refactoring.Performers; use Refactoring.Performers;
 
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -100,15 +101,8 @@ package body Refactoring.Parameters is
         (Kernel, "Editor.edit", Args2.all);
       pragma Unreferenced (Found);
 
-      Args : Argument_List_Access :=
-        new Argument_List'
-          (new String'(Full_Name (File).all),
-           new String'(Integer'Image (Line)),
-           new String'(Integer'Image (Column)),
-           new String'("0"),       --  before
-           new String'("100000")); --  after
-      Chars  : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_chars", Args.all);
+      Chars : constant String := Get_Text
+        (Kernel, File, Line, Column, 1_000);
       Param : Entity_Information;
       First, Last : Integer := Chars'First;
       Nest_Count  : Integer := 1;
@@ -152,7 +146,6 @@ package body Refactoring.Parameters is
       end Add_Parameter_Name;
 
    begin
-      Free (Args);
       Free (Args2);
 
       Skip_Word   (Chars, First);
@@ -186,16 +179,10 @@ package body Refactoring.Parameters is
       end loop;
 
       Result := Result & Chars (Last .. First);
-
-      Args := new Argument_List'
-        (new String'(Full_Name (File).all),
-         new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Column)),
-         new String'(To_String (Result)),
-         new String'("0"),
-         new String'(Integer'Image (First - Chars'First + 1)));
-      Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
-      Free (Args);
+      Insert_Text
+        (Kernel, File, Line, Column, To_String (Result),
+         Indent          => False,
+         Replaced_Length => First - Chars'First + 1);
 
       return Success;
    end Name_Parameters;

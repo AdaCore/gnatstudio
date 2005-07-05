@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,20 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Commands;              use Commands;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Intl;            use GPS.Intl;
-with Entities;              use Entities;
-with Entities.Queries;      use Entities.Queries;
-with Traces;                use Traces;
 with Commands.Generic_Asynchronous;
+with Commands;                use Commands;
+with Entities.Queries;        use Entities.Queries;
+with Entities;                use Entities;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
+with String_Utils;            use String_Utils;
+with Traces;                  use Traces;
+with VFS;                     use VFS;
 
 package body Refactoring.Performers is
---     Me : constant Debug_Handle := Create ("Refactoring");
+   Me : constant Debug_Handle := Create ("Refactoring");
 
    use Location_Arrays;
    use File_Arrays;
@@ -340,5 +344,138 @@ package body Refactoring.Performers is
          Result := Execute_Again;
       end if;
    end Find_Next_Location;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      From_File  : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Length     : Integer) return String
+   is
+      Args : Argument_List_Access := new Argument_List'
+        (new String'(Full_Name (From_File).all),
+         new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Column)),
+         new String'("0"),
+         new String'(Integer'Image (Length)));
+      Text : constant String := Execute_GPS_Shell_Command
+        (Kernel, "Editor.get_chars", Args.all);
+   begin
+      Free (Args);
+      return Text;
+   end Get_Text;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   procedure Insert_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer := 1;
+      Text       : String;
+      Indent     : Boolean;
+      Replaced_Length : Integer := 0)
+   is
+      Args : Argument_List_Access := new Argument_List'
+        (new String'(Full_Name (In_File).all),
+         new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Column)),
+         new String'(Text),
+         new String'("0"),
+         new String'(Integer'Image (Replaced_Length)));
+      Args2 : Argument_List_Access := new Argument_List'
+        (new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
+   begin
+      Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
+
+      if Indent then
+         Execute_GPS_Shell_Command (Kernel, "Editor.select_text", Args2.all);
+         Execute_GPS_Shell_Command (Kernel, "Editor.indent",
+                                    Argument_List'(1 .. 0 => null));
+      end if;
+
+      Free (Args2);
+      Free (Args);
+   end Insert_Text;
+
+   -----------------
+   -- Delete_Text --
+   -----------------
+
+   procedure Delete_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line_Start : Integer;
+      Line_End   : Integer)
+   is
+      Args : Argument_List_Access;
+   begin
+      for L in reverse Line_Start .. Line_End loop
+         Args := new Argument_List'
+           (new String'(Full_Name (In_File).all),
+            new String'(Integer'Image (L)),
+            new String'(Integer'Image (1)),
+            new String'(""));
+         Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
+         Free (Args);
+      end loop;
+   end Delete_Text;
+
+   -----------------------
+   -- Get_Initial_Value --
+   -----------------------
+
+   function Get_Initial_Value
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Information) return String is
+   begin
+      --  These cannot have an initial value, so we save time
+      if Is_Container (Get_Kind (Entity).Kind)
+        or else Get_Kind (Entity).Is_Type
+      then
+         return "";
+      end if;
+
+      declare
+         Text : constant String := Get_Text
+           (Kernel,
+            From_File => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+            Line      => Get_Line (Get_Declaration_Of (Entity)),
+            Column    => Get_Column (Get_Declaration_Of (Entity)),
+            Length    => 1_000);
+         Index : Natural := Text'First;
+         Last  : Natural;
+      begin
+         Skip_To_Char (Text, Index, ':');
+         Index := Index + 1;
+
+         while Index < Text'Last loop
+            if Text (Index .. Index + 1) = ":=" then
+               Index := Index + 2;
+               Skip_Blanks (Text, Index);
+               Last := Index;
+               Skip_To_Char (Text, Last, ';');
+
+               Trace (Me, "   " & Text (Index .. Last - 1));
+               return Text (Index .. Last - 1);
+
+            elsif Text (Index) = ';'
+              or else Text (Index) = ')'
+            then
+               exit;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end;
+
+      return "";
+   end Get_Initial_Value;
 
 end Refactoring.Performers;

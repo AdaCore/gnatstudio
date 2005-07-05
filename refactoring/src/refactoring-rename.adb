@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;         use Ada.Exceptions;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
@@ -174,21 +173,14 @@ package body Refactoring.Rename is
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid
       for L in reverse Location_Arrays.First .. Last (Refs) loop
-         declare
-            Args : Argument_List_Access :=
-              new Argument_List'
-                (new String'
-                    (Full_Name (Get_Filename (Refs.Table (L).File)).all),
-                 new String'(Integer'Image (Refs.Table (L).Line)),
-                 new String'(Integer'Image (Refs.Table (L).Column)),
-                 new String'(Factory.New_Name),
-                 new String'("0"),
-                 new String'(Integer'Image (Name'Length)));
-         begin
-            Execute_GPS_Shell_Command
-              (Kernel, "Editor.replace_text", Args.all);
-            Free (Args);
-         end;
+         Insert_Text
+           (Kernel,
+            Get_Filename (Refs.Table (L).File),
+            Refs.Table (L).Line,
+            Refs.Table (L).Column,
+            Factory.New_Name,
+            Indent          => False,
+            Replaced_Length => Name'Length);
 
          if Factory.Auto_Save
            and then (L = Location_Arrays.First

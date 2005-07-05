@@ -18,48 +18,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Commands.Interactive;  use Commands, Commands.Interactive;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Commands.Interactive;   use Commands, Commands.Interactive;
 with Dynamic_Arrays;
-with Entities.Queries;      use Entities, Entities.Queries;
-with Glib;                  use Glib;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GPS.Intl;              use GPS.Intl;
-with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.Kernel;            use GPS.Kernel;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Check_Button;      use Gtk.Check_Button;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Widget;            use Gtk.Widget;
-with Histories;             use Histories;
-with Language;              use Language;
-with Language_Handlers.GPS; use Language_Handlers.GPS;
-with String_Utils;          use String_Utils;
-with Traces;                use Traces;
-with VFS;                   use VFS;
+with Entities.Queries;       use Entities, Entities.Queries;
+with Glib;                   use Glib;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Check_Button;       use Gtk.Check_Button;
+with Gtk.Dialog;             use Gtk.Dialog;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Widget;             use Gtk.Widget;
+with Histories;              use Histories;
+with Language;               use Language;
+with Language_Handlers.GPS;  use Language_Handlers.GPS;
+with Refactoring.Performers; use Refactoring.Performers;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
 
 package body Refactoring.Subprograms is
 
    Me : constant Debug_Handle := Create ("Refactor.Subprograms");
-   Testsuite_Me : constant Debug_Handle := Create ("TESTSUITE", Off);
 
    type Extract_Method_Command is new Interactive_Command with null record;
    function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called for "Rename Entity" menu
-
-   type Is_Area_Context is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
-     (Filter  : access Is_Area_Context;
-      Context : access Selection_Context'Class) return Boolean;
-   --  Filter that checks that the user has clicked on a subprogram entity
+   --  Called for "Extract Method" menu
 
    type Parameter_Description is record
       Parameter : Entity_Information;
@@ -72,7 +65,8 @@ package body Refactoring.Subprograms is
    use Entity_Information_Arrays;
 
    type Extract_Method_Options is record
-      Use_In_Keyword : Boolean;
+      Use_In_Keyword    : Boolean;
+      Use_Separate_Decl : Boolean;
    end record;
    --  The option to configure the output of the Extract Method refactoring
 
@@ -102,130 +96,15 @@ package body Refactoring.Subprograms is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands
 
-   procedure Insert_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Integer := 1;
-      Text       : String;
-      Indent     : Boolean);
-   --  Insert some text in a source file.
-   --  If Indent is True, the text is indented automatically
-
-   procedure Delete_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
-      Line_Start : Integer;
-      Line_End   : Integer);
-   --  Delete a range of text
-
-   function Get_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      From_File  : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Integer;
-      Length     : Integer) return String;
-   --  Get the contents of From_File
-
    procedure Insert_New_Method
      (Kernel      : access Kernel_Handle_Record'Class;
       In_File     : VFS.Virtual_File;
       Before_Line : Integer;
+      Options     : Extract_Method_Options;
       Method_Decl : String;
       Method_Body : String);
    --  Insert the new method decl and body in In_File, if possible before the
    --  line Before_Line.
-
-   function Lines_Count (Text : String) return Natural;
-   --  Return the number of lines in Text
-
-   function Is_Parameter (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity is a parameter for a subprogram
-
-   function Get_Initial_Value
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Information) return String;
-   --  Get, from the source, the initial value given to a variable, ie the
-   --  value set when the variable was declared, as in
-   --       A, B : Integer := 2;
-
-   -----------------------
-   -- Get_Initial_Value --
-   -----------------------
-
-   function Get_Initial_Value
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Information) return String is
-   begin
-      --  These cannot have an initial value, so we save time
-      if Is_Container (Get_Kind (Entity).Kind)
-        or else Get_Kind (Entity).Is_Type
-      then
-         return "";
-      end if;
-
-      declare
-         Text : constant String := Get_Text
-           (Kernel,
-            From_File => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
-            Line      => Get_Line (Get_Declaration_Of (Entity)),
-            Column    => Get_Column (Get_Declaration_Of (Entity)),
-            Length    => 1_000);
-         Index : Natural := Text'First;
-         Last  : Natural;
-      begin
-         Skip_To_Char (Text, Index, ':');
-         Index := Index + 1;
-
-         while Index < Text'Last loop
-            if Text (Index .. Index + 1) = ":=" then
-               Index := Index + 2;
-               Skip_Blanks (Text, Index);
-               Last := Index;
-               Skip_To_Char (Text, Last, ';');
-
-               Trace (Me, "   " & Text (Index .. Last - 1));
-               return Text (Index .. Last - 1);
-
-            elsif Text (Index) = ';'
-              or else Text (Index) = ')'
-            then
-               exit;
-            end if;
-            Index := Index + 1;
-         end loop;
-      end;
-
-      return "";
-   end Get_Initial_Value;
-
-   -----------------
-   -- Lines_Count --
-   -----------------
-
-   function Lines_Count (Text : String) return Natural is
-      Count : Natural := 1;
-   begin
-      for T in Text'Range loop
-         if Text (T) = ASCII.LF then
-            Count := Count + 1;
-         end if;
-      end loop;
-      return Count;
-   end Lines_Count;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   function Filter_Matches_Primitive
-     (Filter  : access Is_Area_Context;
-      Context : access Selection_Context'Class) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Context.all in File_Area_Context'Class;
-   end Filter_Matches_Primitive;
 
    -------------------------------
    -- Generate_Extracted_Method --
@@ -404,88 +283,6 @@ package body Refactoring.Subprograms is
       Method_Body := Result;
    end Generate_Extracted_Method;
 
-   --------------
-   -- Get_Text --
-   --------------
-
-   function Get_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      From_File  : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Integer;
-      Length     : Integer) return String
-   is
-      Args : Argument_List_Access := new Argument_List'
-        (new String'(Full_Name (From_File).all),
-         new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Column)),
-         new String'("0"),
-         new String'(Integer'Image (Length)));
-      Text : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_chars", Args.all);
-   begin
-      Free (Args);
-      return Text;
-   end Get_Text;
-
-   -----------------
-   -- Insert_Text --
-   -----------------
-
-   procedure Insert_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Integer := 1;
-      Text       : String;
-      Indent     : Boolean)
-   is
-      Args : Argument_List_Access := new Argument_List'
-        (new String'(Full_Name (In_File).all),
-         new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Column)),
-         new String'(Text),
-         new String'("0"),
-         new String'("0"));
-      Args2 : Argument_List_Access := new Argument_List'
-        (new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
-   begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
-
-      if Indent then
-         Execute_GPS_Shell_Command (Kernel, "Editor.select_text", Args2.all);
-         Execute_GPS_Shell_Command (Kernel, "Editor.indent",
-                                    Argument_List'(1 .. 0 => null));
-      end if;
-
-      Free (Args2);
-      Free (Args);
-   end Insert_Text;
-
-   -----------------
-   -- Delete_Text --
-   -----------------
-
-   procedure Delete_Text
-     (Kernel     : access Kernel_Handle_Record'Class;
-      In_File    : VFS.Virtual_File;
-      Line_Start : Integer;
-      Line_End   : Integer)
-   is
-      Args : Argument_List_Access;
-   begin
-      for L in reverse Line_Start .. Line_End loop
-         Args := new Argument_List'
-           (new String'(Full_Name (In_File).all),
-            new String'(Integer'Image (L)),
-            new String'(Integer'Image (1)),
-            new String'(""));
-         Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
-         Free (Args);
-      end loop;
-   end Delete_Text;
-
    -----------------------
    -- Insert_New_Method --
    -----------------------
@@ -494,6 +291,7 @@ package body Refactoring.Subprograms is
      (Kernel      : access Kernel_Handle_Record'Class;
       In_File     : VFS.Virtual_File;
       Before_Line : Integer;
+      Options     : Extract_Method_Options;
       Method_Decl : String;
       Method_Body : String)
    is
@@ -528,32 +326,11 @@ package body Refactoring.Subprograms is
       --  Insert the body before the decl, so that if they are inserted at the
       --  same line, they occur with the decl first
       Insert_Text (Kernel, In_File, Line, 1, Method_Body, True);
-      Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
-   end Insert_New_Method;
 
-   ------------------
-   -- Is_Parameter --
-   ------------------
-
-   function Is_Parameter (Entity : Entity_Information) return Boolean is
-      Caller : constant Entity_Information :=
-        Get_Caller (Declaration_As_Reference (Entity));
-      Param_Iter : Subprogram_Iterator;
-      Param      : Entity_Information;
-   begin
-      if Caller /= null then
-         Param_Iter := Get_Subprogram_Parameters (Caller);
-         loop
-            Get (Param_Iter, Param);
-            exit when Param = null;
-            if Param = Entity then
-               return True;
-            end if;
-            Next (Param_Iter);
-         end loop;
+      if Options.Use_Separate_Decl then
+         Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
       end if;
-      return False;
-   end Is_Parameter;
+   end Insert_New_Method;
 
    --------------------
    -- Extract_Method --
@@ -694,6 +471,7 @@ package body Refactoring.Subprograms is
         (Kernel      => Kernel,
          In_File     => File,
          Before_Line => Line_Start,
+         Options     => Options,
          Method_Decl => To_String (Method_Decl),
          Method_Body => To_String (Method_Body));
 
@@ -718,7 +496,7 @@ package body Refactoring.Subprograms is
       Ent    : Gtk_Entry;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
-      Check  : Gtk_Check_Button;
+      Check, Separate_Decl  : Gtk_Check_Button;
 
       Result : Command_Return_Type := Failure;
       pragma Unreferenced (Button);
@@ -743,6 +521,17 @@ package body Refactoring.Subprograms is
         (Get_History (Get_Kernel (Context.Context)).all,
          Key           => "Refactoring_Use_In_Keyword",
          Default_Value => False);
+      Associate (Get_History (Get_Kernel (Context.Context)).all,
+                "Refactoring_Use_In_Keyword", Check);
+
+      Gtk_New (Separate_Decl, -"Create declaration for subprogram");
+      Pack_Start (Get_Vbox (Dialog), Separate_Decl, Expand => False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Get_Kernel (Context.Context)).all,
+         Key           => "Refactoring_Create_Declaration",
+         Default_Value => True);
+      Associate (Get_History (Get_Kernel (Context.Context)).all,
+                "Refactoring_Create_Declaration", Separate_Decl);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -750,7 +539,8 @@ package body Refactoring.Subprograms is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Options := (Use_In_Keyword => Get_Active (Check));
+         Options := (Use_In_Keyword    => Get_Active (Check),
+                     Use_Separate_Decl => Get_Active (Separate_Decl));
 
          Get_Area
            (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
@@ -779,7 +569,7 @@ package body Refactoring.Subprograms is
    begin
       if Extract_Method
         (Get_Kernel (Data), Create (File), Line_Start, Line_End, Method_Name,
-         Options => (Use_In_Keyword => True))
+         Options => (Use_In_Keyword => True, Use_Separate_Decl => True))
         /= Success
       then
          Set_Error_Msg (Data, "Couldn't extract method");
@@ -804,7 +594,7 @@ package body Refactoring.Subprograms is
          Filter => Filter and Create (Module => "Source_Editor"),
          Action => C);
 
-      if Active (Testsuite_Me) then
+      if Active (Testsuite_Handle) then
          Register_Command
            (Kernel, "extract_method", 3, 4, Command_Handler'Access);
       end if;
