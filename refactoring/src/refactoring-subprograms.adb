@@ -1,0 +1,747 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2005                            --
+--                            AdaCore                                --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Commands.Interactive;   use Commands, Commands.Interactive;
+with Dynamic_Arrays;
+with Entities.Queries;       use Entities, Entities.Queries;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with Language;               use Language;
+with Language_Handlers.GPS;  use Language_Handlers.GPS;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
+
+package body Refactoring.Subprograms is
+
+   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
+   Testsuite_Me : constant Debug_Handle := Create ("TESTSUITE", Off);
+
+   type Extract_Method_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Extract_Method_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called for "Rename Entity" menu
+
+   type Is_Area_Context is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Is_Area_Context;
+      Context : access Selection_Context'Class) return Boolean;
+   --  Filter that checks that the user has clicked on a subprogram entity
+
+   type Parameter_Description is record
+      Parameter : Entity_Information;
+      PType     : Parameter_Type;
+   end record;
+
+   package Parameter_Arrays is new Dynamic_Arrays (Parameter_Description);
+
+   use Parameter_Arrays;
+   use Entity_Information_Arrays;
+
+   procedure Generate_Extracted_Method
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
+      Params     : Parameter_Arrays.Instance;
+      Local_Vars : Entity_Information_Arrays.Instance;
+      File       : VFS.Virtual_File;
+      Line_Start : Natural;
+      Line_End   : Natural;
+      Method_Decl : out Unbounded_String;
+      Method_Body : out Unbounded_String;
+      Method_Call : out Unbounded_String);
+   --  Generate the code of the new method
+
+   function Extract_Method
+     (Kernel               : access Kernel_Handle_Record'Class;
+      File                 : VFS.Virtual_File;
+      Line_Start, Line_End : Integer;
+      Method_Name          : String) return Command_Return_Type;
+   --  Extract a method
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands
+
+   procedure Insert_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer := 1;
+      Text       : String;
+      Indent     : Boolean);
+   --  Insert some text in a source file.
+   --  If Indent is True, the text is indented automatically
+
+   procedure Delete_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line_Start : Integer;
+      Line_End   : Integer);
+   --  Delete a range of text
+
+   function Get_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      From_File  : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Length     : Integer) return String;
+   --  Get the contents of From_File
+
+   procedure Insert_New_Method
+     (Kernel      : access Kernel_Handle_Record'Class;
+      In_File     : VFS.Virtual_File;
+      Before_Line : Integer;
+      Method_Decl : String;
+      Method_Body : String);
+   --  Insert the new method decl and body in In_File, if possible before the
+   --  line Before_Line.
+
+   function Lines_Count (Text : String) return Natural;
+   --  Return the number of lines in Text
+
+   function Is_Parameter (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity is a parameter for a subprogram
+
+   function Get_Initial_Value
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Information) return String;
+   --  Get, from the source, the initial value given to a variable, ie the
+   --  value set when the variable was declared, as in
+   --       A, B : Integer := 2;
+
+   -----------------------
+   -- Get_Initial_Value --
+   -----------------------
+
+   function Get_Initial_Value
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Entity      : Entity_Information) return String is
+   begin
+      --  These cannot have an initial value, so we save time
+      if Is_Container (Get_Kind (Entity).Kind)
+        or else Get_Kind (Entity).Is_Type
+      then
+         return "";
+      end if;
+
+      declare
+         Text : constant String := Get_Text
+           (Kernel,
+            From_File => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+            Line      => Get_Line (Get_Declaration_Of (Entity)),
+            Column    => Get_Column (Get_Declaration_Of (Entity)),
+            Length    => 1_000);
+         Index : Natural := Text'First;
+         Last  : Natural;
+      begin
+         Skip_To_Char (Text, Index, ':');
+         Index := Index + 1;
+
+         while Index < Text'Last loop
+            if Text (Index .. Index + 1) = ":=" then
+               Index := Index + 2;
+               Skip_Blanks (Text, Index);
+               Last := Index;
+               Skip_To_Char (Text, Last, ';');
+
+               Trace (Me, "   " & Text (Index .. Last - 1));
+               return Text (Index .. Last - 1);
+
+            elsif Text (Index) = ';'
+              or else Text (Index) = ')'
+            then
+               exit;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end;
+
+      return "";
+   end Get_Initial_Value;
+
+   -----------------
+   -- Lines_Count --
+   -----------------
+
+   function Lines_Count (Text : String) return Natural is
+      Count : Natural := 1;
+   begin
+      for T in Text'Range loop
+         if Text (T) = ASCII.LF then
+            Count := Count + 1;
+         end if;
+      end loop;
+      return Count;
+   end Lines_Count;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Is_Area_Context;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Context.all in File_Area_Context'Class;
+   end Filter_Matches_Primitive;
+
+   -------------------------------
+   -- Generate_Extracted_Method --
+   -------------------------------
+
+   procedure Generate_Extracted_Method
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Name       : String;
+      Params     : Parameter_Arrays.Instance;
+      Local_Vars : Entity_Information_Arrays.Instance;
+      File       : VFS.Virtual_File;
+      Line_Start : Natural;
+      Line_End   : Natural;
+      Method_Decl : out Unbounded_String;
+      Method_Body : out Unbounded_String;
+      Method_Call : out Unbounded_String)
+   is
+      Out_Params_Count    : Natural := 0;
+      In_Out_Params_Count : Natural := 0;
+      In_Params_Count     : Natural := 0;
+      Result, Decl     : Unbounded_String;
+      Typ              : Entity_Information;
+      Args             : Argument_List_Access;
+      First_Out_Param  : Entity_Information;
+   begin
+      for P in Parameter_Arrays.First .. Last (Params) loop
+         if Params.Table (P).PType = Out_Parameter then
+            Out_Params_Count := Out_Params_Count + 1;
+            First_Out_Param := Params.Table (P).Parameter;
+         elsif Params.Table (P).PType = In_Out_Parameter then
+            In_Out_Params_Count := In_Out_Params_Count + 1;
+         else
+            In_Params_Count := In_Params_Count + 1;
+         end if;
+      end loop;
+
+      if Out_Params_Count = 1
+        and then In_Out_Params_Count = 0
+      then
+         Decl := To_Unbounded_String ("function ");
+      else
+         Decl := To_Unbounded_String ("procedure ");
+      end if;
+
+      Decl := Decl & Name;
+
+      --  Do we have at least one parameter left ?
+
+      if In_Params_Count + In_Out_Params_Count > 0
+        or else Out_Params_Count > 1
+      then
+         Decl := Decl & ASCII.LF & "   (";
+         for P in Parameter_Arrays.First .. Last (Params) loop
+
+            --  Do not emit anything if there is a single out parameter, since
+            --  we then use a function for the extracted method
+            if Params.Table (P).PType /= Out_Parameter
+              or else Out_Params_Count /= 1
+              or else In_Out_Params_Count /= 0
+            then
+               Decl := Decl
+                 & Get_Name (Params.Table (P).Parameter).all & " : ";
+               Typ := Get_Type_Of (Params.Table (P).Parameter);
+               if Typ = null then
+                  Trace (Me, "Couldn't find name of parameter");
+                  Method_Decl := Null_Unbounded_String;
+                  Method_Body := Null_Unbounded_String;
+                  return;
+               end if;
+
+               if Params.Table (P).PType = Out_Parameter then
+                  Decl := Decl & "out ";
+               elsif Params.Table (P).PType = In_Out_Parameter then
+                  Decl := Decl & "in out ";
+               else
+                  Decl := Decl & "in ";
+               end if;
+
+               Decl := Decl & Get_Name (Typ).all;
+               if P /= Last (Params) then
+                  Decl := Decl & ";" & ASCII.LF & "    ";
+               end if;
+            end if;
+         end loop;
+         Decl := Decl & ")";
+      end if;
+
+      if Out_Params_Count = 1
+        and then In_Out_Params_Count = 0
+      then
+         Typ := Get_Type_Of (First_Out_Param);
+         Decl := Decl & " return " & Get_Name (Typ).all;
+      end if;
+
+      Result := Decl;
+      Decl   := Decl & ";" & ASCII.LF;
+
+      Result := Result & ASCII.LF & "is" & ASCII.LF;
+
+      for L in Entity_Information_Arrays.First .. Last (Local_Vars) loop
+         Result := Result
+           & "   " & Get_Name (Local_Vars.Table (L)).all & " : ";
+         Typ := Get_Type_Of (Local_Vars.Table (L));
+         if Typ = null then
+            Trace (Me, "Couldn't find name of local variable");
+            Method_Decl := Null_Unbounded_String;
+            Method_Body := Null_Unbounded_String;
+            return;
+         end if;
+
+         Result := Result & Get_Name (Typ).all & ";" & ASCII.LF;
+      end loop;
+
+      if Out_Params_Count = 1
+        and then In_Out_Params_Count = 0
+      then
+         Typ := Get_Type_Of (First_Out_Param);
+         Result := Result & "   " & Get_Name (First_Out_Param).all
+           & " : " & Get_Name (Typ).all & ";" & ASCII.LF;
+      end if;
+
+      Result := Result & "begin" & ASCII.LF & "   ";
+
+      for L in Line_Start .. Line_End loop
+         Args := new Argument_List'
+           (new String'(Full_Name (File).all),
+            new String'(Integer'Image (L)),
+            new String'(Integer'Image (1)));
+         Result := Result
+           & Execute_GPS_Shell_Command (Kernel, "Editor.get_chars", Args.all);
+         Free (Args);
+      end loop;
+
+      if Out_Params_Count = 1
+        and then In_Out_Params_Count = 0
+      then
+         Result := Result & "   return "
+           & Get_Name (First_Out_Param).all & ";" & ASCII.LF;
+      end if;
+
+      Result := Result & "end " & Name & ";" & ASCII.LF;
+
+      if Out_Params_Count = 1
+        and then In_Out_Params_Count = 0
+      then
+         Method_Call := To_Unbounded_String
+           (Get_Name (First_Out_Param).all & " := ");
+      end if;
+
+      Method_Call := Method_Call & Name;
+      if In_Params_Count + In_Out_Params_Count > 0
+        or else Out_Params_Count > 1
+      then
+         Method_Call := Method_Call & " (";
+
+         for P in Parameter_Arrays.First .. Last (Params) loop
+            if Params.Table (P).PType /= Out_Parameter
+              or else Out_Params_Count /= 1
+              or else In_Out_Params_Count /= 0
+            then
+               Method_Call := Method_Call
+                 & Get_Name (Params.Table (P).Parameter).all;
+
+               if P /= Last (Params) then
+                  Method_Call := Method_Call & ", ";
+               end if;
+            end if;
+         end loop;
+
+         Method_Call := Method_Call & ")";
+      end if;
+
+      Method_Call := Method_Call & ";" & ASCII.LF;
+      Method_Decl := Decl;
+      Method_Body := Result;
+   end Generate_Extracted_Method;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      From_File  : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer;
+      Length     : Integer) return String
+   is
+      Args : Argument_List_Access := new Argument_List'
+        (new String'(Full_Name (From_File).all),
+         new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Column)),
+         new String'("0"),
+         new String'(Integer'Image (Length)));
+      Text : constant String := Execute_GPS_Shell_Command
+        (Kernel, "Editor.get_chars", Args.all);
+   begin
+      Free (Args);
+      return Text;
+   end Get_Text;
+
+   -----------------
+   -- Insert_Text --
+   -----------------
+
+   procedure Insert_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line       : Integer;
+      Column     : Integer := 1;
+      Text       : String;
+      Indent     : Boolean)
+   is
+      Args : Argument_List_Access := new Argument_List'
+        (new String'(Full_Name (In_File).all),
+         new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Column)),
+         new String'(Text),
+         new String'("0"),
+         new String'("0"));
+      Args2 : Argument_List_Access := new Argument_List'
+        (new String'(Integer'Image (Line)),
+         new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
+   begin
+      Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
+
+      if Indent then
+         Execute_GPS_Shell_Command (Kernel, "Editor.select_text", Args2.all);
+         Execute_GPS_Shell_Command (Kernel, "Editor.indent",
+                                    Argument_List'(1 .. 0 => null));
+      end if;
+
+      Free (Args2);
+      Free (Args);
+   end Insert_Text;
+
+   -----------------
+   -- Delete_Text --
+   -----------------
+
+   procedure Delete_Text
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_File    : VFS.Virtual_File;
+      Line_Start : Integer;
+      Line_End   : Integer)
+   is
+      Args : Argument_List_Access;
+   begin
+      for L in reverse Line_Start .. Line_End loop
+         Args := new Argument_List'
+           (new String'(Full_Name (In_File).all),
+            new String'(Integer'Image (L)),
+            new String'(Integer'Image (1)),
+            new String'(""));
+         Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
+         Free (Args);
+      end loop;
+   end Delete_Text;
+
+   -----------------------
+   -- Insert_New_Method --
+   -----------------------
+
+   procedure Insert_New_Method
+     (Kernel      : access Kernel_Handle_Record'Class;
+      In_File     : VFS.Virtual_File;
+      Before_Line : Integer;
+      Method_Decl : String;
+      Method_Body : String)
+   is
+      Languages  : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (Kernel));
+      Handler    : constant LI_Handler :=
+        Get_LI_Handler_From_File (Languages, In_File);
+      Constructs : Construct_List;
+      Line       : Integer := Before_Line;
+      Decl_Line  : Integer := Integer'Last;
+   begin
+      Parse_File_Constructs (Handler, Languages, In_File, Constructs);
+      Constructs.Current := Constructs.First;
+      while Constructs.Current /= null loop
+         if Constructs.Current.Category in Subprogram_Category then
+            if Constructs.Current.Sloc_Start.Line < Decl_Line then
+               Decl_Line := Constructs.Current.Sloc_Start.Line - 1;
+            end if;
+
+            if Constructs.Current.Sloc_Start.Line <= Line
+              and then Constructs.Current.Sloc_End.Line > Line
+            then
+               Line := Constructs.Current.Sloc_Start.Line - 1;
+            end if;
+         end if;
+
+         Constructs.Current := Constructs.Current.Next;
+      end loop;
+
+      Free (Constructs);
+
+      --  Insert the body before the decl, so that if they are inserted at the
+      --  same line, they occur with the decl first
+      Insert_Text (Kernel, In_File, Line, 1, Method_Body, True);
+      Insert_Text (Kernel, In_File, Decl_Line, 1, Method_Decl, True);
+   end Insert_New_Method;
+
+   ------------------
+   -- Is_Parameter --
+   ------------------
+
+   function Is_Parameter (Entity : Entity_Information) return Boolean is
+      Caller : constant Entity_Information :=
+        Get_Caller (Declaration_As_Reference (Entity));
+      Param_Iter : Subprogram_Iterator;
+      Param      : Entity_Information;
+   begin
+      if Caller /= null then
+         Param_Iter := Get_Subprogram_Parameters (Caller);
+         loop
+            Get (Param_Iter, Param);
+            exit when Param = null;
+            if Param = Entity then
+               return True;
+            end if;
+            Next (Param_Iter);
+         end loop;
+      end if;
+      return False;
+   end Is_Parameter;
+
+   --------------------
+   -- Extract_Method --
+   --------------------
+
+   function Extract_Method
+     (Kernel               : access Kernel_Handle_Record'Class;
+      File                 : VFS.Virtual_File;
+      Line_Start, Line_End : Integer;
+      Method_Name          : String) return Command_Return_Type
+   is
+      Ref_Iter : Entity_Reference_Iterator;
+      Iter     : Entity_Iterator;
+      Entity, Caller   : Entity_Information;
+      Ref      : Entity_Reference;
+      Location : File_Location;
+      Source   : constant Source_File := Get_Or_Create
+        (Get_Database (Kernel), File);
+      Is_Modified     : Boolean;
+      Is_Read         : Boolean;
+      Has_Ref_Before, Has_Ref_After : Boolean;
+      Local_Vars      : Entity_Information_Arrays.Instance;
+      Params          : Parameter_Arrays.Instance;
+      Is_Global       : Boolean;
+      Is_Param        : Boolean;
+      Method_Decl, Method_Body, Method_Call : Unbounded_String;
+
+   begin
+      Find_All_Entities_In_File (Iter, Source);
+      while not At_End (Iter) loop
+         Entity := Get (Iter);
+
+         Caller    := Get_Caller (Declaration_As_Reference (Entity));
+         Is_Global := Caller = null
+           or else not Is_Subprogram (Caller);
+
+         if not Is_Global then
+            Is_Modified     := False;
+            Is_Read         := False;
+            Has_Ref_Before  := False;
+            Has_Ref_After   := False;
+            Is_Param        := Is_Parameter (Entity);
+
+            Find_All_References (Ref_Iter, Entity, In_File => Source);
+            while not At_End (Ref_Iter) loop
+               Ref := Get (Ref_Iter);
+               Location := Get_Location (Ref);
+
+               if Location.Line >= Line_Start
+                 and then Location.Line <= Line_End
+               then
+                  if Is_Read_Reference (Get_Kind (Ref)) then
+                     Is_Read := True;
+                  end if;
+
+                  if Is_Write_Reference (Get_Kind (Ref)) then
+                     Is_Modified := True;
+                  end if;
+               elsif Get_Location (Ref) /= Get_Declaration_Of (Entity) then
+                  if Location.Line < Line_Start then
+                     Has_Ref_Before := True;
+                  else
+                     Has_Ref_After := True;
+                  end if;
+               end if;
+
+               Next (Ref_Iter);
+            end loop;
+            Destroy (Ref_Iter);
+
+            if not Has_Ref_Before then
+               if Get_Initial_Value (Kernel, Entity) /= "" then
+                  Has_Ref_Before := True;
+               end if;
+            end if;
+
+            if not Is_Modified and then Is_Read then
+               if Has_Ref_Before
+                 or else Has_Ref_After
+                 or else Is_Param
+               then
+                  Append (Params, (Parameter => Entity,
+                                   PType     => In_Parameter));
+               else
+                  Append (Local_Vars, Entity);
+               end if;
+            elsif Is_Modified then
+               if Has_Ref_Before then
+                  if Has_Ref_After then
+                     Append (Params, (Parameter => Entity,
+                                      PType     => In_Out_Parameter));
+                  else
+                     Append (Params, (Parameter => Entity,
+                                      PType     => In_Parameter));
+                  end if;
+
+               elsif Has_Ref_After then
+                  Append (Params, (Parameter => Entity,
+                                   PType     => Out_Parameter));
+               else
+                  Append (Local_Vars, Entity);
+               end if;
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+      Destroy (Iter);
+
+      Generate_Extracted_Method
+        (Kernel,
+         Name        => Method_Name,
+         Params      => Params,
+         Local_Vars  => Local_Vars,
+         File        => File,
+         Line_Start  => Line_Start,
+         Line_End    => Line_End,
+         Method_Decl => Method_Decl,
+         Method_Body => Method_Body,
+         Method_Call => Method_Call);
+
+      Delete_Text
+        (Kernel      => Kernel,
+         In_File     => File,
+         Line_Start  => Line_Start,
+         Line_End    => Line_End);
+      Insert_Text
+        (Kernel     => Kernel,
+         In_File    => File,
+         Line       => Line_Start,
+         Column     => 1,
+         Text       => To_String (Method_Call),
+         Indent     => True);
+
+      Insert_New_Method
+        (Kernel      => Kernel,
+         In_File     => File,
+         Before_Line => Line_Start,
+         Method_Decl => To_String (Method_Decl),
+         Method_Body => To_String (Method_Body));
+
+      return Success;
+   end Extract_Method;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Extract_Method_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      File : constant VFS.Virtual_File := File_Information
+        (File_Selection_Context_Access (Context.Context));
+      Line_Start, Line_End : Integer;
+   begin
+      Get_Area
+        (File_Area_Context_Access (Context.Context), Line_Start, Line_End);
+      return Extract_Method
+        (Get_Kernel (Context.Context),
+         File, Line_Start, Line_End, "New_Method");
+   end Execute;
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      File        : constant String  := Nth_Arg (Data, 1);
+      Line_Start  : constant Integer := Nth_Arg (Data, 2);
+      Line_End    : constant Integer := Nth_Arg (Data, 3);
+      Method_Name : constant String  := Nth_Arg (Data, 4, "New_Method");
+   begin
+      if Extract_Method
+        (Get_Kernel (Data), Create (File), Line_Start, Line_End, Method_Name)
+        /= Success
+      then
+         Set_Error_Msg (Data, "Couldn't extract method");
+      end if;
+   end Command_Handler;
+
+   --------------------------
+   -- Register_Refactoring --
+   --------------------------
+
+   procedure Register_Refactoring
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      C : constant Interactive_Command_Access := new Extract_Method_Command;
+      Filter : Action_Filter;
+   begin
+      Filter := new Is_Area_Context;
+      Register_Contextual_Menu
+        (Kernel,
+         Name  => "Extract Method",
+         Label => "Refactoring/Extract method",
+         Filter => Filter and Create (Module => "Source_Editor"),
+         Action => C);
+
+      if Active (Testsuite_Me) then
+         Register_Command
+           (Kernel, "extract_method", 3, 4, Command_Handler'Access);
+      end if;
+   end Register_Refactoring;
+
+end Refactoring.Subprograms;

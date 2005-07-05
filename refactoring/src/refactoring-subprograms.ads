@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
---                            ACT-Europe                             --
+--                     Copyright (C) 2005                            --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,27 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with Refactoring.Rename;      use Refactoring.Rename;
-with Refactoring.Parameters;  use Refactoring.Parameters;
-with Refactoring.Subprograms; use Refactoring.Subprograms;
+package Refactoring.Subprograms is
 
-package body Refactoring_Module is
+   procedure Register_Refactoring
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the shell commands and menus
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Refactoring_Module_Id : Module_ID;
-   begin
-      Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
-      Refactoring.Rename.Register_Refactoring (Kernel);
-      Refactoring.Parameters.Register_Refactoring (Kernel);
-      Refactoring.Subprograms.Register_Refactoring (Kernel);
-   end Register_Module;
-
-end Refactoring_Module;
+end Refactoring.Subprograms;
