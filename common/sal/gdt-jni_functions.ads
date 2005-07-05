@@ -123,6 +123,14 @@ package GDT.JNI_Functions is
       Java_ConstructList_getLastInt,
       "Java_com_adacore_gdt_study_gpsjni_ConstructList_getLastInt");
 
+   procedure Java_ConstructList_freeInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint);
+   pragma Export
+     (C,
+      Java_ConstructList_freeInt,
+      "Java_com_adacore_gdt_study_gpsjni_ConstructList_freeInt");
+
+
    function Java_SourceLocation_getLineInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
    pragma Export

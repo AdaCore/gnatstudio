@@ -376,6 +376,20 @@ package body GDT.JNI_Functions is
       end if;
    end Java_ConstructList_getLastInt;
 
+   --------------------------------
+   -- Java_ConstructList_freeInt --
+   --------------------------------
+
+   procedure Java_ConstructList_freeInt (Env : JNIEnv; This : Jobject; Addr : Jint)
+   is
+      pragma Unreferenced (Env, This);
+      Constructs : Construct_List_Ptr := Construct_List_Ptr
+        (Construct_List_Conversion.
+           To_Pointer (To_Address (Integer_Address (Addr))));
+   begin
+      Free (Constructs.all);
+   end Java_ConstructList_freeInt;
+
    ------------------------------------
    -- Java_SourceLocation_getLineInt --
    ------------------------------------
