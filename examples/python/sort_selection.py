@@ -8,7 +8,10 @@ GPS.parse_xml ("""
      <shell lang="python" >sort_selection.sort_selected_ascending()</shell>
   </action>
 
-   <key action="sort selected lines ascending">F12</key>
+  <key action="sort selected lines ascending">F12</key>
+  <menu action="sort selected lines ascending">
+     <title>/Edit/Sort Ascending</title>
+  </menu>
 
    <action name="sort selected lines descending" output="none">
       <filter id="Source editor" />
@@ -16,7 +19,10 @@ GPS.parse_xml ("""
       <shell lang="python" >sort_selection.sort_selected_descending()</shell>
    </action>
 
-    <key action="sort selected lines descending">shift-F12</key>
+  <key action="sort selected lines descending">shift-F12</key>
+  <menu action="sort selected lines descending">
+     <title>/Edit/Sort Descending</title>
+  </menu>
 """)
 
 
