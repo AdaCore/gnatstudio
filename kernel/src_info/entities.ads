@@ -756,7 +756,7 @@ package Entities is
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser.
-
+   --  Result should be freed.
 
 private
 
