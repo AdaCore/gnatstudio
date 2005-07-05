@@ -1333,6 +1333,7 @@ package body Entities.Queries is
       Force_Spec : Boolean) return File_Location
    is
       Ref          : E_Reference;
+      Max          : File_Location := No_File_Location;
    begin
       if Entity.End_Of_Scope.Location.File = File
         and then ((Force_Spec and then Entity.End_Of_Scope.Kind = End_Of_Spec)
@@ -1351,9 +1352,22 @@ package body Entities.Queries is
             then
                return Ref.Location;
             end if;
+
+            --  Subprograms sometimes have no end-of-spec reference, although
+            --  they should so that the parameters are correctly associated to
+            --  them. We simulate these by considering the end-of-spec is the
+            --  location of the last parameter declaration
+
+            if Force_Spec
+              and then Is_Parameter_Reference (Ref.Kind)
+              and then Ref.Location.File = File
+            then
+               Max := Ref.Location;
+               Max.Column := Max.Column + 1;
+            end if;
          end loop;
 
-         return No_File_Location;
+         return Max;
       end if;
    end Get_End_Of_Scope_In_File;
 
@@ -1572,6 +1586,7 @@ package body Entities.Queries is
                Start_Of_Scope := Get_Start_Of_Scope_In_File
                  (Entity, File, Force_Spec => True);
                if Start_Of_Scope /= No_File_Location then
+                  Trace (Me, "MANU Adding to tree " & Get_Name (Entity).all);
                   Add_To_Tree
                        (Tree           => Tree,
                         Entity         => Entity,
@@ -1634,14 +1649,20 @@ package body Entities.Queries is
             end if;
 
             if T.End_Line - 1 <= Info'Last then
-               if T.End_Line = T.Start_Line  then
-                  Info (Line) := Enclosing_Entity;
+               if Is_Container (Get_Kind (T.Entity).Kind) then
+                  Info (Line .. T.End_Line) := (others => T.Entity);
+                  Line := T.End_Line + 1;
                else
-                  Info (Line .. T.End_Line - 1) := (others => T.Entity);
+                  if T.End_Line = T.Start_Line then
+                     Info (Line) := Enclosing_Entity;
+                  else
+                     Info (Line .. T.End_Line - 1) := (others => T.Entity);
+                  end if;
+                  Line := T.End_Line;
                end if;
+            else
+               Line := T.End_Line;
             end if;
-
-            Line := T.End_Line;
 
             Line_Last := T.End_Line;
             T := T.Sibling;
@@ -1762,6 +1783,10 @@ package body Entities.Queries is
          end loop;
       end;
 
+      if Active (Me) then
+         Dump (Tree, "");
+      end if;
+
       if Tree /= null then
          T := Tree;
          while T.Sibling /= null loop
@@ -1796,13 +1821,13 @@ package body Entities.Queries is
             if Active (Me) then
                Trace (Me, "Compute_Callers_And_Called for "
                       & Full_Name (Get_Filename (File)).all);
+               for L in Line_Info'Range loop
+                  if Line_Info (L) /= null then
+                     Trace (Me, "Line" & L'Img & " "
+                            & Get_Name (Line_Info (L)).all);
+                  end if;
+               end loop;
             end if;
-            for L in Line_Info'Range loop
-               if Line_Info (L) /= null then
-                  Trace (Me, "Line" & L'Img & " "
-                         & Get_Name (Line_Info (L)).all);
-               end if;
-            end loop;
 
             declare
                Iter : Entities_Hash.Iterator;
