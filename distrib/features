@@ -3,7 +3,7 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
-- New refactoring module: Rename entity, Name parameters in call
+- New refactoring module: Rename entity, Name parameters in call, Extract Method
 
 - New python API for interacting with the editors
   See EditorBuffer, EditorView, ...
