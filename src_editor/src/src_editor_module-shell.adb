@@ -63,6 +63,8 @@ with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 with Gtk.Handlers;
 
+with Commands;                  use Commands;
+
 package body Src_Editor_Module.Shell is
    Me : constant Debug_Handle := Create ("Editor.Shell");
 
@@ -2201,6 +2203,15 @@ package body Src_Editor_Module.Shell is
             end if;
          end if;
 
+      elsif Command = "start_undo_group" then
+         Get_Buffer (Buffer, Data, 1);
+         End_Action (Buffer);
+         Start_Group (Get_Command_Queue (Buffer));
+
+      elsif Command = "finish_undo_group" then
+         Get_Buffer (Buffer, Data, 1);
+         End_Action (Buffer);
+         End_Group (Get_Command_Queue (Buffer));
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
@@ -2916,6 +2927,10 @@ package body Src_Editor_Module.Shell is
         (Kernel, "indent", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "refill", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "start_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "finish_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 
