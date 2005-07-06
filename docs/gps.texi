@@ -1473,6 +1473,10 @@ and languages constructs such as comments and strings are highlighted in
 different colors and fonts. See @ref{The Preferences Dialog} for a list of
 settings that can be customized.
 
+GPS has support for a number of languages, although support for other languages
+can easily be added through XML files. Most languages supported by GPS will
+provided syntax highlighting in the editor
+
 @item Automatic indentation
 @cindex indentation
 When enabled, lines are automatically indented each time you press the
@@ -3094,6 +3098,16 @@ If your project includes some README files, or other text files, you should
 add "txt" as a language (or any other name you want), and make sure that
 these files are associated with that language in the @code{Project properties
 editor}.
+
+By default, GPS provides support for a number of languages. In most cases,
+this support takes the form of syntax highlighting in the editor, and possibly
+the Outline View. Other languages have advanced cross-references available.
+
+All the supported languages can be added to the project, but you can also add
+your own languages as you need (either by editing the project files by hand,
+or by creating XML files to add GPS support for these languages, which will
+then show in the project properties editor graphically).
+
 
 @c -------------------------------------------------------------------
 @node Scenarios and Configuration Variables
