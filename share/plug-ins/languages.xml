@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+
+<Custom>
+  <Language>
+    <Name>Texinfo</Name>
+    <Spec_Suffix>.texi</Spec_Suffix>
+    <Keywords>^@\w+</Keywords>
+    <Context>
+      <New_Line_Comment_Start>@c </New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+  </Language>
+
+  <Language>
+    <Name>Autoconf</Name>
+    <Spec_Suffix>configure.in</Spec_Suffix>
+    <Keywords>^(AC_(SUBST|DEFINE(_UNQUOTED)?)\((\w+)|A[CM]_\w+)\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+  </Language>
+
+  <Language>
+    <Name>AWK</Name>
+    <Spec_Suffix>.awk</Spec_Suffix>
+    <Keywords>^(BEGIN|END|ARG(C|IND|V)|CONVFMT|E(NVIRON|RRNO)|FI(ELDWIDTHS|LENAME)|F(NR|S)|IGNORECASE|N(F|R)|O(F(MT|S)|RS)|R(LENGTH|S|START|UBSEP)|break|continue|delete|e(xit|lse)|f(or|unction)|getline|if|next|printf?|return|while|atan2|c(lose|os|time)|exp|gsub|in(dex|t)|l(ength|og)|match|rand|s(in|plit|printf|qrt|rand|ub(str)?|ystem)|t(ime|o(lower|upper)))\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start># </New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+  </Language>
+
+  <Language>
+    <Name>Perl</Name>
+    <Spec_Suffix>.pl</Spec_Suffix>
+    <Keywords>^(if|until|while|els(if|e)|unless|d(o|ump)|for(each)?|exit|die|BEGIN|END|return|exec|eval|local|my|continue|goto|last|next|redo)\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start>#</New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+
+    <Categories>
+      <Category>
+        <Name>procedure</Name>
+        <Pattern>^sub\s+([-\w\d+_:]+)\s{</Pattern>
+        <Index>1</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>package</Name>
+        <Pattern>^package\s+([-\w\d+_:]+);</Pattern>
+        <Index>1</Index>
+        <Icon>package_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>variable</Name>
+        <Pattern>^([$@%][-\w\d+_:]+)\s*=</Pattern>
+        <Index>1</Index>
+        <Icon>var_xpm</Icon>
+      </Category>
+    </Categories>
+    <Project_Field name="compiler_command" index="perl">Perl Interpreter</Project_Field>
+  </Language>
+
+  <Language>
+    <Name>Pascal</Name>
+    <Spec_Suffix>.pas</Spec_Suffix>
+    <Keywords>^(absolute|abstract|assembler|automated|cdecl|default|dispid|dynamic|export|external|far|forward|Index|inline|message|name|near|nodefault|overload|override|pascal|private|protected|public|published|read|readonly|register|reintroduce|resident|resourcestring|safecall|stdcall|stored|virtual|write|writeonly|and|array|as|asm|at|begin|case|class|const|constructor|contains|destructor|dispinterface|div|do|downto|else|end|except|exports|file|finalization|finally|for|function|goto|if|implementation|implements|in|inherited|initialization|interface|is|label|library|mod|nil|not|of|object|on|or|out|package|packed|procedure|program|property|raise|record|repeat|requires|result|self|set|shl|shr|then|threadvar|to|try|type|unit|uses|until|var|while|with|xor)\b</Keywords>
+
+    <Context>
+      <New_Line_Comment_Start>//</New_Line_Comment_Start>
+      <comment_start>(*</comment_start>
+      <comment_end>*)</comment_end>
+      <String_Delimiter>'</String_Delimiter>
+      <Can_Indent>True</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>False</Case_Sensitive>
+    </Context>
+    <Project_Field name="compiler_command" index="delphi">Delphi Compiler</Project_Field>
+  </Language>
+
+  <Language>
+    <Name>Fortran 90</Name>
+    <Spec_Suffix>.f</Spec_Suffix>
+
+    <Context>
+      <New_Line_Comment_Start>!</New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>False</Case_Sensitive>
+    </Context>
+
+    <Categories>
+      <Category>
+        <Name>procedure</Name>
+        <Pattern>^[\s\d]*(program|function|subroutine)\s+(\w+)\b</Pattern>
+        <Index>2</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>package</Name>
+        <Pattern>^[\s\d]*module\s+(\w+)\s*(!|$)</Pattern>
+        <Index>1</Index>
+        <Icon>package_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>type</Name>
+        <Pattern>^[\s0-9]*type\s+(\w+)\b</Pattern>
+        <Index>1</Index>
+        <Icon>var_xpm</Icon>
+      </Category>
+    </Categories>
+    <Project_Field name="compiler_command" index="fortran 90">Fortran Compiler</Project_Field>
+  </Language>
+
+  <Language>
+    <Name>M4</Name>
+    <Spec_Suffix>.m4</Spec_Suffix>
+    <Keywords>^(m4_)?(builtin|change(com|quote|word)|d(e(bug(file|mode)|cr|f(ine|n))|iv(ert|num)|nl|umpdef)|e(rrprint|syscmd|val)|f(ile|ormat)|gnu|i(f(def|else)|n(c(lude|r)|d(ex|ir)))|l(en|ine)|m(4(exit|wrap)|aketemp)|p(atsubst|opdef|ushdef)|regexp|s(hift|include|ubstr|ys(cmd|val))|tra(ceo(ff|n)|nslit)|un(d(efine|ivert)|ix))\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start>dnl </New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+  </Language>
+
+  <Language>
+    <Name>Makefile</Name>
+    <Spec_Suffix>Makefile</Spec_Suffix>
+    <Keywords>^((s?include|if(n?(eq|def))?|e(lse|ndif))\b|\n[^#]+:)</Keywords>
+    <Context>
+      <New_Line_Comment_Start>#</New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>False</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+
+    <Categories>
+      <Category>
+        <Name>type</Name>
+        <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
+        <Index>1</Index>
+        <Icon>var_xpm</Icon>
+      </Category>
+    </Categories>
+  </Language>
+
+  <Language>
+    <Name>Shell</Name>
+    <Spec_Suffix>.sh</Spec_Suffix>
+    <Keywords>^(e(cho|xport|val)|getopts|newgrp|pwd|read(only)?|t(est|imes|ype|hen|rap)|ulimit|hash|cd|s(et|hift)|u(mask|nset)|wait|do|el(if|se)|if|until|while|function|done|esac|f(i|or)|in|return|CDPATH|IFS|OPT(ARG|IND)|PS(1|2)|COLUMNS|EDITOR|H(OME|USHLOGIN)|L(ANG|C_(COLLATE|CTYPE|MESSAGES|MONETARY|NUMERIC|TIME)|INES|OGNAME)|MAIL(CHECK|PATH)?|PA(GER|TH)|SHELL|TERM(CAP|INFO)?|VISUAL)\b</Keywords>
+    <Context>
+      <New_Line_Comment_Start>#</New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>True</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+
+    <Categories>
+      <Category>
+        <Name>procedure</Name>
+        <Pattern>^\s*(function\s+)?([\w_][\w\d_]+)\s*\(\)</Pattern>
+        <Index>2</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+    </Categories>
+  </Language>
+
+  <Language>
+    <Name>TCL</Name>
+    <Spec_Suffix>.tcl</Spec_Suffix>
+    <Keywords>^(global|upvar|inherit|p(ublic|r(otected|ivate))|common|itk_option|variable|if|then|else(if)?|for(each)?|break|continue|while|eval|case|switch|default|exit|error|p(roc|uts)|return|uplevel|constructor|destructor|itcl_class|loop|for_(array_keys|recursive_glob|file)|method|body|configbody|set)\b</Keywords>
+
+    <Context>
+      <New_Line_Comment_Start>#</New_Line_Comment_Start>
+      <String_Delimiter>"</String_Delimiter>
+      <Can_Indent>True</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>True</Case_Sensitive>
+    </Context>
+  </Language>
+</Custom>
