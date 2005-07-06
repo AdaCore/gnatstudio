@@ -1,3 +1,11 @@
+### Support file for the GNAT Programm System
+##
+## This file provides two sort functions, which can be used to sort lines
+## in a source file.
+## It is used by selecting the lines to sort, and then selecting one the
+## menus in Edit/Sort Ascending or Edit/Sort Descending
+
+
 import GPS
 import string
 
@@ -5,10 +13,9 @@ GPS.parse_xml ("""
   <action name="sort selected lines ascending" output="none">
      <filter id="Source editor" />
      <description>Sorts current selection</description>
-     <shell lang="python" >sort_selection.sort_selected_ascending()</shell>
+     <shell lang="python" >sort_selection.sort_selection(0)</shell>
   </action>
 
-  <key action="sort selected lines ascending">F12</key>
   <menu action="sort selected lines ascending">
      <title>/Edit/Sort Ascending</title>
   </menu>
@@ -16,20 +23,23 @@ GPS.parse_xml ("""
    <action name="sort selected lines descending" output="none">
       <filter id="Source editor" />
       <description>Sorts current selection</description>
-      <shell lang="python" >sort_selection.sort_selected_descending()</shell>
+      <shell lang="python" >sort_selection.sort_selection(1)</shell>
    </action>
 
-  <key action="sort selected lines descending">shift-F12</key>
   <menu action="sort selected lines descending">
      <title>/Edit/Sort Descending</title>
   </menu>
 """)
 
-
-def sort_selected_ascending ():
-   """Sorts the selected text alphabetically in ascending order"""
+def sort_selection (revert):
+   """Sorts the current selection, either in ascending order if revert is 0
+      or in descending order otherwise"""
    context = GPS.current_context ();
-   selection = GPS.Editor.get_chars (context.file().name());   
+   ed      = GPS.EditorBuffer.get (context.file())
+   start   = ed.selection_start()
+   to      = ed.selection_end()
+   selection = ed.get_chars (start, to)
+
    if selection == "" and context.__class__ == GPS.EntityContext:
       return;
       
@@ -38,26 +48,10 @@ def sort_selected_ascending ():
       # strip off extraneous trailing "" line
       lines = lines[:-1];
       lines.sort ();
-      GPS.Editor.cut ();
-      for line in lines: 
-         GPS.Editor.insert_text (line + "\n");
-
-
-def sort_selected_descending ():
-   """Sorts the selected text alphabetically in descending order"""
-   context = GPS.current_context ();
-   selection = GPS.Editor.get_chars (context.file().name());   
-   if selection == "" and context.__class__ == GPS.EntityContext:
-      return;
-      
-   if selection != "":
-      lines = string.split (selection,"\n");
-      # strip off extraneous trailing "" line
-      lines = lines[:-1];
-      lines.sort ();
-      # the following call is the only difference between these functions
-      lines.reverse ();
-      GPS.Editor.cut ();
-      for line in lines: 
-         GPS.Editor.insert_text (line + "\n");
+      if revert:
+         lines.reverse ();
+      ed.start_undo_group()
+      ed.delete (start, to)
+      ed.insert (start, "\n".join (lines) + "\n")
+      ed.finish_undo_group()
 
