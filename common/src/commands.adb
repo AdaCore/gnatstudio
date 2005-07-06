@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -162,6 +162,10 @@ package body Commands is
       end if;
 
       Action.Queue := Queue;
+
+      if Queue.Group_Level > 0 then
+         Action.Group := Queue.Group_Number;
+      end if;
 
       if High_Priority then
          Prepend (Queue.The_Queue, Command_Access (Action));
@@ -404,12 +408,21 @@ package body Commands is
 
    procedure Undo (Queue : Command_Queue) is
       Action : Command_Access;
+      Group  : Natural := 0;
    begin
-      if not Is_Empty (Queue.Undo_Queue) then
+      while not Is_Empty (Queue.Undo_Queue) loop
          Action := Head (Queue.Undo_Queue);
+
+         exit when Group /= 0
+           and then Group /= Action.Group;
+
+         Group := Action.Group;
+
          Next (Queue.Undo_Queue, Free_Data => False);
          Enqueue (Queue, Action);
-      end if;
+
+         exit when Group = 0;
+      end loop;
    end Undo;
 
    ----------
@@ -418,12 +431,21 @@ package body Commands is
 
    procedure Redo (Queue : Command_Queue) is
       Action : Command_Access;
+      Group  : Natural := 0;
    begin
-      if not Is_Empty (Queue.Redo_Queue) then
+      while not Is_Empty (Queue.Redo_Queue) loop
          Action := Head (Queue.Redo_Queue);
+
+         exit when Group /= 0
+           and then Group /= Action.Group;
+
+         Group := Action.Group;
+
          Next (Queue.Redo_Queue, Free_Data => False);
          Enqueue (Queue, Action);
-      end if;
+
+         exit when Group = 0;
+      end loop;
    end Redo;
 
    ----------------------
@@ -566,5 +588,29 @@ package body Commands is
    begin
       null;
    end Free;
+
+   -----------------
+   -- Start_Group --
+   -----------------
+
+   procedure Start_Group (Q : Command_Queue) is
+   begin
+      Q.Group_Level := Q.Group_Level + 1;
+
+      if Q.Group_Level = 1 then
+         Q.Group_Number := Q.Group_Number + 1;
+      end if;
+   end Start_Group;
+
+   ---------------
+   -- End_Group --
+   ---------------
+
+   procedure End_Group (Q : Command_Queue) is
+   begin
+      if Q.Group_Level > 0 then
+         Q.Group_Level := Q.Group_Level - 1;
+      end if;
+   end End_Group;
 
 end Commands;
