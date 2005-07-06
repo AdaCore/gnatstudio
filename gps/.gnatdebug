@@ -17,29 +17,30 @@ UNEXPECTED_EXCEPTIONS=yes
 
 --  Select the modules that should be loaded
 
-MODULE.DOCGEN             = no
-MODULE.REFACTOR           = no
-MODULE.PYTHON             = yes
-MODULE.CALL_GRAPH         = yes
-MODULE.DEPENDENCYi        = yes
-MODULE.PROJECT_BROWSER    = yes
-MODULE.ENTITIES_BROWSER   = yes
-MODULE.ALIASES            = yes
-MODULE.PROJECT_EXPLORER   = yes
-MODULE.FILES_EXPLORER     = yes
-MODULE.EXTERNAL_EDITOR    = yes
-MODULE.VCS                = yes
-MODULE.CUSTOM             = yes
-MODULE.ACTION_EDITOR      = yes
-MODULE.CODEFIX            = yes
-MODULE.GVD                = yes
-MODULE.AUNIT              = yes
-MODULE.VFS                = yes
-MODULE.HELP               = yes
-MODULE.SSH                = yes
-MODULE.PROJECT_PROPERTIES = yes
-MODULE.PROJECT_VIEWER     = yes
-MODULE.CPP                = yes
+--  MODULE.DOCGEN             = yes
+--  MODULE.METRICS            = no
+--  MODULE.REFACTOR           = yes
+--  MODULE.PYTHON             = yes
+--  MODULE.CALL_GRAPH         = yes
+--  MODULE.DEPENDENCYi        = yes
+--  MODULE.PROJECT_BROWSER    = yes
+--  MODULE.ENTITIES_BROWSER   = yes
+--  MODULE.ALIASES            = yes
+--  MODULE.PROJECT_EXPLORER   = yes
+--  MODULE.FILES_EXPLORER     = yes
+--  MODULE.EXTERNAL_EDITOR    = yes
+--  MODULE.VCS                = yes
+--  MODULE.CUSTOM             = yes
+--  MODULE.ACTION_EDITOR      = yes
+--  MODULE.CODEFIX            = yes
+--  MODULE.GVD                = yes
+--  MODULE.AUNIT              = yes
+--  MODULE.VFS                = yes
+--  MODULE.HELP               = yes
+--  MODULE.SSH                = yes
+--  MODULE.PROJECT_PROPERTIES = yes
+--  MODULE.PROJECT_VIEWER     = yes
+--  MODULE.CPP                = yes
 
 --  Change behavior of GPS. These debug handle do not add extra logs
 
@@ -54,12 +55,22 @@ ALI=no
 ALI.Assert=no
 CPP=no
 ENTITIES.DEBUG=no
+ENTITIES.DUMP = no
+ENTITIES.REF  = no
+ENTITIES.QUERIES = no
 
 --  Debug handles related to scripts
 
 SHELL_SCRIPT=no
 GPS.KERNEL.SCRIPTS=no
+GPS.KERNEL.MODULES=no
 PYTHON.OUT=no
 COMMANDS.CUSTOM=no
 HOOKS=no
 EXPECT=no
+
+--  Debug handles related to the debugger
+GVD.OUT=no
+
+REMOTE_FULL=no
+PYTHON_REF_COUNT=no
