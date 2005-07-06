@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -223,6 +223,14 @@ package Commands is
    procedure Empty_Queue (Q : Command_Queue);
    --  Free all done, undone and pending actions in Q
 
+   procedure Start_Group (Q : Command_Queue);
+   --  Start a group of commands. The commands appended to the queue will be
+   --  considered as part of a same group, until End_Group is called.
+   --  One call to End_Group must be made for each call to Start_Group.
+
+   procedure End_Group (Q : Command_Queue);
+   --  Ends grouping of commands.
+
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command;
@@ -322,6 +330,15 @@ private
       --  Equal to 0 when the queue is empty, 1 is added every time a command
       --  from this queue is executed, and 1 is substracted every time a
       --  command from this queue is undone.
+
+      Group_Level         : Natural := 0;
+      --  Indicates the current group level. 0 indicates that the commands
+      --  are independant, >0 indicates that the commands being added to the
+      --  queue are part of a group.
+
+      Group_Number        : Natural := 0;
+      --  Indicates the number of the current group. This is used to
+      --  distinguish between possible consecutive groups.
    end record;
    type Command_Queue is access Command_Queue_Record;
 
@@ -356,6 +373,10 @@ private
       --  Indicates that an attempt to free the command was made
       --  when Do_Not_Free was set, and that the command should be freed
       --  as soon as possible.
+
+      Group               : Natural := 0;
+      --  The group the command belongs to. 0 indicates that the command does
+      --  not correspond to a group.
    end record;
 
    pragma Inline (Undo_Queue_Empty);
