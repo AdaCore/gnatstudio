@@ -2033,6 +2033,14 @@ Create a new test harness. See AUnit documentation for more details.
 
 @end table
 
+@item Sort Ascending
+Sort the selected lines alphabetically. This is particularly useful when
+editing non source code, or for specific parts of the code, like with clauses
+in Ada
+
+@item Sort Descending
+Sort the selected lines in reverse alphabetical order
+
 @item Preferences
 @cindex preferences
 Give access to the preferences dialog. @xref{The Preferences Dialog}.
