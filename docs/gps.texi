@@ -2165,7 +2165,7 @@ that the renaming operation might be dangerous and/or only partial.
 GPS currently provides the following refactoring capabilities:
 
 @table @bullet
-@item Renaming entity
+@item Rename entity
 Clicking on an entity in a source file and selecting the
 @code{Refactoring/Rename} menu will open a dialog asking for the new name
 of the entity. GPS will rename all instances of the entity in your application.
@@ -2207,8 +2207,7 @@ in the original subprogram by a call to the new subprogram.
       Local1 := Local1 + 4;
    end Proc;
 
-When lines 4 and 5 are extracted, we get:
-
+When lines 4 and 5 are extracted, we get: 
    function New_Method (Param1 : Integer) return Integer is
       Local1 : Integer;
    begin
@@ -2227,6 +2226,16 @@ When lines 4 and 5 are extracted, we get:
 
 The above example, albeit trivial, shows in particular that GPS knows how
 to find which parameters should be transfered to the new subprogram.
+
+GPS will use, for the parameters, the same name that was used for the local
+variable. Very often, it will make sense to recompile the new version of the
+source, and then apply the @code{Rename Entity} refactoring to have more
+specific names for the parameters, or the @code{Name Parameters} refactoring
+so that the call to the new method uses named parameters to further clarify
+the code.
+
+This refactoring is only available if you have selected at least a full line
+of text, not a partial selection in a line of text.
 
 @end table
 
