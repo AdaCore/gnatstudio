@@ -1334,6 +1334,7 @@ package body Entities.Queries is
    is
       Ref          : E_Reference;
       Max          : File_Location := No_File_Location;
+      Ref_Is_Body  : Boolean := False;
    begin
       if Entity.End_Of_Scope.Location.File = File
         and then ((Force_Spec and then Entity.End_Of_Scope.Kind = End_Of_Spec)
@@ -1353,6 +1354,12 @@ package body Entities.Queries is
                return Ref.Location;
             end if;
 
+            if Ref.Kind = Body_Entity
+              and then Ref.Location = Entity.Declaration
+            then
+               Ref_Is_Body := True;
+            end if;
+
             --  Subprograms sometimes have no end-of-spec reference, although
             --  they should so that the parameters are correctly associated to
             --  them. We simulate these by considering the end-of-spec is the
@@ -1367,7 +1374,11 @@ package body Entities.Queries is
             end if;
          end loop;
 
-         return Max;
+         if Ref_Is_Body then
+            return No_File_Location;
+         else
+            return Max;
+         end if;
       end if;
    end Get_End_Of_Scope_In_File;
 
@@ -1822,8 +1833,16 @@ package body Entities.Queries is
                       & Full_Name (Get_Filename (File)).all);
                for L in Line_Info'Range loop
                   if Line_Info (L) /= null then
-                     Trace (Me, "Line" & L'Img & " "
-                            & Get_Name (Line_Info (L)).all);
+                     if Info_For_Decl (L) /= null then
+                        Trace (Me, "Line" & L'Img & " "
+                               & Get_Name (Line_Info (L)).all
+                               & " Decl="
+                               & Get_Name (Info_For_Decl (L)).all);
+                     else
+                        Trace (Me, "Line" & L'Img & " "
+                               & Get_Name (Line_Info (L)).all
+                               & " Decl=<null>");
+                     end if;
                   end if;
                end loop;
             end if;
