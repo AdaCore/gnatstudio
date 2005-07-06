@@ -3379,6 +3379,16 @@ the same line/column even if new lines are added in the buffer. This location is
       <see_also name="GPS.EditorBuffer.apply_overlay" />
    </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.start_undo_group">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Starts grouping commands on the editor. All future editions will be considered as belonging to the same group. finish_undo_group should be called once for every call to start_undo_group.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.finish_undo_group">
+       <param name="self">An instance of GPS.EditorBuffer</param>
+       <description>Cancels the grouping of commands on the editor. See GPS.EditorBuffer.start_undo_group</description>
+  </shell_doc>
+
   <!--#################################################################
       ### EditorView class
       #################################################################-->
