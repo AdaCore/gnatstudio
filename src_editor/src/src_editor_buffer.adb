@@ -4647,6 +4647,9 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
+      End_Action (Buffer);
+      Start_Group (Buffer.Queue);
+
       if Lines_Are_Real (Buffer) then
          if Offset_Line /= 0 then
             C_Str := Get_Slice
@@ -4697,6 +4700,9 @@ package body Src_Editor_Buffer is
          Free (Buffer_Text);
       end if;
 
+      End_Action (Buffer);
+      End_Group (Buffer.Queue);
+
       --  If the cursor was located before the first non-blank character,
       --  move it to that character. This is more usual for Emacs users,
       --  and more user friendly generally.
@@ -4718,6 +4724,8 @@ package body Src_Editor_Buffer is
       when E : others =>
          --  Stop propagation of exception, since doing nothing
          --  in this callback is harmless.
+
+         End_Group (Buffer.Queue);
 
          Buffer.Do_Not_Move_Cursor := False;
 
@@ -5500,5 +5508,15 @@ package body Src_Editor_Buffer is
 
       return Empty_Block;
    end Get_Subprogram_Block;
+
+   -----------------------
+   -- Get_Command_Queue --
+   -----------------------
+
+   function Get_Command_Queue
+     (Buffer : access Source_Buffer_Record'Class) return Command_Queue is
+   begin
+      return Buffer.Queue;
+   end Get_Command_Queue;
 
 end Src_Editor_Buffer;
