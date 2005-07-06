@@ -428,6 +428,34 @@ package body Refactoring.Performers is
       end loop;
    end Delete_Text;
 
+   ----------------------
+   -- Start_Undo_Group --
+   ----------------------
+
+   procedure Start_Undo_Group
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) is
+   begin
+      Execute_GPS_Shell_Command
+        (Kernel,
+         "File """ & Full_Name (File).all & """; "
+         & "EditorBuffer.get %1; EditorBuffer.start_undo_group %1");
+   end Start_Undo_Group;
+
+   -----------------------
+   -- Finish_Undo_Group --
+   -----------------------
+
+   procedure Finish_Undo_Group
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) is
+   begin
+      Execute_GPS_Shell_Command
+        (Kernel,
+         "File """ & Full_Name (File).all & """; "
+         & "EditorBuffer.get %1; EditorBuffer.finish_undo_group %1");
+   end Finish_Undo_Group;
+
    -----------------------
    -- Get_Initial_Value --
    -----------------------

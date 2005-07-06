@@ -91,6 +91,14 @@ package Refactoring.Performers is
       Length     : Integer) return String;
    --  Get the contents of From_File
 
+   procedure Start_Undo_Group
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
+   procedure Finish_Undo_Group
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
+   --  Interface to start/finish undo group
+
    function Get_Initial_Value
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Entity      : Entities.Entity_Information) return String;

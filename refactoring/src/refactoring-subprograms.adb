@@ -477,6 +477,7 @@ package body Refactoring.Subprograms is
          Method_Call => Method_Call);
 
       if Method_Body /= Null_Unbounded_String then
+         Start_Undo_Group (Kernel, File);
          Delete_Text
            (Kernel      => Kernel,
             In_File     => File,
@@ -497,6 +498,7 @@ package body Refactoring.Subprograms is
             Options     => Options,
             Method_Decl => To_String (Method_Decl),
             Method_Body => To_String (Method_Body));
+         Finish_Undo_Group (Kernel, File);
          return Success;
       else
          return Failure;
