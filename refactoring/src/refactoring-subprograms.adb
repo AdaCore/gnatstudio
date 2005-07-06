@@ -25,6 +25,7 @@ with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -46,7 +47,7 @@ with VFS;                    use VFS;
 
 package body Refactoring.Subprograms is
 
-   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
+--   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
    function Execute
@@ -170,8 +171,10 @@ package body Refactoring.Subprograms is
                  & Get_Name (Params.Table (P).Parameter).all & " : ";
                Typ := Get_Type_Of (Params.Table (P).Parameter);
                if Typ = null then
-                  Trace (Me, "Couldn't find type of parameter "
-                         & Get_Name (Params.Table (P).Parameter).all);
+                  Insert (Kernel,
+                          Text => -"Couldn't find the type of "
+                             & Get_Name (Params.Table (P).Parameter).all,
+                          Mode => Error);
                   Method_Decl := Null_Unbounded_String;
                   Method_Body := Null_Unbounded_String;
                   return;
@@ -211,8 +214,10 @@ package body Refactoring.Subprograms is
            & "   " & Get_Name (Local_Vars.Table (L)).all & " : ";
          Typ := Get_Type_Of (Local_Vars.Table (L));
          if Typ = null then
-            Trace (Me, "Couldn't find type of local variable "
-                   & Get_Name (Local_Vars.Table (L)).all);
+            Insert (Kernel,
+                    Text => -"Couldn't find the type of "
+                      & Get_Name (Local_Vars.Table (L)).all,
+                    Mode => Error);
             Method_Decl := Null_Unbounded_String;
             Method_Body := Null_Unbounded_String;
             return;
@@ -368,8 +373,7 @@ package body Refactoring.Subprograms is
 
          Caller    := Get_Caller (Declaration_As_Reference (Entity));
          Is_Global := Caller = null
-           or else not Is_Subprogram (Caller)
-           or else Is_Subprogram (Entity);
+           or else not Is_Subprogram (Caller);
 
          if not Is_Global then
             Is_Modified     := False;
@@ -404,6 +408,21 @@ package body Refactoring.Subprograms is
                Next (Ref_Iter);
             end loop;
             Destroy (Ref_Iter);
+
+            --  If we have a nested subprogram, give up, since we won't be
+            --  able to refactor anyway
+            if Is_Read and then Is_Subprogram (Entity) then
+               if Caller /= null
+                 and then Is_Subprogram (Caller)
+               then
+                  Insert (Kernel,
+                          Text => -"A call to the nested subprogram "
+                            & Get_Name (Entity).all
+                            & (-" prevents the refactoring"),
+                          Mode => Error);
+                  return Failure;
+               end if;
+            end if;
 
             if not Has_Ref_Before then
                if Get_Initial_Value (Kernel, Entity) /= "" then
