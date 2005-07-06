@@ -145,9 +145,9 @@ package body Refactoring.Subprograms is
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0
       then
-         Decl := To_Unbounded_String ("function ");
+         Decl := To_Unbounded_String (ASCII.LF & "function ");
       else
-         Decl := To_Unbounded_String ("procedure ");
+         Decl := To_Unbounded_String (ASCII.LF & "procedure ");
       end if;
 
       Decl := Decl & Name;
@@ -170,7 +170,8 @@ package body Refactoring.Subprograms is
                  & Get_Name (Params.Table (P).Parameter).all & " : ";
                Typ := Get_Type_Of (Params.Table (P).Parameter);
                if Typ = null then
-                  Trace (Me, "Couldn't find name of parameter");
+                  Trace (Me, "Couldn't find type of parameter "
+                         & Get_Name (Params.Table (P).Parameter).all);
                   Method_Decl := Null_Unbounded_String;
                   Method_Body := Null_Unbounded_String;
                   return;
@@ -210,7 +211,8 @@ package body Refactoring.Subprograms is
            & "   " & Get_Name (Local_Vars.Table (L)).all & " : ";
          Typ := Get_Type_Of (Local_Vars.Table (L));
          if Typ = null then
-            Trace (Me, "Couldn't find name of local variable");
+            Trace (Me, "Couldn't find type of local variable "
+                   & Get_Name (Local_Vars.Table (L)).all);
             Method_Decl := Null_Unbounded_String;
             Method_Body := Null_Unbounded_String;
             return;
@@ -366,7 +368,8 @@ package body Refactoring.Subprograms is
 
          Caller    := Get_Caller (Declaration_As_Reference (Entity));
          Is_Global := Caller = null
-           or else not Is_Subprogram (Caller);
+           or else not Is_Subprogram (Caller)
+           or else Is_Subprogram (Entity);
 
          if not Is_Global then
             Is_Modified     := False;
