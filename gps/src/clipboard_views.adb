@@ -230,6 +230,7 @@ package body Clipboard_Views is
 
       Add_Hook (Kernel, Clipboard_Changed_Hook, On_Clipboard_Changed'Access,
                 Watch => GObject (View));
+      Refresh (View);
    end Gtk_New;
 
    ------------------
