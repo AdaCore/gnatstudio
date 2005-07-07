@@ -200,21 +200,6 @@ package Src_Editor_Box is
    --  this procedure. An incorrect location  will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
-   procedure Cut_Clipboard (Editor : access Source_Editor_Box_Record);
-   --  Copy the currently-selected text to the clipboard and then delete it.
-
-   procedure Copy_Clipboard (Editor : access Source_Editor_Box_Record);
-   --  Copy the currently-selected text to the clipboard.
-
-   procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record);
-   --  Paste the contents of the clipboard.
-
-   --  procedure Paste_Primary (Editor : access Source_Editor_Box_Record);
-   --  Paste the contents of the primary selection.
-   --  ??? The primary selection is the X11 cut/copy/paste buffer I think.
-   --  ??? what is the relationship with the clipboard?
-   --  ??? This function is commented out since it was removed in gtk-1.3.7.
-
    procedure Goto_Declaration_Or_Body
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;

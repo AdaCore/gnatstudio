@@ -40,7 +40,6 @@ with Pango.Layout;              use Pango.Layout;
 
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Clipboard;             use Gtk.Clipboard;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Drawing_Area;          use Gtk.Drawing_Area;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -1979,49 +1978,6 @@ package body Src_Editor_Box is
       External_End_Action (Editor.Source_Buffer);
       Enqueue (Editor.Source_Buffer, Command_Access (C));
    end Replace_Slice;
-
-   -------------------
-   -- Cut_Clipboard --
-   -------------------
-
-   procedure Cut_Clipboard (Editor : access Source_Editor_Box_Record) is
-   begin
-      Cut_Clipboard
-        (Editor.Source_Buffer, Gtk.Clipboard.Get,
-         Default_Editable => Editor.Writable);
-   end Cut_Clipboard;
-
-   --------------------
-   -- Copy_Clipboard --
-   --------------------
-
-   procedure Copy_Clipboard (Editor : access Source_Editor_Box_Record) is
-   begin
-      Copy_Clipboard (Editor.Source_Buffer, Gtk.Clipboard.Get);
-   end Copy_Clipboard;
-
-   ---------------------
-   -- Paste_Clipboard --
-   ---------------------
-
-   procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record) is
-      Result : Boolean;
-      pragma Unreferenced (Result);
-   begin
-      --  Delete the selected region if it exists.
-      --  ??? This works around a bug which it seems is in gtk+, to be
-      --  investigated.
-      --  Scenario to reproduce the gtk bug : do a "select_region" and then
-      --  a "paste_clipboard", twice. (See C703-005)
-
-      if Selection_Exists (Editor.Source_Buffer) then
-         Result := Delete_Selection (Editor.Source_Buffer, False, False);
-      end if;
-
-      Paste_Clipboard
-        (Editor.Source_Buffer, Gtk.Clipboard.Get,
-         Default_Editable => Editor.Writable);
-   end Paste_Clipboard;
 
    --------------------------
    -- Add_File_Information --
