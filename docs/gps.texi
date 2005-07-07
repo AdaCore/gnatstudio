@@ -1971,6 +1971,27 @@ Copy the current selection to the clipboard.
 @cindex paste
 Paste the contents of the clipboard to the current cursor position.
 
+@item Paste Previous
+@cindex paste previous
+GPS stores a list of all the text that was previously copied into the clipboard
+through the use of Copy or Cut.
+
+By default, if you press Paste, the newest text will be copied at the current
+position. But if you select Paste Previous immediately after (one or more times)
+you can instead paste text that was copied previously in the clipboard.
+
+For instance, if you copy through @code{Edit->Copy} the text "First", then
+copy the text "Second", you can then select @code{Edit->Paste} to insert
+"Second" at the current location. If you then select
+@code{Edit->Paste Previous}, "Second" will be replaced by "First".
+
+Selecting this menu several times will replace the text previously pasted
+by the previous one in the list saved in the clipboard. When reaching the end
+of this list, GPS will started from the beginning, and insert again the last
+text copied into the clipboard.
+
+The size of this list is controlled by the @code{Clipboard Size} preference.
+
 @item Select All
 @cindex select all
 Select the whole contents of the current source editor.
@@ -7273,6 +7294,13 @@ calling external tools (e.g. before a build).
 @cindex desktop
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
+
+@item Clipboard size
+@cindex clipboard
+This controls the size of the list where all the entries copied into the
+clipboard through @code{Edit->Copy} and @code{Edit->Cut} are saved. This list
+is navigated through the menu @code{Edit->Paste} and
+@code{Edit->Paste Previous}, as described earlier in this guide.
 
 @item Multi language build
 Whether GPS should build (using gprmake) more than just Ada
