@@ -16,7 +16,7 @@ GPS.parse_xml ("""
      <shell lang="python" >sort_selection.sort_selection(0)</shell>
   </action>
 
-  <menu action="sort selected lines ascending">
+  <menu action="sort selected lines ascending" after="Refill">
      <title>/Edit/Sort Ascending</title>
   </menu>
 
@@ -26,7 +26,7 @@ GPS.parse_xml ("""
       <shell lang="python" >sort_selection.sort_selection(1)</shell>
    </action>
 
-  <menu action="sort selected lines descending">
+  <menu action="sort selected lines descending" after="Refill">
      <title>/Edit/Sort Descending</title>
   </menu>
 """)
