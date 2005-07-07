@@ -88,6 +88,7 @@ Description of the main windows
 * The Project View::
 * The File View::
 * The Outline View::
+* The Clipboard View::
 * The Messages Window::
 @ifset python
 * The Shell and Python Windows::
@@ -310,6 +311,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Project View::
 * The File View::
 * The Outline View::
+* The Clipboard View::
 * The Messages Window::
 
 @ifset python
@@ -779,6 +781,48 @@ to the same editor, and the outline view will be refreshed.
 
 There are several preferences associated with the outline view,
 @xref{Outline Preferences}.
+
+@c --------------------------------------------------------------------
+@node The Clipboard View
+@section The Clipboard View
+@cindex clipboard view
+@c --------------------------------------------------------------------
+
+@noindent
+GPS has an advanced mechanism for handling copy/paste operations.
+
+When you select the menus @code{Edit->Copy} or @code{Edit->Cut}, GPS adds the
+current selection to the clipboard. As opposed to what lots of applications
+do, it doesn't discard the previous contents of the clipboard, but save it for
+future usage. It saves a number of entries this way, up to 10 by default,
+although this is configurable through the @code{Clipboard Size} preference.
+
+When you select the menu @code{Edit->Paste}, GPS will paste the last entry
+made in the clipboard at the current location in the editor.
+
+If you immediately select @code{Edit->Paste Previous}, this newly inserted
+text will be removed, and GPS will instead insert the second to last entry
+added to the clipboard. You can keep selecting the same menu to get access
+to older entries.
+
+This is a very powerful mechanism, since it means you can copy several distinct
+lines from a place in an editor, move to an other editor and paste all these
+separate lines, without having to go back and forth between the two editors.
+
+The @code{Clipboard View} provides a graphical mean of seeing what is currently
+stored in the clipboard. It appears as a list of lines, each of which is
+associated with one level of the clipboard. The text that shows in these lines
+is the first line of the selection at that level.
+
+In addition, one of the lines has an arrow on its left. This indicates the
+line that will be pasted when you select the menu @code{Edit->Paste}. If you
+select instead the menu @code{Edit->Paste Previous}, then the line below that
+one will be inserted instead.
+
+If you double-click on any of these lines, GPS will insert the corresponding
+text in the current editor, and make the line you clicked on the current line,
+so that selecting @code{Edit->Paste} or the equivalent shortcut will now
+insert that line.
 
 @c --------------------------------------------------------------------
 @node The Messages Window
@@ -1991,6 +2035,8 @@ of this list, GPS will started from the beginning, and insert again the last
 text copied into the clipboard.
 
 The size of this list is controlled by the @code{Clipboard Size} preference.
+
+For more information, @xref{The Clipboard View}.
 
 @item Select All
 @cindex select all
