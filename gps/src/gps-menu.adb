@@ -22,10 +22,6 @@ with Glib;                         use Glib;
 with Glib.Object;                  use Glib.Object;
 with Gdk.Types;                    use Gdk.Types;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
-with Gtk.Clipboard;                use Gtk.Clipboard;
-with Gtk.Editable;                 use Gtk.Editable;
-with Gtk.Text_View;                use Gtk.Text_View;
-with Gtk.Text_Buffer;              use Gtk.Text_Buffer;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -36,6 +32,7 @@ with GPS.Intl;                     use GPS.Intl;
 
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Clipboard;         use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
@@ -66,7 +63,7 @@ package body GPS.Menu is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project has just changed
 
-   type Clipboard_Kind is (Cut, Copy, Paste);
+   type Clipboard_Kind is (Cut, Copy, Paste, Paste_Previous);
    type Clipboard_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
       Kind   : Clipboard_Kind;
@@ -88,46 +85,15 @@ package body GPS.Menu is
    is
       pragma Unreferenced (Context);
       W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
+      Clipboard : constant Clipboard_Access := Get_Clipboard (Command.Kernel);
    begin
-      if W /= null and then W.all in Gtk_Editable_Record'Class then
+      if W /= null then
          case Command.Kind is
-            when Cut   => Cut_Clipboard (Gtk_Editable (W));
-            when Copy  => Copy_Clipboard (Gtk_Editable (W));
-            when Paste => Paste_Clipboard (Gtk_Editable (W));
+            when Cut            => Cut_Clipboard   (Clipboard, W);
+            when Copy           => Copy_Clipboard  (Clipboard, W);
+            when Paste          => Paste_Clipboard (Clipboard, W);
+            when Paste_Previous => Paste_Previous_Clipboard (Clipboard, W);
          end case;
-         return Commands.Success;
-
-      elsif W /= null and then W.all in Gtk_Text_View_Record'Class then
-         declare
-            Buffer : constant Gtk_Text_Buffer :=
-              Get_Buffer (Gtk_Text_View (W));
-            Result : Boolean;
-            pragma Unreferenced (Result);
-         begin
-            case Command.Kind is
-               when Cut =>
-                  Cut_Clipboard
-                    (Buffer,
-                     Gtk.Clipboard.Get,
-                     Default_Editable => Get_Editable (Gtk_Text_View (W)));
-               when Copy =>
-                  Copy_Clipboard (Buffer, Gtk.Clipboard.Get);
-               when Paste =>
-                  --  Delete the selected region if it exists.
-                  --  ??? This works around a bug which it seems is in gtk+,
-                  --  to be investigated.
-                  --  Scenario to reproduce the gtk bug : do a "select_region"
-                  --  and then a "paste_clipboard", twice. (See C703-005)
-
-                  if Selection_Exists (Buffer) then
-                     Result := Delete_Selection (Buffer, False, False);
-                  end if;
-
-                  Paste_Clipboard
-                    (Buffer, Gtk.Clipboard.Get,
-                     Default_Editable => Get_Editable (Gtk_Text_View (W)));
-            end case;
-         end;
          return Commands.Success;
       else
          return Commands.Failure;
@@ -321,6 +287,18 @@ package body GPS.Menu is
       Register_Button
         (Kernel, Stock_Paste, Command,
          -"Paste From Clipboard");
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Paste_Previous;
+      Register_Action
+        (Kernel, -"Paste Previous From Clipboard", Command,
+         -("Cancel the previous Paste operation, and instead insert the text"
+           & " copied before through Copy To Clipboard"));
+      Register_Menu (Kernel, Edit, -"Pa_ste Previous",  Stock_Paste,
+                     null, Command,
+                     GDK_Insert, Control_Mask + Shift_Mask,
+                     Ref_Item => -"Preferences");
    end Register_Common_Menus;
 
 end GPS.Menu;
