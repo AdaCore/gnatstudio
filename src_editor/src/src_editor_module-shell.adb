@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -1038,12 +1039,12 @@ package body Src_Editor_Module.Shell is
          begin
             if Source /= null then
                if Command = "cut" then
-                  Cut_Clipboard (Source);
+                  Cut_Clipboard (Get_Clipboard (Kernel), Get_View (Source));
                   External_End_Action (Get_Buffer (Source));
                elsif Command = "copy" then
-                  Copy_Clipboard (Source);
+                  Copy_Clipboard (Get_Clipboard (Kernel), Get_View (Source));
                elsif Command = "paste" then
-                  Paste_Clipboard (Source);
+                  Paste_Clipboard (Get_Clipboard (Kernel), Get_View (Source));
                   External_End_Action (Get_Buffer (Source));
                else
                   Select_All (Get_Buffer (Source));
