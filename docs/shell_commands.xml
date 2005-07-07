@@ -109,6 +109,11 @@ when the GPS window is fully visible to the user:
      <description>Hook called when one of the scenario variables has been renamed, removed or when one of its possible values has changed.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ clipboard_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the contents of the clipboard has changed, either because the user has done a Copy or Cut operation, or because he called Paste Previous which changes the current entry in the multi-level clipboard.</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ project_view_changed">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when the project view has been changed, for instance because one of the environment variables has changed. This means that the list of directories, files or switches might now be different.</description>
@@ -3176,7 +3181,8 @@ the same line/column even if new lines are added in the buffer. This location is
 
   <shell_doc name="GPS.EditorBuffer.get">
       <param name="file">An instance of GPS.File</param>
-      <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared will all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user)</description>
+      <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared will all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user).
+If file is not specified, the current editor is returned, ie the last one that had the keyboard focus.</description>
       <example lang="python">
           ed = GPS.EditorBuffer (GPS.File ("a.adb"))
           ed.data = "whatever"
