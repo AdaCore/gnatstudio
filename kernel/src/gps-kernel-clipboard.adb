@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gtk.Clipboard;            use Gtk.Clipboard;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -29,8 +30,10 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with System;                   use System;
 with Traces;                   use Traces;
 with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with XML_Parsers;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -85,6 +88,9 @@ package body GPS.Kernel.Clipboard is
    is
       Clipboard : constant Clipboard_Access := new Clipboard_Record;
       Size      : Integer;
+      Filename  : constant String := Get_Home_Dir (Kernel) & "clipboards.xml";
+      File, Child : Node_Ptr;
+      Err         : String_Access;
    begin
       if Clipboard_Size_Pref = null then
          Clipboard_Size_Pref := Param_Spec_Int
@@ -107,6 +113,32 @@ package body GPS.Kernel.Clipboard is
       Size := Integer (Get_Pref (Kernel, Clipboard_Size_Pref));
       Clipboard.List := new Selection_List (1 .. Size);
       Clipboard.Last_Paste := Clipboard.List'First;
+
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & Filename);
+         XML_Parsers.Parse (Filename, File, Err);
+         if File = null then
+            Insert (Kernel, Err.all, Mode => Error);
+         else
+            Child := File.Child;
+            Size  := 1;
+            while Size <= Clipboard.List'Last
+              and then Child /= null
+            loop
+               Clipboard.List (Size) := new String'(Child.Value.all);
+               if Get_Attribute (Child, "last", "false") = "true" then
+                  Clipboard.Last_Paste := Size;
+               end if;
+
+               Size  := Size + 1;
+               Child := Child.Next;
+            end loop;
+            Free (File);
+
+            Run_Hook (Kernel, Clipboard_Changed_Hook);
+         end if;
+      end if;
+
       Destroy_Clipboard (Kernel);
       Kernel.Clipboard := Convert (Clipboard);
 
@@ -119,10 +151,33 @@ package body GPS.Kernel.Clipboard is
    -----------------------
 
    procedure Destroy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
+      Filename  : constant String := Get_Home_Dir (Kernel) & "clipboards.xml";
+      File      : Node_Ptr;
+      Child     : Node_Ptr;
       Clipboard : Clipboard_Access;
    begin
       if Kernel.Clipboard /= System.Null_Address then
          Clipboard := Convert (Kernel.Clipboard);
+
+         Trace (Me, "Saving " & Filename);
+         File := new Node;
+         File.Tag := new String'("Bookmarks");
+         for L in Clipboard.List'Range loop
+            if Clipboard.List (L) /= null then
+               Child := new Node;
+               Child.Tag := new String'("bookmark");
+
+               if L = Clipboard.Last_Paste then
+                  Set_Attribute (Child, "last", "true");
+               end if;
+
+               Child.Value := new String'(Protect (Clipboard.List (L).all));
+               Add_Child (File, Child, Append => True);
+            end if;
+         end loop;
+         Print (File, Filename);
+         Free (File);
+
          for L in Clipboard.List'Range loop
             Free (Clipboard.List (L));
          end loop;
