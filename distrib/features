@@ -3,6 +3,9 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
+- Multi-level clipboard to save multiple selections
+  New menu Edit->Paste Previous
+
 - New refactoring module: Rename entity, Name parameters in call, Extract Method
 
 - New python API for interacting with the editors
