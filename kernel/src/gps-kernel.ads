@@ -952,6 +952,10 @@ private
       --  The contextual menus registered by the user. This is only used in
       --  GPS.Kernel.Modules, and cast to the appropriate type in that
       --  package.
+
+      Clipboard  : System.Address := System.Null_Address;
+      --  The clipboard used in GPS (See GPS.Kernel.Clipboard on how to use
+      --  this field)
    end record;
 
 end GPS.Kernel;

@@ -59,6 +59,7 @@ with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Main_Window;           use GPS.Main_Window;
 with Default_Preferences;       use Default_Preferences;
+with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -230,6 +231,8 @@ package body GPS.Kernel is
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       GPS.Kernel.Scripts.Initialize (Handle);
+
+      Create_Clipboard (Handle);
 
       Add_Hook
         (Handle, Preferences_Changed_Hook, On_Preferences_Changed'Access);
@@ -1355,6 +1358,7 @@ package body GPS.Kernel is
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
+      Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Home_Dir);
