@@ -116,6 +116,7 @@ with Action_Editor;
 with Outline_View;
 with Socket_Module;
 with Scenario_Views;
+with Clipboard_Views;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -1229,6 +1230,8 @@ procedure GPS.Main is
       --  file or module can provide its own themes.
 
       Theme_Manager_Module.Register_Module (GPS_Main.Kernel);
+
+      Clipboard_Views.Register_Module (GPS_Main.Kernel);
 
       Vsearch_Ext.Register_Module (GPS_Main.Kernel);
 
