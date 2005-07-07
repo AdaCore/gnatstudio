@@ -434,6 +434,12 @@ package body GPS.Main_Window is
       Menu_Item : Gtk_Menu_Item;
 
    begin
+      --  Initialize the window first, so that it can be used while creating
+      --  the kernel, in particular calls to Push_State
+      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
+      Initialize_Class_Record
+        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
+
       Gtk_New
         (Main_Window.Kernel,
          Gtk_Window (Main_Window),
@@ -490,10 +496,6 @@ package body GPS.Main_Window is
             Default => True));
       Register_Property
         (Main_Window.Kernel, Param_Spec (Pref_Show_Statusbar), -"General");
-
-      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
-      Initialize_Class_Record
-        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
 
       Set_Policy (Main_Window, False, True, False);
       Set_Position (Main_Window, Win_Pos_None);
