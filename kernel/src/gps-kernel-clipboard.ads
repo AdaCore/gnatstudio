@@ -26,6 +26,9 @@ package GPS.Kernel.Clipboard is
    type Clipboard_Record is private;
    type Clipboard_Access is access all Clipboard_Record;
 
+   type Selection_List is
+     array (Natural range <>) of GNAT.OS_Lib.String_Access;
+
    procedure Create_Clipboard
      (Kernel : access Kernel_Handle_Record'Class);
    --  Create a new clipboard in the kernel
@@ -54,10 +57,13 @@ package GPS.Kernel.Clipboard is
    --  previous contents of the clipboard.
 
    procedure Paste_Clipboard
-     (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Clipboard     : access Clipboard_Record;
+      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Index_In_List : Natural := 0);
    --  Paste the last clipboard entry made by Cut or Copy (or the one last
-   --  pasted by Paste_Previous)
+   --  pasted by Paste_Previous).
+   --  By default, the last entry is pasted, but you can force a specific
+   --  entry by specifying Index_In_List.
 
    procedure Paste_Previous_Clipboard
      (Clipboard : access Clipboard_Record;
@@ -66,9 +72,23 @@ package GPS.Kernel.Clipboard is
    --  in the clipboard. This fails if the current location in the widget is
    --  no the same where Paste_Clipboard last left it.
 
+
+   function Get_Content
+     (Clipboard : access Clipboard_Record) return Selection_List;
+   --  Return the current contents of the clipboard. The returned value must
+   --  not be freed by the user. Some entries might be set to null in this
+   --  list.
+
+   function Get_Last_Paste
+     (Clipboard : access Clipboard_Record) return Integer;
+   --  Return the index of the last paste text in the result of Get_Context.
+
+   Clipboard_Changed_Hook : constant String := "clipboard_changed";
+   --  Hook called when the contents of the clipboard has changed (either
+   --  because we added a new entry to it, or because the index of the last
+   --  paste operation has changed).
+
 private
-   type Selection_List is
-     array (Natural range <>) of GNAT.OS_Lib.String_Access;
    type Selection_List_Access is access Selection_List;
 
    type Clipboard_Record is record

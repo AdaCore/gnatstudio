@@ -99,6 +99,8 @@ package body GPS.Kernel.Clipboard is
                Maximum => 1_000));
          Register_Property
            (Kernel, Param_Spec (Clipboard_Size_Pref), -"General");
+
+         Register_Hook (Kernel, Clipboard_Changed_Hook);
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
@@ -146,15 +148,22 @@ package body GPS.Kernel.Clipboard is
    -------------------------
 
    procedure Append_To_Clipboard (Clipboard : access Clipboard_Record) is
+      Text : constant String := Wait_For_Text (Gtk.Clipboard.Get);
    begin
-      Free (Clipboard.List (Clipboard.List'Last));
-      Clipboard.List (Clipboard.List'First + 1 .. Clipboard.List'Last) :=
-        Clipboard.List (Clipboard.List'First .. Clipboard.List'Last - 1);
-      Clipboard.List (Clipboard.List'First) := new String'
-        (Wait_For_Text (Gtk.Clipboard.Get));
+      if Clipboard.List (Clipboard.List'First) = null
+        or else Text /= Clipboard.List (Clipboard.List'First).all
+      then
+         Free (Clipboard.List (Clipboard.List'Last));
+         Clipboard.List (Clipboard.List'First + 1 .. Clipboard.List'Last) :=
+           Clipboard.List (Clipboard.List'First .. Clipboard.List'Last - 1);
+         Clipboard.List (Clipboard.List'First) := new String'
+           (Wait_For_Text (Gtk.Clipboard.Get));
 
-      Clipboard.Last_Paste  := Clipboard.List'First;
-      Clipboard.Last_Widget := null;
+         Clipboard.Last_Paste  := Clipboard.List'First;
+         Clipboard.Last_Widget := null;
+
+         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      end if;
    end Append_To_Clipboard;
 
    -------------------
@@ -205,14 +214,22 @@ package body GPS.Kernel.Clipboard is
    ---------------------
 
    procedure Paste_Clipboard
-     (Clipboard : access Clipboard_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Clipboard     : access Clipboard_Record;
+      Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Index_In_List : Natural := 0)
    is
       Buffer : Gtk_Text_Buffer;
       Result : Boolean;
       pragma Unreferenced (Result);
       Iter : Gtk_Text_Iter;
    begin
+      if Index_In_List /= 0
+        and then Index_In_List in Clipboard.List'Range
+      then
+         Clipboard.Last_Paste := Index_In_List;
+         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      end if;
+
       if Clipboard.Last_Paste in Clipboard.List'Range
         and then Clipboard.List (Clipboard.Last_Paste) /= null
       then
@@ -298,7 +315,7 @@ package body GPS.Kernel.Clipboard is
             Start_Pos => Gint (Clipboard.Last_Position
               - Clipboard.List (Clipboard.Last_Paste)'Length - 1),
             End_Pos   => Gint (Clipboard.Last_Position));
-      elsif Widget.all in Gtk_Text_View_Record'Class then
+      else
          Copy (Source => Iter, Dest => Iter2);
          Forward_Chars
            (Iter,
@@ -325,13 +342,38 @@ package body GPS.Kernel.Clipboard is
          Paste_Clipboard (Gtk_Editable (Widget));
          Clipboard.Last_Position :=
            Integer (Get_Position (Gtk_Editable (Widget)));
-      elsif Widget.all in Gtk_Text_View_Record'Class then
+      else
          Paste_Clipboard
            (Buffer, Gtk.Clipboard.Get,
             Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
          Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
          Clipboard.Last_Position := Integer (Get_Offset (Iter));
       end if;
+
+      Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
    end Paste_Previous_Clipboard;
+
+   -----------------
+   -- Get_Content --
+   -----------------
+
+   function Get_Content
+     (Clipboard : access Clipboard_Record) return Selection_List
+   is
+   begin
+      return Clipboard.List.all;
+   end Get_Content;
+
+   --------------------
+   -- Get_Last_Paste --
+   --------------------
+
+   function Get_Last_Paste
+     (Clipboard : access Clipboard_Record) return Integer
+   is
+   begin
+      return Clipboard.Last_Paste;
+   end Get_Last_Paste;
+
 
 end GPS.Kernel.Clipboard;
