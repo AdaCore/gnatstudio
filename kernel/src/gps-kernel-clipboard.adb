@@ -76,6 +76,7 @@ package body GPS.Kernel.Clipboard is
            Clipboard.List (1 .. Integer'Min (Size, Clipboard.List'Length));
          Unchecked_Free (Clipboard.List);
          Clipboard.List := List;
+         Run_Hook (Kernel, Clipboard_Changed_Hook);
       end if;
    end Preferences_Changed;
 
