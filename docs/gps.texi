@@ -703,7 +703,7 @@ when you click on the arrow on the right of the variable name
 
 @cindex project view
 New variables can be added through the contextual menu
-@code{Edit Project->Add Configuration Variable} in the @code{Project View}.
+@code{Project->Add Configuration Variable} in the @code{Project View}.
 The list of possible values for a variable can be changed by clicking on the
 button on the left of the variable's name.
 
@@ -3227,7 +3227,7 @@ appropriate scenario (@ref{The Project Properties Editor}).
 
 @noindent
 Creating a new scenario variable is done through the contextual menu
-(right-click) in the Project Explorer. Select the menu @code{Edit Project->Add
+(right-click) in the Project Explorer. Select the menu @code{Project->Add
 Configuration Variable}. This opens the following dialog:
 
 @iftex
@@ -3377,19 +3377,19 @@ have a special icon (a red exclamation mark is drawn on top of the
 standard icon). If you would rather save all the modified projects in
 a single step, use the menu bar item @code{Project->Save All}.
 
-@item Edit Project/Properties
+@item Project/Properties
 This item will open a new dialog, and give access to all the
 attributes of the project: tool switches, naming schemes, source
 directories, @dots{} @xref{The Project Properties Editor}.
 
-@item Edit Project Source File
+@item Project/Edit source file
 @cindex edit project source file
 This menu will load the project file into an editor, so that you can
 manually edit it. This should be used if you need to access some
 features of the project files that are not accessible graphically
 (renames statements, variables, @dots{})
 
-@item Edit Project/Dependencies...
+@item Project/Dependencies...
 @cindex project dependency
 This opens the dependencies editor (@pxref{The Project Dependencies Editor}).
 
@@ -3886,7 +3886,7 @@ tool when it is called, without trying to represent it graphically.
 
 @noindent
 You can edit the dependencies between projects through the contextual
-menu @code{Edit Project->Dependencies...} in the Project Explorer.
+menu @code{Project->Dependencies...} in the Project Explorer.
 
 This view makes it easy to indicate that your project depends on external
 libraries, or other modules in your source code. For instance, you can
