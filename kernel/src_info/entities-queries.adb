@@ -657,7 +657,6 @@ package body Entities.Queries is
       Iter.Deps          := Deps;
       Iter.Returning_Existing_Refs := Length (Entity.References) /= 0;
 
-
       --  If the first reference in the list is not correct, move to next one
       if Iter.Decl_Returned
         and then
@@ -886,80 +885,82 @@ package body Entities.Queries is
          Iter.Index := Iter.Index + 1;
       end if;
 
-      while Iter.Index <= Last (Iter.Entity.References) loop
-         if Iter.Returning_Existing_Refs
-           and then Iter.Entity.References.Table (Iter.Index).Location.File /=
-             Iter.Last_Returned_File
-         then
-            --  Are we still parsing the list of references that were there
-            --  before the call to Find_All_References ? If yes, we need to
-            --  check whether the file is still up-to-date
-
-            Iter.Last_Returned_File :=
-              Iter.Entity.References.Table (Iter.Index).Location.File;
-            Update_Xref (Iter.Last_Returned_File);
-            --  Do not move the index forward now, since parsing the file
-            --  might have removed the reference from the list.
-
-         else
-            if Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
-              and then In_Range
-                (Iter.Entity.References.Table (Iter.Index).Location,
-                 Iter.In_File, Iter.Start_Line, Iter.Last_Line)
+      loop
+         while Iter.Index <= Last (Iter.Entity.References) loop
+            if Iter.Returning_Existing_Refs
+              and then Iter.Entity.References.Table (Iter.Index).Location.File
+              /= Iter.Last_Returned_File
             then
-               --  Special case here: if the entity has no separate
-               --  declaration, then the location of the body and the spec are
-               --  the same. Avoid duplicates with the following test
-               if Iter.Decl_Returned
-                 and then Iter.Entity.References.Table (Iter.Index).Kind =
-                   Body_Entity
-                 and then Iter.Entity.References.Table (Iter.Index).Location =
-                   Iter.Entity.Declaration
+               --  Are we still parsing the list of references that were there
+               --  before the call to Find_All_References ? If yes, we need to
+               --  check whether the file is still up-to-date
+
+               Iter.Last_Returned_File :=
+                 Iter.Entity.References.Table (Iter.Index).Location.File;
+               Update_Xref (Iter.Last_Returned_File);
+               --  Do not move the index forward now, since parsing the file
+               --  might have removed the reference from the list.
+
+            else
+               if Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
+                 and then In_Range
+                   (Iter.Entity.References.Table (Iter.Index).Location,
+                    Iter.In_File, Iter.Start_Line, Iter.Last_Line)
                then
-                  Next (Iter);
+                  --  Special case here: if the entity has no separate
+                  --  declaration, then the location of the body and the spec
+                  --  are the same. Avoid duplicates with the following test
+                  if Iter.Decl_Returned
+                    and then Iter.Entity.References.Table (Iter.Index).Kind =
+                    Body_Entity
+                    and then Iter.Entity.References.Table (Iter.Index).Location
+                    = Iter.Entity.Declaration
+                  then
+                     Next (Iter);
+                  end if;
+
+                  return;
                end if;
 
+               Iter.Index := Iter.Index + 1;
+            end if;
+         end loop;
+
+         Iter.Returning_Existing_Refs := False;
+
+         --  Parse the current file on the list
+
+         if At_End (Iter.Deps) then
+            if Iter.Include_Overriding
+              and then
+                Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
+            then
+               Add_Overriding_Subprograms (Iter);
+               Iter.Include_Overriding := False;
+            end if;
+
+            if Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
+              or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities)
+            then
                return;
             end if;
 
-            Iter.Index := Iter.Index + 1;
+            Setup_For_Entity
+              (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
+            Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
+         end if;
+
+         Next (Iter.Deps);
+
+         --  The next time Next is called, Index will be incremented, so we
+         --  have to make sure not to lose a reference here.
+         if not At_End (Iter.Deps)
+           and then Get (Iter.Deps) /= null
+           and then Iter.Index <= Last (Iter.Entity.References)
+         then
+            Iter.Index := Iter.Index - 1;
          end if;
       end loop;
-
-      Iter.Returning_Existing_Refs := False;
-
-      --  Parse the current file on the list
-
-      if At_End (Iter.Deps) then
-         if Iter.Include_Overriding
-           and then
-             Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
-         then
-            Add_Overriding_Subprograms (Iter);
-            Iter.Include_Overriding := False;
-         end if;
-
-         if Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
-           or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities)
-         then
-            return;
-         end if;
-
-         Setup_For_Entity
-           (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
-         Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
-      end if;
-
-      Next (Iter.Deps);
-
-      --  The next time Next is called, Index will be incremented, so we have
-      --  to make sure not to lose a reference here.
-      if not At_End (Iter.Deps)
-        and then Get (Iter.Deps) /= null
-        and then Iter.Index <= Last (Iter.Entity.References)
-      then
-         Iter.Index := Iter.Index - 1;
-      end if;
    end Next;
 
    ---------
