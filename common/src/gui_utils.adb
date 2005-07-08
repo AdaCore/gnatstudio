@@ -1595,7 +1595,8 @@ package body GUI_Utils is
       Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
         Gtk.Enums.Selection_Single;
       Sortable_Columns : Boolean := True;
-      Initial_Sort_On  : Integer := -1)
+      Initial_Sort_On  : Integer := -1;
+      Hide_Expander    : Boolean := False)
       return Gtk.Tree_View.Gtk_Tree_View
    is
       View            : Gtk_Tree_View;
@@ -1615,6 +1616,15 @@ package body GUI_Utils is
       Set_Mode (Get_Selection (View), Selection_Mode);
       Set_Headers_Visible (View, Show_Column_Titles);
       Set_Enable_Search (View, True);
+
+      if Hide_Expander then
+         --  Create an explicit columns for the expander
+         Gtk_New (Col);
+         Col_Number := Append_Column (View, Col);
+         Set_Expander_Column (View, Col);
+         Set_Visible (Col, False);
+         Col := null;
+      end if;
 
       for N in 0
         .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
@@ -1676,6 +1686,7 @@ package body GUI_Utils is
             raise Program_Error;
          end if;
       end loop;
+
       return View;
    end Create_Tree_View;
 

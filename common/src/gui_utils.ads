@@ -224,7 +224,8 @@ package GUI_Utils is
       Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
         Gtk.Enums.Selection_Single;
       Sortable_Columns : Boolean := True;
-      Initial_Sort_On  : Integer := -1)
+      Initial_Sort_On  : Integer := -1;
+      Hide_Expander    : Boolean := False)
       return Gtk.Tree_View.Gtk_Tree_View;
    --  Create a new simple tree view, where each column in the view is
    --  associated with a column in the model.
@@ -252,6 +253,12 @@ package GUI_Utils is
    --  initially (it is recommended not to do that if you have lots of info to
    --  store in the model afterward). The value of Initial_Sort_On is
    --  an index in Column_Names.
+   --
+   --  If Hide_Expander is true, then the expander will be hidden and no space
+   --  reserved for it in the tree view. You can later decide to show it again
+   --  through calls to Set_Visible (Get_Expander_Column(..), True).
+   --  The latter will not work if you have set Hide_Expander to true, since no
+   --  specific column will be created for the expander in this case.
    --
    --  Limitations:
    --     Columns are not editable. Radio buttons not supported,
