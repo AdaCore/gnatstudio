@@ -303,7 +303,8 @@ package body Clipboard_Views is
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Selection_Mode     => Selection_None,
-         Sortable_Columns   => False);
+         Sortable_Columns   => False,
+         Hide_Expander      => True);
       Add (Scrolled, View.Tree);
       --  Modify_Font (View.Tree, Get_Pref (Kernel, Outline_View_Font));
 
