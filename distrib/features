@@ -21,7 +21,7 @@ New features in GPS 3.1.0
 - E510-024 Editing specific list of source files for projects
 
 - E525-008 Improved support for remote files
-  If the user name on the remote machine wasn't specified, GPS will not let the
+  If the user name on the remote machine wasn't specified, GPS will now let the
   underlying tool decide for itself. In particular, this adds support for ssh's
   config file.
 
