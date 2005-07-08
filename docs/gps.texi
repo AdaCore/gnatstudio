@@ -2862,13 +2862,17 @@ This item gives access to different capabilities related to listing or
 displaying references to the current entity or selection.
 
 @table @command
-@item @i{Entity} calls
+@item @i{Entity} calls (in browser)
 @cindex call graph
 @cindex calls
 Open or raise the call graph browser on the specified entity and display all
 the subprograms called by @i{entity}. @xref{Call Graph}.
 
-@item @i{Entity} is called by
+@item @i{Entity} calls (in locations)
+This behaves the same as the one above, but will list its result in the
+Locations window. This is generally better if you expect lots of references.
+
+@item @i{Entity} is called by (in browser)
 @cindex call graph
 @cindex called by
 Open or raise the call graph browser on the specified entity and display all
@@ -2878,6 +2882,10 @@ Note that this capability requires a global look up in the project
 cross-references, which may take a significant amount of time the first
 time.  After a global look up, information is cached in memory, so that
 further global queries will be faster.
+
+@item @i{Entity} is called by (in locations)
+This behaves the same as the one above, but will list its result in the
+Locations window. This is generally better if you expect lots of references.
 
 @item Find all references to @i{entity}
 @cindex find all references
