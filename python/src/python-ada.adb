@@ -322,7 +322,7 @@ package body Python.Ada is
      (Class : PyObject; Base : PyObject) return Boolean
    is
       function Internal (Class, Base : PyObject) return Integer;
-      pragma Import (C, Internal, "PyClass_IsSubclass");
+      pragma Import (C, Internal, "ada_pyclass_is_subclass");
    begin
       return Internal (Class, Base) /= 0;
    end PyClass_IsSubclass;
