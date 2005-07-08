@@ -285,9 +285,14 @@ package body GPS.Kernel.Clipboard is
          Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
       end if;
 
-      if Clipboard.Last_Paste in Clipboard.List'Range
-        and then Clipboard.List (Clipboard.Last_Paste) /= null
+      if Clipboard.Last_Paste not in Clipboard.List'Range
+        or else Clipboard.List (Clipboard.Last_Paste) = null
       then
+         Clipboard.Last_Paste := Clipboard.List'First;
+         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      end if;
+
+      if Clipboard.List (Clipboard.Last_Paste) /= null then
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
          Clipboard.Last_Widget   := Gtk_Widget (Widget);
@@ -430,5 +435,36 @@ package body GPS.Kernel.Clipboard is
       return Clipboard.Last_Paste;
    end Get_Last_Paste;
 
+   ---------------------
+   -- Merge_Clipboard --
+   ---------------------
+
+   procedure Merge_Clipboard
+     (Clipboard : access Clipboard_Record;
+      Index1, Index2 : Natural)
+   is
+      Str : String_Access;
+   begin
+      if Index1 in Clipboard.List'Range
+        and then Index2 in Clipboard.List'Range
+        and then Clipboard.List (Index1) /= null
+        and then Clipboard.List (Index2) /= null
+      then
+         Str := new String'(Clipboard.List (Index2).all
+                            & Clipboard.List (Index1).all);
+         Free (Clipboard.List (Index1));
+         Clipboard.List (Index1) := Str;
+
+         Free (Clipboard.List (Index2));
+         if Index2 /= Clipboard.List'Last then
+            Clipboard.List (Index2 .. Clipboard.List'Last - 1) :=
+              (Clipboard.List (Index2 + 1 .. Clipboard.List'Last));
+            Clipboard.List (Clipboard.List'Last) := null;
+         end if;
+
+         Clipboard.Last_Paste := Index1;
+         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      end if;
+   end Merge_Clipboard;
 
 end GPS.Kernel.Clipboard;

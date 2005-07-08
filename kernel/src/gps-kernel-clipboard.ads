@@ -72,6 +72,11 @@ package GPS.Kernel.Clipboard is
    --  in the clipboard. This fails if the current location in the widget is
    --  no the same where Paste_Clipboard last left it.
 
+   procedure Merge_Clipboard
+     (Clipboard : access Clipboard_Record;
+      Index1, Index2 : Natural);
+   --  Merge the two entries in the clipboard, and remove the second one.
+
 
    function Get_Content
      (Clipboard : access Clipboard_Record) return Selection_List;
