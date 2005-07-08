@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 3.1.0
 
+- E708-004 Find Referemces... dialog returning unexpected references
+  Problem:    The Find References... contextual menu opens a contextual menu
+              where you can choose what kind of references should be returned.
+              However, it happens that GPS returns other kinds in addition
+  Workaround: Ignore the other types (since the kind is listed in the Locations
+              window)
+
 - E701-005 Crash/Freeze when closing a New View of an editor
   Problem:    When using multiple views of an editor, if the original view
               is closed before any of the other views, GPS might become
