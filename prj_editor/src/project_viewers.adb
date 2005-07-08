@@ -2668,7 +2668,7 @@ package body Project_Viewers is
       Register_Contextual_Menu
         (Kernel, "Edit project properties",
          Action => Command,
-         Label  => "Edit project/Properties",
+         Label  => "Project/Properties",
          Filter => Filter);
 
       Command := new Save_Project_Command;
@@ -2676,26 +2676,26 @@ package body Project_Viewers is
         (Kernel, "Save project",
          Action => Command,
          Filter => Filter,
-         Label  => "Edit project/Save project %p");
+         Label  => "Project/Save project %p");
 
       Command := new Edit_Project_Source_Command;
       Register_Contextual_Menu
-        (Kernel, "Edit project/Edit project source file",
+        (Kernel, "Project/Edit source file",
          Action => Command,
          Filter => Filter);
 
       Command := new Project_Dependency_Wizard_Command;
       Register_Contextual_Menu
-        (Kernel, "Edit project dependencies",
+        (Kernel, "Project dependencies",
          Action => Command,
          Filter => Filter,
-         Label  => "Edit project/Dependencies");
+         Label  => "Project/Dependencies");
 
       Command := new Add_Variable_Command;
       Register_Contextual_Menu
         (Kernel, "Add configuration variable",
          Action => Command,
-         Label  => "Edit project/Add configuration variable",
+         Label  => "Project/Add configuration variable",
          Filter => Action_Filter
            (Create (Module => "Explorer") and Filter));
 
