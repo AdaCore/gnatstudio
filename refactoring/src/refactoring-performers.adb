@@ -82,14 +82,6 @@ package body Refactoring.Performers is
    --  Called when all the related files have been searched and the refactoring
    --  should be performed
 
-   procedure Add_Overriden_Subprograms (Data : in out Get_Locations_Data);
-   --  Add to Data.Extra_Entities the overriden primitive subprograms related
-   --  to the one in Data.
-
-   procedure Setup_Data_For_Entity
-     (Data : in out Get_Locations_Data; Entity : Entity_Information);
-   --  Prepare Data to analyze Entity
-
    ----------
    -- Free --
    ----------
@@ -153,7 +145,12 @@ package body Refactoring.Performers is
       Data.Errors            := new Renaming_Error_Record;
 
       Push_State (Data.Kernel, Busy);
-      Setup_Data_For_Entity (Data, Entity);
+      Data.Entity            := Entity;
+      Find_All_References
+        (Iter                  => Data.Iter.all,
+         Entity                => Entity,
+         File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
+         Include_Overriding    => True);
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
       Set_Progress
@@ -202,81 +199,6 @@ package body Refactoring.Performers is
       end if;
    end On_End_Of_Search;
 
-   ---------------------------
-   -- Setup_Data_For_Entity --
-   ---------------------------
-
-   procedure Setup_Data_For_Entity
-     (Data : in out Get_Locations_Data; Entity : Entity_Information) is
-   begin
-      Data.Entity            := Entity;
-      Find_All_References
-        (Iter                  => Data.Iter.all,
-         Entity                => Entity,
-         File_Has_No_LI_Report => File_Error_Reporter (Data.Errors));
-   end Setup_Data_For_Entity;
-
-   -------------------------------
-   -- Add_Overriden_Subprograms --
-   -------------------------------
-
-   procedure Add_Overriden_Subprograms (Data : in out Get_Locations_Data) is
-      use Entity_Information_Arrays;
-   begin
-      if Is_Primitive_Operation_Of (Data.Entity) /= null then
-         declare
-            Prim_Of : constant Entity_Information := Is_Primitive_Operation_Of
-              (Data.Entity);
-            Child_Iter : Child_Type_Iterator;
-            Prim       : Primitive_Operations_Iterator;
-            Parents    : constant Entity_Information_Array :=
-              Get_Parent_Types (Prim_Of, Recursive => True);
-            Ent        : Entity_Information;
-         begin
-            Get_Child_Types (Child_Iter, Prim_Of);
-            while not At_End (Child_Iter) loop
-               Ent := Get (Child_Iter);
-               if Ent /= null then
-                  --  Check whether the child type overrides the primitive
-                  --  operation
-                  Find_All_Primitive_Operations
-                    (Prim, Ent, Include_Inherited => False);
-                  while not At_End (Prim) loop
-                     if Get_Name (Get (Prim)).all =
-                       Get_Name (Data.Entity).all
-                     then
-                        Append (Data.Extra_Entities, Get (Prim));
-                     end if;
-
-                     Next (Prim);
-                  end loop;
-                  Destroy (Prim);
-               end if;
-
-               Next (Child_Iter);
-            end loop;
-            Destroy (Child_Iter);
-
-            for P in Parents'Range loop
-               --  Check whether the child type overrides the primitive
-               --  operation
-               Find_All_Primitive_Operations
-                 (Prim, Parents (P), Include_Inherited => False);
-               while not At_End (Prim) loop
-                  if Get_Name (Get (Prim)).all =
-                    Get_Name (Data.Entity).all
-                  then
-                     Append (Data.Extra_Entities, Get (Prim));
-                  end if;
-
-                  Next (Prim);
-               end loop;
-               Destroy (Prim);
-            end loop;
-         end;
-      end if;
-   end Add_Overriden_Subprograms;
-
    ------------------------
    -- Find_Next_Location --
    ------------------------
@@ -291,21 +213,8 @@ package body Refactoring.Performers is
       Source : Source_File;
    begin
       if At_End (Data.Iter.all) then
-         if Data.Extra_Entities = Entity_Information_Arrays.Empty_Instance then
-            Add_Overriden_Subprograms (Data);
-         end if;
-
-         if Data.Extra_Entities = Entity_Information_Arrays.Empty_Instance
-           or else Data.Extra_Entities_Index > Last (Data.Extra_Entities)
-         then
-            On_End_Of_Search (Data);
-            Result := Success;
-         else
-            Setup_Data_For_Entity
-              (Data, Data.Extra_Entities.Table (Data.Extra_Entities_Index));
-            Data.Extra_Entities_Index := Data.Extra_Entities_Index + 1;
-            Result := Execute_Again;
-         end if;
+         On_End_Of_Search (Data);
+         Result := Success;
 
       elsif Ref /= No_Entity_Reference then
          Source := Get_File (Get_Location (Ref));
