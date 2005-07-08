@@ -152,6 +152,18 @@ package body Entities.Queries is
    --  Return the actual entity corresponding to a specific reference to
    --  Entity.
 
+   procedure Setup_For_Entity
+     (Iter   : in out Entity_Reference_Iterator;
+      Entity : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      In_Scope : Entity_Information := null);
+   --  Setup Iter to search for references to Entity
+
+   procedure Add_Overriding_Subprograms
+     (Iter : in out Entity_Reference_Iterator);
+   --  Setup Iter so that it will also return references to all entities
+   --  overriden or overriding by Iter.Entity
+
    function To_String (Location : File_Location) return String;
    --  For debugging purposes only
 
@@ -607,6 +619,58 @@ package body Entities.Queries is
       return False;
    end In_Range;
 
+   ----------------------
+   -- Setup_For_Entity --
+   ----------------------
+
+   procedure Setup_For_Entity
+     (Iter   : in out Entity_Reference_Iterator;
+      Entity : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      In_Scope : Entity_Information := null)
+   is
+      Deps : Dependency_Iterator;
+   begin
+      if Iter.In_File = null then
+         Find_Ancestor_Dependencies
+           (Deps,
+            File                  => Get_File (Get_Declaration_Of (Entity)),
+            File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Include_Self          => True);
+      else
+         Find_Ancestor_Dependencies
+           (Deps,
+            File                  => Iter.In_File,
+            File_Has_No_LI_Report => File_Has_No_LI_Report,
+            Include_Self          => True,
+            Single_Source_File    => True);
+      end if;
+
+      Iter.Entity        := Entity;
+      Iter.Index         := Entity_Reference_Arrays.First;
+      Iter.Decl_Returned := not Iter.Filter (Declaration)
+        or else
+          (In_Scope /= null
+           and then not In_Range
+             (Iter.Entity.Declaration,
+              Iter.In_File, Iter.Start_Line, Iter.Last_Line));
+      Iter.Deps          := Deps;
+      Iter.Returning_Existing_Refs := Length (Entity.References) /= 0;
+
+
+      --  If the first reference in the list is not correct, move to next one
+      if Iter.Decl_Returned
+        and then
+          (Length (Entity.References) = 0
+           or else not Iter.Filter (Entity.References.Table (Iter.Index).Kind)
+           or else not In_Range
+             (Entity.References.Table (Iter.Index).Location,
+              Iter.In_File, Iter.Start_Line, Iter.Last_Line))
+      then
+         Next (Iter);
+      end if;
+   end Setup_For_Entity;
+
    -------------------------
    -- Find_All_References --
    -------------------------
@@ -617,13 +681,12 @@ package body Entities.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       In_File               : Source_File := null;
       In_Scope              : Entity_Information := null;
-      Filter                : Reference_Kind_Filter := Real_References_Filter)
+      Filter                : Reference_Kind_Filter := Real_References_Filter;
+      Include_Overriding    : Boolean := False)
    is
-      Deps : Dependency_Iterator;
       F    : Source_File := In_File;
       Loc  : File_Location := No_File_Location;
       Start, Last : Integer;
-      Had_Old_Refs : constant Boolean := Length (Entity.References) /= 0;
    begin
       Assert (Me, Entity /= null,
               "No Entity specified to Find_All_References");
@@ -660,47 +723,15 @@ package body Entities.Queries is
          Last  := Integer'Last;
       end if;
 
-      if F = null then
-         Find_Ancestor_Dependencies
-           (Deps,
-            File                  => Get_File (Get_Declaration_Of (Entity)),
-            File_Has_No_LI_Report => File_Has_No_LI_Report,
-            Include_Self          => True);
-      else
-         Find_Ancestor_Dependencies
-           (Deps,
-            File                  => F,
-            File_Has_No_LI_Report => File_Has_No_LI_Report,
-            Include_Self          => True,
-            Single_Source_File    => True);
-      end if;
-
-      Iter :=
-        (Index                => Entity_Reference_Arrays.First,
-         Decl_Returned        => not Filter (Declaration)
-           or else
-             (In_Scope /= null
-              and then not In_Range (Entity.Declaration, F, Start, Last)),
-         Returning_Existing_Refs => Had_Old_Refs,
-         Last_Returned_File   => null,
-         Entity               => Entity,
-         Deps                 => Deps,
-         In_File              => F,
-         Start_Line           => Start,
-         Filter               => Filter,
-         Last_Line            => Last);
-
-      --  If the first reference in the list is not correct, move to next one
-      if Iter.Decl_Returned
-        and then
-          (Length (Entity.References) = 0
-           or else not Iter.Filter (Entity.References.Table (Iter.Index).Kind)
-           or else not In_Range
-             (Entity.References.Table (Iter.Index).Location,
-              Iter.In_File, Iter.Start_Line, Iter.Last_Line))
-      then
-         Next (Iter);
-      end if;
+      Iter.Last_Returned_File   := null;
+      Iter.In_File              := F;
+      Iter.Start_Line           := Start;
+      Iter.Last_Line            := Last;
+      Iter.Filter               := Filter;
+      Iter.Include_Overriding   := Include_Overriding;
+      Iter.Extra_Entities       := Entity_Information_Arrays.Empty_Instance;
+      Iter.Extra_Entities_Index := Entity_Information_Arrays.First;
+      Setup_For_Entity (Iter, Entity, File_Has_No_LI_Report, In_Scope);
    end Find_All_References;
 
    --------------------------
@@ -730,6 +761,10 @@ package body Entities.Queries is
    function At_End (Iter : Entity_Reference_Iterator) return Boolean is
    begin
       return Iter.Decl_Returned
+        and then not Iter.Include_Overriding
+        and then
+          (Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
+           or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities))
         and then At_End (Iter.Deps)
         and then Iter.Index > Last (Iter.Entity.References);
    end At_End;
@@ -749,6 +784,94 @@ package body Entities.Queries is
                  and then Ref.Line >= Start_Line
                  and then Ref.Line <= Last_Line);
    end In_Range;
+
+   --------------------------------
+   -- Add_Overriding_Subprograms --
+   --------------------------------
+
+   procedure Add_Overriding_Subprograms
+     (Iter : in out Entity_Reference_Iterator)
+   is
+      procedure Add_Prims_Of_Entity (Entity : Entity_Information);
+      --  Add the relevant primitive operations of Entity
+
+      procedure Add_Children_Of (Entity : Entity_Information);
+      --  Process recursively the children of Entity, and check whether they
+      --  have some matching primitive.
+
+      -------------------------
+      -- Add_Prims_Of_Entity --
+      -------------------------
+
+      procedure Add_Prims_Of_Entity (Entity : Entity_Information) is
+         Prim : Primitive_Operations_Iterator;
+         Found : Boolean;
+         Primitive : Entity_Information;
+      begin
+         if Entity /= null then
+            Find_All_Primitive_Operations
+              (Prim, Entity, Include_Inherited => False);
+            while not At_End (Prim) loop
+               Primitive := Get (Prim);
+
+               --  ??? This test could be more precise if we had more info
+               --  from the ALI files, instead of relying on the name only
+               if Get_Name (Primitive).all = Get_Name (Iter.Entity).all then
+
+                  Found := False;
+                  for E in Entity_Information_Arrays.First ..
+                    Last (Iter.Extra_Entities)
+                  loop
+                     if Iter.Extra_Entities.Table (E) = Primitive then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Append (Iter.Extra_Entities, Primitive);
+                  end if;
+               end if;
+
+               Next (Prim);
+            end loop;
+            Destroy (Prim);
+         end if;
+      end Add_Prims_Of_Entity;
+
+      ---------------------
+      -- Add_Children_Of --
+      ---------------------
+
+      procedure Add_Children_Of (Entity : Entity_Information) is
+         Child_Iter : Child_Type_Iterator;
+      begin
+         Get_Child_Types (Child_Iter, Entity);
+         while not At_End (Child_Iter) loop
+            if Get (Child_Iter) /= null then
+               Add_Prims_Of_Entity (Get (Child_Iter));
+               Add_Children_Of (Get (Child_Iter));
+            end if;
+            Next (Child_Iter);
+         end loop;
+         Destroy (Child_Iter);
+      end Add_Children_Of;
+
+   begin
+      if Is_Primitive_Operation_Of (Iter.Entity) /= null then
+         declare
+            Prim_Of : constant Entity_Information := Is_Primitive_Operation_Of
+              (Iter.Entity);
+            Parents    : constant Entity_Information_Array :=
+              Get_Parent_Types (Prim_Of, Recursive => True);
+         begin
+            Add_Children_Of (Prim_Of);
+            for P in Parents'Range loop
+               Add_Prims_Of_Entity (Parents (P));
+            end loop;
+         end;
+      end if;
+   end Add_Overriding_Subprograms;
 
    ----------
    -- Next --
@@ -808,7 +931,23 @@ package body Entities.Queries is
       --  Parse the current file on the list
 
       if At_End (Iter.Deps) then
-         return;
+         if Iter.Include_Overriding
+           and then
+             Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
+         then
+            Add_Overriding_Subprograms (Iter);
+            Iter.Include_Overriding := False;
+         end if;
+
+         if Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
+           or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities)
+         then
+            return;
+         end if;
+
+         Setup_For_Entity
+           (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
+         Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
       end if;
 
       Next (Iter.Deps);

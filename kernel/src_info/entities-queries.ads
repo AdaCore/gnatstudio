@@ -133,7 +133,8 @@ package Entities.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       In_File               : Source_File := null;
       In_Scope              : Entity_Information := null;
-      Filter                : Reference_Kind_Filter := Real_References_Filter);
+      Filter                : Reference_Kind_Filter := Real_References_Filter;
+      Include_Overriding    : Boolean := False);
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  If In_File is specified, then only the references in that file will be
@@ -145,6 +146,8 @@ package Entities.Queries is
    --  Source files with no LI file are reported through File_Has_No_LI_Report.
    --  You must destroy the iterator when you are done with it, to avoid
    --  memory leaks.
+   --  If Include_Overriding is True, then all references to an overriding or
+   --  Overriden subprogram will also be returned.
 
    function At_End (Iter : Entity_Reference_Iterator) return Boolean;
    --  Whether there are no more reference to return
@@ -525,6 +528,12 @@ private
       In_File : Source_File;
       Start_Line, Last_Line  : Integer;
       Filter  : Reference_Kind_Filter;
+
+      Include_Overriding   : Boolean;
+      Extra_Entities       : Entity_Information_Arrays.Instance :=
+        Entity_Information_Arrays.Empty_Instance;
+      Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
+        Entity_Information_Arrays.First;
 
       Deps    : Dependency_Iterator;
    end record;
