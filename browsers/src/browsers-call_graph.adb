@@ -2124,7 +2124,7 @@ package body Browsers.Call_Graph is
       Entity_Calls_Command (Command.all).To_Browser := False;
       Register_Contextual_Menu
         (Kernel, "Entity calls",
-         Label  => "References/%e calls",
+         Label  => "References/%e calls (in locations)",
          Filter => Filter,
          Action => Command);
 
@@ -2140,7 +2140,7 @@ package body Browsers.Call_Graph is
       Entity_Called_By_Command (Command.all).To_Browser := False;
       Register_Contextual_Menu
         (Kernel, "Entity called by",
-         Label  => "References/%e is called by",
+         Label  => "References/%e is called by (in locations)",
          Filter => Filter,
          Action => Command);
 
