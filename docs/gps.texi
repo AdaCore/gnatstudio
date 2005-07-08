@@ -794,8 +794,8 @@ GPS has an advanced mechanism for handling copy/paste operations.
 When you select the menus @code{Edit->Copy} or @code{Edit->Cut}, GPS adds the
 current selection to the clipboard. As opposed to what lots of applications
 do, it doesn't discard the previous contents of the clipboard, but save it for
-future usage. It saves a number of entries this way, up to 10 by default,
-although this is configurable through the @code{Clipboard Size} preference.
+future usage. It saves a number of entries this way, up to 10 by default.
+This value is configurable through the @code{Clipboard Size} preference.
 
 When you select the menu @code{Edit->Paste}, GPS will paste the last entry
 made in the clipboard at the current location in the editor.
@@ -1525,9 +1525,9 @@ and languages constructs such as comments and strings are highlighted in
 different colors and fonts. See @ref{The Preferences Dialog} for a list of
 settings that can be customized.
 
-GPS has support for a number of languages, although support for other languages
-can easily be added through XML files. Most languages supported by GPS will
-provided syntax highlighting in the editor
+By default, GPS knows about many languages. You can also easily add support
+for other languages through XML files. Most languages supported by GPS
+will provide syntax highlighting in the editor.
 
 @item Automatic indentation
 @cindex indentation
@@ -2869,8 +2869,9 @@ Open or raise the call graph browser on the specified entity and display all
 the subprograms called by @i{entity}. @xref{Call Graph}.
 
 @item @i{Entity} calls (in locations)
-This behaves the same as the one above, but will list its result in the
-Locations window. This is generally better if you expect lots of references.
+This behaves the same as the one above, except that it will list its result
+in the Locations window. This is generally more convenient if you expect lots
+of references.
 
 @item @i{Entity} is called by (in browser)
 @cindex call graph
@@ -2884,8 +2885,9 @@ time.  After a global look up, information is cached in memory, so that
 further global queries will be faster.
 
 @item @i{Entity} is called by (in locations)
-This behaves the same as the one above, but will list its result in the
-Locations window. This is generally better if you expect lots of references.
+This behaves the same as the one above, except that it will list its result
+in the Locations window. This is generally more convenient if you expect lots
+of references.
 
 @item Find all references to @i{entity}
 @cindex find all references
