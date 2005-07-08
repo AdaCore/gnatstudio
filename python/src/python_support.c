@@ -153,7 +153,7 @@ PyObject* ada_PyEval_EvalCodeEx
   }
 
   result = (PyObject*) PyEval_EvalCodeEx
-    ((PyCodeObject*)co, globals, locals,
+    (co, globals, locals,
     &PyTuple_GET_ITEM (args, 0), PyTuple_Size (args), k, nk, d, nd, closure);
 
   if (k != NULL) {
