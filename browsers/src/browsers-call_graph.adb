@@ -245,13 +245,14 @@ package body Browsers.Call_Graph is
    ----------
 
    type Entity_Idle_Data is record
-      Kernel       : Kernel_Handle;
-      Iter         : Entity_Reference_Iterator_Access;
-      Entity       : Entity_Information;
-      Filter       : Reference_Kind_Filter;
-      Iter_Started : Boolean;
-      Show_Caller  : Boolean;
-      Category     : String_Access;
+      Kernel             : Kernel_Handle;
+      Iter               : Entity_Reference_Iterator_Access;
+      Entity             : Entity_Information;
+      Filter             : Reference_Kind_Filter;
+      Iter_Started       : Boolean;
+      Show_Caller        : Boolean;
+      Category           : String_Access;
+      Include_Overriding : Boolean;
    end record;
 
    type Examine_Callback is record
@@ -343,7 +344,8 @@ package body Browsers.Call_Graph is
       Entity      : Entity_Information;
       Locals_Only : Boolean;
       Show_Caller : Boolean;
-      Filter      : Reference_Kind_Filter);
+      Filter      : Reference_Kind_Filter;
+      Include_Overriding : Boolean := False);
    --  Internal implementation of find_all_references
 
    procedure Find_All_References_Internal
@@ -351,7 +353,8 @@ package body Browsers.Call_Graph is
       Info           : Entity_Information;
       Category_Title : String;
       Show_Caller    : Boolean;
-      Filter         : Reference_Kind_Filter);
+      Filter         : Reference_Kind_Filter;
+      Include_Overriding : Boolean := False);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
    --  Starts a background search for all references.
@@ -1320,7 +1323,8 @@ package body Browsers.Call_Graph is
          Find_All_References
            (Iter   => Data.Iter.all,
             Entity => Data.Entity,
-            Filter => Data.Filter);
+            Filter => Data.Filter,
+            Include_Overriding => Data.Include_Overriding);
 
          Data.Iter_Started := True;
          Set_Progress
@@ -1372,7 +1376,8 @@ package body Browsers.Call_Graph is
       Info             : Entity_Information;
       Category_Title   : String;
       Show_Caller      : Boolean;
-      Filter           : Reference_Kind_Filter)
+      Filter           : Reference_Kind_Filter;
+      Include_Overriding : Boolean := False)
    is
       Data : Entity_Idle_Data;
       C    : Xref_Commands.Generic_Asynchronous_Command_Access;
@@ -1389,6 +1394,7 @@ package body Browsers.Call_Graph is
                      Category         => new String'(Category_Title),
                      Iter_Started     => False,
                      Show_Caller      => Show_Caller,
+                     Include_Overriding => Include_Overriding,
                      Entity           => Info);
 
             Xref_Commands.Create
@@ -1848,7 +1854,8 @@ package body Browsers.Call_Graph is
       Entity            : Entity_Information;
       Locals_Only       : Boolean;
       Show_Caller       : Boolean;
-      Filter            : Reference_Kind_Filter)
+      Filter            : Reference_Kind_Filter;
+      Include_Overriding : Boolean := False)
    is
       Iter     : Entity_Reference_Iterator;
       File     : constant Virtual_File := File_Information
@@ -1867,7 +1874,8 @@ package body Browsers.Call_Graph is
               (Iter    => Iter,
                Entity  => Entity,
                Filter  => Filter,
-               In_File => Get_Or_Create (Get_Database (Kernel), File));
+               In_File => Get_Or_Create (Get_Database (Kernel), File),
+               Include_Overriding => Include_Overriding);
 
             while not At_End (Iter) loop
                if Get (Iter) /= No_Entity_Reference then
@@ -1892,7 +1900,8 @@ package body Browsers.Call_Graph is
             Entity,
             Category_Title   => All_Refs_Category (Entity),
             Show_Caller      => Show_Caller,
-            Filter           => Filter);
+            Filter           => Filter,
+            Include_Overriding => Include_Overriding);
       end if;
    end Parse_All_Refs;
 
@@ -1973,6 +1982,7 @@ package body Browsers.Call_Graph is
       Project_And_Recursive,
       File_Only : Gtk_Radio_Button;
       Show_Caller : Gtk_Check_Button;
+      Include_Overriding : Gtk_Check_Button;
       Filter    : Reference_Kind_Filter := (others => False);
       Frame     : Gtk_Frame;
       Widget    : Gtk_Widget;
@@ -2053,7 +2063,7 @@ package body Browsers.Call_Graph is
 
       --  Extra info choice
 
-      Gtk_New (Frame, -"Extra information");
+      Gtk_New (Frame, -"Advanced Search");
       Pack_Start (Get_Vbox (Dialog), Frame);
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
@@ -2064,6 +2074,14 @@ package body Browsers.Call_Graph is
         (Get_History (Kernel).all, "Find_Prefs_Show_Caller", False);
       Associate (Get_History (Kernel).all, "Find_Prefs_Show_Caller",
                  Show_Caller);
+
+      Gtk_New
+        (Include_Overriding, -"Include overriding and overriden operations");
+      Pack_Start (Box, Include_Overriding);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "Find_Prefs_Include_Overriding", False);
+      Associate (Get_History (Kernel).all, "Find_Prefs_Include_Overriding",
+                 Include_Overriding);
 
       Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -2085,7 +2103,8 @@ package body Browsers.Call_Graph is
               (Entity_Selection_Context_Access (Context.Context)),
             Locals_Only       => Get_Active (File_Only),
             Filter            => Filter,
-            Show_Caller       => Get_Active (Show_Caller));
+            Show_Caller       => Get_Active (Show_Caller),
+            Include_Overriding => Get_Active (Include_Overriding));
 
          Destroy (Dialog);
 
