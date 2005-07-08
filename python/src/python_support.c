@@ -153,7 +153,7 @@ PyObject* ada_PyEval_EvalCodeEx
   }
 
   result = (PyObject*) PyEval_EvalCodeEx
-    (co, globals, locals,
+    ((PyCodeObject*)co, globals, locals,
     &PyTuple_GET_ITEM (args, 0), PyTuple_Size (args), k, nk, d, nd, closure);
 
   if (k != NULL) {
@@ -162,6 +162,23 @@ PyObject* ada_PyEval_EvalCodeEx
 
   return result;
 }
+
+/*
+PyObject* ada_py_object_new (PyObject* base)
+{
+   if (PyClass_Check (base)) {
+      return PyInstance_NewRaw (base, NULL);
+   } else {
+      if (base->ob_type->tp_new != NULL) {
+           Py_INCREF (Py_None);
+           Py_INCREF (Py_None);
+           return base->ob_type->tp_new (base->ob_type, Py_None, Py_None);
+      } else {
+           return NULL;
+      }
+   }
+}
+*/
 
 
 int ada_pycobject_check (PyObject* obj) {
@@ -204,9 +221,22 @@ PyObject* ada_py_true() {
   return Py_True;
 }
 
-PyObject* ada_pyclass_name(PyClassObject* obj) {
-//  return PyObject_GetAttrString (obj, "__name__");
-   return obj->cl_name;
+PyObject* ada_pyclass_name(PyObject* obj) {
+  if (PyClass_Check (obj)) {
+      return ((PyClassObject*)obj)->cl_name;
+  } else {
+     /* Derives from object, not a real class */
+     return PyObject_GetAttrString (obj, "__name__");
+  }
+}
+
+int ada_pyclass_is_subclass (PyObject* class, PyObject* base)
+{
+  if (PyClass_Check (class)) {
+      return PyClass_IsSubclass (class, base);
+  } else {
+      return PyObject_TypeCheck (class, base->ob_type);
+  }
 }
 
 
