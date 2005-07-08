@@ -60,11 +60,8 @@ with Commands.Interactive;        use Commands, Commands.Interactive;
 with Default_Preferences;         use Default_Preferences;
 with Entities;                    use Entities;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
---  with Traces;                      use Traces;
 
 package body Outline_View is
-
---   Me : constant Debug_Handle := Create ("Outline_View");
 
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
@@ -73,6 +70,7 @@ package body Outline_View is
    Outline_View_Profiles            : Param_Spec_Boolean;
    Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
    Outline_View_Link_Editor         : Param_Spec_Boolean;
+   Outline_View_Show_File_Node      : Param_Spec_Boolean;
 
    Entity_Name_Column : constant := 2;
    Mark_Column        : constant := 3;
@@ -100,6 +98,10 @@ package body Outline_View is
       File      : VFS.Virtual_File;
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
+
+      Show_File_Node : Boolean := True;
+      --  Whether the root node should show the file name. If set to False, no
+      --  root node is used, which saves space on the display.
    end record;
    type Outline_View_Access is access all Outline_View_Record'Class;
 
@@ -299,6 +301,15 @@ package body Outline_View is
               Freeze_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)));
          end if;
 
+         Outline.Show_File_Node :=
+           Get_Pref (Kernel, Outline_View_Show_File_Node);
+
+         if Outline.Show_File_Node then
+            Set_Expander_Column (Outline.Tree, null);
+         else
+            Set_Expander_Column (Outline.Tree, Get_Column (Outline.Tree, 0));
+         end if;
+
          Refresh (Outline);
       end if;
    end Preferences_Changed;
@@ -492,6 +503,8 @@ package body Outline_View is
          Initial_Sort := -1;
       end if;
 
+      Outline.Show_File_Node := Get_Pref (Kernel, Outline_View_Show_File_Node);
+
       Gtk_New (Scrolled);
       Pack_Start (Outline, Scrolled, Expand => True);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -506,8 +519,15 @@ package body Outline_View is
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => Initial_Sort,
-         Selection_Mode     => Gtk.Enums.Selection_Single);
+         Selection_Mode     => Gtk.Enums.Selection_Single,
+         Hide_Expander      => True);
       Add (Scrolled, Outline.Tree);
+
+      if Outline.Show_File_Node then
+         Set_Expander_Column (Outline.Tree, null);
+      else
+         Set_Expander_Column (Outline.Tree, Get_Column (Outline.Tree, 0));
+      end if;
 
       Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
       Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
@@ -617,9 +637,12 @@ package body Outline_View is
       if Outline.File /= VFS.No_File then
          Handler := Get_LI_Handler_From_File (Languages, Outline.File);
          Lang := Get_Language_From_File (Languages, Outline.File);
-         Append (Model, Root, Null_Iter);
-         Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
-         Set (Model, Root, 1, "File: " & Base_Name (Outline.File));
+
+         if Outline.Show_File_Node then
+            Append (Model, Root, Null_Iter);
+            Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
+            Set (Model, Root, 1, "File: " & Base_Name (Outline.File));
+         end if;
       end if;
 
       if Handler = null or else Lang = null then
@@ -863,6 +886,20 @@ package body Outline_View is
             Nick    => -"Link with editor"));
       Register_Property
         (Kernel, Param_Spec (Outline_View_Link_Editor), -"Outline");
+
+      Outline_View_Show_File_Node := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name    => "Outline-View-Show-File-Node",
+            Default => True,
+            Blurb   => -("If true, the outline view's top line will indicate"
+                         & " the name of the file currently shown in the"
+                         & " outline. If false, the name of the file will not"
+                         & " be displayed, and the outline view will use"
+                         & " slightly less screen estate"),
+            Nick    => -"Show file name"));
+      Register_Property
+        (Kernel, Param_Spec (Outline_View_Show_File_Node), -"Outline");
+
    end Register_Module;
 
 end Outline_View;
