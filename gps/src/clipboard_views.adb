@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;       use Ada.Exceptions;
+with Commands.Interactive; use Commands, Commands.Interactive;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Clipboard; use GPS.Kernel.Clipboard;
@@ -35,6 +36,7 @@ with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_Store;       use Gtk.Tree_Store;
@@ -42,8 +44,8 @@ with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
-with String_Utils;         use String_Utils;
 with Pixmaps_IDE;          use Pixmaps_IDE;
+with String_Utils;         use String_Utils;
 with Traces; use Traces;
 
 package body Clipboard_Views is
@@ -94,6 +96,89 @@ package body Clipboard_Views is
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
+   function View_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Context factory when creating contextual menus
+
+   function Get_Selected_From_Event
+     (View  : access Clipboard_View_Record'Class;
+      Event : Gdk_Event) return Integer;
+   --  Return the entry selected by event
+
+   type Merge_With_Previous_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Merge_With_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Merge the selected entry with the previous one
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Merge_With_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Selected : Integer;
+      View : constant Clipboard_View_Access := Clipboard_View_Access
+        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+   begin
+      if Context.Event /= null then
+         Selected := Get_Selected_From_Event (View, Context.Event);
+         if Selected /= -1 then
+            Merge_Clipboard
+              (Get_Clipboard (View.Kernel), Selected, Selected + 1);
+            return Success;
+         end if;
+      end if;
+      return Failure;
+   end Execute;
+
+   -----------------------------
+   -- Get_Selected_From_Event --
+   -----------------------------
+
+   function Get_Selected_From_Event
+     (View  : access Clipboard_View_Record'Class;
+      Event : Gdk_Event) return Integer
+   is
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter : Gtk_Tree_Iter;
+   begin
+      Iter := Find_Iter_For_Event (View.Tree, Model, Event);
+      if Iter /= Null_Iter then
+         return Integer (Get_Int (Model, Iter, 2));
+      else
+         return -1;
+      end if;
+   end Get_Selected_From_Event;
+
+   --------------------------
+   -- View_Context_Factory --
+   --------------------------
+
+   function View_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel, Event_Widget, Object, Event, Menu);
+      --  Nothing special in the context, just the module itself so that people
+      --  can still add information if needed
+      Context : constant Selection_Context_Access := new Selection_Context;
+   begin
+      return Context;
+   end View_Context_Factory;
+
    ------------------
    -- Button_Press --
    ------------------
@@ -103,18 +188,13 @@ package body Clipboard_Views is
       Event : Gdk_Event) return Boolean
    is
       View  : constant Clipboard_View_Access := Clipboard_View_Access (Clip);
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter : Gtk_Tree_Iter;
-      Selected : Gint;
+      Selected : Integer;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         Iter := Find_Iter_For_Event (View.Tree, Model, Event);
-         if Iter /= Null_Iter then
-            Selected := Get_Int (Model, Iter, 2);
-
+         Selected := Get_Selected_From_Event (View, Event);
+         if Selected > 0 then
             --  Put the focus back on the current editor
             Execute_GPS_Shell_Command
               (View.Kernel, "EditorBuffer.get;"
@@ -124,7 +204,7 @@ package body Clipboard_Views is
             Paste_Clipboard
               (Get_Clipboard (View.Kernel),
                Get_Current_Focus_Widget (View.Kernel),
-               Integer (Selected));
+               Selected);
             return True;
          end if;
       end if;
@@ -159,7 +239,7 @@ package body Clipboard_Views is
       Iter      : Gtk_Tree_Iter;
       Last_Paste : constant Integer :=
         Get_Last_Paste (Get_Clipboard (View.Kernel));
-      Index : Natural;
+      Index, First : Natural;
    begin
       Clear (Model);
 
@@ -174,17 +254,25 @@ package body Clipboard_Views is
             end if;
 
             --  Show only the first line of the selection
-            Index := Selection (S)'First;
-            Skip_Lines (Selection (S).all, 1, Index);
+            First := Selection (S)'First;
+            while First <= Selection (S)'Last
+              and then Is_Blank (Selection (S)(First))
+            loop
+               First := First + 1;
+            end loop;
 
-            if Index > Selection (S)'First
-              and then Selection (S)(Index - 1) = ASCII.LF
-            then
-               Index := Index - 2;
+            if First > Selection (S)'Last then
+               First := Selection (S)'Last;
             end if;
 
+            Index := Selection (S)'First;
+            while Index <= Selection (S)'Last
+              and then Selection (S)(Index) /= ASCII.LF
+            loop
+               Index := Index + 1;
+            end loop;
             Set (Model, Iter, 1,
-                 Selection (S) (Selection (S)'First .. Index));
+                 Selection (S) (First .. Index - 1));
             Set (Model, Iter, 2, Gint (S));
          end if;
       end loop;
@@ -227,6 +315,13 @@ package body Clipboard_Views is
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => View.Tree,
+         Object          => View,
+         ID              => Clipboard_Views_Module,
+         Context_Func    => View_Context_Factory'Access);
 
       Add_Hook (Kernel, Clipboard_Changed_Hook, On_Clipboard_Changed'Access,
                 Watch => GObject (View));
@@ -321,6 +416,7 @@ package body Clipboard_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module      => Clipboard_Views_Module,
@@ -331,6 +427,13 @@ package body Clipboard_Views is
          "/" & (-"Tools"), -"Clipboard View", "", On_Open_View'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Command := new Merge_With_Previous_Command;
+      Register_Contextual_Menu
+        (Kernel, "Clipboard View Append To Previous",
+         Action => Command,
+         Filter => Create (Module => "Clipboard_View"),
+         Label  => -"Append To Previous");
    end Register_Module;
 
 end Clipboard_Views;
