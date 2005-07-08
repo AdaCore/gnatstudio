@@ -2901,6 +2901,16 @@ to indicate the scope of the search, and whether the context (or caller)
 at each reference should be displayed. Computing the caller information will
 take slightly longer though.
 
+@cinde primitive operation
+This dialog has an option @code{Include overriding and overriden operations},
+which, when activated, will include references to overriden or overriding
+entities of the one you selected.
+
+This is particularly useful when you are wondering whether you can easily
+modify the profile of a primitive operation, since you can then see what
+other entities will also be impacted. If you select only the @code{declaration}
+check box, you will see the list of all related primitive operations.
+
 @item Find all local references to @i{entity}
 @cindex find all local references
 Find all references to @i{entity} in the current file (or in the current
@@ -8171,6 +8181,13 @@ If this option is set, the current subprogram will be selected in the outline
 view every time the cursor position changes in the current editor. This
 option requires some computation for GPS, and you might want to avoid the
 slow down by disabling it.
+
+@item Show file name
+
+If this option is set, the outline view will show the name of the file on its
+first line, and indent slightly all following lines. If this option is unset,
+this will save some screen real estate, but you will have to look at the
+current editor to see what file is descrived in the Outline View.
 
 @end table
 
