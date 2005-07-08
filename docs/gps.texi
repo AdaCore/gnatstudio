@@ -824,6 +824,14 @@ text in the current editor, and make the line you clicked on the current line,
 so that selecting @code{Edit->Paste} or the equivalent shortcut will now
 insert that line.
 
+The contextual menu in the clipboard view provides one entry, which is
+@code{Append To Previous}. If you select this entry, the select line will
+be append to the one below, and removed from the clipboard. This means that
+selection @code{Edit->Paste} will in fact paste the two entries at the same
+time. This is in particular useful when you want to copy lines from separate
+places in the initial file, merge them, and then paste them together one or
+more times later on, through a single operation.
+
 @c --------------------------------------------------------------------
 @node The Messages Window
 @section The Messages Window
