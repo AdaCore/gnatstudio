@@ -6,6 +6,11 @@ New features in GPS 3.1.0
 - Multi-level clipboard to save multiple selections
   New menu Edit->Paste Previous, and the Clipboard View
 
+- Added basic support for several languages (highlighting and outline view):
+  Perl, Tcl, Pascal, unix shell,...
+
+- New menus Edit->Sort Ascending and Edit->Sort Descending
+
 - New refactoring module: Rename entity, Name parameters in call, Extract Method
 
 - New python API for interacting with the editors
@@ -50,3 +55,4 @@ New features in GPS 3.1.0
   Tooltips now show information about generics instantiations.
   They also show the proper casing of Ada entities, instead of lower cases only
 
+- Improved MDI, better at reloading your desktop
