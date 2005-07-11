@@ -118,14 +118,12 @@ package body Theme_Manager_Module is
    Visible_Column   : constant := 2;
 
    procedure Destroy (Module : in out Theme_Manager_Module_Record);
-   --  Free the memory occupied by Module
-
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Theme_Manager_Module_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   --  Handles tags read from the customization files
+   --  See inherited documentation
 
    procedure Selection_Changed (Editor : access Gtk_Widget_Record'Class);
    --  Called when the selection has changed
@@ -242,12 +240,13 @@ package body Theme_Manager_Module is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Theme_Manager_Module_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
+      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Themes : Theme_Description_Access;
       Str : GNAT.OS_Lib.String_Access;
       Active : constant String := Get_Pref (Kernel, Active_Themes);
@@ -589,10 +588,7 @@ package body Theme_Manager_Module is
    begin
       Theme_Manager_Module := new Theme_Manager_Module_Record;
       Register_Module
-        (Module_ID (Theme_Manager_Module),
-         Kernel,
-         "theme_manager",
-         Customization_Handler => Customize'Access);
+        (Module_ID (Theme_Manager_Module), Kernel, "theme_manager");
 
       Active_Themes := Param_Spec_String (Gnew_String
         (Name    => "Active-Themes",
