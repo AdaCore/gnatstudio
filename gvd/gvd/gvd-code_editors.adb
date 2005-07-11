@@ -247,17 +247,6 @@ package body GVD.Code_Editors is
       return Get_Current_File (Editor.Source);
    end Get_Current_File;
 
-   --------------------------
-   -- Set_Current_Language --
-   --------------------------
-
-   procedure Set_Current_Language
-     (Editor : access Code_Editor_Record;
-      Lang   : Language.Language_Access) is
-   begin
-      Set_Current_Language (Editor.Source, Lang);
-   end Set_Current_Language;
-
    -----------------
    -- Set_Address --
    -----------------

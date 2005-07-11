@@ -20,7 +20,6 @@
 
 with Glib.Object;
 with Gtk.Widget;
-with Language;
 with GVD.Types;
 with VFS;
 
@@ -28,15 +27,6 @@ package GVD.Source_Editor is
 
    type Source_Editor_Record is abstract tagged private;
    type Source_Editor is access all Source_Editor_Record'Class;
-
-   procedure Set_Current_Language
-     (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access);
-   --  Change the current language for the editor.
-   --  The text already present in the editor is not re-highlighted for the
-   --  new language, this only influences future addition to the editor.
-   --
-   --  If Lang is null, then no color highlighting will be performed.
 
    procedure Update_Breakpoints
      (Editor  : access Source_Editor_Record;
@@ -110,8 +100,6 @@ private
       Current_File : VFS.Virtual_File;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
-
-      Lang : Language.Language_Access;
    end record;
 
 end GVD.Source_Editor;

@@ -40,7 +40,6 @@ with Glib.Object;
 with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
-with Language;
 with GVD.Assembly_View;
 with GVD.Source_Editor;
 with GVD.Types;
@@ -153,15 +152,6 @@ package GVD.Code_Editors is
      (Editor : access Code_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
-
-   procedure Set_Current_Language
-     (Editor : access Code_Editor_Record;
-      Lang   : Language.Language_Access);
-   --  Change the current language for the source editor.
-   --  The text already present in the editor is not re-highlighted for the
-   --  new language, this only influences future addition to the editor.
-   --
-   --  If Lang is null, then no color highlighting will be performed.
 
    procedure On_Executable_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);

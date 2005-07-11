@@ -78,7 +78,6 @@ with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with Items.Simples;              use Items.Simples;
-with Language_Handlers;          use Language_Handlers;
 with Pixmaps_IDE;                use Pixmaps_IDE;
 with Process_Proxies;            use Process_Proxies;
 with String_List_Utils;          use String_List_Utils;
@@ -666,11 +665,6 @@ package body GVD.Process is
                    (Process.Current_Output (File_First .. File_Last),
                     Resolve_Links => False));
          begin
-            Set_Current_Language
-              (Process.Editor_Text, Get_Language_From_File
-                 (GPS.Kernel.Get_Language_Handler
-                    (GPS_Window (Process.Window).Kernel),
-                  File_Name));
             Load_File (Process.Editor_Text, File_Name);
          end;
       end if;
@@ -1470,9 +1464,10 @@ package body GVD.Process is
             begin
                Set_Value
                  (Debugger_Output_Type (Entity.all),
-                  Send (Process.Debugger,
-                        Refresh_Command (Debugger_Output_Type (Entity.all)),
-                        Mode => Internal));
+                  Send
+                    (Process.Debugger,
+                     Refresh_Command (Debugger_Output_Type (Entity.all)),
+                     Mode => Internal));
 
                --  No link ?
 
@@ -1747,8 +1742,8 @@ package body GVD.Process is
             --  send the command right away.
 
             Send
-              (Debugger.Debugger, Command,
-               Wait_For_Prompt => False, Mode => Mode);
+              (Debugger.Debugger,
+               Command, Wait_For_Prompt => False, Mode => Mode);
 
          else
             Close_Debugger (Debugger);
@@ -1764,8 +1759,8 @@ package body GVD.Process is
            or else Debugger.Registered_Dialog /= null
          then
             Send
-              (Debugger.Debugger, Command,
-               Wait_For_Prompt => False, Mode => Mode);
+              (Debugger.Debugger,
+               Command, Wait_For_Prompt => False, Mode => Mode);
          else
             Send (Debugger.Debugger, Command, Mode => Mode);
          end if;

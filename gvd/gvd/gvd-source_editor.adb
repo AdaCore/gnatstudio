@@ -20,23 +20,6 @@
 
 package body GVD.Source_Editor is
 
-   --------------------------
-   -- Set_Current_Language --
-   --------------------------
-
-   procedure Set_Current_Language
-     (Editor : access Source_Editor_Record;
-      Lang   : Language.Language_Access)
-   is
-      use Language;
-   begin
-      Free (Editor.Lang);
-
-      if Lang /= null then
-         Editor.Lang := new Language_Root'Class'(Lang.all);
-      end if;
-   end Set_Current_Language;
-
    ----------------------
    -- Get_Current_File --
    ----------------------
