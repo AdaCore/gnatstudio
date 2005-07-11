@@ -1,6 +1,4 @@
 GNAT_SOURCES= \
-  a-stunau.ads \
-  a-stunau.adb \
   ali.ads \
   ali.adb \
   alloc.ads \
@@ -29,24 +27,6 @@ GNAT_SOURCES= \
   fmap.adb \
   fname.ads \
   fname.adb \
-  g-bubsor.ads \
-  g-bubsor.adb \
-  g-heasor.ads \
-  g-heasor.adb \
-  g-regpat.ads \
-  g-regpat.adb \
-  g-comlin.ads \
-  g-comlin.adb \
-  g-dirope.ads \
-  g-dirope.adb \
-  g-expect.ads \
-  g-expect.adb \
-  g-os_lib.ads \
-  g-os_lib.adb \
-  g-string.ads \
-  g-string.adb \
-  g-utf_32.ads \
-  g-utf_32.adb \
   gnatvsn.ads \
   gnatvsn.adb \
   hostparm.ads \
@@ -104,14 +84,6 @@ GNAT_SOURCES= \
   prj.ads \
   prj.adb \
   rident.ads \
-  s-htable.ads \
-  s-htable.adb \
-  s-rident.ads \
-  s-crtl.ads \
-  s-casuti.ads \
-  s-casuti.adb \
-  s-wchcnv.ads \
-  s-wchcnv.adb \
   scans.ads \
   scans.adb \
   scng.ads \
