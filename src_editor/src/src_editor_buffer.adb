@@ -3906,7 +3906,7 @@ package body Src_Editor_Buffer is
       Set_Context_Information
         (Context,
          Buffer.Kernel,
-         Src_Editor_Module_Id);
+         Abstract_Module_ID (Src_Editor_Module_Id));
 
       if Buffer.Filename /= VFS.No_File then
          Set_File_Information (Context, Buffer.Filename);

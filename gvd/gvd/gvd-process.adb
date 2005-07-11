@@ -922,7 +922,7 @@ package body GVD.Process is
          On_Stack_Delete_Event'Access, Process);
 
       Child := Put
-        (GPS.Kernel.Get_Kernel (Debugger_Module_ID.all),
+        (Get_Kernel (Debugger_Module_ID.all),
          Process.Stack,
          Position => Position_Debugger_Stack,
          Module   => Debugger_Module_ID);
@@ -982,7 +982,7 @@ package body GVD.Process is
       Free (Annotation_Font);
 
       Child := Put
-        (GPS.Kernel.Get_Kernel (Debugger_Module_ID.all),
+        (Get_Kernel (Debugger_Module_ID.all),
          Process.Data_Scrolledwindow,
          Position => Position_Debugger_Data,
          Flags    => All_Buttons,

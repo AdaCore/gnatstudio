@@ -759,7 +759,7 @@ package body Shell_Script is
         (Module      => Module_ID (Shell_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Shell script",
-         Priority    => GPS.Kernel.Default_Priority);
+         Priority    => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

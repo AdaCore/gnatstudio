@@ -72,8 +72,9 @@ package body GPS.Kernel.Preferences is
       Index : Guint) return String;
    --  Return enum value for Index
 
+   type Preferences_Module is new Module_ID_Record with null record;
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Preferences_Module;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
@@ -1117,12 +1118,13 @@ package body GPS.Kernel.Preferences is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Preferences_Module;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
+      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Child : Glib.Xml_Int.Node_Ptr;
       Child_Count : Natural;
       Flags : Param_Flags;
@@ -1318,11 +1320,11 @@ package body GPS.Kernel.Preferences is
       Pref_Class : constant Class_Type := New_Class (Kernel, "Preference");
       Module     : Module_ID;
    begin
+      Module := new Preferences_Module;
       GPS.Kernel.Modules.Register_Module
         (Module                => Module,
          Kernel                => Kernel,
-         Module_Name           => "Preferences",
-         Customization_Handler => Customize'Access);
+         Module_Name           => "Preferences");
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args  => 1,

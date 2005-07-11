@@ -123,7 +123,7 @@ package body GPS.Kernel.MDI is
          Set_Size_Request (Child, Default_Width, Default_Height);
       end if;
 
-      C.Module := Module_ID (Module);
+      C.Module := Abstract_Module_ID (Module);
       C.Desktop_Independent := Desktop_Independent;
       return Put (Get_MDI (Handle), C, Position, Flags, Focus_Widget);
    end Put;
@@ -136,7 +136,7 @@ package body GPS.Kernel.MDI is
      (Child : Gtkada.MDI.MDI_Child) return Module_ID is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
-         return GPS_MDI_Child (Child).Module;
+         return Module_ID (GPS_MDI_Child (Child).Module);
       else
          return null;
       end if;
@@ -244,9 +244,7 @@ package body GPS.Kernel.MDI is
          Module := Get_Module_From_Child (Child);
 
          if Module /= null
-           and then Module.Info.Save_Function /= null
-           and then Module.Info.Save_Function
-             (Handle, Get_Widget (Child), Mode => Query)
+           and then Save_Function (Module, Get_Widget (Child), Mode => Query)
          then
             Append (Model, It, Null_Iter);
             Set (Model, It, 0, True);
@@ -262,11 +260,9 @@ package body GPS.Kernel.MDI is
       function Save_Child (Child : MDI_Child) return Boolean is
          Module : constant Module_ID := Get_Module_From_Child (Child);
       begin
-         if Module /= null
-           and then Module.Info.Save_Function /= null
-         then
-            return Module.Info.Save_Function
-              (Handle, Get_Widget (Child), Mode => Action);
+         if Module /= null then
+            return Save_Function
+              (Module, Get_Widget (Child), Mode => Action);
          else
             return True;
          end if;

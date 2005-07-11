@@ -37,6 +37,7 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Gtkada.Tree_View;        use Gtkada.Tree_View;
 
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 
 with Custom_Module;           use Custom_Module;

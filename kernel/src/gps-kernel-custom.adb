@@ -25,8 +25,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
 with VFS;                       use VFS;
 
@@ -54,8 +55,8 @@ package body GPS.Kernel.Custom is
       Level  : Customization_Level)
    is
       use type Module_List.List_Node;
-      Current : Module_List.List_Node :=
-        Module_List.First (Kernel.Modules_List);
+      List    : constant Module_List.List := List_Of_Modules (Kernel);
+      Current : Module_List.List_Node;
       Tmp  : Node_Ptr := Node;
       Tmp2 : Node_Ptr;
 
@@ -74,15 +75,9 @@ package body GPS.Kernel.Custom is
          Tmp2 := Tmp.Next;
          Tmp.Next := null;
 
-         Current := Module_List.First (Kernel.Modules_List);
+         Current := Module_List.First (List);
          while Current /= Module_List.Null_Node loop
-            if Module_List.Data (Current).Info.Customization_Handler /=
-              null
-            then
-               Module_List.Data (Current).Info.Customization_Handler
-                 (Kernel, File, Tmp, Level);
-            end if;
-
+            Customize (Module_List.Data (Current), File, Tmp, Level);
             Current := Module_List.Next (Current);
          end loop;
 

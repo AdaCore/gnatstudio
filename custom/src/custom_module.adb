@@ -67,6 +67,8 @@ package body Custom_Module is
 
    Me : constant Debug_Handle := Create ("custom_module");
 
+   type Custom_Module_ID_Record is new Module_ID_Record with null record;
+
    Path_Cst        : aliased constant String := "path";
    On_Activate_Cst : aliased constant String := "on_activate";
    Add_Before_Cst  : aliased constant String := "add_before";
@@ -93,11 +95,11 @@ package body Custom_Module is
    --  Called when a Subprogram_Type_Menu is activated
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Custom_Module_ID_Record;
       File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
+      Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
-   --  Called when a new customization in parsed
+   --  See inherited documentation
 
    procedure Menu_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -112,14 +114,15 @@ package body Custom_Module is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Custom_Module_ID_Record;
       File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
+      Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
 
-      Handler      : constant GPS_Language_Handler := GPS_Language_Handler
+      Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
+      Handler : constant GPS_Language_Handler := GPS_Language_Handler
         (Get_Language_Handler (Kernel));
 
       procedure Add_Child
@@ -383,7 +386,7 @@ package body Custom_Module is
 
          Create (Command,
                  Name           => Name,
-                 Kernel         => Kernel_Handle (Kernel),
+                 Kernel         => Kernel,
                  Command        => Node.Child,
                  Default_Output => Get_Attribute
                    (Node, "output", Console_Output),
@@ -1032,13 +1035,12 @@ package body Custom_Module is
       Contextual_Class : constant Class_Type := New_Class
         (Kernel, "Contextual");
    begin
-      Custom_Module_ID := new Module_ID_Record;
+      Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
         (Module                  => Custom_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => "Custom",
-         Priority                => Low_Priority,
-         Customization_Handler   => Customize'Access);
+         Priority                => Low_Priority);
 
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);

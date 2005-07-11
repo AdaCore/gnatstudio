@@ -21,11 +21,11 @@
 --  This package provides facilities for customizing menus,
 --  keyboard shortcuts, and so on, in GPS.
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel.Modules; use GPS.Kernel;
 
 package Custom_Module is
 
-   Custom_Module_ID : Module_ID;
+   Custom_Module_ID : GPS.Kernel.Modules.Module_ID;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

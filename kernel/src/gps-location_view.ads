@@ -53,13 +53,13 @@ package GPS.Location_View is
    procedure Gtk_New
      (View        : out Location_View;
       Kernel      : Kernel_Handle;
-      Module      : Module_ID);
+      Module      : Abstract_Module_ID);
    --  Create a new Location_View.
 
    procedure Initialize
      (View   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
-      Module : Module_ID);
+      Module : Abstract_Module_ID);
    --  Internal initialization procedure.
 
    function Get_Or_Create_Location_View

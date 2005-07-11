@@ -32,6 +32,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
 
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
 

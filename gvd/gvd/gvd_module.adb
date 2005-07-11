@@ -214,13 +214,13 @@ package body GVD_Module is
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger module, and kill the underlying debugger.
 
+   function Tooltip_Handler
+     (Module  : access GVD_Module_Record;
+      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap;
+   --  See inherited documentation
+
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
-
-   procedure Tooltip_Handler
-     (Sel_Context : access Selection_Context'Class;
-      Pixmap      : out Gdk.Gdk_Pixmap);
-   --  Create a pixmap suitable for a tooltip, if debugger has been initialized
 
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class);
    --  Add debugger related buttons to the main toolbar.
@@ -2456,24 +2456,24 @@ package body GVD_Module is
    -- Tooltip_Handler --
    ---------------------
 
-   procedure Tooltip_Handler
-     (Sel_Context : access Selection_Context'Class;
-      Pixmap      : out Gdk.Gdk_Pixmap)
+   function Tooltip_Handler
+     (Module  : access GVD_Module_Record;
+      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap
    is
+      pragma Unreferenced (Module);
+      Pixmap    : Gdk.Gdk_Pixmap;
       Selection : Entity_Selection_Context_Access;
       Debugger  : Visual_Debugger;
       Kernel    : Kernel_Handle;
       Value     : Basic_Types.String_Access;
 
    begin
-      Pixmap := null;
-
-      if Sel_Context.all not in Entity_Selection_Context'Class then
-         return;
+      if Context.all not in Entity_Selection_Context'Class then
+         return null;
       end if;
 
-      Kernel    := Get_Kernel (Sel_Context);
-      Selection := Entity_Selection_Context_Access (Sel_Context);
+      Kernel    := Get_Kernel (Context);
+      Selection := Entity_Selection_Context_Access (Context);
       Debugger  := Get_Current_Process (Get_Main_Window (Kernel));
 
       if Debugger = null
@@ -2481,7 +2481,7 @@ package body GVD_Module is
         or else not Has_Entity_Name_Information (Selection)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
-         return;
+         return null;
       end if;
 
       Push_State (Kernel, Busy);
@@ -2495,7 +2495,7 @@ package body GVD_Module is
              (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Pop_State (Kernel);
-            return;
+            return null;
 
          else
             Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
@@ -2515,14 +2515,17 @@ package body GVD_Module is
 
       Free (Value);
       Pop_State (Kernel);
+      return Pixmap;
 
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Pop_State (Kernel);
+         return null;
       when E : others =>
          Pop_State (Kernel);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+         return null;
    end Tooltip_Handler;
 
    -------------------
@@ -3354,8 +3357,7 @@ package body GVD_Module is
         (Module          => Module_ID (GVD_Module_ID),
          Kernel          => Kernel,
          Module_Name     => GVD_Module_Name,
-         Priority        => Default_Priority + 20,
-         Tooltip_Handler => Tooltip_Handler'Access);
+         Priority        => Default_Priority + 20);
 
       Debugger_Filter := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");

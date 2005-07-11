@@ -613,7 +613,7 @@ package body Python_Module is
       Console := Create_Interactive_Console
         (Kernel              => Kernel,
          Title               => -"Python",
-         Module              => Module_ID (Python_Module_Id),
+         Module              => Abstract_Module_ID (Python_Module_Id),
          History             => History_Key'("python_console"),
          Create_If_Not_Exist => True);
       Set_Default_Console

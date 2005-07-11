@@ -27,6 +27,7 @@ with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;             use GPS.Intl;
 with GUI_Utils;            use GUI_Utils;
 with Glib;                 use Glib;
@@ -51,6 +52,7 @@ with Traces; use Traces;
 package body Clipboard_Views is
 --   Me : constant Debug_Handle := Create ("Clipboard");
 
+   type Clipboard_Views_Module_Record is new Module_ID_Record with null record;
    Clipboard_Views_Module : Module_ID;
 
    type Clipboard_View_Record is new Gtk.Box.Gtk_Box_Record with record
@@ -306,7 +308,9 @@ package body Clipboard_Views is
          Sortable_Columns   => False,
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
-      --  Modify_Font (View.Tree, Get_Pref (Kernel, Outline_View_Font));
+
+      --  ??? Should use same font as outline view instead
+      Modify_Font (View.Tree, Get_Pref_Font (Kernel, Default_Style));
 
       View.Current := Gdk_New_From_Xpm_Data (arrow_xpm);
 
@@ -419,6 +423,7 @@ package body Clipboard_Views is
    is
       Command : Interactive_Command_Access;
    begin
+      Clipboard_Views_Module := new Clipboard_Views_Module_Record;
       Register_Module
         (Module      => Clipboard_Views_Module,
          Module_Name => "Clipboard_View",

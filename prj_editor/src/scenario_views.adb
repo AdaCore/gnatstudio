@@ -112,6 +112,7 @@ package body Scenario_Views is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open the scenario view if it isn't already open
 
+   type Scenario_Module_Record is new Module_ID_Record with null record;
    Scenario_Module_Id : Module_ID;
 
    -----------
@@ -449,6 +450,7 @@ package body Scenario_Views is
 
    procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Scenario_Module_Id := new Scenario_Module_Record;
       Register_Module
         (Module      => Scenario_Module_Id,
          Kernel      => Kernel,

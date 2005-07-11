@@ -390,7 +390,8 @@ package body Src_Editor_Box.Tooltips is
 
          Trace (Me, "Tooltip on " & Entity_Name);
          Set_Context_Information
-           (Context'Unchecked_Access, Box.Kernel, Src_Editor_Module_Id);
+           (Context'Unchecked_Access, Box.Kernel,
+            Abstract_Module_ID (Src_Editor_Module_Id));
          Set_File_Information
            (Context      => Context'Unchecked_Access,
             File         => Filename,

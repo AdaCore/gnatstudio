@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2005                      --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,8 @@ with Refactoring.Subprograms; use Refactoring.Subprograms;
 
 package body Refactoring_Module is
 
+   type Refactoring_Module_Record is new Module_ID_Record with null record;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -35,6 +37,7 @@ package body Refactoring_Module is
    is
       Refactoring_Module_Id : Module_ID;
    begin
+      Refactoring_Module_Id := new Refactoring_Module_Record;
       Register_Module (Refactoring_Module_Id, Kernel, "refactoring");
       Refactoring.Rename.Register_Refactoring (Kernel);
       Refactoring.Parameters.Register_Refactoring (Kernel);

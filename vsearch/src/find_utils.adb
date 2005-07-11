@@ -23,7 +23,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
-with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel;                use GPS.Kernel;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -55,7 +55,7 @@ package body Find_Utils is
       renames Vsearch_Ext.Register_Search_Function;
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
       renames Vsearch_Ext.Search_Context_From_Module;
 

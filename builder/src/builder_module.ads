@@ -20,7 +20,7 @@
 
 --  Builder module.
 
-with GPS.Kernel;
+with GPS.Kernel.Modules;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with String_List_Utils;
@@ -29,9 +29,9 @@ with Commands;
 
 package Builder_Module is
 
-   Builder_Module_ID : GPS.Kernel.Module_ID;
+   Builder_Module_ID : GPS.Kernel.Modules.Module_ID;
 
-   type Builder_Module_ID_Record is new GPS.Kernel.Module_ID_Record
+   type Builder_Module_ID_Record is new GPS.Kernel.Modules.Module_ID_Record
    with record
       Make_Menu  : Gtk.Menu.Gtk_Menu;
       Run_Menu   : Gtk.Menu.Gtk_Menu;

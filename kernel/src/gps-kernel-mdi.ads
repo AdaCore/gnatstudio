@@ -21,7 +21,8 @@
 --  This package contains various constants and subprograms used for the
 --  GPS-specific usage of the MDI.
 
-with Gtkada.MDI; use Gtkada.MDI;
+with Gtkada.MDI;         use Gtkada.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 
 package GPS.Kernel.MDI is
 
@@ -101,7 +102,7 @@ package GPS.Kernel.MDI is
 private
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
-      Module              : Module_ID;
+      Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
    end record;
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;

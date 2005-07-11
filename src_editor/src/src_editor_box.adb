@@ -1099,7 +1099,7 @@ package body Src_Editor_Box is
       Set_Context_Information
         (Context => Context,
          Kernel  => Kernel,
-         Creator => Src_Editor_Module_Id);
+         Creator => Abstract_Module_ID (Src_Editor_Module_Id));
 
       --  Click in the line numbers area ?
 
@@ -1165,7 +1165,7 @@ package body Src_Editor_Box is
                   Set_Context_Information
                     (Context => Area,
                      Kernel  => Kernel,
-                     Creator => Src_Editor_Module_Id);
+                     Creator => Abstract_Module_ID (Src_Editor_Module_Id));
                   Set_File_Information
                     (Area,
                      File => Filename);

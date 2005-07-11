@@ -79,6 +79,7 @@ package body GPS.Location_View is
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
 
+   type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
 
    package View_Idle is new Gtk.Main.Timeout (Location_View);
@@ -1224,7 +1225,7 @@ package body GPS.Location_View is
    procedure Gtk_New
      (View   : out Location_View;
       Kernel : Kernel_Handle;
-      Module : Module_ID)
+      Module : Abstract_Module_ID)
    is
    begin
       View := new Location_View_Record;
@@ -1366,7 +1367,7 @@ package body GPS.Location_View is
    procedure Initialize
      (View   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
-      Module : Module_ID)
+      Module : Abstract_Module_ID)
    is
       Scrolled : Gtk_Scrolled_Window;
       Success  : Boolean;
@@ -1412,10 +1413,10 @@ package body GPS.Location_View is
 
       Register_Contextual_Menu
         (View.Kernel,
-         View.Tree,
-         View,
-         Module,
-         Context_Func'Access);
+         Event_On_Widget => View.Tree,
+         Object          => View,
+         ID              => Module_ID (Module),
+         Context_Func    => Context_Func'Access);
 
       File_Hook := new File_Edited_Hook_Record;
       File_Hook.View := Location_View (View);
@@ -1799,7 +1800,8 @@ package body GPS.Location_View is
             return null;
          end if;
 
-         Gtk_New (Locations, Kernel_Handle (Kernel), Location_View_Module_Id);
+         Gtk_New (Locations, Kernel_Handle (Kernel),
+                  Abstract_Module_ID (Location_View_Module_Id));
          Child := Put
            (Kernel, Locations,
             Module              => Location_View_Module_Id,
@@ -2064,6 +2066,7 @@ package body GPS.Location_View is
       Module_Name : constant String := "Location View";
       Command : Interactive_Command_Access;
    begin
+      Location_View_Module_Id := new Location_View_Module;
       Register_Module
         (Module      => Location_View_Module_Id,
          Kernel      => Kernel,

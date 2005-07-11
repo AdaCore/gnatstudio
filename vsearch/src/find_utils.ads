@@ -288,7 +288,7 @@ package Find_Utils is
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
-      Id                : GPS.Kernel.Module_ID;
+      Id                : GPS.Kernel.Abstract_Module_ID;
       Label             : String (1 .. Length);
    end record;
    --  If Extra_Information is not null, then it will be displayed every time
@@ -326,7 +326,7 @@ package Find_Utils is
    --  callback function. Object is ignored, and can be anything.
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Module_ID_Record'Class)
+     (Id : access GPS.Kernel.Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data;
    --  Return the first search context that matches Id, or No_Search if there
    --  is none.

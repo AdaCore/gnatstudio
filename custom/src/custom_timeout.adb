@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Gtk.Main;                  use Gtk.Main;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Traces;                    use Traces;
 with Custom_Module;             use Custom_Module;
