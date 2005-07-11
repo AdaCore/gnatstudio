@@ -116,7 +116,7 @@ package body Codefix_Module is
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
-   type Codefix_Module_ID_Record is new GPS.Kernel.Module_ID_Record with record
+   type Codefix_Module_ID_Record is new Module_ID_Record with record
       Sessions      : Codefix_Sessions;
       Codefix_Class : Class_Type;
       Codefix_Error_Class : Class_Type;
