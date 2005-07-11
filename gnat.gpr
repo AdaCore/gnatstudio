@@ -7,12 +7,12 @@ project GNAT is
    package Compiler is
       case Shared.Build is
           when "Debug" =>
-             for Default_Switches ("Ada") use ("-g", "-gnata", "-gnatpg", "-O");
+             for Default_Switches ("Ada") use
+               ("-g", "-gnata", "-gnatpg", "-O", "-gnatws");
           when "Production" =>
              for Default_Switches ("Ada") 
                 use ("-gnatn", "-gnatpg", "-O2", "-gnatws", "-g");
       end case;
-      --  for Default_Switches ("Ada") use Compiler'Default_Switches ("Ada") & ("-pg");
    end Compiler;
 
    package Naming is
