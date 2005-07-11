@@ -24,8 +24,6 @@ with GPS.Kernel;
 
 package Socket_Module is
 
-   Socket_Module_ID   : GPS.Kernel.Module_ID;
-   Socket_Module_Name : constant String := "Socket";
    Default_GPS_Port   : constant := 50000;
 
    procedure Register_Module

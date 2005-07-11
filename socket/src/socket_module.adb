@@ -43,6 +43,9 @@ package body Socket_Module is
 
    Me : constant Debug_Handle := Create ("Socket_Module");
 
+   Socket_Module_ID   : GPS.Kernel.Modules.Module_ID;
+   Socket_Module_Name : constant String := "Socket";
+
    Max_Number_Of_Reads : constant := 128;
 
    use Commands.Command_Queues;
