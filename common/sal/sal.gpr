@@ -39,14 +39,5 @@ project Sal is
       for Default_Switches ("ada") use ("-shared");
    end Binder;
 
-   package Ide is
-   end Ide;
-
-   package Compiler is
-   end Compiler;
-
-   package Builder is
-   end Builder;
-
 end Sal;
 
