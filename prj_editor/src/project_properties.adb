@@ -238,6 +238,13 @@ package body Project_Properties is
      is access all Properties_Module_ID_Record'Class;
    Properties_Module_ID : Properties_Module_ID_Access;
 
+   procedure Customize
+     (Module : access Properties_Module_ID_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
+
    -----------------------
    -- Attribute editors --
    -----------------------
@@ -587,15 +594,6 @@ package body Project_Properties is
       Project_Changed    : in out Boolean;
       Attribute_Index    : String := "");
    --  Remove the declaration for Attr in Project.
-
-   procedure Customize
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Customization_Level);
-   --  Create a new user-specific attribute in the project. This also indicates
-   --  how this attribute should be edited graphically.
-   --  Node should be an <project_attribute> node
 
    function Find_Editor_Page_By_Name (Name : String) return Natural;
    --  Find the index in Properties_Module_ID.Pages of the page Name.
@@ -1140,10 +1138,9 @@ package body Project_Properties is
    begin
       Properties_Module_ID := new Properties_Module_ID_Record;
       Register_Module
-        (Module                  => Module_ID (Properties_Module_ID),
+        (Module                  => Properties_Module_ID,
          Kernel                  => Kernel,
-         Module_Name             => "Project_Properties",
-         Customization_Handler   => Customize'Access);
+         Module_Name             => "Project_Properties");
    end Register_Module;
 
    ------------------------------
@@ -1609,7 +1606,7 @@ package body Project_Properties is
    ---------------
 
    procedure Customize
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Module : access Properties_Module_ID_Record;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
@@ -1634,14 +1631,15 @@ package body Project_Properties is
 
             if Name = "" then
                Insert
-                 (Kernel,
+                 (Get_Kernel (Module.all),
                   -"<project_attribute> must specify a ""name"" attribute",
                   Mode => Error);
             end if;
 
             Attribute := Find_Attribute_By_Name
               (Editor_Page, Editor_Section, Name, Pkg, Indexed);
-            Parse_Attribute_Description (Kernel, Node, Attribute);
+            Parse_Attribute_Description
+              (Get_Kernel (Module.all), Node, Attribute);
          end;
       end if;
    end Customize;
