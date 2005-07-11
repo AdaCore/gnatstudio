@@ -204,6 +204,11 @@ package body KeyManager_Module is
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
+   procedure Customize
+     (Module : access Keymanager_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
    procedure Destroy (Module : in out Keymanager_Module_Record);
    --  See doc for inherited subprogram
 
@@ -359,13 +364,6 @@ package body KeyManager_Module is
      (Event : Gdk_Event; Kernel : System.Address);
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
-
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Called when new customization files are parsed
 
    function Lookup_Key_From_Action
      (Handler : Key_Manager_Access; Action : String) return String;
@@ -1991,7 +1989,7 @@ package body KeyManager_Module is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Keymanager_Module_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
@@ -2003,13 +2001,14 @@ package body KeyManager_Module is
             Action : constant String := Get_Attribute (Node, "action");
          begin
             if Action = "" then
-               Insert (Kernel, -"<key> nodes must have an action attribute",
+               Insert (Get_Kernel (Module.all),
+                       -"<key> nodes must have an action attribute",
                        Mode => Error);
                raise Assert_Failure;
             end if;
 
             if Node.Value = null then
-               Insert (Kernel,
+               Insert (Get_Kernel (Module.all),
                        -"Invalid key binding for action " & Action,
                        Mode => Error);
                raise Assert_Failure;
@@ -2017,7 +2016,7 @@ package body KeyManager_Module is
 
             if Node.Child /= null then
                Insert
-                 (Kernel,
+                 (Get_Kernel (Module.all),
                   -"Invalid child node for <key> tag", Mode => Error);
                raise Assert_Failure;
             end if;
@@ -2048,8 +2047,7 @@ package body KeyManager_Module is
       Keymanager_Module := new Keymanager_Module_Record;
       Keymanager_Module.Key_Manager := Manager;
       Register_Module
-        (Module_ID (Keymanager_Module), Kernel, "keymanager",
-         Customization_Handler => Customize'Access);
+        (Keymanager_Module, Kernel, "keymanager");
 
       Event_Handler_Set
         (General_Event_Handler'Access,
