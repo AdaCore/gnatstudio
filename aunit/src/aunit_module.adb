@@ -38,6 +38,10 @@ with Traces;                      use Traces;
 
 package body Aunit_Module is
 
+   type Aunit_Module_Record is new Module_ID_Record with null record;
+   Aunit_Module_ID   : Module_ID;
+   Aunit_Module_Name : constant String := "Unit_Testing";
+
    procedure On_New_Test_Case
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -163,6 +167,7 @@ package body Aunit_Module is
       Edit         : constant String := '/' & (-"Edit") & '/';
       Unit_Testing : constant String := -"Unit Testing";
    begin
+      Aunit_Module_ID := new Aunit_Module_Record;
       Register_Module
         (Module                  => Aunit_Module_ID,
          Kernel                  => Kernel,

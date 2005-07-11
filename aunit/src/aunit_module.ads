@@ -24,9 +24,6 @@ with GPS.Kernel;
 
 package Aunit_Module is
 
-   Aunit_Module_ID   : GPS.Kernel.Module_ID;
-   Aunit_Module_Name : constant String := "Unit_Testing";
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
