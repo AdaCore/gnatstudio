@@ -18,83 +18,72 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System; use System;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
-
-with Glib; use Glib;
-with Glib.Object; use Glib.Object;
-
-with Pango.Enums;         use Pango.Enums;
-with Pango.Font;          use Pango.Font;
-
-with Gdk.Color;           use Gdk.Color;
-with Gdk.Event;           use Gdk.Event;
-
-with Gtk;                 use Gtk;
-with Gtk.Arguments;       use Gtk.Arguments;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Main;            use Gtk.Main;
-with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Object;          use Gtk.Object;
-with Gtk.Window;          use Gtk.Window;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Pango.Font;          use Pango.Font;
-
-with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.MDI;          use Gtkada.MDI;
-with Gtkada.Types;        use Gtkada.Types;
-
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with System;                     use System;
 
 pragma Warnings (Off);
-with GNAT.TTY;            use GNAT.TTY;
-with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
+with GNAT.TTY;                   use GNAT.TTY;
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with GPS.Intl;                   use GPS.Intl;
-with Display_Items;              use Display_Items;
-with Debugger.Gdb;               use Debugger.Gdb;
-with Process_Proxies;            use Process_Proxies;
-with Items.Simples;              use Items.Simples;
-with Breakpoints_Editor;         use Breakpoints_Editor;
-with Pixmaps_IDE;                use Pixmaps_IDE;
-with String_Utils;               use String_Utils;
-with Basic_Types;                use Basic_Types;
-with GUI_Utils;                  use GUI_Utils;
+with Gdk.Color;                  use Gdk.Color;
+with Gdk.Event;                  use Gdk.Event;
+with Glib; use Glib;
+with Glib.Object;                use Glib.Object;
+with Gtk;                        use Gtk;
+with Gtk.Arguments;              use Gtk.Arguments;
+with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Handlers;               use Gtk.Handlers;
+with Gtk.Main;                   use Gtk.Main;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Object;                 use Gtk.Object;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
+with Gtkada.Canvas;              use Gtkada.Canvas;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Types;               use Gtkada.Types;
+with Pango.Enums;                use Pango.Enums;
+with Pango.Font;                 use Pango.Font;
 
-with GVD_Module;                 use GVD_Module;
+with Basic_Types;                use Basic_Types;
+with Breakpoints_Editor;         use Breakpoints_Editor;
+with Config;                     use Config;
+with Debugger.Gdb;               use Debugger.Gdb;
+with Default_Preferences;        use Default_Preferences;
+with Display_Items;              use Display_Items;
+with Histories;                  use Histories;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
+with GUI_Utils;                  use GUI_Utils;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
-with GPS.Kernel;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Main_Window;            use GPS.Main_Window;
-with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
-with Default_Preferences;        use Default_Preferences;
+with GVD_Module;                 use GVD_Module;
 with GVD.Preferences;            use GVD.Preferences;
-with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
+with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
+with Items.Simples;              use Items.Simples;
 with Language_Handlers;          use Language_Handlers;
-with VFS;                        use VFS;
-with Config;                     use Config;
-with Histories;                  use Histories;
-
+with Pixmaps_IDE;                use Pixmaps_IDE;
+with Process_Proxies;            use Process_Proxies;
 with String_List_Utils;          use String_List_Utils;
-
-with GPS.Main_Window;            use GPS.Main_Window;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with String_Utils;               use String_Utils;
+with VFS;                        use VFS;
 
 package body GVD.Process is
 
@@ -636,7 +625,6 @@ package body GVD.Process is
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
       Pc          : Address_Type;
-      Pc_Length   : Natural := 0;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
 
    begin
@@ -659,9 +647,8 @@ package body GVD.Process is
          --  of the process, and thus make the address inaccessible afterwards.
 
          if Addr_First /= 0 then
-            Pc_Length := Addr_Last - Addr_First + Pc'First;
-            Pc (Pc'First .. Pc_Length) :=
-              Process.Current_Output (Addr_First .. Addr_Last);
+            Pc := String_To_Address
+              (Process.Current_Output (Addr_First .. Addr_Last));
          end if;
       end if;
 
@@ -699,9 +686,11 @@ package body GVD.Process is
       --  newly displayed frame.
 
       if Addr_First /= 0 then
-         Set_Address
-           (Process.Editor_Text,
-            Pc (Pc'First .. Pc_Length));
+         Set_Address (Process.Editor_Text, Pc);
+      end if;
+
+      if (Line /= 0 and then Mode /= Internal) or else Addr_First /= 0 then
+         Update_Assembly_View (Process.Editor_Text);
       end if;
 
       Found_Frame_Info
@@ -917,7 +906,7 @@ package body GVD.Process is
    procedure Gtk_New
      (Process : out Visual_Debugger;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Text_Box.Source_Editor.Source_Editor) is
+      Source  : GVD.Source_Editor.Source_Editor) is
    begin
       Process := new Visual_Debugger_Record;
       Initialize (Process, Window, Source);
@@ -1098,7 +1087,7 @@ package body GVD.Process is
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Text_Box.Source_Editor.Source_Editor)
+      Source  : GVD.Source_Editor.Source_Editor)
    is
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
@@ -1704,7 +1693,7 @@ package body GVD.Process is
       use String_History;
 
       procedure Pre_User_Command;
-      --  handle all the set up for a user command (logs, history, ...)
+      --  Handle all the set up for a user command (logs, history, ...)
 
       procedure Pre_User_Command is
       begin

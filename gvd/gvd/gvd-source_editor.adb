@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package body GVD.Text_Box.Source_Editor is
+package body GVD.Source_Editor is
 
    --------------------------
    -- Set_Current_Language --
@@ -57,4 +57,4 @@ package body GVD.Text_Box.Source_Editor is
       return Editor.Widget;
    end Get_Widget;
 
-end GVD.Text_Box.Source_Editor;
+end GVD.Source_Editor;

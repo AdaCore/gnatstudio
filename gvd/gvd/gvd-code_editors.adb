@@ -25,14 +25,12 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Pango.Font;          use Pango.Font;
 with GVD.Types;           use GVD.Types;
-with Basic_Types;         use Basic_Types;
 with VFS;                 use VFS;
-with Config;              use Config;
 
 package body GVD.Code_Editors is
 
-   use GVD.Text_Box.Asm_Editor;
-   use GVD.Text_Box.Source_Editor;
+   use GVD.Assembly_View;
+   use GVD.Source_Editor;
 
    --------------------
    -- Local packages --
@@ -99,7 +97,7 @@ package body GVD.Code_Editors is
       --  current line
 
       if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-         Highlight_Address_Range (Editor.Asm, Line);
+         Set_Source_Line (Editor.Asm, Line);
       end if;
    end Set_Line;
 
@@ -146,7 +144,7 @@ package body GVD.Code_Editors is
 
    function Get_Source
      (Editor : access Code_Editor_Record'Class)
-      return GVD.Text_Box.Source_Editor.Source_Editor is
+      return GVD.Source_Editor.Source_Editor is
    begin
       return Editor.Source;
    end Get_Source;
@@ -157,7 +155,7 @@ package body GVD.Code_Editors is
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-      return GVD.Text_Box.Asm_Editor.Asm_Editor is
+      return GVD.Assembly_View.GVD_Assembly_View is
    begin
       return Editor.Asm;
    end Get_Asm;
@@ -167,13 +165,10 @@ package body GVD.Code_Editors is
    ---------------------
 
    function Get_Asm_Address
-     (Editor : access Code_Editor_Record'Class) return String is
+     (Editor : access Code_Editor_Record'Class)
+      return GVD.Types.Address_Type is
    begin
-      if Editor.Asm_Address = null then
-         return "";
-      else
-         return Editor.Asm_Address.all;
-      end if;
+      return Editor.Asm_Address;
    end Get_Asm_Address;
 
    ------------------
@@ -198,6 +193,17 @@ package body GVD.Code_Editors is
       Load_File (Editor.Source, File_Name);
    end Load_File;
 
+   --------------------------
+   -- Update_Assembly_View --
+   --------------------------
+
+   procedure Update_Assembly_View (Editor : access Code_Editor_Record) is
+   begin
+      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
+         Update_Display (Editor.Asm);
+      end if;
+   end Update_Assembly_View;
+
    ------------------------
    -- Update_Breakpoints --
    ------------------------
@@ -221,7 +227,7 @@ package body GVD.Code_Editors is
 
    procedure Configure
      (Editor            : access Code_Editor_Record;
-      Source            : GVD.Text_Box.Source_Editor.Source_Editor;
+      Source            : GVD.Source_Editor.Source_Editor;
       Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array) is
@@ -258,10 +264,9 @@ package body GVD.Code_Editors is
 
    procedure Set_Address
      (Editor : access Code_Editor_Record;
-      Pc     : String) is
+      Pc     : GVD.Types.Address_Type) is
    begin
-      Free (Editor.Asm_Address);
-      Editor.Asm_Address := new String'(Pc);
+      Editor.Asm_Address := Pc;
 
       if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
          Set_Address (Editor.Asm, Pc);
@@ -281,7 +286,7 @@ package body GVD.Code_Editors is
       --  displayed.
 
       if Edit.Asm /= null then
-         GVD.Text_Box.Asm_Editor.On_Executable_Changed (Edit.Asm);
+         GVD.Assembly_View.On_Executable_Changed (Edit.Asm);
       end if;
    end On_Executable_Changed;
 
@@ -295,28 +300,12 @@ package body GVD.Code_Editors is
       Edit : constant Code_Editor := Code_Editor (Editor);
    begin
       if Edit.Mode = Source or else Edit.Mode = Source_Asm then
-         GVD.Text_Box.Source_Editor.Preferences_Changed (Edit.Source);
+         GVD.Source_Editor.Preferences_Changed (Edit.Source);
       end if;
 
       if Edit.Mode = Asm or else Edit.Mode = Source_Asm then
-         GVD.Text_Box.Asm_Editor.Preferences_Changed (Edit.Asm);
-         Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
+         GVD.Assembly_View.Preferences_Changed (Edit.Asm);
       end if;
    end Preferences_Changed;
-
-   ---------------------
-   -- Get_Window_Size --
-   ---------------------
-
-   function Get_Window_Size
-     (Editor : access Code_Editor_Record'Class) return Gint is
-   begin
-      if Editor.Mode = Asm then
-         return Gint (Get_Allocation_Width (Editor.Asm)) - Layout_Width;
-      else
-         return Gint (Get_Allocation_Width
-           (Get_Widget (Editor.Source))) - Layout_Width;
-      end if;
-   end Get_Window_Size;
 
 end GVD.Code_Editors;

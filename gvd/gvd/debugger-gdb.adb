@@ -1704,14 +1704,16 @@ package body Debugger.Gdb is
 
    procedure Break_Address
      (Debugger  : access Gdb_Debugger;
-      Address   : String;
+      Address   : GVD.Types.Address_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden) is
    begin
       if Temporary then
-         Send (Debugger, "tbreak *" & Address, Mode => Mode);
+         Send
+           (Debugger, "tbreak *" & Address_To_String (Address), Mode => Mode);
       else
-         Send (Debugger, "break *" & Address, Mode => Mode);
+         Send
+           (Debugger, "break *" & Address_To_String (Address), Mode => Mode);
       end if;
    end Break_Address;
 
@@ -2992,9 +2994,8 @@ package body Debugger.Gdb is
                Br (Num).Enabled := S (Matched (4).First) = 'y';
 
                if Br (Num).The_Type = Breakpoint then
-                  Br (Num).Address :=
-                    new String'("0x"
-                                & S (Matched (7).First .. Matched (7).Last));
+                  Br (Num).Address := String_To_Address
+                    ("0x" & S (Matched (7).First .. Matched (7).Last));
                else
                   Br (Num).Expression :=
                     new String'(S (Matched (7).First .. Matched (7).Last));
@@ -3275,21 +3276,22 @@ package body Debugger.Gdb is
    ----------------------
 
    procedure Get_Machine_Code
-     (Debugger        : access Gdb_Debugger;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural;
-      Code            : out Basic_Types.String_Access;
-      Start_Address   : String := "";
-      End_Address     : String := "")
+     (Debugger      : access Gdb_Debugger;
+      Range_Start   : out GVD.Types.Address_Type;
+      Range_End     : out Address_Type;
+      Code          : out Basic_Types.String_Access;
+      Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
       Disassembled : constant String := Send
-        (Debugger, "disassemble " & Start_Address & " " & End_Address,
+        (Debugger,
+         "disassemble " &
+         Address_To_String (Start_Address) & " " &
+         Address_To_String (End_Address),
          Mode => Internal);
       Tmp,
       Start_Index,
-      End_Index   : Integer;
+      End_Index    : Integer;
 
    begin
       Start_Index := Disassembled'First;
@@ -3311,8 +3313,8 @@ package body Debugger.Gdb is
       --  when the user program wasn't compiled with -g.
 
       if Code.all = "" then
-         Range_Start_Len := 0;
-         Range_End_Len := 0;
+         Range_Start := Invalid_Address;
+         Range_End := Invalid_Address;
          return;
       end if;
 
@@ -3322,15 +3324,11 @@ package body Debugger.Gdb is
       Tmp := Start_Index;
       Skip_To_Char (Disassembled, Tmp, ' ');
 
-      if Start_Index < Disassembled'Last
-        and then Disassembled (Start_Index .. Start_Index + 1) = "0x"
-        and then Tmp - Start_Index <= Range_Start'Length
-      then
-         Range_Start_Len := Tmp - Start_Index;
-         Range_Start (1 .. Range_Start_Len) :=
-           Disassembled (Start_Index .. Tmp - 1);
+      if Start_Index < Disassembled'Last then
+         Range_Start :=
+           String_To_Address (Disassembled (Start_Index .. Tmp - 1));
       else
-         Range_Start_Len := 0;
+         Range_Start := Invalid_Address;
       end if;
 
       --  Get the actual end address, in case the disassembled zone doesn't end
@@ -3350,14 +3348,10 @@ package body Debugger.Gdb is
       end loop;
       --  Skip_To_Char (Disassembled, Tmp, ' ');
 
-      if End_Index < Disassembled'Last
-        and then Disassembled (End_Index .. End_Index + 1) = "0x"
-        and then Tmp - End_Index <= Range_End'Length
-      then
-         Range_End_Len := Tmp - End_Index;
-         Range_End (1 .. Range_End_Len) := Disassembled (End_Index .. Tmp - 1);
+      if End_Index < Disassembled'Last then
+         Range_End := String_To_Address (Disassembled (End_Index .. Tmp - 1));
       else
-         Range_End_Len := 0;
+         Range_End := Invalid_Address;
       end if;
    end Get_Machine_Code;
 
@@ -3369,9 +3363,7 @@ package body Debugger.Gdb is
      (Debugger        : access Gdb_Debugger;
       Line            : Natural;
       Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural) is
+      Range_End       : out Address_Type) is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
       Switch_Language (Debugger, "c");
@@ -3385,19 +3377,15 @@ package body Debugger.Gdb is
          Match (Address_Range_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
-            Range_Start_Len := Matched (1).Last - Matched (1).First + 1;
-            Range_Start (1 .. Range_Start_Len) :=
-              S (Matched (1).First .. Matched (1).Last);
+            Range_Start := String_To_Address
+              (S (Matched (1).First .. Matched (1).Last));
 
-            Range_End_Len := Matched (2).Last - Matched (2).First + 1;
-            Range_End (1 .. Range_End_Len) :=
-              S (Matched (2).First .. Matched (2).Last);
+            Range_End := String_To_Address
+              (S (Matched (2).First .. Matched (2).Last));
 
          else
-            Range_Start (1 .. 1) := " ";
-            Range_End (1 .. 1) := " ";
-            Range_Start_Len := 0;
-            Range_End_Len := 0;
+            Range_Start := Invalid_Address;
+            Range_End   := Invalid_Address;
          end if;
       end;
 

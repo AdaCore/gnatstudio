@@ -238,7 +238,7 @@ package Debugger.Gdb is
 
    procedure Break_Address
      (Debugger   : access Gdb_Debugger;
-      Address    : String;
+      Address    : GVD.Types.Address_Type;
       Temporary  : Boolean := False;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
@@ -340,22 +340,18 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return GVD.Types.Exception_Array;
 
    procedure Get_Machine_Code
-     (Debugger        : access Gdb_Debugger;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural;
-      Code            : out Basic_Types.String_Access;
-      Start_Address   : String := "";
-      End_Address     : String := "");
+     (Debugger      : access Gdb_Debugger;
+      Range_Start   : out GVD.Types.Address_Type;
+      Range_End     : out GVD.Types.Address_Type;
+      Code          : out Basic_Types.String_Access;
+      Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address);
 
    procedure Get_Line_Address
      (Debugger        : access Gdb_Debugger;
       Line            : Natural;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural);
+      Range_Start     : out GVD.Types.Address_Type;
+      Range_End       : out GVD.Types.Address_Type);
 
    function Get_Memory
      (Debugger : access Gdb_Debugger;

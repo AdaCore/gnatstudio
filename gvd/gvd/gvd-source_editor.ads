@@ -24,7 +24,7 @@ with Language;
 with GVD.Types;
 with VFS;
 
-package GVD.Text_Box.Source_Editor is
+package GVD.Source_Editor is
 
    type Source_Editor_Record is abstract tagged private;
    type Source_Editor is access all Source_Editor_Record'Class;
@@ -114,4 +114,4 @@ private
       Lang : Language.Language_Access;
    end record;
 
-end GVD.Text_Box.Source_Editor;
+end GVD.Source_Editor;

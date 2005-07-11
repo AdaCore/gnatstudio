@@ -47,7 +47,7 @@ with Debugger;            use Debugger;
 with GPS.Main_Window;
 with Items;
 with GVD.Code_Editors;
-with GVD.Text_Box.Source_Editor;
+with GVD.Source_Editor;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
@@ -105,7 +105,6 @@ package GVD.Process is
    --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
    --
    --    Emitted whenever the underlying debugger is closed.
-
 
    type Regexp_Filter_List is private;
 
@@ -209,13 +208,13 @@ package GVD.Process is
    procedure Gtk_New
      (Process : out Visual_Debugger;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Text_Box.Source_Editor.Source_Editor);
+      Source  : GVD.Source_Editor.Source_Editor);
    --  Create a new visual debugger and add it to Window.
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Text_Box.Source_Editor.Source_Editor);
+      Source  : GVD.Source_Editor.Source_Editor);
    --  Internal initialize procedure.
 
    procedure Configure

@@ -50,6 +50,49 @@ package GVD.Types is
    --  Visible commands
    --  This type of command is always handled asynchronousely
 
+   ---------------
+   -- Addresses --
+   ---------------
+
+   type Address_Type is private;
+   --  An abstract representation of an address.
+
+   Invalid_Address : constant Address_Type;
+   --  Address_Type that represents an invalid address.
+
+   function String_To_Address (Address_String : String) return Address_Type;
+   --  Given  a string, return the corresponding Address_Type. If string
+   --  does not represent a valid address, Invalid_Address is return.
+
+   function Address_To_String (Address : Address_Type) return String;
+   --  Return a string representation of Address.
+
+   function Set_Offset
+     (Address : Address_Type;
+      Offset  : Natural) return Address_Type;
+
+   function "="
+     (Address_1 : Address_Type;
+      Address_2 : Address_Type)
+      return Boolean;
+   function ">"
+     (Address_1 : Address_Type;
+      Address_2 : Address_Type)
+      return Boolean;
+   function ">="
+     (Address_1 : Address_Type;
+      Address_2 : Address_Type)
+      return Boolean;
+   function "<"
+     (Address_1 : Address_Type;
+      Address_2 : Address_Type)
+      return Boolean;
+   function "<="
+     (Address_1 : Address_Type;
+      Address_2 : Address_Type)
+      return Boolean;
+   --  Arithmetic on addresses
+
    -----------------
    -- Breakpoints --
    -----------------
@@ -107,7 +150,7 @@ package GVD.Types is
       Enabled     : Boolean;
       --  Whether the breakpoint is currently enabled
 
-      Address     : String_Access;
+      Address     : Address_Type;
       --  The address of the breakpoint.
 
       Expression  : String_Access;
@@ -201,5 +244,26 @@ package GVD.Types is
    end record;
    --  This record contains all the information about how a debugger was
    --  started.
+private
+   subtype Address_Range is Integer range 0 .. 20;
 
+   type Address_Type (Last : Address_Range := 0) is record
+      Address_String : String (1 .. Last);
+      --  The string representing the address
+
+      Length         : Natural := 0;
+      --  This is the lenght of the remaining string once the "0x" prefix as
+      --  well as all the following zeros have been stripped.
+      --  The meaningful part of Address_String is therefore the one in
+      --  the Last - Length + 1 .. Last range.
+
+      Offset         : Integer := 0;
+      --  Offset used when the address is used to query the debugger.
+   end record;
+
+   Invalid_Address : constant Address_Type :=
+                       (Address_String => "",
+                        Last           => 0,
+                        Length         => 0,
+                        Offset         => 0);
 end GVD.Types;

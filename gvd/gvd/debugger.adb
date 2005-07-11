@@ -18,41 +18,39 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;       use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
-pragma Warnings (On);
-
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with Ada.Strings;       use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Strings;                use Ada.Strings;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with GNAT.Expect;                use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+pragma Warnings (On);
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Glib;              use Glib;
-with Glib.Object;       use Glib.Object;
+with Glib;                       use Glib;
 with Glib.Convert;
-with Gtk.Main;          use Gtk.Main;
-with Gtk.Window;        use Gtk.Window;
-with Gtkada.Types;      use Gtkada.Types;
+with Glib.Object;                use Glib.Object;
+with Gtk.Main;                   use Gtk.Main;
+with Gtk.Window;                 use Gtk.Window;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.Types;               use Gtkada.Types;
 
-with GPS.Intl;               use GPS.Intl;
-with Items;                  use Items;
-with Process_Proxies;        use Process_Proxies;
-with Language;               use Language;
-with Language.Debugger;      use Language.Debugger;
-with GVD;                    use GVD;
-with Default_Preferences;    use Default_Preferences;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GVD.Preferences;        use GVD.Preferences;
-with GVD.Process;            use GVD.Process;
-with String_Utils;           use String_Utils;
-with GVD.Types;              use GVD.Types;
-with Basic_Types;            use Basic_Types;
-
-with Gtkada.Dialogs;         use Gtkada.Dialogs;
-with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Code_Editors;       use GVD.Code_Editors;
-with Config;                 use Config;
+with Basic_Types;                use Basic_Types;
+with Default_Preferences;        use Default_Preferences;
+with Config;                     use Config;
+with GVD;                        use GVD;
+with GVD.Code_Editors;           use GVD.Code_Editors;
+with GVD.Preferences;            use GVD.Preferences;
+with GVD.Process;                use GVD.Process;
+with GVD.Source_Editor;          use GVD.Source_Editor;
+with GVD.Types;                  use GVD.Types;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Intl;                   use GPS.Intl;
+with Items;                      use Items;
+with Language;                   use Language;
+with Language.Debugger;          use Language.Debugger;
+with Process_Proxies;            use Process_Proxies;
+with String_Utils;               use String_Utils;
 
 package body Debugger is
 

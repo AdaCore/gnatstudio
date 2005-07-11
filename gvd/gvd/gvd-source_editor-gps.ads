@@ -27,7 +27,7 @@ with String_List_Utils;
 --  This package provides an implementation of Source_Editor based on
 --  the GPS Editor.
 
-package GVD.Text_Box.Source_Editor.GPS is
+package GVD.Source_Editor.GPS is
 
    type GEdit_Record is new Source_Editor_Record with private;
    type GEdit is access all GEdit_Record'Class;
@@ -100,4 +100,4 @@ private
       --  The list of files for which a location is currently highlighted.
    end record;
 
-end GVD.Text_Box.Source_Editor.GPS;
+end GVD.Source_Editor.GPS;

@@ -285,8 +285,11 @@ package body Breakpoints_Editor is
             Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
          else
             Set_Active (Editor.Address_Selected, True);
-            Add_Unique_Combo_Entry (Editor.Address_Combo, Br.Address.all);
-            Set_Text (Get_Entry (Editor.Address_Combo), Br.Address.all);
+            Add_Unique_Combo_Entry
+              (Editor.Address_Combo, Address_To_String (Br.Address));
+            Set_Text
+              (Get_Entry (Editor.Address_Combo),
+               Address_To_String (Br.Address));
          end if;
       end if;
 
@@ -586,17 +589,18 @@ package body Breakpoints_Editor is
 
       elsif Get_Active (Editor.Address_Selected) then
          declare
-            Addr : constant String :=
-              Get_Text (Get_Entry (Editor.Address_Combo));
+            Address : constant Address_Type :=
+                        String_To_Address
+                          (Get_Text (Get_Entry (Editor.Address_Combo)));
          begin
             if Current = -1
-              or else Br.Address = null
-              or else Br.Address.all = Addr
+              or else Br.Address = Invalid_Address
+              or else Br.Address = Address
             then
                Remove := True;
                Break_Address
                  (Editor.Process.Debugger,
-                  Address   => Addr,
+                  Address   => Address,
                   Temporary => Temporary,
                   Mode      => GVD.Types.Visible);
             end if;

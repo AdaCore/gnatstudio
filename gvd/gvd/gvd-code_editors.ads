@@ -41,11 +41,10 @@ with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
 with Language;
-with GVD.Text_Box.Asm_Editor;
-with GVD.Text_Box.Source_Editor;
+with GVD.Assembly_View;
+with GVD.Source_Editor;
 with GVD.Types;
 with Pango.Font;
-with Basic_Types;
 with VFS;
 
 package GVD.Code_Editors is
@@ -87,8 +86,10 @@ package GVD.Code_Editors is
 
    procedure Set_Address
      (Editor : access Code_Editor_Record;
-      Pc     : String);
+      Pc     : GVD.Types.Address_Type);
    --  Set the address the debugger is currently stopped at.
+
+   procedure Update_Assembly_View (Editor : access Code_Editor_Record);
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;
@@ -101,7 +102,7 @@ package GVD.Code_Editors is
 
    procedure Configure
      (Editor            : access Code_Editor_Record;
-      Source            : GVD.Text_Box.Source_Editor.Source_Editor;
+      Source            : GVD.Source_Editor.Source_Editor;
       Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array);
@@ -135,16 +136,16 @@ package GVD.Code_Editors is
 
    function Get_Source
      (Editor : access Code_Editor_Record'Class)
-      return GVD.Text_Box.Source_Editor.Source_Editor;
+      return GVD.Source_Editor.Source_Editor;
    --  Return the widget used to display the source code
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-      return GVD.Text_Box.Asm_Editor.Asm_Editor;
+      return GVD.Assembly_View.GVD_Assembly_View;
    --  Return the widget used to display the asm code
 
    function Get_Asm_Address
-     (Editor : access Code_Editor_Record'Class) return String;
+     (Editor : access Code_Editor_Record'Class) return GVD.Types.Address_Type;
    --  Return the current address (program counter) associated with the
    --  assembly window.
 
@@ -171,20 +172,16 @@ package GVD.Code_Editors is
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
 
-   function Get_Window_Size
-     (Editor : access Code_Editor_Record'Class) return Glib.Gint;
-   --  Return the size of the Asm/source text window.
-
 private
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
-      Source           : GVD.Text_Box.Source_Editor.Source_Editor;
-      Asm              : GVD.Text_Box.Asm_Editor.Asm_Editor;
+      Source           : GVD.Source_Editor.Source_Editor;
+      Asm              : GVD.Assembly_View.GVD_Assembly_View;
 
       Mode             : View_Mode := GVD.Code_Editors.Source;
 
       Source_Line      : Natural;
-      Asm_Address      : Basic_Types.String_Access;
+      Asm_Address      : GVD.Types.Address_Type;
 
       Process          : Glib.Object.GObject;
       --  The visual debugger associated with the editor

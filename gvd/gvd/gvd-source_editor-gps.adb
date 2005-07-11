@@ -40,7 +40,7 @@ with GNAT.OS_Lib;
 with Default_Preferences;       use Default_Preferences;
 with GVD.Preferences;           use GVD.Preferences;
 
-package body GVD.Text_Box.Source_Editor.GPS is
+package body GVD.Source_Editor.GPS is
 
    Highlight_Category : constant String := "Debugger Highlight";
 
@@ -342,8 +342,8 @@ package body GVD.Text_Box.Source_Editor.GPS is
          Result.Disposition := D.Disposition;
          Result.Enabled := D.Enabled;
 
-         if D.Address /= null then
-            Result.Address := new String'(D.Address.all);
+         if D.Address /= Invalid_Address then
+            Result.Address := D.Address;
          end if;
 
          if D.Expression /= null then
@@ -559,4 +559,4 @@ package body GVD.Text_Box.Source_Editor.GPS is
       end loop;
    end Free_Debug_Info;
 
-end GVD.Text_Box.Source_Editor.GPS;
+end GVD.Source_Editor.GPS;

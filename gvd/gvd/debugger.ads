@@ -28,6 +28,7 @@ with Gtk.Window;
 with GVD.Types;
 with Basic_Types;
 with GVD.Proc_Utils;
+with GVD.Types;
 with VFS;
 with Ada.Unchecked_Deallocation;
 
@@ -599,7 +600,7 @@ package Debugger is
 
    procedure Break_Address
      (Debugger   : access Debugger_Root;
-      Address    : String;
+      Address    : GVD.Types.Address_Type;
       Temporary  : Boolean := False;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Set a breakpoint at a specific address.
@@ -778,34 +779,26 @@ package Debugger is
    -- Assembly code --
    -------------------
 
-   subtype Address_Type is String (1 .. 20);
-   --  A string that can contain an address.
-
    procedure Get_Machine_Code
      (Debugger        : access Debugger_Root;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural;
+      Range_Start     : out GVD.Types.Address_Type;
+      Range_End       : out GVD.Types.Address_Type;
       Code            : out Basic_Types.String_Access;
-      Start_Address   : String := "";
-      End_Address     : String := "") is abstract;
+      Start_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      End_Address     : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
+   is abstract;
    --  Return the machine code (or assembly code) for a specific region.
-   --  The region desassembled is Start_Address .. End_Address (where the
-   --  meaning of address depends on the target (this can be an machine
+   --  The region disassembled is Start_Address .. End_Address (where the
+   --  meaning of address depends on the target (this can be a machine
    --  address or an offset in the JVM).
-   --  If Start_Address is "", then the code for the current frame is
-   --  returned.
-   --  The region really disassembled is Range_Start .. Range_End.
-   --  The address is given in Range_Start (1 .. Range_Start_Len).
+   --  If Start_Address is Invalid_Address, then the code for the current frame
+   --  is returned.
 
    procedure Get_Line_Address
      (Debugger        : access Debugger_Root;
       Line            : Natural;
-      Range_Start     : out Address_Type;
-      Range_End       : out Address_Type;
-      Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural) is abstract;
+      Range_Start     : out GVD.Types.Address_Type;
+      Range_End       : out GVD.Types.Address_Type) is abstract;
    --  Return the range of addresses for a given source line.
    --  See Get_Machine_Code for an explanation of the parameters.
 
@@ -906,7 +899,6 @@ package Debugger is
    --  Whether the debugger has a separate execution window.
 
 private
-
    type Command_Record;
    type Command_Access is access Command_Record;
    type Command_Record is record

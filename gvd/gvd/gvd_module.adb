@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Directory_Operations;      use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
+
 with Glib;                           use Glib;
 with Glib.Object;                    use Glib.Object;
 with Gdk.Color;                      use Gdk.Color;
@@ -48,34 +51,33 @@ with Gtkada.File_Selector;           use Gtkada.File_Selector;
 with Gtkada.Handlers;                use Gtkada.Handlers;
 with Gtkada.MDI;                     use Gtkada.MDI;
 
+with Basic_Types;                    use Basic_Types;
 with Histories;                      use Histories;
-with List_Select_Pkg;                use List_Select_Pkg;
+with Default_Preferences;            use Default_Preferences;
 with Display_Items;                  use Display_Items;
 with Breakpoints_Editor;             use Breakpoints_Editor;
+with Debugger;                       use Debugger;
+with GVD.Call_Stack;                 use GVD.Call_Stack;
 with GVD.Canvas;                     use GVD.Canvas;
 with GVD.Code_Editors;               use GVD.Code_Editors;
-with GVD.Call_Stack;                 use GVD.Call_Stack;
 with GVD.Dialogs;                    use GVD.Dialogs;
-with GVD.Menu;                       use GVD.Menu;
-with GVD.Proc_Utils;                 use GVD.Proc_Utils;
-with Std_Dialogs;                    use Std_Dialogs;
 with GPS.Main_Window;                use GPS.Main_Window;
 with GPS.Main_Window.Debug;          use GPS.Main_Window.Debug;
 with GVD.Memory_View;                use GVD.Memory_View;
-with Default_Preferences;            use Default_Preferences;
+with GVD.Menu;                       use GVD.Menu;
+with GVD.Proc_Utils;                 use GVD.Proc_Utils;
 with GVD.Preferences;                use GVD.Preferences;
-with GVD.Text_Box.Asm_Editor;        use GVD.Text_Box.Asm_Editor;
+with GVD.Assembly_View;              use GVD.Assembly_View;
 with GVD.Types;                      use GVD.Types;
 with GVD.Process;                    use GVD.Process;
-with Process_Proxies;                use Process_Proxies;
-with Debugger;                       use Debugger;
+with GVD.Source_Editor;              use GVD.Source_Editor;
+with GVD.Source_Editor.GPS;          use GVD.Source_Editor.GPS;
+with List_Select_Pkg;                use List_Select_Pkg;
 with Language;                       use Language;
 with Language_Handlers;              use Language_Handlers;
-with Basic_Types;                    use Basic_Types;
-with GUI_Utils;                      use GUI_Utils;
+with Process_Proxies;                use Process_Proxies;
 with Projects;                       use Projects;
-with GNAT.Directory_Operations;      use GNAT.Directory_Operations;
-with GNAT.OS_Lib;
+with Std_Dialogs;                    use Std_Dialogs;
 
 with GPS.Main_Window;                use GPS.Main_Window;
 with GPS.Kernel;                     use GPS.Kernel;
@@ -86,6 +88,7 @@ with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                       use GPS.Intl;
 with Pixmaps_IDE;                    use Pixmaps_IDE;
@@ -105,12 +108,7 @@ with Commands;                       use Commands;
 with Commands.Interactive;           use Commands.Interactive;
 with Commands.Debugger;              use Commands.Debugger;
 
-with GVD.Text_Box.Source_Editor;     use GVD.Text_Box.Source_Editor;
-with GVD.Text_Box.Source_Editor.GPS;
-use  GVD.Text_Box.Source_Editor.GPS;
-
 with Interactive_Consoles;           use Interactive_Consoles;
-with GPS.Kernel.Scripts;
 
 package body GVD_Module is
 
@@ -758,11 +756,11 @@ package body GVD_Module is
      (Debugger : out GPS_Debugger;
       Window   : access GPS_Window_Record'Class)
    is
-      Edit : GVD.Text_Box.Source_Editor.GPS.GEdit;
+      Edit : GVD.Source_Editor.GPS.GEdit;
    begin
       Debugger := new GPS_Debugger_Record;
 
-      GVD.Text_Box.Source_Editor.GPS.Gtk_New (Edit, Window);
+      GVD.Source_Editor.GPS.Gtk_New (Edit, Window);
       GVD.Process.Initialize (Debugger, Window, Source_Editor (Edit));
    end Gtk_New;
 
@@ -1954,7 +1952,7 @@ package body GVD_Module is
    is
       Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
       Editor   : constant Code_Editor := Code_Editor (Widget);
-      Asm      : constant Asm_Editor  := Get_Asm (Editor);
+      Asm      : constant GVD_Assembly_View  := Get_Asm (Editor);
 
    begin
       Set_Sensitive
@@ -1982,16 +1980,19 @@ package body GVD_Module is
         GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger := Get_Current_Process (Top);
       Editor   : constant Code_Editor  := Process.Editor_Text;
-      Address  : constant String       := Get_Asm_Address (Editor);
-      Assembly : constant Asm_Editor   := Get_Asm (Editor);
+      Address  : constant Address_Type := Get_Asm_Address (Editor);
+      Assembly : constant GVD_Assembly_View := Get_Asm (Editor);
       Child    : MDI_Child;
 
    begin
+      Trace (Me, "*** [On_Assembly] *** Address = " &
+             Address_To_String (Address));
       if Get_Mode (Editor) = Source_Asm then
          return;
       end if;
 
       Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub & (-"Assembly")), False);
+
       GVD_Module_ID.Delete_Id :=
         Gtkada.Handlers.Return_Callback.Object_Connect
           (Assembly, "delete_event",
@@ -2001,17 +2002,20 @@ package body GVD_Module is
       Set_Mode (Editor, Source_Asm);
       Child := Put (Kernel, Assembly, Module => GVD_Module_ID,
                     Position => Position_Right);
+      Unref (Assembly);
       Set_Focus_Child (Child);
       Raise_Child (Child);
-      Unref (Assembly);
       Set_Title (Child, -"Assembly View");
 
       if not Command_In_Process (Get_Process (Process.Debugger)) then
-         if Address /= "" then
+         Set_Source_Line (Assembly, Get_Line (Editor));
+
+         if Address /= Invalid_Address then
             Set_Address (Assembly, Address);
+            Set_Address (Editor, Address);
          end if;
 
-         Highlight_Address_Range (Assembly, Get_Line (Editor));
+         Update_Display (Assembly);
 
          if Process.Breakpoints /= null then
             Update_Breakpoints (Assembly, Process.Breakpoints.all);
@@ -2032,9 +2036,9 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Top          : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                       GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
-        Get_Current_Process (Top);
+                       Get_Current_Process (Top);
       Dialog       : Gtk_Dialog;
       Table        : Gtk_Table;
       Ent_Protocol : Gtk_Entry;
@@ -2248,9 +2252,11 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Top  : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Get_Kernel (Context.Context)));
-      Edit : constant GEdit := GEdit (Get_Source
-        (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
+               GPS_Window (Get_Main_Window (Get_Kernel (Context.Context)));
+      Edit : constant GEdit :=
+               GEdit
+                 (Get_Source
+                    (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
       Name : constant Virtual_File := Get_Current_File (Edit);
    begin
       if Name /= VFS.No_File then
