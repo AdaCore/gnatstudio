@@ -25,6 +25,7 @@ with System;       use System;
 with Ada.Tags;     use Ada.Tags;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Generic_List;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
