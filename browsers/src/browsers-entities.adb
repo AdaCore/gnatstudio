@@ -61,6 +61,7 @@ package body Browsers.Entities is
 
    Me : constant Debug_Handle := Create ("Browser.Entities");
 
+   type Entity_Browser_Module_Record is new Module_ID_Record with null record;
    Entity_Browser_Module : Module_ID;
 
    Left_Margin : constant := 20;
@@ -77,6 +78,11 @@ package body Browsers.Entities is
    Generic_Item_Box_Height_Top : constant := 10;
    Generic_Item_Box_Height     : constant := Generic_Item_Box_Height_Top + 17;
    --  Height of the top-rigth box for generic items
+
+   function Default_Context_Factory
+     (Module : access Entity_Browser_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    ------------------
    -- Type browser --
@@ -284,11 +290,6 @@ package body Browsers.Entities is
       return Node_Ptr;
    --  Support functions for the MDI
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create a current kernel context, based on the currently selected item
-
    procedure On_Show_Source
      (Browser : access Gtk_Widget_Record'Class; Item : Browser_Item);
    --  Display a source editor to show the declaration of the entity
@@ -438,11 +439,11 @@ package body Browsers.Entities is
    is
       Command : Interactive_Command_Access;
    begin
+      Entity_Browser_Module := new Entity_Browser_Module_Record;
       Register_Module
         (Module                  => Entity_Browser_Module,
          Kernel                  => Kernel,
-         Module_Name             => "Entity_Browser",
-         Default_Context_Factory => Default_Factory'Access);
+         Module_Name             => "Entity_Browser");
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Command := new Examine_Entity_Command;
@@ -1659,15 +1660,15 @@ package body Browsers.Entities is
       return Selection_Context_Access (Context);
    end Contextual_Factory;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Entity_Browser_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Module);
       Browser : constant Type_Browser := Type_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
@@ -1680,7 +1681,7 @@ package body Browsers.Entities is
 
       return Contextual_Factory
         (Browser_Item (Get (Iter)), Browser, null, null);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    ----------------------------
    -- Get_Last_Button_Number --

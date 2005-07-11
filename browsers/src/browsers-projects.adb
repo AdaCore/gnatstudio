@@ -47,10 +47,16 @@ package body Browsers.Projects is
 
    Me : constant Debug_Handle := Create ("Browsers.Projects");
 
+   type Project_Browser_Module is new Module_ID_Record with null record;
    Project_Browser_Module_ID : Module_ID;
 
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
+
+   function Default_Context_Factory
+     (Module : access Project_Browser_Module;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    ---------------------
    -- Project_Browser --
@@ -136,11 +142,6 @@ package body Browsers.Projects is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       User   : Kernel_Handle) return Node_Ptr;
    --  Support functions for the MDI
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create a current kernel context, based on the currently selected item
 
    function Browser_Search_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -613,15 +614,15 @@ package body Browsers.Projects is
       return null;
    end Save_Desktop;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Project_Browser_Module;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Module);
       Browser : constant Project_Browser := Project_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
@@ -637,7 +638,7 @@ package body Browsers.Projects is
          Browser => Browser,
          Event   => null,
          Menu    => null);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    ----------------------------
    -- Browser_Search_Factory --
@@ -758,12 +759,12 @@ package body Browsers.Projects is
       Name : constant String := "Project Browser";
       Command : Interactive_Command_Access;
    begin
+      Project_Browser_Module_ID := new Project_Browser_Module;
       Register_Module
         (Module                  => Project_Browser_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Project_Browser_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -802,7 +803,7 @@ package body Browsers.Projects is
                     Label             => Name,
                     Factory           => Browser_Search_Factory'Access,
                     Extra_Information => null,
-                    Id                => Project_Browser_Module_ID,
+                    Id      => Abstract_Module_ID (Project_Browser_Module_ID),
                     Mask              => All_Options and not Supports_Replace
                       and not Search_Backward and not All_Occurrences));
    end Register_Module;

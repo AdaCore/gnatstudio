@@ -74,8 +74,14 @@ package body Browsers.Call_Graph is
 
    Me : constant Debug_Handle := Create ("Browsers.Call_Graph");
 
+   type Callgraph_Module_Record is new Module_ID_Record with null record;
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
+
+   function Default_Context_Factory
+     (Module : access Callgraph_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    Automatically_Check_To_Dependencies : constant Boolean := True;
    --  If True, then every time an item is added to the call graph we check,
@@ -413,11 +419,6 @@ package body Browsers.Call_Graph is
       User   : Kernel_Handle)
       return Node_Ptr;
    --  Support functions for the MDI
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create a current kernel context, based on the currently selected item
 
    procedure Print_Ref
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -1551,15 +1552,15 @@ package body Browsers.Call_Graph is
                 "Unexpected exception " & Exception_Information (E));
    end On_Find_All_References;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Callgraph_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Module);
       Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
@@ -1575,7 +1576,7 @@ package body Browsers.Call_Graph is
          Browser => Browser,
          Event   => null,
          Menu    => null);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    --------------------------------
    -- Call_Graph_Command_Handler --
@@ -2129,12 +2130,12 @@ package body Browsers.Call_Graph is
       Filter   : Action_Filter;
 
    begin
+      Call_Graph_Module_Id := new Callgraph_Module_Record;
       Register_Module
         (Module                  => Call_Graph_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
-         Priority                => GPS.Kernel.Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

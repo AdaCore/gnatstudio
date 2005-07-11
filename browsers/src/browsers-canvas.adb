@@ -23,6 +23,7 @@ with Glib.Convert;           use Glib.Convert;
 with Glib.Error;             use Glib.Error;
 with Glib.Graphs;            use Glib.Graphs;
 with Glib.Object;            use Glib.Object;
+with Glib.Xml_Int;           use Glib.Xml_Int;
 with Pango.Enums;            use Pango.Enums;
 with Gdk.Color;              use Gdk.Color;
 with Gdk.GC;                 use Gdk.GC;
@@ -189,6 +190,8 @@ package body Browsers.Canvas is
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
    procedure Destroy (Marker : in out Browser_Marker_Record);
    function To_String (Marker : access Browser_Marker_Record) return String;
+   function Save
+     (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
 
    function Create_Browser_Marker
@@ -2383,6 +2386,20 @@ package body Browsers.Canvas is
    begin
       return "Browser: " & Marker.Title.all;
    end To_String;
+
+   ----------
+   -- Save --
+   ----------
+
+   function Save
+     (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr
+   is
+      N : constant Node_Ptr := new Node;
+   begin
+      N.Tag   := new String'("browser_marker");
+      N.Value := new String'(Marker.Title.all);
+      return N;
+   end Save;
 
    ---------------------------
    -- Create_Browser_Marker --

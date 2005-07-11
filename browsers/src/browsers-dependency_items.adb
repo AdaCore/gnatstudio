@@ -64,10 +64,16 @@ package body Browsers.Dependency_Items is
 
    Me : constant Debug_Handle := Create ("Browsers.Dependency");
 
+   type Dependency_Browser_Module is new Module_ID_Record with null record;
    Dependency_Browser_Module_ID : Module_ID;
 
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
+
+   function Default_Context_Factory
+     (Module : access Dependency_Browser_Module;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    --------------
    -- Commands --
@@ -285,11 +291,6 @@ package body Browsers.Dependency_Items is
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create a current kernel context, based on the currently selected item
 
    procedure Depends_On_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -943,15 +944,15 @@ package body Browsers.Dependency_Items is
       end if;
    end Open_File;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Dependency_Browser_Module;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Module);
       Browser : constant Dependency_Browser := Dependency_Browser (Child);
       Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
@@ -967,7 +968,7 @@ package body Browsers.Dependency_Items is
          Browser => Browser,
          Event   => null,
          Menu    => null);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    --------------------------------
    -- Depends_On_Command_Handler --
@@ -1001,12 +1002,12 @@ package body Browsers.Dependency_Items is
       Filter  : constant Action_Filter :=
         Action_Filter (not Lookup_Filter (Kernel, "Entity"));
    begin
+      Dependency_Browser_Module_ID := new Dependency_Browser_Module;
       Register_Module
         (Module                  => Dependency_Browser_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Dependency_Browser_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
