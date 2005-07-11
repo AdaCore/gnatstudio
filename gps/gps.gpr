@@ -58,11 +58,9 @@ project GPS is
    package Linker is
       case Shared.OS is
          when "Windows_NT" =>
-            for Default_Switches ("Ada") use
-              ("--LINK=./gpslink", "obj/gps.res");
+            for Default_Switches ("Ada") use ("obj/gps.res");
          when "unix" =>
-            for Default_Switches ("Ada") use
-              ("--LINK=./gpslink");
+            null;
       end case;
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
