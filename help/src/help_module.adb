@@ -98,7 +98,7 @@ package body Help_Module is
    package Help_Category_List is new Generic_List (Help_Category_Access, Free);
    use Help_Category_List;
 
-   type Help_Module_ID_Record is new GPS.Kernel.Module_ID_Record with record
+   type Help_Module_ID_Record is new Module_ID_Record with record
       Categories : Help_Category_List.List;
       --  The registered help files
 
@@ -110,7 +110,15 @@ package body Help_Module is
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
    procedure Destroy (Module : in out Help_Module_ID_Record);
-   --  Destroy the memory associated with Module
+   procedure Customize
+     (Module : access Help_Module_ID_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   function Default_Context_Factory
+     (Module : access Help_Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
@@ -173,21 +181,9 @@ package body Help_Module is
       Anchor : String := "");
    --  Open an HTML file.
 
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Handles customization strings for this module
-
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for HTML commands.
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Generate a context corresponding to the currently viewed location.
 
    procedure On_About
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -578,12 +574,12 @@ package body Help_Module is
       Unchecked_Free (Data);
    end Free;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Help_Module_ID_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       pragma Unreferenced (Child);
@@ -593,11 +589,11 @@ package body Help_Module is
 
       Set_Context_Information
         (Context => Context,
-         Kernel  => Kernel,
-         Creator => Module_ID (Help_Module_ID));
+         Kernel  => Get_Kernel (Module.all),
+         Creator => Abstract_Module_ID (Module));
 
       return Selection_Context_Access (Context);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    ------------------
    -- On_Load_HTML --
@@ -919,12 +915,13 @@ package body Help_Module is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Help_Module_ID_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang : GNAT.OS_Lib.String_Access;
       Field : Node_Ptr;
@@ -1031,7 +1028,7 @@ package body Help_Module is
          else
             N := Node.Child;
             while N /= null loop
-               Customize (Kernel, Create (Full), N, System_Wide);
+               Customize (Help_Module_ID, Create (Full), N, System_Wide);
                N := N.Next;
             end loop;
             Free (Node);
@@ -1147,9 +1144,7 @@ package body Help_Module is
         (Module                  => Module_ID (Help_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
-         Priority                => GPS.Kernel.Default_Priority - 20,
-         Customization_Handler   => Customize'Access,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => GPS.Kernel.Modules.Default_Priority - 20);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
