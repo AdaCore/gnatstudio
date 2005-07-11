@@ -33,7 +33,15 @@ project Sal is
    for Library_Kind use "dynamic";
    for Library_Interface use ("JNI", "GDT", "GDT.Jni_Functions");
    for Languages use ("Ada");
-   for Library_Options use ("-lgcc_s", "-lgcc_eh");
+    
+   type Target_Type is ("win32", "linux");
+
+   Target : Target_Type := external ("target", "linux");
+
+   case Target is
+      when "win32" =>
+         for Library_Options use ("-lgcc_s", "-lgcc_eh");
+   end case;
    
    package Binder is
       for Default_Switches ("ada") use ("-shared");
