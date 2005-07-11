@@ -23,8 +23,6 @@ with Docgen;     use Docgen;
 
 package Docgen_Module is
 
-   Docgen_Module_Id : GPS.Kernel.Module_ID;
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the Ada parsers in GPS.

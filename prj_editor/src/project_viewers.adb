@@ -147,6 +147,13 @@ package body Project_Viewers is
    type Prj_Editor_Module_Id_Access is access all
      Prj_Editor_Module_Id_Record'Class;
 
+   procedure Customize
+     (Module : access Prj_Editor_Module_Id_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
+
    Prj_Editor_Module_ID : Prj_Editor_Module_Id_Access;
    --  Id for the project editor module
 
@@ -325,13 +332,6 @@ package body Project_Viewers is
    --  See comments in the body of this function explaining the use of this
    --  pragma.
    --  Called when a new file is edited
-
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Called when a new customization in parsed
 
    procedure Parsing_Switches_XML
      (Kernel : access Kernel_Handle_Record'Class;
@@ -2537,7 +2537,7 @@ package body Project_Viewers is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Prj_Editor_Module_Id_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
@@ -2553,7 +2553,8 @@ package body Project_Viewers is
          begin
             if Tool_Name = "" then
                GPS.Kernel.Console.Insert
-                 (Kernel, -"Invalid <tool> node, no name specified");
+                 (Get_Kernel (Module.all),
+                  -"Invalid <tool> node, no name specified");
             else
                N2 := Node.Child;
                while N2 /= null loop
@@ -2572,7 +2573,7 @@ package body Project_Viewers is
                           and then Child.Tag.all /= "dependency"
                           and then Child.Tag.all /= "expansion"
                         then
-                           Insert (Kernel,
+                           Insert (Get_Kernel (Module.all),
                                    -("Invalid child tag for <switches>"
                                      & " in customization files: <")
                                    & Child.Tag.all & '>',
@@ -2589,7 +2590,8 @@ package body Project_Viewers is
                            XML_Node  => Deep_Copy (N2),
                            Tool_Name => new String'(Tool_Name),
                            Languages => Get_Languages_From_Tool_Node (Node));
-                        Register_Switches_Page (Kernel, Creator);
+                        Register_Switches_Page
+                          (Get_Kernel (Module.all), Creator);
                      end if;
                   end if;
 
@@ -2617,8 +2619,7 @@ package body Project_Viewers is
         (Module                  => Module_ID (Prj_Editor_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
-         Priority                => Default_Priority,
-         Customization_Handler   => Customize'Access);
+         Priority                => Default_Priority);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);

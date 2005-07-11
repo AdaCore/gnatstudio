@@ -60,6 +60,8 @@ package body Docgen_Module is
 
    Me : constant Debug_Handle := Create ("Docgen");
 
+   Docgen_Module_Id : GPS.Kernel.Modules.Module_ID;
+
    type Supported_Backends is
      array (Natural range <>) of Docgen.Backend.Backend_Handle;
    type Supported_Backends_Access is access Supported_Backends;
@@ -97,6 +99,13 @@ package body Docgen_Module is
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
 
+   procedure Customize
+     (Module : access Docgen_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
+
    procedure Set_Options
      (Process_Body_Files_P : Boolean := False;
       Ignorable_Comments_P : Boolean := False;
@@ -133,14 +142,6 @@ package body Docgen_Module is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
-
-   procedure Docgen_Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Customization routine for the docgen module, this is a callback to
-   --  be used with a Register_Module.
 
    ------------------
    -- For the menu --
@@ -501,14 +502,14 @@ package body Docgen_Module is
       end if;
    end Choose_Menu_File;
 
-   ----------------------
-   -- Docgen_Customize --
-   ----------------------
+   ---------------
+   -- Customize --
+   ---------------
 
-   procedure Docgen_Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Node   : Node_Ptr;
+   procedure Customize
+     (Module : access Docgen_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
@@ -532,7 +533,7 @@ package body Docgen_Module is
 
             if Name = "" then
                Console.Insert
-                 (Kernel,
+                 (Get_Kernel (Module.all),
                   -"DOCGEN: missing backend name in " & Full_Name (File).all,
                   Mode => Error);
             else
@@ -654,7 +655,7 @@ package body Docgen_Module is
             Insert (Out_Format);
          end;
       end if;
-   end Docgen_Customize;
+   end Customize;
 
    -------------------
    -- Generate_File --
@@ -896,13 +897,11 @@ package body Docgen_Module is
       Command  : Interactive_Command_Access;
    begin
       Docgen_Module_Id := new Docgen_Module_Record;
-
       Register_Module
         (Module                => Docgen_Module_Id,
          Kernel                => Kernel,
          Module_Name           => "Docgen",
-         Priority              => Default_Priority,
-         Customization_Handler => Docgen_Customize'Access);
+         Priority              => GPS.Kernel.Modules.Default_Priority);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu
