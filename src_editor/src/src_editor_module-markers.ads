@@ -20,6 +20,7 @@
 
 with GPS.Kernel;
 with VFS;
+with Glib.Xml_Int;
 
 package Src_Editor_Module.Markers is
 
@@ -55,6 +56,8 @@ private
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
    function To_String
      (Marker : access File_Marker_Record) return String;
+   function Save
+     (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
 
 end Src_Editor_Module.Markers;

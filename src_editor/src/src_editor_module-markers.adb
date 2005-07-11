@@ -22,6 +22,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
 with Src_Editor_Box;            use Src_Editor_Box;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 
 package body Src_Editor_Module.Markers is
 
@@ -99,5 +100,21 @@ package body Src_Editor_Module.Markers is
         & " at line" & Integer'Image (Marker.Line)
         & " column"  & Integer'Image (Marker.Column);
    end To_String;
+
+   ----------
+   -- Save --
+   ----------
+
+   function Save
+     (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr
+   is
+      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
+   begin
+      Node.Tag := new String'("file_marker");
+      Set_Attribute (Node, "file", Full_Name (Marker.File).all);
+      Set_Attribute (Node, "line", Integer'Image (Marker.Line));
+      Set_Attribute (Node, "column", Integer'Image (Marker.Column));
+      return Node;
+   end Save;
 
 end Src_Editor_Module.Markers;
