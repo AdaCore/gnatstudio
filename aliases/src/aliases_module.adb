@@ -164,7 +164,12 @@ package body Aliases_Module is
    type Aliases_Module_Id_Access is access all Aliases_Module_Id_Record'Class;
 
    procedure Destroy (Module : in out Aliases_Module_Id_Record);
-   --  Free the memory occupied by the module
+   procedure Customize
+     (Module : access Aliases_Module_Id_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
 
    Aliases_Module_Id : Aliases_Module_Id_Access;
 
@@ -358,11 +363,6 @@ package body Aliases_Module is
    procedure Show_Read_Only_Toggled (Editor : access Gtk_Widget_Record'Class);
    --  Called when the "show read-only" toggle is changed
 
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
       Node   : Node_Ptr;
@@ -2104,14 +2104,14 @@ package body Aliases_Module is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Aliases_Module_Id_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (File);
    begin
-      Customize (Kernel, Node, Level, Read_Only => True);
+      Customize (Get_Kernel (Module.all), Node, Level, Read_Only => True);
    end Customize;
 
    ---------------
@@ -2218,8 +2218,7 @@ package body Aliases_Module is
         (Module                  => Module_ID (Aliases_Module_Id),
          Kernel                  => Kernel,
          Module_Name             => "Aliases",
-         Priority                => Default_Priority,
-         Customization_Handler   => Customize'Access);
+         Priority                => Default_Priority);
 
       Register_Menu
         (Kernel, Edit, -"_Aliases",
