@@ -43,6 +43,7 @@ with Gtk.Main;          use Gtk.Main;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
+with Gtk.Object;        use Gtk.Object;
 with Gtk.Selection;     use Gtk.Selection;
 with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
@@ -53,6 +54,7 @@ with Traces;            use Traces;
 with GPS.Intl;        use GPS.Intl;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;   use GPS.Kernel.Macros;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
@@ -66,6 +68,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with System;            use System;
 with Commands.Interactive; use Commands.Interactive;
+with Generic_List;
 
 package body GPS.Kernel.Modules is
 
@@ -99,7 +102,7 @@ package body GPS.Kernel.Modules is
       Command  : Commands.Interactive.Interactive_Command_Access;
       Filter   : GPS.Kernel.Action_Filter;
 
-      Submenu  : Module_Menu_Handler;
+      Submenu  : Submenu_Factory;
       Is_Submenu : Boolean := False;
 
       Visible    : Boolean := True;
@@ -210,6 +213,170 @@ package body GPS.Kernel.Modules is
       Command : Interactive_Action);
    --  Called when a registered menu is hidden
 
+   type Module_List_Access is access Module_List.List;
+   function Convert is new Ada.Unchecked_Conversion
+     (Module_List_Access, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Module_List_Access);
+
+   ------------------
+   -- Menu_Handler --
+   ------------------
+
+   procedure Menu_Handler
+     (Module  : access Module_ID_Record;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Module, Object, Context, Menu);
+   begin
+      null;
+   end Menu_Handler;
+
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
+
+   function Default_Context_Factory
+     (Module : access Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Module, Child);
+   begin
+      return null;
+   end Default_Context_Factory;
+
+   -------------------
+   -- Save_Function --
+   -------------------
+
+   function Save_Function
+     (Module : access Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Mode   : Save_Function_Mode) return Boolean
+   is
+      pragma Unreferenced (Module, Child, Mode);
+   begin
+      return False;
+   end Save_Function;
+
+   ---------------------
+   -- Tooltip_Handler --
+   ---------------------
+
+   function Tooltip_Handler
+     (Module  : access Module_ID_Record;
+      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap
+   is
+      pragma Unreferenced (Module, Context);
+   begin
+      return null;
+   end Tooltip_Handler;
+
+   ----------------------
+   -- Bookmark_Handler --
+   ----------------------
+
+   function Bookmark_Handler
+     (Module : access Module_ID_Record;
+      Load   : Xml_Int.Node_Ptr := null) return Location_Marker
+   is
+      pragma Unreferenced (Module, Load);
+   begin
+      return null;
+   end Bookmark_Handler;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Module : access Module_ID_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Module, File, Node, Level);
+   begin
+      null;
+   end Customize;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Module : in out Module_ID) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Module_ID_Record'Class, Module_ID);
+   begin
+      Destroy (Module.all);
+      Unchecked_Free (Module);
+   end Free;
+
+   ------------------------
+   -- Get_Current_Module --
+   ------------------------
+
+   function Get_Current_Module
+     (Kernel : access Kernel_Handle_Record'Class) return Module_ID
+   is
+      C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+   begin
+      if C = null
+        or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
+      then
+         return null;
+      end if;
+
+      return Get_Module_From_Child (C);
+   end Get_Current_Module;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle is
+   begin
+      return ID.Kernel;
+   end Get_Kernel;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Module : Module_ID) return String is
+   begin
+      return Module.Name.all;
+   end Get_Name;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out Module_ID_Record) is
+      pragma Unreferenced (Id);
+   begin
+      null;
+   end Destroy;
+
+   -------------------
+   -- Create_Marker --
+   -------------------
+
+   function Create_Marker
+     (Kernel : access Kernel_Handle_Record'Class;
+      Load   : Xml_Int.Node_Ptr := null) return Location_Marker
+   is
+      Module : constant Module_ID := Get_Current_Module (Kernel);
+   begin
+      if Module /= null then
+         return Bookmark_Handler (Module, Load);
+      else
+         return null;
+      end if;
+   end Create_Marker;
+
    ---------------
    -- Get_Label --
    ---------------
@@ -285,21 +452,18 @@ package body GPS.Kernel.Modules is
       Context : Selection_Context_Access;
       Pixmap  : out Gdk.Gdk_Pixmap)
    is
-      Current : Module_List.List_Node :=
-        Module_List.First (Kernel.Modules_List);
-
       use type Module_List.List_Node;
       use type Gdk.Gdk_Pixmap;
-
+      Current : Module_List.List_Node :=
+        Module_List.First (List_Of_Modules (Kernel));
+      Module  : Module_ID;
    begin
       Pixmap := null;
 
       while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Info.Tooltip_Handler /= null then
-            Module_List.Data (Current).Info.Tooltip_Handler
-              (Context => Context,
-               Pixmap  => Pixmap);
-
+         Module := Module_List.Data (Current);
+         if Module /= null then
+            Pixmap := Tooltip_Handler (Module, Context);
             if Pixmap /= null then
                return;
             end if;
@@ -314,53 +478,23 @@ package body GPS.Kernel.Modules is
    ---------------------
 
    procedure Register_Module
-     (Module                  : in out Module_ID;
+     (Module                  : access Module_ID_Record;
       Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
-      Priority                : Module_Priority     := Default_Priority;
-      Default_Context_Factory : Module_Default_Context_Factory := null;
-      Save_Function           : Module_Save_Function := null;
-      Tooltip_Handler         : Module_Tooltip_Handler := null;
-      Customization_Handler   : Module_Customization_Handler := null)
+      Priority                : Module_Priority := Default_Priority)
    is
-      Prev    : Module_List.List_Node := Module_List.Null_Node;
-      Current : Module_List.List_Node :=
-        Module_List.First (Kernel.Modules_List);
-
-      use type Module_List.List_Node;
+      List    : Module_List_Access := Convert (Kernel.Modules_List);
    begin
-      if Module = null then
-         Module := new Module_ID_Record;
+      Module.Name     := new String'(Module_Name);
+      Module.Priority := Priority;
+      Module.Kernel   := Kernel_Handle (Kernel);
+
+      if List = null then
+         List := new Module_List.List;
+         Kernel.Modules_List := Convert (List);
       end if;
 
-      Module.Info := new Module_ID_Information'
-        (Name_Length           => Module_Name'Length,
-         Kernel                => Kernel_Handle (Kernel),
-         Name                  => Module_Name,
-         Priority              => Priority,
-         Default_Factory       => Default_Context_Factory,
-         Save_Function         => Save_Function,
-         Tooltip_Handler       => Tooltip_Handler,
-         Customization_Handler => Customization_Handler);
-
-      while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Info.Name = Module_Name then
-            Console.Insert
-              (Kernel,
-               (-"Module already registered: ") & Module_Name, Mode => Error);
-            return;
-         end if;
-
-         if Module_List.Data (Current).Info.Priority < Priority then
-            Module_List.Append (Kernel.Modules_List, Prev, Module);
-            return;
-         end if;
-
-         Prev    := Current;
-         Current := Module_List.Next (Current);
-      end loop;
-
-      Module_List.Append (Kernel.Modules_List, Module);
+      Module_List.Append (List.all, Module_ID (Module));
    end Register_Module;
 
    -----------------------------
@@ -428,7 +562,7 @@ package body GPS.Kernel.Modules is
    function Get_Priority
      (ID : access Module_ID_Record'Class) return Module_Priority is
    begin
-      return ID.Info.Priority;
+      return ID.Priority;
    end Get_Priority;
 
    -----------------
@@ -437,11 +571,7 @@ package body GPS.Kernel.Modules is
 
    function Module_Name (ID : access Module_ID_Record'Class) return String is
    begin
-      if ID.Info /= null then
-         return ID.Info.Name;
-      else
-         return "";
-      end if;
+      return ID.Name.all;
    end Module_Name;
 
    -----------------------
@@ -758,7 +888,7 @@ package body GPS.Kernel.Modules is
       Set_Context_Information
         (Context,
          Kernel  => User.Kernel,
-         Creator => User.ID);
+         Creator => Abstract_Module_ID (User.ID));
 
       Run_Hook (User.Kernel, Contextual_Menu_Open_Hook);
 
@@ -1354,22 +1484,28 @@ package body GPS.Kernel.Modules is
    ------------------
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
-      use Module_List;
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Module_List.List, Module_List_Access);
+      List : Module_List_Access := Convert (Kernel.Modules_List);
    begin
       --  ??? Problem: should destroy the modules in the reverse order.
       --  Otherwise, the scripts module is no longer available for the other
       --  modules.
-      Free (Kernel.Modules_List);
+      if List /= null then
+         Module_List.Free (List.all);
+         Unchecked_Free (List);
+         Kernel.Modules_List := System.Null_Address;
+      end if;
    end Free_Modules;
 
    ---------------------
    -- List_Of_Modules --
    ---------------------
 
-   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return GPS.Kernel.Module_List.List is
+   function List_Of_Modules
+     (Kernel : access Kernel_Handle_Record'Class) return Module_List.List is
    begin
-      return Kernel.Modules_List;
+      return Convert (Kernel.Modules_List).all;
    end List_Of_Modules;
 
    ------------------------
@@ -1764,7 +1900,7 @@ package body GPS.Kernel.Modules is
       Name          : String;
       Label         : String := "";
       Filter        : GPS.Kernel.Action_Filter := null;
-      Submenu       : Module_Menu_Handler := null;
+      Submenu       : Submenu_Factory := null;
       Ref_Item      : String := "";
       Add_Before    : Boolean := True)
    is

@@ -116,8 +116,10 @@ with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
 with Gdk.Types;
+with Generic_List;
 with Gtk.Image;
 with Gtk.Handlers;
+with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Selection;
 with Gtk.Widget;
@@ -135,6 +137,125 @@ package GPS.Kernel.Modules is
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    --  Names for the internal modules
 
+   ------------------
+   -- Module types --
+   ------------------
+
+   type Module_ID_Record is new Abstract_Module_ID_Record with private;
+   type Module_ID is access all Module_ID_Record'Class;
+
+   procedure Destroy (Id : in out Module_ID_Record);
+   --  Free the memory associated with the module. By default, this does
+   --  nothing.
+
+   function Get_Name (Module : Module_ID) return String;
+   --  Return the name of the module
+
+   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle;
+   --  Return the kernel associated with Module
+
+   function Get_Current_Module
+     (Kernel : access Kernel_Handle_Record'Class) return Module_ID;
+   --  Return the module the currently selected MDI child belongs to.
+   --  null might be returned if there is either no selected child or GPS
+   --  couldn't find its module
+
+   procedure Menu_Handler
+     (Module  : access Module_ID_Record;
+      Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Callback used every time some contextual menu event happens in GPS.
+   --
+   --  The object that is displaying the contextual menu is Object. Note that
+   --  this isn't necessarily the widget in which the mouse event occurs.
+   --
+   --  Context contains all the information about the current selection.
+   --  The module that initiated the event (ie the one that is currently
+   --  displaying the contextual menu) can be found by reading Get_Creator for
+   --  the context.
+   --
+   --  The callback should add the relevant items to Menu. It is recommended to
+   --  use GPS.Kernel.Modules.Context_Callback below to connect signals to
+   --  the items.
+
+   function Default_Context_Factory
+     (Module : access Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  A function called when the kernel needs to get the current context for
+   --  an MDI child. This is used mostly when generating a context for the
+   --  menubar menu items.
+   --  Child is the widget that was put directly in the MDI. It is always of
+   --  the type MDI_Child_Tag registered with Register_Module.
+
+   type Save_Function_Mode is (Query, Action);
+   --  The two types of use for Module_Save_Function.
+   --  If Query, then the save_function should return whether the corresponding
+   --  child has been modified, and not saved yet, and thus whether we should
+   --  ask the user whether to save it.
+   --  If Action, the save_function *must* save the child. The return value
+   --  then indicates whether the save was successful (True), or failed (False)
+
+   function Save_Function
+     (Module : access Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Mode   : Save_Function_Mode) return Boolean;
+   --  A function called when the kernel asks a MDI child to save itself.
+   --  See the description of Mode for the description of the modes.
+   --  Child is the widget that put directly in the MDI.
+   --  Should return True if the Child needs to be saved (in Query mode), or
+   --  if the child could be saved with success (in Action mode)
+
+   function Tooltip_Handler
+     (Module  : access Module_ID_Record;
+      Context : access Selection_Context'Class) return Gdk.Gdk_Pixmap;
+   --  Callback used every time some tooltip event happens in GPS.
+   --  Context contains all the information about the context of the tooltip.
+   --
+   --  The first callback that will decide to handle the tooltip will set
+   --  pixmap, which will stop the
+   --  propagation of the tooltip message (since only one module can display
+   --  a tooltip at a time).
+   --
+   --  Since only one module will handle the tooltip, putting proper priorities
+   --  when registering the modules is very important.
+   --
+   --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
+   --  create a tooltip that only contains text
+
+   function Bookmark_Handler
+     (Module : access Module_ID_Record;
+      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+   --  Create bookmark for either the bookmark described in Load, or
+   --  the current context in the module. Load is used when reloading the
+   --  bookmarks when GPS is started, and is the same XML node created by
+   --  Location_Marker.Save.
+   --
+   --  null should be returned if we can't create a marker at that position
+
+   procedure Customize
+     (Module : access Module_ID_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   --  Subprogram called when a new customization has been parsed.
+   --  It is initially called just after all modules have been registered,
+   --  and gets passed a single XML node.
+   --  File is the XML file that is currently being parsed.
+
+   ------------------
+   -- Modules list --
+   ------------------
+
+   procedure Free (Module : in out Module_ID);
+   --  Free memory associated to a Module_ID.
+
+   package Module_List is new Generic_List (Module_ID);
+
+   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
+      return Module_List.List;
+   --  Return the list of currently loaded modules.
+
    -----------
    -- Types --
    -----------
@@ -147,15 +268,20 @@ package GPS.Kernel.Modules is
    -- Module manipulation --
    -------------------------
 
+   type Module_Priority is new Natural;
+   Low_Priority     : constant Module_Priority := Module_Priority'First;
+   Default_Priority : constant Module_Priority := 500;
+   High_Priority    : constant Module_Priority := Module_Priority'Last;
+   --  The priority of the module.
+   --  Modules with a higher priority are always called before modules with
+   --  lower priority, for instance when computing the contents of a contextual
+   --  menu.
+
    procedure Register_Module
-     (Module                  : in out Module_ID;
+     (Module                  : access Module_ID_Record;
       Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
-      Priority                : Module_Priority := Default_Priority;
-      Default_Context_Factory : Module_Default_Context_Factory := null;
-      Save_Function           : Module_Save_Function := null;
-      Tooltip_Handler         : Module_Tooltip_Handler := null;
-      Customization_Handler   : Module_Customization_Handler := null);
+      Priority                : Module_Priority := Default_Priority);
    --  Register a new module into GPS.
    --  If Module is null, a new module_id is created. Otherwise, the internal
    --  information stored in Module is changed. This allows you to store user
@@ -163,18 +289,6 @@ package GPS.Kernel.Modules is
    --
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
-   --
-   --  Save_Function is an optional callback that will handle the saving of
-   --  the given module.
-   --
-   --  Tooltip_Handler is an optional callback used to display tooltips.
-   --  See description of Module_Tooltip_Handler in GPS.Kernel and procedure
-   --  Compute_Tooltip below for more details.
-   --
-   --  Customization_Handler is called every time some customization has
-   --  changed: initially after all modules are loaded, or every time a
-   --  module adds a customization string. Only one XML node is passed to
-   --  Customization_Handler every time.
 
    procedure Dynamic_Register_Module
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -197,10 +311,6 @@ package GPS.Kernel.Modules is
    --
    --  Success is set to True if the module could be successfully registered.
 
-   function List_Of_Modules (Kernel : access Kernel_Handle_Record'Class)
-      return GPS.Kernel.Module_List.List;
-   --  Return the list of currently loaded modules.
-
    function Module_Name (ID : access Module_ID_Record'Class) return String;
    --  Return the name of the module registered as ID
 
@@ -210,6 +320,19 @@ package GPS.Kernel.Modules is
    function Get_Priority
      (ID : access Module_ID_Record'Class) return Module_Priority;
    --  Return the current priority of ID
+
+   -------------
+   -- Markers --
+   -------------
+
+   function Create_Marker
+     (Kernel : access Kernel_Handle_Record'Class;
+      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+   --  Create a marker for the current module at the current location.
+   --  Load is an XML node created through a call to Save
+   --  (for a Location_Marker and is used to restore a marker from a previous
+   --  session.
+   --  null is returned if no Location_Marker could be created.
 
    ----------------------
    -- Desktop handling --
@@ -358,12 +481,17 @@ package GPS.Kernel.Modules is
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
 
+   type Submenu_Factory is access procedure
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+
    procedure Register_Contextual_Submenu
      (Kernel     : access Kernel_Handle_Record'Class;
       Name       : String;
       Label      : String := "";
       Filter     : GPS.Kernel.Action_Filter := null;
-      Submenu    : Module_Menu_Handler := null;
+      Submenu    : Submenu_Factory := null;
       Ref_Item   : String := "";
       Add_Before : Boolean := True);
    --  Register a new submenu. Its contents can be computed dynamically by
@@ -530,5 +658,12 @@ package GPS.Kernel.Modules is
    --  Handle text/uri-list drop events by loading the corresponding projects
    --  or files. Assume the selection data contains a string representing a LF
    --  or CR/LF separated list of files.
+
+private
+   type Module_ID_Record is new Abstract_Module_ID_Record with record
+      Kernel                : Kernel_Handle;
+      Priority              : Module_Priority;
+      Name                  : GNAT.OS_Lib.String_Access;
+   end record;
 
 end GPS.Kernel.Modules;
