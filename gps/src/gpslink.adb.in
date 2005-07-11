@@ -22,16 +22,10 @@ with Ada.Command_Line; use Ada.Command_Line;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 function GPSLink return Integer is
-   Args : Argument_List (1 .. Argument_Count + 1);
+   Args : Argument_List (1 .. Argument_Count);
 begin
-   for J in 1 .. Args'Last - 1 loop
+   for J in Args'Range loop
       Args (J) := new String'(Argument (J));
    end loop;
-
-   --  Always link with libcommon.a last, so that it can resolve symbols
-   --  not available in libgnat. This is needed to better support multiple
-   --  versions of GNAT when building GPS.
-
-   Args (Args'Last) := new String'("@ROOT@/common/obj/libcommon.a");
    return Spawn (Locate_Exec_On_Path ("gcc").all, Args);
 end GPSLink;
