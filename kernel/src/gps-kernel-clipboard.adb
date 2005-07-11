@@ -162,11 +162,11 @@ package body GPS.Kernel.Clipboard is
 
          Trace (Me, "Saving " & Filename);
          File := new Node;
-         File.Tag := new String'("Bookmarks");
+         File.Tag := new String'("Clipboard");
          for L in Clipboard.List'Range loop
             if Clipboard.List (L) /= null then
                Child := new Node;
-               Child.Tag := new String'("bookmark");
+               Child.Tag := new String'("clipboard");
 
                if L = Clipboard.Last_Paste then
                   Set_Attribute (Child, "last", "true");
