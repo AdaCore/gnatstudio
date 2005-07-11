@@ -171,13 +171,6 @@ package body Src_Editor_Module is
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
-   function Save_Function
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean;
-   --  Save the text editor.
-   --  If Force is False, then offer a choice to the user before doing so.
-
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line  : Editable_Line_Type;
@@ -319,11 +312,6 @@ package body Src_Editor_Module is
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True).
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the current context for GPS.Kernel.Get_Current_Context
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
@@ -1167,11 +1155,11 @@ package body Src_Editor_Module is
    -------------------
 
    function Save_Function
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Source_Editor_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget;
       Mode   : Save_Function_Mode) return Boolean
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Module);
       Success        : Boolean;
       Box            : constant Source_Editor_Box := Source_Editor_Box (Child);
    begin
@@ -2461,17 +2449,18 @@ package body Src_Editor_Module is
       return Get_Contextual_Menu (Kernel, Editor, null, null);
    end Default_Factory;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Source_Editor_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
    begin
-      return Default_Factory (Kernel, Source_Editor_Box (Child));
-   end Default_Factory;
+      return Default_Factory
+        (Get_Kernel (Module.all), Source_Editor_Box (Child));
+   end Default_Context_Factory;
 
    -----------------------------
    -- Expand_Aliases_Entities --
@@ -2530,6 +2519,44 @@ package body Src_Editor_Module is
          return Invalid_Expansion;
       end if;
    end Expand_Aliases_Entities;
+
+   ----------------------
+   -- Bookmark_Handler --
+   ----------------------
+
+   function Bookmark_Handler
+     (Module : access Source_Editor_Module_Record;
+      Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker
+   is
+      pragma Unreferenced (Load);
+      Source  : constant Source_Editor_Box := Get_Source_Box_From_MDI
+        (Find_Current_Editor (Get_Kernel (Module.all)));
+      Line, Column : Integer;
+   begin
+      if Source /= null then
+         Get_Cursor_Location (Source, Line, Column);
+         return Location_Marker
+           (Create_File_Marker
+              (File   => Get_Filename (Source),
+               Line   => Line,
+               Column => Column));
+      end if;
+      return null;
+   end Bookmark_Handler;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Module : access Source_Editor_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level)
+   is
+   begin
+      Casing_Customize (Get_Kernel (Module.all), File, Node, Level);
+   end Customize;
 
    ---------------------
    -- Register_Module --
@@ -2753,10 +2780,7 @@ package body Src_Editor_Module is
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => Src_Editor_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access,
-         Save_Function           => Save_Function'Access,
-         Customization_Handler   => Casing_Customize'Access);
+         Priority                => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -3021,7 +3045,7 @@ package body Src_Editor_Module is
                Label             => Name,
                Factory           => Current_File_Factory'Access,
                Extra_Information => Gtk_Widget (Selector),
-               Id                => Src_Editor_Module_Id,
+               Id                => Abstract_Module_ID (Src_Editor_Module_Id),
                Mask              => All_Options));
          Register_Search_Function
            (Kernel => Kernel,

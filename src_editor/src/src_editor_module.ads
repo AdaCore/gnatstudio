@@ -20,18 +20,21 @@
 
 with Glib.Object;
 with Glib;               use Glib;
+with Glib.Xml_Int;       use Glib.Xml_Int;
 with Gdk.GC;
 with Gdk.Color;          use Gdk.Color;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
 with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
+with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.MDI;         use Gtkada.MDI;
 
 with Src_Editor_Box;
 
-with GPS.Kernel;       use GPS.Kernel;
-with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with String_List_Utils;  use String_List_Utils;
 with VFS;                use VFS;
 with Src_Contexts;
@@ -45,7 +48,7 @@ with Commands.Controls;  use Commands.Controls;
 
 package Src_Editor_Module is
 
-   Src_Editor_Module_Id : GPS.Kernel.Module_ID;
+   Src_Editor_Module_Id : Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
    Search_Result_Highlighting : constant String := "Search Results";
@@ -252,7 +255,22 @@ private
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
    procedure Destroy (Id : in out Source_Editor_Module_Record);
-   --  Free the memory used by the module.
+   function Default_Context_Factory
+     (Module : access Source_Editor_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   function Save_Function
+     (Module : access Source_Editor_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Mode   : Save_Function_Mode) return Boolean;
+   procedure Customize
+     (Module : access Source_Editor_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Customization_Level);
+   function Bookmark_Handler
+     (Module : access Source_Editor_Module_Record;
+      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+   --  See inherited documentation
 
    ----------
    -- Misc --
