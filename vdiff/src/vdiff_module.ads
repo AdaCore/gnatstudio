@@ -20,12 +20,12 @@
 
 --  Visual Diff module.
 
-with GPS.Kernel;
+with GPS.Kernel.Modules;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 
 package Vdiff_Module is
 
-   Vdiff_Module_ID   : GPS.Kernel.Module_ID;
+   Vdiff_Module_ID   : GPS.Kernel.Modules.Module_ID;
    Vdiff_Module_Name : constant String := "Visual_Diff";
 
    --  Preferences used by vdiff1 and not by vdiff2

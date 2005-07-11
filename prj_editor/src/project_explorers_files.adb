@@ -74,10 +74,16 @@ with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
 
-   Explorer_Files_Module_Id   : GPS.Kernel.Module_ID := null;
+   Explorer_Files_Module_Id   : Module_ID;
 
    File_View_Shows_Only_Project : constant History_Key :=
      "explorers-file-show-project-only";
+
+   type Explorer_Module_Record is new Module_ID_Record with null record;
+   function Default_Context_Factory
+     (Module : access Explorer_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
@@ -196,21 +202,17 @@ package body Project_Explorers_Files is
       Kernel       : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the Context.
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Explorer_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
    begin
-      return Explorer_Context_Factory (Kernel, Child, Child, null, null);
-   end Default_Factory;
+      return Explorer_Context_Factory
+        (Get_Kernel (Module.all), Child, Child, null, null);
+   end Default_Context_Factory;
 
    --------------------
    -- Read_Directory --
@@ -1234,12 +1236,12 @@ package body Project_Explorers_Files is
    is
       Tools : constant String := '/' & (-"Tools");
    begin
+      Explorer_Files_Module_Id := new Explorer_Module_Record;
       Register_Module
         (Module                  => Explorer_Files_Module_Id,
          Kernel                  => Kernel,
          Module_Name             => "Files_View",
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu

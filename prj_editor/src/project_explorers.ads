@@ -46,9 +46,6 @@ package Project_Explorers is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   Explorer_Module_ID : GPS.Kernel.Module_ID := null;
-   --  Id for the explorer module
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list

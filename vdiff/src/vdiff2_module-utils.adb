@@ -21,6 +21,7 @@
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 

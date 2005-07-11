@@ -20,7 +20,7 @@
 
 --  New Visual Diff module.
 
-with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Modules;       use GPS.Kernel;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
@@ -31,7 +31,7 @@ package Vdiff2_Module is
 
    type VDiff2_Module is private;
 
-   Vdiff_Module_ID        : GPS.Kernel.Module_ID;
+   Vdiff_Module_ID        : GPS.Kernel.Modules.Module_ID;
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
    Diff3_Cmd              : Param_Spec_String;
@@ -50,11 +50,12 @@ private
 
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
-   type VDiff2_Module_Record is new Module_ID_Record with record
-      Number_active    : Natural := 0;
-      List_Diff        : Diff_Head_List_Access;
-      Enable_Fine_Diff : Boolean := True;
-   end record;
+   type VDiff2_Module_Record is new GPS.Kernel.Modules.Module_ID_Record with
+      record
+         Number_active    : Natural := 0;
+         List_Diff        : Diff_Head_List_Access;
+         Enable_Fine_Diff : Boolean := True;
+      end record;
 
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
    procedure Destroy (Id : in out VDiff2_Module_Record);

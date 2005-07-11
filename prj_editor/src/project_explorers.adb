@@ -96,6 +96,10 @@ package body Project_Explorers is
 
    Me : constant Debug_Handle := Create ("Project_Explorers");
 
+   type Explorer_Module_Record is new Module_ID_Record with null record;
+   Explorer_Module_ID : Module_ID := null;
+   --  Id for the explorer module
+
    Explorers_Tooltips : constant Debug_Handle :=
      Create ("Explorers.Tooltips", Off);
 
@@ -107,6 +111,11 @@ package body Project_Explorers is
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
+
+   function Default_Context_Factory
+     (Module : access Explorer_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    ---------------
    -- Searching --
@@ -380,11 +389,6 @@ package body Project_Explorers is
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the GPS.Kernel.Get_Current_Context.
-
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -475,7 +479,7 @@ package body Project_Explorers is
       pragma Unreferenced (Context);
    begin
       return Ctxt.all in File_Selection_Context'Class
-        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
         and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
         and then not Has_Directory_Information
            (File_Selection_Context_Access (Ctxt));
@@ -492,7 +496,7 @@ package body Project_Explorers is
       pragma Unreferenced (Context);
    begin
       return Ctxt.all in File_Selection_Context'Class
-        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
         and then Has_Directory_Information
            (File_Selection_Context_Access (Ctxt))
         and then not Has_File_Information
@@ -510,7 +514,7 @@ package body Project_Explorers is
       pragma Unreferenced (Context);
    begin
       return Ctxt.all in File_Selection_Context'Class
-        and then Get_Creator (Ctxt) = Explorer_Module_ID
+        and then Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
         and then Has_File_Information
            (File_Selection_Context_Access (Ctxt))
         and then Ctxt.all not in Entity_Selection_Context'Class;
@@ -526,7 +530,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Get_Creator (Ctxt) = Explorer_Module_ID
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
         and then Ctxt.all in Entity_Selection_Context'Class;
    end Filter_Matches_Primitive;
 
@@ -2064,16 +2068,17 @@ package body Project_Explorers is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_Explorer;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Explorer_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
    begin
-      return Explorer_Context_Factory (Kernel, Child, Child, null, null);
-   end Default_Factory;
+      return Explorer_Context_Factory
+        (Get_Kernel (Module.all), Child, Child, null, null);
+   end Default_Context_Factory;
 
    ----------
    -- Free --
@@ -2731,12 +2736,12 @@ package body Project_Explorers is
       Command : Interactive_Command_Access;
 
    begin
+      Explorer_Module_ID := new Explorer_Module_Record;
       Register_Module
         (Module                  => Explorer_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Explorer_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => GPS.Kernel.Modules.Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -2827,7 +2832,7 @@ package body Project_Explorers is
                      Label             => Name,
                      Factory           => Explorer_Search_Factory'Access,
                      Extra_Information => Gtk_Widget (Extra),
-                     Id                => Explorer_Module_ID,
+                     Id             => Abstract_Module_ID (Explorer_Module_ID),
                      Mask              => All_Options and not Supports_Replace
                        and not Search_Backward and not All_Occurrences));
       end;

@@ -116,7 +116,8 @@ package body Vdiff_Utils is
       pragma Unreferenced (Menu);
 
    begin
-      Set_Context_Information (Context, Kernel, Vdiff_Module_ID);
+      Set_Context_Information (Context, Kernel,
+                               Abstract_Module_ID (Vdiff_Module_ID));
 
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          Get_Selection_Info

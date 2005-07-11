@@ -48,6 +48,13 @@ with VFS;                       use VFS;
 
 package body Vdiff_Module is
 
+   type Vdiff_Module_Record is new Module_ID_Record with null record;
+
+   function Default_Context_Factory
+     (Module : access Vdiff_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
+
    function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
       Data      : access Hooks_Data'Class) return Boolean;
@@ -64,11 +71,6 @@ package body Vdiff_Module is
       Result : Diff_Occurrence_Link) return MDI_Child;
    --  Compare two files.
    --  Return null if there are no differences
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Return the default context factory for Vdiff widgets.
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -296,12 +298,12 @@ package body Vdiff_Module is
       return True;
    end Diff_Hook;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Vdiff_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       Vdiff   : constant Vdiff_Access := Vdiff_Access (Child);
@@ -321,8 +323,8 @@ package body Vdiff_Module is
 
          Set_Context_Information
            (Context => Context,
-            Kernel  => Kernel,
-            Creator => Vdiff_Module_ID);
+            Kernel  => Get_Kernel (Module.all),
+            Creator => Abstract_Module_ID (Module));
 
          if Is_Regular_File (Label_1) then
             Set_File_Information (Context, File => Label_1);
@@ -332,7 +334,7 @@ package body Vdiff_Module is
 
          return Selection_Context_Access (Context);
       end;
-   end Default_Factory;
+   end Default_Context_Factory;
 
    ---------------------
    -- Register_Module --
@@ -343,12 +345,12 @@ package body Vdiff_Module is
    is
       Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
    begin
+      Vdiff_Module_ID := new Vdiff_Module_Record;
       Register_Module
         (Module                  => Vdiff_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Vdiff_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => Default_Factory'Access);
+         Priority                => Default_Priority);
       Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);

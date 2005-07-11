@@ -28,6 +28,7 @@ with Gtk.Window;                        use Gtk.Window;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                          use GPS.Intl;
