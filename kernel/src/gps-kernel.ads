@@ -22,17 +22,14 @@
 
 with Basic_Mapper;
 with GNAT.OS_Lib;
-with Generic_List;
 with Entities;
 with Entities.Queries;
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
-with Gdk;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Icon_Factory;
 with Gtk.Main;
-with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tooltips;
 with Gtk.Widget;
@@ -46,7 +43,6 @@ with Default_Preferences;
 with Histories;
 with Projects.Registry;
 with Task_Manager;
-with Generic_List;
 with VFS;
 
 package GPS.Kernel is
@@ -65,6 +61,19 @@ package GPS.Kernel is
    --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
+
+   type Customization_Level is
+     (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
+   --  The various level of customization (See GPS.Kernel.Custom).
+   --  Hard_Coded is used for customization that are hard-coded in the GPS code
+   --  System_Wide is used if customization comes from a custom file found in
+   --  the installation directory of GPS.
+   --  Project_Wide is used if the customization comes from a custom file found
+   --  in one of the directories lists in GPS_CUSTOM_PATH.
+   --  User_Specific is used if the customization comes from a custom file
+   --  found in the user's own directory (see GPS_HOME/.gps/plug-ins).
+   --  Themes is used if the customization was found in a theme definition,
+   --  wherever that definition was found.
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
    --  Load the preferences from the user's file ~/.gps/preferences
@@ -183,6 +192,15 @@ package GPS.Kernel is
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory.
 
+   -------------
+   -- Modules --
+   -------------
+   --  ??? Could be moved to GPS.Kernel.Module if the contexts didn't require
+   --  an Abstract_Module_ID. Perhaps we could move them to GPS.Kernel.Contexts
+
+   type Abstract_Module_ID_Record is abstract tagged null record;
+   type Abstract_Module_ID is access all Abstract_Module_ID_Record'Class;
+
    -----------
    -- Files --
    -----------
@@ -246,38 +264,6 @@ package GPS.Kernel is
    --  Find the declaration of the given entity in the file. If multiple
    --  entities match, an interactive dialog is open for the user.
 
-   ---------------
-   -- Module ID --
-   ---------------
-
-   type Module_ID_Information (<>) is private;
-   type Module_ID_Record is tagged private;
-   type Module_ID is access all Module_ID_Record'Class;
-   --  Module identifier. Each of the registered module in GPS has such a
-   --  identifier, that contains its name and all the callbacks associated with
-   --  the module.
-
-   procedure Destroy (Id : in out Module_ID_Record);
-   --  Free the memory associated with the module. By default, this does
-   --  nothing.
-
-   function Get_Name (Module : Module_ID) return String;
-   --  Return the name of the module
-
-   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle;
-   --  Return the kernel associated with Module
-
-   function Get_Current_Module
-     (Kernel : access Kernel_Handle_Record) return Module_ID;
-   --  Return the module the currently selected MDI child belongs to.
-   --  null might be returned if there is either no selected child or GPS
-   --  couldn't find its module
-
-   procedure Free (Module : in out Module_ID);
-   --  Free memory associated to a Module_ID.
-
-   package Module_List is new Generic_List (Module_ID);
-
    --------------
    -- Contexts --
    --------------
@@ -294,14 +280,15 @@ package GPS.Kernel is
    procedure Set_Context_Information
      (Context : access Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Module_ID);
+      Creator : Abstract_Module_ID);
    --  Set the information in the context
 
    function Get_Kernel
      (Context : access Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
-   function Get_Creator (Context : access Selection_Context) return Module_ID;
+   function Get_Creator
+     (Context : access Selection_Context) return Abstract_Module_ID;
    --  Return the module ID for the module that created the context
 
    procedure Destroy (Context : in out Selection_Context);
@@ -335,8 +322,7 @@ package GPS.Kernel is
    --  instance a new child has been selected automatically at that point)
 
    function Get_Context_For_Child
-     (Kernel : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
+     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
    --  Return the context associated with Child.
    --  The user should free the returned value.
 
@@ -347,101 +333,47 @@ package GPS.Kernel is
    --  it.
 
    -------------
-   -- Modules --
+   -- Markers --
    -------------
-   --  See documentation in GPS.Kernel.Modules
+   --  The following subprograms provide the required support for representing
+   --  and storing locations in a list, so that the user can move back and
+   --  forward from places where he was before.
+   --  Location in this sense is to be taken as a broad term, since it might
+   --  represent a location in a source editor, but also a location within
+   --  a browser,...
 
-   type Module_Priority is new Natural;
-   Low_Priority     : constant Module_Priority := Module_Priority'First;
-   Default_Priority : constant Module_Priority := 500;
-   High_Priority    : constant Module_Priority := Module_Priority'Last;
-   --  The priority of the module.
-   --  Modules with a higher priority are always called before modules with
-   --  lower priority, for instance when computing the contents of a contextual
-   --  menu.
+   type Location_Marker_Record is abstract tagged private;
+   type Location_Marker is access all Location_Marker_Record'Class;
 
-   type Module_Menu_Handler is access procedure
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Callback used every time some contextual menu event happens in GPS.
-   --  The module that initiated the event (ie the one that is currently
-   --  displaying the contextual menu) can be found by reading Get_Creator for
-   --  the context.
-   --
-   --  The object that is displaying the contextual menu is Object. Note that
-   --  this isn't necessarily the widget in which the mouse event occurs.
-   --
-   --  Context contains all the information about the current selection.
-   --
-   --  The callback should add the relevant items to Menu. It is recommended to
-   --  use GPS.Kernel.Modules.Context_Callback below to connect signals to
-   --  the items.
+   function Go_To
+     (Marker : access Location_Marker_Record;
+      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
+   --  Move the focus in GPS to the location marked by M.
+   --  If this function returns False, it is assumed the marker is no longer
+   --  legal, and should be removed from the history.
 
-   type Module_Default_Context_Factory is access function
+   procedure Destroy (Marker : in out Location_Marker_Record);
+   --  Free the memory used by Marker. By default, this does nothing
+
+   function To_String
+     (Marker : access Location_Marker_Record) return String is abstract;
+   --  Return a displayable string describing marker.
+   --  This string doesn't need to be unique for each marker, it is used in the
+   --  user interface to allow the user to select a specific marker.
+
+   function Save
+     (Marker : access Location_Marker_Record)
+      return Xml_Int.Node_Ptr is abstract;
+   --  Saves the marker to an XML node, so that it can be reloaded later on,
+   --  possibly in a different GPS session.
+
+
+   procedure Push_Marker_In_History
      (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  A function called when the kernel needs to get the current context for
-   --  an MDI child. This is used mostly when generating a context for the
-   --  menubar menu items.
-   --  Child is the widget that was put directly in the MDI. It is always of
-   --  the type MDI_Child_Tag registered with Register_Module.
-
-   type Save_Function_Mode is (Query, Action);
-   --  The two types of use for Module_Save_Function.
-   --  If Query, then the save_function should return whether the corresponding
-   --  child has been modified, and not saved yet, and thus whether we should
-   --  ask the user whether to save it.
-   --  If Action, the save_function *must* save the child. The return value
-   --  then indicates whether the save was successful (True), or failed (False)
-
-   type Module_Save_Function is access function
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget;
-      Mode   : Save_Function_Mode) return Boolean;
-   --  A function called when the kernel asks a MDI child to save itself.
-   --  See the description of Mode for the description of the modes.
-   --  Child is the widget that put directly in the MDI.
-
-   type Module_Tooltip_Handler is access procedure
-     (Context : access Selection_Context'Class;
-      Pixmap  : out Gdk.Gdk_Pixmap);
-   --  Callback used every time some tooltip event happens in GPS.
-   --  Context contains all the information about the context of the tooltip.
-   --
-   --  The first callback that will decide to handle the tooltip will set
-   --  pixmap, which will stop the
-   --  propagation of the tooltip message (since only one module can display
-   --  a tooltip at a time).
-   --
-   --  Since only one module will handle the tooltip, putting proper priorities
-   --  when registering the modules is very important.
-   --
-   --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
-   --  create a tooltip that only contains text
-
-   type Customization_Level is
-     (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
-   --  The various level of customization (See GPS.Kernel.Custom).
-   --  Hard_Coded is used for customization that are hard-coded in the GPS code
-   --  System_Wide is used if customization comes from a custom file found in
-   --  the installation directory of GPS.
-   --  Project_Wide is used if the customization comes from a custom file found
-   --  in one of the directories lists in GPS_CUSTOM_PATH.
-   --  User_Specific is used if the customization comes from a custom file
-   --  found in the user's own directory (see GPS_HOME/.gps/plug-ins).
-   --  Themes is used if the customization was found in a theme definition,
-   --  wherever that definition was found.
-
-   type Module_Customization_Handler is access procedure
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Customization_Level);
-   --  Subprogram called when a new customization has been parsed.
-   --  It is initially called just after all modules have been registered,
-   --  and gets passed a single XML node.
-   --  File is the XML file that is currently being parsed.
+      Marker : access Location_Marker_Record'Class);
+   --  Push a new marker in the list of previous locations the user has
+   --  visited. This is the basic interface for the handling of the history of
+   --  locations. It emits the hook Marker_Added_To_History.
 
    --------------------
    -- Action filters --
@@ -548,43 +480,6 @@ package GPS.Kernel is
    --  Return the name to use for that function when listing all functions
    --  attached to a hook.
    --  The default is to use <internal>
-
-   -------------
-   -- Markers --
-   -------------
-   --  The following subprograms provide the required support for representing
-   --  and storing locations in a list, so that the user can move back and
-   --  forward from places where he was before.
-   --  Location in this sense is to be taken as a broad term, since it might
-   --  represent a location in a source editor, but also a location within
-   --  a browser,...
-
-   type Location_Marker_Record is abstract tagged private;
-   type Location_Marker is access all Location_Marker_Record'Class;
-
-   function Go_To
-     (Marker : access Location_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
-   --  Move the focus in GPS to the location marked by M.
-   --  If this function returns False, it is assumed the marker is no longer
-   --  legal, and should be removed from the history.
-
-   procedure Destroy (Marker : in out Location_Marker_Record);
-   --  Free the memory used by Marker. By default, this does nothing
-
-   function To_String
-     (Marker : access Location_Marker_Record) return String is abstract;
-   --  Return a displayable string describing marker.
-   --  This string doesn't need to be unique for each marker, it is used in the
-   --  user interface to allow the user to select a specific marker.
-
-
-   procedure Push_Marker_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access Location_Marker_Record'Class);
-   --  Push a new marker in the list of previous locations the user has
-   --  visited. This is the basic interface for the handling of the history of
-   --  locations. It emits the hook Marker_Added_To_History.
 
    -----------
    -- Tools --
@@ -791,25 +686,9 @@ private
       end case;
    end record;
 
-   type Module_ID_Information (Name_Length : Natural) is record
-      Kernel                : Kernel_Handle;
-      Priority              : Module_Priority;
-      Default_Factory       : Module_Default_Context_Factory;
-      Save_Function         : Module_Save_Function;
-      Tooltip_Handler       : Module_Tooltip_Handler;
-      Customization_Handler : Module_Customization_Handler;
-      Name                  : String (1 .. Name_Length);
-   end record;
-
-   type Module_ID_Information_Access is access Module_ID_Information;
-
-   type Module_ID_Record is tagged record
-      Info : Module_ID_Information_Access;
-   end record;
-
    type Selection_Context is tagged record
       Kernel    : Kernel_Handle;
-      Creator   : Module_ID;
+      Creator   : Abstract_Module_ID;
       Ref_Count : Natural := 1;
    end record;
 
@@ -875,8 +754,9 @@ private
       Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
       --  The action contexts registered in the kernel
 
-      Modules_List : Module_List.List;
+      Modules_List : System.Address;
       --  The list of all the modules that have been registered in this kernel.
+      --  See GPS.Kernel.Modules for functions manipulating that list
 
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main GPS window

@@ -82,7 +82,6 @@ with VFS;                       use VFS;
 with Projects.Registry;         use Projects, Projects.Registry;
 
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with Generic_List;
 
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.GPS;     use Language_Handlers.GPS;
@@ -469,42 +468,6 @@ package body GPS.Kernel is
       Unref (C);
    end Context_Changed;
 
-   ------------------------
-   -- Get_Current_Module --
-   ------------------------
-
-   function Get_Current_Module
-     (Kernel : access Kernel_Handle_Record) return Module_ID
-   is
-      C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-   begin
-      if C = null
-        or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
-      then
-         return null;
-      end if;
-
-      return Get_Module_From_Child (C);
-   end Get_Current_Module;
-
-   ----------------
-   -- Get_Kernel --
-   ----------------
-
-   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle is
-   begin
-      return ID.Info.Kernel;
-   end Get_Kernel;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Module : Module_ID) return String is
-   begin
-      return Module.Info.Name;
-   end Get_Name;
-
    -------------------------
    -- Get_Current_Context --
    -------------------------
@@ -523,16 +486,15 @@ package body GPS.Kernel is
          Handle.Current_Context := null;
       end if;
 
-      Module := Get_Current_Module (Handle);
+      Module := Get_Current_Module (Kernel);
 
-      if Module /= null
-        and then Module.Info.Default_Factory /= null
-      then
-         Handle.Current_Context := Module.Info.Default_Factory
-           (Handle, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
+      if Module /= null then
+         Handle.Current_Context := Default_Context_Factory
+           (Module, Get_Widget (Get_Focus_Child (Get_MDI (Handle))));
 
          if Handle.Current_Context /= null then
-            Set_Context_Information (Handle.Current_Context, Handle, Module);
+            Set_Context_Information
+              (Handle.Current_Context, Handle, Abstract_Module_ID (Module));
          end if;
       end if;
 
@@ -541,7 +503,7 @@ package body GPS.Kernel is
          Set_Context_Information
            (Handle.Current_Context,
             Kernel  => Handle,
-            Creator => Module);
+            Creator => Abstract_Module_ID (Module));
       end if;
 
       return Kernel.Current_Context;
@@ -552,8 +514,7 @@ package body GPS.Kernel is
    ---------------------------
 
    function Get_Context_For_Child
-     (Kernel : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access
+     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access
    is
       Module : Module_ID;
    begin
@@ -561,12 +522,10 @@ package body GPS.Kernel is
          return null;
       end if;
 
-      Module := Get_Module_From_Child (Child);
+      Module := Module_ID (Get_Module_From_Child (Child));
 
-      if Module /= null
-        and then Module.Info.Default_Factory /= null
-      then
-         return Module.Info.Default_Factory (Kernel, Get_Widget (Child));
+      if Module /= null then
+         return Default_Context_Factory (Module, Get_Widget (Child));
       else
          return null;
       end if;
@@ -841,22 +800,6 @@ package body GPS.Kernel is
          return False;
    end Load_Desktop;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Module : in out Module_ID) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Module_ID_Record'Class, Module_ID);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Module_ID_Information, Module_ID_Information_Access);
-
-   begin
-      Destroy (Module.all);
-      Unchecked_Free (Module.Info);
-      Unchecked_Free (Module);
-   end Free;
-
    -----------
    -- Unref --
    -----------
@@ -912,7 +855,7 @@ package body GPS.Kernel is
    -----------------
 
    function Get_Creator (Context : access Selection_Context)
-      return Module_ID is
+      return Abstract_Module_ID is
    begin
       return Context.Creator;
    end Get_Creator;
@@ -924,7 +867,7 @@ package body GPS.Kernel is
    procedure Set_Context_Information
      (Context : access Selection_Context;
       Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Module_ID) is
+      Creator : Abstract_Module_ID) is
    begin
       Context.Kernel := Kernel_Handle (Kernel);
       Context.Creator := Creator;
@@ -936,16 +879,6 @@ package body GPS.Kernel is
 
    procedure Destroy (Context : in out Selection_Context) is
       pragma Unreferenced (Context);
-   begin
-      null;
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Id : in out Module_ID_Record) is
-      pragma Unreferenced (Id);
    begin
       null;
    end Destroy;
@@ -1845,7 +1778,7 @@ package body GPS.Kernel is
               and then Filter.Module /= null
               and then (Get_Creator (Context) = null
                         or else not Equal
-                          (Module_Name (Get_Creator (Context)),
+                          (Module_Name (Module_ID (Get_Creator (Context))),
                            Filter.Module.all,
                            False))
             then
