@@ -94,15 +94,6 @@ private
    --  Highlight address lines in the buffer that correspond to a given source
    --  line.
 
-   procedure Set_Line
-     (Assembly_View : GVD_Assembly_View;
-      Line          : Natural;
-      Set_Current   : Boolean := True);
-   --  Set the current line (and draw the button on the side).
-   --  If Set_Current is True, then the line becomes the current line (ie the
-   --  one on which the debugger is stopped). Otherwise, Line is simply the
-   --  line that we want to display in the assembly view.
-
    procedure Set_Font
      (Assembly_View : GVD_Assembly_View;
       Font          : Pango.Font.Pango_Font_Description);
@@ -145,9 +136,6 @@ private
    --  line.
    --  Note that Columns is the number of visible columns in the widget, ie
    --  after Tabs have been expanded.
-
-   procedure Hide_Current_Line_Button (Assembly_View : GVD_Assembly_View);
-   --  Hide the arrow that shows the current line.
 
    function On_Pixmap_Clicked
      (Assembly_View : GVD_Assembly_View;
