@@ -58,7 +58,7 @@ package GPS.Kernel.Console is
       Title   : String := "";
       History : Histories.History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module       : GPS.Kernel.Module_ID := null;
+      Module       : GPS.Kernel.Abstract_Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.

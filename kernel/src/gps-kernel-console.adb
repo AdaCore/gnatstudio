@@ -370,7 +370,7 @@ package body GPS.Kernel.Console is
       Title       : String := "";
       History     : History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module      : GPS.Kernel.Module_ID := null;
+      Module      : GPS.Kernel.Abstract_Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console
    is
       Console : Interactive_Console;
@@ -404,7 +404,7 @@ package body GPS.Kernel.Console is
                   Child               => Console,
                   Position            => Position_Bottom,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                  Module              => Module,
+                  Module              => Module_ID (Module),
                   Desktop_Independent => True);
             else
                Child := Put
