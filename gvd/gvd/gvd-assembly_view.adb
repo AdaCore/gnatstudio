@@ -287,11 +287,11 @@ package body GVD.Assembly_View is
 
       --  Create the current line icon, and make sure it is never destroyed.
 
-      Gtk_New
-        (Assembly_View.Current_Line_Button,
-         Current_Line_Pixmap,
-         Current_Line_Mask);
-      Ref (Assembly_View.Current_Line_Button);
+--        Gtk_New
+--          (Assembly_View.Current_Line_Button,
+--           Current_Line_Pixmap,
+--           Current_Line_Mask);
+--        Ref (Assembly_View.Current_Line_Button);
 
       --  Highlighting
 
@@ -379,7 +379,7 @@ package body GVD.Assembly_View is
    begin
       Unref (Assembly_View.Font);
 
-      Destroy (Assembly_View.Current_Line_Button);
+--        Destroy (Assembly_View.Current_Line_Button);
    end Destroy_Cb;
 
    ---------------------
@@ -405,143 +405,6 @@ package body GVD.Assembly_View is
              "Range_End   = " &
              Address_To_String (Assembly_View.Source_Line_End));
    end Set_Source_Line;
-
-   --------------
-   -- Set_Line --
-   --------------
-
-   procedure Set_Line
-     (Assembly_View : GVD_Assembly_View;
-      Line          : Natural;
-      Set_Current   : Boolean := True)
-   is
-      Buffer      : constant Gtk_Text_Buffer :=
-                      Get_Buffer (Assembly_View.View);
-      Y_In_Buffer : Gint;
-      Line_Height : Gint;
-      Dummy_Gint  : Gint;
-      Y_In_Window : Gint;
-      Y           : Gint;
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Result      : Boolean;
-      --        pragma Unreferenced (Result);
-      Visible_Rect : Gdk_Rectangle;
-      Y_Max        : Gint;
-      Y_Min        : Gint;
-   begin
-      --  We assume here that all lines have the same height.
-
-      Get_Visible_Rect (Assembly_View.View, Visible_Rect);
-      Buffer_To_Window_Coords
-        (Assembly_View.View, Text_Window_Text,
-         Buffer_X => 0,
-         Buffer_Y => Visible_Rect.Y,
-         Window_X => Dummy_Gint,
-         Window_Y => Y_Min);
-      Buffer_To_Window_Coords
-        (Assembly_View.View, Text_Window_Text,
-         Buffer_X => 0,
-         Buffer_Y => Visible_Rect.Y + Visible_Rect.Height,
-         Window_X => Dummy_Gint,
-         Window_Y => Y_Max);
-
-      Trace (Me,
-             "[Set_Line] Window_Y_Min = " & Y_Min'Img & ASCII.LF &
-             "           Window_Y_Max = " & Y_Max'Img);
-
-      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Line));
-      Copy (Start_Iter, End_Iter);
-      Forward_To_Line_End (End_Iter, Result);
-
---        Result := Scroll_To_Iter
---          (Assembly_View.View,
---           Start_Iter,
---           0.0,
---           Use_Align => True,
---           Xalign    => 0.0,
---           Yalign    => 0.0);
-
-      Get_Line_Yrange
-        (Assembly_View.View, Start_Iter,
-         Y      => Y_In_Buffer,
-         Height => Line_Height);
-
-      --  Convert the buffer coordinates to window ones.
-
-      Buffer_To_Window_Coords
-        (Assembly_View.View, Text_Window_Text,
-         Buffer_X => 0,
-         Buffer_Y => Y_In_Buffer,
-         Window_X => Dummy_Gint,
-         Window_Y => Y_In_Window);
-
-      Trace (Me, "[Set_Line] Line = " & Line'Img &
-             ", Line_Height = " & Line_Height'Img & ASCII.LF &
-             "Y_In_Buffer = " & Y_In_Buffer'Img & ASCII.LF &
-             "Y_In_Window = " & Y_In_Window'Img);
-
-      Y := Y_In_Window;
-
-      --  Display the current line icon
-      --  Note that we start by hiding everything, and then show everything
-      --  at the end, so that the layout is correctly refreshed. This is not
-      --  done otherwise.
-
-      Freeze (Assembly_View.Buttons);
-      Hide_All (Assembly_View.Buttons);
-
-      if Set_Current then
-         if Get_Parent (Assembly_View.Current_Line_Button) /= null then
-            Trace (Me, "[Move] X = 10" & ", Y = " & Y'Img);
-            Move (Assembly_View.Buttons, Assembly_View.Current_Line_Button,
-                  X => 10, Y => Y);
-         else
-            Trace (Me, "[Put] X = 10" & ", Y = " & Y'Img);
-            Put (Assembly_View.Buttons, Assembly_View.Current_Line_Button,
-                 X => 10, Y => Y);
-         end if;
-      else
-         if Get_Parent (Assembly_View.Current_Line_Button) /= null then
-            Trace (Me, "[Remove] Assembly_View.Current_Line_Button");
-            Remove (Assembly_View.Buttons, Assembly_View.Current_Line_Button);
-         end if;
-      end if;
-
-      --  Force a realize on the text widget, so that scrolling always works.
-      --  Scrolling is always reset to 0.0 when the Gtk_Text is realized,
-      --  which, for the initial file, happens only after Set_Line has been
-      --  called.
-      --  The call below thus make sure that no unwanted scrolling will happen
-      --  later on.
-      --  Note that Realize can't be called when the assembly view isn't
-      --  mapped. This can happen when it is hidden from the screen, but
-      --  updates should take place.
-
-      if Mapped_Is_Set (Assembly_View) then
-         Realize (Assembly_View.View);
-      end if;
-
-      --  Scroll the code editor to make sure the line is visible on screen.
-
---        Freeze (Box.Child);
---        Clamp_Page
---          (Get_Vadj (Box.Child),
---           Lower => Grange_Float (Y - Box.Line_Height),
---           Upper => Grange_Float (Y + 2 * Box.Line_Height));
---        Thaw (Box.Child);
-
-      if Set_Current then
-         Assembly_View.Current_Line := Line;
-      end if;
-
-      Show_All (Assembly_View.Buttons);
-      Thaw (Assembly_View.Buttons);
-
-      --  Make sure the arrow that indicated the previous line is no longer
-      --  visible.
-      Queue_Draw (Assembly_View.Buttons);
-   end Set_Line;
 
    ---------------------
    -- Index_From_Line --
@@ -600,20 +463,6 @@ package body GVD.Assembly_View is
       Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
       Delete_Mark (Buffer, Start_Mark);
    end Insert_At_Cursor;
-
-   ------------------------------
-   -- Hide_Current_Line_Button --
-   ------------------------------
-
-   procedure Hide_Current_Line_Button (Assembly_View : GVD_Assembly_View) is
-   begin
-      Trace (Me, "[Hide_Current_Line_Button]");
-      if Get_Parent (Assembly_View.Current_Line_Button) /= null then
-         Freeze (Assembly_View.Buttons);
-         Remove (Assembly_View.Buttons, Assembly_View.Current_Line_Button);
-         Thaw (Assembly_View.Buttons);
-      end if;
-   end Hide_Current_Line_Button;
 
    ----------------------
    -- Pixels_From_Line --
@@ -839,8 +688,6 @@ package body GVD.Assembly_View is
    is
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (Assembly_View.View);
    begin
-      Trace (Me, "[Set_Buffer]" & ASCII.LF & Text);
-
       Begin_User_Action (Buffer);
       Set_Text (Buffer, Text);
       End_User_Action (Buffer);
@@ -1373,12 +1220,11 @@ package body GVD.Assembly_View is
    ----------------------------
 
    procedure Show_Current_Line_Menu
-     (Assembly_View : access GVD_Assembly_View_Record'Class) is
+     (Assembly_View : access GVD_Assembly_View_Record'Class)
+   is
+      pragma Unreferenced (Assembly_View);
    begin
-      Set_Line
-        (GVD_Assembly_View (Assembly_View),
-         Assembly_View.Current_Line,
-         Set_Current => True);
+      null;
    end Show_Current_Line_Menu;
 
    -------------------------
@@ -1411,6 +1257,7 @@ package body GVD.Assembly_View is
    is
 --        Pos      : Grange_Float;
    begin
+      Trace (Me, "[Meta_Scroll]");
       if Assembly_View.Current_Range /= null
         and then Get_Pref (GVD_Prefs, Assembly_Range_Size) /= 0
       then
@@ -1425,7 +1272,7 @@ package body GVD.Assembly_View is
                           (Assembly_View, Assembly_View.Current_Line);
 --                 F    : constant Gdk_Font := From_Description
 --                   (Get_Pref_Font (GVD_Prefs, Default_Style));
-               Line  : Natural;
+--                 Line  : Natural;
                Iter  : Gtk_Text_Iter;
                Found : Boolean;
             begin
@@ -1434,8 +1281,8 @@ package body GVD.Assembly_View is
 
                Iter_From_Address (Assembly_View, Addr, Iter, Found);
 
-               Line := Natural (Get_Line (Iter));
-               Set_Line (Assembly_View, Line);
+--                 Line := Natural (Get_Line (Iter));
+--                 Set_Line (Assembly_View, Line);
 --                 Pos := Grange_Float
 --                   (Gint (Line) * (Get_Ascent (F) + Get_Descent (F)));
             end;
@@ -1735,12 +1582,11 @@ package body GVD.Assembly_View is
    --------------------
 
    procedure Update_Display (Assembly_View : GVD_Assembly_View) is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Assembly_View.View);
-      Found : Boolean;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Line       : Natural;
-      Result     : Boolean;
+      Buffer        : constant Gtk_Text_Buffer :=
+                        Get_Buffer (Assembly_View.View);
+      Start_Iter    : Gtk_Text_Iter;
+      End_Iter      : Gtk_Text_Iter;
+      Dummy_Boolean : Boolean;
 
       Address_Low  : Address_Type := Assembly_View.Source_Line_Start;
       Address_High : Address_Type := Assembly_View.Source_Line_End;
@@ -1788,13 +1634,15 @@ package body GVD.Assembly_View is
 
       --  Display the arrow showing the location of the program counter.
 
-      Iter_From_Address (Assembly_View, Assembly_View.Pc, Start_Iter, Found);
+      Iter_From_Address
+        (Assembly_View, Assembly_View.Pc, Start_Iter, Dummy_Boolean);
       Copy (Start_Iter, Dest => End_Iter);
-      Forward_To_Line_End (End_Iter, Result);
+      Forward_To_Line_End (End_Iter, Dummy_Boolean);
       Apply_Tag (Buffer, Assembly_View.Pc_Tag, Start_Iter, End_Iter);
 
-      Line := Natural (Get_Line (Start_Iter));
-      Set_Line (Assembly_View, Line, Set_Current => True);
+      --  Make sure that the Pc line is visible
+      Place_Cursor (Buffer, Start_Iter);
+      Scroll_Mark_Onscreen (Assembly_View.View, Get_Insert (Buffer));
 
    end Update_Display;
 
