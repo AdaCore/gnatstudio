@@ -45,3 +45,15 @@ void W_CallVoidMethodIIIS
    (*Env)->CallVoidMethod (Env, Object, Id, P1, P2, P3, P4);
 }
 
+void gps_utilsinit (void);
+
+/**
+ * This function is used to manually initialize the ada library (since there
+ * is no way to do it automatically under win32).
+ */
+void Java_com_adacore_gdt_study_gpsjni_GPSJni_libInitInt 
+   (JNIEnv * Env, jclass * this) 
+{
+   gps_utilsinit ();
+}
+	   
