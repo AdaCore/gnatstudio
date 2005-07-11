@@ -63,6 +63,7 @@ with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 
 package body Outline_View is
 
+   type Outline_View_Module_Record is new Module_ID_Record with null record;
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
 
@@ -75,6 +76,11 @@ package body Outline_View is
    Entity_Name_Column : constant := 2;
    Mark_Column        : constant := 3;
    Line_Column        : constant := 4;
+
+   function Default_Context_Factory
+     (Module : access Outline_View_Module_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -139,11 +145,6 @@ package body Outline_View is
      (Category : Language.Language_Category) return Language.Language_Category;
    --  Return Cat_Unknown if the category should be filtered out, and the
    --  name of the category to use otherwise.
-
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
-   --  Create the current context
 
    function Outline_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -314,23 +315,23 @@ package body Outline_View is
       end if;
    end Preferences_Changed;
 
-   ---------------------
-   -- Default_Factory --
-   ---------------------
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
 
-   function Default_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
+   function Default_Context_Factory
+     (Module : access Outline_View_Module_Record;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       Outline : constant Outline_View_Access := Outline_View_Access (Child);
    begin
       return Outline_Context_Factory
-        (Kernel       => Kernel,
+        (Kernel       => Get_Kernel (Module.all),
          Event_Widget => Outline.Tree,
          Object       => Outline,
          Event        => null,
          Menu         => null);
-   end Default_Factory;
+   end Default_Context_Factory;
 
    -----------------------------
    -- Outline_Context_Factory --
@@ -789,7 +790,7 @@ package body Outline_View is
       Outline : Outline_View_Access;
       File    : Virtual_File;
       Child   : MDI_Child;
-      Module  : constant Module_ID := Get_Creator (D.Context);
+      Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Outline_View_Record'Tag);
@@ -827,10 +828,10 @@ package body Outline_View is
       Tools : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
    begin
+      Outline_View_Module := new Outline_View_Module_Record;
       Register_Module
         (Module      => Outline_View_Module,
          Module_Name => Outline_View_Module_Name,
-         Default_Context_Factory => Default_Factory'Access,
          Kernel      => Kernel);
 
       Register_Menu
