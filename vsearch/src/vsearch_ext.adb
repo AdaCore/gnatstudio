@@ -116,8 +116,13 @@ package body Vsearch_Ext is
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
+   procedure Customize
+     (Module : access Vsearch_Module_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
    procedure Destroy (Module : in out Vsearch_Module_Record);
-   --  Called when the module is destroyed
+   --  See inherited documentation
 
    Vsearch_Module_Id : Vsearch_Module;
    --  ??? Register in the kernel, shouldn't be a global variable
@@ -226,13 +231,6 @@ package body Vsearch_Ext is
 
    procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class);
    --  Resize the vsearch window if needed.
-
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Called when a new customization in parsed
 
    ---------------
    -- Callbacks --
@@ -1470,7 +1468,7 @@ package body Vsearch_Ext is
       if Module /= null then
          declare
             Search : constant Search_Module_Data :=
-              Search_Context_From_Module (Module);
+              Vsearch_Ext.Search_Context_From_Module (Module);
          begin
             if Search /= No_Search then
                Set_Text (Get_Entry (Vsearch.Context_Combo), Search.Label);
@@ -1594,14 +1592,14 @@ package body Vsearch_Ext is
    --------------------------------
 
    function Search_Context_From_Module
-     (Id : access GPS.Kernel.Module_ID_Record'Class)
+     (Id : access Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
    is
       use Search_Modules_List;
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
       while List /= Null_Node loop
-         if Data (List).Id = Module_ID (Id) then
+         if Data (List).Id = Abstract_Module_ID (Id) then
             return Data (List);
          end if;
 
@@ -1723,7 +1721,7 @@ package body Vsearch_Ext is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access Vsearch_Module_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
@@ -1740,7 +1738,7 @@ package body Vsearch_Ext is
 
          if Patt /= null and then Name /= null then
             Register_Search_Pattern
-              (Kernel         => Kernel,
+              (Kernel         => Get_Kernel (Module.all),
                Name           => Name.Value.all,
                Regexp         => Patt.Value.all,
                Case_Sensitive =>
@@ -1766,8 +1764,7 @@ package body Vsearch_Ext is
         (Module      => Module_ID (Vsearch_Module_Id),
          Kernel      => Kernel,
          Module_Name => Search_Module_Name,
-         Priority    => Default_Priority,
-         Customization_Handler => Customize'Access);
+         Priority    => Default_Priority);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
