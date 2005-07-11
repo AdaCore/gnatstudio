@@ -20,7 +20,6 @@
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
-
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk.Button;                  use Gtk.Button;
@@ -28,6 +27,7 @@ with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
+with Glib.Xml_Int;                use Glib.Xml_Int;
 
 with Projects;                    use Projects;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -51,6 +51,7 @@ with Ada.Unchecked_Deallocation;
 package body Navigation_Module is
 
    Navigation_Module_Name : constant String := "Navigation";
+   Navigation_Module_ID : Module_ID;
 
    Me : constant Debug_Handle := Create ("Navigation");
 
@@ -90,6 +91,7 @@ package body Navigation_Module is
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
    procedure Destroy (Marker : in out Shell_Marker_Record);
    function To_String (Marker : access Shell_Marker_Record) return String;
+   function Save (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr;
    --  See inherited documentation
 
    -----------------------
@@ -489,6 +491,20 @@ package body Navigation_Module is
    begin
       return Marker.Command.all;
    end To_String;
+
+   ----------
+   -- Save --
+   ----------
+
+   function Save
+     (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr
+   is
+      N : constant Node_Ptr := new Node;
+   begin
+      N.Tag   := new String'("shell_mark");
+      N.Value := new String'(Marker.Command.all);
+      return N;
+   end Save;
 
    -------------------------
    -- Create_Shell_Marker --

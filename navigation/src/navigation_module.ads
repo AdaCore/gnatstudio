@@ -24,8 +24,6 @@ with GPS.Kernel; use GPS.Kernel;
 
 package Navigation_Module is
 
-   Navigation_Module_ID : Module_ID;
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
