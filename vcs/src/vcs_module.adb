@@ -141,7 +141,8 @@ package body VCS_Module is
         and then Get_Current_Ref (Selection_Context_Access (Context)) /=
         Unknown_VCS_Reference
         and then (Context.all not in Entity_Selection_Context'Class
-                  or else Get_Name (Get_Creator (Context)) = "Source_Editor");
+                  or else Get_Name (Module_ID (Get_Creator (Context))) =
+                    "Source_Editor");
    end Filter_Matches_Primitive;
 
    -------------------------
@@ -269,6 +270,18 @@ package body VCS_Module is
       return null;
    end Save_Desktop;
 
+   -----------------------------
+   -- Default_Context_Factory --
+   -----------------------------
+
+   function Default_Context_Factory
+     (Module : access VCS_Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+   begin
+      return VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
+   end Default_Context_Factory;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -341,8 +354,7 @@ package body VCS_Module is
         (Module                  => Module_ID (VCS_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
-         Priority                => Default_Priority,
-         Default_Context_Factory => VCS_View_API.Context_Factory'Access);
+         Priority                => Default_Priority);
 
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);

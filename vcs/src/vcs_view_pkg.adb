@@ -1159,7 +1159,7 @@ package body VCS_View_Pkg is
             Set_Context_Information
               (Context,
                Kernel,
-               Module_ID (VCS_Module_ID));
+               Abstract_Module_ID (VCS_Module_ID));
             Set_File_Information (Context, File => First_File);
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
             VCS_Contextual_Menu
@@ -1543,7 +1543,8 @@ package body VCS_View_Pkg is
                First := Create (String_List.Head (Files));
 
                Set_Context_Information
-                 (Context, Explorer.Kernel, Module_ID (VCS_Module_ID));
+                 (Context, Explorer.Kernel,
+                  Abstract_Module_ID (VCS_Module_ID));
                Set_File_Information (Context, File => First);
 
                Set_Current_Context

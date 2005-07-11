@@ -21,10 +21,11 @@
 --  This package defines the GPS module for communication with VCS.
 
 with GPS.Kernel;   use GPS.Kernel;
-
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Gtkada.MDI;   use Gtkada.MDI;
 with VCS_View_Pkg; use VCS_View_Pkg;
+with Gtk.Widget;
 
 package VCS_Module is
 
@@ -45,7 +46,10 @@ package VCS_Module is
    VCS_Module_ID   : VCS_Module_ID_Access;
 
    procedure Destroy (Module : in out VCS_Module_ID_Record);
-   --  Free the memory occupied by Module
+   function Default_Context_Factory
+     (Module : access VCS_Module_ID_Record;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  See inherited documentation
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

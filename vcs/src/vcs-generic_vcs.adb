@@ -73,7 +73,12 @@ package body VCS.Generic_VCS is
    end record;
 
    procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
-   --  Free memory used by the module.
+   procedure Customize
+     (Module : access VCS_Generic_Module_ID_Record;
+      File   : VFS.Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  See inherited documentation
 
    type VCS_Generic_Module_ID_Access is access
      all VCS_Generic_Module_ID_Record'Class;
@@ -85,13 +90,6 @@ package body VCS.Generic_VCS is
 
    function Identify_VCS (S : String) return VCS_Access;
    --  Utility function to identify the Generic VCS from a given string.
-
-   procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Called when a new customization in parsed
 
    function Get_Info (Id : String) return Generic_VCS_Access;
    --  Return the information corresponding to Id.
@@ -232,7 +230,7 @@ package body VCS.Generic_VCS is
       Set_Context_Information
         (Context => Context,
          Kernel  => Kernel,
-         Creator => Module_ID (VCS_Generic_Module_ID));
+         Creator => Abstract_Module_ID (VCS_Generic_Module_ID));
 
       Set_File_Information
         (Context,
@@ -877,12 +875,13 @@ package body VCS.Generic_VCS is
    ---------------
 
    procedure Customize
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Module : access VCS_Generic_Module_ID_Record;
       File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level, File);
+      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
 
       function Parse_Node (M : Node_Ptr) return Boolean;
       --  Parse one node that contains VCS information.
@@ -1131,7 +1130,7 @@ package body VCS.Generic_VCS is
 
          Register_VCS (Module_ID (VCS_Module_ID), Name);
 
-         Ref.Kernel := Kernel_Handle (Kernel);
+         Ref.Kernel := Kernel;
 
          VCS_Info_List.Append (VCS_Generic_Module_ID.VCS_List, Ref);
 
@@ -1462,8 +1461,7 @@ package body VCS.Generic_VCS is
         (Module                  => Module_ID (VCS_Generic_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_Generic_Module_Name,
-         Priority                => Default_Priority,
-         Customization_Handler   => Customize'Access);
+         Priority                => Default_Priority);
    end Register_Module;
 
    ----------

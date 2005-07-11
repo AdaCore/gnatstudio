@@ -805,7 +805,7 @@ package body VCS_View_API is
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
-         if Get_Creator (Context) = Module_ID (VCS_Module_ID) then
+         if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
             Explorer := Get_Explorer (Kernel, False);
             List := Get_Selected_Files (Explorer);
          else
@@ -1320,7 +1320,7 @@ package body VCS_View_API is
 
       Kernel := Get_Kernel (Context);
 
-      if Get_Creator (Context) = Module_ID (VCS_Module_ID) then
+      if Get_Creator (Context) = Abstract_Module_ID (VCS_Module_ID) then
          Explorer := Get_Explorer (Kernel, False);
          return Get_Current_Ref (Explorer);
 

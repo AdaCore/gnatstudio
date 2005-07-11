@@ -20,6 +20,7 @@
 
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VCS_Module;         use VCS_Module;
 with VFS;                use VFS;
 
