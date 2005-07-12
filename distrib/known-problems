@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E708-005 International characters converted to local character set when saving
+  Problem:    When saving files, GPS ignores the preference in Character Set
+              and saves to the local character set.
+  Workaround: Set the environment variable CHARSET to your preferred character
+              set (for example UTF-8) 
+
 - E708-004 Find Referemces... dialog returning unexpected references
   Problem:    The Find References... contextual menu opens a contextual menu
               where you can choose what kind of references should be returned.
