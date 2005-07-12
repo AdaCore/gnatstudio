@@ -2785,7 +2785,10 @@ package body Src_Editor_Buffer is
       Get_String (U_Buffer, S, Length);
 
       if S /= null then
-         Write (FD, S (1 .. Length));
+         --  The string has already been converted to the preferred charset:
+         --  call Write with As_UTF8 => False so that no additional conversion
+         --  is performed.
+         Write (FD, S (1 .. Length), As_UTF8 => False);
       end if;
 
       Close (FD);
