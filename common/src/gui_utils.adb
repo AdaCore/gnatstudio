@@ -1644,13 +1644,13 @@ package body GUI_Utils is
             if Column_Names (Column_Names'First + N) /= null then
                Set_Title (Col, Column_Names (Column_Names'First + N).all);
             end if;
+         end if;
 
-            if not Is_Icon and then Sortable_Columns then
-               Set_Sort_Column_Id (Col, Gint (N));
-               Set_Clickable (Col, True);
-               if Initial_Sort_On = N + Column_Names'First then
-                  Clicked (Col);
-               end if;
+         if not Is_Icon and then Sortable_Columns then
+            Set_Sort_Column_Id (Col, Gint (N));
+            Set_Clickable (Col, True);
+            if Initial_Sort_On = N + Column_Names'First then
+               Clicked (Col);
             end if;
          end if;
 
