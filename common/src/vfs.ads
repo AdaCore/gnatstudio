@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -166,7 +166,8 @@ package VFS is
       Str     : UTF8_String;
       As_UTF8 : Boolean := True);
    --  Write a string to File. The required encoding for the string depends
-   --  on As_UTF8.
+   --  on As_UTF8: if As_UTF8 is True, the file is converted to Locale before
+   --  writing. If As_UTF8 is False, no conversion is performed.
 
    procedure Close (File : in out Writable_File);
    --  Closes File, and write the file to disk.
