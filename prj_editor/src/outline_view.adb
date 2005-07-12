@@ -92,7 +92,6 @@ package body Outline_View is
       return MDI_Child;
    --  Open the outline view, or return a handle to it if it already exists.
 
-
    procedure On_Open_Outline
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -705,6 +704,8 @@ package body Outline_View is
       pragma Unreferenced (Widget);
    begin
       Outline := Open_Outline (Kernel);
+      Preferences_Changed (Kernel);
+
       Raise_Child (Outline);
       Set_Focus_Child (Get_MDI (Kernel), Outline);
    end On_Open_Outline;
@@ -738,7 +739,6 @@ package body Outline_View is
            (Kernel  => Kernel_Handle (Kernel),
             Context => Get_Current_Context (Kernel));
          On_Context_Changed (Kernel, Data'Unchecked_Access);
-
 
          Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access,
                    Watch => GObject (Outline));
