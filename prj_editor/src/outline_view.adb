@@ -493,7 +493,7 @@ package body Outline_View is
       Kernel  : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
-      Initial_Sort : Integer := 1;
+      Initial_Sort : Integer := 2;
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
@@ -734,13 +734,10 @@ package body Outline_View is
             Module         => Outline_View_Module);
          Set_Title (Child, -"Outline View", -"Outline View");
 
-         --  Initilaze the outline view according to the preferences.
-
-         Preferences_Changed (Kernel);
-
          Data := Context_Hooks_Args'
            (Kernel  => Kernel_Handle (Kernel),
             Context => Get_Current_Context (Kernel));
+
          On_Context_Changed (Kernel, Data'Unchecked_Access);
 
          Add_Hook (Kernel, Context_Changed_Hook, On_Context_Changed'Access,
