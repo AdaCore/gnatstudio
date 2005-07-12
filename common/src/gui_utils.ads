@@ -27,6 +27,7 @@ with Gtk.Menu_Item;
 with Gdk.Types;
 with Gdk.Window;
 with Glib.Object;
+with Glib.Values;
 with Glib;                     use Glib;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -217,15 +218,23 @@ package GUI_Utils is
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node
 
+   type Editable_Cb is access procedure
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   type Editable_Callback_Array is array (Natural range <>) of Editable_Cb;
+
    function Create_Tree_View
-     (Column_Types   : Glib.GType_Array;
-      Column_Names   : GNAT.OS_Lib.String_List;
+     (Column_Types       : Glib.GType_Array;
+      Column_Names       : GNAT.OS_Lib.String_List;
       Show_Column_Titles : Boolean := True;
-      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
+      Selection_Mode     : Gtk.Enums.Gtk_Selection_Mode :=
         Gtk.Enums.Selection_Single;
-      Sortable_Columns : Boolean := True;
-      Initial_Sort_On  : Integer := -1;
-      Hide_Expander    : Boolean := False)
+      Sortable_Columns   : Boolean := True;
+      Initial_Sort_On    : Integer := -1;
+      Hide_Expander      : Boolean := False;
+      Merge_Icon_Columns : Boolean := True;
+      Editable_Columns   : Glib.Gint_Array := (1 .. 0 => -1);
+      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null))
       return Gtk.Tree_View.Gtk_Tree_View;
    --  Create a new simple tree view, where each column in the view is
    --  associated with a column in the model.
@@ -260,8 +269,30 @@ package GUI_Utils is
    --  The latter will not work if you have set Hide_Expander to true, since no
    --  specific column will be created for the expander in this case.
    --
+   --  Merge_Icon_Columns should be true if the icon and the following text
+   --  should be in the same column (and thus indented the same for child
+   --  nodes). In some specific cases, we might want the icon in a separate
+   --  column, so that we can handle differently the click on the icon and the
+   --  click on the text.
+   --
+   --  Editable_Columns can be used to indicate which columns should be
+   --  editable (when the element is positive, it indicates a column in the
+   --  model that contains a boolean. This boolean indicates whether the cell
+   --  is editable). Its indexes match the ones in Column_Types.
+   --  If Editable_Callback is specified, this is an additional callback called
+   --  when the columns has been edited.
+   --  This could be done afterwards with a code like:
+   --      Col     := Get_Column (View, 2);
+   --      Renders := Get_Cell_Renderers (Col);
+   --      Text_Render := Gtk_Cell_Renderer_Text (Get_Data (First (Renders)));
+   --      Add_Attribute (Col, Text_Render, "editable", 1);
+   --      Free (Renders);
+   --      Set_Editable_And_Callback (Get_Model (View), Text_Render, 1);
+   --      Widget_Callback.Object_Connect
+   --       (Text_Render, "edited", Callback'Access, Slot_Object => View);
+   --
    --  Limitations:
-   --     Columns are not editable. Radio buttons not supported,
+   --     Radio buttons not supported,
 
 
    -------------------------

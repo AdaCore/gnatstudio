@@ -72,6 +72,7 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
@@ -1596,7 +1597,10 @@ package body GUI_Utils is
         Gtk.Enums.Selection_Single;
       Sortable_Columns : Boolean := True;
       Initial_Sort_On  : Integer := -1;
-      Hide_Expander    : Boolean := False)
+      Hide_Expander    : Boolean := False;
+      Merge_Icon_Columns : Boolean := True;
+      Editable_Columns   : Gint_Array := (1 .. 0 => -1);
+      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null))
       return Gtk.Tree_View.Gtk_Tree_View
    is
       View            : Gtk_Tree_View;
@@ -1608,6 +1612,7 @@ package body GUI_Utils is
       Pixbuf_Render   : Gtk_Cell_Renderer_Pixbuf;
       Previous_Was_Icon : Boolean := False;
       Is_Icon         : Boolean;
+      ColNum          : Guint;
       pragma Unreferenced (Col_Number);
    begin
       Gtk_New (Model, Column_Types);
@@ -1629,12 +1634,13 @@ package body GUI_Utils is
       for N in 0
         .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
       loop
-         Is_Icon := Column_Types (Column_Types'First + Guint (N)) =
-           Gdk.Pixbuf.Get_Type;
+         ColNum := Column_Types'First + Guint (N);
+         Is_Icon := Column_Types (ColNum) = Gdk.Pixbuf.Get_Type;
 
          --  Reuse existing column for icons
-         if not Previous_Was_Icon
-           and then (Col = null or else not Is_Icon)
+         if not Merge_Icon_Columns
+           or else (not Previous_Was_Icon
+                    and then (Col = null or else not Is_Icon))
          then
             Gtk_New           (Col);
             Set_Resizable     (Col, True);
@@ -1656,7 +1662,7 @@ package body GUI_Utils is
 
          Previous_Was_Icon := Is_Icon;
 
-         if Column_Types (Column_Types'First + Guint (N)) = GType_Boolean then
+         if Column_Types (ColNum) = GType_Boolean then
             Gtk_New (Toggle_Render);
             Set_Radio (Toggle_Render, False);
             Tree_Column_Callback.Connect
@@ -1666,14 +1672,33 @@ package body GUI_Utils is
             Pack_Start (Col, Toggle_Render, False);
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
-         elsif Column_Types (Column_Types'First + Guint (N)) =
-           GType_String
-         then
+         elsif Column_Types (ColNum) = GType_String then
             if Text_Render = null then
                Gtk_New (Text_Render);
             end if;
             Pack_Start (Col, Text_Render, False);
             Add_Attribute (Col, Text_Render, "text", Gint (N));
+
+            if Integer (ColNum) in Editable_Columns'Range
+              and then Editable_Columns (Integer (ColNum)) >= 0
+            then
+               Add_Attribute
+                 (Col, Text_Render, "editable",
+                  Editable_Columns (Integer (ColNum)));
+               Set_Editable_And_Callback
+                 (Model, Text_Render, Gint (ColNum));
+
+               if Integer (ColNum) in Editable_Callback'Range
+                 and then Editable_Callback (Integer (ColNum)) /= null
+               then
+                  Widget_Callback.Object_Connect
+                    (Text_Render, "edited",
+                     Widget_Callback.Handler
+                       (Editable_Callback (Integer (ColNum))),
+                     Slot_Object => View);
+               end if;
+
+            end if;
 
          elsif Is_Icon then
             if Pixbuf_Render = null then
