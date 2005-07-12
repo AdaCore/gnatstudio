@@ -704,7 +704,6 @@ package body Outline_View is
       pragma Unreferenced (Widget);
    begin
       Outline := Open_Outline (Kernel);
-      Preferences_Changed (Kernel);
 
       Raise_Child (Outline);
       Set_Focus_Child (Get_MDI (Kernel), Outline);
@@ -734,6 +733,10 @@ package body Outline_View is
             Position       => Position_Left,
             Module         => Outline_View_Module);
          Set_Title (Child, -"Outline View", -"Outline View");
+
+         --  Initilaze the outline view according to the preferences.
+
+         Preferences_Changed (Kernel);
 
          Data := Context_Hooks_Args'
            (Kernel  => Kernel_Handle (Kernel),
