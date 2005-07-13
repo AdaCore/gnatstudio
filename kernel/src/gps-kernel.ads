@@ -24,6 +24,7 @@ with Basic_Mapper;
 with GNAT.OS_Lib;
 with Entities;
 with Entities.Queries;
+with Gdk.Event;    use Gdk.Event;
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
 with Gtk.Handlers;
@@ -788,6 +789,9 @@ private
       --  This variable should remain not null and unchanged while a contextual
       --  menu or standard menu is displayed and executed, so that user scripts
       --  have access to it.
+
+      Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
+      --  The event triggering the last contextual menu
 
       Current_Context : Selection_Context_Access := null;
       --  The selection for the current MDI child. It is recomputed every time

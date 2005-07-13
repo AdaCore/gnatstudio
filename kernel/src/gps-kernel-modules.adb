@@ -39,7 +39,6 @@ with Gtk.Dnd;           use Gtk.Dnd;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Image;         use Gtk.Image;
-with Gtk.Main;          use Gtk.Main;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
@@ -604,7 +603,8 @@ package body GPS.Kernel.Modules is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
       Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
-      Context.Event   := Get_Current_Event;
+      Context.Event   := Kernel_Handle (Kernel).Last_Event_For_Contextual;
+      --   Get_Current_Event;
 
       --  This ensure that Context.Context will not be freed while it is needed
       --  and also that Kernel.Last_Context_For_Contextual is not reset to
@@ -901,6 +901,11 @@ package body GPS.Kernel.Modules is
       --  the last holder of a ref calls Unref.
       Trace (Me, "Set Last_Context_For_Contextual");
       User.Kernel.Last_Context_For_Contextual := Context;
+
+      if User.Kernel.Last_Event_For_Contextual /= null then
+         Free (User.Kernel.Last_Event_For_Contextual);
+      end if;
+      Deep_Copy (From => Event, To => User.Kernel.Last_Event_For_Contextual);
 
       Set_Context_Information
         (Context,
