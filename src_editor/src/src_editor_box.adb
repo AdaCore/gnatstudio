@@ -226,9 +226,10 @@ package body Src_Editor_Box is
       Push_Marker_In_History
         (Kernel => Source.Kernel,
          Marker => Create_File_Marker
-           (File   => Get_Filename (Source.Source_Buffer),
+           (Kernel => Source.Kernel,
+            File   => Get_Filename (Source.Source_Buffer),
             Line   => Natural (Line),
-            Column => 0));
+            Column => 1));
    end Add_Navigation_Location;
 
    -----------
