@@ -31,6 +31,7 @@ package Src_Editor_Buffer.Text_Handling is
       Line_End     : Editable_Line_Type;
       Column_End   : Natural) return UTF8_String;
    --  Return the characters between given positions.
+   --  ??? Isn't it the same as Src_Editor_Buffer.Get_Text ?
 
    function Get_Chars
      (Buffer : access Source_Buffer_Record'Class;
