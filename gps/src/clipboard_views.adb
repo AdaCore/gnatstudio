@@ -90,6 +90,10 @@ package body Clipboard_Views is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the contents of the clipboard has changed
 
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences have changed.
+
    procedure Refresh (View : access Clipboard_View_Record'Class);
    --  Refresh the contents of the clipboard view
 
@@ -229,6 +233,19 @@ package body Clipboard_Views is
       Refresh (Clipboard_View_Access (Get_Widget (Open_View (Kernel))));
    end On_Clipboard_Changed;
 
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      View : constant Clipboard_View_Access := Clipboard_View_Access
+        (Get_Widget (Open_View (Kernel)));
+   begin
+      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+   end On_Preferences_Changed;
+
    -------------
    -- Refresh --
    -------------
@@ -309,8 +326,7 @@ package body Clipboard_Views is
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
 
-      --  ??? Should use same font as outline view instead
-      Modify_Font (View.Tree, Get_Pref_Font (Kernel, Default_Style));
+      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
 
       View.Current := Gdk_New_From_Xpm_Data (arrow_xpm);
 
@@ -330,6 +346,8 @@ package body Clipboard_Views is
 
       Add_Hook (Kernel, Clipboard_Changed_Hook, On_Clipboard_Changed'Access,
                 Watch => GObject (View));
+      Add_Hook (Kernel, Preferences_Changed_Hook,
+                On_Preferences_Changed'Access, Watch => GObject (View));
       Refresh (View);
    end Gtk_New;
 
