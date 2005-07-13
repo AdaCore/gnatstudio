@@ -80,7 +80,8 @@ package GPS.Location_View is
       Highlight_Category : String := "";
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
-      Enable_Counter     : Boolean := True);
+      Enable_Counter     : Boolean := True;
+      Has_Markups        : Boolean := False);
    --  Insert a new location in the result view.
    --  This is similar to Insert, except it creates the result view if
    --  necessary.
@@ -90,6 +91,9 @@ package GPS.Location_View is
    --  the items.
    --  If Enable_Counter is True, enable the counting of the items on-the-fly.
    --  See Recount_Category below.
+   --  If Has_Markups is True, then Text should be in Pango Markup language;
+   --  in this case, the markups will be interpreted and displayed in the
+   --  Locations view.
 
    procedure Recount_Category
      (Kernel   : access Kernel_Handle_Record'Class;
