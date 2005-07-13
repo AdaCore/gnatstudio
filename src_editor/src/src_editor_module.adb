@@ -548,7 +548,7 @@ package body Src_Editor_Module is
    -- Find_Mark --
    ---------------
 
-   function Find_Mark (Identifier : String) return Mark_Identifier_Record is
+   function Find_Mark (Identifier : Natural) return Mark_Identifier_Record is
       use type Mark_Identifier_List.List_Node;
 
       Id          : constant Source_Editor_Module :=
@@ -561,7 +561,7 @@ package body Src_Editor_Module is
       while Mark_Node /= Mark_Identifier_List.Null_Node loop
          Mark_Record := Mark_Identifier_List.Data (Mark_Node);
 
-         if Image (Mark_Record.Id) = Identifier then
+         if Mark_Record.Id = Identifier then
             return Mark_Record;
          end if;
 

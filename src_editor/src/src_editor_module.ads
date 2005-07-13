@@ -267,7 +267,7 @@ private
    ----------
    --  These utilities are needed by child packages
 
-   function Find_Mark (Identifier : String) return Mark_Identifier_Record;
+   function Find_Mark (Identifier : Natural) return Mark_Identifier_Record;
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
 

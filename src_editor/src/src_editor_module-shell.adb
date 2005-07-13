@@ -1111,7 +1111,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "goto_mark" then
          declare
-            Identifier  : constant String := Nth_Arg (Data, 1);
+            Identifier  : constant Integer := Nth_Arg (Data, 1);
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
             Success     : Boolean;
@@ -1125,7 +1125,7 @@ package body Src_Editor_Module.Shell is
          declare
             procedure Unchecked_Free is new Ada.Unchecked_Deallocation
               (Location_Marker_Record'Class, Location_Marker);
-            Identifier  : constant String := Nth_Arg (Data, 1);
+            Identifier  : constant Integer := Nth_Arg (Data, 1);
             Mark_Record : Mark_Identifier_Record := Find_Mark (Identifier);
             Node        : Mark_Identifier_List.List_Node;
             Prev        : Mark_Identifier_List.List_Node;
@@ -1225,7 +1225,7 @@ package body Src_Editor_Module.Shell is
         or else Command = "get_file"
       then
          declare
-            Identifier  : constant String := Nth_Arg (Data, 1);
+            Identifier  : constant Integer := Nth_Arg (Data, 1);
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
          begin
@@ -1564,7 +1564,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "remove_blank_lines" then
          declare
-            Identifier  : constant String := Nth_Arg (Data, 1);
+            Identifier  : constant Integer := Nth_Arg (Data, 1);
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
             Child       : MDI_Child;
