@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
+
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
@@ -117,6 +119,7 @@ with Outline_View;
 with Socket_Module;
 with Scenario_Views;
 with Clipboard_Views;
+with Bookmark_Views;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -1345,6 +1348,11 @@ procedure GPS.Main is
       end if;
 
       Casing_Exceptions.Register_Module (GPS_Main.Kernel);
+
+      --  Load these last, since this requires the collaboration of over
+      --  modules
+
+      Bookmark_Views.Register_Module (GPS_Main.Kernel);
 
       --  Load system files
 
