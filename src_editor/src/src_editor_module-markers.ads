@@ -21,6 +21,7 @@
 with GPS.Kernel;
 with VFS;
 with Glib.Xml_Int;
+with Gtk.Text_Mark;
 
 package Src_Editor_Module.Markers is
 
@@ -29,11 +30,18 @@ package Src_Editor_Module.Markers is
    type File_Marker is access all File_Marker_Record'Class;
 
    function Create_File_Marker
-     (File   : VFS.Virtual_File;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Line   : Natural;
-      Column : Natural) return File_Marker;
+      Column : Natural;
+      Length : Natural := 0) return File_Marker;
    --  Create a new marker that represents a position inside a file. It isn't
    --  related to a specific editor
+
+   function Create_File_Marker
+     (File   : VFS.Virtual_File;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
+   --  Create a new marker from an existing text mark
 
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -42,6 +50,31 @@ package Src_Editor_Module.Markers is
    --  request, so that he can easily choose to go back to the previous
    --  location.
 
+   function Load
+     (Kernel   : access Kernel_Handle_Record'Class;
+      From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker;
+   --  Create a new marker either from From_XML or from the current context
+
+   procedure Create_Text_Mark
+     (Kernel : access Kernel_Handle_Record'Class;
+      Marker : access File_Marker_Record'Class);
+   --  Create a text mark that will keep the location of the marker even when
+   --  the text is changed
+
+   function Get_File
+     (Marker : access File_Marker_Record'Class) return VFS.Virtual_File;
+   --  Return the file in which Marker is set
+
+   function Get_Line
+     (Marker : access File_Marker_Record'Class) return Integer;
+   function Get_Column
+     (Marker : access File_Marker_Record'Class) return Integer;
+   function Get_Mark
+     (Marker : access File_Marker_Record'Class)
+      return Gtk.Text_Mark.Gtk_Text_Mark;
+   pragma Inline (Get_File, Get_Line, Get_Column, Get_Mark);
+   --  Return the coordinates of the marker
+
 private
    type File_Marker_Record
      is new GPS.Kernel.Location_Marker_Record with
@@ -49,8 +82,11 @@ private
          File   : VFS.Virtual_File;
          Line   : Natural;
          Column : Natural;
+         Length : Natural := 1;
+         Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
       end record;
 
+   procedure Destroy (Marker : in out File_Marker_Record);
    function Go_To
      (Marker : access File_Marker_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
