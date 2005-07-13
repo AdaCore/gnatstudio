@@ -159,6 +159,7 @@ package GPS.Kernel.Preferences is
 
    -- General --
    Default_Font          : Param_Spec_Font;
+   View_Fixed_Font       : Param_Spec_Font;
    Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
    Default_Charset       : Param_Spec_String;
