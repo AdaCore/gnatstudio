@@ -1685,8 +1685,6 @@ package body GUI_Utils is
                Add_Attribute
                  (Col, Text_Render, "editable",
                   Editable_Columns (Integer (ColNum)));
-               Set_Editable_And_Callback
-                 (Model, Text_Render, Gint (ColNum));
 
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
@@ -1698,6 +1696,8 @@ package body GUI_Utils is
                      Slot_Object => View);
                end if;
 
+               Set_Editable_And_Callback
+                 (Model, Text_Render, Gint (ColNum));
             end if;
 
          elsif Is_Icon then
