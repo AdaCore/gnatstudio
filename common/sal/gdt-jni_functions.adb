@@ -29,6 +29,8 @@ with Basic_Types; use Basic_Types;
 
 with Ada.Text_IO; use Ada.Text_IO;
 with System.Address_Image;
+with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 
 package body GDT.JNI_Functions is
 
@@ -44,6 +46,38 @@ package body GDT.JNI_Functions is
       Flush;
       return 0;
    end Db;
+
+   type Ptr_Str is access all String;
+   procedure Free is new Ada.Unchecked_Deallocation (String, Ptr_Str);
+
+   function Value (Str : chars_ptr) return Ptr_Str;
+   --  This function is absolutely necessary to handle big files, since the
+   --  regular one uses the stack and, therefore, introduce stack overflows.
+
+   function Value (Str : chars_ptr) return Ptr_Str is
+      Res : Ptr_Str;
+
+      type hidden_chars_ptr is access all Character;
+
+      function Convert is new Ada.Unchecked_Conversion
+        (chars_ptr, hidden_chars_ptr);
+
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, hidden_chars_ptr);
+
+      Hidden_Str : hidden_chars_ptr := Convert (Str);
+
+   begin
+      Res := new String (1 .. Integer (Strlen (Str)));
+
+      for I in Res'Range loop
+         Res (I) := Hidden_Str.all;
+         Hidden_Str :=
+           Convert (To_Address (To_Integer (Hidden_Str.all'Address) + 1));
+      end loop;
+
+      return Res;
+   end Value;
 
    type Construct_List_Ptr is access all Construct_List;
    type Source_Location_Ptr is access all Source_Location;
@@ -74,16 +108,17 @@ package body GDT.JNI_Functions is
       pragma Unreferenced (This);
       Constructs_Stored : constant Construct_List_Ptr := new Construct_List;
 
-
-     C_Str : constant Interfaces.C.Strings.chars_ptr :=
+      C_Str : constant Interfaces.C.Strings.chars_ptr :=
         GetStringUTFChars (Env, Str);
-     Ada_Str : constant String := Value (C_Str);
+
+      Ada_Str : Ptr_Str := Value (C_Str);
    begin
       Analyze_Ada_Source
-        (Buffer            => Ada_Str,
+        (Buffer            => Ada_Str.all,
          Indent_Params     => Default_Indent_Parameters,
          Format            => False,
          Constructs        => Construct_List_Access (Constructs_Stored));
+      Free (Ada_Str);
 
       ReleaseStringUTFChars (Env, Str, C_Str);
 
@@ -109,7 +144,7 @@ package body GDT.JNI_Functions is
       C_Str : constant Interfaces.C.Strings.chars_ptr :=
         GetStringUTFChars (Env, Buffer);
 
-      Ada_Str : constant String := Value (C_Str);
+      Ada_Str : Ptr_Str := Value (C_Str);
 
       Id : JMethodID;
       C_Function : constant Interfaces.C.Strings.chars_ptr :=
@@ -145,12 +180,13 @@ package body GDT.JNI_Functions is
          C_Function,
          C_Profile);
       Analyze_Ada_Source
-        (Buffer            => Ada_Str,
+        (Buffer            => Ada_Str.all,
          Indent_Params     => Default_Indent_Parameters,
          Format            => True,
          From              => Integer (Line_From),
          To                => Integer (Line_To),
          Replace           => Callback'Unrestricted_Access);
+      Free (Ada_Str);
 
       ReleaseStringUTFChars (Env, Callback_Function, C_Function);
       Free (C_Profile);
