@@ -36,12 +36,14 @@ package Src_Editor_Module.Markers is
       Column : Natural;
       Length : Natural := 0) return File_Marker;
    --  Create a new marker that represents a position inside a file. It isn't
-   --  related to a specific editor
+   --  related to a specific editor. The mark will always indicate the same
+   --  position in the file, even if the file is closed, reopened or modified.
 
    function Create_File_Marker
      (File   : VFS.Virtual_File;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
-   --  Create a new marker from an existing text mark
+   --  Create a new marker from an existing text mark. The mark will always
+   --  indicate the same position in the file.
 
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -55,12 +57,6 @@ package Src_Editor_Module.Markers is
       From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker;
    --  Create a new marker either from From_XML or from the current context
 
-   procedure Create_Text_Mark
-     (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access File_Marker_Record'Class);
-   --  Create a text mark that will keep the location of the marker even when
-   --  the text is changed
-
    function Get_File
      (Marker : access File_Marker_Record'Class) return VFS.Virtual_File;
    --  Return the file in which Marker is set
@@ -72,13 +68,25 @@ package Src_Editor_Module.Markers is
    function Get_Mark
      (Marker : access File_Marker_Record'Class)
       return Gtk.Text_Mark.Gtk_Text_Mark;
-   pragma Inline (Get_File, Get_Line, Get_Column, Get_Mark);
+   function Get_Id
+     (Marker : access File_Marker_Record'Class) return Integer;
+   pragma Inline (Get_File, Get_Line, Get_Column, Get_Mark, Get_Id);
    --  Return the coordinates of the marker
+
+   function Find_Mark (Id : Natural) return File_Marker;
+   --  Find the mark corresponding to Id, or return null
+
+   procedure Reset_Markers_For_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
+   --  Rests all markers that were set for File, so that we recreate the
+   --  text_marks associated with them.
 
 private
    type File_Marker_Record
      is new GPS.Kernel.Location_Marker_Record with
       record
+         Id     : Natural;   --  Needed only for the shell API
          File   : VFS.Virtual_File;
          Line   : Natural;
          Column : Natural;

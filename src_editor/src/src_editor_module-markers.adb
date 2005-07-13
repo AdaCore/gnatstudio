@@ -32,25 +32,126 @@ with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with String_Utils;              use String_Utils;
 with System;                    use System;
+with System.Address_Image;
 with Ada.Unchecked_Conversion;
---  with Traces;                    use Traces;
+with Traces;                    use Traces;
 
 package body Src_Editor_Module.Markers is
---     Me : constant Debug_Handle := Create ("Markers");
+   Me : constant Debug_Handle := Create ("Markers");
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, File_Marker);
    function Convert is new Ada.Unchecked_Conversion
      (File_Marker, System.Address);
 
-   procedure On_Destroy_Mark
+   procedure On_Destroy_Buffer
      (Marker : System.Address; Text_Mark : System.Address);
-   pragma Convention (C, On_Destroy_Mark);
+   pragma Convention (C, On_Destroy_Buffer);
 
    procedure Update_Marker_Location
      (Marker : access File_Marker_Record'Class);
    --  Update the location stored in Marker according to the one stored in the
    --  associated Gtk_Text_Mark
+
+   procedure Register_Persistent_Marker
+     (Marker  : access File_Marker_Record'Class);
+   --  Register Marker as a permanent marker. This means that if the associated
+   --  file is closed, reopened, modified,... the marker will always point to
+   --  the same location
+
+   procedure Create_Text_Mark
+     (Kernel : access Kernel_Handle_Record'Class;
+      Marker : access File_Marker_Record'Class);
+   --  Create a text mark that will keep the location of the marker even when
+   --  the text is changed
+
+   procedure Dump_Persistent_Markers;
+   pragma Unreferenced (Dump_Persistent_Markers);
+   --  Debug procedure to dump the list of persistent markers
+
+   -----------------------------
+   -- Dump_Persistent_Markers --
+   -----------------------------
+
+   procedure Dump_Persistent_Markers is
+      use Marker_List;
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Node   : List_Node := First (Module.Stored_Marks);
+   begin
+      Trace (Me, "List of persistent markers");
+      while Node /= Null_Node loop
+         Trace (Me, "     marker="
+                & System.Address_Image
+                  (Convert (File_Marker (Data (Node))))
+                & " " & To_String (Data (Node)));
+         Node := Next (Node);
+      end loop;
+   end Dump_Persistent_Markers;
+
+   --------------------------------
+   -- Register_Persistent_Marker --
+   --------------------------------
+
+   procedure Register_Persistent_Marker
+     (Marker  : access File_Marker_Record'Class)
+   is
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Marker.Id            := Module.Next_Mark_Id;
+      Module.Next_Mark_Id  := Module.Next_Mark_Id + 1;
+      Marker_List.Append (Module.Stored_Marks,  Location_Marker (Marker));
+   end Register_Persistent_Marker;
+
+   ---------------
+   -- Find_Mark --
+   ---------------
+
+   function Find_Mark (Id : Natural) return File_Marker is
+      use type Marker_List.List_Node;
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Marker : File_Marker;
+      Node  : Marker_List.List_Node := Marker_List.First (Module.Stored_Marks);
+   begin
+      while Node /= Marker_List.Null_Node loop
+         Marker := File_Marker (Marker_List.Data (Node));
+
+         if Marker.Id = Id then
+            return Marker;
+         end if;
+
+         Node := Marker_List.Next (Node);
+      end loop;
+
+      return null;
+   end Find_Mark;
+
+   ----------------------------
+   -- Reset_Markers_For_File --
+   ----------------------------
+
+   procedure Reset_Markers_For_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File)
+   is
+      use Marker_List;
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Node   : List_Node := First (Module.Stored_Marks);
+      Marker : File_Marker;
+   begin
+      while Node /= Null_Node loop
+         Marker := File_Marker (Data (Node));
+
+         if Marker.File = File then
+            Create_Text_Mark (Kernel, Marker);
+         end if;
+
+         Node := Next (Node);
+      end loop;
+   end Reset_Markers_For_File;
 
    ----------------------------
    -- Update_Marker_Location --
@@ -63,16 +164,16 @@ package body Src_Editor_Module.Markers is
    begin
       if Marker.Mark /= null then
          Get_Iter_At_Mark (Get_Buffer (Marker.Mark), Iter, Marker.Mark);
-         Marker.Line   := Integer (Get_Line (Iter));
-         Marker.Column := Integer (Get_Line_Offset (Iter));
+         Marker.Line   := Integer (Get_Line (Iter)) + 1;
+         Marker.Column := Integer (Get_Line_Offset (Iter)) + 1;
       end if;
    end Update_Marker_Location;
 
-   ---------------------
-   -- On_Destroy_Mark --
-   ---------------------
+   -----------------------
+   -- On_Destroy_Buffer --
+   -----------------------
 
-   procedure On_Destroy_Mark
+   procedure On_Destroy_Buffer
      (Marker : System.Address; Text_Mark : System.Address)
    is
       pragma Unreferenced (Text_Mark);
@@ -80,20 +181,38 @@ package body Src_Editor_Module.Markers is
    begin
       Update_Marker_Location (M);
       M.Mark   := null;
-   end On_Destroy_Mark;
+   end On_Destroy_Buffer;
 
    -------------
    -- Destroy --
    -------------
 
    procedure Destroy (Marker : in out File_Marker_Record) is
+      use Marker_List;
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      M1    : constant File_Marker := Marker'Unchecked_Access;
+      M     : File_Marker;
+      Node  : Marker_List.List_Node := Marker_List.First (Module.Stored_Marks);
+      Prev  : Marker_List.List_Node := Marker_List.Null_Node;
    begin
       if Marker.Mark /= null then
          Weak_Unref (Get_Buffer (Marker.Mark),
-                     On_Destroy_Mark'Access, Marker'Address);
+                     On_Destroy_Buffer'Access, Convert (M1));
          Delete_Mark (Get_Buffer (Marker.Mark), Marker.Mark);
          Marker.Mark := null;
       end if;
+
+      while Node /= Marker_List.Null_Node loop
+         M := File_Marker (Marker_List.Data (Node));
+         if M = M1 then
+            Remove_Nodes (Module.Stored_Marks, Prev, Node);
+            exit;
+         end if;
+
+         Prev := Node;
+         Node := Marker_List.Next (Node);
+      end loop;
    end Destroy;
 
    ----------------------
@@ -107,7 +226,7 @@ package body Src_Editor_Module.Markers is
       Child  : constant MDI_Child := Find_Editor (Kernel, Marker.File);
       Source : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
-      if Source /= null then
+      if Marker.Mark = null and then Source /= null then
          Marker.Mark := Create_Mark
            (Get_Buffer (Source), Editable_Line_Type (Marker.Line),
             Integer'Max (1, Marker.Column));
@@ -115,7 +234,7 @@ package body Src_Editor_Module.Markers is
          --  We cannot connect to the mark, since it is destroyed *after* the
          --  buffer itself. Strange decision from the gtk+ developers
          Weak_Ref (Get_Buffer (Source),
-                   On_Destroy_Mark'Access, Convert (File_Marker (Marker)));
+                   On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
       end if;
    end Create_Text_Mark;
 
@@ -140,6 +259,16 @@ package body Src_Editor_Module.Markers is
       return Marker.Mark;
    end Get_Mark;
 
+   ------------
+   -- Get_Id --
+   ------------
+
+   function Get_Id
+     (Marker : access File_Marker_Record'Class) return Integer is
+   begin
+      return Marker.Id;
+   end Get_Id;
+
    ------------------------
    -- Create_File_Marker --
    ------------------------
@@ -155,12 +284,14 @@ package body Src_Editor_Module.Markers is
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
+         Id     => Natural'Last,
          File   => File,
          Line   => Line,
          Column => Column,
          Length => Length,
          Mark   => null);
       Create_Text_Mark (Kernel, Marker);
+      Register_Persistent_Marker (Marker);
       return Marker;
    end Create_File_Marker;
 
@@ -176,12 +307,14 @@ package body Src_Editor_Module.Markers is
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
+         Id     => Natural'Last,
          File   => File,
          Line   => 0,
          Column => 1,
          Length => 0,
          Mark   => Mark);
       Update_Marker_Location (Marker);
+      Register_Persistent_Marker (Marker);
       return Marker;
    end Create_File_Marker;
 

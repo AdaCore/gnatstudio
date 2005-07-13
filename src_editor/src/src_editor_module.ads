@@ -167,15 +167,10 @@ private
    -- Marks --
    -----------
 
-   type Mark_Identifier_Record is record
-      Id     : Natural;
-      Marker : Location_Marker;   --  A File_Marker in fact
-   end record;
-
-   procedure Free (X : in out Mark_Identifier_Record);
+   procedure Do_Nothing (X : in out Location_Marker);
    --  Free memory associated to X.
 
-   package Mark_Identifier_List is new Generic_List (Mark_Identifier_Record);
+   package Marker_List is new Generic_List (Location_Marker, Do_Nothing);
 
    -----------------------------
    -- Highlighting categories --
@@ -225,7 +220,7 @@ private
 
       Show_Subprogram_Names : Boolean    := False;
 
-      Stored_Marks          : Mark_Identifier_List.List;
+      Stored_Marks          : Marker_List.List;
       Next_Mark_Id          : Natural := 0;
 
       Categories            : Highlighting_Category_Array_Access;
@@ -266,10 +261,6 @@ private
    -- Misc --
    ----------
    --  These utilities are needed by child packages
-
-   function Find_Mark (Identifier : Natural) return Mark_Identifier_Record;
-   --  Find the mark corresponding to Identifier, or return an empty
-   --  record.
 
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;

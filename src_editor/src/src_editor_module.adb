@@ -351,12 +351,6 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed.
 
-   procedure Fill_Marks
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File);
-   --  Create the marks on the buffer corresponding to File, if File has just
-   --  been open.
-
    function Get_Filename (Child : MDI_Child) return VFS.Virtual_File;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
@@ -534,67 +528,15 @@ package body Src_Editor_Module is
       end if;
    end Get_Filename;
 
-   ----------
-   -- Free --
-   ----------
+   ----------------
+   -- Do_Nothing --
+   ----------------
 
-   procedure Free (X : in out Mark_Identifier_Record) is
+   procedure Do_Nothing (X : in out Location_Marker) is
       pragma Unreferenced (X);
    begin
       null;
-   end Free;
-
-   ---------------
-   -- Find_Mark --
-   ---------------
-
-   function Find_Mark (Identifier : Natural) return Mark_Identifier_Record is
-      use type Mark_Identifier_List.List_Node;
-
-      Id          : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      Mark_Node   : Mark_Identifier_List.List_Node;
-      Mark_Record : Mark_Identifier_Record;
-   begin
-      Mark_Node := Mark_Identifier_List.First (Id.Stored_Marks);
-
-      while Mark_Node /= Mark_Identifier_List.Null_Node loop
-         Mark_Record := Mark_Identifier_List.Data (Mark_Node);
-
-         if Mark_Record.Id = Identifier then
-            return Mark_Record;
-         end if;
-
-         Mark_Node := Mark_Identifier_List.Next (Mark_Node);
-      end loop;
-
-      return Mark_Identifier_Record'(Id => 0, Marker => null);
-   end Find_Mark;
-
-   ----------------
-   -- Fill_Marks --
-   ----------------
-
-   procedure Fill_Marks
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File)
-   is
-      use Mark_Identifier_List;
-      Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      Node        : List_Node := First (Id.Stored_Marks);
-      Mark_Record : Mark_Identifier_Record;
-   begin
-      while Node /= Null_Node loop
-         Mark_Record := Data (Node);
-
-         if Get_File (File_Marker (Mark_Record.Marker)) = File then
-            Create_Text_Mark (Kernel, File_Marker (Data (Node).Marker));
-         end if;
-
-         Node := Next (Node);
-      end loop;
-   end Fill_Marks;
+   end Do_Nothing;
 
    --------------------
    -- File_Edited_Cb --
@@ -606,7 +548,7 @@ package body Src_Editor_Module is
    is
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
-      Fill_Marks (Kernel, D.File);
+      Reset_Markers_For_File (Kernel, D.File);
    end File_Edited_Cb;
 
    -----------------------------
@@ -3109,7 +3051,7 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
-      Mark_Identifier_List.Free (Id.Stored_Marks);
+      Marker_List.Free (Id.Stored_Marks);
 
       Free (Id.Search_Pattern);
 

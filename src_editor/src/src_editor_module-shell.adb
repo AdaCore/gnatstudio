@@ -39,7 +39,6 @@ with Basic_Types;               use Basic_Types;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with GPS.Intl;                  use GPS.Intl;
-with String_Utils;              use String_Utils;
 with Casing_Exceptions;         use Casing_Exceptions;
 with VFS;                       use VFS;
 with Language;                  use Language;
@@ -876,13 +875,14 @@ package body Src_Editor_Module.Shell is
    procedure Edit_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_Marker_Record'Class, File_Marker);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Id     : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
       Length : Natural := 0;
       Line   : Natural := 1;
       Column : Natural := 1;
       Force  : Boolean;
+      Marker : File_Marker;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
@@ -928,21 +928,9 @@ package body Src_Editor_Module.Shell is
                   end if;
 
                elsif Command = "create_mark" then
-                  declare
-                     Mark_Record : Mark_Identifier_Record;
-                  begin
-                     --  Create a new mark record and insert it in the list.
-
-                     Mark_Record.Marker := Location_Marker
-                       (Create_File_Marker
-                          (Kernel, File, Line, Column, Length));
-                     Mark_Record.Id   := Id.Next_Mark_Id;
-                     Id.Next_Mark_Id  := Id.Next_Mark_Id + 1;
-                     Mark_Identifier_List.Append
-                       (Id.Stored_Marks, Mark_Record);
-
-                     Set_Return_Value (Data, Image (Mark_Record.Id));
-                  end;
+                  Marker := Create_File_Marker
+                    (Kernel, File, Line, Column, Length);
+                  Set_Return_Value (Data, Get_Id (Marker));
                end if;
             end if;
          end;
@@ -1110,49 +1098,14 @@ package body Src_Editor_Module.Shell is
          end;
 
       elsif Command = "goto_mark" then
-         declare
-            Identifier  : constant Integer := Nth_Arg (Data, 1);
-            Mark_Record : constant Mark_Identifier_Record :=
-              Find_Mark (Identifier);
-            Success     : Boolean;
-            pragma Unreferenced (Success);
-         begin
-            Push_Current_Editor_Location_In_History (Kernel);
-            Success := Go_To (Mark_Record.Marker, Kernel);
-         end;
+         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Push_Current_Editor_Location_In_History (Kernel);
+         Force := Go_To (Marker, Kernel);
 
       elsif Command = "delete_mark" then
-         declare
-            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-              (Location_Marker_Record'Class, Location_Marker);
-            Identifier  : constant Integer := Nth_Arg (Data, 1);
-            Mark_Record : Mark_Identifier_Record := Find_Mark (Identifier);
-            Node        : Mark_Identifier_List.List_Node;
-            Prev        : Mark_Identifier_List.List_Node;
-            use Mark_Identifier_List;
-         begin
-            Node := First (Id.Stored_Marks);
-
-            if Mark_Identifier_List.Data (Node).Id = Mark_Record.Id then
-               Next (Id.Stored_Marks);
-            else
-               Prev := Node;
-               Node := Next (Node);
-
-               while Node /= Null_Node loop
-                  if Mark_Identifier_List.Data (Node).Id = Mark_Record.Id then
-                     Remove_Nodes (Id.Stored_Marks, Prev, Node);
-                     exit;
-                  end if;
-
-                  Prev := Node;
-                  Node := Next (Node);
-               end loop;
-            end if;
-
-            Destroy (Mark_Record.Marker.all);
-            Unchecked_Free (Mark_Record.Marker);
-         end;
+         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Destroy (Marker.all);
+         Unchecked_Free (Marker);
 
       elsif Command = "get_chars" then
          Name_Parameters (Data, Get_Chars_Args);
@@ -1220,27 +1173,17 @@ package body Src_Editor_Module.Shell is
             end if;
          end;
 
-      elsif Command = "get_line"
-        or else Command = "get_column"
-        or else Command = "get_file"
-      then
-         declare
-            Identifier  : constant Integer := Nth_Arg (Data, 1);
-            Mark_Record : constant Mark_Identifier_Record :=
-              Find_Mark (Identifier);
-         begin
-            if Command = "get_line" then
-               Set_Return_Value
-                 (Data, Get_Line (File_Marker (Mark_Record.Marker)));
-            elsif Command = "get_column" then
-               Set_Return_Value
-                 (Data, Get_Column (File_Marker (Mark_Record.Marker)));
-            else
-               Set_Return_Value
-                 (Data, Full_Name
-                    (Get_File (File_Marker (Mark_Record.Marker))).all);
-            end if;
-         end;
+      elsif Command = "get_line" then
+         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Set_Return_Value (Data, Get_Line (Marker));
+
+      elsif Command = "get_column" then
+         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Set_Return_Value (Data, Get_Column (Marker));
+
+      elsif Command = "get_file" then
+         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Set_Return_Value (Data, Full_Name (Get_File (Marker)).all);
 
       elsif Command = "get_last_line" then
          declare
@@ -1530,7 +1473,6 @@ package body Src_Editor_Module.Shell is
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
             Box         : Source_Editor_Box;
-            Mark_Record : Mark_Identifier_Record;
             Highlight_Category : Natural := 0;
          begin
             Child := Find_Editor (Kernel, Filename);
@@ -1544,18 +1486,13 @@ package body Src_Editor_Module.Shell is
                Box := Source_Editor_Box (Get_Widget (Child));
 
                if Line >= 0 and then Number > 0 then
-                  --  Create a new mark record and insert it in the list.
-                  Mark_Record.Id := Id.Next_Mark_Id;
-                  Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
-                  Mark_Record.Marker := Location_Marker
-                    (Create_File_Marker
-                       (Filename,
-                        Add_Blank_Lines
-                          (Get_Buffer (Box),
-                           Editable_Line_Type (Line),
-                           Highlight_Category, "", Number)));
-                  Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
-                  Set_Return_Value (Data, Image (Mark_Record.Id));
+                  Marker := Create_File_Marker
+                    (Filename,
+                     Add_Blank_Lines
+                       (Get_Buffer (Box),
+                        Editable_Line_Type (Line),
+                        Highlight_Category, "", Number));
+                  Set_Return_Value (Data, Get_Id (Marker));
                end if;
             else
                Set_Error_Msg (Data, -"file not open");
@@ -1563,26 +1500,21 @@ package body Src_Editor_Module.Shell is
          end;
 
       elsif Command = "remove_blank_lines" then
+         Marker := Find_Mark (Nth_Arg (Data, 1));
          declare
-            Identifier  : constant Integer := Nth_Arg (Data, 1);
-            Mark_Record : constant Mark_Identifier_Record :=
-              Find_Mark (Identifier);
             Child       : MDI_Child;
             Number      : Integer := 0;
             Box         : Source_Editor_Box;
-            Mark        : Gtk_Text_Mark;
          begin
             if Number_Of_Arguments (Data) >= 3 then
                Number := Nth_Arg (Data, 2);
             end if;
 
-            Mark := Get_Mark (File_Marker (Mark_Record.Marker));
-            if Mark /= null then
-               Child := Find_Editor
-                 (Kernel, Get_File (File_Marker (Mark_Record.Marker)));
+            if Get_Mark (Marker) /= null then
+               Child := Find_Editor (Kernel, Get_File (Marker));
                Box := Source_Editor_Box (Get_Widget (Child));
                Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
-                 (Get_Buffer (Box), Mark, Number);
+                 (Get_Buffer (Box), Get_Mark (Marker), Number);
             else
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
