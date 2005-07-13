@@ -368,13 +368,30 @@ package body GPS.Kernel.Modules is
      (Kernel : access Kernel_Handle_Record'Class;
       Load   : Xml_Int.Node_Ptr := null) return Location_Marker
    is
-      Module : constant Module_ID := Get_Current_Module (Kernel);
+      use type Module_List.List_Node;
+      use type Xml_Int.Node_Ptr;
+      Current : Module_List.List_Node :=
+        Module_List.First (List_Of_Modules (Kernel));
+      Module  : Module_ID;
+      Marker  : Location_Marker;
    begin
-      if Module /= null then
-         return Bookmark_Handler (Module, Load);
+      if Load = null then
+         Module := Get_Current_Module (Kernel);
+         if Module /= null then
+            return Bookmark_Handler (Module, null);
+         end if;
+
       else
-         return null;
+         while Current /= Module_List.Null_Node loop
+            Module := Module_List.Data (Current);
+            Marker := Bookmark_Handler (Module, Load);
+            if Marker /= null then
+               return Marker;
+            end if;
+            Current := Module_List.Next (Current);
+         end loop;
       end if;
+      return null;
    end Create_Marker;
 
    ---------------
