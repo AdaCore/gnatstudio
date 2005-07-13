@@ -63,7 +63,6 @@ with Gtk.Rc;                      use Gtk.Rc;
 with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Window;                  use Gtk.Window;
 with Gtkada.Entry_Completion;     use Gtkada.Entry_Completion;
 with Gtkada.Handlers;             use Gtkada.Handlers;
@@ -358,7 +357,9 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed.
 
-   procedure Fill_Marks (Kernel : Kernel_Handle; File : VFS.Virtual_File);
+   procedure Fill_Marks
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File);
    --  Create the marks on the buffer corresponding to File, if File has just
    --  been open.
 
@@ -573,13 +574,7 @@ package body Src_Editor_Module is
          Mark_Node := Mark_Identifier_List.Next (Mark_Node);
       end loop;
 
-      return Mark_Identifier_Record'
-        (Id     => 0,
-         File   => VFS.No_File,
-         Mark   => null,
-         Line   => 0,
-         Column => 0,
-         Length => 0);
+      return Mark_Identifier_Record'(Id => 0, Marker => null);
    end Find_Mark;
 
    ----------------
@@ -587,7 +582,7 @@ package body Src_Editor_Module is
    ----------------
 
    procedure Fill_Marks
-     (Kernel : Kernel_Handle;
+     (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File)
    is
       Id : constant Source_Editor_Module :=
@@ -595,19 +590,10 @@ package body Src_Editor_Module is
 
       use Mark_Identifier_List;
 
-      Box         : Source_Editor_Box;
-      Child       : MDI_Child;
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
    begin
       if Is_In_List (Id.Unopened_Files, Full_Name (File).all) then
-         Child := Find_Editor (Kernel, File);
-
-         if Child = null then
-            return;
-         end if;
-
-         Box := Source_Editor_Box (Get_Widget (Child));
          Remove_From_List (Id.Unopened_Files, Full_Name (File).all);
 
          Node := First (Id.Stored_Marks);
@@ -615,20 +601,8 @@ package body Src_Editor_Module is
          while Node /= Null_Node loop
             Mark_Record := Data (Node);
 
-            if Mark_Record.File = File then
-               Set_Data
-                 (Node,
-                  Mark_Identifier_Record'
-                    (Id     => Mark_Record.Id,
-                     File   => File,
-                     Line   => Mark_Record.Line,
-                     Mark   =>
-                       Create_Mark
-                         (Get_Buffer (Box),
-                          Editable_Line_Type (Mark_Record.Line),
-                          Mark_Record.Column),
-                     Column => Mark_Record.Column,
-                     Length => Mark_Record.Length));
+            if Get_File (File_Marker (Mark_Record.Marker)) = File then
+               Create_Text_Mark (Kernel, File_Marker (Data (Node).Marker));
             end if;
 
             Node := Next (Node);
@@ -646,11 +620,7 @@ package body Src_Editor_Module is
    is
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
-      Fill_Marks (Kernel_Handle (Kernel), D.File);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+      Fill_Marks (Kernel, D.File);
    end File_Edited_Cb;
 
    -----------------------------
@@ -700,6 +670,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Kernel);
       use Mark_Identifier_List;
 
       D           : constant File_Hooks_Args := File_Hooks_Args (Data.all);
@@ -707,66 +678,27 @@ package body Src_Editor_Module is
                       Source_Editor_Module (Src_Editor_Module_Id);
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
-      Added       : Boolean := False;
-      Box         : Source_Editor_Box;
-      Child       : MDI_Child;
 
    begin
-      --  If the file has marks, store their location.
+      --  If there are marks associated with this file, save the name of the
+      --  file in a special list so that we can easily restore the mark
+      --  later on when the file is open again
 
-      if Id = null then
-         Node := Null_Node;
-      else
+      if Id /= null then
          Node := First (Id.Stored_Marks);
-      end if;
-
-      while Node /= Null_Node loop
-         Mark_Record := Mark_Identifier_List.Data (Node);
-         if Mark_Record.File = D.File then
-            if Mark_Record.Mark /= null
-              and then Mark_Record.Line /= 0
-            then
-               Child := Find_Editor (Kernel, Mark_Record.File);
-               --  All views might have been destroyed already.
-               --  ??? We should in fact do this update when the mark itself
-               --  is destroyed (through a weak_ref), instead of when the
-               --  buffer is destroyed. That would work in more cases.
-               if Child /= null then
-                  Box := Source_Editor_Box (Get_Widget (Child));
-
-                  Mark_Record.Line :=
-                    Natural (Src_Editor_Buffer.Line_Information.Get_Line
-                               (Get_Buffer (Box), Mark_Record.Mark));
-                  Mark_Record.Column :=
-                    Src_Editor_Buffer.Line_Information.Get_Column
-                      (Get_Buffer (Box), Mark_Record.Mark);
-               end if;
-
-               Set_Data
-                 (Node,
-                  Mark_Identifier_Record'
-                    (Id     => Mark_Record.Id,
-                     File   => D.File,
-                     Line   => Mark_Record.Line,
-                     Mark   => null,
-                     Column => Mark_Record.Column,
-                     Length => Mark_Record.Length));
-
-               if not Added then
-                  Add_Unique_Sorted
-                    (Id.Unopened_Files, Full_Name (D.File).all);
-                  Added := True;
-               end if;
+         while Node /= Null_Node loop
+            Mark_Record := Mark_Identifier_List.Data (Node);
+            if Get_File (File_Marker (Mark_Record.Marker)) = D.File then
+               --  ??? Why do we need a second list. If we were using a proper
+               --  hash table, we could store all marks in a single list
+               Add_Unique_Sorted
+                 (Id.Unopened_Files, Full_Name (D.File).all);
+               exit;
             end if;
-         end if;
 
-         Node := Next (Node);
-      end loop;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+            Node := Next (Node);
+         end loop;
+      end if;
    end File_Closed_Cb;
 
    -------------------
@@ -914,7 +846,8 @@ package body Src_Editor_Module is
                Push_Marker_In_History
                  (Kernel  => User,
                   Marker  => Create_File_Marker
-                    (File   => F,
+                    (Kernel => User,
+                     File   => F,
                      Line   => Line,
                      Column => Column));
             end if;
@@ -2319,7 +2252,8 @@ package body Src_Editor_Module is
             Push_Marker_In_History
               (Kernel => Kernel,
                Marker => Create_File_Marker
-                 (File   => D.File,
+                 (Kernel => Kernel,
+                  File   => D.File,
                   Line   => D.Line,
                   Column => D.Column));
          end if;
@@ -2526,22 +2460,10 @@ package body Src_Editor_Module is
 
    function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
-      Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker
-   is
-      pragma Unreferenced (Load);
-      Source  : constant Source_Editor_Box := Get_Source_Box_From_MDI
-        (Find_Current_Editor (Get_Kernel (Module.all)));
-      Line, Column : Integer;
+      Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker is
    begin
-      if Source /= null then
-         Get_Cursor_Location (Source, Line, Column);
-         return Location_Marker
-           (Create_File_Marker
-              (File   => Get_Filename (Source),
-               Line   => Line,
-               Column => Column));
-      end if;
-      return null;
+      return Src_Editor_Module.Markers.Load
+        (Get_Kernel (Module.all), Load);
    end Bookmark_Handler;
 
    ---------------

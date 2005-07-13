@@ -24,7 +24,6 @@ with Glib.Xml_Int;       use Glib.Xml_Int;
 with Gdk.GC;
 with Gdk.Color;          use Gdk.Color;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
-with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
 with Gtk.Widget;         use Gtk.Widget;
@@ -171,11 +170,7 @@ private
 
    type Mark_Identifier_Record is record
       Id     : Natural;
-      File   : VFS.Virtual_File;
-      Line   : Natural := 0;
-      Column : Natural := 1;
-      Mark   : Gtk_Text_Mark;
-      Length : Natural;
+      Marker : Location_Marker;   --  A File_Marker in fact
    end record;
 
    procedure Free (X : in out Mark_Identifier_Record);
