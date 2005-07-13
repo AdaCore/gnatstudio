@@ -1426,8 +1426,9 @@ package body GPS.Location_View is
          File_Hook,
          Watch => GObject (View));
 
-      Modify_Font (View.Tree, Get_Pref_Font (Kernel, Default_Style));
-      --  ??? Should we free the font description ?
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access,
+                Watch => GObject (View));
+      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
    end Initialize;
 
    ---------------------
@@ -1868,6 +1869,7 @@ package body GPS.Location_View is
       end if;
 
       View := Location_View (Get_Widget (Child));
+      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
 
       Node := First (View.Stored_Locations);
 
@@ -2098,8 +2100,6 @@ package body GPS.Location_View is
          Label       => -"Clear Locations View",
          Filter      => Create (Module => Module_Name),
          Action      => Command);
-
-      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
    -----------------------
