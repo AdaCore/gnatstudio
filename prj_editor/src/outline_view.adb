@@ -57,7 +57,6 @@ with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
 with Commands.Interactive;        use Commands, Commands.Interactive;
-with Default_Preferences;         use Default_Preferences;
 with Entities;                    use Entities;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 
@@ -67,7 +66,6 @@ package body Outline_View is
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
 
-   Outline_View_Font                : Param_Spec_Font;
    Outline_View_Profiles            : Param_Spec_Boolean;
    Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
    Outline_View_Link_Editor         : Param_Spec_Boolean;
@@ -292,7 +290,7 @@ package body Outline_View is
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
 
-         Modify_Font (Outline.Tree, Get_Pref (Kernel, Outline_View_Font));
+         Modify_Font (Outline.Tree, Get_Pref (Kernel, View_Fixed_Font));
 
          if Get_Pref (Kernel, Outline_View_Sort_Alphabetically) then
             Thaw_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)), 1);
@@ -532,7 +530,7 @@ package body Outline_View is
       Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
       Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
 
-      Modify_Font (Outline.Tree, Get_Pref (Kernel, Outline_View_Font));
+      Modify_Font (Outline.Tree, Get_Pref (Kernel, View_Fixed_Font));
 
       Return_Callback.Object_Connect
         (Outline.Tree,
@@ -847,15 +845,6 @@ package body Outline_View is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Default_Desktop_Item (Kernel, "Outline_View", Position_Left);
-
-      Outline_View_Font := Param_Spec_Font
-        (Gnew_Font
-           (Name => "Outline-View-Font",
-            Default => Get_Pref (Kernel, Param_Spec_String (Default_Font)),
-            Blurb   => -"Font used in the outline view",
-            Nick    => -"Outline View font"));
-      Register_Property
-        (Kernel, Param_Spec (Outline_View_Font), -"Outline");
 
       Outline_View_Profiles := Param_Spec_Boolean
         (Gnew_Boolean
