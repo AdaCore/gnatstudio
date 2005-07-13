@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,8 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch_Ext;               use Vsearch_Ext;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with String_Utils;              use String_Utils;
 
 package body Find_Utils is
 
@@ -142,11 +143,35 @@ package body Find_Utils is
    is
       Last_Line_Start : Natural := Start_Index;
 
+      function Pretty_Print_Line
+        (Line      : String;
+         Start_Pos : Integer;
+         End_Pos   : Integer) return String;
+      --  Return a version of the string that highlights the pattern between
+      --  Start_Pos and End_Pos, using pango markup language.
+
       procedure Re_Search;
       --  Handle the search for a regular expression
 
       procedure BM_Search;
       --  Handle the search for a constant string
+
+      -----------------------
+      -- Pretty_Print_Line --
+      -----------------------
+
+      function Pretty_Print_Line
+        (Line      : String;
+         Start_Pos : Integer;
+         End_Pos   : Integer) return String is
+      begin
+         return Escape_Text (Line (Line'First .. Line'First + Start_Pos - 2))
+           & "<span foreground=""red"">" &
+         Escape_Text (Line (Line'First + Start_Pos - 1
+                            .. Line'First + End_Pos - 2))
+           & "</span>" &
+         Escape_Text (Line (Line'First + End_Pos - 1 .. Line'Last));
+      end Pretty_Print_Line;
 
       ---------------
       -- Re_Search --
@@ -181,18 +206,21 @@ package body Find_Utils is
             Ref_Index := Pos;
 
             declare
-               Line : String renames
-                 Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
+               End_Col : constant Natural := Ref_Column +
+                    Integer (UTF8_Strlen
+                      (Buffer (Context.Sub_Matches (0).First ..
+                                 Context.Sub_Matches (0).Last)));
+               Line    : constant String :=
+                 Pretty_Print_Line
+                   (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
+                    Ref_Column, End_Col);
             begin
                if not Callback (Match_Result'
                  (Length     => Line'Length,
                   Index      => Pos,
                   Line       => Ref_Line,
                   Column     => Ref_Column,
-                  End_Column => Ref_Column +
-                    Integer (UTF8_Strlen
-                      (Buffer (Context.Sub_Matches (0).First ..
-                                 Context.Sub_Matches (0).Last))),
+                  End_Column => End_Col,
                   Text       => Line))
                then
                   Was_Partial := True;
@@ -242,7 +270,10 @@ package body Find_Utils is
 
                declare
                   Line : constant String :=
-                    Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
+                    Pretty_Print_Line
+                      (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
+                       Ref_Column,
+                       Ref_Column + Context.Look_For'Length);
                begin
                   if not Callback (Match_Result'
                     (Length     => Line'Length,
