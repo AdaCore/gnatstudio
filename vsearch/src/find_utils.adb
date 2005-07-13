@@ -272,8 +272,8 @@ package body Find_Utils is
                   Line : constant String :=
                     Pretty_Print_Line
                       (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
-                       Ref_Column,
-                       Ref_Column + Context.Look_For'Length);
+                       Pos - Last_Line_Start + 1,
+                       Pos - Last_Line_Start + 1 + Context.Look_For'Length);
                begin
                   if not Callback (Match_Result'
                     (Length     => Line'Length,
