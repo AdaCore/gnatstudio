@@ -285,6 +285,14 @@ package body Clipboard_Views is
             end if;
 
             Index := Selection (S)'First;
+            --  Search the first non-whitespace character
+            while Index <= Selection (S)'Last
+              and then Is_Blank (Selection (S)(Index))
+            loop
+               Index := Index + 1;
+            end loop;
+
+            --  and only display the first line starting from there
             while Index <= Selection (S)'Last
               and then Selection (S)(Index) /= ASCII.LF
             loop
