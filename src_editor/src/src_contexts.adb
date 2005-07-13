@@ -583,7 +583,8 @@ package body Src_Contexts is
             Column    => To_Positive (Match.Column),
             Length    => Match.End_Column - Match.Column,
             Highlight => True,
-            Highlight_Category => Search_Result_Highlighting);
+            Highlight_Category => Search_Result_Highlighting,
+            Has_Markups        => True);
       end if;
    end Highlight_Result;
 
