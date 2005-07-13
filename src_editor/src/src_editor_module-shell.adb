@@ -929,11 +929,8 @@ package body Src_Editor_Module.Shell is
 
                elsif Command = "create_mark" then
                   declare
-                     Child       : MDI_Child;
                      Mark_Record : Mark_Identifier_Record;
                   begin
-                     Child := Find_Editor (Kernel, File);
-
                      --  Create a new mark record and insert it in the list.
 
                      Mark_Record.Marker := Location_Marker
@@ -941,12 +938,6 @@ package body Src_Editor_Module.Shell is
                           (Kernel, File, Line, Column, Length));
                      Mark_Record.Id   := Id.Next_Mark_Id;
                      Id.Next_Mark_Id  := Id.Next_Mark_Id + 1;
-
-                     if Child = null then
-                        Add_Unique_Sorted
-                          (Id.Unopened_Files, Full_Name (File).all);
-                     end if;
-
                      Mark_Identifier_List.Append
                        (Id.Stored_Marks, Mark_Record);
 

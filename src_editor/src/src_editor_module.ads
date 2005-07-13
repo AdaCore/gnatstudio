@@ -34,7 +34,6 @@ with Src_Editor_Box;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with String_List_Utils;  use String_List_Utils;
 with VFS;                use VFS;
 with Src_Contexts;
 
@@ -228,10 +227,6 @@ private
 
       Stored_Marks          : Mark_Identifier_List.List;
       Next_Mark_Id          : Natural := 0;
-
-      Unopened_Files           : String_List_Utils.String_List.List;
-      --  Contains a list of files for which marks have been created but
-      --  that are not open.
 
       Categories            : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories.

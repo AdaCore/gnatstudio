@@ -77,7 +77,6 @@ with Src_Editor_Module.Markers;   use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;     use Src_Editor_Module.Shell;
 with Src_Editor_View;             use Src_Editor_View;
 with Src_Editor_View.Commands;    use Src_Editor_View.Commands;
-with String_List_Utils;           use String_List_Utils;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
 with Projects.Registry;           use Projects, Projects.Registry;
@@ -328,11 +327,6 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
-
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "file_closed" hook.
 
    procedure File_Changed_On_Disk_Cb
      (Kernel : access Kernel_Handle_Record'Class;
@@ -585,29 +579,21 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File)
    is
+      use Mark_Identifier_List;
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-
-      use Mark_Identifier_List;
-
-      Node        : List_Node;
+      Node        : List_Node := First (Id.Stored_Marks);
       Mark_Record : Mark_Identifier_Record;
    begin
-      if Is_In_List (Id.Unopened_Files, Full_Name (File).all) then
-         Remove_From_List (Id.Unopened_Files, Full_Name (File).all);
+      while Node /= Null_Node loop
+         Mark_Record := Data (Node);
 
-         Node := First (Id.Stored_Marks);
+         if Get_File (File_Marker (Mark_Record.Marker)) = File then
+            Create_Text_Mark (Kernel, File_Marker (Data (Node).Marker));
+         end if;
 
-         while Node /= Null_Node loop
-            Mark_Record := Data (Node);
-
-            if Get_File (File_Marker (Mark_Record.Marker)) = File then
-               Create_Text_Mark (Kernel, File_Marker (Data (Node).Marker));
-            end if;
-
-            Node := Next (Node);
-         end loop;
-      end if;
+         Node := Next (Node);
+      end loop;
    end Fill_Marks;
 
    --------------------
@@ -661,45 +647,6 @@ package body Src_Editor_Module is
          Next (Iter);
       end loop;
    end File_Changed_On_Disk_Cb;
-
-   --------------------
-   -- File_Closed_Cb --
-   --------------------
-
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel);
-      use Mark_Identifier_List;
-
-      D           : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Id          : constant Source_Editor_Module :=
-                      Source_Editor_Module (Src_Editor_Module_Id);
-      Node        : List_Node;
-      Mark_Record : Mark_Identifier_Record;
-
-   begin
-      --  If there are marks associated with this file, save the name of the
-      --  file in a special list so that we can easily restore the mark
-      --  later on when the file is open again
-
-      if Id /= null then
-         Node := First (Id.Stored_Marks);
-         while Node /= Null_Node loop
-            Mark_Record := Mark_Identifier_List.Data (Node);
-            if Get_File (File_Marker (Mark_Record.Marker)) = D.File then
-               --  ??? Why do we need a second list. If we were using a proper
-               --  hash table, we could store all marks in a single list
-               Add_Unique_Sorted
-                 (Id.Unopened_Files, Full_Name (D.File).all);
-               exit;
-            end if;
-
-            Node := Next (Node);
-         end loop;
-      end if;
-   end File_Closed_Cb;
 
    -------------------
    -- File_Saved_Cb --
@@ -2036,8 +1983,6 @@ package body Src_Editor_Module is
       Start_Line   : Integer;
       End_Line     : Integer;
       Buffer       : Source_Buffer;
-
-      use String_List_Utils.String_List;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
@@ -2941,7 +2886,6 @@ package body Src_Editor_Module is
       Undo_Redo_Data.Set (Kernel, UR, Undo_Redo_Id);
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
-      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
       Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
       Add_Hook
         (Kernel, File_Changed_On_Disk_Hook, File_Changed_On_Disk_Cb'Access);
@@ -3165,7 +3109,6 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
-      String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
 
       Free (Id.Search_Pattern);
