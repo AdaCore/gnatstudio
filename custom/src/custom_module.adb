@@ -50,6 +50,8 @@ with Language.Custom;           use Language.Custom;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.GPS;     use Language_Handlers.GPS;
 
+with Remote_Connections.Custom; use Remote_Connections.Custom;
+
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
@@ -784,7 +786,8 @@ package body Custom_Module is
       ---------------
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
-         Lang  : Custom_Language_Access;
+         Lang       : Custom_Language_Access;
+         Connection : Custom_Connection_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -796,6 +799,10 @@ package body Custom_Module is
             --  ??? Lang is never freed
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Handler, Kernel, Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "protocol" then
+            Connection := new Remote_Connections.Custom.Custom_Connection;
+            Initialize (Connection, Current_Node);
 
          elsif Current_Node.Tag.all = "menu" then
             Parse_Menu_Node (Current_Node, Parent_Path);
