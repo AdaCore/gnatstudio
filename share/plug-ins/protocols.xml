@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<Custom>
+  <Protocol>
+    <Name>ssh</Name>
+    <Description>This protocol is used to create and keep open a permanent SSH connection to the remote host. Files are transfered inline and the remote host is assumed to be a Unix-like system, which can execute a /bin/sh shell. ""ssh"" itself must be found in your PATH.</Description>
+    <Commands>
+      <Shell_Cmd>ssh %h -C %U -e none -q /bin/sh</Shell_Cmd>
+      <User_Name_In_Shell_Cmd>-l %u</User_Name_In_Shell_Cmd>
+      <Has_Shell_Prompt>False</Has_Shell_Prompt>
+      <Inline_Read_File_Cmd>cat %F</Inline_Read_File_Cmd>
+      <Exit_Status_Cmd>echo $?</Exit_Status_Cmd>
+      <Is_Regular_File_Cmd>test -r %F</Is_Regular_File_Cmd>
+      <Is_Writable_Cmd>test -w %F</Is_Writable_Cmd>
+      <Is_Directory_Cmd>test -d %F</Is_Directory_Cmd>
+      <Delete_File_Cmd>rm -f %F</Delete_File_Cmd>
+      <Timestamp_Cmd>ls -l %F 2&gt;/dev/null</Timestamp_Cmd>
+      <Inline_Write_File_Cmd>cat &gt; %F &lt;&lt;'GPSEOF'</Inline_Write_File_Cmd>
+      <Set_Readable_Cmd>chmod u+r %F</Set_Readable_Cmd>
+      <Set_Writable_Cmd>chmod u+w %F</Set_Writable_Cmd>
+      <Set_Unreadable_Cmd>chmod u-r %F</Set_Unreadable_Cmd>
+      <Set_Unwritable_Cmd>chmod u-w %F</Set_Unwritable_Cmd>
+   </Commands>
+  </Protocol>
+</Custom>
