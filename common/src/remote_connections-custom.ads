@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
---                            ACT-Europe                             --
+--                   Copyright (C) 2005                              --
+--                            Ada Core                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,28 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
--- This is a generic remote connection that is customiwed from a XML file.
--- see remote_connections for a complete spec
+--  This is a generic remote connection that is customized from a XML file.
+--  see remote_connections for a complete spec
 
-with Glib.Xml_Int;
+with Ada.Calendar;    use Ada.Calendar;
+with GNAT.Expect;     use GNAT.Expect;
+with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with Glib;            use Glib;
+with Glib.Xml_Int;    use Glib.Xml_Int;
+with VFS;             use VFS;
 
 package Remote_Connections.Custom is
 
    type Custom_Connection is new Remote_Connection_Record with private;
-   type Custom_Connection_Access is access all Custom_Connection`Class;
+   type Custom_Connection_Access is access all Custom_Connection'Class;
 
    procedure Initialize
      (Connection : access Custom_Connection'Class;
       Top        : Glib.Xml_Int.Node_Ptr);
-   -- Initialize Connection based on the content of an XML node.
-   -- The connection is automatically registered
+   --  Initialize Connection based on the content of an XML node.
+   --  The connection is automatically registered
 
    function Get_Protocol
-     (Protocol : access Custom_Connection) return String;
+     (Connection      : access Custom_Connection) return String;
    function Get_Description
-     (Connection : access Custom_Connection) return String;
+     (Connection      : access Custom_Connection) return String;
    procedure Close
-     (Connection : access Custom_Connection;
+     (Connection      : access Custom_Connection;
       GPS_Termination : Boolean);
    function Is_Regular_File
      (Connection      : access Custom_Connection;
@@ -79,62 +85,105 @@ package Remote_Connections.Custom is
       Passwd     : String := "";
       Reuse      : Boolean := False) return Remote_Connection;
 
-   procedure Ensure_Connection
-     (Connection : access Custom_Connection'Class);
-   --  Make sure the connection is already open
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd        : String;
-      Cmd2       : String := "";
-      Cmd3       : String := "") return String;
-   --  Send a command, and get its output.
-   --  If Cmd2 is not the empty string, it is executed also, and its output is
-   --  appended to the one of Cmd
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd     : String;
-      Cmd2    : String := "") return Boolean;
-   --  Execute command, and return its exit status.
-
-   function Substitute
-     (Cmd, Local_Full_Name : String;
-      Connection           : access Custom_Connection'Class;
-      Temporary_File : String := "") return String;
-   --  Substitute the special variables in Cmd (%f, %F, ...)
-   --  %t is only defined if Temporary_File is not the empty string.
-   --  User_Name_Is_Explicit should be true if the user name was specified by
-   --  the user in the command.
-
-   procedure Trace_Filter_Input
-     (Descriptor : Process_Descriptor'Class;
-      Str        : String;
-      User_Data  : System.Address := System.Null_Address);
-   procedure Trace_Filter_Output
-     (Descriptor : Process_Descriptor'Class;
-      Str        : String;
-      User_Data  : System.Address := System.Null_Address);
-   --  Filter all input/output of the shell
-
-   procedure Open_Connection
-     (Cmd                  : String;
-      Connection           : access Custom_Connection'Class;
-      Is_Interactive_Shell : Boolean;
-      Fd                   : out TTY_Process_Descriptor;
-      Is_Open              : out Boolean);
-   --  Open a new connection with Cmd.
-   --  The password is assumed to be the same as in Connection. However, if it
-   --  doesn't match, the user will be asked interactively.
-   --  If Is_Interactive_Shell is true, the connection is assumed to be
-   --  interactive, and the shell will be setup.
-   --  Is_Open is set to False if the connection couldn't be initialized.
-
 private
 
-   type Custom_Connection is new Remote_Connection_Record with record
-      null;
-   end record;
+   type Commands_Record is record
+      Shell_Cmd           : String_Ptr;
+      --  Command to execute to initialize the connection
 
+      User_Name_In_Shell_Cmd : String_Ptr;
+      --  The substitution for %U in Shell_Cmd (this is only called if the
+      --  user name was specified explicitly by the user, and %U is replaced
+      --  with "" otherwise. Note that this part is substituted in turn, so it
+      --  can contain special characters like %u
+
+      Read_File_Cmd        : String_Ptr;
+      Inline_Read_File_Cmd : String_Ptr;
+      --  Command to execute on the remote host to see the contents of a file.
+      --  The inline version is used if it is defined, and uses the same
+      --  connection as previously open. The normal version indicates that the
+      --  file will be fetched directly, and copied to a local temporary file
+      --  the name of which is supplied in the %t parameter.
+      --  If Read_File_Cmd starts with the '@' character, a new connection is
+      --  started to emit the command, rather than sending the command to the
+      --  already open connection. The new connection is immediately closed
+      --  after the command.
+
+      Exit_Status_Cmd     : String_Ptr;
+      --  Command to execute on the host to get the status of the previous
+      --  command. This is used in conjunction with the test commands. If this
+      --  notion doesn't make sense on the system, this command should be the
+      --  empty string.
+
+      Is_Regular_File_Cmd : String_Ptr;
+      --  Command to execute to find whether a file is readable. This will be
+      --  executed just before Exit_Status_Cmd, and the file is considered
+      --  readable if the combination of the two outputs is exactly "0"
+
+      Is_Writable_Cmd     : String_Ptr;
+      --  Same as Is_Regular_File_Cmd, but check whether the file is writable
+
+      Is_Directory_Cmd    : String_Ptr;
+      --  Same as Is_Regular_File_Cmd, but check whether the file is in fact
+      --  a directory
+
+      Delete_File_Cmd     : String_Ptr;
+      --  Command to execute to delete a file
+
+      Timestamp_Cmd       : String_Ptr;
+      --  Command to execute to get the timestamp. The expected output of the
+      --  command is that of the Unix "ls" utility.
+      --  ??? Add support for other output formats, through regexps
+
+      Write_File_Cmd        : String_Ptr;
+      Inline_Write_File_Cmd : String_Ptr;
+      --  Command to execute to write the file on the remote host. The contents
+      --  of the file is sent on standard input, and the string
+      --  End_Of_File_Mark is sent on its own at the end of the file
+      --  The inline version is used if it is defined, and uses the same
+      --  connection as previously open.
+      --  The same behavior is provided for Write_File_Cmd as for
+      --  Read_File_Cmd.
+
+      Has_Shell_Prompt    : Boolean := False;
+      --  Whether we are expecting a prompt from the remote shell, or whether
+      --  we should emulate it.
+
+      Set_Readable_Cmd    : String_Ptr;
+      Set_Writable_Cmd    : String_Ptr;
+      Set_Unreadable_Cmd  : String_Ptr;
+      Set_Unwritable_Cmd  : String_Ptr;
+      --  Commands to use to change the readable/writable status of files
+   end record;
+   --  In these commands, the following substitutions are available:
+   --    %F => full local file name on the host, utf8 encoded
+   --    %f => base local file name
+   --    %d => directory local file name
+   --    %h => host name
+   --    %u => user name
+   --    %t => temporary local file to use (only for read and write)
+   --    %U => value of User_Name_In_Shell_Cmd, only if the user name was
+   --          explicitly specified by the user, the empty string otherwise
+   --  Any of these command can be left to null, and a reasonnable default is
+   --  provided.
+
+   type Custom_Connection is new Remote_Connection_Record with record
+      Description : String_Ptr;
+      --  A description of the protocol
+
+      Name                : String_Ptr;
+      --  Name of the protocol; This is also the suffix in URLs
+
+      Is_Open  : Boolean := False;
+      Fd       : TTY_Process_Descriptor;
+      Commands : Commands_Record;
+
+      Last_Connection_Attempt : Time := VFS.No_Time;
+      --  Time when we last attempted a connection, so that we avoid
+      --  asking the password over and over again when the user cancelled a
+      --  query.
+
+      Next                    : Custom_Connection_Access := null;
+   end record;
 
 end Remote_Connections.Custom;
