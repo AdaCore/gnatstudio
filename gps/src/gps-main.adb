@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
-
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
