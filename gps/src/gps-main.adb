@@ -111,7 +111,6 @@ with Python_Module;
 with KeyManager_Module;
 with Theme_Manager_Module;
 with Docgen_Module;
-with SSH_Protocol;
 with HTTP_Protocol;
 with Refactoring_Module;
 with Action_Editor;
@@ -156,7 +155,6 @@ procedure GPS.Main is
    Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
    VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
    Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
-   SSH_Trace     : constant Debug_Handle := Create ("MODULE.SSH", On);
    HTTP_Trace    : constant Debug_Handle := Create ("MODULE.HTTP", On);
    Scenario_View_Trace : constant Debug_Handle :=
      Create ("MODULE.SCENARIO", On);
@@ -1189,10 +1187,6 @@ procedure GPS.Main is
 
       --  Register the remote protocols early so that other modules can access
       --  remote files.
-
-      if Active (SSH_Trace) then
-         SSH_Protocol.Register_Protocol;
-      end if;
 
       if Active (HTTP_Trace) then
          HTTP_Protocol.Register_Protocol;
