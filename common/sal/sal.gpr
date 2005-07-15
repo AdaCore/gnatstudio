@@ -1,3 +1,5 @@
+with "../../shared.gpr";
+
 project Sal is
 
    for Source_Dirs use ("../src", ".");
@@ -34,12 +36,8 @@ project Sal is
    for Library_Interface use ("JNI", "GDT", "GDT.Jni_Functions");
    for Languages use ("Ada");
 
-   type Target_Type is ("win32", "linux");
-
-   Target : Target_Type := external ("target", "linux");
-
-   case Target is
-      when "linux" =>
+   case Shared.OS is
+      when "unix" =>
          for Library_Options use ("-lgcc_s", "-lgcc_eh");
    end case;
 
