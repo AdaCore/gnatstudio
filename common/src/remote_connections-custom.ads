@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005                              --
---                            Ada Core                             --
+--                      Copyright (C) 2005                           --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 --  This is a generic remote connection that is customized from a XML file.
---  see remote_connections for a complete spec
+--  See remote_connections for a complete spec
 
 with Ada.Calendar;    use Ada.Calendar;
 with GNAT.Expect;     use GNAT.Expect;
@@ -171,7 +171,7 @@ private
       Description : String_Ptr;
       --  A description of the protocol
 
-      Name                : String_Ptr;
+      Name : String_Ptr;
       --  Name of the protocol; This is also the suffix in URLs
 
       Is_Open  : Boolean := False;
@@ -183,7 +183,7 @@ private
       --  asking the password over and over again when the user cancelled a
       --  query.
 
-      Next                    : Custom_Connection_Access := null;
+      Next : Custom_Connection_Access := null;
    end record;
 
 end Remote_Connections.Custom;

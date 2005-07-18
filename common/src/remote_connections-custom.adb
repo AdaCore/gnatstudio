@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005                              --
---                            Ada Core                             --
+--                      Copyright (C) 2005                           --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +38,7 @@ with VFS;                use VFS;
 
 package body Remote_Connections.Custom is
 
-   Me      : constant Debug_Handle := Create ("Remote_Connections.Custom");
+   Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -70,9 +70,9 @@ package body Remote_Connections.Custom is
    Max_Passwd_Attempts : constant := 2;
    --  Maximum number of attempts to enter the password
 
-   ----------------------------------
-   -- INTERNAL METHODS DECLARATION --
-   ----------------------------------
+   -----------------------
+   -- Local Subprograms --
+   -----------------------
 
    function Get_String (S : in String_Ptr) return String;
    --  returns "" if S is null, S.all else
@@ -117,10 +117,6 @@ package body Remote_Connections.Custom is
    --  If Is_Interactive_Shell is true, the connection is assumed to be
    --  interactive, and the shell will be setup.
    --  Is_Open is set to False if the connection couldn't be initialized.
-
-   -------------------------------------
-   -- INTERNAL METHODS IMPLEMENTATION --
-   -------------------------------------
 
    ----------------
    -- Get_String --
@@ -453,10 +449,6 @@ package body Remote_Connections.Custom is
          Is_Open := False;
    end Open_Connection;
 
-   -------------------------------------
-   -- EXTERNAL METHODS IMPLEMENTATION --
-   -------------------------------------
-
    ----------------
    -- Initialize --
    ----------------
@@ -503,9 +495,9 @@ package body Remote_Connections.Custom is
       -------------------
 
       procedure Parse_Boolean
-        (Node          : Node_Ptr;
-         Name          : String;
-         Result        : in out Boolean)
+        (Node   : Node_Ptr;
+         Name   : String;
+         Result : in out Boolean)
       is
          Field : String_Ptr;
       begin
@@ -539,7 +531,7 @@ package body Remote_Connections.Custom is
       end Parse_String;
 
    begin
-      --  insert connection in custom connections list
+      --  Insert connection in custom connections list
       Connection.Next := Custom_Root;
       Custom_Root     := Custom_Connection_Access (Connection);
 
@@ -568,59 +560,78 @@ package body Remote_Connections.Custom is
 
       --  Get Commands node
       Node := Find_Tag (Top.Child, "Commands");
+
       if Node /= null then
-         Parse_String (Node   => Node,
-                       Name   => "Shell_Cmd",
-                       Result => Connection.Commands.Shell_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "User_Name_In_Shell_Cmd",
-                       Result => Connection.Commands.User_Name_In_Shell_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Read_File_Cmd",
-                       Result => Connection.Commands.Read_File_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Inline_Read_File_Cmd",
-                       Result => Connection.Commands.Inline_Read_File_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Exit_Status_Cmd",
-                       Result => Connection.Commands.Exit_Status_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Is_Regular_File_Cmd",
-                       Result => Connection.Commands.Is_Regular_File_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Is_Writable_Cmd",
-                       Result => Connection.Commands.Is_Writable_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Is_Directory_Cmd",
-                       Result => Connection.Commands.Is_Directory_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Delete_File_Cmd",
-                       Result => Connection.Commands.Delete_File_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Timestamp_Cmd",
-                       Result => Connection.Commands.Timestamp_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Write_File_Cmd",
-                       Result => Connection.Commands.Write_File_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Inline_Write_File_Cmd",
-                       Result => Connection.Commands.Inline_Write_File_Cmd);
-         Parse_Boolean (Node   => Node,
-                        Name   => "Has_Shell_Prompt",
-                        Result => Connection.Commands.Has_Shell_Prompt);
-         Parse_String (Node   => Node,
-                       Name   => "Set_Readable_Cmd",
-                       Result => Connection.Commands.Set_Readable_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Set_Writable_Cmd",
-                       Result => Connection.Commands.Set_Writable_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Set_Unreadable_Cmd",
-                       Result => Connection.Commands.Set_Unreadable_Cmd);
-         Parse_String (Node   => Node,
-                       Name   => "Set_Unwritable_Cmd",
-                       Result => Connection.Commands.Set_Unwritable_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Shell_Cmd",
+            Result => Connection.Commands.Shell_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "User_Name_In_Shell_Cmd",
+            Result => Connection.Commands.User_Name_In_Shell_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Read_File_Cmd",
+            Result => Connection.Commands.Read_File_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Inline_Read_File_Cmd",
+            Result => Connection.Commands.Inline_Read_File_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Exit_Status_Cmd",
+            Result => Connection.Commands.Exit_Status_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Is_Regular_File_Cmd",
+            Result => Connection.Commands.Is_Regular_File_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Is_Writable_Cmd",
+            Result => Connection.Commands.Is_Writable_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Is_Directory_Cmd",
+            Result => Connection.Commands.Is_Directory_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Delete_File_Cmd",
+            Result => Connection.Commands.Delete_File_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Timestamp_Cmd",
+            Result => Connection.Commands.Timestamp_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Write_File_Cmd",
+            Result => Connection.Commands.Write_File_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Inline_Write_File_Cmd",
+            Result => Connection.Commands.Inline_Write_File_Cmd);
+         Parse_Boolean
+           (Node   => Node,
+            Name   => "Has_Shell_Prompt",
+            Result => Connection.Commands.Has_Shell_Prompt);
+         Parse_String
+           (Node   => Node,
+            Name   => "Set_Readable_Cmd",
+            Result => Connection.Commands.Set_Readable_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Set_Writable_Cmd",
+            Result => Connection.Commands.Set_Writable_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Set_Unreadable_Cmd",
+            Result => Connection.Commands.Set_Unreadable_Cmd);
+         Parse_String
+           (Node   => Node,
+            Name   => "Set_Unwritable_Cmd",
+            Result => Connection.Commands.Set_Unwritable_Cmd);
       end if;
+
       Remote_Connections.Register_Protocol (Connection);
    end Initialize;
 
@@ -639,7 +650,7 @@ package body Remote_Connections.Custom is
    ---------------------
 
    function Get_Description
-     (Connection      : access Custom_Connection) return String is
+     (Connection : access Custom_Connection) return String is
    begin
       return Get_String (Connection.Description);
    end Get_Description;
@@ -656,6 +667,7 @@ package body Remote_Connections.Custom is
          Close (Connection.Fd);
          Close
            (Remote_Connection_Record (Connection.all)'Access, GPS_Termination);
+
       else
          --  Do nothing, since we want to keep the connection open as long as
          --  possible
@@ -684,6 +696,7 @@ package body Remote_Connections.Custom is
          --  On the other hand, this means that when attempting to open an
          --  invalid remote file, GPS will try to create a new file since it
          --  thinks it doesn't have a regular file.
+
          return Connection.Is_Open and then Send_Cmd_And_Get_Result
            (Connection,
             Substitute
@@ -705,6 +718,7 @@ package body Remote_Connections.Custom is
       if Connection.Commands.Inline_Read_File_Cmd /= null then
          Trace (Me, "Read_File inline " & Local_Full_Name);
          Ensure_Connection (Connection);
+
          if not Connection.Is_Open then
             Trace (Me, "File could not be read");
             return null;
@@ -724,6 +738,7 @@ package body Remote_Connections.Custom is
             Success     : Boolean;
             Result      : String_Access;
             Pd          : TTY_Process_Descriptor;
+
          begin
             Change_Dir (Temporary_Dir);
             Create_Temp_File (Fd, Base_Tmp);
@@ -743,6 +758,7 @@ package body Remote_Connections.Custom is
                   False,
                   Pd,
                   Is_Open => Success);
+
                if Success then
                   Close (Pd);
                else
@@ -752,6 +768,7 @@ package body Remote_Connections.Custom is
             else
                Trace (Me, "Read_File " & Local_Full_Name);
                Ensure_Connection (Connection);
+
                if not Connection.Is_Open then
                   Trace (Me, "File could not be read");
                   return null;
@@ -763,6 +780,7 @@ package body Remote_Connections.Custom is
                            Local_Full_Name, Connection,
                            Temporary_Dir & Base_Tmp));
                      pragma Unreferenced (Result);
+
                   begin
                      null;
                   end;
@@ -814,10 +832,12 @@ package body Remote_Connections.Custom is
    is
    begin
       if Connection.Commands.Is_Writable_Cmd = null then
-         --  Assume it is writable if we have a command defined for this,
-         --  we'll check when we try to write it
+         --  Assume it is writable if we do not have a command defined for
+         --  this, we'll check when we try to write it.
+
          return Connection.Commands.Write_File_Cmd /= null
            or else Connection.Commands.Inline_Write_File_Cmd /= null;
+
       else
          Trace (Me, "Is_Writable " & Local_Full_Name);
          Ensure_Connection (Connection);
@@ -925,17 +945,18 @@ package body Remote_Connections.Custom is
          end if;
 
          declare
-            C : constant String := Substitute
+            C       : constant String := Substitute
               (Connection.Commands.Timestamp_Cmd.all, Local_Full_Name,
                Connection);
-            Result : constant String :=
+            Result  : constant String :=
               Send_Cmd_And_Get_Result (Connection, C);
-            Month  : Month_Number := 1;
-            Day    : Day_Number;
-            Year   : Year_Number := Ada.Calendar.Year (Clock);
-            Hour   : Hour_Number := 1;
-            Minute : Minute_Number := 1;
+            Month   : Month_Number := 1;
+            Day     : Day_Number;
+            Year    : Year_Number := Ada.Calendar.Year (Clock);
+            Hour    : Hour_Number := 1;
+            Minute  : Minute_Number := 1;
             Matched : Match_Array (0 .. 20);
+
          begin
             if Result = "" then
                return VFS.No_Time;
@@ -999,12 +1020,13 @@ package body Remote_Connections.Custom is
       Local_Full_Name : Glib.UTF8_String;
       Temporary_File  : String)
    is
-      Success     : Boolean;
-      Pd          : TTY_Process_Descriptor;
+      Success : Boolean;
+      Pd      : TTY_Process_Descriptor;
    begin
       if Connection.Commands.Inline_Write_File_Cmd /= null then
          Trace (Me, "Write inline " & Local_Full_Name);
          Ensure_Connection (Connection);
+
          if Connection.Is_Open then
             declare
                Tmp : String_Access := Read_File (Temporary_File);
@@ -1014,8 +1036,10 @@ package body Remote_Connections.Custom is
                Result : constant Boolean := Send_Cmd_And_Get_Result
                  (Connection, C,
                   Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
+
             begin
                Free (Tmp);
+
                if not Result then
                   raise Use_Error;
                end if;
@@ -1055,6 +1079,7 @@ package body Remote_Connections.Custom is
                      Local_Full_Name, Connection,
                      Temporary_File));
                pragma Unreferenced (Result);
+
             begin
                null;
             end;
@@ -1078,6 +1103,7 @@ package body Remote_Connections.Custom is
       else
          Trace (Me, "Set_Writable " & Local_Full_Name);
          Ensure_Connection (Connection);
+
          if Connection.Is_Open then
             if Writable then
                declare
@@ -1087,9 +1113,11 @@ package body Remote_Connections.Custom is
                   Result : constant String :=
                     Send_Cmd_And_Get_Result (Connection, C);
                   pragma Unreferenced (Result);
+
                begin
                   null;
                end;
+
             else
                declare
                   C : constant String := Substitute
@@ -1098,6 +1126,7 @@ package body Remote_Connections.Custom is
                   Result : constant String :=
                     Send_Cmd_And_Get_Result (Connection, C);
                   pragma Unreferenced (Result);
+
                begin
                   null;
                end;
@@ -1122,6 +1151,7 @@ package body Remote_Connections.Custom is
       else
          Trace (Me, "Set_Readable " & Local_Full_Name);
          Ensure_Connection (Connection);
+
          if Connection.Is_Open then
             if Readable then
                declare
@@ -1134,6 +1164,7 @@ package body Remote_Connections.Custom is
                begin
                   null;
                end;
+
             else
                declare
                   C : constant String := Substitute
@@ -1142,6 +1173,7 @@ package body Remote_Connections.Custom is
                   Result : constant String :=
                     Send_Cmd_And_Get_Result (Connection, C);
                   pragma Unreferenced (Result);
+
                begin
                   null;
                end;
