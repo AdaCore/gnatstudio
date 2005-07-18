@@ -357,10 +357,6 @@ package String_Utils is
    --  Unprotect an argument: remove the leading and ending '"',
    --  and un-escape the "\" when necessary.
 
-   function Escape_Text (S : in String) return String;
-   --  Escape the text so that it is interpreted as-is by the Pango markup
-   --  language
-
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
