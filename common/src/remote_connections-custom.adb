@@ -304,12 +304,14 @@ package body Remote_Connections.Custom is
       Wrong_Passwd_Match : constant := 3;
       Shell_Prompt_Match : constant := 4;
       Unknown_Host_Match : constant := 5;
+      Scp_Match          : constant := 6;
       Regexps            : constant Compiled_Regexp_Array :=
         (Login_Match        => Login_Regexp,
          Passwd_Match       => Passwd_Regexp,
          Wrong_Passwd_Match => Wrong_Passwd_Regexp,
          Shell_Prompt_Match => Shell_Prompt_Regexp,
-         Unknown_Host_Match => Unknown_Host_Regexp);
+         Unknown_Host_Match => Unknown_Host_Regexp,
+         Scp_Match          => Scp_Regexp);
 
       Args : Argument_List_Access;
       Passwd_Attempts : Natural := 1;
@@ -322,7 +324,7 @@ package body Remote_Connections.Custom is
 
    begin
       Args := Argument_String_To_List (Cmd);
-      Trace (Me, "Connecting with " & Cmd);
+      Trace (Me, "Connecting with """ & Cmd & """");
 
       --  Do not create a TTY on the remote site, so that commands we
       --  send are not echoed. Otherwise, getting a file results in the
@@ -425,6 +427,7 @@ package body Remote_Connections.Custom is
                return;
 
             when Unknown_Host_Match =>
+               Is_Open := False;
                Trace (Me, "Invalid host " & Expect_Out (Fd));
                Response := Message_Dialog
                  ("Unknown host: " & Get_Host (Connection),
@@ -434,6 +437,12 @@ package body Remote_Connections.Custom is
                   Justification => Justify_Left);
                Close (Fd);
                Connection.Is_Open := False;
+               return;
+
+            when Scp_Match =>
+               Is_Open := True;
+               Trace (Me, "Scp OK");
+               Close (Fd);
                return;
 
             when others =>
@@ -526,7 +535,11 @@ package body Remote_Connections.Custom is
          Field := Get_Field (Node, Name);
 
          if Field /= null then
-            Result := Get_String (Field);
+            if Field.all /= "null" then
+               Result := Get_String (Field);
+            else
+               Result := null;
+            end if;
          end if;
       end Parse_String;
 
@@ -733,6 +746,7 @@ package body Remote_Connections.Custom is
       elsif Connection.Commands.Read_File_Cmd /= null then
          declare
             Base_Tmp    : String (1 .. Temp_File_Len);
+            Index       : Natural;
             Current_Dir : constant String := Get_Current_Dir;
             Fd          : File_Descriptor;
             Success     : Boolean;
@@ -744,48 +758,59 @@ package body Remote_Connections.Custom is
             Create_Temp_File (Fd, Base_Tmp);
             Change_Dir (Current_Dir);
 
-            if Connection.Commands.Read_File_Cmd
-              (Connection.Commands.Read_File_Cmd'First) = '@'
-            then
-               Open_Connection
-                 (Substitute
-                    (Connection.Commands.Read_File_Cmd.all
-                       (Connection.Commands.Read_File_Cmd'First + 1
-                          .. Connection.Commands.Read_File_Cmd'Last),
-                     Local_Full_Name, Connection,
-                     Temporary_Dir & Base_Tmp),
-                  Connection,
-                  False,
-                  Pd,
-                  Is_Open => Success);
+            for I in Base_Tmp'Range loop
+               exit when Base_Tmp (I) = ASCII.NUL;
+               Index := I;
+            end loop;
 
-               if Success then
-                  Close (Pd);
+            declare
+               Str_Base_Tmp : constant String :=
+                 Temporary_Dir & Base_Tmp (Base_Tmp'First .. Index);
+            begin
+               if Connection.Commands.Read_File_Cmd
+                 (Connection.Commands.Read_File_Cmd'First) = '@'
+               then
+                  Open_Connection
+                    (Substitute
+                       (Connection.Commands.Read_File_Cmd.all
+                          (Connection.Commands.Read_File_Cmd'First + 1
+                           .. Connection.Commands.Read_File_Cmd'Last),
+                        Local_Full_Name, Connection,
+                        Str_Base_Tmp),
+                     Connection,
+                     False,
+                     Pd,
+                     Is_Open => Success);
+
+                  if Success then
+                     Close (Pd);
+                  else
+                     return null;
+                  end if;
+
                else
-                  return null;
+                  Trace (Me, "Read_File " & Local_Full_Name);
+                  Ensure_Connection (Connection);
+
+                  if not Connection.Is_Open then
+                     Trace (Me, "File could not be read");
+                     return null;
+                  else
+                     declare
+                        Result : constant String := Send_Cmd_And_Get_Result
+                          (Connection, Substitute
+                             (Connection.Commands.Read_File_Cmd.all,
+                              Local_Full_Name, Connection,
+                              Str_Base_Tmp));
+                        pragma Unreferenced (Result);
+
+                     begin
+                        null;
+                     end;
+
+                  end if;
                end if;
-
-            else
-               Trace (Me, "Read_File " & Local_Full_Name);
-               Ensure_Connection (Connection);
-
-               if not Connection.Is_Open then
-                  Trace (Me, "File could not be read");
-                  return null;
-               else
-                  declare
-                     Result : constant String := Send_Cmd_And_Get_Result
-                       (Connection, Substitute
-                          (Connection.Commands.Read_File_Cmd.all,
-                           Local_Full_Name, Connection,
-                           Temporary_Dir & Base_Tmp));
-                     pragma Unreferenced (Result);
-
-                  begin
-                     null;
-                  end;
-               end if;
-            end if;
+            end;
 
             Result := Read_File (Temporary_Dir & Base_Tmp);
             Delete_File (Temporary_Dir & Base_Tmp, Success);
