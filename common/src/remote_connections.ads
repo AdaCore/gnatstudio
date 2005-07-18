@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -226,6 +226,7 @@ package Remote_Connections is
    function Wrong_Passwd_Regexp return GNAT.Expect.Pattern_Matcher_Access;
    function Unknown_Host_Regexp return GNAT.Expect.Pattern_Matcher_Access;
    function Shell_Prompt_Regexp return GNAT.Expect.Pattern_Matcher_Access;
+   function Scp_Regexp          return GNAT.Expect.Pattern_Matcher_Access;
    --  Various precompiled regular expressions that can be used to detect
    --  standard messages (login request, password request, warning for
    --  incorrect password, and warning for incorrect host name).
