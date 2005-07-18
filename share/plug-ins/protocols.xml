@@ -22,4 +22,16 @@
       <Set_Unwritable_Cmd>chmod u-w %F</Set_Unwritable_Cmd>
    </Commands>
   </Protocol>
+  <Protocol>
+    <Name>scp</Name>
+    <Description>This protocol uses a combination of ssh and scp. The former is used for commands that check the status and timestamp of files, the latter is used to transfer files in both direction</Description>
+    <Parent>ssh</Parent>
+    <Commands>
+      <Inline_Read_File_Cmd>null</Inline_Read_File_Cmd>
+      <Read_File_Cmd>@scp -C -p %U%h:%F %t</Read_File_Cmd>
+      <User_Name_In_Shell_Cmd>%u@</User_Name_In_Shell_Cmd>
+      <Inline_Write_File_Cmd>null</Inline_Write_File_Cmd>
+      <Write_File_Cmd>@scp -C -p %t %U%h:%F</Write_File_Cmd>
+    </Commands>
+  </Protocol>
 </Custom>
