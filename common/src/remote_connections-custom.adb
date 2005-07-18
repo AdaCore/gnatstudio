@@ -758,9 +758,9 @@ package body Remote_Connections.Custom is
             Create_Temp_File (Fd, Base_Tmp);
             Change_Dir (Current_Dir);
 
-            for I in Base_Tmp'Range loop
-               exit when Base_Tmp (I) = ASCII.NUL;
-               Index := I;
+            for J in Base_Tmp'Range loop
+               exit when Base_Tmp (J) = ASCII.NUL;
+               Index := J;
             end loop;
 
             declare
