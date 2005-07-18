@@ -53,6 +53,9 @@ package body Remote_Connections is
    Shell_Prompt_Re : constant Pattern_Matcher_Access :=
      new Pattern_Matcher'
        (Compile ("^[^#$%>\n]*[#$%>] *$", Case_Insensitive or Multiple_Lines));
+   Scp_Re : constant Pattern_Matcher_Access :=
+     new Pattern_Matcher'
+       (Compile ("100%", Case_Insensitive or Multiple_Lines));
    --  Regexps used in various part of this package. These are inspired from
    --  Emacs's tramp.el mode
 
@@ -73,7 +76,6 @@ package body Remote_Connections is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Connection_List_Record, Connection_List);
-
 
    Factories : Factory_Hash.String_Hash_Table.HTable;
    Open_Connections : Connection_List;
@@ -406,5 +408,14 @@ package body Remote_Connections is
    begin
       return Shell_Prompt_Re;
    end Shell_Prompt_Regexp;
+
+   ----------------
+   -- Scp_Regexp --
+   ----------------
+
+   function Scp_Regexp return GNAT.Expect.Pattern_Matcher_Access is
+   begin
+      return Scp_Re;
+   end Scp_Regexp;
 
 end Remote_Connections;
