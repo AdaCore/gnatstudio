@@ -89,6 +89,7 @@ Description of the main windows
 * The File View::
 * The Outline View::
 * The Clipboard View::
+* Bookmarks::
 * The Messages Window::
 @ifset python
 * The Shell and Python Windows::
@@ -312,6 +313,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The File View::
 * The Outline View::
 * The Clipboard View::
+* Bookmarks::
 * The Messages Window::
 
 @ifset python
@@ -831,6 +833,41 @@ selection @code{Edit->Paste} will in fact paste the two entries at the same
 time. This is in particular useful when you want to copy lines from separate
 places in the initial file, merge them, and then paste them together one or
 more times later on, through a single operation.
+
+@c --------------------------------------------------------------------
+@node Bookmarks
+@section Bookmarks
+@cindex bookmark
+@c --------------------------------------------------------------------
+
+@noindent
+Bookmarks are a convenient way to remember places in your code or in your
+environment so that you can go back to them at any point in the future.
+These bookmarks are saved automatically when GPS exits, and restored when it
+is reloaded, so that exist across GPS sessions.
+
+Bookmarks will automatically remember the exact location in an editor, not
+in terms of line/column, but in terms of which word they point to. If you
+modify the file through GPS, the bookmark will be automatically updated to
+keep refering to the same place. Likewise if you close and reopen the file.
+However, when the file is modified outside of GPS, the bookmark will not be
+aware of that change, and will thus reference another place in the file.
+
+The menu @code{Edit->Create Bookmark} allows you to create a bookmark
+at the current location (either in the editor, or the browser for instance).
+
+All the bookmarks you have created will be visible in the
+@code{Tools->Bookmarks} window. Clicking on the small icon to the left side
+of each line will immediately jump to that bookmark.
+
+You can rename a bookmark so that it is easier to remember what it refers to.
+To do so, open the Bookmarks window, and click twice on the line of the
+bookmark. This will change the way the name is displayed, so that you can edit
+it in place. Press @key{enter} when you are done modifying the name.
+
+You can delete an existing bookmark by right clicking on the line, and
+select @code{Delete bookmark} in the contextual menu.
+
 
 @c --------------------------------------------------------------------
 @node The Messages Window
@@ -2901,7 +2938,7 @@ to indicate the scope of the search, and whether the context (or caller)
 at each reference should be displayed. Computing the caller information will
 take slightly longer though.
 
-@cinde primitive operation
+@cindex primitive operation
 This dialog has an option @code{Include overriding and overriden operations},
 which, when activated, will include references to overriden or overriding
 entities of the one you selected.
