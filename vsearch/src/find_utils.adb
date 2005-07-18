@@ -21,6 +21,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Glib.Convert;              use Glib.Convert;
 with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
 with GPS.Kernel;                use GPS.Kernel;
@@ -30,7 +31,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch_Ext;               use Vsearch_Ext;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with String_Utils;              use String_Utils;
 
 package body Find_Utils is
 

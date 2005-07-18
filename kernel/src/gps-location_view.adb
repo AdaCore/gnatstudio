@@ -1484,7 +1484,7 @@ package body GPS.Location_View is
          else
             Add_Location
               (View, View.Tree.Model, Category, File, Line, Column, Length,
-               Highlight, Escape_Text (Text), Highlight_Category,
+               Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
                Enable_Counter    => Enable_Counter);
@@ -2374,7 +2374,8 @@ package body GPS.Location_View is
                Column             => Positive (Column),
                Length             => Length,
                Highlight          => Highlight,
-               Message            => Escape_Text (Get_Message (Last)),
+               Message            => Glib.Convert.Escape_Text
+                 (Get_Message (Last)),
                Highlight_Category => C.all,
                Quiet              => Expand,
                Remove_Duplicates  => False,
