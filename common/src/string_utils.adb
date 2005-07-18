@@ -25,8 +25,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Glib.Unicode;            use Glib, Glib.Unicode;
 
-with Interfaces.C.Strings;
-
 package body String_Utils is
 
    -----------------
@@ -1403,26 +1401,5 @@ package body String_Utils is
          return Result (Result'First .. Index - 1);
       end if;
    end Unprotect;
-
-   -----------------
-   -- Escape_Text --
-   -----------------
-
-   function Escape_Text (S : in String) return String is
-
-      function Internal (S : String; L : Integer) return
-        Interfaces.C.Strings.chars_ptr;
-      pragma Import (C, Internal, "g_markup_escape_text");
-
-      C_Res  : constant Interfaces.C.Strings.chars_ptr :=
-        Internal (S & ASCII.NUL, S'Length);
-      Result : constant String := Interfaces.C.Strings.Value (C_Res);
-
-      procedure G_Free (C_Str : Interfaces.C.Strings.chars_ptr);
-      pragma Import (C, G_Free, "g_free");
-   begin
-      G_Free (C_Res);
-      return Result;
-   end Escape_Text;
 
 end String_Utils;
