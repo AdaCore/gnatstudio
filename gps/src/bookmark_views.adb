@@ -335,6 +335,10 @@ package body Bookmark_Views is
       Mark  : constant Location_Marker := Create_Marker (Kernel);
       Child : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Bookmark_View_Record'Tag);
+      View  : Bookmark_View_Access;
+      Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
    begin
       if Mark /= null then
          Append (Bookmark_Views_Module.List,
@@ -342,7 +346,27 @@ package body Bookmark_Views is
                    (Marker => Mark,
                     Name   => new String'(To_String (Mark))));
          if Child /= null then
-            Refresh (Bookmark_View_Access (Get_Widget (Child)));
+            View  := Bookmark_View_Access (Get_Widget (Child));
+            Model := Gtk_Tree_Store (Get_Model (View.Tree));
+            Refresh (View);
+
+            --  Start editing the name of the bookmark immediately
+            Iter := Get_Iter_First (Model);
+            while Iter /= Null_Iter loop
+               if Convert (Get_Address (Model, Iter, Data_Column)).Marker =
+                 Mark
+               then
+                  Path := Get_Path (Model, Iter);
+                  Set_Cursor
+                    (View.Tree,
+                     Path          => Path,
+                     Focus_Column  => Get_Column (View.Tree, 2),
+                     Start_Editing => True);
+                  Path_Free (Path);
+                  exit;
+               end if;
+               Next (Get_Model (View.Tree), Iter);
+            end loop;
          end if;
          Run_Hook (Kernel, Bookmark_Added_Hook);
       end if;
