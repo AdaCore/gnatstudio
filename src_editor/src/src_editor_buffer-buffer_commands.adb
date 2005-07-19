@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003-2004                        --
---                            ACT-Europe                             --
+--                    Copyright (C) 2003-2005                        --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,12 @@
 -----------------------------------------------------------------------
 
 with Ada.Tags;                  use Ada.Tags;
+
 with Gtk;                       use Gtk;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
+
 with GPS.Kernel;                use GPS.Kernel;
 with Src_Editor_View;           use Src_Editor_View;
 
@@ -36,10 +39,11 @@ package body Src_Editor_Buffer.Buffer_Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      View   : Source_View;
-      Widget : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Command.Kernel);
-      Buffer : Source_Buffer;
+
+      View                 : Source_View;
+      Widget               : constant Gtk_Widget :=
+                               Get_Current_Focus_Widget (Command.Kernel);
+      Buffer               : Source_Buffer;
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
       Last_Highlight_Iter  : Gtk_Text_Iter;
@@ -62,7 +66,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
         (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
       Get_Iter_At_Mark
         (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Get_Insert_Mark (Buffer));
 
       if Equal (First_Highlight_Iter, On_Cursor_Iter) then
          Place_Cursor (Buffer, Last_Highlight_Iter);
