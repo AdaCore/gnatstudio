@@ -33,27 +33,27 @@ with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
 
 package Gtkada.Text_View is
 
-   type Text_View_Record is
+   type Gtkada_Text_View_Record is
      new Gtk.Text_View.Gtk_Text_View_Record  with private;
-   type Text_View_Access is access all Text_View_Record'Class;
+   type Gtkada_Text_View is access all Gtkada_Text_View_Record'Class;
 
    procedure Gtk_New
-     (View   : out Text_View_Access;
-      Buffer : Text_Buffer_Access := null);
+     (View   : out Gtkada_Text_View;
+      Buffer : Gtkada_Text_Buffer := null);
    --  Create a new Text_View_Access.
 
    procedure Initialize
-     (View   : access Text_View_Record'Class;
-      Buffer : Text_Buffer_Access);
+     (View   : access Gtkada_Text_View_Record'Class;
+      Buffer : Gtkada_Text_Buffer);
    --  Internal initialization procedure.
    --  See he section "Creating your own widgets" in the documentation.
 
    procedure Save_Cursor_Position
-     (View : access Text_View_Record'Class);
+     (View : access Gtkada_Text_View_Record'Class);
    --  Save the cursor position
 
    procedure Get_Cursor_Position
-     (View : access Text_View_Record'Class;
+     (View : access Gtkada_Text_View_Record'Class;
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the cursor location in that view.
 
@@ -62,18 +62,18 @@ package Gtkada.Text_View is
    ---------------
 
    function Get_Saved_Cursor_Mark
-     (View : access Text_View_Record'Class)
+     (View : access Gtkada_Text_View_Record'Class)
       return Gtk_Text_Mark;
    pragma Inline (Get_Saved_Cursor_Mark);
 
    procedure Set_Saved_Cursor_Mark
-     (View   : access Text_View_Record'Class;
+     (View   : access Gtkada_Text_View_Record'Class;
       Cursor : Gtk_Text_Mark);
    pragma Inline (Set_Saved_Cursor_Mark);
 
 private
 
-   type Text_View_Record is
+   type Gtkada_Text_View_Record is
      new Gtk.Text_View.Gtk_Text_View_Record
    with record
       Saved_Cursor_Mark : Gtk_Text_Mark;

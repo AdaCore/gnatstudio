@@ -36,7 +36,7 @@ with Gtk.Main;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtkada.Text_Buffer;
+with Gtkada.Text_Buffer;          use Gtkada.Text_Buffer;
 
 with Commands;                    use Commands;
 with Generic_List;
@@ -48,7 +48,7 @@ with VFS;
 
 package Src_Editor_Buffer is
 
-   type Source_Buffer_Record is new Gtkada.Text_Buffer.Text_Buffer_Record
+   type Source_Buffer_Record is new Gtkada_Text_Buffer_Record
      with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
@@ -853,9 +853,7 @@ private
    -- Source_Buffer_Record --
    --------------------------
 
-   type Source_Buffer_Record is
-     new Gtkada.Text_Buffer.Text_Buffer_Record
-   with record
+   type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with record
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : VFS.Virtual_File;
       File_Identifier : VFS.Virtual_File;

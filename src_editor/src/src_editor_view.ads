@@ -32,7 +32,7 @@ with Gtk.Drawing_Area;
 with Gtk.Main;
 with Gtk.Scrolled_Window;
 with Gtkada.MDI;             use Gtkada.MDI;
-with Gtkada.Text_View;
+with Gtkada.Text_View;       use Gtkada.Text_View;
 with Pango.Font;
 
 with GPS.Kernel;
@@ -41,7 +41,7 @@ with Src_Editor_Buffer;
 
 package Src_Editor_View is
 
-   type Source_View_Record is new Gtkada.Text_View.Text_View_Record
+   type Source_View_Record is new Gtkada_Text_View_Record
      with private;
    type Source_View is access all Source_View_Record'Class;
 
@@ -132,7 +132,7 @@ package Src_Editor_View is
 private
 
    type Source_View_Record is
-     new Gtkada.Text_View.Text_View_Record
+     new Gtkada_Text_View_Record
    with record
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view.

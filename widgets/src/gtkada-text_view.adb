@@ -41,12 +41,12 @@ package body Gtkada.Text_View is
    -------------------------
 
    procedure Get_Cursor_Position
-     (View : access Text_View_Record'Class;
+     (View : access Gtkada_Text_View_Record'Class;
       Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
    is
    begin
       if Has_Focus_Is_Set (View) then
-         Get_Cursor_Position (Text_Buffer_Access (Get_Buffer (View)), Iter);
+         Get_Cursor_Position (Gtkada_Text_Buffer (Get_Buffer (View)), Iter);
       else
          Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
       end if;
@@ -57,7 +57,7 @@ package body Gtkada.Text_View is
    ---------------------------
 
    function Get_Saved_Cursor_Mark
-     (View : access Text_View_Record'Class)
+     (View : access Gtkada_Text_View_Record'Class)
       return Gtk_Text_Mark is
    begin
       return View.Saved_Cursor_Mark;
@@ -68,10 +68,10 @@ package body Gtkada.Text_View is
    -------------
 
    procedure Gtk_New
-     (View   : out Text_View_Access;
-      Buffer : Text_Buffer_Access := null) is
+     (View   : out Gtkada_Text_View;
+      Buffer : Gtkada_Text_Buffer := null) is
    begin
-      View := new Text_View_Record;
+      View := new Gtkada_Text_View_Record;
       Initialize (View, Buffer);
    end Gtk_New;
 
@@ -80,8 +80,8 @@ package body Gtkada.Text_View is
    ----------------
 
    procedure Initialize
-     (View   : access Text_View_Record'Class;
-      Buffer : Text_Buffer_Access) is
+     (View   : access Gtkada_Text_View_Record'Class;
+      Buffer : Gtkada_Text_Buffer) is
    begin
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
    end Initialize;
@@ -90,9 +90,11 @@ package body Gtkada.Text_View is
    -- Save_Cursor_Position --
    --------------------------
 
-   procedure Save_Cursor_Position (View : access Text_View_Record'Class) is
-      Buffer : constant Text_Buffer_Access :=
-                 Text_Buffer_Access (Get_Buffer (View));
+   procedure Save_Cursor_Position
+     (View : access Gtkada_Text_View_Record'Class)
+   is
+      Buffer : constant Gtkada_Text_Buffer :=
+                 Gtkada_Text_Buffer (Get_Buffer (View));
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
@@ -104,7 +106,7 @@ package body Gtkada.Text_View is
    ---------------------------
 
    procedure Set_Saved_Cursor_Mark
-     (View   : access Text_View_Record'Class;
+     (View   : access Gtkada_Text_View_Record'Class;
       Cursor : Gtk_Text_Mark) is
    begin
       View.Saved_Cursor_Mark := Cursor;

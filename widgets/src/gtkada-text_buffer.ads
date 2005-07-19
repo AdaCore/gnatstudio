@@ -32,22 +32,22 @@ with Gtk.Text_Mark;   use Gtk.Text_Mark;
 
 package Gtkada.Text_Buffer is
 
-   type Text_Buffer_Record is
+   type Gtkada_Text_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record  with private;
-   type Text_Buffer_Access is access all Text_Buffer_Record;
+   type Gtkada_Text_Buffer is access all Gtkada_Text_Buffer_Record;
 
-   procedure Gtk_New (Buffer : out Text_Buffer_Access);
+   procedure Gtk_New (Buffer : out Gtkada_Text_Buffer);
    --  Create a new Text_Buffer_Access.
 
-   procedure Initialize (Buffer : access Text_Buffer_Record'Class);
+   procedure Initialize (Buffer : access Gtkada_Text_Buffer_Record'Class);
    --  Internal initialization procedure.
    --  See he section "Creating your own widgets" in the documentation.
 
-   procedure Clear (Buffer : access Text_Buffer_Record'Class);
+   procedure Clear (Buffer : access Gtkada_Text_Buffer_Record'Class);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 
    procedure Get_Cursor_Position
-     (Buffer : access Text_Buffer_Record'Class;
+     (Buffer : access Gtkada_Text_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter);
    --  Return the current cursor position. Such a query should rather be done
    --  on the specific view in which you are interested
@@ -57,20 +57,20 @@ package Gtkada.Text_Buffer is
    ---------------
 
    function Get_Insert_Mark
-     (Buffer : access Text_Buffer_Record'Class)
+     (Buffer : access Gtkada_Text_Buffer_Record'Class)
       return Gtk_Text_Mark;
    pragma Inline (Get_Insert_Mark);
    --  Return the current insert mark.
 
    procedure Set_Insert_Mark
-     (Buffer : access Text_Buffer_Record'Class;
+     (Buffer : access Gtkada_Text_Buffer_Record'Class;
       Mark   : Gtk_Text_Mark);
    pragma Inline (Set_Insert_Mark);
    --  Store the current insert mark.
 
 private
 
-   type Text_Buffer_Record is
+   type Gtkada_Text_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
       Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;

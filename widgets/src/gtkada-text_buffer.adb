@@ -35,9 +35,9 @@ package body Gtkada.Text_Buffer is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Buffer : out Text_Buffer_Access) is
+   procedure Gtk_New (Buffer : out Gtkada_Text_Buffer) is
    begin
-      Buffer := new Text_Buffer_Record;
+      Buffer := new Gtkada_Text_Buffer_Record;
       Initialize (Buffer);
    end Gtk_New;
 
@@ -45,7 +45,7 @@ package body Gtkada.Text_Buffer is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Buffer : access Text_Buffer_Record'Class) is
+   procedure Initialize (Buffer : access Gtkada_Text_Buffer_Record'Class) is
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
    end Initialize;
@@ -54,7 +54,7 @@ package body Gtkada.Text_Buffer is
    -- Clear --
    -----------
 
-   procedure Clear (Buffer : access Text_Buffer_Record'Class) is
+   procedure Clear (Buffer : access Gtkada_Text_Buffer_Record'Class) is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
@@ -69,7 +69,7 @@ package body Gtkada.Text_Buffer is
    -------------------------
 
    procedure Get_Cursor_Position
-     (Buffer : access Text_Buffer_Record'Class;
+     (Buffer : access Gtkada_Text_Buffer_Record'Class;
       Iter   : out Gtk_Text_Iter) is
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
@@ -80,7 +80,7 @@ package body Gtkada.Text_Buffer is
    ---------------------
 
    function Get_Insert_Mark
-     (Buffer : access Text_Buffer_Record'Class)
+     (Buffer : access Gtkada_Text_Buffer_Record'Class)
       return Gtk_Text_Mark is
    begin
       return Buffer.Insert_Mark;
@@ -91,7 +91,7 @@ package body Gtkada.Text_Buffer is
    ---------------------
 
    procedure Set_Insert_Mark
-     (Buffer : access Text_Buffer_Record'Class;
+     (Buffer : access Gtkada_Text_Buffer_Record'Class;
       Mark   : Gtk_Text_Mark) is
    begin
       Buffer.Insert_Mark := Mark;

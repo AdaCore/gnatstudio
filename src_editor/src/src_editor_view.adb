@@ -1234,7 +1234,7 @@ package body Src_Editor_View is
 
       pragma Assert (Buffer /= null);
 
-      Initialize (View, Text_Buffer_Access (Buffer));
+      Initialize (View, Gtkada_Text_Buffer (Buffer));
 
       View.Kernel := Kernel_Handle (Kernel);
       View.Scroll := Scroll;
