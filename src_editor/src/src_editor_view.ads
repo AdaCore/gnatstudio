@@ -23,31 +23,25 @@
 --  many functionalities related to source code editing.
 --  </description>
 
-with Glib; use Glib;
 with Gdk.GC;
 with Gdk.Color;
 with Gdk.Event;
 with Gdk.Pixmap;
-
+with Glib;                   use Glib;
+with Gtk.Drawing_Area;
+with Gtk.Main;
+with Gtk.Scrolled_Window;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Text_View;
 with Pango.Font;
 
-with Gtk.Drawing_Area;
-with Gtk.Text_View;
-with Gtk.Text_Iter;
-with Gtk.Scrolled_Window;
-with Gtk.Main;
-
 with GPS.Kernel;
-with Src_Editor_Buffer;
-with Gtk.Text_Mark; use Gtk.Text_Mark;
-
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-
-with Gtkada.MDI; use Gtkada.MDI;
+with Src_Editor_Buffer;
 
 package Src_Editor_View is
 
-   type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
+   type Source_View_Record is new Gtkada.Text_View.Text_View_Record
      with private;
    type Source_View is access all Source_View_Record'Class;
 
@@ -135,18 +129,10 @@ package Src_Editor_View is
       Child : MDI_Child);
    --  Inform View that it is being contained in Child.
 
-   procedure Save_Cursor_Position
-     (View : access Source_View_Record'Class);
-   --  Save the cursor position
-
-   procedure Get_Cursor_Position
-     (View : access Source_View_Record'Class;
-      Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Return the cursor location in that view.
-
 private
 
-   type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
+   type Source_View_Record is
+     new Gtkada.Text_View.Text_View_Record
    with record
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view.
@@ -155,8 +141,6 @@ private
       --  The drawing area used for the speed column.
 
       Kernel              : GPS.Kernel.Kernel_Handle;
-
-      Saved_Cursor_Mark   : Gtk_Text_Mark;
 
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
