@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,17 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Maps;  use Ada.Strings.Maps;
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Commands.Editor;   use Commands.Editor;
+with Ada.Strings.Maps;   use Ada.Strings.Maps;
 
-with Language;          use Language;
-with Case_Handling;     use Case_Handling;
-with Casing_Exceptions; use Casing_Exceptions;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
 
+with Case_Handling;      use Case_Handling;
+with Casing_Exceptions;  use Casing_Exceptions;
+with Commands.Editor;    use Commands.Editor;
+with Language;           use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-
 
 package body Src_Editor_Buffer.Text_Handling is
 
