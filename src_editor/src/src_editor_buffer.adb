@@ -18,72 +18,69 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Calendar;                        use Ada.Calendar;
+with Ada.Characters.Handling;             use Ada.Characters.Handling;
+with Ada.Exceptions;                      use Ada.Exceptions;
+with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
-with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
+with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System;
 with System.Address_Image;
 
-with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
-with Glib.Unicode;              use Glib.Unicode;
-with Glib.Values;               use Glib.Values;
-with Gdk.Color;                 use Gdk.Color;
-with Gtk;                       use Gtk;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.Types;              use Gtkada.Types;
+with Glib;                                use Glib;
+with Glib.Convert;                        use Glib.Convert;
+with Glib.Object;                         use Glib.Object;
+with Glib.Properties;                     use Glib.Properties;
+with Glib.Unicode;                        use Glib.Unicode;
+with Glib.Values;                         use Glib.Values;
+with Gdk.Color;                           use Gdk.Color;
+with Gtk;                                 use Gtk;
+with Gtk.Enums;                           use Gtk.Enums;
+with Gtk.Handlers;                        use Gtk.Handlers;
+with Gtk.Main;                            use Gtk.Main;
+with Gtk.Text_Iter;                       use Gtk.Text_Iter;
+with Gtk.Text_Mark;                       use Gtk.Text_Mark;
+with Gtk.Text_Tag;                        use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
+with Gtk.Widget;                          use Gtk.Widget;
+with Gtkada.Dialogs;                      use Gtkada.Dialogs;
+with Gtkada.Text_Buffer;                  use Gtkada.Text_Buffer;
+with Gtkada.Types;                        use Gtkada.Types;
+with Pango.Font;                          use Pango.Font;
 
-with Basic_Types;               use Basic_Types;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Src_Highlighting;          use Src_Highlighting;
-
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
-with Commands.Editor;           use Commands.Editor;
-with Commands.Controls;         use Commands.Controls;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
-with Casing_Exceptions;         use Casing_Exceptions;
-with Case_Handling;             use Case_Handling;
-with Completion_Module;         use Completion_Module;
-
-with Pango.Font;                use Pango.Font;
-
-with VFS;                       use VFS;
-
-with Src_Editor_Module;                  use Src_Editor_Module;
-with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_View;                    use Src_Editor_View;
+with Basic_Types;                         use Basic_Types;
+with Casing_Exceptions;                   use Casing_Exceptions;
+with Case_Handling;                       use Case_Handling;
+with Commands.Editor;                     use Commands.Editor;
+with Commands.Controls;                   use Commands.Controls;
+with Completion_Module;                   use Completion_Module;
+with GPS.Intl;                            use GPS.Intl;
+with GPS.Kernel;                          use GPS.Kernel;
+with GPS.Kernel.Console;                  use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;                  use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
+with Language;                            use Language;
+with Language_Handlers;                   use Language_Handlers;
+with Language_Handlers.GPS;               use Language_Handlers.GPS;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Hooks;            use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Text_Handling;    use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
+with Src_Editor_Buffer.Text_Handling;     use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Module;                   use Src_Editor_Module;
+with Src_Editor_Module.Line_Highlighting;
+with Src_Editor_View;                     use Src_Editor_View;
+with Src_Highlighting;                    use Src_Highlighting;
+with String_Utils;                        use String_Utils;
+with Traces;                              use Traces;
+with VFS;                                 use VFS;
 
 package body Src_Editor_Buffer is
 
@@ -92,16 +89,16 @@ package body Src_Editor_Buffer is
    use Src_Editor_Buffer.Line_Information;
    use type System.Address;
 
-   Me                   : constant Debug_Handle :=
+   Me                        : constant Debug_Handle :=
      Create ("Source_Editor_Buffer");
-   Indent_On_Block_Info : constant Debug_Handle :=
+   Indent_On_Block_Info      : constant Debug_Handle :=
      Create ("Source_Editor_Buffer.Indent_On_Block_Info", Default => Off);
 
    Buffer_Recompute_Interval : constant Guint32 := 200;
    --  The interval at which to check whether the buffer should be reparsed,
    --  in milliseconds.
 
-   Cursor_Stop_Interval : constant Guint32 := 100;
+   Cursor_Stop_Interval      : constant Guint32 := 100;
    --  The interval after which we consider that the cursor has stopped.
 
    Buffer_Recompute_Delay    : constant Duration := 1.0;
@@ -318,9 +315,6 @@ package body Src_Editor_Buffer is
    --  Return the iter at position (Line, Column), tab expansion included.
    --  ??? This function should be removed in the long term, replaced by
    --  the version of Get_Iter_At_Screen_Position that supports blank lines.
-
-   procedure Clear (Buffer : access Source_Buffer_Record);
-   --  Delete all characters from the given buffer, leaving an empty buffer.
 
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
@@ -2145,7 +2139,7 @@ package body Src_Editor_Buffer is
       Command : Check_Modified_State;
       P_Hook  : Preferences_Hook;
    begin
-      Gtk.Text_Buffer.Initialize (Buffer);
+      Gtkada.Text_Buffer.Initialize (Buffer);
 
       Glib.Object.Initialize_Class_Record
         (Buffer, Signals, Class_Record, "GPSSourceBuffer",
@@ -2911,20 +2905,6 @@ package body Src_Editor_Buffer is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Save_To_File;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Buffer : access Source_Buffer_Record) is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      if Get_Char_Count (Buffer) > 0 then
-         Get_Bounds (Buffer, Start_Iter, End_Iter);
-         Delete (Buffer, Start_Iter, End_Iter);
-      end if;
-   end Clear;
 
    ------------------
    -- Set_Language --
