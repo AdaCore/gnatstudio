@@ -18,26 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
-with Pango.Layout;              use Pango.Layout;
-
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -58,36 +49,44 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-with GUI_Utils;                 use GUI_Utils;
-with GPS.Intl;                  use GPS.Intl;
+with Gtkada.Text_View;          use Gtkada.Text_View;
+with Gtkada.Types;              use Gtkada.Types;
+with Pango.Layout;              use Pango.Layout;
 
 with Basic_Types;
+with Commands;                  use Commands;
+with Commands.Editor;           use Commands.Editor;
+with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
+with Find_Utils;                use Find_Utils;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
 with Language_Handlers;         use Language_Handlers;
-with String_Utils;              use String_Utils;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with Src_Editor_Box.Tooltips;   use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Box.Tooltips;   use Src_Editor_Box.Tooltips;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
+with Std_Dialogs;               use Std_Dialogs;
+with String_Utils;              use String_Utils;
+with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-with Std_Dialogs;               use Std_Dialogs;
-with Tooltips;                  use Tooltips;
-
-with Commands;                  use Commands;
-with Commands.Editor;           use Commands.Editor;
-with Find_Utils;                use Find_Utils;
-
-with Gtkada.Types;              use Gtkada.Types;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 package body Src_Editor_Box is
 
