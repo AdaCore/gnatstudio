@@ -21,10 +21,6 @@
 with Ada.Strings.Maps.Constants;  use Ada.Strings.Maps;
 with Ada.Exceptions;              use Ada.Exceptions;
 
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
-with Glib.Properties;             use Glib.Properties;
-with Glib.Values;                 use Glib.Values;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Color;                   use Gdk.Color;
@@ -36,6 +32,10 @@ with Gdk.Pixmap;                  use Gdk.Pixmap;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
+with Glib.Properties;             use Glib.Properties;
+with Glib.Values;                 use Glib.Values;
 with Gtk;                         use Gtk;
 with Gtk.Adjustment;              use Gtk.Adjustment;
 with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
@@ -50,25 +50,27 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtk.Window;                  use Gtk.Window;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtkada.Text_Buffer;          use Gtkada.Text_Buffer;
+with Gtkada.Text_View;            use Gtkada.Text_View;
+with Pango.Font;                  use Pango.Font;
+with Pango.Layout;                use Pango.Layout;
+
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Hooks;     use Src_Editor_Buffer.Hooks;
 
+with Config;                      use Config;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with Language;                    use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Pango.Font;                  use Pango.Font;
-with Pango.Layout;                use Pango.Layout;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Config;                      use Config;
 with Traces;                      use Traces;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                         use VFS;
-with Language;                    use Language;
-with Config;
 
 package body Src_Editor_View is
 
@@ -323,7 +325,7 @@ package body Src_Editor_View is
    is
       Y, Height   : Gint;
       Rect        : Gdk_Rectangle;
-      Insert_Mark : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      Insert_Mark : constant Gtk_Text_Mark := Get_Saved_Cursor_Mark (View);
       Iter        : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Get_Buffer (Source_View (View)), Iter, Insert_Mark);
@@ -346,18 +348,6 @@ package body Src_Editor_View is
       Gtk.Handlers.Add_Watch (Id, Data);
    end Setup;
 
-   --------------------------
-   -- Save_Cursor_Position --
-   --------------------------
-
-   procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Insert_Iter : Gtk_Text_Iter;
-   begin
-      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
-   end Save_Cursor_Position;
-
    -----------------------------
    -- Restore_Cursor_Position --
    -----------------------------
@@ -369,7 +359,7 @@ package body Src_Editor_View is
       Cursor_Iter : Gtk_Text_Iter;
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Saved_Cursor_Mark (View));
 
       --  If the cursor has not moved, do not do anything.
 
@@ -409,7 +399,7 @@ package body Src_Editor_View is
          View.Speed_Column_Buffer := null;
       end if;
 
-      Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
+      Delete_Mark (Get_Buffer (View), Get_Saved_Cursor_Mark (View));
 
       if View.Connect_Expose_Registered then
          Idle_Remove (View.Connect_Expose_Id);
@@ -1020,7 +1010,7 @@ package body Src_Editor_View is
          end loop;
 
          Get_Iter_At_Mark
-           (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
+           (Get_Buffer (View), Cursor_Iter, Get_Saved_Cursor_Mark (View));
 
          Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
@@ -1239,12 +1229,12 @@ package body Src_Editor_View is
 
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
-      --  until the widget is realize or mapped. Their initialization is thus
+      --  until the widget is realized or mapped. Their initialization is thus
       --  done at that point.
 
       pragma Assert (Buffer /= null);
 
-      Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
+      Initialize (View, Text_Buffer_Access (Buffer));
 
       View.Kernel := Kernel_Handle (Kernel);
       View.Scroll := Scroll;
@@ -1402,7 +1392,7 @@ package body Src_Editor_View is
          Source_View (View));
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
+      Set_Saved_Cursor_Mark (View, Create_Mark (Buffer, "", Insert_Iter));
 
       Invalidate_Window (Source_View (View));
    end Initialize;
@@ -1622,7 +1612,7 @@ package body Src_Editor_View is
       --  behavior.
 
       Scroll_To_Mark
-        (View, View.Saved_Cursor_Mark, Use_Align => Center,
+        (View, Get_Saved_Cursor_Mark (View), Use_Align => Center,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
@@ -1637,22 +1627,6 @@ package body Src_Editor_View is
         (View, Insert_Mark, Use_Align => False,
          Within_Margin => 0.1, Xalign => 0.5, Yalign => 0.5);
    end Center_Cursor;
-
-   -------------------------
-   -- Get_Cursor_Position --
-   -------------------------
-
-   procedure Get_Cursor_Position
-     (View : access Source_View_Record'Class;
-      Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
-   is
-   begin
-      if Has_Focus_Is_Set (View) then
-         Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
-      else
-         Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
-      end if;
-   end Get_Cursor_Position;
 
    -----------------------------
    -- Window_To_Buffer_Coords --
