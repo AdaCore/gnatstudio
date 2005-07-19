@@ -18,46 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
+with System;
+
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Pixmap;                  use Gdk.Pixmap;
 with Gdk.Color;                   use Gdk.Color;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
 with Gtk;                         use Gtk;
+with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;          use Gtk.Text_Tag_Table;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with Src_Editor_Module;           use Src_Editor_Module;
+with Pango.Enums;                 use Pango.Enums;
 with Pango.Layout;                use Pango.Layout;
 
-with Traces;                      use Traces;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
-with System;
-
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-
-with Pango.Layout;              use Pango.Layout;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-
-with Traces; use Traces;
-with Gtk.Enums;   use Gtk.Enums;
-with Pango.Enums; use Pango.Enums;
-
-with Commands;        use Commands;
-with Commands.Editor; use Commands.Editor;
-
+with Commands;                    use Commands;
+with Commands.Editor;             use Commands.Editor;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Module;           use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
+with Traces;                      use Traces;
 
 package body Src_Editor_Buffer.Line_Information is
 
@@ -67,8 +57,8 @@ package body Src_Editor_Buffer.Line_Information is
    --  Identifier for the block information column.
 
    procedure Remove_Line_Information_Column
-     (Buffer        : access Source_Buffer_Record'Class;
-      Column        : Integer);
+     (Buffer : access Source_Buffer_Record'Class;
+      Column : Integer);
    --  Remove the column from the side window information in Buffer.
 
    procedure Remove_Blank_Lines
@@ -79,10 +69,10 @@ package body Src_Editor_Buffer.Line_Information is
    --  remove all continuous blank lines at Buffer_Lines_At_Blanks.
 
    procedure Get_Column_For_Identifier
-     (Buffer        : access Source_Buffer_Record'Class;
-      Identifier    : String;
-      Width         : Integer;
-      Every_Line    : Boolean);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Width      : Integer;
+      Every_Line : Boolean);
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
@@ -132,10 +122,10 @@ package body Src_Editor_Buffer.Line_Information is
    -------------------------------
 
    procedure Get_Column_For_Identifier
-     (Buffer        : access Source_Buffer_Record'Class;
-      Identifier    : String;
-      Width         : Integer;
-      Every_Line    : Boolean)
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Width      : Integer;
+      Every_Line : Boolean)
    is
       Column         : Integer;
       Columns_Config : Columns_Config_Access;
@@ -262,8 +252,8 @@ package body Src_Editor_Buffer.Line_Information is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (Buffer        : access Source_Buffer_Record'Class;
-      Column        : Integer)
+     (Buffer : access Source_Buffer_Record'Class;
+      Column : Integer)
    is
       Columns_Config : Columns_Config_Access;
       Editable_Lines : Editable_Line_Array_Access renames
