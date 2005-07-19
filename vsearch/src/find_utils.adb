@@ -213,7 +213,8 @@ package body Find_Utils is
                Line    : constant String :=
                  Pretty_Print_Line
                    (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
-                    Ref_Column, End_Col);
+                    Pos - Last_Line_Start + 1,
+                    Pos - Last_Line_Start + 1 + End_Col - Ref_Column);
             begin
                if not Callback (Match_Result'
                  (Length     => Line'Length,
