@@ -25,32 +25,30 @@
 --  reference support, etc.
 --  </description>
 
+with Ada.Unchecked_Deallocation;
+with Ada.Calendar;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+
+with Gdk.GC; use Gdk.GC;
 with Glib; use Glib;
 with Gtk;
 with Gtk.Main;
-with Gtk.Text_Buffer;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
+with Gtkada.Text_Buffer;
 
+with Commands;                    use Commands;
+with Generic_List;
+with GPS.Kernel;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with Language;
 with Src_Highlighting;
-
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
-with Ada.Calendar;
-with GPS.Kernel;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Generic_List;
 with VFS;
-
-with Gdk.GC; use Gdk.GC;
-
-with Commands; use Commands;
 
 package Src_Editor_Buffer is
 
-   type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+   type Source_Buffer_Record is new Gtkada.Text_Buffer.Text_Buffer_Record
      with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
@@ -59,6 +57,13 @@ package Src_Editor_Buffer is
       Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
+
+   procedure Initialize
+     (Buffer : access Source_Buffer_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle;
+      Lang   : Language.Language_Access := null);
+   --  Internal initialization procedure.
+   --  See the section "Creating your own widgets" in the documentation.
 
    --  The following types define the different line types that are involved
    --  in the buffer:
@@ -78,13 +83,6 @@ package Src_Editor_Buffer is
    type File_Line_Type is new Natural;
    --  File lines identify lines that were in the file the last time that the
    --  buffer was saved.
-
-   procedure Initialize
-     (Buffer : access Source_Buffer_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Lang   : Language.Language_Access := null);
-   --  Internal initialization procedure.
-   --  See the section "Creating your own widgets" in the documentation.
 
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
@@ -862,7 +860,7 @@ private
    --------------------------
 
    type Source_Buffer_Record is
-     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+     new Gtkada.Text_Buffer.Text_Buffer_Record
    with record
       Kernel          : GPS.Kernel.Kernel_Handle;
       Filename        : VFS.Virtual_File;
