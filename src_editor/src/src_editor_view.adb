@@ -71,6 +71,7 @@ with Language;                    use Language;
 with Config;
 
 package body Src_Editor_View is
+
    Me : constant Debug_Handle := Create ("Editor_View");
 
    Speed_Column_Width : constant := 10;

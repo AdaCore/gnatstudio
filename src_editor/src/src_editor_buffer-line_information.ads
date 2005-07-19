@@ -34,9 +34,9 @@ with GPS.Kernel.Standard_Hooks;
 package Src_Editor_Buffer.Line_Information is
 
    procedure Create_Line_Information_Column
-     (Buffer        : access Source_Buffer_Record'Class;
-      Identifier    : String;
-      Every_Line    : Boolean);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Identifier : String;
+      Every_Line : Boolean);
    --  Add a column corresponding to Identifier in Buffer.
 
    procedure Remove_Line_Information_Column
@@ -104,14 +104,14 @@ package Src_Editor_Buffer.Line_Information is
    --  Remove Number blank lines associated with Mark.
 
    procedure Hide_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number     : Editable_Line_Type);
+     (Buffer : access Source_Buffer_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Editable_Line_Type);
    --  Hide Number editable lines from Mark.
 
    procedure Unhide_Lines
-     (Buffer     : access Source_Buffer_Record'Class;
-      Mark       : Gtk.Text_Mark.Gtk_Text_Mark);
+     (Buffer : access Source_Buffer_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
    --  Unhide editable lines that are hidden between the line that Mark is on
    --  and the following line.
 
