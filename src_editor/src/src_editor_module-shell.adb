@@ -18,6 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with System;
+
+with Gdk.Color;                 use Gdk.Color;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
+with Gtk.Clipboard;             use Gtk.Clipboard;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Text_View;          use Gtkada.Text_View;
+with Pango.Enums;               use Pango.Enums;
+
+with Commands;                  use Commands;
+with Basic_Types;               use Basic_Types;
+with Casing_Exceptions;         use Casing_Exceptions;
+with Find_Utils;                use Find_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -25,46 +51,20 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Language;                  use Language;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with Src_Contexts;              use Src_Contexts;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
+with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
-with Src_Contexts;              use Src_Contexts;
-with Find_Utils;                use Find_Utils;
-with Basic_Types;               use Basic_Types;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-with GPS.Intl;                  use GPS.Intl;
-with Casing_Exceptions;         use Casing_Exceptions;
-with VFS;                       use VFS;
-with Language;                  use Language;
 with Traces;                    use Traces;
-
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with Ada.Unchecked_Conversion;
-with System;
-
-with Glib.Convert;              use Glib.Convert;
-with Glib.Properties;           use Glib.Properties;
-with Glib.Object;               use Glib.Object;
-with Gdk.Color;                 use Gdk.Color;
-with Pango.Enums;               use Pango.Enums;
-with Gtk.Clipboard;             use Gtk.Clipboard;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
-with Gtk.Handlers;
-
-with Commands;                  use Commands;
+with VFS;                       use VFS;
 
 package body Src_Editor_Module.Shell is
    Me : constant Debug_Handle := Create ("Editor.Shell");
