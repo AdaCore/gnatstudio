@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,12 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;              use Glib;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Gtk.Text_Mark;     use Gtk.Text_Mark;
+with Gtkada.Text_View;  use Gtkada.Text_View;
+
 with Commands;          use Commands;
-with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel;        use GPS.Kernel;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View;   use Src_Editor_View;
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Glib;              use Glib;
 
 package body Src_Editor_View.Commands is
 
@@ -94,11 +97,12 @@ package body Src_Editor_View.Commands is
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Iter   : Gtk_Text_Iter;
+      Mark   : constant Gtk_Text_Mark := Get_Saved_Cursor_Mark (View);
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
       Move_Iter (Iter, Command.Kind, Command.Step);
-      Move_Mark (Buffer, View.Saved_Cursor_Mark, Iter);
+      Move_Mark (Buffer, Mark, Iter);
       Place_Cursor (Buffer, Iter);
       return Success;
    end Execute;
@@ -119,7 +123,7 @@ package body Src_Editor_View.Commands is
    begin
       Scroll_To_Mark
         (View,
-         View.Saved_Cursor_Mark,
+         Get_Saved_Cursor_Mark (View),
          Within_Margin => 0.0,
          Use_Align     => True,
          Xalign        => 0.0,
@@ -143,7 +147,7 @@ package body Src_Editor_View.Commands is
       Iter, Start : Gtk_Text_Iter;
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
+      Get_Iter_At_Mark (Buffer, Iter, Get_Saved_Cursor_Mark (View));
       Copy (Source => Iter, Dest => Start);
       Move_Iter (Iter, Command.Kind, Command.Count);
       Delete (Buffer, Iter, Start);
