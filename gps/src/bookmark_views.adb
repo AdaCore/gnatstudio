@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with Commands.Interactive; use Commands, Commands.Interactive;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with GPS.Kernel.Console;   use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
@@ -40,6 +41,7 @@ with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Generic_List;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Stock;            use Gtk.Stock;
@@ -108,11 +110,6 @@ package body Bookmark_Views is
       Kernel : Kernel_Handle);
    --  Create the Bookmark view (or raise the existing one)
 
-   procedure On_Create_Bookmark
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Create a new bookmark at the current location
-
    function Open_View
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Create the Bookmark view if needed
@@ -167,11 +164,29 @@ package body Bookmark_Views is
       Params : Glib.Values.GValues);
    --  Called when a line is edited in the view
 
+   package Bookmark_Idle is new Gtk.Main.Idle (Bookmark_View_Access);
+   use Bookmark_Idle;
+   function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean;
+   --  Function called to start editing the selected line. This is necessary
+   --  since any editing is stopped as soon as the tree gains the focus back.
+
    type Delete_Bookmark_Command is new Interactive_Command with null record;
    function Execute
      (Command : access Delete_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Delete the selected bookmark
+
+   type Create_Bookmark_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Create_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Create a new bookmark
+
+   type Rename_Bookmark_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Rename_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Rename the selected bookmark
 
    -------------
    -- Execute --
@@ -201,6 +216,60 @@ package body Bookmark_Views is
                Node := Next (Node);
             end loop;
             Refresh (View);
+            return Success;
+         end if;
+      end if;
+      return Failure;
+   end Execute;
+
+   ------------------------
+   -- Start_Editing_Idle --
+   ------------------------
+
+   function Start_Editing_Idle (View : Bookmark_View_Access) return Boolean is
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      if Iter /= Null_Iter then
+         Path := Get_Path (Model, Iter);
+         Set_Cursor
+           (View.Tree,
+            Path          => Path,
+            Focus_Column  => Get_Column (View.Tree, 2),
+            Start_Editing => True);
+         Path_Free (Path);
+      end if;
+      return False;
+   end Start_Editing_Idle;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Rename_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      View : constant Bookmark_View_Access := Bookmark_View_Access
+        (Get_Widget (Open_View (Get_Kernel (Context.Context))));
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter : Gtk_Tree_Iter;
+      Id   : Idle_Handler_Id;
+      pragma Unreferenced (Command, Id);
+   begin
+      if Context.Event /= null then
+         Iter := Find_Iter_For_Event (View.Tree, Model, Context.Event);
+         if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (View.Tree), Iter);
+
+            --  Start the edition in idle mode, since otherwise the tree gains
+            --  the focus when the menu is hidden, and stops the edition
+            --  immediately.
+            Id := Add (Start_Editing_Idle'Access, View,
+                       Priority => Priority_High_Idle);
             return Success;
          end if;
       end if;
@@ -306,11 +375,8 @@ package body Bookmark_Views is
          Coordinates_For_Event (View.Tree, Model, Event, Iter, Col);
          Marker := Get_Selected_From_Event (View, Event);
 
-         --  Only when clicking in the Goto column, and we always return True
-         --  to prevent the selection
-         if Marker /= null
-           and then Col = Get_Column (View.Tree, 1)
-         then
+         --  Always return True to prevent the selection
+         if Marker /= null then
             Result := Go_To (Marker.Marker, View.Kernel);
             return True;
          end if;
@@ -323,16 +389,17 @@ package body Bookmark_Views is
          return False;
    end Button_Press;
 
-   ------------------------
-   -- On_Create_Bookmark --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Create_Bookmark
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+   function Execute
+     (Command : access Create_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      Mark  : constant Location_Marker := Create_Marker (Kernel);
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Mark   : constant Location_Marker := Create_Marker (Kernel);
       Child : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Bookmark_View_Record'Tag);
       View  : Bookmark_View_Access;
@@ -369,8 +436,10 @@ package body Bookmark_Views is
             end loop;
          end if;
          Run_Hook (Kernel, Bookmark_Added_Hook);
+         return Success;
       end if;
-   end On_Create_Bookmark;
+      return Failure;
+   end Execute;
 
    -------------
    -- Refresh --
@@ -665,9 +734,6 @@ package body Bookmark_Views is
       Register_Menu
         (Kernel,
          "/" & (-"Tools"), -"Bookmarks", "", On_Open_View'Access);
-      Register_Menu
-        (Kernel,
-         "/" & (-"Edit"), -"Create Bookmark", "", On_Create_Bookmark'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -681,6 +747,23 @@ package body Bookmark_Views is
          Action => Command,
          Filter => Create (Module => "Bookmark_View"),
          Label  => -"Delete bookmark");
+
+      Command := new Rename_Bookmark_Command;
+      Register_Contextual_Menu
+        (Kernel, "Bookmark View Rename Bookmark",
+         Action => Command,
+         Filter => Create (Module => "Bookmark_View"),
+         Label  => -"Rename bookmark");
+
+      Command := new Create_Bookmark_Command;
+      Register_Menu
+        (Kernel,
+         "/" & (-"Edit"), -"Create Bookmark", "",
+         Ref_Item => -"Comment Lines", Callback => null, Command => Command);
+      Register_Action
+        (Kernel, "Bookmark Create", Command,
+         -("Create a bookmark at the current location"));
+
    end Register_Module;
 
 end Bookmark_Views;
