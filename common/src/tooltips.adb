@@ -98,6 +98,7 @@ package body Tooltips is
       X, Y          : Gint;
       Window        : Gdk_Window;
       W             : Gtk_Widget;
+      Focus         : Gtk_Widget;
    begin
       if not Tooltip.Active then
          return False;
@@ -125,13 +126,17 @@ package body Tooltips is
            (Tooltip.Display_Window, "leave_notify_event",
             Leave_Notify_Cb'Access, User_Data => Tooltip);
 
-         Add_Watch
-           (Tooltip_Handler.Connect
-              (Get_Focus (Gtk_Window (Get_Toplevel (Tooltip.Widget))),
-               "focus_out_event",
-               Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
-               User_Data => Tooltip),
-            Object => Tooltip.Display_Window);
+         Focus := Get_Focus (Gtk_Window (Get_Toplevel (Tooltip.Widget)));
+
+         if Focus /= null then
+            Add_Watch
+              (Tooltip_Handler.Connect
+                 (Focus,
+                  "focus_out_event",
+                  Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+                  User_Data => Tooltip),
+               Object => Tooltip.Display_Window);
+         end if;
       end if;
 
       return False;
