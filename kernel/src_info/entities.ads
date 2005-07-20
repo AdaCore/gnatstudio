@@ -600,6 +600,8 @@ package Entities is
       Kind     : Reference_Kind);
    procedure Set_Is_Renaming_Of
      (Entity : Entity_Information; Renaming_Of : Entity_Information);
+   procedure Set_Overriden_Entity
+     (Entity : Entity_Information; Overriden : Entity_Information);
    procedure Set_Is_Instantiation
      (Entity : Entity_Information; Of_Generic : Entity_Information);
    --  Override some information for the entity.
@@ -912,6 +914,10 @@ private
       --  a primitive operation
       --  ??? These could be collapsed into a single list, depending on the
       --  kind of the current entity.
+      --
+      --  Pointed_Type is also used for the overriden entity when the current
+      --  entity is a subprogram. It is used for the type stored in an array
+      --  as well.
 
       Rename                : Entity_Information;
       --  The entity that this one renames.

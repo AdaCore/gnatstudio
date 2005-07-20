@@ -1506,6 +1506,19 @@ package body Entities is
       Ref (Renaming_Of, "Set_Is_Renaming_Of");
    end Set_Is_Renaming_Of;
 
+   --------------------------
+   -- Set_Overriden_Entity --
+   --------------------------
+
+   procedure Set_Overriden_Entity
+     (Entity : Entity_Information; Overriden : Entity_Information) is
+   begin
+      Assert (Assert_Me, Overriden /= null, "Invalid overriden entity");
+      Unref (Entity.Pointed_Type, "replacing pointed_type (overriden)");
+      Entity.Pointed_Type := Overriden;
+      Ref (Overriden, "Set_Overriden_Entity");
+   end Set_Overriden_Entity;
+
    ----------------
    -- Add_Called --
    ----------------
