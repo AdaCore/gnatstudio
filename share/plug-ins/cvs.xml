@@ -298,7 +298,7 @@
       </local_status_parser>
 
       <annotations_parser>
-         <regexp>(\d[^\s]*)[^\:]*\:(.*)(\n|$)</regexp>
+         <regexp>(\d\.\d[^\s]*)[^\:]*\:(.*)(\n|$)</regexp>
 
          <repository_revision_index>1</repository_revision_index>
          <file_index>2</file_index>
