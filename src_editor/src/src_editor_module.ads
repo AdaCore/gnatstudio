@@ -18,31 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with Glib.Object;
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
-with Gdk.GC;
 with Gdk.Color;          use Gdk.Color;
+with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.MDI;         use Gtkada.MDI;
 
+with Basic_Types;
+with Commands.Controls;  use Commands.Controls;
+with Generic_List;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with HTables;
+with Src_Contexts;
 with Src_Editor_Box;
 
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VFS;                use VFS;
-with Src_Contexts;
-
-with Ada.Unchecked_Deallocation;
-with Generic_List;
-with Basic_Types;
-with HTables;
-
-with Commands.Controls;  use Commands.Controls;
 
 package Src_Editor_Module is
 
