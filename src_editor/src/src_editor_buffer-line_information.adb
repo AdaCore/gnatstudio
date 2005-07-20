@@ -608,7 +608,7 @@ package body Src_Editor_Buffer.Line_Information is
       procedure Draw_Line_Info is
          Height, Width : Gint;
       begin
-         Set_Text (Layout, Editable_Line'Img);
+         Set_Markup (Layout, Editable_Line'Img);
          Get_Pixel_Size (Layout, Width, Height);
 
          Draw_Layout
