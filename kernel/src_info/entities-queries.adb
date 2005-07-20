@@ -45,6 +45,16 @@ package body Entities.Queries is
    --  that we give advantage to matches on the same line rather than on the
    --  same column.
 
+   Use_Approximate_Overriding_Algorithm : constant Boolean := False;
+   --  If set to True, GPS tries to find the list of overriding or overriden
+   --  entities in Find_All_References through an approximate algorithm: it
+   --  searchs for parent or children types, and for their primitive operations
+   --  with the same name as the current entity.
+   --  If set to False, we assume that GNAT itself provides an accurate
+   --  information and that calls to Overriden_Entity returns the exact
+   --  information.
+   --  This should be set to True for versions of GNAT <= 20050718
+
    use Entities_Hash;
    use Entity_Information_Arrays;
    use Entity_Reference_Arrays;
@@ -791,12 +801,37 @@ package body Entities.Queries is
    procedure Add_Overriding_Subprograms
      (Iter : in out Entity_Reference_Iterator)
    is
+      Toplevel_Entity : Entity_Information;
+
       procedure Add_Prims_Of_Entity (Entity : Entity_Information);
       --  Add the relevant primitive operations of Entity
 
       procedure Add_Children_Of (Entity : Entity_Information);
       --  Process recursively the children of Entity, and check whether they
       --  have some matching primitive.
+
+      function Is_Same_Entity (Entity : Entity_Information) return Boolean;
+      pragma Inline (Is_Same_Entity);
+      --  Return True if Entity is in the same chain of overriding entities
+      --  as Iter.Entity
+
+      --------------------
+      -- Is_Same_Entity --
+      --------------------
+
+      function Is_Same_Entity (Entity : Entity_Information) return Boolean is
+         Top : Entity_Information;
+      begin
+         if Use_Approximate_Overriding_Algorithm then
+            return Get_Name (Entity).all = Get_Name (Iter.Entity).all;
+         else
+            Top := Entity;
+            while Overriden_Entity (Top) /= null loop
+               Top := Overriden_Entity (Top);
+            end loop;
+            return Top = Toplevel_Entity;
+         end if;
+      end Is_Same_Entity;
 
       -------------------------
       -- Add_Prims_Of_Entity --
@@ -813,10 +848,7 @@ package body Entities.Queries is
             while not At_End (Prim) loop
                Primitive := Get (Prim);
 
-               --  ??? This test could be more precise if we had more info
-               --  from the ALI files, instead of relying on the name only
-               if Get_Name (Primitive).all = Get_Name (Iter.Entity).all then
-
+               if Is_Same_Entity (Primitive) then
                   Found := False;
                   for E in Entity_Information_Arrays.First ..
                     Last (Iter.Extra_Entities)
@@ -856,11 +888,19 @@ package body Entities.Queries is
          Destroy (Child_Iter);
       end Add_Children_Of;
 
+      Prim_Of : Entity_Information;
    begin
-      if Is_Primitive_Operation_Of (Iter.Entity) /= null then
+      if not Use_Approximate_Overriding_Algorithm then
+         Toplevel_Entity := Iter.Entity;
+         while Overriden_Entity (Toplevel_Entity) /= null loop
+            Toplevel_Entity := Overriden_Entity (Toplevel_Entity);
+         end loop;
+      end if;
+
+      Prim_Of := Is_Primitive_Operation_Of (Iter.Entity);
+
+      if Prim_Of /= null then
          declare
-            Prim_Of : constant Entity_Information := Is_Primitive_Operation_Of
-              (Iter.Entity);
             Parents    : constant Entity_Information_Array :=
               Get_Parent_Types (Prim_Of, Recursive => True);
          begin
@@ -2361,7 +2401,11 @@ package body Entities.Queries is
      (Entity : Entity_Information) return Entity_Information is
    begin
       Update_Xref (Get_File (Get_Declaration_Of (Entity)));
-      return Entity.Pointed_Type;
+      if Is_Subprogram (Entity) then
+         return null;
+      else
+         return Entity.Pointed_Type;
+      end if;
    end Array_Contents_Type;
 
    ------------------
@@ -2372,8 +2416,27 @@ package body Entities.Queries is
      (Entity : Entity_Information) return Entity_Information is
    begin
       Update_Xref (Get_File (Get_Declaration_Of (Entity)));
-      return Entity.Pointed_Type;
+      if Is_Subprogram (Entity) then
+         return null;
+      else
+         return Entity.Pointed_Type;
+      end if;
    end Pointed_Type;
+
+   ----------------------
+   -- Overriden_Entity --
+   ----------------------
+
+   function Overriden_Entity
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+      if Is_Subprogram (Entity) then
+         return Entity.Pointed_Type;
+      else
+         return null;
+      end if;
+   end Overriden_Entity;
 
    -------------------
    -- Returned_Type --

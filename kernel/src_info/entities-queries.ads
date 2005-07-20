@@ -379,6 +379,10 @@ package Entities.Queries is
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type pointed to by entity
 
+   function Overriden_Entity
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the overriden entity
+
    function Returned_Type
      (Entity : Entity_Information) return Entity_Information;
    --  Return the type returned by the entity
