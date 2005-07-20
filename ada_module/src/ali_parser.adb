@@ -287,6 +287,15 @@ package body ALI_Parser is
       First_Sect, Last_Sect : Nat);
    --  Process the parent type of an entity declared in Xref_Ent.
 
+   procedure Process_Overriding_Ref
+     (Handler               : access ALI_Handler_Record'Class;
+      LI                    : LI_File;
+      Entity                : Entity_Information;
+      Xref_Ent              : Nat;
+      Sfiles                : Sdep_To_Sfile_Table;
+      First_Sect, Last_Sect : Nat);
+   --  Process the overriding information declared in Xref_Ent
+
    function Find_Entity_In_ALI
      (Handler               : access ALI_Handler_Record'Class;
       LI                    : LI_File;
@@ -717,6 +726,11 @@ package body ALI_Parser is
               (Handler, LI, Entity, Xref_Sect, Xref_Ent, Sfiles,
                First_Sect, Last_Sect);
          end if;
+
+         if Xref_Entity.Table (Xref_Ent).Oref_File_Num /= No_Sdep_Id then
+            Process_Overriding_Ref
+              (Handler, LI, Entity, Xref_Ent, Sfiles, First_Sect, Last_Sect);
+         end if;
       end if;
 
       --  Process the generics instantation information
@@ -1048,6 +1062,44 @@ package body ALI_Parser is
          end case;
       end if;
    end Process_Type_Ref;
+
+   ----------------------------
+   -- Process_Overriding_Ref --
+   ----------------------------
+
+   procedure Process_Overriding_Ref
+     (Handler               : access ALI_Handler_Record'Class;
+      LI                    : LI_File;
+      Entity                : Entity_Information;
+      Xref_Ent              : Nat;
+      Sfiles                : Sdep_To_Sfile_Table;
+      First_Sect, Last_Sect : Nat)
+   is
+      Parent : Entity_Information;
+   begin
+      Parent := Find_Entity_In_ALI
+        (Handler    => Handler,
+         LI         => LI,
+         Sfiles     => Sfiles,
+         File_Num   => Xref_Entity.Table (Xref_Ent).Oref_File_Num,
+         Line       => Xref_Entity.Table (Xref_Ent).Oref_Line,
+         Column     => Xref_Entity.Table (Xref_Ent).Oref_Col,
+         First_Sect => First_Sect,
+         Last_Sect  => Last_Sect);
+
+      if Parent = null then
+         if Active (Assert_Me) then
+            Trace (Assert_Me,
+                   "Overriding type not found in ALI file: "
+                   & Full_Name (Get_LI_Filename (LI)).all
+                   & Xref_Entity.Table (Xref_Ent).Oref_File_Num'Img
+                   & Xref_Entity.Table (Xref_Ent).Oref_Line'Img
+                   & Xref_Entity.Table (Xref_Ent).Oref_Col'Img);
+         end if;
+      else
+         Set_Overriden_Entity (Entity, Parent);
+      end if;
+   end Process_Overriding_Ref;
 
    --------------------------
    -- Process_Xref_Section --
