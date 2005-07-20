@@ -18,18 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;         use Gdk.Color;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtk.Window;        use Gtk.Window;
-with GPS.Kernel;      use GPS.Kernel;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Intl;        use GPS.Intl;
-with VFS;               use VFS;
+with Gdk.Color;               use Gdk.Color;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
 
-with Src_Editor_Box;    use Src_Editor_Box;
-with Src_Editor_Buffer; use Src_Editor_Buffer;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with Src_Editor_Box;          use Src_Editor_Box;
+with Src_Editor_Buffer;       use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with VFS;                     use VFS;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -54,7 +54,6 @@ package body Src_Editor_Module.Line_Highlighting is
       3 => Line_Cst'Access,
       4 => Start_Col_Cst'Access,
       5 => End_Col_Cst'Access);
-
 
    --------------------------
    -- Edit_Command_Handler --
