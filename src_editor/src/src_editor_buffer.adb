@@ -1255,28 +1255,16 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      --  ??? Should optimize this function by saving the values of the
+      --  "insert" mark
+
       Buffer.Setting_Mark := True;
 
-      --  ??? Should optimize this function by saving the values of
-      --  insert/gtk_drag_target marks
-
-      declare
-         Mark_Name : constant String := Get_Name (Mark);
-      begin
-         if Mark_Name = "insert"
-           or else Mark_Name = "gtk_drag_target"
-         then
-            if Get_Object (Mark) /= Get_Object (Get_Insert_Mark (Buffer)) then
-               --  If the mark corresponds to a cursor position, set the stored
-               --  Insert_Mark accordingly.
-
-               Set_Insert_Mark (Buffer, Mark);
-            end if;
-
+      if Get_Name (Mark) = "insert" then
+            Set_Insert_Mark (Buffer, Mark);
             Emit_New_Cursor_Position (Buffer);
             Cursor_Move_Hook (Buffer);
-         end if;
-      end;
+      end if;
 
       Buffer.Setting_Mark := False;
 
