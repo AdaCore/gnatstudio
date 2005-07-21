@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2001-2005                    --
+--                                AdaCore                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,19 +37,19 @@ package Vdiff2_Module.Callback is
 
    procedure On_Compare_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Compare Two Files...
+   --  Callback for Tools->VDiff->Compare Three Files...
 
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Compare Tree Files...
+   --  Callback for Tools->VDiff->Compare Two Files...
 
    procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Merge Two Files...
+   --  Callback for Tools->VDiff->Merge Three Files...
 
    procedure On_Merge_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Tools->VDiff->Merge Tree Files...
+   --  Callback for Tools->VDiff->Merge Two Files...
 
    procedure File_Closed_Cb
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
