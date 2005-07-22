@@ -1234,8 +1234,13 @@ procedure GPS.Main is
          Help_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      Navigation_Module.Register_Module (GPS_Main.Kernel);
+      --  Initialize Src_Editor_Module early, since many modules depend
+      --  on the editor API, and also during finalization, modules may need
+      --  to access marks that are handled by this module.
+
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
+
+      Navigation_Module.Register_Module (GPS_Main.Kernel);
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
