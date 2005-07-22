@@ -332,9 +332,59 @@ package body Generic_List is
    -- Free --
    ----------
 
-   procedure Free (L : in out List; Free_Data : Boolean := True) is
+   procedure Free
+     (L         : in out List;
+      Free_Data : Boolean := True;
+      Reversed  : Boolean := False)
+   is
+      procedure Free (Node : in out List_Node);
+      --  Free Nodes starting from Node
+
+      procedure Free_Reverse (Node : List_Node);
+      --  Free Nodes starting from Node, in reverse order
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Node : in out List_Node) is
+         Tmp : List_Node;
+      begin
+         while Node /= null loop
+            Tmp := Node;
+            Node := Node.Next;
+
+            if Free_Data and then Tmp.Element /= null then
+               Free (Tmp.Element.all);
+            end if;
+
+            Free_Element (Tmp.Element);
+            Free_Node (Tmp);
+         end loop;
+      end Free;
+
+      ------------------
+      -- Free_Reverse --
+      ------------------
+
+      procedure Free_Reverse (Node : List_Node) is
+         Tmp : List_Node;
+      begin
+         if Node /= null then
+            Free_Reverse (Node.Next);
+
+            Tmp := Node;
+
+            if Free_Data and then Tmp.Element /= null then
+               Free (Tmp.Element.all);
+            end if;
+
+            Free_Element (Tmp.Element);
+            Free_Node (Tmp);
+         end if;
+      end Free_Reverse;
+
       Current : List_Node;
-      Tmp     : List_Node;
 
    begin
       if L.First = null or else L.Last = null or else L.Last.all = null then
@@ -345,17 +395,11 @@ package body Generic_List is
       L.First.all := null;
       L.Last.all  := null;
 
-      while Current /= null loop
-         Tmp := Current;
-         Current := Current.Next;
-
-         if Free_Data and then Tmp.Element /= null then
-            Free (Tmp.Element.all);
-         end if;
-
-         Free_Element (Tmp.Element);
-         Free_Node (Tmp);
-      end loop;
+      if Reversed then
+         Free_Reverse (Current);
+      else
+         Free (Current);
+      end if;
 
       Free_Node_Access (L.First);
       Free_Node_Access (L.Last);

@@ -97,10 +97,15 @@ package Generic_List is
    --  If First_Node is Null_Node, then the nodes are removed from the
    --  beginning of the list.
 
-   procedure Free (L : in out List; Free_Data : Boolean := True);
+   procedure Free
+     (L         : in out List;
+      Free_Data : Boolean := True;
+      Reversed  : Boolean := False);
    --  Free memory associated to L.
    --  If Free_Data is true, then the data associated with each node is also
    --  freed through a called to the formal parameter Free.
+   --  If Reversed is True, Free the items in reverse order (from last to
+   --  first). Otherwise, free from First to Last.
 
    function First (L : List) return List_Node;
    --  Return the first node contained in L.
