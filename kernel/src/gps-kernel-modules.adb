@@ -1510,11 +1510,12 @@ package body GPS.Kernel.Modules is
         (Module_List.List, Module_List_Access);
       List : Module_List_Access := Convert (Kernel.Modules_List);
    begin
-      --  ??? Problem: should destroy the modules in the reverse order.
-      --  Otherwise, the scripts module is no longer available for the other
-      --  modules.
+      --  Destroy the modules in the reverse order,
+      --  otherwise, the scripts module is no longer available for the other
+      --  modules, and some modules (e.g. editor) is freed too early.
+
       if List /= null then
-         Module_List.Free (List.all);
+         Module_List.Free (List.all, Reversed => True);
          Unchecked_Free (List);
          Kernel.Modules_List := System.Null_Address;
       end if;
