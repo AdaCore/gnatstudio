@@ -77,9 +77,17 @@ package body Src_Editor_Module.Markers is
       use Marker_List;
       Module : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Node   : List_Node := First (Module.Stored_Marks);
+      Node   : List_Node;
+
    begin
       Trace (Me, "List of persistent markers");
+
+      if Module = null then
+         return;
+      end if;
+
+      Node := First (Module.Stored_Marks);
+
       while Node /= Null_Node loop
          Trace (Me, "     marker="
                 & System.Address_Image
@@ -113,8 +121,14 @@ package body Src_Editor_Module.Markers is
       Module : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Marker : File_Marker;
-      Node  : Marker_List.List_Node := Marker_List.First (Module.Stored_Marks);
+      Node   : Marker_List.List_Node;
+
    begin
+      if Module = null then
+         return null;
+      end if;
+
+      Node := Marker_List.First (Module.Stored_Marks);
       while Node /= Marker_List.Null_Node loop
          Marker := File_Marker (Marker_List.Data (Node));
 
@@ -139,9 +153,15 @@ package body Src_Editor_Module.Markers is
       use Marker_List;
       Module : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Node   : List_Node := First (Module.Stored_Marks);
+      Node   : List_Node;
       Marker : File_Marker;
+
    begin
+      if Module = null then
+         return;
+      end if;
+
+      Node := First (Module.Stored_Marks);
       while Node /= Null_Node loop
          Marker := File_Marker (Data (Node));
 
@@ -193,9 +213,16 @@ package body Src_Editor_Module.Markers is
         Source_Editor_Module (Src_Editor_Module_Id);
       M1    : constant File_Marker := Marker'Unchecked_Access;
       M     : File_Marker;
-      Node  : Marker_List.List_Node := Marker_List.First (Module.Stored_Marks);
+      Node  : Marker_List.List_Node;
       Prev  : Marker_List.List_Node := Marker_List.Null_Node;
+
    begin
+      if Module = null then
+         return;
+      end if;
+
+      Node := Marker_List.First (Module.Stored_Marks);
+
       if Marker.Mark /= null then
          Weak_Unref (Get_Buffer (Marker.Mark),
                      On_Destroy_Buffer'Access, Convert (M1));
