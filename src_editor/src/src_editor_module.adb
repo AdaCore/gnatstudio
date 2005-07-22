@@ -389,8 +389,8 @@ package body Src_Editor_Module is
    procedure Update_Cache_On_Focus
      (Child : access Gtk_Widget_Record'Class);
    --  Make sure that the last view for a file is reflected in the cache, so
-   --  that we always used that one by default when search for the last editor
-   --  for a given file
+   --  that we always use that one by default when looking for the last editor
+   --  for a given file.
 
    -----------------------
    -- On_Editor_Destroy --
@@ -890,12 +890,10 @@ package body Src_Editor_Module is
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (MDI_Child (Child));
    begin
-      if Id /= null then
-         --  Update the cache, so that the view is used when possible, since it
-         --  was the last open in any case
-         Editors_Hash.Set
-           (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
-      end if;
+      --  Update the cache, so that the view is used when possible, since it
+      --  was the last open in any case
+      Editors_Hash.Set
+        (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
    end Update_Cache_On_Focus;
 
    --------------
