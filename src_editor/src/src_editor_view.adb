@@ -2301,6 +2301,11 @@ package body Src_Editor_View is
       end if;
 
       Src_View.Scrolling := False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Scroll;
 
    ---------------
