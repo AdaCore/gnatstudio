@@ -755,7 +755,7 @@ private
       Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
       --  The action contexts registered in the kernel
 
-      Modules_List : System.Address;
+      Modules_List : System.Address := System.Null_Address;
       --  The list of all the modules that have been registered in this kernel.
       --  See GPS.Kernel.Modules for functions manipulating that list
 
