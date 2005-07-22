@@ -890,10 +890,12 @@ package body Src_Editor_Module is
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (MDI_Child (Child));
    begin
-      --  Update the cache, so that the view is used when possible, since it
-      --  was the last open in any case
-      Editors_Hash.Set
-        (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
+      if Id /= null then
+         --  Update the cache, so that the view is used when possible, since it
+         --  was the last open in any case
+         Editors_Hash.Set
+           (Id.Editors, Get_Filename (Box), (Child => MDI_Child (Child)));
+      end if;
    end Update_Cache_On_Focus;
 
    --------------
