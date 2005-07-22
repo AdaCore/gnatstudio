@@ -188,6 +188,24 @@ package body GDT.JNI_Functions is
       return Jint (To_Integer (Construct.Sloc_Start'Address));
    end Java_ConstructAccess_getSlocStartInt;
 
+   -------------------------------------------
+   -- Java_ConstructAccess_getSlocEntityInt --
+   -------------------------------------------
+
+   function Java_ConstructAccess_getSlocEntityInt
+     (Env : JNIEnv;
+      This : Jobject;
+      Addr : Jint)
+      return Jint
+   is
+      pragma Unreferenced (Env, This);
+      Construct : constant Construct_Access_Ptr := Construct_Access_Ptr
+        (Construct_Information_Conversion.To_Pointer
+           (To_Address (Integer_Address (Addr))));
+   begin
+      return Jint (To_Integer (Construct.Sloc_Entity'Address));
+   end Java_ConstructAccess_getSlocEntityInt;
+
    ----------------------------------------
    -- Java_ConstructAccess_getSlocEndInt --
    ----------------------------------------

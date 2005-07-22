@@ -52,6 +52,13 @@ package GDT.JNI_Functions is
      (C, Java_ConstructAccess_getSlocStartInt,
       "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getSlocStartInt");
 
+   function Java_ConstructAccess_getSlocEntityInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
+   pragma Export
+     (C,
+      Java_ConstructAccess_getSlocEntityInt,
+      "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getSlocEntityInt");
+
    function Java_ConstructAccess_getSlocEndInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
    pragma Export
@@ -65,7 +72,6 @@ package GDT.JNI_Functions is
      (C,
       Java_ConstructAccess_getPrevInt,
       "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getPrevInt");
-
 
    function Java_ConstructAccess_getNextInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
