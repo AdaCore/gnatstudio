@@ -378,7 +378,6 @@ package body Bookmark_Views is
          --  Always return True to prevent the selection
          if Marker /= null then
             Result := Go_To (Marker.Marker, View.Kernel);
-            return True;
          end if;
       end if;
       return False;
@@ -481,7 +480,6 @@ package body Bookmark_Views is
       Mark := Convert (Get_Address (M, Iter, Data_Column));
       Free (Mark.Name);
       Mark.Name := new String'(Get_String (Text_Value));
-      Unselect_All (Get_Selection (View));
    end Edited_Callback;
 
    ----------------------------
@@ -741,19 +739,19 @@ package body Bookmark_Views is
 
       Load_Bookmarks (Kernel);
 
-      Command := new Delete_Bookmark_Command;
-      Register_Contextual_Menu
-        (Kernel, "Bookmark View Delete Bookmark",
-         Action => Command,
-         Filter => Create (Module => "Bookmark_View"),
-         Label  => -"Delete bookmark");
-
       Command := new Rename_Bookmark_Command;
       Register_Contextual_Menu
         (Kernel, "Bookmark View Rename Bookmark",
          Action => Command,
          Filter => Create (Module => "Bookmark_View"),
          Label  => -"Rename bookmark");
+
+      Command := new Delete_Bookmark_Command;
+      Register_Contextual_Menu
+        (Kernel, "Bookmark View Delete Bookmark",
+         Action => Command,
+         Filter => Create (Module => "Bookmark_View"),
+         Label  => -"Delete bookmark");
 
       Command := new Create_Bookmark_Command;
       Register_Menu
