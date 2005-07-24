@@ -20,13 +20,14 @@
 
 --  This package is the root of the GPS' kernel API.
 
-with Basic_Mapper;
+with Ada.Unchecked_Conversion;
+with System;
+
 with GNAT.OS_Lib;
-with Entities;
-with Entities.Queries;
-with Gdk.Event;    use Gdk.Event;
+
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
+with Gdk.Event;    use Gdk.Event;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Icon_Factory;
@@ -36,15 +37,19 @@ with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
+
+with Basic_Mapper;
+with Entities;
+with Entities.Queries;
 with Language_Handlers;
 with String_Hash;
-with System;
-with Ada.Unchecked_Conversion;
 with Default_Preferences;
 with Histories;
 with Projects.Registry;
 with Task_Manager;
 with VFS;
+with Entities;
+with Entities.Queries;
 
 package GPS.Kernel is
 

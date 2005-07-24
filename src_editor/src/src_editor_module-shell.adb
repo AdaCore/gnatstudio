@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                        Copyright (C) 2005                         --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -59,7 +59,8 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Text_Handling;
+use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
@@ -2475,7 +2476,7 @@ package body Src_Editor_Module.Shell is
    procedure Overlay_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Tag        : Gtk_Text_Tag;
+      Tag : Gtk_Text_Tag;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg

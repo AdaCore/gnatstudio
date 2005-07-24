@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2004-2005                    --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -208,8 +208,8 @@ package body Casing_Exceptions is
    ---------------
 
    function Get_Label
-     (Creator   : access Contextual_Label_Record;
-      Context   : access Selection_Context'Class) return String
+     (Creator : access Contextual_Label_Record;
+      Context : access Selection_Context'Class) return String
    is
       C : Entity_Selection_Context_Access;
    begin
@@ -343,7 +343,7 @@ package body Casing_Exceptions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Filename : constant String :=
-        Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
+                   Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
       Command : Interactive_Command_Access;
       Label   : Contextual_Label;
       Substring_Filter, Full_String_Filter : Action_Filter;

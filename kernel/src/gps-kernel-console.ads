@@ -54,12 +54,12 @@ package GPS.Kernel.Console is
    --  Clear all the text in the Console.
 
    function Create_Interactive_Console
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Title   : String := "";
-      History : Histories.History_Key := "interactive";
+     (Kernel              : access Kernel_Handle_Record'Class;
+      Title               : String := "";
+      History             : Histories.History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module       : GPS.Kernel.Abstract_Module_ID := null;
-      Force_Create : Boolean := False) return Interactive_Console;
+      Module              : GPS.Kernel.Abstract_Module_ID := null;
+      Force_Create        : Boolean := False) return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.
    --  If the title is the empty stirng, the GPS console is returned.
@@ -68,8 +68,7 @@ package GPS.Kernel.Console is
    --  Module is used to associate the console with a specific module
 
    function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Interactive_Console;
+     (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
    --  Return the interactive console associated with the kernel.
 
 end GPS.Kernel.Console;

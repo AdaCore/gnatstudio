@@ -21,24 +21,24 @@
 --  This package provides low-level utilities to handle differences between
 --  files.
 
-with Ada.Text_IO;              use Ada.Text_IO;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNAT.Expect;              use GNAT.Expect;
-with GNAT.Regpat;              use GNAT.Regpat;
+with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Text_IO;            use Ada.Text_IO;
+
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Expect;            use GNAT.Expect;
+with GNAT.Regpat;            use GNAT.Regpat;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Basic_Types;
 with Generic_List;
-with String_Utils;             use String_Utils;
-with Traces;                   use Traces;
-
-with Vdiff2_Module;            use Vdiff2_Module;
-with VFS;                      use VFS;
-with Ada.Exceptions; use Ada.Exceptions;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
+with Vdiff2_Module;          use Vdiff2_Module;
+with VFS;                    use VFS;
 
 package body Diff_Utils2 is
    use Diff_Chunk_List;
@@ -454,17 +454,16 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Diff3_Command  : String;
+     (Diff3_Command : String;
       My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is
-      Descriptor     : TTY_Process_Descriptor;
       Pattern_Bloc   : constant Pattern_Matcher :=
-        Compile ("^====([1-3])?$",
-                 Multiple_Lines);
+                         Compile ("^====([1-3])?$", Multiple_Lines);
       Pattern_Chunk  : constant Pattern_Matcher :=
-        Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])$",
-                 Multiple_Lines);
+                         Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])$",
+                                  Multiple_Lines);
+      Descriptor     : TTY_Process_Descriptor;
       Matches_Block  : Match_Array (0 .. 1);
       Matches_Chunk1,
       Matches_Chunk2,
@@ -480,7 +479,7 @@ package body Diff_Utils2 is
 
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
-      Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+      Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
 
       Args (1) := new String'(Locale_Full_Name (My_Change));
       Args (2) := new String'(Locale_Full_Name (Old_File));

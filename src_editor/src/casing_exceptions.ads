@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2004-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@
 --  GPS feature (create menu, read/write casing XML files).
 
 with Glib.Xml_Int;  use Glib.Xml_Int;
-with GPS.Kernel;  use GPS.Kernel;
+with GPS.Kernel;    use GPS.Kernel;
 with Case_Handling; use Case_Handling;
 with VFS;
 

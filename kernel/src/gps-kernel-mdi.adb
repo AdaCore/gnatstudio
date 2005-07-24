@@ -18,33 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
-with Glib.Values;                 use Glib.Values;
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Dialog;                  use Gtk.Dialog;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Label;                   use Gtk.Label;
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;    use Gtk.Cell_Renderer_Toggle;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Stock;                   use Gtk.Stock;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
-with Gtk.Tree_Store;              use Gtk.Tree_Store;
-with Gtk.Tree_View;               use Gtk.Tree_View;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Window;                  use Gtk.Window;
-with Gtkada.Dialogs;              use Gtkada.Dialogs;
-with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.MDI;                  use Gtkada.MDI;
+with Glib;                     use Glib;
+with Glib.Values;              use Glib.Values;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with VFS;                         use VFS;
-with Projects;                    use Projects;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Main_Window;          use GPS.Main_Window;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with VFS;                      use VFS;
+with Projects;                 use Projects;
 
 package body GPS.Kernel.MDI is
 

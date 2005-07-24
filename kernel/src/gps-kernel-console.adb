@@ -18,32 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;             use Ada.Calendar;
-with GNAT.Calendar;            use GNAT.Calendar;
-with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with Ada.Calendar;           use Ada.Calendar;
+with Ada.Exceptions;         use Ada.Exceptions;
 
-with Interactive_Consoles;     use Interactive_Consoles;
+with GNAT.Calendar;          use GNAT.Calendar;
+with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
+with GNAT.IO;                use GNAT.IO;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Glib.Xml_Int;           use Glib.Xml_Int;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+
+with Interactive_Consoles;   use Interactive_Consoles;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GNAT.IO;                  use GNAT.IO;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtkada.File_Selector;     use Gtkada.File_Selector;
-with Gtkada.MDI;               use Gtkada.MDI;
-with String_Utils;             use String_Utils;
-with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
-with Gtkada.Handlers;          use Gtkada.Handlers;
-with Histories;                use Histories;
-with Gtk.Widget;               use Gtk.Widget;
-with VFS;                      use VFS;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
+with Histories;              use Histories;
+with Gtk.Widget;             use Gtk.Widget;
+with VFS;                    use VFS;
 with Basic_Types;
 
 package body GPS.Kernel.Console is
@@ -106,8 +108,7 @@ package body GPS.Kernel.Console is
    -----------------
 
    function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Interactive_Console
+     (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console
    is
       pragma Unreferenced (Kernel);
    begin
@@ -366,12 +367,12 @@ package body GPS.Kernel.Console is
    --------------------------------
 
    function Create_Interactive_Console
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Title       : String := "";
-      History     : History_Key := "interactive";
+     (Kernel              : access Kernel_Handle_Record'Class;
+      Title               : String := "";
+      History             : History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
-      Module      : GPS.Kernel.Abstract_Module_ID := null;
-      Force_Create : Boolean := False) return Interactive_Console
+      Module              : GPS.Kernel.Abstract_Module_ID := null;
+      Force_Create        : Boolean := False) return Interactive_Console
    is
       Console : Interactive_Console;
       Child   : MDI_Child;

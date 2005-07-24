@@ -109,7 +109,6 @@ package GPS.Kernel.Hooks is
    type No_Args_Execute is access procedure
      (Kernel : access Kernel_Handle_Record'Class);
 
-
    procedure Add_Hook
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Name   : String;

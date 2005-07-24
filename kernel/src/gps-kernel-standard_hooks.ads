@@ -18,13 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with System;
+
+with GNAT.OS_Lib;
+
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with VFS;                use VFS;
-with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
-with System;
 with Gdk.Pixbuf;
 with Commands;
 with Entities;

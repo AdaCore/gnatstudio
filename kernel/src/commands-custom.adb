@@ -18,39 +18,40 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Macros;  use GPS.Kernel.Macros;
-
-with Glib;                 use Glib;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Check_Button;     use Gtk.Check_Button;
-with Gtk.Tooltips;         use Gtk.Tooltips;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Combo;            use Gtk.Combo;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Size_Group;       use Gtk.Size_Group;
-with Gtk.Spin_Button;      use Gtk.Spin_Button;
-
-with String_Utils;         use String_Utils;
-with Interactive_Consoles; use Interactive_Consoles;
-
-with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Traces;               use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
-with GNAT.Regpat;          use GNAT.Regpat;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with System;
+
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with Glib;                      use Glib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Spin_Button;           use Gtk.Spin_Button;
+
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with String_Utils;              use String_Utils;
+with Interactive_Consoles;      use Interactive_Consoles;
+
+with Traces;                    use Traces;
 
 package body Commands.Custom is
 
@@ -799,8 +800,8 @@ package body Commands.Custom is
                Interval := 1;
             end if;
 
-            for J in Context.Args'First - 1 + First_Arg ..
-              Context.Args'Last
+            for J in
+              Context.Args'First - 1 + First_Arg .. Context.Args'Last
             loop
                if Context.Args (J) /= null then
                   Length :=
@@ -812,8 +813,8 @@ package body Commands.Custom is
                Result : String (1 .. Length);
                Index  : Natural := 1;
             begin
-               for J in Context.Args'First - 1 + First_Arg ..
-                 Context.Args'Last
+               for J in
+                 Context.Args'First - 1 + First_Arg .. Context.Args'Last
                loop
                   if Context.Args (J) /= null then
                      if Interval = 1 then
@@ -826,8 +827,9 @@ package body Commands.Custom is
                      else
                         declare
                            Protect : constant String :=
-                             String_Utils.Protect (Context.Args (J).all,
-                                                   Protect_Quotes => Quoted);
+                                       String_Utils.Protect
+                                         (Context.Args (J).all,
+                                          Protect_Quotes => Quoted);
                         begin
                            Result
                              (Index .. Index + Protect'Length + 2) :=
@@ -881,8 +883,8 @@ package body Commands.Custom is
          Quoted : Boolean) return String
       is
          Num     : Integer;
-         Macro   : constant String := Substitute
-           (Param, Command.Execution.Context, Quoted);
+         Macro   : constant String :=
+                     Substitute (Param, Command.Execution.Context, Quoted);
       begin
          if Macro /= "" then
             return Macro;
@@ -898,8 +900,8 @@ package body Commands.Custom is
          declare
             Output_Index : constant Integer := Output_Substitution
               (Command, Command.Execution.Cmd_Index, Num);
-            Output  : GNAT.OS_Lib.String_Access;
-            Last   : Integer;
+            Output       : GNAT.OS_Lib.String_Access;
+            Last         : Integer;
          begin
             if Output_Index = -1 then
                return "";
@@ -949,17 +951,17 @@ package body Commands.Custom is
       is
          --  Perform arguments substitutions for the command.
 
-         Subst_Percent  : constant String := Substitute
+         Subst_Percent   : constant String := Substitute
            (Component.Command.all,
             Substitution_Char => '$',
             Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
-         Subst_Cmd_Line : constant String := Substitute
+         Subst_Cmd_Line  : constant String := Substitute
            (Subst_Percent,
             Substitution_Char => GPS.Kernel.Macros.Special_Character,
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
-         Console        : Interactive_Console;
+         Console         : Interactive_Console;
          Output_Location : GNAT.OS_Lib.String_Access;
 
          function To_String (P : in GNAT.OS_Lib.String_Access) return String;
@@ -1022,7 +1024,7 @@ package body Commands.Custom is
                      Hide_Output  => Output_Location.all = No_Output,
                      Show_Command => Component.Show_Command,
                      Console      => Console,
-                     Errors => Errors);
+                     Errors       => Errors);
                end if;
             end if;
 
@@ -1221,11 +1223,10 @@ package body Commands.Custom is
             Command.Execution.Context := Context.Context;
          end if;
 
-         Command.Execution.Cmd_Index   := Command.Components'First;
+         Command.Execution.Cmd_Index  := Command.Components'First;
          Ref (Command.Execution.Context);
 
-         Check_Save_Output
-           (Command, Command.Execution.Save_Output.all);
+         Check_Save_Output (Command, Command.Execution.Save_Output.all);
          Clear_Consoles (Command.Kernel, Command);
 
          if Context.Dir /= null then

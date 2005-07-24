@@ -54,6 +54,6 @@ package GPS.Kernel.Task_Manager is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the task manager module graphical entry points.
+   --  Register the task manager module graphical entry points
 
 end GPS.Kernel.Task_Manager;

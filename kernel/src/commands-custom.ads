@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2005                    --
+--                              AdaCore                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -190,7 +190,6 @@ private
    --  Stores information relevant only while a command is executing, to
    --  limit the memory footprint when storing a command.
 
-
    type Custom_Component_Record is abstract new Command_Component_Record with
       record
          Show_Command : Boolean;
@@ -240,7 +239,6 @@ private
       Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See doc for inherited subprograms
 
-
    type Command_Component_Description is record
       Component : Custom_Component;
       On_Failure_For : Integer := -1;
@@ -257,8 +255,6 @@ private
    type Components_Array is array (Natural range <>)
       of Command_Component_Description;
    type Components_Array_Access is access Components_Array;
-
-
 
    type Custom_Command is new Interactive_Command with record
       Kernel      : Kernel_Handle;
@@ -286,6 +282,5 @@ private
      (Command     : access Custom_Command;
       Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See doc for inherited subprograms
-
 
 end Commands.Custom;

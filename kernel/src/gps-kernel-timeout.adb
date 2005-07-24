@@ -18,54 +18,48 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Config;               use Config;
-
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Values;
-
-with Gtk.Main;             use Gtk.Main;
-
-with GNAT.Expect;          use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
-pragma Warnings (On);
-with GNAT.Regpat;          use GNAT.Regpat;
-
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-
-with String_Utils;         use String_Utils;
-with Traces;               use Traces;
-
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with Interactive_Consoles;       use Interactive_Consoles;
+with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
-with GPS.Intl;           use GPS.Intl;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Expect;                use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+pragma Warnings (On);
+with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
-with Gtkada.MDI;           use Gtkada.MDI;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Glib;                       use Glib;
+with Glib.Object;                use Glib.Object;
+with Glib.Values;
+with Gtk.Main;                   use Gtk.Main;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
-with Ada.Unchecked_Deallocation;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Intl;                   use GPS.Intl;
+with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
+with Interactive_Consoles;       use Interactive_Consoles;
+with Config;                     use Config;
 
 package body GPS.Kernel.Timeout is
 
    type Console_Process_Data is new GObject_Record with record
-      Console   : Interactive_Console;
-      Delete_Id : Gtk.Handlers.Handler_Id;
+      Console       : Interactive_Console;
+      Delete_Id     : Gtk.Handlers.Handler_Id;
 
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
 
-      D       : Process_Data;
-      Died    : Boolean := False;
+      D             : Process_Data;
+      Died          : Boolean := False;
       --  Indicates that the process has died.
 
-      Id          : Timeout_Handler_Id;
+      Id            : Timeout_Handler_Id;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 

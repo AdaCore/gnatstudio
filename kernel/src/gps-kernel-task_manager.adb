@@ -71,8 +71,7 @@ package body GPS.Kernel.Task_Manager is
 
    function Get_Or_Create_Task_Manager_Interface_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child;
+      Allow_Creation : Boolean := True) return MDI_Child;
    --  Internal version of Get_Or_Create_Task_Manager_Interface
 
    procedure On_Task_Manager
@@ -195,8 +194,7 @@ package body GPS.Kernel.Task_Manager is
 
    function Get_Or_Create_Task_Manager_Interface_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child
+      Allow_Creation : Boolean := True) return MDI_Child
    is
       Child : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag);
@@ -399,10 +397,7 @@ package body GPS.Kernel.Task_Manager is
          Callback => On_Task_Manager'Access,
          Ref_Item => Shell);
 
-      Add_Hook
-        (Kernel,
-         Before_Exit_Action_Hook,
-         On_Exit_Hook'Access);
+      Add_Hook (Kernel, Before_Exit_Action_Hook, On_Exit_Hook'Access);
    end Register_Module;
 
    -------------

@@ -157,14 +157,13 @@ package body Task_Manager is
      (Manager : in Task_Manager_Access;
       Active  : Boolean) return Boolean
    is
-      Lowest  : Integer := Integer'Last;
-      Result  : Command_Return_Type;
-      First   : Integer;
-      Last    : Integer;
-      Command : Command_Access;
+      Lowest        : Integer := Integer'Last;
+      Result        : Command_Return_Type;
+      First         : Integer;
+      Last          : Integer;
+      Command       : Command_Access;
       Previous_Prio : Integer;
-
-      Queue : Task_Queue_Access;
+      Queue         : Task_Queue_Access;
    begin
       if Manager.Queues = null then
          return False;

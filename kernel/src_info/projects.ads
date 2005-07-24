@@ -566,7 +566,6 @@ package Projects is
    function Get_Tree (Project : Project_Type) return Prj.Project_Tree_Ref;
    --  The tree to which the project belongs
 
-
 private
    type Project_Type_Data;
    type Project_Type_Data_Access is access Project_Type_Data;

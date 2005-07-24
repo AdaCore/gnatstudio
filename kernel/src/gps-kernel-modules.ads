@@ -124,10 +124,10 @@ with Gtk.Menu_Item;
 with Gtk.Selection;
 with Gtk.Widget;
 with Gtkada.MDI;
-with Commands; use Commands;
+with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
-with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 
 package GPS.Kernel.Modules is
 

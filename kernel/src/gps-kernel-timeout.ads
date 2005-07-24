@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main;
+with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
 with GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
+
+with Gtk.Main;
 with Interactive_Consoles;
 
 package GPS.Kernel.Timeout is
