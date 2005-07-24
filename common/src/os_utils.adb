@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                             ACT-Europe                            --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Glib.Convert;              use Glib.Convert;
 with Traces;                    use Traces;
 
@@ -43,6 +45,10 @@ package body OS_Utils is
 
       function Normalize (Path : String_Access) return String;
       --  Normalize Path as a directory and Free it on return
+
+      ---------------
+      -- Normalize --
+      ---------------
 
       function Normalize (Path : String_Access) return String is
          P   : String_Access := Path;
