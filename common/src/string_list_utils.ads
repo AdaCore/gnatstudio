@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,13 +25,13 @@ with GNAT.OS_Lib;
 package String_List_Utils is
 
    procedure String_Free (S : in out String);
-   --  Free memory associated with S.
+   --  Free memory associated with S
 
    package String_List is new Generic_List (String, Free => String_Free);
 
    function Copy_String_List
      (S : in String_List.List) return String_List.List;
-   --  Return a deep copy of S.
+   --  Return a deep copy of S
 
    procedure Sort is new List_Utils.Sort (String_List);
    --  Sort L alphabetically.
@@ -49,11 +49,8 @@ package String_List_Utils is
    --  Remove S from L. If All_Occurrences is True, remove all occurrences,
    --  otherwise remove only the first occurrence.
 
-   function Is_In_List
-     (L : String_List.List;
-      S : String)
-     return Boolean;
-   --  Return True if S is in L.
+   function Is_In_List (L : String_List.List; S : String) return Boolean;
+   --  Return True if S is in L
 
    function Longest_Prefix (L : String_List.List) return String;
    --  Return the longest prefix of all the strings in L. The empty string is
@@ -68,6 +65,6 @@ package String_List_Utils is
    function List_To_Argument_List
      (L : String_List.List) return GNAT.OS_Lib.Argument_List;
    --  Convert the list.
-   --  The returned memory must be freed by the user
+   --  The returned memory must be freed by the user.
 
 end String_List_Utils;

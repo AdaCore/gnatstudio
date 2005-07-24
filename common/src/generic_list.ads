@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ generic
    type Data_Type (<>) is private;
 
    with procedure Free (Data : in out Data_Type) is <>;
-   --  Free any dynamic memory associated with Data.
+   --  Free any dynamic memory associated with Data
 
 package Generic_List is
 
@@ -43,7 +43,7 @@ package Generic_List is
    procedure Prepend
      (L    : in out List;
       Item : Data_Type);
-   --  Add an item at the beginning of a list. The cost is O(1).
+   --  Add an item at the beginning of a list. The cost is O(1)
 
    procedure Prepend
      (L    : in out List;
@@ -55,7 +55,7 @@ package Generic_List is
    procedure Append
      (L    : in out List;
       Item : Data_Type);
-   --  Add an item at the end of a list. The cost is O(1).
+   --  Add an item at the end of a list. The cost is O(1)
 
    procedure Append
      (L    : in out List;
@@ -68,7 +68,7 @@ package Generic_List is
    --  True if L does not contain any element.
 
    function Length (L : List) return Natural;
-   --  Return the number of elements in L. Cost is O(n).
+   --  Return the number of elements in L. Cost is O(n)
 
    procedure Concat
      (L1 : in out List;
@@ -108,10 +108,10 @@ package Generic_List is
    --  first). Otherwise, free from First to Last.
 
    function First (L : List) return List_Node;
-   --  Return the first node contained in L.
+   --  Return the first node contained in L
 
    function Last (L : List) return List_Node;
-   --  Return the last node contained in L.
+   --  Return the last node contained in L
 
    function Prev (L : List; Node : List_Node) return List_Node;
    --  Return the node before Node in L. The cost is O(n).
@@ -119,7 +119,7 @@ package Generic_List is
    --  If Node cannot be found in L, raise List_Empty.
 
    function Next (Node : List_Node) return List_Node;
-   --  Return the node following Node. The cost is O(1).
+   --  Return the node following Node. The cost is O(1)
 
    procedure Next
      (L         : in out List;
@@ -145,7 +145,7 @@ package Generic_List is
    procedure Set_Data
      (Node : List_Node;
       D    : Data_Type);
-   --  Free the data associated with L and replace it by D.
+   --  Free the data associated with L and replace it by D
 
 private
 

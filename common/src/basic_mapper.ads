@@ -39,7 +39,7 @@ package Basic_Mapper is
      (Mapper : in out File_Mapper_Access;
       Text_1 : String;
       Text_2 : String);
-   --  Add a couple of corresponding strings in Mapper.
+   --  Add a couple of corresponding strings in Mapper
 
    procedure Remove_Entry
      (Mapper : in out File_Mapper_Access;
@@ -50,15 +50,15 @@ package Basic_Mapper is
    procedure Save_Mapper
      (Mapper    : File_Mapper_Access;
       File_Name : String);
-   --  Save Mapper to file File_Name.
+   --  Save Mapper to file File_Name
 
    procedure Load_Mapper
      (Mapper    : out File_Mapper_Access;
       File_Name : String);
-   --  Load Mapper from file File_Name.
+   --  Load Mapper from file File_Name
 
    procedure Empty_Mapper (Mapper : out File_Mapper_Access);
-   --  Return an empty mapper.
+   --  Return an empty mapper
 
    procedure Free (Mapper : in out File_Mapper_Access);
    --  Free the memory occupied by Mapper and its components.

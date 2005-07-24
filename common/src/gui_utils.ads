@@ -212,9 +212,9 @@ package GUI_Utils is
    --  selection.
 
    function Find_Node
-     (Model   : Gtk.Tree_Store.Gtk_Tree_Store;
-      Name    : String;
-      Column  : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
+     (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
+      Name   : String;
+      Column : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node
 
@@ -341,8 +341,8 @@ package GUI_Utils is
 
    procedure Key_Grab
      (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Key  : out Gdk.Types.Gdk_Key_Type;
-      Mods : out Gdk.Types.Gdk_Modifier_Type);
+      Key       : out Gdk.Types.Gdk_Key_Type;
+      Mods      : out Gdk.Types.Gdk_Modifier_Type);
    --  Temporarily grab the pointer and keyboards for In_Widget, and returns
    --  the first fully defined key that the user has pressed. (Key, Mods) is
    --  set to (0, 0) if no key could be grabbed.
@@ -499,8 +499,6 @@ package GUI_Utils is
    --  Create a new label, with a blue background.
    --  Event should be inserted in the container, and the text should be set
    --  in Label.
-
-
 
 private
 

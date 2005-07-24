@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,26 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;   use Ada.Text_IO;
-with Glib;          use Glib;
-with GNAT.OS_Lib;   use GNAT.OS_Lib;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtk.Combo;     use Gtk.Combo;
-with Gtk.GEntry;    use Gtk.GEntry;
-with Glib.Xml_Int;  use Glib.Xml_Int;
-with XML_Parsers;
-with Gtk.List;      use Gtk.List;
-with Gtk.List_Item; use Gtk.List_Item;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Menu;      use Gtk.Menu;
+with Ada.Text_IO;         use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GUI_Utils;     use GUI_Utils;
-with Gtk.Handlers;  use Gtk.Handlers;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtk.Toggle_Button; use Gtk.Toggle_Button;
-with Traces;        use Traces;
-with GUI_Utils;     use GUI_Utils;
-with String_Utils;  use String_Utils;
+
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
+with Glib;                use Glib;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Glib.Xml_Int;        use Glib.Xml_Int;
+with XML_Parsers;
+with Gtk.List;            use Gtk.List;
+with Gtk.List_Item;       use Gtk.List_Item;
+with Gtk.Menu_Item;       use Gtk.Menu_Item;
+with Gtk.Menu;            use Gtk.Menu;
+with GUI_Utils;           use GUI_Utils;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
+with Traces;              use Traces;
+with GUI_Utils;           use GUI_Utils;
+with String_Utils;        use String_Utils;
 
 package body Histories is
 
@@ -722,4 +724,3 @@ package body Histories is
    end On_Changed;
 
 end Histories;
-

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  Support for saving/loading case exception files.
+--  Support for saving/loading case exception files
 
 package Case_Handling.IO is
 

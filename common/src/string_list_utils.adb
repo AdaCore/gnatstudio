@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -107,11 +107,7 @@ package body String_List_Utils is
    -- Is_In_List --
    ----------------
 
-   function Is_In_List
-     (L : String_List.List;
-      S : String)
-     return Boolean
-   is
+   function Is_In_List (L : String_List.List; S : String) return Boolean is
       Node : List_Node := First (L);
    begin
       while Node /= Null_Node loop

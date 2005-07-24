@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -157,7 +157,7 @@ package Histories is
    function Get_History
      (Hist      : History_Record;
       Key       : History_Key) return Boolean;
-   --  Return the current value of Key.
+   --  Return the current value of Key
 
    procedure Associate
      (Hist      : in out History_Record;

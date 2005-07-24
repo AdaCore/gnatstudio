@@ -782,9 +782,9 @@ package body GUI_Utils is
       Data   : Glib.Gint)
    is
       M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
-      Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant GValue := Nth (Params, 2);
+      Iter        : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
@@ -1590,29 +1590,29 @@ package body GUI_Utils is
    ----------------------
 
    function Create_Tree_View
-     (Column_Types   : Glib.GType_Array;
-      Column_Names   : GNAT.OS_Lib.String_List;
+     (Column_Types       : Glib.GType_Array;
+      Column_Names       : GNAT.OS_Lib.String_List;
       Show_Column_Titles : Boolean := True;
-      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
+      Selection_Mode     : Gtk.Enums.Gtk_Selection_Mode :=
         Gtk.Enums.Selection_Single;
-      Sortable_Columns : Boolean := True;
-      Initial_Sort_On  : Integer := -1;
-      Hide_Expander    : Boolean := False;
+      Sortable_Columns   : Boolean := True;
+      Initial_Sort_On    : Integer := -1;
+      Hide_Expander      : Boolean := False;
       Merge_Icon_Columns : Boolean := True;
       Editable_Columns   : Gint_Array := (1 .. 0 => -1);
       Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null))
       return Gtk.Tree_View.Gtk_Tree_View
    is
-      View            : Gtk_Tree_View;
-      Col             : Gtk_Tree_View_Column;
-      Col_Number      : Gint;
-      Model           : Gtk_Tree_Store;
-      Text_Render     : Gtk_Cell_Renderer_Text;
-      Toggle_Render   : Gtk_Cell_Renderer_Toggle;
-      Pixbuf_Render   : Gtk_Cell_Renderer_Pixbuf;
+      View              : Gtk_Tree_View;
+      Col               : Gtk_Tree_View_Column;
+      Col_Number        : Gint;
+      Model             : Gtk_Tree_Store;
+      Text_Render       : Gtk_Cell_Renderer_Text;
+      Toggle_Render     : Gtk_Cell_Renderer_Toggle;
+      Pixbuf_Render     : Gtk_Cell_Renderer_Pixbuf;
       Previous_Was_Icon : Boolean := False;
-      Is_Icon         : Boolean;
-      ColNum          : Guint;
+      Is_Icon           : Boolean;
+      ColNum            : Guint;
       pragma Unreferenced (Col_Number);
    begin
       Gtk_New (Model, Column_Types);

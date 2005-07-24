@@ -22,13 +22,14 @@
 --  It gives access to local and remote files, abstract file system specific
 --  features (case sensitivity),...
 
-with Glib;          use Glib;
-with Glib.Values;
-with GNAT.OS_Lib;
-with Ada.Finalization;
-with Remote_Connections;
 with Ada.Calendar;
+with Ada.Finalization;
 with GNAT.Calendar;
+with GNAT.OS_Lib;
+
+with Glib;               use Glib;
+with Glib.Values;
+with Remote_Connections;
 
 package VFS is
 
@@ -79,7 +80,7 @@ package VFS is
 
    function Base_Name
      (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
-   --  Return the base name of the file.
+   --  Return the base name of the file
 
    function Full_Name
      (File : Virtual_File; Normalize : Boolean := False)
@@ -98,7 +99,7 @@ package VFS is
 
    function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
    --  Return the directory name for File. This includes any available
-   --  on the protocol, so that relative files names are properly found
+   --  on the protocol, so that relative files names are properly found.
 
    function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
    --  Return the contents of an entire file, encoded with the locale encoding.
@@ -138,7 +139,7 @@ package VFS is
    --  the beginning of the file name will be replaced by Remote_Dir.
 
    procedure Sort (Files : in out File_Array);
-   --  Sort the array of files, in the order given by the full names.
+   --  Sort the array of files, in the order given by the full names
 
    -------------------
    -- Writing files --
