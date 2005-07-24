@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003 - 2004                       --
---                            ACT-Europe                             --
+--                   Copyright (C) 2003 - 2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Event;   use Gdk.Event;
-with GPS.Intl;  use GPS.Intl;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Gtk.Label;   use Gtk.Label;
 with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+
 with Glib.Xml_Int; use Glib.Xml_Int;
+with Gdk.Event;    use Gdk.Event;
+with Gtk.Label;    use Gtk.Label;
+with GPS.Intl;     use GPS.Intl;
 
 package body Commands.Interactive is
 
@@ -162,9 +164,8 @@ package body Commands.Interactive is
    -- Execute --
    -------------
 
-   function Execute (Command : access Interactive_Command)
-     return Command_Return_Type
-   is
+   function Execute
+     (Command : access Interactive_Command) return Command_Return_Type is
    begin
       return Execute (Interactive_Command_Access (Command), Null_Context);
    end Execute;
@@ -181,6 +182,10 @@ package body Commands.Interactive is
       function Execute_Command
         (Command : Command_Access) return Command_Return_Type;
 
+      ---------------------
+      -- Execute_Command --
+      ---------------------
+
       function Execute_Command
         (Command : Command_Access) return Command_Return_Type is
       begin
@@ -188,8 +193,8 @@ package body Commands.Interactive is
            (Interactive_Command_Access (Command), Context);
       end Execute_Command;
 
-      procedure Internal is new Launch_Synchronous_Generic
-        (Execute_Command);
+      procedure Internal is new Launch_Synchronous_Generic (Execute_Command);
+
    begin
       Internal (Command_Access (Command), Wait);
    end Launch_Synchronous_Interactive;
@@ -353,6 +358,5 @@ package body Commands.Interactive is
    begin
       return Undo (Command.Command);
    end Undo;
-
 
 end Commands.Interactive;
