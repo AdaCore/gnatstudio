@@ -174,9 +174,6 @@ package body Vsearch_Ext is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Aborts the current search pattern
 
-   procedure Reset_All_Occurrences (Search : access Gtk_Widget_Record'Class);
-   --  Reset the "all occurrences" button
-
    function Key_Press
      (Vsearch : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean;
@@ -997,21 +994,6 @@ package body Vsearch_Ext is
       end if;
    end Set_First_Next_Mode;
 
-   ---------------------------
-   -- Reset_All_Occurrences --
-   ---------------------------
-
-   procedure Reset_All_Occurrences
-     (Search : access Gtk_Widget_Record'Class) is
-   begin
-      Set_Active (Vsearch_Extended (Search).Search_All_Check, False);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Reset_All_Occurrences;
-
    ----------------------------
    -- Set_First_Next_Mode_Cb --
    ----------------------------
@@ -1278,15 +1260,6 @@ package body Vsearch_Ext is
         (Vsearch.Replace_Entry, "changed", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
         (Vsearch.Context_Entry, "changed", Reset_Search'Access, Handle);
-      Widget_Callback.Object_Connect
-        (Vsearch.Pattern_Entry, "changed", Reset_All_Occurrences'Access,
-         Vsearch);
-      Widget_Callback.Object_Connect
-        (Vsearch.Replace_Entry, "changed", Reset_All_Occurrences'Access,
-         Vsearch);
-      Widget_Callback.Object_Connect
-        (Vsearch.Context_Entry, "changed", Reset_All_Occurrences'Access,
-         Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Search_All_Check, "toggled", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
