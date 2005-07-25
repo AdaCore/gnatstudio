@@ -414,6 +414,7 @@ private
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Debuggee_Pid     : Integer := 0;
       Has_Symbol_List  : Integer := -1;
+      Has_Start_Cmd    : Integer := -1;
    end record;
 
    procedure Internal_Parse_Value
