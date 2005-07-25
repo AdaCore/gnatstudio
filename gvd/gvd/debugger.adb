@@ -979,15 +979,31 @@ package body Debugger is
      (Debugger : access Debugger_Root'Class) return Boolean
    is
       Command : Command_Access := Debugger.Command_Queue;
+      Process : Visual_Debugger;
+      First   : Natural;
+
    begin
       if Command = null then
          return False;
       end if;
 
       Debugger.Command_Queue := Command.Next;
-      Send
-        (Debugger, Command.Cmd.all, Command.Empty_Buffer,
-         Mode => Command.Mode);
+
+      First := Command.Cmd'First;
+      Skip_Blanks (Command.Cmd.all, First);
+
+      if Looking_At (Command.Cmd.all, First, "graph") then
+         if Debugger.Window /= null then
+            Process := GVD.Process.Convert (Debugger.Window, Debugger);
+            Process_Graph_Cmd (Process, Command.Cmd.all);
+         end if;
+
+      else
+         Send
+           (Debugger, Command.Cmd.all, Command.Empty_Buffer,
+            Mode => Command.Mode);
+      end if;
+
       Free (Command.Cmd);
       Free (Command);
       return True;
