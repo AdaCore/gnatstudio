@@ -286,6 +286,11 @@ package GVD.Process is
    procedure Create_Call_Stack (Process : access Visual_Debugger_Record'Class);
    --  Create the call stack widget associated with Process.
 
+   procedure Process_Graph_Cmd
+     (Process : access Visual_Debugger_Record'Class;
+      Cmd     : String);
+   --  Parse and process a "graph print" or "graph display" command
+
    procedure Final_Post_Process
      (Process : access Visual_Debugger_Record'Class;
       Mode    : GVD.Types.Command_Type);

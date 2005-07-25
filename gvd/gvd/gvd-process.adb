@@ -171,11 +171,6 @@ package body GVD.Process is
    --  Callback for all the button press events in the debugger command window.
    --  This is used to display the contexual menu.
 
-   procedure Process_Graph_Cmd
-     (Process : access Visual_Debugger_Record'Class;
-      Cmd     : String);
-   --  Parse and process a "graph print" or "graph display" command
-
    function On_Data_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
@@ -1606,7 +1601,7 @@ package body GVD.Process is
          --  Usually because Find_Item returned a null value.
          Output_Error
            (GPS_Window (Process.Window).Kernel,
-            (-" Invalid command: ") & Cmd);
+            (-" Error while processing: ") & Cmd);
    end Process_Graph_Cmd;
 
    --------------------
@@ -1722,7 +1717,9 @@ package body GVD.Process is
 
       Skip_Blanks (Lowered_Command, First);
 
-      if Looking_At (Lowered_Command, First, "graph") then
+      if not Command_In_Process (Get_Process (Debugger.Debugger))
+        and then Looking_At (Lowered_Command, First, "graph")
+      then
          Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
 
