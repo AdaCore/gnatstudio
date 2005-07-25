@@ -202,7 +202,7 @@ package body Ada_Analyzer is
      Token_Type range Tok_Entry .. Tok_Procedure;
    --  Keywords which start a declaration
 
-   subtype Token_Class_No_Cont is Token_Type range Tok_Function .. Tok_Colon;
+   subtype Token_Class_No_Cont is Token_Type range Tok_Generic .. Tok_Colon;
    --  Do not allow a following continuation line
 
    Is_Operator : constant Token_Set :=
