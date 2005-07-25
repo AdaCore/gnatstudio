@@ -48,7 +48,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Location_View;         use GPS.Location_View;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
-
+with Interactive_Consoles;       use Interactive_Consoles;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
@@ -1303,6 +1303,8 @@ package body Builder_Module is
          Remote_Host : constant String :=
            Get_Attribute_Value (Data.Project, Remote_Host_Attribute);
          Exec        : String_Access;
+         Fd          : Process_Descriptor_Access;
+         Console     : Interactive_Console;
 
       begin
          if Remote_Host = ""
@@ -1313,12 +1315,15 @@ package body Builder_Module is
             if Exec = null then
                Insert (K, -"Could not locate executable on path: " & Command);
             else
+               Console := Create_Interactive_Console (K, Title);
                Launch_Process
                  (K,
-                  Command   => Exec.all,
-                  Arguments => Arguments,
-                  Console   => Create_Interactive_Console (K, Title),
-                  Success   => Success);
+                  Command              => Exec.all,
+                  Arguments            => Arguments,
+                  Console              => Console,
+                  Success              => Success,
+                  Show_In_Task_Manager => True,
+                  Fd                   => Fd);
             end if;
 
             Free (Exec);
@@ -1333,13 +1338,16 @@ package body Builder_Module is
                Last_Arg     : String_Access := new String'(Full_Command);
 
             begin
+               Console := Create_Interactive_Console (K, Title);
                Launch_Process
                  (K,
-                  Command   => New_Args (New_Args'First).all,
-                  Arguments =>
+                  Command              => New_Args (New_Args'First).all,
+                  Arguments            =>
                     New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
-                  Console   => Create_Interactive_Console (K, Title),
-                  Success   => Success);
+                  Console              => Console,
+                  Success              => Success,
+                  Show_In_Task_Manager => True,
+                  Fd                   => Fd);
 
                Free (Last_Arg);
                Free (New_Args);
