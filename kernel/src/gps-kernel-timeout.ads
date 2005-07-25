@@ -54,18 +54,28 @@ package GPS.Kernel.Timeout is
    package Process_Timeout is new Gtk.Main.Timeout (Process_Data);
 
    procedure Launch_Process
-     (Kernel        : Kernel_Handle;
-      Command       : String;
-      Arguments     : GNAT.OS_Lib.Argument_List;
-      Console       : Interactive_Consoles.Interactive_Console := null;
-      Callback      : Output_Callback := null;
-      Exit_Cb       : Exit_Callback := null;
-      Success       : out Boolean;
-      Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False;
-      Directory     : String := "");
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Show_Command         : Boolean := True;
+      Callback_Data        : System.Address := System.Null_Address;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Remote_Host          : String := "";
+      Remote_Protocol      : String := "";
+      Show_In_Task_Manager : Boolean := True);
    --  Launch a given command with arguments.
+   --  Arguments must be freed by the user.
+   --
+   --  If (Remote_Host, Remote_Protocol) is specified, the process will be
+   --  started on a remote machine. Otherwise it is started on the local host.
+   --  It is currently assumed that the command to start a process on the
+   --  remote machine is  "protocol host command", as in "ssh paris ls"
+   --
    --  Set Success to True if the command could be spawned.
    --  Callback will be called asynchronousely when some new data is
    --  available from the process.
@@ -76,6 +86,9 @@ package GPS.Kernel.Timeout is
    --  GPS.Kernel.Console.Get_Console.
    --  If Show_Command is True and the output is displayed, the command
    --  itself is displayed in the console.
+   --  If the console is specified and is closed while the process is
+   --  running, a dialog will be displayed asking the user whether the
+   --  process should be killed as well.
    --
    --  If Line_By_Line is True, then the output of the command is processed
    --  line by line, instead of being processed with as big chunks as possible.
@@ -83,20 +96,26 @@ package GPS.Kernel.Timeout is
    --
    --  If Directory is not empty, move to Dir before launching the command,
    --  and change back to the current directory once the command is spawned.
+   --  This applies to the local host, not the remote host.
 
    procedure Launch_Process
-     (Kernel        : Kernel_Handle;
-      Command       : String;
-      Arguments     : GNAT.OS_Lib.Argument_List;
-      Console       : Interactive_Consoles.Interactive_Console := null;
-      Callback      : Output_Callback := null;
-      Exit_Cb       : Exit_Callback := null;
-      Success       : out Boolean;
-      Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False;
-      Directory     : String := "";
-      Fd            : out GNAT.Expect.Process_Descriptor_Access);
-   --  Same as above, and returns the created Process_Descriptor
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Show_Command         : Boolean := True;
+      Callback_Data        : System.Address := System.Null_Address;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Remote_Host          : String := "";
+      Remote_Protocol      : String := "";
+      Show_In_Task_Manager : Boolean := True;
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access);
+   --  Same as above, and returns the created Process_Descriptor.
+   --  Fd will be cleaned automatically, and should not be freed by the caller
+   --  of Launch_Process (although it is of course authorized to Close Fd).
 
 end GPS.Kernel.Timeout;

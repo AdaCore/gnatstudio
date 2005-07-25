@@ -40,12 +40,14 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 with Interactive_Consoles;       use Interactive_Consoles;
 with Config;                     use Config;
+with Commands;                   use Commands;
 
 package body GPS.Kernel.Timeout is
 
@@ -76,8 +78,9 @@ package body GPS.Kernel.Timeout is
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" event.
 
-   procedure Cleanup (Data : Process_Data);
-   --  Close the process descriptor and free its associated memory
+   procedure Cleanup (Data : in out Process_Data);
+   --  Close the process descriptor and free its associated memory.
+   --  Free memory used by Data itself
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -85,33 +88,102 @@ package body GPS.Kernel.Timeout is
       User_Data : System.Address) return String;
    --  Handler for user input on the console.
 
+   type Monitor_Command is new Root_Command with record
+      Name    : String_Access;
+      Data    : Console_Process;
+   end record;
+   type Monitor_Command_Access is access all Monitor_Command'Class;
+   --  Command that can be used to monitor an external process through the task
+   --  manager, and make it interruptible by users. No special handling of
+   --  the output is done, since this is assumed to be done through the call
+   --  to Launch_Process already. Closing the console terminates the process.
+
+   procedure Free (D : in out Monitor_Command);
+   function Execute
+     (Command : access Monitor_Command) return Command_Return_Type;
+   function Name (Command : access Monitor_Command) return String;
+   --  See inherited documentation
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Monitor_Command) is
+      PID     : GNAT.Expect.Process_Id;
+      Status  : Integer;
+   begin
+      if not D.Data.Died and then D.Data.D.Descriptor /= null then
+         PID := Get_Pid (D.Data.D.Descriptor.all);
+
+         if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
+            Interrupt (D.Data.D.Descriptor.all);
+            Close (D.Data.D.Descriptor.all, Status);
+         end if;
+      end if;
+
+      Free (D.Name);
+      Cleanup (D.Data.D);
+      Unref (D.Data);
+   end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Monitor_Command) return Command_Return_Type is
+   begin
+      if Command.Data.D.Descriptor = null
+        or else Command.Data.Died
+      then
+         return Failure;
+      else
+         return Execute_Again;
+      end if;
+   end Execute;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access Monitor_Command) return String is
+   begin
+      if Command.Name /= null then
+         return Command.Name.all;
+      else
+         return "Command";
+      end if;
+   end Name;
+
    -------------
    -- Cleanup --
    -------------
 
-   procedure Cleanup (Data : Process_Data) is
-      Fd     : Process_Descriptor_Access := Data.Descriptor;
+   procedure Cleanup (Data : in out Process_Data) is
       Status : Integer;
    begin
-      Close (Fd.all, Status);
+      if Data.Descriptor /= null then
+         Close (Data.Descriptor.all, Status);
 
-      if Data.Exit_Cb = null then
-         if Status = 0 then
-            Console.Insert
-              (Data.Kernel, ASCII.LF & (-"process terminated successfully"));
+         if Data.Exit_Cb = null then
+            if Status = 0 then
+               --  ??? Shouldn't we print in the process's console ?
+               Console.Insert
+                 (Data.Kernel,
+                  ASCII.LF & (-"process terminated successfully"));
+            else
+               Console.Insert
+                 (Data.Kernel, ASCII.LF & (-"process exited with status ") &
+                  Image (Status));
+            end if;
+
          else
-            Console.Insert
-              (Data.Kernel, ASCII.LF & (-"process exited with status ") &
-                 Image (Status));
+            Data.Exit_Cb (Data, Status);
          end if;
 
-      else
-         Data.Exit_Cb (Data, Status);
+         Free (Data.Descriptor);
+         Pop_State (Data.Kernel);
       end if;
-
-      Free (Fd);
-
-      Pop_State (Data.Kernel);
    end Cleanup;
 
    ----------------
@@ -128,24 +200,26 @@ package body GPS.Kernel.Timeout is
       end if;
 
       Fd := Data.D.Descriptor;
-      Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
+      if Fd /= null then
+         Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
 
-      if Result /= Expect_Timeout then
-         declare
-            Output : constant String := Strip_CR (Expect_Out (Fd.all));
-         begin
-            if Data.Console /= null then
-               Insert (Data.Console, Output, Add_LF => False);
+         if Result /= Expect_Timeout then
+            declare
+               Output : constant String := Strip_CR (Expect_Out (Fd.all));
+            begin
+               if Data.Console /= null then
+                  Insert (Data.Console, Output, Add_LF => False);
 
-               --  ??? This might be costly, we could cache this MDI Child
-               Highlight_Child
-                 (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
-            end if;
+                  --  ??? This might be costly, we could cache this MDI Child
+                  Highlight_Child
+                    (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+               end if;
 
-            if Data.D.Callback /= null then
-               Data.D.Callback (Data.D, Output);
-            end if;
-         end;
+               if Data.D.Callback /= null then
+                  Data.D.Callback (Data.D, Output);
+               end if;
+            end;
+         end if;
       end if;
 
       return True;
@@ -177,15 +251,15 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.Died := True;
-         Cleanup (Data.D);
          Unchecked_Free (Data.Expect_Regexp);
+         Cleanup (Data.D);
          Unref (Data);
 
          return False;
 
       when E : others =>
-         Cleanup (Data.D);
          Unchecked_Free (Data.Expect_Regexp);
+         Cleanup (Data.D);
          Unref (Data);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
@@ -228,26 +302,32 @@ package body GPS.Kernel.Timeout is
    --------------------
 
    procedure Launch_Process
-     (Kernel        : Kernel_Handle;
-      Command       : String;
-      Arguments     : GNAT.OS_Lib.Argument_List;
-      Console       : Interactive_Consoles.Interactive_Console := null;
-      Callback      : Output_Callback := null;
-      Exit_Cb       : Exit_Callback := null;
-      Success       : out Boolean;
-      Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False;
-      Directory     : String := "";
-      Fd            : out GNAT.Expect.Process_Descriptor_Access)
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Show_Command         : Boolean := True;
+      Callback_Data        : System.Address := System.Null_Address;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Remote_Host          : String := "";
+      Remote_Protocol      : String := "";
+      Show_In_Task_Manager : Boolean := True;
+      Fd                   : out GNAT.Expect.Process_Descriptor_Access)
    is
       Timeout : constant Guint32 := 50;
       Data    : Console_Process;
+      C       : Monitor_Command_Access;
 
       procedure Spawn
-        (Command   : String;
-         Arguments : Argument_List;
-         Success   : out Boolean);
+        (Command         : String;
+         Arguments       : Argument_List;
+         Success         : out Boolean;
+         Remote_Host     : String := "";
+         Remote_Protocol : String := "");
       --  Launch given command.
 
       -----------
@@ -255,31 +335,70 @@ package body GPS.Kernel.Timeout is
       -----------
 
       procedure Spawn
-        (Command   : String;
-         Arguments : Argument_List;
-         Success   : out Boolean)
+        (Command         : String;
+         Arguments       : Argument_List;
+         Success         : out Boolean;
+         Remote_Host     : String := "";
+         Remote_Protocol : String := "")
       is
-         Exec    : String_Access := Locate_Exec_On_Path (Command);
-         Old_Dir : String_Access;
+         Exec         : String_Access;
+         Old_Dir      : String_Access;
+         Args         : Argument_List_Access;
+         Remote_Args  : Argument_List_Access;
       begin
-         if Exec = null then
-            Success := False;
-            GPS.Kernel.Console.Insert
-              (Kernel, -"Executable not found on PATH: " & Command,
-               Mode => Error);
-            return;
+         --  Take into account possible switches specified in Remote_Host
+         --  and Remote_Protocol.
+
+         if Remote_Host /= "" and then Remote_Protocol /= "" then
+            Remote_Args := Argument_String_To_List
+              (Remote_Protocol & ' ' & Remote_Host);
+         end if;
+
+         --  Find the command to execute on the local host
+
+         if Remote_Protocol = "" or else Remote_Host = "" then
+            if Host = Windows then
+               --  Execute  "cmd /c command arg1 arg2"
+               Exec := new String'("cmd");
+               Args := new Argument_List'
+                 ((new String'("/c"), new String'(Command))
+                  & Clone (Arguments));
+
+            else
+               --  Execute "command arg1 arg2"
+               Exec := Locate_Exec_On_Path (Command);
+               if Exec = null then
+                  Success := False;
+                  GPS.Kernel.Console.Insert
+                    (Kernel, -"Executable not found on PATH: " & Command,
+                     Mode => Error);
+                  return;
+               end if;
+
+               Args := new Argument_List'(Clone (Arguments));
+            end if;
+         else
+            if Host = Windows then
+               --  Execute "cmd /c protocol host command arg1 arg2"
+               Exec := new String'("cmd");
+               Args := new Argument_List'
+                 ((1 => new String'("/c"))
+                  & Remote_Args.all & new String'(Command)
+                  & Clone (Arguments));
+            else
+               --  Execute "protocol host command arg1 arg2"
+               Exec := Remote_Args (Remote_Args'First);
+               Args := new Argument_List'
+                 (Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last)
+                  & new String'(Command) & Clone (Arguments));
+            end if;
          end if;
 
          if Data.Console /= null and then Show_Command then
-            Insert (Data.Console, Command, Add_LF => False);
-            for J in Arguments'Range loop
-               Insert
-                 (Data.Console, ' ' & Arguments (J).all, Add_LF => False);
-            end loop;
-
-            --  Add end of line after last argument
-
-            Insert (Data.Console, "", Add_LF => True);
+            Insert (Data.Console,
+                    Exec.all & ' '
+                    & Argument_List_To_Quoted_String (Args.all),
+                    Add_LF => True);
          end if;
 
          Fd := new TTY_Process_Descriptor;
@@ -289,30 +408,7 @@ package body GPS.Kernel.Timeout is
             Change_Dir (Directory);
          end if;
 
-         if Host = Windows then
-            --  ??? Should remove this kludge, the one in
-            --  commands-external.adb, and the one in
-            --  GVD.Proc_Utils.Open_Processes
-
-            declare
-               Real_Args : GNAT.OS_Lib.Argument_List (1 .. 2);
-            begin
-               Real_Args (1) := new String'("/c");
-               Real_Args (2) := new String'(Command);
-
-               Non_Blocking_Spawn
-                 (Fd.all,
-                  "cmd",
-                  Real_Args & Arguments,
-                  Err_To_Out => True);
-
-               GNAT.OS_Lib.Free (Real_Args (1));
-               GNAT.OS_Lib.Free (Real_Args (2));
-            end;
-         else
-            Non_Blocking_Spawn
-              (Fd.all, Exec.all, Arguments, Err_To_Out => True);
-         end if;
+         Non_Blocking_Spawn (Fd.all, Exec.all, Args.all, Err_To_Out => True);
 
          if Directory /= "" then
             Change_Dir (Old_Dir.all);
@@ -320,7 +416,9 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Success := True;
+
          Free (Exec);
+         Free (Args);
 
       exception
          when Invalid_Process =>
@@ -343,11 +441,13 @@ package body GPS.Kernel.Timeout is
             Delete_Handler'Access,
             GObject (Data),
             After => False);
+      else
+         Data.Delete_Id.Signal := Null_Signal_Id;
       end if;
 
       Data.Console := Console;
 
-      Spawn (Command, Arguments, Success);
+      Spawn (Command, Arguments, Success, Remote_Host, Remote_Protocol);
 
       if Success then
          --  Precompile the regular expression for more efficiency
@@ -358,10 +458,23 @@ package body GPS.Kernel.Timeout is
               (Compile (".*$", Single_Line));
          end if;
 
-         Data.D       := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
-         Data.Delete_Id.Signal := Null_Signal_Id;
-         Data.Id      :=
+         Data.D  := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
+         Data.Id :=
            Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
+
+         if Show_In_Task_Manager then
+            C      := new Monitor_Command;
+            C.Data := Data;
+            Ref (Data);
+            C.Name := new String'(Command);
+            Launch_Background_Command
+              (Kernel,
+               Command_Access (C),
+               Active   => False,
+               Show_Bar => True,
+               Queue_Id => "");
+         end if;
+
       else
          Unref (Data);
          Pop_State (Kernel);
@@ -379,23 +492,27 @@ package body GPS.Kernel.Timeout is
    --------------------
 
    procedure Launch_Process
-     (Kernel        : Kernel_Handle;
-      Command       : String;
-      Arguments     : GNAT.OS_Lib.Argument_List;
-      Console       : Interactive_Consoles.Interactive_Console := null;
-      Callback      : Output_Callback := null;
-      Exit_Cb       : Exit_Callback := null;
-      Success       : out Boolean;
-      Show_Command  : Boolean := True;
-      Callback_Data : System.Address := System.Null_Address;
-      Line_By_Line  : Boolean := False;
-      Directory     : String := "")
+     (Kernel               : Kernel_Handle;
+      Command              : String;
+      Arguments            : GNAT.OS_Lib.Argument_List;
+      Console              : Interactive_Consoles.Interactive_Console := null;
+      Callback             : Output_Callback := null;
+      Exit_Cb              : Exit_Callback := null;
+      Success              : out Boolean;
+      Show_Command         : Boolean := True;
+      Callback_Data        : System.Address := System.Null_Address;
+      Line_By_Line         : Boolean := False;
+      Directory            : String := "";
+      Remote_Host          : String := "";
+      Remote_Protocol      : String := "";
+      Show_In_Task_Manager : Boolean := True)
    is
       Fd : Process_Descriptor_Access;
    begin
       Launch_Process
         (Kernel, Command, Arguments, Console, Callback, Exit_Cb, Success,
-         Show_Command, Callback_Data, Line_By_Line, Directory, Fd);
+         Show_Command, Callback_Data, Line_By_Line, Directory,
+         Remote_Host, Remote_Protocol, Show_In_Task_Manager, Fd);
    end Launch_Process;
 
    --------------------
