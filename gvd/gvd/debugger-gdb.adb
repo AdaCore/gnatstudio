@@ -173,6 +173,9 @@ package body Debugger.Gdb is
    No_Definition_Of          : constant String := "No definition of";
    --  String used to detect undefined commands.
 
+   Undefined_Command         : constant String := "Undefined command";
+   --  Another string used to detect undefined commands.
+
    List_Lines                : constant String := "^done,lines=[";
    --  Used to parse output of -symbol-list-lines command
 
@@ -1338,22 +1341,47 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
+      if Debugger.Has_Start_Cmd = -1 then
+         declare
+            S : constant String := Send
+                  (Debugger, "help start", Mode => Internal);
+         begin
+            if S'Length > Undefined_Command'Length
+              and then S (S'First ..
+                          S'First + Undefined_Command'Length - 1) =
+                Undefined_Command
+            then
+               Debugger.Has_Start_Cmd := 0;
+            else
+               Debugger.Has_Start_Cmd := 1;
+            end if;
+         end;
+      end if;
+
       if Arguments = "" and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= null
       then
          declare
             Module : constant String := Get_Module (Debugger.Executable.all);
          begin
+            if Debugger.Has_Start_Cmd = 1 then
+               Send (Debugger, "start " & Module, Mode => Mode);
+            else
+               Send
+                 (Debugger,
+                  Start (Language_Debugger_Access (Get_Language (Debugger))) &
+                    " " & Module, Mode => Mode);
+            end if;
+         end;
+      else
+         if Debugger.Has_Start_Cmd = 1 then
+            Send (Debugger, "start " & Arguments, Mode => Mode);
+         else
             Send
               (Debugger,
                Start (Language_Debugger_Access (Get_Language (Debugger))) &
-                 " " & Module, Mode => Mode);
-         end;
-      else
-         Send
-           (Debugger,
-            Start (Language_Debugger_Access (Get_Language (Debugger))) &
-              " " & Arguments, Mode => Mode);
+                 " " & Arguments, Mode => Mode);
+         end if;
       end if;
 
       Set_Is_Started (Debugger, True);
