@@ -1486,6 +1486,7 @@ package body Debugger.Gdb is
       return    Command (Command'First .. Index - 1) = "step"
         or else Command (Command'First .. Index - 1) = "stepi"
         or else Command (Command'First .. Index - 1) = "s"
+        or else Command (Command'First .. Index - 1) = "si"
         or else Command (Command'First .. Index - 1) = "next"
         or else Command (Command'First .. Index - 1) = "n"
         or else Command (Command'First .. Index - 1) = "nexti"
