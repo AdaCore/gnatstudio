@@ -1494,13 +1494,15 @@ package body Debugger.Gdb is
         or else Command (Command'First .. Index - 1) = "c"
         or else Command = "finish"
         or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "attach")
-        or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "target")
+          and then
+            (Command (Command'First .. Command'First + 5) = "attach"
+             or else Command (Command'First .. Command'First + 5) = "target"))
         or else (Command'Length >= 3
           and then Command (Command'First .. Command'First + 2) = "run")
         or else (Command'Length >= 5
-          and then Command (Command'First .. Command'First + 4) = "begin");
+          and then
+            (Command (Command'First .. Command'First + 4) = "begin"
+             or else Command (Command'First .. Command'First + 4) = "start"));
    end Is_Execution_Command;
 
    ---------------------
@@ -1541,6 +1543,7 @@ package body Debugger.Gdb is
         or else Looking_At (Command, Command'First, "disable")
         or else Looking_At (Command, Command'First, "enable")
         or else Looking_At (Command, Command'First, "begin")
+        or else Looking_At (Command, Command'First, "start")
         or else Looking_At (Command, Command'First, "ignore")
         or else Looking_At (Command, Command'First, "command")
         or else Looking_At (Command, Command'First, "condition")
