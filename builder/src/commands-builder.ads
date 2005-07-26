@@ -20,9 +20,7 @@
 
 --  This package handles build commands.
 
-with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
-with VFS;                  use VFS;
-with GNAT.OS_Lib;
+with GPS.Kernel;
 
 package Commands.Builder is
 
@@ -35,38 +33,15 @@ package Commands.Builder is
    Shadow_Category  : constant String := "Syntax check";
    --  -"Syntax check"
 
-   type Build_Command is new Root_Command with private;
-   type Build_Command_Access is access all Build_Command;
-
-   procedure Create
-     (Item  : out Build_Command_Access;
-      Data  : Process_Data;
-      Quiet : Boolean := False;
-      Files : File_Array_Access := null);
-   --  Create a new Build_Command.
-   --  Files contain an array of files that are to be deleted when the
-   --  command is destroyed. User must not free Files.
-
-   procedure Free (D : in out Build_Command);
-   --  Free memory associated to D.
-
-   function Execute
-     (Command : access Build_Command) return Command_Return_Type;
-   --  Execute Command, and launch the associated Handler.
-   --  See comments for Create.
-
-   function Name (Command : access Build_Command) return String;
-   --  Return a description of the command.
-
-private
-
-   type Build_Command is new Root_Command with record
-      Quiet : Boolean := False;
-      Data  : Process_Data;
-      Files : File_Array_Access := null;
-      Main_Error_Category : GNAT.OS_Lib.String_Access;
-      Style_Category      : GNAT.OS_Lib.String_Access;
-      Warning_Category    : GNAT.OS_Lib.String_Access;
-   end record;
+   procedure Process_Builder_Output
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Command : Commands.Command_Access;
+      Output  : String;
+      Quiet   : Boolean);
+   --  Process the builder output: update the progress bar in Command as
+   --  necessary, hide the progress output, and display the other outputs in
+   --  the console. Error messages are displayed in the locations window.
+   --
+   --  Output can contain multiple lines.
 
 end Commands.Builder;

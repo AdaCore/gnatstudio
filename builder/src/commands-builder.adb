@@ -18,32 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
-with GPS.Location_View;         use GPS.Location_View;
-
-with GPS.Intl;                use GPS.Intl;
-with GNAT.Expect;               use GNAT.Expect;
-
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
-with String_Utils;              use String_Utils;
+with Builder_Module;     use Builder_Module;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Location_View;  use GPS.Location_View;
+with String_Utils;       use String_Utils;
 with String_List_Utils;
 
-with GNAT.Expect;               use GNAT.Expect;
+with GPS.Intl;              use GPS.Intl;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Traces;                use Traces;
+
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with VFS;                       use VFS;
-
-with Builder_Module; use Builder_Module;
 
 package body Commands.Builder is
 
@@ -60,36 +52,6 @@ package body Commands.Builder is
    --  Category is the category to add to in the results view.
    --  Warning_Category and Style_Category correspond to the categories
    --  used for warnings and style errors.
-
-   procedure Cleanup_Build (Command : access Build_Command);
-   --  Perform all clean ups and updates after a build is terminated.
-
-   ------------
-   -- Create --
-   ------------
-
-   procedure Create
-     (Item  : out Build_Command_Access;
-      Data  : Process_Data;
-      Quiet : Boolean := False;
-      Files : File_Array_Access := null)
-   is
-   begin
-      Item := new Build_Command;
-      Item.Data := Data;
-      Item.Quiet := Quiet;
-      Item.Files := Files;
-
-      if Quiet then
-         Item.Main_Error_Category := new String'(-Shadow_Category);
-         Item.Style_Category      := new String'(-Shadow_Category);
-         Item.Warning_Category    := new String'(-Shadow_Category);
-      else
-         Item.Main_Error_Category := new String'(-Error_Category);
-         Item.Style_Category      := new String'(-Style_Category);
-         Item.Warning_Category    := new String'(-Warning_Category);
-      end if;
-   end Create;
 
    ---------------------------
    -- Parse_Compiler_Output --
@@ -108,8 +70,7 @@ package body Commands.Builder is
       end if;
 
       String_List_Utils.String_List.Append
-        (Builder_Module_ID_Access (Builder_Module_ID).Output,
-         Output);
+        (Builder_Module_ID.Output, Output);
       Parse_File_Locations
         (Kernel,
          Output,
@@ -126,205 +87,60 @@ package body Commands.Builder is
                 "Unexpected exception: " & Exception_Information (E));
    end Parse_Compiler_Output;
 
-   ----------
-   -- Free --
-   ----------
+   ----------------------------
+   -- Process_Builder_Output --
+   ----------------------------
 
-   procedure Free (D : in out Build_Command) is
-      Data    : Process_Data renames D.Data;
-      Fd      : Process_Descriptor_Access renames Data.Descriptor;
-      PID     : GNAT.Expect.Process_Id;
-   begin
-      if Fd /= null then
-         PID := Get_Pid (Fd.all);
-
-         if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
-            Interrupt (Fd.all);
-            Console.Insert (Data.Kernel, "<^C>");
-            Cleanup_Build (D'Access);
-         end if;
-      end if;
-
-      --  Delete the associated files.
-
-      if D.Files /= null then
-         for J in D.Files'Range loop
-            if Is_Regular_File (D.Files (J)) then
-               Delete (D.Files (J));
-            end if;
-         end loop;
-
-         Unchecked_Free (D.Files);
-      end if;
-
-      Free (D.Main_Error_Category);
-      Free (D.Warning_Category);
-      Free (D.Style_Category);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Free;
-
-   -------------------
-   -- Cleanup_Build --
-   -------------------
-
-   procedure Cleanup_Build (Command : access Build_Command) is
-      Data    : Process_Data renames Command.Data;
-      Kernel  : Kernel_Handle renames Data.Kernel;
-      Fd      : Process_Descriptor renames Data.Descriptor.all;
-      Status  : Integer;
-
-   begin
-      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
-        Builder_Module_ID_Access (Builder_Module_ID).Build_Count - 1;
-      Builder_Module_ID_Access (Builder_Module_ID).Last_Command := null;
-
-      Parse_Compiler_Output
-        (Kernel,
-         Command.Main_Error_Category.all,
-         Command.Warning_Category.all,
-         Command.Style_Category.all,
-         Expect_Out (Fd),
-         Command.Quiet);
-      Close (Fd, Status);
-
-      if not Command.Quiet then
-         if Status = 0 then
-            Console.Insert
-              (Kernel, ASCII.LF & (-"successful compilation/build"));
-         else
-            Console.Insert
-              (Kernel,
-               ASCII.LF
-               & (-"process exited with status ") & Image (Status));
-         end if;
-      end if;
-
-      Pop_State (Kernel);
-      Free (Data.Descriptor);
-
-      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
-         Compilation_Finished
-           (Kernel, VFS.No_File, Command.Main_Error_Category.all);
-      end if;
-   end Cleanup_Build;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute
-     (Command : access Build_Command) return Command_Return_Type
+   procedure Process_Builder_Output
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Command : Commands.Command_Access;
+      Output  : String;
+      Quiet   : Boolean)
    is
-      Data    : Process_Data renames Command.Data;
-      Kernel  : Kernel_Handle renames Data.Kernel;
-      Fd      : Process_Descriptor renames Data.Descriptor.all;
-
-      Matched      : Match_Array (0 .. 3);
-      Result       : Expect_Match;
-      Matcher      : constant Pattern_Matcher := Compile
+      --  ??? This is configurable in some cases (from XML for instance), so
+      --  we should not have a hard coded regexp here, and especially not
+      --  recompile it every time.
+      Matcher : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
-      Line_Matcher : constant Pattern_Matcher :=
-        Compile ("^.*?\n", Multiple_Lines);
-      Buffer       : String_Access := new String (1 .. 1024);
-      Buffer_Pos   : Natural := Buffer'First;
-      Min_Size     : Natural;
-      New_Size     : Natural;
-      Tmp          : String_Access;
-
+      Matched : Match_Array (0 .. 3);
+      Start, Eol, Eol2   : Integer := Output'First;
+      Buffer       : Unbounded_String;
    begin
-      Command.Progress.Activity := Running;
+      while Start <= Output'Last loop
+         Eol := Next_Line (Output, Start);
+         exit when Eol = Start;
 
-      loop
-         Expect (Fd, Result, Line_Matcher, Timeout => 1);
+         if Eol - 1 > Start then
+            Eol2 := Eol - 1;
+            if Output (Eol2 - 1) = ASCII.CR then
+               Eol2 := Eol2 - 1;
+            end if;
 
-         exit when Result = Expect_Timeout;
-
-         declare
-            S : constant String := Strip_CR (Expect_Out (Fd));
-         begin
-            Match (Matcher, S, Matched);
-
+            Match (Matcher, Output (Start .. Eol2), Matched);
             if Matched (0) = No_Match then
-               --  Coalesce all the output into one single chunck, which is
-               --  much faster to display in the console.
-
-               Min_Size := Buffer_Pos + S'Length;
-
-               if Buffer'Last < Min_Size then
-                  New_Size := Buffer'Length * 2;
-
-                  while New_Size < Min_Size loop
-                     New_Size := New_Size * 2;
-                  end loop;
-
-                  Tmp := new String (1 .. New_Size);
-                  Tmp (1 .. Buffer_Pos - 1) := Buffer (1 .. Buffer_Pos - 1);
-                  Free (Buffer);
-                  Buffer := Tmp;
-               end if;
-
-               Buffer (Buffer_Pos .. Buffer_Pos + S'Length - 1) := S;
-               Buffer_Pos := Buffer_Pos + S'Length;
-
+               Append (Buffer, Output (Start .. Eol2));
             else
                Command.Progress.Current := Natural'Value
-                 (S (Matched (1).First .. Matched (1).Last));
+                 (Output (Matched (1).First .. Matched (1).Last));
                Command.Progress.Total := Natural'Value
-                 (S (Matched (2).First .. Matched (2).Last));
+                 (Output (Matched (2).First .. Matched (2).Last));
             end if;
-         end;
-      end loop;
-
-      if Buffer_Pos /= Buffer'First then
-         Parse_Compiler_Output
-           (Kernel,
-            Command.Main_Error_Category.all,
-            Command.Warning_Category.all,
-            Command.Style_Category.all,
-            Buffer (Buffer'First .. Buffer_Pos - 1),
-            Command.Quiet);
-      end if;
-
-      Free (Buffer);
-
-      return Execute_Again;
-
-   exception
-      when Process_Died =>
-         if Buffer_Pos /= Buffer'First then
-            Parse_Compiler_Output
-              (Kernel,
-               Command.Main_Error_Category.all,
-               Command.Warning_Category.all,
-               Command.Style_Category.all,
-               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd),
-               Command.Quiet);
+         else
+            Append (Buffer, Output (Start .. Eol2));
          end if;
 
-         Free (Buffer);
-         Cleanup_Build (Command);
-         return Success;
+         Start := Eol;
+      end loop;
 
-      when E : others =>
-         Free (Buffer);
-         Cleanup_Build (Command);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         return Failure;
-   end Execute;
-
-   ----------
-   -- Name --
-   ----------
-
-   function Name (Command : access Build_Command) return String is
-      pragma Unreferenced (Command);
-   begin
-      return -"Building";
-   end Name;
+      if Length (Buffer) /= 0 then
+         Parse_Compiler_Output
+           (Kernel_Handle (Kernel),
+            -Error_Category,
+            -Warning_Category,
+            -Style_Category,
+            To_String (Buffer),
+            Quiet);
+      end if;
+   end Process_Builder_Output;
 
 end Commands.Builder;
