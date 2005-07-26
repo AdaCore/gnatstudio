@@ -760,6 +760,11 @@ package body Ada_Analyzer is
       --  - Tok_Arrow
       --  - Tok_Colon_Equal (not supported yet)
 
+      function Find_Multi_Line_Paren (P : Natural) return Natural;
+      --  Return the location of the first left parenthesis which is not
+      --  closed on the same line.
+      --  If a right parenthesis is found before, return 0.
+
       procedure Replace_Text
         (First : Natural;
          Last  : Natural;
@@ -878,6 +883,70 @@ package body Ada_Analyzer is
                  Line_Start (Buffer, Top_Token.Profile_Start) + 1);
          end if;
       end Indent_Function_Return;
+
+      ---------------------------
+      -- Find_Multi_Line_Paren --
+      ---------------------------
+
+      function Find_Multi_Line_Paren (P : Natural) return Natural is
+         Found            : Natural;
+         J                : Natural := P;
+         Local_Num_Parens : Natural := 0;
+
+      begin
+         Main_Loop :
+         loop
+            exit Main_Loop when J >= Buffer'Last;
+
+            case Buffer (J) is
+               when '"' =>
+                  if Buffer (J - 1) /= ''' then
+                     J := J + 1;
+                     Skip_To_Char (Buffer, J, '"');
+                  end if;
+
+               when '-' =>
+                  if Buffer (J + 1) = '-' then
+                     if Local_Num_Parens > 0 then
+                        return Found;
+                     end if;
+
+                     --  Skip comment
+
+                     J := Next_Line (Buffer, J) - 1;
+                  end if;
+
+               when '(' =>
+                  if Buffer (J - 1) /= '''
+                    or else Buffer (J + 1) /= '''
+                  then
+                     Local_Num_Parens := Local_Num_Parens + 1;
+                     Found := J;
+                  end if;
+
+               when ')' =>
+                  if Buffer (J - 1) /= ''' then
+                     if Local_Num_Parens = 0 then
+                        return 0;
+                     end if;
+
+                     Local_Num_Parens := Local_Num_Parens - 1;
+                  end if;
+
+               when ASCII.LF =>
+                  if Local_Num_Parens > 0 then
+                     return Found;
+                  end if;
+
+               when others =>
+                  null;
+            end case;
+
+            J := J + 1;
+         end loop Main_Loop;
+
+         return 0;
+      end Find_Multi_Line_Paren;
 
       -----------------------
       -- Compute_Alignment --
@@ -2044,6 +2113,7 @@ package body Ada_Analyzer is
          Last            : Natural;
          Offs            : Natural;
          Align           : Natural;
+         Adjust          : Natural;
          Insert_Spaces   : Boolean;
          Char            : Character;
          Prev_Prev_Token : Token_Type;
@@ -2524,6 +2594,8 @@ package body Ada_Analyzer is
                   end if;
 
                   if Indent_Done then
+                     Adjust := Indent_Continue + Continuation_Val;
+
                      if Format_Operators
                        and then not Is_Blank (Char)
                        and then Char /= '('
@@ -2536,6 +2608,12 @@ package body Ada_Analyzer is
                   else
                      --  Indent with extra spaces if the '(' is the first
                      --  non blank character on the line
+
+                     if Prev_Prev_Token = Tok_Comma then
+                        Adjust := 1;
+                     else
+                        Adjust := Indent_Continue + 1;
+                     end if;
 
                      if Prev_Prev_Token = Tok_Comma
                        or else Prev_Prev_Token = Tok_Ampersand
@@ -2550,6 +2628,7 @@ package body Ada_Analyzer is
                              Top (Tokens).Colon_Col + 4 - Indent_Continue;
                         end if;
 
+                        Adjust := Adjust + Continuation_Val;
                         Do_Indent (P, Num_Spaces, Continuation => True);
                      end if;
                   end if;
@@ -2579,7 +2658,28 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
-                  Push (Indents, (P - Start_Of_Line + Padding + 1, Align));
+                  --  Indent on the left parenthesis for subprogram & type
+                  --  declarations, and for constructs that have no nested
+                  --  parenthesis except on the same line.
+                  --  In other cases (complex subprogram call or expressions),
+                  --  indent as for continuation lines.
+
+                  if Subprogram_Decl
+                    or else Top_Token.Token = Tok_Type
+                    or else (Format
+                             and then Num_Parens = 1
+                             and then Find_Multi_Line_Paren (P + 1) = 0)
+                  then
+                     Push (Indents, (P - Start_Of_Line + Padding + 1, Align));
+                  else
+                     if Top (Indents).Level = None then
+                        Push (Indents, (Num_Spaces + Adjust, Align));
+                     elsif Prev_Prev_Token = Tok_Left_Paren then
+                        Push (Indents, (Top (Indents).Level, Align));
+                     else
+                        Push (Indents, (Top (Indents).Level + Adjust, Align));
+                     end if;
+                  end if;
 
                   if Continuation_Val > 0 then
                      Continuation_Val := Continuation_Val - Indent_Continue;
