@@ -228,15 +228,18 @@ package Find_Utils is
    --  Return the total progress level in Context (ex: the total number of
    --  files being searched). By default, return 1.
 
-   function Search
+   procedure Search
      (Context         : access Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean is abstract;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean) is abstract;
    --  This subprogram should search for the next occurrence of Context.
-   --  It should return False if there is no other search to be performed, True
-   --  if a call to this function might lead to another occurrence of the
-   --  search string.
+   --  Found tells whether an occurrence of the context was found.
+   --  Continue is set to False if there is no other search to be performed and
+   --  to True if a call to this function might lead to another occurrence of
+   --  the search string.
    --  If Give_Focus is true, then the widget that contains the match, in case
    --  the user was looking for a single match, should gain the focus.
    --  Otherwise, the focus shouldn't be changed and should remain on the
