@@ -58,6 +58,9 @@ package Task_Manager is
    --  Interrupt the Queue that contains Command.
    --  Do nothing if there is no such queue.
 
+   procedure Interrupt_Latest_Task (Manager : Task_Manager_Access);
+   --  Interrupt the task that was started last
+
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
       Area    : Gtk.Box.Gtk_Hbox);

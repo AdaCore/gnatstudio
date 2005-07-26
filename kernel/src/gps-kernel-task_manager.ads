@@ -52,6 +52,10 @@ package GPS.Kernel.Task_Manager is
    --  Interrupt the Queue that contains Command.
    --  Do nothing if there is no such queue.
 
+   procedure Interrupt_Latest_Task
+     (Kernel  : access Kernel_Handle_Record'Class);
+   --  Interrupt the last command that was started in the task manager
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the task manager module graphical entry points

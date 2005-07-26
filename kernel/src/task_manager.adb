@@ -574,6 +574,17 @@ package body Task_Manager is
       Manager.GUI := GUI;
    end Set_GUI;
 
+   ---------------------------
+   -- Interrupt_Latest_Task --
+   ---------------------------
+
+   procedure Interrupt_Latest_Task (Manager : Task_Manager_Access) is
+   begin
+      if Manager.Queues /= null then
+         Interrupt_Command (Manager, Manager.Queues'Last);
+      end if;
+   end Interrupt_Latest_Task;
+
    --------------------------
    -- Has_Running_Commands --
    --------------------------

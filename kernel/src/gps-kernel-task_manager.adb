@@ -339,6 +339,16 @@ package body GPS.Kernel.Task_Manager is
       end if;
    end Launch_Background_Command;
 
+   ---------------------------
+   -- Interrupt_Latest_Task --
+   ---------------------------
+
+   procedure Interrupt_Latest_Task
+     (Kernel  : access Kernel_Handle_Record'Class) is
+   begin
+      Interrupt_Latest_Task (Get_Task_Manager (Kernel));
+   end Interrupt_Latest_Task;
+
    ---------------------
    -- Interrupt_Queue --
    ---------------------
