@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -127,6 +127,8 @@ private
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
       Find_Next              : Boolean := False;
+      Found                  : Boolean := False;
+      --  Whether the search results in at least one match.
    end record;
 
    type Search_Regexp is record
