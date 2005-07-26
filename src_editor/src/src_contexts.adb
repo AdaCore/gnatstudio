@@ -20,48 +20,49 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Basic_Types;               use Basic_Types;
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
-with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Basic_Types;               use Basic_Types;
+with File_Utils;                use File_Utils;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
-with Osint;                     use Osint;
-with Projects;                  use Projects;
+with Find_Utils;                use Find_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
-with File_Utils;                use File_Utils;
-with Traces;                    use Traces;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Regexp;               use GNAT.Regexp;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
+with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
-with Find_Utils;                use Find_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with GUI_Utils;                 use GUI_Utils;
-with VFS;                       use VFS;
-
+with Projects;                  use Projects;
 with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_View;           use Src_Editor_View;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Src_Contexts is
 
@@ -674,8 +675,8 @@ package body Src_Contexts is
          return Buttons = Button_Yes;
       end Continue_Dialog;
 
-      Was_Partial : Boolean;
-      Buffer_Text : GNAT.OS_Lib.String_Access;
+      Was_Partial       : Boolean;
+      Buffer_Text       : GNAT.OS_Lib.String_Access;
 
    begin
       Result := null;
@@ -685,7 +686,8 @@ package body Src_Contexts is
          Scan_Buffer
            (Buffer_Text.all, 1, Context,
             Backward_Callback'Unrestricted_Access, Scope,
-            Lexical_State, Lang, Was_Partial => Was_Partial);
+            Lexical_State, Lang,
+            Was_Partial => Was_Partial);
          GNAT.OS_Lib.Free (Buffer_Text);
 
          --  Start from the end if necessary.
@@ -725,7 +727,8 @@ package body Src_Contexts is
             Scan_Buffer
               (Buffer_Text.all, 1, Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
-               Lexical_State, Lang, Was_Partial => Was_Partial);
+               Lexical_State, Lang,
+               Was_Partial => Was_Partial);
             GNAT.OS_Lib.Free (Buffer_Text);
          end if;
       end if;
@@ -772,7 +775,7 @@ package body Src_Contexts is
          return True;
       end Callback;
 
-      State : Recognized_Lexical_States := Statements;
+      State       : Recognized_Lexical_States := Statements;
       Was_Partial : Boolean;
    begin
       if Str /= "" then
@@ -785,8 +788,9 @@ package body Src_Contexts is
          Scan_File (Context,
                     Handler, Kernel,
                     File, Callback'Unrestricted_Access, Scope,
-                    Lexical_State => State, Force_Read => Kernel = null,
-                    Was_Partial => Was_Partial);
+                    Lexical_State => State,
+                    Force_Read    => Kernel = null,
+                    Was_Partial   => Was_Partial);
       end if;
 
       return Result;
@@ -1230,33 +1234,41 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   function Search
+   procedure Search
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean)
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
 
    begin
       if Child = null then
-         return False;
+         Found := False;
+         Continue := False;
+         return;
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
 
       Raise_Child (Child, Give_Focus);
 
-      return Auxiliary_Search
+      Found := Auxiliary_Search
         (Context, Editor,
          Get_Language_Handler (Kernel), Kernel, Search_Backward);
+      Continue := False; --  ??? Dummy boolean.
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "unexpected exception: " & Exception_Information (E));
-         return False;
+
+         Found := False;
+         Continue := False;
+         return;
    end Search;
 
    -------------
@@ -1370,15 +1382,16 @@ package body Src_Contexts is
      (Context  : access Abstract_Files_Context;
       Handler  : access Language_Handlers.Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
-      Callback : Scan_Callback) return Boolean
+      Callback : Scan_Callback)
+      return Boolean
    is
       Match  : Match_Result_Access;
       C      : constant Abstract_Files_Context_Access :=
-        Abstract_Files_Context_Access (Context);
+                 Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
       Button : Message_Dialog_Buttons;
-      Tmp    : Boolean;
+      Tmp : Boolean;
 
    begin
       if not Context.All_Occurrences then
@@ -1461,7 +1474,7 @@ package body Src_Contexts is
 
          else
             declare
-               State       : Recognized_Lexical_States := Statements;
+               State : Recognized_Lexical_States := Statements;
                Was_Partial : Boolean;
             begin
                Scan_File
@@ -1469,8 +1482,9 @@ package body Src_Contexts is
                   Handler,
                   Kernel,
                   Current_File (C), Callback, Context.Scope,
-                  Lexical_State => State, Force_Read => Kernel = null,
-                  Was_Partial => Was_Partial);
+                  Lexical_State => State,
+                  Force_Read    => Kernel = null,
+                  Was_Partial   => Was_Partial);
                return not Was_Partial;
             end;
          end if;
@@ -1481,11 +1495,13 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   function Search
+   procedure Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean)
    is
       pragma Unreferenced (Search_Backward);
       C : constant Abstract_Files_Context_Access :=
@@ -1501,6 +1517,7 @@ package body Src_Contexts is
 
       function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
+         Found := True;
          Highlight_Result
            (Kernel      => Kernel,
             File_Name   => Current_File (C),
@@ -1512,10 +1529,12 @@ package body Src_Contexts is
       end Interactive_Callback;
 
    begin
-      return Search (Context,
-                     Get_Language_Handler (Kernel),
-                     Kernel_Handle (Kernel),
-                     Interactive_Callback'Unrestricted_Access);
+      Found := False;
+      Continue := Search
+        (Context,
+         Get_Language_Handler (Kernel),
+         Kernel_Handle (Kernel),
+         Interactive_Callback'Unrestricted_Access);
    end Search;
 
    -------------
@@ -1529,8 +1548,8 @@ package body Src_Contexts is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      C           : constant Abstract_Files_Context_Access :=
-        Abstract_Files_Context_Access (Context);
+      C            : constant Abstract_Files_Context_Access :=
+                       Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
       Interactive  : constant Boolean := not Context.All_Occurrences;
@@ -1543,6 +1562,8 @@ package body Src_Contexts is
       End_Column   : Positive;
       Success      : Boolean;
       Matches      : Match_Result_Array_Access;
+      Found        : Boolean;
+      Continue     : Boolean;
 
    begin
       --  If we already have an occurrence, and the file is still open, the
@@ -1580,8 +1601,13 @@ package body Src_Contexts is
          end if;
 
          --  Else search the next occurrence
-         return Search (C, Kernel, Search_Backward,
-                        Give_Focus => Give_Focus);
+         Search
+           (C, Kernel, Search_Backward,
+            Give_Focus => Give_Focus,
+            Found      => Found,
+            Continue   => Continue);
+
+         return Found;
 
       --  Non interactive case
       else
