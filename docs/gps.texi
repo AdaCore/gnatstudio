@@ -7346,8 +7346,14 @@ The default font used in GPS
 @item Character set
 @cindex character set
 @cindex ISO-8859-1
-Name of character set to use for displaying text. The default value is
-ISO-8859-1, which corresponds to Latin-1 (Western European) characters.
+Name of character set to use when reading or writting text files.
+GPS uses UTF-8 and Unicode internally, which can handle any character in
+any language. However, your system will generally not support Unicode natively,
+and thus the contents of the files should be translated from the file system
+encoding to unicode.
+
+This preference indicates the file system encoding in use. It defaults to
+ISO-8859-1, which corresponds to western european characters.
 
 @item Dynamic key bindings
 @cindex key
