@@ -75,6 +75,10 @@ package body Expect_Interface is
    procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X.
 
+   type Instance_Callback_Data is new Callback_Data_Record with record
+      Inst : Class_Instance;
+   end record;
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -101,10 +105,6 @@ package body Expect_Interface is
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Custom_Action_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Class_Instance, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Class_Instance);
 
    type Exit_Type is (Matched, Timed_Out, Died);
    function Interactive_Expect
@@ -193,7 +193,8 @@ package body Expect_Interface is
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
       Class : constant Class_Type := New_Class (Data.Kernel, "Process");
-      Inst : constant Class_Instance := Convert (Data.Callback_Data);
+      Inst : constant Class_Instance :=
+        Instance_Callback_Data (Data.Callback_Data.all).Inst;
       D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
@@ -224,7 +225,8 @@ package body Expect_Interface is
 
    procedure Output_Cb (Data : Process_Data; Output : String) is
       Class : constant Class_Type := New_Class (Data.Kernel, "Process");
-      Inst : constant Class_Instance := Convert (Data.Callback_Data);
+      Inst : constant Class_Instance :=
+        Instance_Callback_Data (Data.Callback_Data.all).Inst;
       D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
       Matches   : Match_Array (0 .. Max_Paren_Count);
       Beg_Index : Natural;
@@ -459,7 +461,7 @@ package body Expect_Interface is
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
                Show_Command  => False,
-               Callback_Data => Convert (Inst),
+               Callback_Data => new Instance_Callback_Data'(Inst => Inst),
                Line_By_Line  => False,
                Directory     => "",
                Fd            => D.Fd);

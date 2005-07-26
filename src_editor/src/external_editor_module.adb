@@ -44,7 +44,6 @@ with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
-with System;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body External_Editor_Module is
@@ -524,7 +523,7 @@ package body External_Editor_Module is
            (Interval => Timeout,
             Func     => External_Timeout'Access,
             D        => Process_Data'
-              (Kernel_Handle (Kernel), null, null, null, System.Null_Address),
+              (Kernel_Handle (Kernel), null, null, null, null, null),
            Destroy   => External_Timeout_Destroy'Access);
       end if;
 
