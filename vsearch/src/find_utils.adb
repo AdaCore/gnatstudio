@@ -114,11 +114,13 @@ package body Find_Utils is
          return False;
       end Callback;
 
-      Index : Integer := Buffer'First;
-      Line, Column : Integer := 0;
+      Index       : Integer := Buffer'First;
+      Line,
+      Column      : Integer := 0;
       Was_Partial : Boolean;
-      Start : constant Integer := Integer'Max (Start_Index, Buffer'First);
-      Last  : constant Integer := Integer'Min (End_Index, Buffer'Last);
+      Start       : constant Integer :=
+                      Integer'Max (Start_Index, Buffer'First);
+      Last        : constant Integer := Integer'Min (End_Index, Buffer'Last);
    begin
       Scan_Buffer_No_Scope
         (Context, Buffer, Start, Last, Callback'Unrestricted_Access,
@@ -580,10 +582,10 @@ package body Find_Utils is
          return True;
       end Callback;
 
-      Context : aliased Root_Search_Context;
-      L, C    : Integer := 1;
-      Index   : Integer;
-      Was_Partial : Boolean;
+      Context       : aliased Root_Search_Context;
+      L, C          : Integer := 1;
+      Index         : Integer;
+      Was_Partial   : Boolean;
    begin
       Index  := Buffer'First;
 
