@@ -69,7 +69,6 @@ with Welcome_Page;              use Welcome_Page;
 with DDE;
 with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
-with System;
 
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -595,11 +594,11 @@ procedure GPS.Main is
       if Splash = null then
          Timeout_Id := Process_Timeout.Add
            (1, Finish_Setup'Unrestricted_Access,
-            (GPS_Main.Kernel, null, null, null, System.Null_Address));
+            (GPS_Main.Kernel, null, null, null, null, null));
       else
          Timeout_Id := Process_Timeout.Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (GPS_Main.Kernel, null, null, null, System.Null_Address));
+            (GPS_Main.Kernel, null, null, null, null, null));
       end if;
    end Init_Settings;
 
