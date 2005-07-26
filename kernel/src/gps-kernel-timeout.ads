@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 
 with Gtk.Main;
 with Interactive_Consoles;
+with Commands;
 
 package GPS.Kernel.Timeout is
 
@@ -39,12 +40,24 @@ package GPS.Kernel.Timeout is
    --  Callback called when an underlying process launched by Launch_Process
    --  terminates.
 
+   type Callback_Data_Record is abstract tagged null record;
+   type Callback_Data_Access is access all Callback_Data_Record'Class;
+   procedure Destroy (Data : in out Callback_Data_Record);
+   --  Destroy the memory allocated for Data
+
    type Process_Data is record
       Kernel        : Kernel_Handle;
       Descriptor    : GNAT.Expect.Process_Descriptor_Access;
       Callback      : Output_Callback;
       Exit_Cb       : Exit_Callback;
-      Callback_Data : System.Address;
+      Callback_Data : Callback_Data_Access;
+
+      Command       : Commands.Command_Access;
+      --  The command in which the process is wrapped. There might be no such
+      --  command if Launch_Process was called with Show_In_Task_Manager set to
+      --  False.
+      --  This command can be used to report the progress of the action, so
+      --  that the task manager is usefully updated.
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation
@@ -62,12 +75,14 @@ package GPS.Kernel.Timeout is
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
       Show_Command         : Boolean := True;
-      Callback_Data        : System.Address := System.Null_Address;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True);
+      Show_In_Task_Manager : Boolean := True;
+      Synchronous          : Boolean := False);
    --  Launch a given command with arguments.
    --  Arguments must be freed by the user.
    --
@@ -81,7 +96,9 @@ package GPS.Kernel.Timeout is
    --  available from the process.
    --  Exit_Callback will be called when the underlying process dies.
    --
-   --  Output is sent to Console, if not null, or discarded otherwise.
+   --  Output is sent to Console, if not null and Show_Output is True, or
+   --  discarded otherwise.
+   --
    --  Check GPS.Kernel.Console.Create_Interactive_Console and
    --  GPS.Kernel.Console.Get_Console.
    --  If Show_Command is True and the output is displayed, the command
@@ -97,6 +114,14 @@ package GPS.Kernel.Timeout is
    --  If Directory is not empty, move to Dir before launching the command,
    --  and change back to the current directory once the command is spawned.
    --  This applies to the local host, not the remote host.
+   --
+   --  If Show_In_Task_Manager is true, then a Command wrapper will be set up
+   --  so that the process appears in the task manager and can be interrupted
+   --  by the user. In this case, Synchronous is taken into account to know
+   --  whether Launch_Process should return immediately or wait for the process
+   --  to complete.
+   --
+   --  Callback_Data is freed automatically when the process terminates.
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
@@ -107,15 +132,18 @@ package GPS.Kernel.Timeout is
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
       Show_Command         : Boolean := True;
-      Callback_Data        : System.Address := System.Null_Address;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Synchronous          : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access);
    --  Same as above, and returns the created Process_Descriptor.
-   --  Fd will be cleaned automatically, and should not be freed by the caller
-   --  of Launch_Process (although it is of course authorized to Close Fd).
+   --  Fd is allocated by this procedure, and will be cleaned automatically,
+   --  and should not be freed by the caller of Launch_Process (although it is
+   --  of course authorized to Close Fd).
 
 end GPS.Kernel.Timeout;

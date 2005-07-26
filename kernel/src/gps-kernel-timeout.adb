@@ -54,12 +54,16 @@ package body GPS.Kernel.Timeout is
    type Console_Process_Data is new GObject_Record with record
       Console       : Interactive_Console;
       Delete_Id     : Gtk.Handlers.Handler_Id;
+      Show_Output   : Boolean;
 
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
 
       D             : Process_Data;
       Died          : Boolean := False;
       --  Indicates that the process has died.
+
+      Interrupted   : Boolean := False;
+      --  Whether the process was interrupted by the user
 
       Id            : Timeout_Handler_Id;
    end record;
@@ -69,6 +73,8 @@ package body GPS.Kernel.Timeout is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Callback_Data_Record'Class, Callback_Data_Access);
 
    function Process_Cb (Data : Console_Process) return Boolean;
    --  Generic callback for async spawn of processes.
@@ -78,7 +84,7 @@ package body GPS.Kernel.Timeout is
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" event.
 
-   procedure Cleanup (Data : in out Process_Data);
+   procedure Cleanup (Data : Console_Process);
    --  Close the process descriptor and free its associated memory.
    --  Free memory used by Data itself
 
@@ -121,8 +127,11 @@ package body GPS.Kernel.Timeout is
          end if;
       end if;
 
+      D.Data.D.Command := null;
+      D.Data.Interrupted := True;
+
       Free (D.Name);
-      Cleanup (D.Data.D);
+      Cleanup (D.Data);
       Unref (D.Data);
    end Free;
 
@@ -159,30 +168,40 @@ package body GPS.Kernel.Timeout is
    -- Cleanup --
    -------------
 
-   procedure Cleanup (Data : in out Process_Data) is
+   procedure Cleanup (Data : Console_Process) is
       Status : Integer;
+      Console : Interactive_Console := Data.Console;
    begin
-      if Data.Descriptor /= null then
-         Close (Data.Descriptor.all, Status);
+      if Data.D.Descriptor /= null then
+         Close (Data.D.Descriptor.all, Status);
 
-         if Data.Exit_Cb = null then
-            if Status = 0 then
-               --  ??? Shouldn't we print in the process's console ?
-               Console.Insert
-                 (Data.Kernel,
-                  ASCII.LF & (-"process terminated successfully"));
-            else
-               Console.Insert
-                 (Data.Kernel, ASCII.LF & (-"process exited with status ") &
-                  Image (Status));
-            end if;
-
-         else
-            Data.Exit_Cb (Data, Status);
+         if Data.Console = null then
+            Console := Get_Console (Data.D.Kernel);
          end if;
 
-         Free (Data.Descriptor);
-         Pop_State (Data.Kernel);
+         if Data.Interrupted then
+            Insert
+              (Console, ASCII.LF & (-"<^C> process interrupted"));
+         elsif Status = 0 then
+            Insert
+              (Console, ASCII.LF & (-"process terminated successfully"));
+         else
+            Insert
+              (Console, ASCII.LF & (-"process exited with status ") &
+               Image (Status));
+         end if;
+
+         if Data.D.Exit_Cb /= null then
+            Data.D.Exit_Cb (Data.D, Status);
+         end if;
+
+         Free (Data.D.Descriptor);
+         Pop_State (Data.D.Kernel);
+
+         if Data.D.Callback_Data /= null then
+            Destroy (Data.D.Callback_Data.all);
+            Unchecked_Free (Data.D.Callback_Data);
+         end if;
       end if;
    end Cleanup;
 
@@ -208,11 +227,15 @@ package body GPS.Kernel.Timeout is
                Output : constant String := Strip_CR (Expect_Out (Fd.all));
             begin
                if Data.Console /= null then
-                  Insert (Data.Console, Output, Add_LF => False);
+                  if Data.Show_Output then
+                     Insert (Data.Console, Output, Add_LF => False);
 
-                  --  ??? This might be costly, we could cache this MDI Child
-                  Highlight_Child
-                    (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+                     --  ??? This might be costly, we could cache this MDI
+                     --  Child
+                     Highlight_Child
+                       (Find_MDI_Child
+                          (Get_MDI (Data.D.Kernel), Data.Console));
+                  end if;
                end if;
 
                if Data.D.Callback /= null then
@@ -252,14 +275,14 @@ package body GPS.Kernel.Timeout is
 
          Data.Died := True;
          Unchecked_Free (Data.Expect_Regexp);
-         Cleanup (Data.D);
+         Cleanup (Data);
          Unref (Data);
 
          return False;
 
       when E : others =>
          Unchecked_Free (Data.Expect_Regexp);
-         Cleanup (Data.D);
+         Cleanup (Data);
          Unref (Data);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
@@ -290,12 +313,22 @@ package body GPS.Kernel.Timeout is
       when E : others =>
          Timeout_Remove (Process.Id);
          Unchecked_Free (Process.Expect_Regexp);
-         Cleanup (Process.D);
+         Cleanup (Process);
          Unref (Process);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
          return "";
    end Data_Handler;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Callback_Data_Record) is
+      pragma Unreferenced (Data);
+   begin
+      null;
+   end Destroy;
 
    --------------------
    -- Launch_Process --
@@ -310,12 +343,14 @@ package body GPS.Kernel.Timeout is
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
       Show_Command         : Boolean := True;
-      Callback_Data        : System.Address := System.Null_Address;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Synchronous          : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access)
    is
       Timeout : constant Guint32 := 50;
@@ -446,6 +481,7 @@ package body GPS.Kernel.Timeout is
       end if;
 
       Data.Console := Console;
+      Data.Show_Output := Show_Output;
 
       Spawn (Command, Arguments, Success, Remote_Host, Remote_Protocol);
 
@@ -458,7 +494,7 @@ package body GPS.Kernel.Timeout is
               (Compile (".*$", Single_Line));
          end if;
 
-         Data.D  := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
+         Data.D  := (Kernel, Fd, Callback, Exit_Cb, Callback_Data, null);
          Data.Id :=
            Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
 
@@ -467,12 +503,20 @@ package body GPS.Kernel.Timeout is
             C.Data := Data;
             Ref (Data);
             C.Name := new String'(Command);
-            Launch_Background_Command
-              (Kernel,
-               Command_Access (C),
-               Active   => False,
-               Show_Bar => True,
-               Queue_Id => "");
+
+            Data.D.Command := Command_Access (C);
+
+            if Synchronous then
+               Launch_Synchronous (Command_Access (C), 0.1);
+               Destroy (Command_Access (C));
+            else
+               Launch_Background_Command
+                 (Kernel,
+                  Command_Access (C),
+                  Active   => False,
+                  Show_Bar => True,
+                  Queue_Id => "");
+            end if;
          end if;
 
       else
@@ -500,19 +544,22 @@ package body GPS.Kernel.Timeout is
       Exit_Cb              : Exit_Callback := null;
       Success              : out Boolean;
       Show_Command         : Boolean := True;
-      Callback_Data        : System.Address := System.Null_Address;
+      Show_Output          : Boolean := True;
+      Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True)
+      Show_In_Task_Manager : Boolean := True;
+      Synchronous          : Boolean := False)
    is
       Fd : Process_Descriptor_Access;
    begin
       Launch_Process
         (Kernel, Command, Arguments, Console, Callback, Exit_Cb, Success,
-         Show_Command, Callback_Data, Line_By_Line, Directory,
-         Remote_Host, Remote_Protocol, Show_In_Task_Manager, Fd);
+         Show_Command, Show_Output, Callback_Data, Line_By_Line, Directory,
+         Remote_Host, Remote_Protocol, Show_In_Task_Manager,
+         Synchronous, Fd);
    end Launch_Process;
 
    --------------------
@@ -543,7 +590,7 @@ package body GPS.Kernel.Timeout is
 
       if Button = Button_Yes then
          Timeout_Remove (Console.Id);
-         Cleanup (Console.D);
+         Cleanup (Console);
          Unchecked_Free (Console.Expect_Regexp);
          Unref (Console);
          return False;
@@ -556,7 +603,7 @@ package body GPS.Kernel.Timeout is
       when E : others =>
          Timeout_Remove (Console.Id);
          Unchecked_Free (Console.Expect_Regexp);
-         Cleanup (Console.D);
+         Cleanup (Console);
          Unref (Console);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
