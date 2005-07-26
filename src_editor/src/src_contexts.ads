@@ -18,17 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_List;
 with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Regexp;
 with GNAT.Regpat;
-with GPS.Kernel;
+
 with Gtk.Widget;
 with Gtk.Combo;
 with Gtk.Frame;
-with Find_Utils;   use Find_Utils;
+
+with Find_Utils;                    use Find_Utils;
 with Files_Extra_Info_Pkg;
+with Generic_List;
+with GPS.Kernel;
 with Language_Handlers;
 with VFS;
 
@@ -103,7 +105,8 @@ package Src_Contexts is
      (Context  : access Abstract_Files_Context;
       Handler  : access Language_Handlers.Language_Handler_Record'Class;
       Kernel   : GPS.Kernel.Kernel_Handle;
-      Callback : Scan_Callback) return Boolean;
+      Callback : Scan_Callback)
+      return Boolean;
    --  Search either the next match or all the occurrences, depending on the
    --  parameter All_Occurrences. For each one of them, Callback is called.
    --  This function returns True if there are potentially more matches in the
@@ -228,11 +231,13 @@ package Src_Contexts is
 
 private
 
-   function Search
+   procedure Search
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean);
    --  Search function for "Current File"
 
    function Replace
@@ -296,11 +301,13 @@ private
    type Abstract_Files_Context_Access is access all
      Abstract_Files_Context'Class;
 
-   function Search
+   procedure Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean);
    --  Search function for "Files From Project" and "Open_Files"
 
    function Replace
