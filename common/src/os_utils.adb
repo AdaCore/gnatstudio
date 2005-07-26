@@ -244,36 +244,6 @@ package body OS_Utils is
       OpenVMS_Host := Setting;
    end Set_OpenVMS_Host;
 
-   -----------
-   -- Spawn --
-   -----------
-
-   procedure Spawn
-     (Program_Name : String;
-      Args         : Argument_List;
-      Idle         : Idle_Callback;
-      Success      : out Boolean)
-   is
-      Fd     : TTY_Process_Descriptor;
-      Result : Expect_Match;
-
-   begin
-      Non_Blocking_Spawn (Fd, Program_Name, Args, Err_To_Out  => True);
-      Success := True;
-
-      loop
-         Idle.all;
-         Expect (Fd, Result, ".+", Timeout => 50);
-      end loop;
-
-   exception
-      when Invalid_Process =>
-         Success := False;
-
-      when Process_Died =>
-         Close (Fd);
-   end Spawn;
-
    ------------------------
    -- Make_Dir_Recursive --
    ------------------------
