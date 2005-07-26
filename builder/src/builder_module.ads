@@ -25,11 +25,8 @@ with Gtk.Menu;
 with Gtk.Menu_Item;
 with String_List_Utils;
 with Projects;
-with Commands;
 
 package Builder_Module is
-
-   Builder_Module_ID : GPS.Kernel.Modules.Module_ID;
 
    type Builder_Module_ID_Record is new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -47,14 +44,11 @@ package Builder_Module is
 
       Build_Count : Natural := 0;
       --  Number of on-going builds
-
-      Last_Command : Commands.Command_Access;
-      --  The last build command launched
    end record;
+   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
    --  Data stored with the module id.
 
-   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
-
+   Builder_Module_ID : Builder_Module_ID_Access;
    Builder_Module_Name : constant String := "Builder";
 
    procedure Register_Module
