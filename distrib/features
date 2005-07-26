@@ -3,6 +3,8 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
+- E723-001 Build->Run commands can now be interrupted
+
 - E202-013 Support for bookmarks
 
 - E303-018 Improved assembly view. The source line the debugger is
