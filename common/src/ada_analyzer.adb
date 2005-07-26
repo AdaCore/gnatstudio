@@ -933,6 +933,11 @@ package body Ada_Analyzer is
                      Local_Num_Parens := Local_Num_Parens - 1;
                   end if;
 
+               when ';' =>
+                  if Buffer (J - 1) /= ''' then
+                     return 0;
+                  end if;
+
                when ASCII.LF =>
                   if Local_Num_Parens > 0 then
                      return Found;
