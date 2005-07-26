@@ -85,6 +85,8 @@ with Commands.Generic_Asynchronous;
 
 package body Builder_Module is
 
+   Me : constant Debug_Handle := Create ("Builder");
+
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with gvd-menu.adb, since we want to
@@ -110,6 +112,15 @@ package body Builder_Module is
    Quiet_Opt      : aliased String := "-q";
    Unique_Compile : aliased String := "-u";
    Syntax_Check   : aliased String := "-gnats";
+   --  ??? Shouldn't have hard-coded options.
+
+   type Files_Callback_Data is new Callback_Data_Record with record
+      Files : File_Array_Access;
+   end record;
+   type Files_Callback_Data_Access is access all Files_Callback_Data'Class;
+   procedure Destroy (Data : in out Files_Callback_Data);
+   --  Callback data used for the list of files that need to be freed at the
+   --  end of a compilation.
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
@@ -208,33 +219,21 @@ package body Builder_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
 
-   procedure Insert_And_Launch
-     (Kernel          : Kernel_Handle;
-      Remote_Host     : String;
-      Remote_Protocol : String;
-      Command         : String;
-      Arguments       : Argument_List;
-      Fd              : Process_Descriptor_Access;
-      Insert          : Boolean := True);
-   --  Compute the command to be executed from Command, Remote_Host
-   --  and Remote_Protocol (execution is local when
-   --  Remote_Host = "" or Remote_Protocol = ""
-
-   procedure Insert_And_Launch
-     (Kernel          : Kernel_Handle;
-      Remote_Host     : String;
-      Remote_Protocol : String;
-      Cmd_Line        : String;
-      Fd              : Process_Descriptor_Access);
-   --  Similar to procedure above, except that the command and its argument
-   --  are provided as a string.
-
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
    --  Remove from the accel_map the key bindings set for previous projects
+
+   procedure Parse_Compiler_Output
+     (Data : Process_Data; Output : String);
+   --  Called whenever new output from the compiler is available
+
+   procedure Free_Temporary_Files
+     (Data : Process_Data; Status : Integer);
+   --  Free the temporary files that were created for the compilation. The
+   --  list is stored in Data.Callback_Data.
 
    --------------------
    -- Menu Callbacks --
@@ -320,6 +319,15 @@ package body Builder_Module is
       Shadow : Boolean);
    --  Clear the compiler output, the console, and the result view.
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Files_Callback_Data) is
+   begin
+      Unchecked_Free (Data.Files);
+   end Destroy;
+
    --------------------------
    -- Is_Dynamic_Menu_Item --
    --------------------------
@@ -349,8 +357,7 @@ package body Builder_Module is
          --  window.
       end if;
 
-      String_List_Utils.String_List.Free
-        (Builder_Module_ID_Access (Builder_Module_ID).Output);
+      String_List_Utils.String_List.Free (Builder_Module_ID.Output);
    end Clear_Compilation_Output;
 
    -----------------------
@@ -441,75 +448,43 @@ package body Builder_Module is
       end if;
    end Free;
 
-   -----------------------
-   -- Insert_And_Launch --
-   -----------------------
+   ---------------------------
+   -- Parse_Compiler_Output --
+   ---------------------------
 
-   procedure Insert_And_Launch
-     (Kernel          : Kernel_Handle;
-      Remote_Host     : String;
-      Remote_Protocol : String;
-      Command         : String;
-      Arguments       : Argument_List;
-      Fd              : Process_Descriptor_Access;
-      Insert          : Boolean := True)
-   is
-      Remote_Args : Argument_List_Access;
-      Cmd         : constant String :=
-        Command & " " & Argument_List_To_String (Arguments);
-
+   procedure Parse_Compiler_Output
+     (Data : Process_Data; Output : String) is
    begin
-      if Insert then
-         Console.Raise_Console (Kernel);
+      Process_Builder_Output
+        (Kernel  => Data.Kernel,
+         Command => Data.Command,
+         Output  => Output & ASCII.LF,
+         Quiet   => False);
+   end Parse_Compiler_Output;
+
+   --------------------------
+   -- Free_Temporary_Files --
+   --------------------------
+
+   procedure Free_Temporary_Files
+     (Data : Process_Data; Status : Integer)
+   is
+      pragma Unreferenced (Status);
+      Files : constant Files_Callback_Data_Access :=
+        Files_Callback_Data_Access (Data.Callback_Data);
+   begin
+      if Files /= null then
+         for F in Files.Files'Range loop
+            if Is_Regular_File (Files.Files (F)) then
+               Trace (Me, "Deleting temporary file "
+                      & Full_Name (Files.Files (F)).all);
+               Delete (Files.Files (F));
+            end if;
+         end loop;
       end if;
 
-      if Remote_Host /= ""
-        and then Remote_Protocol /= ""
-      then
-         Remote_Args := Argument_String_To_List
-           (Remote_Protocol & " " & Remote_Host);
-
-         if Insert then
-            Console.Insert
-              (Kernel, Remote_Protocol & " " & Remote_Host & " " & Cmd);
-         end if;
-
-         Non_Blocking_Spawn
-           (Fd.all,
-            Remote_Args (Remote_Args'First).all,
-            Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last) &
-              Command'Unrestricted_Access & Arguments,
-            Buffer_Size => 0, Err_To_Out => True);
-         Free (Remote_Args);
-
-      else
-         if Insert then
-            Console.Insert (Kernel, Cmd);
-         end if;
-
-         Non_Blocking_Spawn
-           (Fd.all, Command, Arguments, Buffer_Size => 0, Err_To_Out => True);
-      end if;
-   end Insert_And_Launch;
-
-   procedure Insert_And_Launch
-     (Kernel          : Kernel_Handle;
-      Remote_Host     : String;
-      Remote_Protocol : String;
-      Cmd_Line        : String;
-      Fd              : Process_Descriptor_Access)
-   is
-      Args : Argument_List_Access := Argument_String_To_List (Cmd_Line);
-   begin
-      Insert_And_Launch
-        (Kernel,
-         Remote_Host,
-         Remote_Protocol,
-         Args (Args'First).all,
-         Args (Args'First + 1 .. Args'Last),
-         Fd);
-      Free (Args);
-   end Insert_And_Launch;
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
+   end Free_Temporary_Files;
 
    --------------
    -- On_Build --
@@ -532,8 +507,7 @@ package body Builder_Module is
         (Get_Project (Kernel), Recursive => True);
       Syntax  : Command_Syntax;
       Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
-
-      C       : Build_Command_Access;
+      Success : Boolean;
 
    begin
       if Langs'Length = 0 then
@@ -661,7 +635,7 @@ package body Builder_Module is
          Change_Dir (Dir_Name (Project_Path (Project)));
       end if;
 
-      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+      if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, False);
       end if;
 
@@ -675,36 +649,27 @@ package body Builder_Module is
             Cmd := new String'("gprmake");
       end case;
 
-      Fd := new TTY_Process_Descriptor;
-      Insert_And_Launch
+      Launch_Process
         (Kernel,
          Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
-         Remote_Host      =>
-           Get_Attribute_Value (Prj, Remote_Host_Attribute),
+         Remote_Host      => Get_Attribute_Value (Prj, Remote_Host_Attribute),
          Command          => Cmd.all,
          Arguments        => Args.all,
-         Fd               => Fd);
+         Fd               => Fd,
+         Console          => Get_Console (Kernel),
+         Show_Command     => True,
+         Show_Output      => False,
+         Success          => Success,
+         Line_By_Line     => False,
+         Callback         => Parse_Compiler_Output'Access,
+         Exit_Cb          => Free_Temporary_Files'Access,
+         Show_In_Task_Manager => True,
+         Synchronous          => Synchronous);
+
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+
       Free (Cmd);
       Free (Args);
-
-      Create (C, (Kernel, Fd, null, null, System.Null_Address));
-      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
-        Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
-      Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
-        Command_Access (C);
-
-      if Synchronous then
-         Launch_Synchronous (Command_Access (C), 0.1);
-         Destroy (Command_Access (C));
-
-      else
-         Launch_Background_Command
-           (Kernel,
-            Command_Access (C),
-            Active   => False,
-            Show_Bar => True,
-            Queue_Id => "");
-      end if;
 
       Change_Dir (Old_Dir);
 
@@ -795,12 +760,13 @@ package body Builder_Module is
       Local_File      : String_Access;
       Lang            : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
-      C               : Build_Command_Access;
       Common_Args     : Argument_List_Access;
       Args            : Argument_List_Access;
       Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Shadow_Path     : String_Access;
       Compilable_File : Virtual_File := File;
+      Success         : Boolean;
+      Files_To_Free   : File_Array_Access;
 
    begin
       --  Is there a file to compile ?
@@ -881,11 +847,9 @@ package body Builder_Module is
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
-      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+      if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, Shadow);
       end if;
-
-      Fd := new TTY_Process_Descriptor;
 
       if Shadow then
          --  Create a temporary project, and a temporary file containing the
@@ -923,19 +887,14 @@ package body Builder_Module is
             Shadow_Path := new String'(Full_Name (Temp_Project).all);
             Compilable_File := Temp_File;
             Change_Dir (Tmp_Dir);
-            Create
-              (Item  => C,
-               Data  => (Kernel, Fd, null, null, System.Null_Address),
-               Quiet => Quiet,
-               Files => new File_Array'
-                 (1 => Temp_File,
-                  2 => Temp_Project));
+
+            Files_To_Free := new File_Array'
+              (1 => Temp_File, 2 => Temp_Project);
          end;
       else
          Local_File := new String'(Locale_Full_Name (File));
          Change_Dir (Dir_Name (Project_Path (Prj)));
          Shadow_Path := new String'("");
-         Create (C, (Kernel, Fd, null, null, System.Null_Address), Quiet);
       end if;
 
       if not Shadow
@@ -951,15 +910,27 @@ package body Builder_Module is
                Index    => Ada_String,
                Use_Initial_Value => True);
          begin
-            Insert_And_Launch
+            Launch_Process
               (Kernel,
-               Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
-               Remote_Host => Get_Attribute_Value (Prj, Remote_Host_Attribute),
-               Command         => Cmd.all,
-               Arguments       => Default_Builder_Switches &
-               Common_Args.all & (1 => Local_File),
-               Fd              => Fd,
-               Insert          => not Quiet);
+               Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
+               Remote_Host      =>
+                 Get_Attribute_Value (Prj, Remote_Host_Attribute),
+               Command          => Cmd.all,
+               Arguments        => Default_Builder_Switches
+                 & Common_Args.all & (1 => Local_File),
+               Fd               => Fd,
+               Console          => Get_Console (Kernel),
+               Show_Command     => not Quiet,
+               Show_Output      => False,
+               Success          => Success,
+               Callback_Data    => new Files_Callback_Data'
+                 (Files => Files_To_Free),
+               Line_By_Line     => False,
+               Exit_Cb          => Free_Temporary_Files'Access,
+               Callback         => Parse_Compiler_Output'Access,
+               Show_In_Task_Manager => True,
+               Synchronous          => Synchronous);
+            Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
             Free (Default_Builder_Switches);
          end;
 
@@ -970,39 +941,28 @@ package body Builder_Module is
             Shadow_Path.all,
             Compilable_File,
             Compile_Only => True);
-
-         Insert_And_Launch
+         Launch_Process
            (Kernel,
             Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
-            Remote_Host     =>
-              Get_Attribute_Value (Prj, Remote_Host_Attribute),
-            Command         => Cmd.all,
-            Arguments       => Common_Args.all & Args.all,
-            Fd              => Fd,
-            Insert          => not Quiet);
+            Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
+            Command        => Cmd.all,
+            Arguments      => Common_Args.all & Args.all,
+            Fd             => Fd,
+            Console        => Get_Console (Kernel),
+            Show_Command   => not Quiet,
+            Show_Output    => False,
+            Success        => Success,
+            Line_By_Line   => False,
+            Callback       => Parse_Compiler_Output'Access,
+            Exit_Cb        => Free_Temporary_Files'Access,
+            Show_In_Task_Manager => True,
+            Synchronous          => Synchronous);
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Free (Args);
       end if;
 
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
-
-      Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
-        Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
-      Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
-        Command_Access (C);
-
-      if Synchronous then
-         Launch_Synchronous (Command_Access (C), 0.1);
-         Destroy (Command_Access (C));
-
-      else
-         Launch_Background_Command
-           (Kernel,
-            Command_Access (C),
-            Active   => False,
-            Show_Bar => not Shadow,
-            Queue_Id => "");
-      end if;
 
       Change_Dir (Old_Dir);
       Free (Local_File);
@@ -1067,8 +1027,7 @@ package body Builder_Module is
          end;
 
       elsif Command = "get_build_output" then
-         Node := First
-           (Builder_Module_ID_Access (Builder_Module_ID).Output);
+         Node := First (Builder_Module_ID.Output);
 
          Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop
@@ -1136,9 +1095,8 @@ package body Builder_Module is
          Position => Gtk.Enums.Win_Pos_Mouse,
          History  => Get_History (Kernel),
          Key      => "gps_custom_command");
-
-      C   : Build_Command_Access;
-      Fd  : Process_Descriptor_Access;
+      Fd      : Process_Descriptor_Access;
+      Success : Boolean;
 
    begin
       if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
@@ -1151,38 +1109,32 @@ package body Builder_Module is
          return;
       end if;
 
-      if Builder_Module_ID_Access (Builder_Module_ID).Build_Count = 0 then
+      if Builder_Module_ID.Build_Count = 0 then
          Clear_Compilation_Output (Kernel, False);
       end if;
 
+      declare
+         Args : Argument_List_Access := Argument_String_To_List (Cmd);
       begin
-         Fd := new TTY_Process_Descriptor;
-         Insert_And_Launch
+         Launch_Process
            (Kernel,
-            Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
-            Remote_Host      =>
-              Get_Attribute_Value
-                (Get_Project (Kernel), Remote_Host_Attribute),
-            Cmd_Line         => Cmd,
-            Fd               => Fd);
-
-         Create (C, (Kernel, Fd, null, null, System.Null_Address));
-
-         Builder_Module_ID_Access (Builder_Module_ID).Build_Count :=
-           Builder_Module_ID_Access (Builder_Module_ID).Build_Count + 1;
-         Builder_Module_ID_Access (Builder_Module_ID).Last_Command :=
-           Command_Access (C);
-
-         Launch_Background_Command
-           (Kernel, Command_Access (C),
-            Active   => False,
-            Show_Bar => True,
-            Queue_Id => "");
-
-      exception
-         when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command", Mode => Error);
-            Free (Fd);
+            Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
+            Remote_Host    => Get_Attribute_Value
+              (Get_Project (Kernel), Remote_Host_Attribute),
+            Command        => Args (Args'First).all,
+            Arguments      => Args (Args'First + 1 .. Args'Last),
+            Fd             => Fd,
+            Console        => Get_Console (Kernel),
+            Show_Command   => True,
+            Show_Output    => False,
+            Success        => Success,
+            Line_By_Line   => False,
+            Callback       => Parse_Compiler_Output'Access,
+            Exit_Cb        => Free_Temporary_Files'Access,
+            Show_In_Task_Manager => True,
+            Synchronous          => False);
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
+         Free (Args);
       end;
 
    exception
@@ -1443,13 +1395,7 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      if Builder_Module_ID_Access (Builder_Module_ID).Last_Command /= null then
-         Interrupt_Queue
-           (Kernel,
-            Builder_Module_ID_Access (Builder_Module_ID).Last_Command);
-      else
-         Console.Insert (Kernel, -"No build to interrupt", Mode => Info);
-      end if;
+      Interrupt_Latest_Task (Kernel);
    end On_Stop_Build;
 
    --------------------
@@ -1464,8 +1410,6 @@ package body Builder_Module is
       Mains        : Argument_List)
    is
       Mitem          : Dynamic_Menu_Item;
-      Builder_Module : constant Builder_Module_ID_Access :=
-        Builder_Module_ID_Access (Builder_Module_ID);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Main  : Virtual_File;
 
@@ -1476,7 +1420,7 @@ package body Builder_Module is
 
       --  Accelerators were removed when the menu items were destroyed (just
       --  before the update)
-      Builder_Module.Build_Item := null;
+      Builder_Module_ID.Build_Item := null;
 
       for M in Mains'Range loop
          Mitem := new Dynamic_Menu_Item_Record;
@@ -1523,7 +1467,7 @@ package body Builder_Module is
                      Replace    => False);
                end if;
 
-               Builder_Module.Build_Item := Gtk_Menu_Item (Mitem);
+               Builder_Module_ID.Build_Item := Gtk_Menu_Item (Mitem);
             end if;
          end;
       end loop;
@@ -1673,18 +1617,16 @@ package body Builder_Module is
    ---------------------
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Builder_Module : constant Builder_Module_ID_Access :=
-        Builder_Module_ID_Access (Builder_Module_ID);
       Mitem : Gtk_Menu_Item;
-      Menu1 : Gtk_Menu renames Builder_Module.Make_Menu;
-      Menu2 : Gtk_Menu renames Builder_Module.Run_Menu;
+      Menu1 : Gtk_Menu renames Builder_Module_ID.Make_Menu;
+      Menu2 : Gtk_Menu renames Builder_Module_ID.Run_Menu;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
       --  Free the previous shortcuts if needed. We only keep the ones from
       --  the current project, to avoid an ever expending custom_keys file,
       --  and to limit the change of a duplicate key binding appearing in the
       --  menu.
-      if Builder_Module.Last_Project_For_Menu /= Get_Project (Kernel) then
+      if Builder_Module_ID.Last_Project_For_Menu /= Get_Project (Kernel) then
          Cleanup_Accel_Map (Kernel);
       end if;
 
@@ -1699,13 +1641,13 @@ package body Builder_Module is
       declare
          P : Project_Type := Get_Project (Kernel);
       begin
-         if Builder_Module.Make_Menu /= null then
-            Remove_All_Children (Builder_Module.Make_Menu,
+         if Builder_Module_ID.Make_Menu /= null then
+            Remove_All_Children (Builder_Module_ID.Make_Menu,
                                  Is_Dynamic_Menu_Item'Access);
          end if;
 
-         if Builder_Module.Run_Menu /= null then
-            Remove_All_Children (Builder_Module.Run_Menu,
+         if Builder_Module_ID.Run_Menu /= null then
+            Remove_All_Children (Builder_Module_ID.Run_Menu,
                                  Is_Dynamic_Menu_Item'Access);
          end if;
 
@@ -1718,13 +1660,13 @@ package body Builder_Module is
                   --  Use the main units of the extending project, but we
                   --  should still compile in the context of the root project
                   Add_Build_Menu
-                    (Menu         => Builder_Module.Make_Menu,
+                    (Menu         => Builder_Module_ID.Make_Menu,
                      Project      => Get_Project (Kernel),
                      Kernel       => Kernel,
                      Set_Shortcut => True,
                      Mains        => Mains);
                   Add_Run_Menu
-                    (Menu         => Builder_Module.Run_Menu,
+                    (Menu         => Builder_Module_ID.Run_Menu,
                      Project      => Get_Project (Kernel),
                      Kernel       => Kernel,
                      Mains        => Mains);
@@ -1738,7 +1680,7 @@ package body Builder_Module is
          end loop;
       end;
 
-      Add_Root_Project_Build_Menu (Builder_Module.Make_Menu, Kernel, True);
+      Add_Root_Project_Build_Menu (Builder_Module_ID.Make_Menu, Kernel, True);
 
       --  No main program ?
 
@@ -1754,11 +1696,11 @@ package body Builder_Module is
            (Project => No_Project,
             File    => VFS.No_File));
 
-      if Builder_Module.Build_Item = null then
+      if Builder_Module_ID.Build_Item = null then
          Add_Accelerator
            (Mitem, "activate", Group, GDK_F4, 0,
             Gtk.Accel_Group.Accel_Visible);
-         Builder_Module.Build_Item := Mitem;
+         Builder_Module_ID.Build_Item := Mitem;
       end if;
 
       Mitem := new Dynamic_Menu_Item_Record;
