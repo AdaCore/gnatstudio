@@ -184,11 +184,13 @@ package body Project_Explorers is
    --  Create a new search context for the explorer. Only one occurence is
    --  searched, and only in Projects or Files, depending on the parameters.
 
-   function Search
+   procedure Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean;
+      Give_Focus      : Boolean;
+      Found           :  out Boolean;
+      Continue        : out Boolean);
    --  Search the next occurrence in the explorer
 
    --------------
@@ -2160,13 +2162,15 @@ package body Project_Explorers is
    -- Search --
    ------------
 
-   function Search
+   procedure Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean)
    is
-      pragma Unreferenced (Search_Backward, Give_Focus);
+      pragma Unreferenced (Search_Backward, Give_Focus, Continue);
       C        : constant Explorer_Search_Context_Access :=
         Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
@@ -2583,7 +2587,7 @@ package body Project_Explorers is
 
       Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
 
-      return C.Current /= Null_Iter;
+      Found := C.Current /= Null_Iter;
    end Search;
 
    --------------------
@@ -2646,9 +2650,11 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Command);
       File_C   : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
+                   File_Selection_Context_Access (Context.Context);
       Kernel   : constant Kernel_Handle := Get_Kernel (File_C);
       C        : Search_Context_Access;
+      Found    : Boolean;
+      Continue : Boolean;
    begin
       C := Explorer_Search_Factory
         (Kernel,
@@ -2664,9 +2670,14 @@ package body Project_Explorers is
                       Whole_Word     => True,
                       Regexp         => True));
 
-      if not Search (C, Kernel, Search_Backward => False,
-                     Give_Focus => True)
-      then
+      Search
+        (C, Kernel,
+         Search_Backward => False,
+         Give_Focus      => True,
+         Found           => Found,
+         Continue        => Continue);
+
+      if not Found then
          Insert (Kernel,
                  -"File not found in the explorer: "
                  & Base_Name (File_Information (File_C)),
@@ -2686,10 +2697,12 @@ package body Project_Explorers is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File_C : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context.Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (File_C);
-      C      : Search_Context_Access;
+      File_C   : constant File_Selection_Context_Access :=
+                   File_Selection_Context_Access (Context.Context);
+      Kernel   : constant Kernel_Handle := Get_Kernel (File_C);
+      C        : Search_Context_Access;
+      Found    : Boolean;
+      Continue : Boolean;
    begin
       C := Explorer_Search_Factory
         (Kernel,
@@ -2702,9 +2715,14 @@ package body Project_Explorers is
                       Whole_Word     => True,
                       Regexp         => False));
 
-      if not Search (C, Kernel, Search_Backward => False,
-                     Give_Focus => True)
-      then
+      Search
+        (C, Kernel,
+         Search_Backward => False,
+         Give_Focus      => True,
+         Found           => Found,
+         Continue        => Continue);
+
+      if not Found then
          Insert (Kernel,
                  -"Project not found in the explorer: "
                  & Project_Name (Project_Information (File_C)));
@@ -2763,7 +2781,6 @@ package body Project_Explorers is
             and not Create (Module => Explorer_Module_Name)),
          Label  => "Locate in explorer: %p");
 
-
       --  Add a project explorer to the default desktop.
       Add_Default_Desktop_Item
         (Kernel, "Project_Explorer_Project", Position_Left, False, True);
@@ -2821,7 +2838,6 @@ package body Project_Explorers is
         (Kernel,
          Filter => Entity_Node_Filter,
          Name   => "Explorer_Entity_Node");
-
 
       declare
          Name : constant String := -"Project explorer";
