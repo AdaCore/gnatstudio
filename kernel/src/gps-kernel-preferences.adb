@@ -294,7 +294,11 @@ package body GPS.Kernel.Preferences is
       Default_Charset := Param_Spec_String (Gnew_String
         (Name    => "General-Charset",
          Nick    => -"Character set",
-         Blurb   => -"Name of character set to use for displaying text",
+         Blurb   => -("Name of character set to use when reading or saving"
+                      & " files. GPS uses unicode internally, but need to"
+                      & " convert the files from and to your system's"
+                      & " own encoding. Use ""UTF-8"" if your system supports"
+                      & " unicode"),
          Default => "ISO-8859-1"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
