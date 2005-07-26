@@ -498,30 +498,52 @@ package body Vsearch_Ext is
    procedure Search_Iterate
      (Data    : in out Idle_Search_Data;
       Command : Command_Access;
-      Result  : out Command_Return_Type) is
+      Result  : out Command_Return_Type)
+   is
+      Vsearch  : constant Vsearch_Extended := Vsearch_Extended (Data.Vsearch);
+      Button   : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+      Found    : Boolean;
+      Continue : Boolean;
    begin
-      if Data.Vsearch.Continue
-        and then Search
+      if Data.Vsearch.Continue then
+         Search
            (Data.Vsearch.Last_Search_Context,
             Data.Vsearch.Kernel,
             Data.Search_Backward,
-            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
-      then
-         Set_Progress
-           (Command,
-            (Running,
-             Get_Current_Progress (Data.Vsearch.Last_Search_Context),
-             Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
+            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
+            Found      => Found,
+            Continue   => Continue);
 
-         Result := Execute_Again;
-      else
-         Free (Data.Vsearch.Last_Search_Context);
-         Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
-         Pop_State (Data.Vsearch.Kernel);
-         Data.Vsearch.Search_Idle_Handler := 0;
+         Data.Vsearch.Found := Data.Vsearch.Found or else Found;
 
-         Result := Success;
+         if Continue then
+            Set_Progress
+              (Command,
+               (Running,
+                Get_Current_Progress (Data.Vsearch.Last_Search_Context),
+                Get_Total_Progress (Data.Vsearch.Last_Search_Context)));
+            Result := Execute_Again;
+            return;
+         end if;
       end if;
+
+      Free (Data.Vsearch.Last_Search_Context);
+      Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
+      Pop_State (Data.Vsearch.Kernel);
+      Data.Vsearch.Search_Idle_Handler := 0;
+
+      if not Vsearch.Found then
+         Button := Message_Dialog
+           (Msg     => "No occurrences of '" &
+            Get_Text (Vsearch.Pattern_Entry) & "' found.",
+            Title   => -"Search",
+            Buttons => Button_OK,
+            Parent  => Get_Main_Window (Vsearch.Kernel));
+      end if;
+
+      Result := Success;
 
    exception
       when E : others =>
@@ -645,13 +667,15 @@ package body Vsearch_Ext is
    ---------------
 
    procedure On_Search (Object : access Gtk_Widget_Record'Class) is
-      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Vsearch        : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Toplevel       : constant Gtk_Widget := Get_Toplevel (Vsearch);
+      Found          : Boolean;
       Has_Next       : Boolean;
       Button         : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
-      All_Occurences : constant Boolean := Get_Active
-        (Vsearch.Search_All_Check);
+      All_Occurences : constant Boolean :=
+                         Get_Active (Vsearch.Search_All_Check);
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
       C              : Search_Commands.Generic_Asynchronous_Command_Access;
    begin
@@ -665,6 +689,9 @@ package body Vsearch_Ext is
          if All_Occurences then
             --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
+            --  ??? What is that supposed to mean.
+
+            Vsearch.Found := False;
 
             Search_Commands.Create
               (C,
@@ -677,15 +704,20 @@ package body Vsearch_Ext is
 
          else
             Push_State (Vsearch.Kernel, Processing);
-            Has_Next := Search
+
+            Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
                Search_Backward => False,
-               Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
+               Give_Focus      => Get_Active (Vsearch.Select_Editor_Check),
+               Found           => Found,
+               Continue        => Has_Next);
+
             Pop_State (Vsearch.Kernel);
 
             --  Give a visual feedback that the search is terminated.
-            if not Has_Next
+            if not Found
+              and then not Has_Next
               and then not Vsearch.Find_Next
             then
                Button := Message_Dialog
@@ -693,7 +725,7 @@ package body Vsearch_Ext is
                     (-"' found."),
                   Title   => -"Search",
                   Buttons => Button_OK,
-                  Parent  => Gtk_Window (Get_Toplevel (Vsearch)));
+                  Parent  => Gtk_Window (Toplevel));
             end if;
 
             --  We keep the "Next" mode until a new context is created by
@@ -776,11 +808,11 @@ package body Vsearch_Ext is
    ------------------------
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
-      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
-      All_Occurences : constant Boolean := Get_Active
-        (Vsearch.Search_All_Check);
-      Has_Next : Boolean;
-      pragma Unreferenced (Has_Next);
+      Vsearch        : constant Vsearch_Extended := Vsearch_Extended (Object);
+      All_Occurences : constant Boolean :=
+                         Get_Active (Vsearch.Search_All_Check);
+      Found          : Boolean;
+      Has_Next       : Boolean;
 
    begin
       if not Vsearch.Find_Next then
@@ -796,11 +828,13 @@ package body Vsearch_Ext is
 
          else
             Push_State (Vsearch.Kernel, Processing);
-            Has_Next := Search
+            Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
                Search_Backward => True,
-               Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
+               Give_Focus      => Get_Active (Vsearch.Select_Editor_Check),
+               Found           => Found,
+               Continue        => Has_Next);
             Pop_State (Vsearch.Kernel);
 
             Set_First_Next_Mode (Vsearch, Find_Next => True);
