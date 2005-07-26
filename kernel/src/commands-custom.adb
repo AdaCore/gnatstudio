@@ -176,6 +176,11 @@ package body Commands.Custom is
    --  This properly takes into account the on-failure components.
    --  Return -1 if no Ref is invalid.
 
+   type Custom_Callback_Data is new Callback_Data_Record with record
+      Command : Custom_Command_Access;
+   end record;
+   type Custom_Callback_Data_Access is access all Custom_Callback_Data;
+
    -------------------
    -- Create_Filter --
    -------------------
@@ -202,10 +207,11 @@ package body Commands.Custom is
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
-      Command : constant Custom_Command_Access := Convert (Data.Callback_Data);
+      D : constant Custom_Callback_Data_Access :=
+        Custom_Callback_Data_Access (Data.Callback_Data);
    begin
-      Command.Execution.External_Process_In_Progress := False;
-      Command.Execution.Process_Exit_Status := Status;
+      D.Command.Execution.External_Process_In_Progress := False;
+      D.Command.Execution.Process_Exit_Status := Status;
    end Exit_Cb;
 
    --------------------------
@@ -213,7 +219,9 @@ package body Commands.Custom is
    --------------------------
 
    procedure Store_Command_Output (Data : Process_Data; Output : String) is
-      Command : constant Custom_Command_Access := Convert (Data.Callback_Data);
+      D : constant Custom_Callback_Data_Access :=
+        Custom_Callback_Data_Access (Data.Callback_Data);
+      Command : constant Custom_Command_Access := D.Command;
 
       procedure Append (S : in out String_Access; Value : String);
       --  Append Value to S
@@ -1081,7 +1089,8 @@ package body Commands.Custom is
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
                Show_Command  => Component.Show_Command,
-               Callback_Data => Convert (Custom_Command_Access (Command)),
+               Callback_Data => new Custom_Callback_Data'
+                 (Command => Custom_Command_Access (Command)),
                Line_By_Line  => False,
                Directory     => To_String (Context.Dir));
             Free (Args);
