@@ -150,11 +150,13 @@ package body Browsers.Projects is
       return Search_Context_Access;
    --  Create a new search context for the explorer
 
-   function Search
+   procedure Search
      (Context         : access Browser_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean;
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean);
    --  Search the next occurrence in the explorer
 
    function Find_Project
@@ -661,11 +663,13 @@ package body Browsers.Projects is
    -- Search --
    ------------
 
-   function Search
+   procedure Search
      (Context         : access Browser_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean
+      Give_Focus      : Boolean;
+      Found           : out Boolean;
+      Continue        : out Boolean)
    is
       pragma Unreferenced (Search_Backward, Give_Focus);
       First_Match  : Canvas_Item;
@@ -678,7 +682,9 @@ package body Browsers.Projects is
 
    begin
       if Child = null then
-         return False;
+         Found := False;
+         Continue := False;
+         return;
       end if;
 
       Browser := Project_Browser (Get_Widget (Child));
@@ -717,10 +723,17 @@ package body Browsers.Projects is
          Clear_Selection (Get_Canvas (Browser));
          Add_To_Selection (Get_Canvas (Browser), First_Match);
          Show_Item (Get_Canvas (Browser), First_Match);
-         return True;
+         Found := True;
       else
-         return False;
+         Found := False;
       end if;
+
+      if It = null then
+         Continue := False;
+      else
+         Continue := True;
+      end if;
+
    end Search;
 
    -------------
