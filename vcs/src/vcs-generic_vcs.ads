@@ -22,14 +22,14 @@
 --
 --  See package VCS for a complete spec of this package.
 
-with Basic_Types;               use Basic_Types;
-with GNAT.Regpat;               use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regpat;               use GNAT.Regpat;
+with Basic_Types;               use Basic_Types;
 
 package VCS.Generic_VCS is
 
    type Generic_VCS_Record is new VCS_Record with private;
-   --  A value used to reference a Generic_VCS repository.
+   --  A value used to reference a Generic_VCS repository
 
    type Generic_VCS_Access is access all Generic_VCS_Record'Class;
 
@@ -52,7 +52,7 @@ package VCS.Generic_VCS is
    function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List)
-     return File_Status_List.List;
+      return File_Status_List.List;
 
    procedure Open
      (Rep       : access Generic_VCS_Record;
@@ -134,6 +134,7 @@ package VCS.Generic_VCS is
 
    function Get_Registered_Status
      (Rep : access Generic_VCS_Record) return Status_Array;
+
 private
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
@@ -146,15 +147,15 @@ private
    end record;
 
    procedure Free (X : in out Regexp_Status_Record);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    package Status_Parser is new Generic_List
      (Regexp_Status_Record);
 
    type Status_Parser_Record is record
-      Regexp             : Pattern_Matcher_Access;
-      Matches_Num        : Natural := 0;
-      Status_Identifiers : Status_Parser.List;
+      Regexp               : Pattern_Matcher_Access;
+      Matches_Num          : Natural := 0;
+      Status_Identifiers   : Status_Parser.List;
 
       File_Index           : Natural := 0;
       Status_Index         : Natural := 0;
@@ -177,8 +178,6 @@ private
       Status_Parser       : Status_Parser_Record;
       Local_Status_Parser : Status_Parser_Record;
       Annotations_Parser  : Status_Parser_Record;
-
-      Absolute_Names       : Boolean := True;
    end record;
 
 end VCS.Generic_VCS;
