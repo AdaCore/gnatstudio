@@ -481,6 +481,7 @@ package body GPS.Kernel.Styles is
 
       if Style.Foreground.GC /= Null_GC then
          Unref (Style.Foreground.GC);
+         Style.Foreground.GC := Null_GC;
       end if;
 
       Style.Foreground.Color := Null_Color;
@@ -504,6 +505,7 @@ package body GPS.Kernel.Styles is
 
       if Style.Background.GC /= Null_GC then
          Unref (Style.Background.GC);
+         Style.Background.GC := Null_GC;
       end if;
 
       Style.Background.Color := Null_Color;
