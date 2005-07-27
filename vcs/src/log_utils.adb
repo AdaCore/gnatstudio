@@ -21,47 +21,84 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Traces;                    use Traces;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
+
+with Gtk.Enums;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with Basic_Mapper;              use Basic_Mapper;
+with Commands;                  use Commands;
+with Commands.VCS;              use Commands.VCS;
+with Commands.External;         use Commands.External;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with VFS;                       use VFS;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Location_View;         use GPS.Location_View;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with VFS;                       use VFS;
+with VCS_Utils;                 use VCS_Utils;
 
 package body Log_Utils is
 
-   --  The format for the mappings file is as follows :
-   --
-   --      File_1
-   --      Log_1
-   --      File_2
-   --      Log_2
-   --      File_3
-   --      Log_3
-   --
-   --  and so on.
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display Head in the console, then return True if List is not
+   --  empty, otherwise display List in the console and return False.
+
+   --------------------------
+   -- Action_To_Log_Suffix --
+   --------------------------
+
+   function Action_To_Log_Suffix (Action : VCS_Action) return String is
+   begin
+      case Action is
+         when Commit =>
+            return "$log";
+
+         when others =>
+            return "$" & Action'Img & "$log";
+      end case;
+   end Action_To_Log_Suffix;
 
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
+      use GNAT.OS_Lib;
+
+      --  The format for the mappings file is as follows :
+      --
+      --      File_1
+      --      Log_1
+      --      File_2
+      --      Log_2
+      --      File_3
+      --      Log_3
+      --
+      --  and so on.
+
       Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
       Mapping  : constant Virtual_File :=
-        Create (Full_Filename => Logs_Dir & "/mapping");
+                   Create (Full_Filename => Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
       Button   : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
-      --  Create the mappings file and read it.
+      --  Create the mappings file and read it
 
    begin
       if not Is_Directory (Logs_Dir) then
@@ -116,6 +153,8 @@ package body Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File) return VFS.Virtual_File
    is
+      use GNAT.OS_Lib;
+
       procedure Add_Header (Pos : Positive; Date_Header : Boolean);
       --  Add ChangeLog headers at position POS in the file buffer content.
       --  If Date_Header is True, adds also the ISO date tag.
@@ -285,9 +324,11 @@ package body Log_Utils is
       Create    : Boolean;
       Suffix    : String := "$log") return VFS.Virtual_File
    is
+      use GNAT.OS_Lib;
+
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String :=
-        Full_Name (File_Name, Normalize => True).all;
+                      Full_Name (File_Name, Normalize => True).all;
       Return_Name : constant String := Get_Other_Text (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
@@ -374,6 +415,8 @@ package body Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File) return String
    is
+      use GNAT.OS_Lib;
+
       R : String_Access;
    begin
       R := Read_File (Get_Log_From_File (Kernel, File_Name, False));
@@ -400,6 +443,8 @@ package body Log_Utils is
       File_Name : VFS.Virtual_File;
       Suffix    : String := "$log")
    is
+      use GNAT.OS_Lib;
+
       ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
       Log_File  : constant Virtual_File :=
         Get_Log_From_File (Kernel, File_Name, False);
@@ -564,5 +609,331 @@ package body Log_Utils is
       Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True).all);
       Save_Mapper (Mapper, Logs_Dir & "mapping");
    end Remove_File_From_Mapping;
+
+   -------------------
+   -- Check_Handler --
+   -------------------
+
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      use String_List;
+
+      List_Temp : String_List.List_Node := First (List);
+      Head_Temp : String_List.List_Node := First (Head);
+      Length    : Integer := 0;
+
+   begin
+      if not String_List.Is_Empty (List) then
+         while Head_Temp /= Null_Node loop
+            Console.Insert (Kernel, Data (Head_Temp), Mode => Console.Error);
+            Head_Temp := Next (Head_Temp);
+         end loop;
+      end if;
+
+      while List_Temp /= Null_Node loop
+         declare
+            S : constant String := Data (List_Temp);
+         begin
+            Console.Insert (Kernel, S, Mode => Console.Error);
+            Length := Length + S'Length;
+         end;
+
+         List_Temp := Next (List_Temp);
+      end loop;
+
+      if Length /= 0 then
+         declare
+            S : String (1 .. Length);
+         begin
+            Length := 1;
+            List_Temp := First (List);
+
+            while List_Temp /= Null_Node loop
+               declare
+                  D : constant String := Data (List_Temp);
+               begin
+                  S (Length .. Length - 1 + D'Length) := D;
+                  Length := Length + D'Length;
+               end;
+
+               List_Temp := Next (List_Temp);
+            end loop;
+
+            Parse_File_Locations (Kernel, S, -"Style/Log Check");
+         end;
+      end if;
+
+      return String_List.Is_Empty (List);
+   end Check_Handler;
+
+   ----------------------
+   -- Log_Action_Files --
+   ----------------------
+
+   procedure Log_Action_Files
+     (Kernel   : Kernel_Handle;
+      Ref      : VCS_Access;
+      Action   : VCS_Action;
+      Files    : String_List.List;
+      Activity : Activity_Id)
+   is
+      use String_List;
+      use Ada.Strings.Unbounded;
+
+      function Add_LF_To_Log (Log : in String) return String;
+      --  Returns Log with LF added if there is no ending line separator. We
+      --  call this routine to ensure that the catenated logs won't be put on
+      --  the same line.
+
+      -------------------
+      -- Add_LF_To_Log --
+      -------------------
+
+      function Add_LF_To_Log (Log : in String) return String is
+      begin
+         if Log'Length > 0
+           and then Log (Log'Last) /= ASCII.LF
+           and then Log (Log'Last) /= ASCII.CR
+         then
+            return Log & ASCII.LF;
+         else
+            return Log;
+         end if;
+      end Add_LF_To_Log;
+
+      Logs               : String_List.List;
+      Files_Temp         : List_Node := First (Files);
+
+      Commit_Command     : Log_Action_Command_Access;
+      Get_Status_Command : Get_Status_Command_Access;
+
+      Project            : Project_Type;
+
+      Success            : Boolean;
+      pragma Unreferenced (Success);
+
+      Cancel_All         : Boolean := False;
+
+      Log_Checks         : External_Command_Access;
+      File_Checks        : External_Command_Access;
+      File               : Virtual_File;
+
+      First_Check, Last_Check : Command_Access := null;
+
+   begin
+      if not Save_Files (Kernel, Files, Save_Logs => True) then
+         return;
+      end if;
+
+      --  Build the log for the commit
+
+      if Activity = No_Activity then
+         while Files_Temp /= Null_Node loop
+            --  Save any open log editors, and then get the corresponding logs
+
+            File := Create (Full_Filename => Data (Files_Temp));
+            Append (Logs, Get_Log (Kernel, File));
+            Files_Temp := Next (Files_Temp);
+         end loop;
+
+      else
+         if Get_Group_Commit (Activity) then
+            declare
+               L : Unbounded_String;
+            begin
+               while Files_Temp /= Null_Node loop
+                  --  Save any open log editors, and then get the corresponding
+                  --  logs.
+
+                  File := Create (Full_Filename => Data (Files_Temp));
+                  Append (L, "* " & Base_Name (File) & ":" & ASCII.LF);
+                  Append (L, Add_LF_To_Log (Get_Log (Kernel, File)));
+                  Files_Temp := Next (Files_Temp);
+
+                  if Files_Temp /= Null_Node then
+                     --  Skip a line between each files
+                     Append (L, ASCII.LF);
+                  end if;
+               end loop;
+
+               Append (L, Get_Log (Kernel, Activity));
+
+               Append (Logs, To_String (L));
+            end;
+
+         else
+            while Files_Temp /= Null_Node loop
+               --  Save any open log editors, and then get the corresponding
+               --  logs.
+
+               File := Create (Full_Filename => Data (Files_Temp));
+               Append
+                 (Logs,
+                  Add_LF_To_Log (Get_Log (Kernel, File))
+                  & Get_Log (Kernel, Activity));
+               Files_Temp := Next (Files_Temp);
+            end loop;
+         end if;
+      end if;
+
+      --  Create the Commit command
+
+      Create (Commit_Command, Ref, Action, Files, Logs);
+
+      --  Create the Get_Status command
+
+      Create (Get_Status_Command, Ref, Files);
+
+      --  The Get_Status command is a consequence of the Commit command
+
+      Add_Consequence_Action
+        (Command_Access (Commit_Command),
+         Command_Access (Get_Status_Command));
+
+      --  Create the file checks and the log checks
+
+      --  ??? Should we add check for the activity log and in this case which
+      --  check script should be used.
+
+      Files_Temp := First (Files);
+
+      while Files_Temp /= Null_Node loop
+         File := Create (Full_Filename => Data (Files_Temp));
+         Project := Get_Project_From_File (Get_Registry (Kernel).all, File);
+
+         if Project /= No_Project then
+            declare
+               File_Check_Script : constant String := Get_Attribute_Value
+                 (Project, Vcs_File_Check);
+               Log_Check_Script  : constant String := Get_Attribute_Value
+                 (Project, Vcs_Log_Check);
+               Log_File          : constant Virtual_File :=
+                                     Get_Log_From_File
+                                       (Kernel, File, True,
+                                        Action_To_Log_Suffix (Action));
+               File_Args         : String_List.List;
+               Log_Args          : String_List.List;
+               Head_List         : String_List.List;
+               S                 : GNAT.OS_Lib.String_Access;
+
+               use type GNAT.OS_Lib.String_Access;
+
+            begin
+               if File_Check_Script /= "" then
+                  Append (File_Args, Data (Files_Temp));
+
+                  Create (File_Checks,
+                          Kernel,
+                          File_Check_Script,
+                          "",
+                          File_Args,
+                          Null_List,
+                          Check_Handler'Access,
+                          -"Version Control: Checking files");
+
+                  if First_Check = null then
+                     First_Check := Command_Access (File_Checks);
+                  else
+                     Add_Consequence_Action (Last_Check, File_Checks);
+                  end if;
+
+                  Last_Check := Command_Access (File_Checks);
+               end if;
+
+               if Log_Check_Script /= "" then
+                  --  Check that the log file is not empty
+
+                  S := Read_File (Log_File);
+
+                  if S = null then
+                     Cancel_All := True;
+                     Insert (Kernel,
+                             (-"File could not be read: ")
+                             & Full_Name (Log_File).all);
+
+                     Free (File_Args);
+                     Free (Log_Args);
+                     Free (Head_List);
+                     exit;
+
+                  elsif S.all = "" then
+                     if Message_Dialog
+                       ((-"File: ") & Full_Name (File).all
+                        & ASCII.LF & ASCII.LF &
+                          (-"The revision log for this file is empty,")
+                        & ASCII.LF &
+                          (-"Commit anyway ?"),
+                        Confirmation,
+                        Button_Yes or Button_No,
+                        Button_Yes,
+                        "", -"Empty log detected",
+                        Gtk.Enums.Justify_Left) = Button_No
+                     then
+                        Cancel_All := True;
+
+                        GNAT.OS_Lib.Free (S);
+                        Free (File_Args);
+                        Free (Log_Args);
+                        Free (Head_List);
+                        exit;
+                     end if;
+                  end if;
+
+                  GNAT.OS_Lib.Free (S);
+
+                  Append (Log_Args, Full_Name (Log_File).all);
+                  Append
+                    (Head_List, -"File: " & Full_Name (File).all & ASCII.LF
+                     & (-"The revision log does not pass the checks."));
+
+                  Create
+                    (Log_Checks,
+                     Kernel,
+                     Log_Check_Script,
+                     "",
+                     Log_Args,
+                     Head_List,
+                     Check_Handler'Access,
+                     -"CVS: Checking file changelogs");
+
+                  if First_Check = null then
+                     First_Check := Command_Access (Log_Checks);
+                  else
+                     Add_Consequence_Action (Last_Check, Log_Checks);
+                  end if;
+
+                  Last_Check := Command_Access (Log_Checks);
+               end if;
+
+               Free (File_Args);
+               Free (Log_Args);
+               Free (Head_List);
+            end;
+         end if;
+
+         Files_Temp := Next (Files_Temp);
+      end loop;
+
+      --  Execute the commit command after the last file check or log check
+      --  command.
+
+      if Last_Check /= null then
+         Add_Consequence_Action (Last_Check, Commit_Command);
+      else
+         First_Check := Command_Access (Commit_Command);
+      end if;
+
+      if Cancel_All then
+         Destroy (First_Check);
+      else
+         Launch_Background_Command
+           (Kernel, First_Check, True, True, Name (Ref));
+      end if;
+
+      Free (Logs);
+   end Log_Action_Files;
 
 end Log_Utils;
