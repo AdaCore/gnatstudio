@@ -42,6 +42,7 @@ with Commands;                    use Commands;
 with Generic_List;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;           use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
 with VFS;
@@ -511,7 +512,7 @@ package Src_Editor_Buffer is
    procedure Add_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Editable_Line_Type;
-      Id           : String;
+      Style        : Style_Access;
       Highlight_In : Highlight_Location_Array);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -520,7 +521,7 @@ package Src_Editor_Buffer is
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Id     : String);
+      Style  : Style_Access);
    --  Disable the highlighting of Line using colors defined in category
    --  corresponding to Id.
    --  See Src_Editor_Box.Remove_Line_Highlighting.
