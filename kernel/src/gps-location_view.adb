@@ -164,10 +164,20 @@ package body GPS.Location_View is
    -- Local subprograms --
    -----------------------
 
+   function To_Style is new Ada.Unchecked_Conversion
+     (System.Address, Style_Access);
+   function To_Address is new Ada.Unchecked_Conversion
+     (Style_Access, System.Address);
+
    function Get_Message
      (View : access Location_View_Record'Class;
       Iter : Gtk_Tree_Iter) return String;
    --  Return the message stored at Iter.
+
+   function Get_Highlighting_Style
+     (View : access Location_View_Record'Class;
+      Iter : Gtk_Tree_Iter) return Style_Access;
+   --  Return the highlighting style stored at Iter.
 
    function Get_File
      (View : access Location_View_Record'Class;
@@ -180,6 +190,7 @@ package body GPS.Location_View is
       File       : VFS.Virtual_File);
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
+   --  Identifier is the escaped string.
 
    procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view.
@@ -188,7 +199,7 @@ package body GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
       Category      : String;
-      H_Category    : String;
+      H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -198,6 +209,7 @@ package body GPS.Location_View is
    --  necessary and if Create is True.
    --  If File is "", then the category iter will be returned.
    --  If the category was created, New_Category is set to True.
+   --  Category is the escaped string.
 
    procedure Fill_Iter
      (View               : access Location_View_Record'Class;
@@ -211,7 +223,7 @@ package body GPS.Location_View is
       Column             : Integer;
       Length             : Integer;
       Highlighting       : Boolean;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
    --  Base_Name can be left to the empty string, it will then be computed
@@ -228,7 +240,7 @@ package body GPS.Location_View is
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean);
@@ -298,7 +310,7 @@ package body GPS.Location_View is
       Line               : Natural;
       Column             : Natural;
       Length             : Natural;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Highlight          : Boolean := True);
    --  Highlight the line with the corresponding category.
    --  If Highlight is set to False, remove the highlighting.
@@ -411,10 +423,7 @@ package body GPS.Location_View is
                        (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
                      Integer
                        (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
-                     Get_String
-                       (View.Tree.Model,
-                        File_Iter,
-                        Highlight_Category_Column));
+                     Get_Highlighting_Style (View, File_Iter));
 
                   Next (View.Tree.Model, Line_Iter);
                end loop;
@@ -536,18 +545,18 @@ package body GPS.Location_View is
       Line               : Natural;
       Column             : Natural;
       Length             : Natural;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Highlight          : Boolean := True)
    is
       Args    : GNAT.OS_Lib.Argument_List (1 .. 5) :=
         (1 => new String'(Full_Name (Filename).all),
-         2 => new String'(Highlight_Category),
+         2 => new String'(Get_Name (Highlight_Category)),
          3 => new String'(Image (Line)),
          4 => new String'(Image (Column)),
          5 => new String'(Image (Column + Length)));
       Command : GNAT.OS_Lib.String_Access;
    begin
-      if Highlight_Category = "" then
+      if Highlight_Category = null then
          return;
       end if;
 
@@ -680,18 +689,20 @@ package body GPS.Location_View is
                Args : GNAT.OS_Lib.Argument_List :=
                  (1 => new String'(Image (Integer (Mark))));
 
+               Style : Style_Access;
             begin
                if Mark /= -1 then
                   Execute_GPS_Shell_Command
                     (View.Kernel, "Editor.delete_mark", Args);
                end if;
                Free (Args);
-            end;
 
-            Add_Unique_Sorted
-              (Categories,
-               Get_String
-                 (View.Tree.Model, Loc_Iter, Highlight_Category_Column));
+               Style := Get_Highlighting_Style (View, Loc_Iter);
+
+               if Style /= null then
+                  Add_Unique_Sorted (Categories, Get_Name (Style));
+               end if;
+            end;
 
             Next (View.Tree.Model, Loc_Iter);
          end loop;
@@ -702,7 +713,9 @@ package body GPS.Location_View is
          while not Is_Empty (Categories) loop
             Highlight_Line
               (View.Kernel,
-               Get_File (View, File_Iter), 0, 0, 0, Head (Categories), False);
+               Get_File (View, File_Iter), 0, 0, 0,
+               Get_Or_Create_Style (View.Kernel, Head (Categories), False),
+               False);
             Next (Categories, Free_Data => True);
          end loop;
 
@@ -759,7 +772,7 @@ package body GPS.Location_View is
       Column             : Integer;
       Length             : Integer;
       Highlighting       : Boolean;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
    is
       function To_Proxy is new
@@ -795,7 +808,14 @@ package body GPS.Location_View is
       Set (Model, Iter, Length_Column, Gint (Length));
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
-      Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
+
+      Init (Value, GType_Pointer);
+      Set_Address (Value, To_Address (Highlight_Category));
+
+      Set_Value
+        (View.Tree.Model, Iter, Highlight_Category_Column, Value);
+      Unset (Value);
+
       Set (Model, Iter, Number_Of_Items_Column, 0);
 
       --  ??? Lexicographic order will be used for line numbers > 1_000_000
@@ -807,7 +827,7 @@ package body GPS.Location_View is
            (Model,
             Iter,
             Category_Line_Column,
-            Highlight_Category & Img (Img'Last - 5 .. Img'Last));
+            Get_Name (Highlight_Category) & Img (Img'Last - 5 .. Img'Last));
       end;
 
       if Line = 0 then
@@ -931,7 +951,7 @@ package body GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
       Category      : String;
-      H_Category    : String;
+      H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -1004,7 +1024,7 @@ package body GPS.Location_View is
       Length             : Natural;
       Highlight          : Boolean;
       Message            : String;
-      Highlight_Category : String;
+      Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean)
@@ -1183,7 +1203,7 @@ package body GPS.Location_View is
          Button_Column             => Gdk.Pixbuf.Get_Type,
          Action_Column             => GType_Pointer,
          Highlight_Column          => GType_Boolean,
-         Highlight_Category_Column => GType_String,
+         Highlight_Category_Column => GType_Pointer,
          Number_Of_Items_Column    => GType_Int,
          Total_Column              => GType_String,
          Category_Line_Column      => GType_String);
@@ -1465,7 +1485,7 @@ package body GPS.Location_View is
       Column             : Positive;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "";
+      Highlight_Category : Style_Access := null;
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True;
@@ -1476,14 +1496,18 @@ package body GPS.Location_View is
       if View /= null then
          if Has_Markups then
             Add_Location
-              (View, View.Tree.Model, Category, File, Line, Column, Length,
+              (View, View.Tree.Model,
+               Glib.Convert.Escape_Text (Category),
+               File, Line, Column, Length,
                Highlight, Text, Highlight_Category,
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
                Enable_Counter    => Enable_Counter);
          else
             Add_Location
-              (View, View.Tree.Model, Category, File, Line, Column, Length,
+              (View, View.Tree.Model,
+               Glib.Convert.Escape_Text (Category),
+               File, Line, Column, Length,
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
@@ -1518,7 +1542,8 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          View.Tree.Model,
-         Category, "", VFS.No_File, Cat, Iter, Dummy, False);
+         Glib.Convert.Escape_Text (Category),
+         null, VFS.No_File, Cat, Iter, Dummy, False);
 
       if Cat = Null_Iter then
          return;
@@ -1551,7 +1576,7 @@ package body GPS.Location_View is
         Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
-         Remove_Category (View, Category, File);
+         Remove_Category (View, Glib.Convert.Escape_Text (Category), File);
       end if;
    end Remove_Location_Category;
 
@@ -1571,7 +1596,7 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          View.Tree.Model,
-         Identifier, "", File, Iter, File_Iter, Dummy);
+         Identifier, null, File, Iter, File_Iter, Dummy);
 
       if File_Iter = Null_Iter then
          Remove_Category_Or_File_Iter (Location_View (View), Iter);
@@ -1692,7 +1717,7 @@ package body GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Identifier    : String;
       Category      : String;
-      H_Category    : String;
+      H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
@@ -1706,6 +1731,7 @@ package body GPS.Location_View is
 
       Value         : GValue;
       Old_Action    : Action_Item;
+      Escaped_Message : constant String := Glib.Convert.Escape_Text (Message);
 
       pragma Unreferenced (Identifier);
    begin
@@ -1715,11 +1741,14 @@ package body GPS.Location_View is
              & ' ' & Message);
 
       Get_Category_File
-        (View, View.Tree.Model, Category, H_Category,
+        (View, View.Tree.Model,
+         Glib.Convert.Escape_Text (Category),
+         H_Category,
          File, Category_Iter, File_Iter, Created, False);
 
       if Category_Iter = Null_Iter then
-         Trace (Me, "Add_Action_Item: Category " & H_Category & " not found");
+         Trace (Me, "Add_Action_Item: Category " & Get_Name (H_Category)
+                & " not found");
       end if;
 
       if File_Iter = Null_Iter then
@@ -1737,7 +1766,7 @@ package body GPS.Location_View is
               (View.Tree.Model, Line_Iter, Line_Column) = Gint (Line)
               and then Get_Int
                 (View.Tree.Model, Line_Iter, Column_Column) = Gint (Column)
-              and then Get_Message (View, Line_Iter) =  Message
+              and then Get_Message (View, Line_Iter) =  Escaped_Message
             then
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
@@ -1844,7 +1873,7 @@ package body GPS.Location_View is
       D : Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
-        (View, D.Identifier, D.Category, "", D.File,
+        (View, D.Identifier, D.Category, null, D.File,
          Integer (D.Line), Integer (D.Column), D.Message, D.Action);
       return True;
    end Location_Hook;
@@ -1885,7 +1914,8 @@ package body GPS.Location_View is
             Length   => Loc.Length,
             Highlight => Loc.Highlight,
             Message  => Loc.Message.all,
-            Highlight_Category => Loc.Highlight_Category.all,
+            Highlight_Category => Get_Or_Create_Style
+              (Kernel_Handle (Kernel), Loc.Highlight_Category.all, False),
             Quiet              => True,
             Remove_Duplicates  => False,
             Enable_Counter     => True);
@@ -2028,9 +2058,8 @@ package body GPS.Location_View is
                   Set_Attribute (Location, "message",
                                  Get_Message (View, Location_Iter));
                   Set_Attribute (Location, "category",
-                                 Get_String
-                                   (View.Tree.Model, Location_Iter,
-                                    Highlight_Category_Column));
+                                 Get_Name (Get_Highlighting_Style
+                                             (View, Location_Iter)));
                   Set_Attribute (Location, "highlight",
                                  Boolean'Image
                                    (Get_Boolean
@@ -2143,6 +2172,7 @@ package body GPS.Location_View is
       if Command = "parse" then
          Name_Parameters (Data, Parse_Location_Parameters);
          declare
+            Kernel             : constant Kernel_Handle := Get_Kernel (Data);
             Highlight_Category : constant String := Nth_Arg (Data, 10, "");
             Style_Category     : constant String := Nth_Arg (Data, 11, "");
             Warning_Category   : constant String := Nth_Arg (Data, 12, "");
@@ -2154,9 +2184,12 @@ package body GPS.Location_View is
                   or else Warning_Category /= "",
                Text                    => Nth_Arg (Data, 1),
                Category                => Nth_Arg (Data, 2),
-               Highlight_Category      => Highlight_Category,
-               Style_Category          => Style_Category,
-               Warning_Category        => Warning_Category,
+               Highlight_Category      =>
+                 Get_Or_Create_Style (Kernel, Highlight_Category, False),
+               Style_Category          =>
+                 Get_Or_Create_Style (Kernel, Style_Category, False),
+               Warning_Category        =>
+                 Get_Or_Create_Style (Kernel, Warning_Category, False),
                File_Location_Regexp    => Nth_Arg (Data, 3, ""),
                File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
                Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
@@ -2187,7 +2220,8 @@ package body GPS.Location_View is
                Text               => Nth_Arg (Data, 5),
                Length             => Nth_Arg (Data, 7, 0),
                Highlight          => Highlight /= "",
-               Highlight_Category => Highlight,
+               Highlight_Category => Get_Or_Create_Style
+                 (Get_Kernel (Data), Highlight, False),
                Quiet              => True);
          end;
       end if;
@@ -2202,9 +2236,9 @@ package body GPS.Location_View is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : String := "";
-      Style_Category          : String := "";
-      Warning_Category        : String := "";
+      Highlight_Category      : Style_Access := null;
+      Style_Category          : Style_Access := null;
+      Warning_Category        : Style_Access := null;
       File_Location_Regexp    : String := "";
       File_Index_In_Regexp    : Integer := -1;
       Line_Index_In_Regexp    : Integer := -1;
@@ -2286,7 +2320,7 @@ package body GPS.Location_View is
       Line       : Natural := 1;
       Column     : Natural := 1;
       Length     : Natural := 0;
-      C          : String_Access;
+      C          : Style_Access;
 
       -----------------
       -- Get_Message --
@@ -2355,17 +2389,17 @@ package body GPS.Location_View is
             end if;
 
             if Matched (Warning_Index) /= No_Match then
-               C := Warning_Category'Unrestricted_Access;
+               C := Warning_Category;
             elsif  Matched (Style_Index) /= No_Match then
-               C := Style_Category'Unrestricted_Access;
+               C := Style_Category;
             else
-               C := Highlight_Category'Unrestricted_Access;
+               C := Highlight_Category;
             end if;
 
             Add_Location
               (View               => View,
                Model              => Model,
-               Category           => Category,
+               Category           => Glib.Convert.Escape_Text (Category),
                File               => Create
                  (Text (Matched
                           (File_Index).First .. Matched (File_Index).Last),
@@ -2376,7 +2410,7 @@ package body GPS.Location_View is
                Highlight          => Highlight,
                Message            => Glib.Convert.Escape_Text
                  (Get_Message (Last)),
-               Highlight_Category => C.all,
+               Highlight_Category => C,
                Quiet              => Expand,
                Remove_Duplicates  => False,
                Enable_Counter     => False);
@@ -2447,5 +2481,24 @@ package body GPS.Location_View is
       Unset (Value);
       return Result;
    end Get_File;
+
+   ----------------------------
+   -- Get_Highlighting_Style --
+   ----------------------------
+
+   function Get_Highlighting_Style
+     (View : access Location_View_Record'Class;
+      Iter : Gtk_Tree_Iter) return Style_Access
+   is
+      Result : Style_Access;
+      Value  : GValue;
+   begin
+      Get_Value
+        (View.Tree.Model, Iter, Highlight_Category_Column, Value);
+      Result := To_Style (Get_Address (Value));
+      Unset (Value);
+
+      return Result;
+   end Get_Highlighting_Style;
 
 end GPS.Location_View;
