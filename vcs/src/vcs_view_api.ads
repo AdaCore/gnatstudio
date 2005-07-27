@@ -19,12 +19,12 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
-with Glib.Object;          use Glib.Object;
+with Glib.Object;        use Glib.Object;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Gtk.Menu;             use Gtk.Menu;
-with VCS;                  use VCS;
-with Projects;             use Projects;
+with Gtk.Menu;           use Gtk.Menu;
+with VCS;                use VCS;
+with Projects;           use Projects;
 
 package VCS_View_API is
 
@@ -165,8 +165,7 @@ package VCS_View_API is
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access);
-   --  If the VCS Explorer is not displayed, display it.
-   --  Both suprograms accept a null context
+   --  If the VCS Explorer is not displayed, display it
 
    function Get_Current_Ref
      (Context : Selection_Context_Access) return VCS_Access;
@@ -192,13 +191,6 @@ package VCS_View_API is
 
    function Get_Current_Ref (Project : Project_Type) return VCS_Access;
    --  Return the VCS reference registered in Project.
-
-   procedure Display_Editor_Status
-     (Kernel : access Kernel_Handle_Record'Class;
-      Ref    : VCS_Access;
-      Status : File_Status_Record);
-   --  Display a label corresponding to the file. If the file is not open,
-   --  do nothing.
 
    procedure VCS_Command_Handler
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
