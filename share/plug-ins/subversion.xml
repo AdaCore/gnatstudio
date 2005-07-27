@@ -226,7 +226,7 @@
 
    <!-- SVN -->
 
-   <vcs name="Subversion" absolute_names="FALSE">
+   <vcs name="Subversion" absolute_names="TRUE" atomic_commands="TRUE">
       <status_files       action="generic_svn_status"         label="Query status"/>
       <status_dir         action="generic_svn_status_dir"     label="Query status for directory"/>
       <local_status_files action="generic_svn_local_status"   label="Local status"/>
