@@ -44,12 +44,6 @@ package body Src_Editor_Module.Markers is
    function Convert is new Ada.Unchecked_Conversion
      (File_Marker, System.Address);
 
-   procedure On_Destroy_Buffer
-     (Marker : System.Address; Text_Mark : System.Address);
-   pragma Convention (C, On_Destroy_Buffer);
-   --  Called when a buffer is destroyed, so that we can save the marks. At
-   --  this point, the marks are still attached to the buffer
-
    procedure On_Destroy_Mark
      (Marker : System.Address; Text_Mark : System.Address);
    pragma Convention (C, On_Destroy_Mark);
@@ -192,35 +186,11 @@ package body Src_Editor_Module.Markers is
       Iter   : Gtk_Text_Iter;
    begin
       if Marker.Mark /= null then
---         Get_Iter_At_Mark (Get_Buffer (Marker.Mark), Iter, Marker.Mark);
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
          Marker.Line   := Integer (Get_Line (Iter)) + 1;
          Marker.Column := Integer (Get_Line_Offset (Iter)) + 1;
       end if;
    end Update_Marker_Location;
-
-   -----------------------
-   -- On_Destroy_Buffer --
-   -----------------------
-
-   procedure On_Destroy_Buffer
-     (Marker : System.Address; Text_Mark : System.Address)
-   is
-      pragma Unreferenced (Text_Mark);
-      M    : constant File_Marker := Convert (Marker);
-   begin
-      Update_Marker_Location (M);
-
-      --  No need to remove the weak_ref on the buffer, since it has been
-      --  cancelled automatically by gtk+ prior to calling On_Destroy_Buffer
-
-      --  No need either to remove the weak_ref on the mark, since it will
-      --  automatically be destroyed shortly after the buffer, and
-      --  On_Destroy_Mark will be called as a result.
-
-      M.Mark   := null;
-      M.Buffer := null;
-   end On_Destroy_Buffer;
 
    ---------------------
    -- On_Destroy_Mark --
@@ -234,10 +204,6 @@ package body Src_Editor_Module.Markers is
    begin
       --  No need to remove the weak_ref on the mark since it has been
       --  cancelled automatically by gtk+ prior to calling On_Destroy_Mark.
-
-      --  No need either to remove the weak_ref on the buffer (???).
-      --  The issue is that the mark no longer belongs to a buffer anyway, so
-      --  we do not have access to the latter.
 
       M.Mark   := null;
       M.Buffer := null;
@@ -264,17 +230,11 @@ package body Src_Editor_Module.Markers is
       Node := Marker_List.First (Module.Stored_Marks);
 
       if Marker.Mark /= null then
-         --  We need to unset the weak_unref on the buffer, since the
-         --  associated data is the File_Marker, which will be freed on
-         --  exit of this subprogram).
-         --  We also explicitly remove the weak_unref on the mark, even though
+         --  We explicitly remove the weak_unref on the mark, even though
          --  it is likely it will be destroyed as a result of Delete_Mark.
          --  However, if someone happened to have a Ref on it, we want to be
          --  sure that On_Destroy_Mark will never be call with the dangling
          --  File_Marker pointer.
-
-         Weak_Unref (Marker.Buffer,
-                     On_Destroy_Buffer'Access, Convert (M1));
 
          Weak_Unref (Marker.Mark,
                    On_Destroy_Mark'Access, Convert (M1));
@@ -320,12 +280,8 @@ package body Src_Editor_Module.Markers is
          --  The last two cases need to be protected, since the File_Marker
          --  itself isn't destroyed then, and we need to update its location).
 
-         --  Protect against case 3.
-         --  We cannot connect to the mark, since it is destroyed *after* the
-         --  buffer itself. Strange decision from the gtk+ developers
-
-         Weak_Ref (Get_Buffer (Source),
-                   On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
+         --  Protect against case 3: this results in the destruction of the
+         --  text_mark anyway, so nothing to do.
 
          --  Protect against case 2.
          --  Connect on the mark itself. If it is removed from the buffer
