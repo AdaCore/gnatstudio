@@ -53,6 +53,7 @@ with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Location_View;             use GPS.Location_View;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;                  use String_Utils;
 with Browsers.Canvas;               use Browsers.Canvas;
@@ -94,7 +95,6 @@ package body Browsers.Call_Graph is
    Include_Implicit_Cst : aliased constant String := "include_implicit";
    References_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Include_Implicit_Cst'Access);
-
 
    type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
@@ -1287,7 +1287,7 @@ package body Browsers.Call_Graph is
             Column    => Col,
             Length    => Name'Length,
             Highlight => True,
-            Highlight_Category => "Search Results",
+            Highlight_Category => Search_Results_Style,
             Remove_Duplicates => False,
             Enable_Counter    => False);
 
@@ -1301,7 +1301,7 @@ package body Browsers.Call_Graph is
             Column    => Col,
             Length    => Name'Length,
             Highlight => True,
-            Highlight_Category => "Search Results",
+            Highlight_Category => Search_Results_Style,
             Remove_Duplicates => False,
             Enable_Counter    => False);
       end if;
@@ -1544,7 +1544,6 @@ package body Browsers.Call_Graph is
            (Kernel, -"Cannot find references: no entity selected",
             Mode => Error);
       end if;
-
 
    exception
       when E : others =>
