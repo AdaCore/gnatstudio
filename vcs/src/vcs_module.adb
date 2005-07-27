@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
@@ -42,12 +44,14 @@ with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_View_API;              use VCS_View_API;
 with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Activities_View_API;   use VCS_Activities_View_API;
+with VCS_Utils;                 use VCS_Utils;
 with Basic_Types;               use Basic_Types;
 with Commands.VCS;              use Commands.VCS;
 
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
-with Ada.Exceptions;            use Ada.Exceptions;
+with VCS_Activities;            use VCS_Activities;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with VFS;                       use VFS;
@@ -57,7 +61,7 @@ with Log_Utils;
 
 package body VCS_Module is
 
-   Auto_Detect  : constant String := "None";
+   Auto_Detect : constant String := "None";
 
    type Has_VCS_Filter is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
@@ -77,16 +81,21 @@ package body VCS_Module is
       Kernel : Kernel_Handle);
    --  Display the VCS explorer
 
+   procedure On_Open_Activities_Interface
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Display the VCS Activities explorer
+
    procedure File_Edited_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : access Hooks_Data'Class);
-   --  Callback for the "file_edited" signal.
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_edited" signal
 
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -97,12 +106,12 @@ package body VCS_Module is
    procedure Status_Parse_Handler
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
-   --  Handler for the command "vcs_status_parse".
+   --  Handler for the command "vcs_status_parse"
 
    procedure Annotations_Parse_Handler
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
-   --  Handler for the command "VCS.annotations_parse".
+   --  Handler for the command "VCS.annotations_parse"
 
    procedure VCS_Command_Handler_No_Param
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
@@ -126,6 +135,24 @@ package body VCS_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_Interface;
+
+   ----------------------------------
+   -- On_Open_Activities_Interface --
+   ----------------------------------
+
+   procedure On_Open_Activities_Interface
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Open_Activities_Explorer (Kernel, null);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Open_Activities_Interface;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -236,13 +263,19 @@ package body VCS_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      M : constant VCS_Module_ID_Access := VCS_Module_ID;
-      Explorer : VCS_View_Access;
-      pragma Unreferenced (Explorer);
+      M          : constant VCS_Module_ID_Access := VCS_Module_ID;
+      Explorer   : VCS_View_Access;
+      A_Explorer : VCS_Activities_View_Access;
+      pragma Unreferenced (Explorer, A_Explorer);
    begin
       if Node.Tag.all = "VCS_View_Record" then
          Explorer := Get_Explorer (User, True, True);
          return M.Explorer_Child;
+
+      elsif Node.Tag.all = "VCS_Activities_View_Record" then
+         A_Explorer := Get_Activities_Explorer (User, True, True);
+         Query_Activities_Files (User, Real_Query => False);
+         return M.Activities_Child;
       end if;
 
       return null;
@@ -263,7 +296,11 @@ package body VCS_Module is
       if Widget.all in VCS_View_Record'Class then
          N := new Node;
          N.Tag := new String'("VCS_View_Record");
+         return N;
 
+      elsif Widget.all in VCS_Activities_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("VCS_Activities_View_Record");
          return N;
       end if;
 
@@ -276,8 +313,7 @@ package body VCS_Module is
 
    function Default_Context_Factory
      (Module : access VCS_Module_ID_Record;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
-   is
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
    begin
       return VCS_View_API.Context_Factory (Get_Kernel (Module.all), Child);
    end Default_Context_Factory;
@@ -292,16 +328,15 @@ package body VCS_Module is
       VCS_Class : constant Class_Type := New_Class (Kernel, "VCS");
 
       VCS_Root  : constant String := -"VCS";
-      Command : Generic_Kernel_Command_Access;
+      Command   : Generic_Kernel_Command_Access;
 
-      VCS_Action_Context : constant Action_Filter :=
-        Action_Filter (Create);
+      VCS_Action_Context : constant Action_Filter := Action_Filter (Create);
 
       File_Filter : constant Action_Filter := Lookup_Filter (Kernel, "File");
-      Dir_Filter : constant Action_Filter :=
-        Lookup_Filter (Kernel, "Directory");
-      Prj_Filter : constant Action_Filter :=
-        Lookup_Filter (Kernel, "Project");
+      Dir_Filter  : constant Action_Filter :=
+                      Lookup_Filter (Kernel, "Directory");
+      Prj_Filter  : constant Action_Filter :=
+                      Lookup_Filter (Kernel, "Project");
 
       Filter : Action_Filter;
       Mitem  : Gtk_Menu_Item;
@@ -350,11 +385,14 @@ package body VCS_Module is
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
+
       Register_Module
-        (Module                  => Module_ID (VCS_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => VCS_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Module_ID (VCS_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => VCS_Module_Name,
+         Priority    => Default_Priority);
+
+      Load_Activities (Kernel);
 
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
@@ -375,7 +413,7 @@ package body VCS_Module is
 
       Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
 
-      --  Register VCS commands.
+      --  Register VCS commands
 
       Register_Command
         (Kernel, "supported_systems",
@@ -453,7 +491,7 @@ package body VCS_Module is
          Static_Method => True,
          Handler       => Annotations_Parse_Handler'Access);
 
-      --  Register the main VCS menu and the VCS actions.
+      --  Register the main VCS menu and the VCS actions
 
       Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
@@ -465,6 +503,12 @@ package body VCS_Module is
       Gtk_New_With_Mnemonic (Mitem, -"_Explorer");
       Kernel_Callback.Connect
         (Mitem, "activate", On_Open_Interface'Access, Kernel_Handle (Kernel));
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Gtk_New_With_Mnemonic (Mitem, -"_Activities");
+      Kernel_Callback.Connect
+        (Mitem, "activate", On_Open_Activities_Interface'Access,
+         Kernel_Handle (Kernel));
       Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
 
       Gtk_New_With_Mnemonic (Mitem, -"Update all _projects");
@@ -770,16 +814,16 @@ package body VCS_Module is
    --------------------
 
    procedure File_Edited_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : access Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
    is
       use String_List_Utils.String_List;
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Files  : List;
       Ref    : VCS_Access;
       Status : File_Status_Record;
    begin
-      Ref    := Get_Current_Ref
+      Ref := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel).all, D.File, True));
 
       if Ref = null then
@@ -794,8 +838,7 @@ package body VCS_Module is
          Get_Status (Ref, Files, False, Local => True);
          Free (Files);
       else
-         Display_Editor_Status
-           (Kernel_Handle (Kernel), Ref, Status);
+         Display_Editor_Status (Kernel_Handle (Kernel), Ref, Status);
       end if;
 
    exception
@@ -819,9 +862,7 @@ package body VCS_Module is
          Gtk_New (M.Explorer, Kernel);
       end if;
 
-      if Show
-        and then M.Explorer_Child = null
-      then
+      if Show and then M.Explorer_Child = null then
          M.Explorer_Child := Put
            (Kernel, M.Explorer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
@@ -870,5 +911,70 @@ package body VCS_Module is
       return M.Explorer /= null
         and then M.Explorer_Child /= null;
    end Explorer_Is_Open;
+
+   -----------------------------
+   -- Get_Activities_Explorer --
+   -----------------------------
+
+   function Get_Activities_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True;
+      Show        : Boolean := False) return VCS_Activities_View_Access
+   is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      if M.Activities = null then
+         Gtk_New (M.Activities, Kernel);
+      end if;
+
+      if Show and then M.Activities_Child = null then
+         M.Activities_Child := Put
+           (Kernel, M.Activities,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Position       => Position_VCS_Activities,
+            Module         => VCS_Module_ID);
+
+         Set_Focus_Child (M.Activities_Child);
+         Set_Title (M.Activities_Child, -"VCS Activities");
+      end if;
+
+      if M.Activities_Child /= null
+        and then Raise_Child
+      then
+         Gtkada.MDI.Raise_Child (M.Activities_Child);
+      end if;
+
+      return M.Activities;
+   end Get_Activities_Explorer;
+
+   ----------------------------------
+   -- Hide_VCS_Activities_Explorer --
+   ----------------------------------
+
+   procedure Hide_VCS_Activities_Explorer is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      if M.Activities = null
+        or else M.Activities_Child = null
+      then
+         return;
+      else
+         Ref (M.Activities);
+         Close_Child (M.Activities_Child, True);
+         M.Activities_Child := null;
+      end if;
+   end Hide_VCS_Activities_Explorer;
+
+   ---------------------------------
+   -- Activities_Explorer_Is_Open --
+   ---------------------------------
+
+   function Activities_Explorer_Is_Open return Boolean is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      return M.Activities /= null
+        and then M.Activities_Child /= null;
+   end Activities_Explorer_Is_Open;
 
 end VCS_Module;
