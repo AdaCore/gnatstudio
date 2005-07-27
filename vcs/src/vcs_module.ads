@@ -20,30 +20,39 @@
 
 --  This package defines the GPS module for communication with VCS.
 
-with GPS.Kernel;   use GPS.Kernel;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Gtkada.MDI;   use Gtkada.MDI;
-with VCS_View_Pkg; use VCS_View_Pkg;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
 with Gtk.Widget;
+with Gtkada.MDI;          use Gtkada.MDI;
+with VCS_View_Pkg;        use VCS_View_Pkg;
+with VCS_Activities_View; use VCS_Activities_View;
 
 package VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
-      VCS_List : Argument_List_Access;
+      VCS_List         : Argument_List_Access;
       --  The list of all VCS systems recognized by the kernel
 
-      Explorer : VCS_View_Access;
+      Explorer         : VCS_View_Access;
       --  The VCS Explorer
 
-      Explorer_Child : MDI_Child;
+      Explorer_Child   : MDI_Child;
       --  The child containing the VCS Explorer
+
+      Activities       : VCS_Activities_View_Access;
+      --  The VCS Activities explorer
+
+      Activities_Child : MDI_Child;
    end record;
+
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
 
-   VCS_Module_ID   : VCS_Module_ID_Access;
+   VCS_Module_ID : VCS_Module_ID_Access;
 
    procedure Destroy (Module : in out VCS_Module_ID_Record);
    function Default_Context_Factory
@@ -75,6 +84,19 @@ package VCS_Module is
    --  Call this subprogram when the VCS Explorer is about to be removed
 
    function Explorer_Is_Open return Boolean;
-   --  Return whether the Explorer is open.
+   --  Return whether the Explorer is open
+
+   function Get_Activities_Explorer
+     (Kernel      : Kernel_Handle;
+      Raise_Child : Boolean := True;
+      Show        : Boolean := False) return VCS_Activities_View_Access;
+   --  Return the VCS Explorer. If Show is True, place it in the MDI and show
+   --  it.
+
+   procedure Hide_VCS_Activities_Explorer;
+   --  Call this subprogram when the VCS Explorer is about to be removed
+
+   function Activities_Explorer_Is_Open return Boolean;
+   --  Return whether the Explorer is open
 
 end VCS_Module;
