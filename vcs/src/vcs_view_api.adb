@@ -468,13 +468,10 @@ package body VCS_View_API is
                   Gtk_New (Item, Label => Get_Name (Activity));
                   Append (Submenu, Item);
 
-                  --  ??? don't we leak memory here
                   A_Context := new Activity_Context;
 
                   Set_Context_Information
                     (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
-                  Set_File_Information
-                    (A_Context, File_Information (File_Name));
                   Set_Activity_Information (A_Context, Image (Activity));
 
                   Context_Callback.Connect
@@ -982,13 +979,13 @@ package body VCS_View_API is
       while not String_List.Is_Empty (List) loop
          declare
             File : constant Virtual_File :=
-              Create (String_List.Head (List));
+                     Create (String_List.Head (List));
          begin
             Get_Log_From_ChangeLog (Kernel, File);
 
             declare
                Log_File     : constant Virtual_File :=
-                 Get_Log_From_File (Kernel, File, True);
+                                Get_Log_From_File (Kernel, File, True);
                Already_Open : Boolean;
             begin
                Already_Open := Is_Open (Kernel, Log_File);
@@ -2379,7 +2376,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Dirs : constant String_List.List :=
-        Get_Dirs_In_Project (Get_Project (Kernel), True);
+               Get_Dirs_In_Project (Get_Project (Kernel), True);
       Ref  : constant VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Dirs);
@@ -2446,7 +2443,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      --  At this point Full must not be null.
+      --  At this point Full must not be null
 
       Prj := Get_Project_From_File (Get_Registry (Kernel).all, Full, True);
 
@@ -2479,7 +2476,7 @@ package body VCS_View_API is
 
       String_List.Append (Files, Full_Name (Full).all);
 
-      --  Process the command.
+      --  Process the command
 
       if Command = "get_status" then
          Open_Explorer (Kernel, null);
