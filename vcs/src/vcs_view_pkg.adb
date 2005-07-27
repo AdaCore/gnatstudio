@@ -18,18 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;        use Glib;
-with Glib.Object; use Glib.Object;
+with GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
 
 with Gdk;
-with Gdk.Color;  use Gdk.Color;
-with Gdk.Event;  use Gdk.Event;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
 with Gtk.Enums;
-with Gdk.Pixmap; use Gdk.Pixmap;
-with Gdk.Rectangle; use Gdk.Rectangle;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-with Gdk.Types;  use Gdk.Types;
-with Gdk.Window; use Gdk.Window;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
 
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
@@ -52,28 +57,22 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-
 with VCS;
-
+with VCS_Activities;            use VCS_Activities;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 with VCS_View_API;              use VCS_View_API;
 with VCS_Module;                use VCS_Module;
+with VCS_Utils;                 use VCS_Utils;
 
 with Log_Utils;                 use Log_Utils;
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with VFS;                       use VFS;
 with Tooltips;
 
@@ -94,8 +93,8 @@ package body VCS_View_Pkg is
    type VCS_Tooltips_Access is access all VCS_Tooltips'Class;
    procedure Draw
      (Tooltip : access VCS_Tooltips;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle);
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
    --  See inherited documentation
 
    --------------------
@@ -131,6 +130,7 @@ package body VCS_View_Pkg is
    Status_Description_Column : constant := 4;
    Status_Pixbuf_Column      : constant := 5;
    Has_Log_Column            : constant := 6;
+   Activity_Column           : constant := 7;
 
    -------------------
    -- Columns_Types --
@@ -145,7 +145,8 @@ package body VCS_View_Pkg is
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
-         Has_Log_Column            => GType_Boolean);
+         Has_Log_Column            => GType_Boolean,
+         Activity_Column           => GType_String);
    end Columns_Types;
 
    -----------------------
@@ -153,19 +154,19 @@ package body VCS_View_Pkg is
    -----------------------
 
    procedure Refresh (Explorer : VCS_View_Access);
-   --  Redraw the files in the VCS Explorer.
+   --  Redraw the files in the VCS Explorer
 
    procedure Create_Model (VCS_View : access VCS_Page_Record'Class);
-   --  Creates the underlying tree model for VCS_View.
+   --  Creates the underlying tree model for VCS_View
 
    procedure Set_Column_Types (Explorer : access VCS_Page_Record'Class);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    procedure Fill_Info
-     (Explorer      : access VCS_Page_Record'Class;
-      Iter          : Gtk_Tree_Iter;
-      Line_Info     : Line_Record;
-      Success       : out Boolean);
+     (Explorer  : access VCS_Page_Record'Class;
+      Iter      : Gtk_Tree_Iter;
+      Line_Info : Line_Record;
+      Success   : out Boolean);
    --  Fills the tree info at the given Iter with values from
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
@@ -180,7 +181,7 @@ package body VCS_View_Pkg is
    function Get_Page_For_Identifier
      (Explorer   : access VCS_View_Record'Class;
       Identifier : VCS_Access) return VCS_Page_Access;
-   --  Return the page relative to Identifier. Create it if necessary.
+   --  Return the page relative to Identifier. Create it if necessary
 
    function Copy_Context
      (Context : Selection_Context_Access)
@@ -189,14 +190,10 @@ package body VCS_View_Pkg is
    --  and create a new context containing them.
 
    function Copy (X : Line_Record) return Line_Record;
-   --  Return a deep copy of X.
+   --  Return a deep copy of X
 
    procedure On_Selected (Explorer : access Gtk_Widget_Record'Class);
-   --  Give the focus to the current page tree.
-
-   procedure Toggle_Show_Status
-     (Explorer : access GObject_Record'Class;
-      Index    : Natural);
+   --  Give the focus to the current page tree
 
    ---------------
    -- Callbacks --
@@ -210,30 +207,35 @@ package body VCS_View_Pkg is
      (Explorer : access Gtk_Widget_Record'Class);
    --  Callback for activation of "Show all status"
 
+   procedure Toggle_Show_Status
+     (Explorer : access GObject_Record'Class;
+      Index    : Natural);
+   --  Callback for activation of each filter
+
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event)
       return Boolean;
-   --  Callback for the "button_press" event.
+   --  Callback for the "button_press" event
 
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event)
-     return Boolean;
+      return Boolean;
    --  Callback for the "delete_event" signal
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal, connected before.
+   --  Callback for the "destroy" signal, connected before
 
    type File_Hook_Record is new Hook_Args_Record with record
       Explorer : VCS_View_Access;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
    procedure Execute
-     (Hook   : File_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      File_Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" signal.
+     (Hook      : File_Hook_Record;
+      Kernel    : access Kernel_Handle_Record'Class;
+      File_Data : access Hooks_Data'Class);
+   --  Callback for the "file_edited" signal
 
    function Context_Func
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -241,7 +243,7 @@ package body VCS_View_Pkg is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
-   --  Default context factory.
+   --  Default context factory
 
    function Get_Path_At_Event
      (Tree  : Gtk_Tree_View;
@@ -252,16 +254,16 @@ package body VCS_View_Pkg is
    function Get_Cached_Data
      (Page  : VCS_Page_Access;
       Index : VFS.Virtual_File) return Line_Record;
-   --  Get the cached data.
+   --  Get the cached data
 
    procedure Set_Cached_Data
      (Page  : VCS_Page_Access;
       Index : VFS.Virtual_File;
       Data  : Line_Record);
-   --  Set the cached data.
+   --  Set the cached data
 
    function To_History_Key (S : in String) return History_Key;
-   --  Return history key corresponding to S.
+   --  Return history key corresponding to S
 
    --------------------
    -- To_History_Key --
@@ -323,22 +325,22 @@ package body VCS_View_Pkg is
 
    procedure Draw
      (Tooltip : access VCS_Tooltips;
-      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-      Area   : out Gdk.Rectangle.Gdk_Rectangle)
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Window     : Gdk.Window.Gdk_Window;
       New_Window : Gdk_Window;
       Mask       : Gdk_Modifier_Type;
 
-      X, Y      : Gint;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
+      X, Y       : Gint;
+      Path       : Gtk_Tree_Path;
+      Column     : Gtk_Tree_View_Column;
       Cell_X,
-      Cell_Y    : Gint;
-      Row_Found : Boolean;
-      Iter      : Gtk_Tree_Iter;
+      Cell_Y     : Gint;
+      Row_Found  : Boolean;
+      Iter       : Gtk_Tree_Iter;
 
-      Text      : String_Access;
+      Text       : String_Access;
    begin
       Window := Get_Bin_Window (Tooltip.Page.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
@@ -406,7 +408,7 @@ package body VCS_View_Pkg is
    -----------
 
    procedure Clear (Explorer : VCS_View_Access) is
-      Page   : VCS_Page_Access;
+      Page : VCS_Page_Access;
    begin
       if Explorer /= null then
          for J in 1 .. Explorer.Number_Of_Pages loop
@@ -428,8 +430,8 @@ package body VCS_View_Pkg is
    ---------------
 
    function On_Delete
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event, View);
    begin
@@ -447,7 +449,7 @@ package body VCS_View_Pkg is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy (View     : access Gtk_Widget_Record'Class) is
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
       The_View : constant VCS_View_Access := VCS_View_Access (View);
       Page     : VCS_Page_Access;
    begin
@@ -524,11 +526,11 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record;
       File     : VFS.Virtual_File)
    is
-      Page          : VCS_Page_Access;
-      Log           : Boolean;
-      Dummy         : Boolean;
-      Iter          : Gtk_Tree_Iter;
-      Line          : Line_Record;
+      Page  : VCS_Page_Access;
+      Log   : Boolean;
+      Dummy : Boolean;
+      Iter  : Gtk_Tree_Iter;
+      Line  : Line_Record;
    begin
       if Get_Log_From_File (Explorer.Kernel, File, False) = VFS.No_File then
          Log := False;
@@ -572,8 +574,8 @@ package body VCS_View_Pkg is
    is
       Explorer      : constant VCS_View_Access :=
                         Get_Explorer (Kernel, False, False);
-      Status_Temp   : File_Status_List.List_Node
-        := File_Status_List.First (Status);
+      Status_Temp   : File_Status_List.List_Node :=
+                        File_Status_List.First (Status);
       Found         : Boolean := False;
       Page          : VCS_Page_Access;
       Log           : Boolean;
@@ -599,22 +601,18 @@ package body VCS_View_Pkg is
 
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
-            S      : constant File_Status_Record :=
-                       File_Status_List.Data (Status_Temp);
-            File   : constant Virtual_File := S.File;
+            S    : constant File_Status_Record :=
+                     File_Status_List.Data (Status_Temp);
+            File : constant Virtual_File := S.File;
          begin
             --  Clear the logs
 
-            if Clear_Logs
-              and then S.Status = Up_To_Date_Status
-            then
+            if Clear_Logs and then S.Status = Up_To_Date_Status then
                declare
-                  Log   : constant Virtual_File :=
-                            Get_Log_From_File (Kernel, File, False);
+                  Log : constant Virtual_File :=
+                          Get_Log_From_File (Kernel, File, False);
                begin
-                  if Log /= VFS.No_File
-                    and then Is_Regular_File (Log)
-                  then
+                  if Log /= VFS.No_File and then Is_Regular_File (Log) then
                      Delete (Log);
                      Close_File_Editors (Kernel, Log);
                   end if;
@@ -638,18 +636,17 @@ package body VCS_View_Pkg is
          Status_Temp := File_Status_List.Next (Status_Temp);
       end loop;
 
-      Status_Temp := File_Status_List.First (Status);
-
       if Explorer = null then
          return;
       end if;
+
+      Status_Temp := File_Status_List.First (Status);
 
       Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
       Status_Hash.Get_First (Page.Cached_Status, Iter);
       Cache_Empty := Get_Element (Iter) = No_Element;
 
-      Set_Current_Page (Explorer.Notebook,
-                        Page_Num (Explorer.Notebook, Page));
+      Set_Current_Page (Explorer.Notebook, Page_Num (Explorer.Notebook, Page));
 
       Push_State (Kernel, Busy);
       Sort_Id := Freeze_Sort (Page.Model);
@@ -661,9 +658,7 @@ package body VCS_View_Pkg is
          begin
             Line := Get_Cached_Data (Page, File);
 
-            if Line = No_Data
-              or else Override_Cache
-            then
+            if Line = No_Data or else Override_Cache then
                Log := Get_Log_From_File (Kernel, File, False) /= VFS.No_File;
 
                Line :=
@@ -676,9 +671,7 @@ package body VCS_View_Pkg is
          --  if it already exists in Page.Stored_Status, we simply modify
          --  the element, otherwise we add it to the list.
 
-         if Display
-           or else Cache_Empty
-         then
+         if Display or else Cache_Empty then
             declare
                New_Status         : constant Line_Record := Copy (Line);
                New_File           : constant Virtual_File :=
@@ -693,6 +686,7 @@ package body VCS_View_Pkg is
 
                if Get_Element (Temp_Stored_Status) = No_Element then
                   Set (Page.Stored_Status, New_File, (Line => New_Status));
+
                else
                   E := Get (Page.Stored_Status, New_File);
 
@@ -703,14 +697,12 @@ package body VCS_View_Pkg is
                        (Page, New_Status.Status.File);
                   end if;
 
-                  if not Found
-                    and then Force_Display
-                  then
+                  if not Found and then Force_Display then
                      Set (Page.Stored_Status, New_File, (Line => New_Status));
                   end if;
                end if;
 
-               --  Append the iter only if the status is currently shown.
+               --  Append the iter only if the status is currently shown
 
                for J in Page.Status'Range loop
                   if Page.Status (J).Status = New_Status.Status.Status then
@@ -723,9 +715,7 @@ package body VCS_View_Pkg is
                           and then not Is_Regular_File
                             (New_Status.Status.File))
                      then
-                        if Iter = Null_Iter
-                          and then Force_Display
-                        then
+                        if Iter = Null_Iter and then Force_Display then
                            Append (Page.Model, Iter, Null_Iter);
                         end if;
 
@@ -758,10 +748,10 @@ package body VCS_View_Pkg is
    ---------------
 
    procedure Fill_Info
-     (Explorer      : access VCS_Page_Record'Class;
-      Iter          : Gtk_Tree_Iter;
-      Line_Info     : Line_Record;
-      Success       : out Boolean)
+     (Explorer  : access VCS_Page_Record'Class;
+      Iter      : Gtk_Tree_Iter;
+      Line_Info : Line_Record;
+      Success   : out Boolean)
    is
       Pixbuf : Gdk_Pixbuf;
    begin
@@ -777,6 +767,9 @@ package body VCS_View_Pkg is
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
            Full_Name (Line_Info.Status.File, True).all);
+
+      Set (Explorer.Model, Iter, Activity_Column,
+           Get_Name (Get_File_Activity (Line_Info.Status.File)));
 
       Set (Explorer.Model, Iter, Base_Name_Column,
            Base_Name (Line_Info.Status.File));
@@ -862,6 +855,10 @@ package body VCS_View_Pkg is
          Data  : Explorer_Selection_Foreach.Data_Type_Access);
       --  Add an item to Result.
 
+      -----------------------
+      -- Add_Selected_Item --
+      -----------------------
+
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -888,18 +885,6 @@ package body VCS_View_Pkg is
          Explorer_Selection_Foreach.Data_Type_Access (Explorer));
       return Result;
    end Get_Selected_Files;
-
-   ------------------
-   -- Push_Message --
-   ------------------
-
-   procedure Push_Message
-     (Kernel   : Kernel_Handle;
-      M_Type   : Message_Type;
-      Message  : String) is
-   begin
-      Console.Insert (Kernel, Message, Mode => M_Type);
-   end Push_Message;
 
    ----------------------
    -- Set_Column_Types --
@@ -946,6 +931,13 @@ package body VCS_View_Pkg is
       Set_Sort_Column_Id (Explorer.File_Column, Base_Name_Column);
       Set_Resizable (Explorer.File_Column, True);
       Dummy := Append_Column (Explorer.Tree, Explorer.File_Column);
+
+      Gtk_New (Explorer.Activity_Column);
+      Set_Title (Explorer.Activity_Column, -"Activity");
+      Pack_Start (Explorer.Activity_Column, Text_Rend, True);
+      Add_Attribute
+        (Explorer.Activity_Column, Text_Rend, "text", Activity_Column);
+      Dummy := Append_Column (Explorer.Tree, Explorer.Activity_Column);
 
       Gtk_New (Col);
       Set_Title (Col, -"Working rev.");
@@ -1085,14 +1077,8 @@ package body VCS_View_Pkg is
    begin
       Path := Gtk_New;
       Get_Path_At_Pos
-        (Tree,
-         Gint (X),
-         Gint (Y),
-         Path,
-         Column,
-         Buffer_X,
-         Buffer_Y,
-         Row_Found);
+        (Tree, Gint (X), Gint (Y),
+         Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
       return Path;
    end Get_Path_At_Event;
@@ -1107,7 +1093,6 @@ package body VCS_View_Pkg is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
-
    is
       pragma Unreferenced (Event_Widget);
 
@@ -1128,7 +1113,7 @@ package body VCS_View_Pkg is
         (Get_Nth_Page (Explorer.Notebook,
                        Get_Current_Page (Explorer.Notebook)));
 
-      --  If there is no selection, select the item under the cursor.
+      --  If there is no selection, select the item under the cursor
 
       Path := Get_Path_At_Event (Page.Tree, Event);
 
@@ -1139,13 +1124,13 @@ package body VCS_View_Pkg is
          Select_Path (Get_Selection (Page.Tree), Path);
 
          Iter := Get_Iter (Page.Model, Path);
-         Path_Free (Path);
-
          String_List.Append
            (Files, Get_String (Page.Model, Iter, Name_Column));
       else
          Files := Get_Selected_Files (Explorer);
       end if;
+
+      Path_Free (Path);
 
       --  Create the context
 
@@ -1157,9 +1142,7 @@ package body VCS_View_Pkg is
             Context := new File_Selection_Context;
 
             Set_Context_Information
-              (Context,
-               Kernel,
-               Abstract_Module_ID (VCS_Module_ID));
+              (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
             Set_File_Information (Context, File => First_File);
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
             VCS_Contextual_Menu
@@ -1280,11 +1263,11 @@ package body VCS_View_Pkg is
         and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
       then
          declare
-            File        : constant Virtual_File :=
-              Get_File_From_Log (Kernel, D.File);
-            Page        : VCS_Page_Access;
             use Status_Hash;
-            E           : Element;
+            File : constant Virtual_File :=
+              Get_File_From_Log (Kernel, D.File);
+            Page : VCS_Page_Access;
+            E    : Element;
          begin
             Browse_Files :
             for J in 1 .. Hook.Explorer.Number_Of_Pages loop
@@ -1586,10 +1569,10 @@ package body VCS_View_Pkg is
    is
       Result         : String_List.List;
       Focused_Child  : constant MDI_Child :=
-        Get_Focus_Child (Get_MDI (Kernel));
+                         Get_Focus_Child (Get_MDI (Kernel));
       Explorer_Child : constant MDI_Child :=
-        Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
-
+                         Find_MDI_Child_By_Tag
+                           (Get_MDI (Kernel), VCS_View_Record'Tag);
    begin
       if Explorer_Child = Focused_Child
         and then Explorer_Child /= null
@@ -1685,14 +1668,12 @@ package body VCS_View_Pkg is
       return Get_Cached_Data (Page, File).Status;
    end Get_Cached_Status;
 
-
    ----------
    -- Hash --
    ----------
 
-   function Hash is new HTables.Hash (Header_Num);
-
    function Hash (F : Virtual_File) return Header_Num is
+      function Hash is new HTables.Hash (Header_Num);
    begin
       if Filenames_Are_Case_Sensitive then
          return Hash (Full_Name (F).all);
