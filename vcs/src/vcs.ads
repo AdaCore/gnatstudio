@@ -18,15 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_List;
-with String_List_Utils; use String_List_Utils;
-
-with VFS;
-
-with Basic_Types;  use Basic_Types;
-with GPS.Kernel; use GPS.Kernel;
-
 with Ada.Unchecked_Deallocation;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with GPS.Kernel;                use GPS.Kernel;
+with Basic_Types;               use Basic_Types;
+with String_List_Utils;         use String_List_Utils;
+with Generic_List;
+with VFS;
 
 package VCS is
 
@@ -44,7 +43,7 @@ package VCS is
    --  that we communicate can be decided by the user.
 
    type VCS_Record is abstract tagged limited private;
-   --  A value used to reference a VCS repository.
+   --  A value used to reference a VCS repository
 
    type VCS_Access is access all VCS_Record'Class;
 
@@ -98,6 +97,14 @@ package VCS is
    procedure Free (Ref : in out VCS_Access);
    --  Free the VCS pointed to by Ref, and Ref itself
 
+   function Absolute_Filenames_Supported
+     (Ref : access VCS_Record) return Boolean;
+   --  Returns True if the external VCS supports absolute filenames
+
+   function Atomic_Commands_Supported
+     (Ref : access VCS_Record) return Boolean;
+   --  Returns True if the external VCS handles atomic commands
+
    type File_Status is record
       Label    : String_Access;
       --  The label corresponding to the status
@@ -130,32 +137,32 @@ package VCS is
      (Status_Array, Status_Array_Access);
 
    type File_Status_Record is record
-      --  Contains all the repository information concerning one file.
+      --  Contains all the repository information concerning one file
 
-      File : VFS.Virtual_File := VFS.No_File;
-      --  The corresponding file.
+      File                : VFS.Virtual_File := VFS.No_File;
+      --  The corresponding file
 
-      Status : File_Status := Unknown;
-      --  The status of the file.
+      Status              : File_Status := Unknown;
+      --  The status of the file
 
-      Working_Revision : String_List.List := String_List.Null_List;
-      --  The current local version of the file.
+      Working_Revision    : String_List.List := String_List.Null_List;
+      --  The current local version of the file
 
       Repository_Revision : String_List.List := String_List.Null_List;
-      --  The latest version of the file in the repository.
+      --  The latest version of the file in the repository
 
-      Tags    : String_List.List := String_List.Null_List;
-      --  Other versions of this file that exist in the repository.
+      Tags                : String_List.List := String_List.Null_List;
+      --  Other versions of this file that exist in the repository
 
-      Users : String_List.List := String_List.Null_List;
-      --  A list of users currently working on the file.
+      Users               : String_List.List := String_List.Null_List;
+      --  A list of users currently working on the file
 
       --  ???  We need to put additional info here: date, etc.
    end record;
 
    function Copy_File_Status
      (F : in File_Status_Record) return File_Status_Record;
-   --  Return a deep copy of F.
+   --  Return a deep copy of F
 
    procedure Free (F : in out File_Status_Record);
    package File_Status_List is new Generic_List (File_Status_Record);
@@ -370,7 +377,6 @@ private
    --  The file corresponds to the latest version in the corresponding
    --  branch on the repository.
 
-
    Added_Label : aliased String := "Added";
    Added_Stock : aliased String := "gps-vcs-added";
    Added : File_Status :=
@@ -411,7 +417,10 @@ private
    --  The file is unknown of the VCS repository.
 
    type VCS_Record is abstract tagged limited record
-      Kernel : GPS.Kernel.Kernel_Handle;
+      Kernel          : GPS.Kernel.Kernel_Handle;
+      Absolute_Names  : Boolean    := False;
+      Atomic_Commands : Boolean    := False;
+      Dir_Sep         : Path_Style := System_Default;
    end record;
 
 end VCS;
