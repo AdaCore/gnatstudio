@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2005                       --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -520,6 +520,36 @@ package body GPS.Kernel.Contexts is
       Unref (Context.Entity);
       Destroy (File_Selection_Context (Context));
       Free (Context.Entity_Name);
+   end Destroy;
+
+   ------------------------------
+   -- Set_Activity_Information --
+   ------------------------------
+
+   procedure Set_Activity_Information
+     (Context : access Activity_Context;
+      Id      : String) is
+   begin
+      Context.Id := new String'(Id);
+   end Set_Activity_Information;
+
+   --------------------------
+   -- Activity_Information --
+   --------------------------
+
+   function Activity_Information
+     (Context : access Activity_Context) return String is
+   begin
+      return Context.Id.all;
+   end Activity_Information;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out Activity_Context) is
+   begin
+      Free (Context.Id);
    end Destroy;
 
    ------------------------------
