@@ -67,6 +67,7 @@ with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
+with GPS.Kernel.Styles;                   use GPS.Kernel.Styles;
 with Language;                            use Language;
 with Language_Handlers;                   use Language_Handlers;
 with Language_Handlers.GPS;               use Language_Handlers.GPS;
@@ -319,7 +320,7 @@ package body Src_Editor_Buffer is
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type;
-      Id     : String;
+      Style  : Style_Access;
       Set    : Boolean;
       Highlight_In : Highlight_Location_Array);
    --  Common function for [Add|Remove]_Line_Highlighting.
@@ -4091,7 +4092,7 @@ package body Src_Editor_Buffer is
    procedure Set_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type;
-      Id     : String;
+      Style  : Style_Access;
       Set    : Boolean;
       Highlight_In : Highlight_Location_Array)
    is
@@ -4102,10 +4103,10 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Category := Lookup_Category (Id);
+      Category := Lookup_Category (Style);
 
       if Category = 0 then
-         Trace (Me, "Set_Line_Highlight Id=" & Id
+         Trace (Me, "Set_Line_Highlight Id=" & Get_Name (Style)
                 & " couldn't identify category, nothing done");
          --  Could not identify highlighting category
          return;
@@ -4182,20 +4183,21 @@ package body Src_Editor_Buffer is
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Id     : String;
+      Style  : Style_Access;
       Highlight_In : Highlight_Location_Array)
    is
       The_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
          for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Id, True, Highlight_In);
+            Set_Line_Highlighting (Editor, J, Style, True, Highlight_In);
          end loop;
       else
          The_Line := Get_Buffer_Line (Editor, Line);
 
          if The_Line /= 0 then
-            Set_Line_Highlighting (Editor, The_Line, Id, True, Highlight_In);
+            Set_Line_Highlighting
+              (Editor, The_Line, Style, True, Highlight_In);
          end if;
       end if;
 
@@ -4209,7 +4211,7 @@ package body Src_Editor_Buffer is
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Id     : String)
+      Style  : Style_Access)
    is
       The_Line : Buffer_Line_Type;
    begin
@@ -4218,17 +4220,17 @@ package body Src_Editor_Buffer is
       end if;
 
       if Line = 0 then
-         Highlight_Range (Editor, Id, 0, 1, 1, True);
+         Highlight_Range (Editor, Style, 0, 1, 1, True);
 
          for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Id, False, (others => False));
+            Set_Line_Highlighting (Editor, J, Style, False, (others => False));
          end loop;
       else
          The_Line := Get_Buffer_Line (Editor, Line);
 
          if The_Line /= 0 then
             Set_Line_Highlighting
-              (Editor, The_Line, Id, False, (others => False));
+              (Editor, The_Line, Style, False, (others => False));
          end if;
       end if;
 
