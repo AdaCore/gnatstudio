@@ -172,7 +172,7 @@ package body GPS.Kernel.Clipboard is
                   Set_Attribute (Child, "last", "true");
                end if;
 
-               Child.Value := new String'(Protect (Clipboard.List (L).all));
+               Child.Value := new String'(Clipboard.List (L).all);
                Add_Child (File, Child, Append => True);
             end if;
          end loop;
