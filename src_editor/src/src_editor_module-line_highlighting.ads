@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,25 +36,20 @@ package Src_Editor_Module.Line_Highlighting is
    --  The category indexes begin at 1.
 
    procedure Add_Category
-     (Id    : String;
-      Color : Gdk_Color;
+     (Style            : Style_Access;
       Mark_In_Speedbar : Boolean := False);
    --  Add a new category to the category cache.
    --  Update the Color of the category if it already exists.
    --  If Mark_In_Speedbar is true, then a mark is added in the speedbar even
    --  if we only highlight part of a line.
 
-   function Lookup_Category (Id : String) return Natural;
-   --  Return the index corresponding to Id.
-   --  Return 0 if the category wasn't found.
+   function Lookup_Category (Style : Style_Access) return Natural;
+   --  Return the index corresponding to Style.
+   --  If there is no category corresponding to Style, create one.
 
    function Get_GC (Index : Natural) return Gdk_GC;
    --  Return the GC corresponding to a category Index.
    --  If Index does not correspond to an existing category, return null.
-
-   function Get_Color (Index : Natural) return Gdk_Color;
-   --  Return the color corresponding to a category Index.
-   --  If Index does not correspond to an existing category, return Null_Color.
 
    function Get_Last_Index return Natural;
    --  Return the number of categories.
