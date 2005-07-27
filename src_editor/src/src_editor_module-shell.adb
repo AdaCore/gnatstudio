@@ -1105,8 +1105,10 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "delete_mark" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
-         Destroy (Marker.all);
-         Unchecked_Free (Marker);
+         if Marker /= null then
+            Destroy (Marker.all);
+            Unchecked_Free (Marker);
+         end if;
 
       elsif Command = "get_chars" then
          Name_Parameters (Data, Get_Chars_Args);
