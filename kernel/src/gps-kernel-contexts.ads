@@ -62,7 +62,7 @@ package GPS.Kernel.Contexts is
 
    function Has_File_Information
      (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected file.
+   --  True if the context has information about a selected file
 
    function File_Information
      (Context : access File_Selection_Context) return VFS.Virtual_File;
@@ -126,13 +126,13 @@ package GPS.Kernel.Contexts is
      (Context    : access File_Area_Context;
       Start_Line : Integer := 0;
       End_Line   : Integer := 0);
-   --  Set the area information in Context.
+   --  Set the area information in Context
 
    procedure Get_Area
      (Context    : access File_Area_Context;
       Start_Line : out Integer;
       End_Line   : out Integer);
-   --  Return the area information in Context.
+   --  Return the area information in Context
 
    type Is_Area_Context is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
@@ -162,13 +162,13 @@ package GPS.Kernel.Contexts is
      (Context : access Message_Context) return Boolean;
    function Category_Information
      (Context : access Message_Context) return String;
-   --  Check whether there is some category information, and return it.
+   --  Check whether there is some category information, and return it
 
    function Has_Message_Information
      (Context : access Message_Context) return Boolean;
    function Message_Information
      (Context : access Message_Context) return String;
-   --  Check whether there is some message information, and return it.
+   --  Check whether there is some message information, and return it
 
    ---------------------
    -- Entity Contexts --
@@ -218,6 +218,24 @@ package GPS.Kernel.Contexts is
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
 
+   ----------------------
+   -- Activity_Context --
+   ----------------------
+
+   type Activity_Context is new File_Selection_Context with private;
+   type Activity_Context_Access is access all Activity_Context;
+
+   procedure Set_Activity_Information
+     (Context : access Activity_Context;
+      Id      : String);
+
+   function Activity_Information
+     (Context : access Activity_Context) return String;
+   --  Returns the name of the activity
+
+   procedure Destroy (Context : in out Activity_Context);
+   --  Free the memory associated with the context
+
 private
 
    type File_Selection_Context is new Selection_Context with record
@@ -245,6 +263,10 @@ private
       Entity_Name   : GNAT.OS_Lib.String_Access := null;
       Entity_Column : Integer := 0;
       Entity        : Entities.Entity_Information := null;
+   end record;
+
+   type Activity_Context is new File_Selection_Context with record
+      Id : GNAT.OS_Lib.String_Access := null;
    end record;
 
    pragma Inline (Has_Project_Information);
