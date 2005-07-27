@@ -373,7 +373,6 @@ package GPS.Kernel is
    --  Saves the marker to an XML node, so that it can be reloaded later on,
    --  possibly in a different GPS session.
 
-
    procedure Push_Marker_In_History
      (Kernel : access Kernel_Handle_Record'Class;
       Marker : access Location_Marker_Record'Class);
@@ -753,6 +752,9 @@ private
 
       Actions : Root_Table_Access;
       --  The actions registered in the kernel
+
+      Styles : Root_Table_Access;
+      --  The styles registered in the kernel
 
       Hooks : Hooks_Hash.String_Hash_Table.HTable;
       --  The hooks registered in the kernel
