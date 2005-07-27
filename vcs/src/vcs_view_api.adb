@@ -18,56 +18,47 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
+
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Enums;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
-
-with VCS;                       use VCS;
-with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS_View_Pkg;              use VCS_View_Pkg;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with String_List_Utils;         use String_List_Utils;
 
+with VCS;                       use VCS;
+with VCS_Activities;            use VCS_Activities;
+with VCS_Activities_View_API;   use VCS_Activities_View_API;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
+with VCS_Utils;                 use VCS_Utils;
 with Log_Utils;                 use Log_Utils;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;
 
 with Basic_Types;               use Basic_Types;
 
 with Projects.Registry;         use Projects, Projects.Registry;
 
-with Commands;                  use Commands;
-with Commands.VCS;              use Commands.VCS;
-with Commands.External;         use Commands.External;
-
 with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with VFS;                       use VFS;
 with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 
 package body VCS_View_API is
-
-   Max_Rev_Length : constant := 10;
-   --  The maximum length of a revision string, in characters. Revisions longer
-   --  than this will be krunched when displayed in the editors.
 
    VCS_Menu_Prefix : constant String := "<gps>/VCS/";
 
@@ -116,23 +107,6 @@ package body VCS_View_API is
    --  Context might be null, in which case the contents of the root project is
    --  shown.
 
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-   --  Display Head in the console, then return True if List is not
-   --  empty, otherwise display List in the console and return False.
-
-   procedure Log_Action_Files
-     (Kernel : Kernel_Handle;
-      Ref    : VCS_Access;
-      Action : VCS_Action;
-      Files  : String_List.List);
-   --  Perform Action on the list of files, assuming that they all belong to
-   --  the VCS system identified by Ref.
-   --  This subprogram will do all the necessary file/log checks before
-   --  performing Action.
-
    function Get_Files_In_Project
      (Project   : Project_Type;
       Recursive : Boolean := True) return String_List.List;
@@ -159,13 +133,6 @@ package body VCS_View_API is
       Get_Status : Boolean);
    --  Perform VCS operations on directories contained in Context.
 
-   function Save_Files
-     (Kernel : Kernel_Handle;
-      Files  : String_List.List;
-      Save_Logs : Boolean := False) return Boolean;
-   --  Ask the user whether he wants to save the file editors for Files.
-   --  Return False if the user has cancelled the action.
-
    procedure On_Log_Action
      (Context : Selection_Context_Access;
       Action  : VCS_Action);
@@ -175,24 +142,6 @@ package body VCS_View_API is
      (Context : Selection_Context_Access;
       One_Rev : Boolean);
    --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2.
-
-   function Action_To_Log_Suffix (Action : VCS_Action) return String;
-   --  Return the suffix to be used in log files that correspond to Action.
-
-   --------------------------
-   -- Action_To_Log_Suffix --
-   --------------------------
-
-   function Action_To_Log_Suffix (Action : VCS_Action) return String is
-   begin
-      case Action is
-         when Commit =>
-            return "$log";
-
-         when others =>
-            return "$" & Action'Img & "$log";
-      end case;
-   end Action_To_Log_Suffix;
 
    ---------------------
    -- Get_Current_Ref --
@@ -219,65 +168,6 @@ package body VCS_View_API is
       end if;
    end Get_Current_Ref;
 
-   -------------------
-   -- Check_Handler --
-   -------------------
-
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean
-   is
-      use String_List;
-
-      List_Temp : String_List.List_Node := First (List);
-      Head_Temp : String_List.List_Node := First (Head);
-      Length    : Integer := 0;
-
-   begin
-      if not String_List.Is_Empty (List) then
-         while Head_Temp /= Null_Node loop
-            Push_Message (Kernel, Error, Data (Head_Temp));
-            Head_Temp := Next (Head_Temp);
-         end loop;
-      end if;
-
-      while List_Temp /= Null_Node loop
-         declare
-            S : constant String := Data (List_Temp);
-         begin
-            Push_Message (Kernel, Error, S);
-            Length := Length + S'Length;
-         end;
-
-         List_Temp := Next (List_Temp);
-      end loop;
-
-      if Length /= 0 then
-         declare
-            S : String (1 .. Length);
-         begin
-            Length := 1;
-            List_Temp := First (List);
-
-            while List_Temp /= Null_Node loop
-               declare
-                  D : constant String := Data (List_Temp);
-               begin
-                  S (Length .. Length - 1 + D'Length) := D;
-                  Length := Length + D'Length;
-               end;
-
-               List_Temp := Next (List_Temp);
-            end loop;
-
-            Parse_File_Locations (Kernel, S, -"Style/Log Check");
-         end;
-      end if;
-
-      return String_List.Is_Empty (List);
-   end Check_Handler;
-
    -------------------------
    -- VCS_Contextual_Menu --
    -------------------------
@@ -288,12 +178,12 @@ package body VCS_View_API is
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean)
    is
-      Item      : Gtk_Menu_Item;
-      Menu_Item : Gtk_Menu_Item;
-      Submenu   : Gtk_Menu;
-      File_Name : File_Selection_Context_Access;
-      Ref       : VCS_Access;
-      Actions   : Action_Array;
+      Item            : Gtk_Menu_Item;
+      Menu_Item       : Gtk_Menu_Item;
+      Submenu         : Gtk_Menu;
+      File_Name       : File_Selection_Context_Access;
+      Ref             : VCS_Access;
+      Actions         : Action_Array;
 
       File_Section    : Boolean;
       Dir_Section     : Boolean;
@@ -311,7 +201,7 @@ package body VCS_View_API is
       --  If Via_Log is True, ???
 
       procedure Add_Separator;
-      --  Add a separator in the menu if needed.
+      --  Add a separator in the menu if needed
 
       ----------------
       -- Add_Action --
@@ -366,6 +256,12 @@ package body VCS_View_API is
       Log_Exists : Boolean;
 
    begin
+      if Context /= null and then Context.all in Activity_Context'Class then
+         --  We do not want the Version Control menu for the Activities
+         --  Explorer.
+         return;
+      end if;
+
       if Context = null then
          Ref := Get_Current_Ref (Get_Project (Kernel));
       else
@@ -432,7 +328,7 @@ package body VCS_View_API is
          end;
       end if;
 
-      --  Fill the section relative to files.
+      --  Fill the section relative to files
 
       Section_Active := File_Section;
 
@@ -547,6 +443,51 @@ package body VCS_View_API is
       then
          Gtk_New (Item);
          Append (Menu, Item);
+      end if;
+
+      --  Fill the section for the activity
+
+      if (File_Section or else Show_Everything)
+        and then First /= No_Activity
+      then
+         Gtk_New (Menu_Item, Label => -"Add to Activity");
+         Append (Menu, Menu_Item);
+         Gtk_New (Submenu);
+         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
+         declare
+            Activity  : Activity_Id := First;
+            A_Context : Activity_Context_Access;
+            Found     : Boolean := False;
+         begin
+            while Activity /= No_Activity loop
+               if Project_Path (Get_Root_Project (Get_Registry (Kernel).all))
+                 = Get_Project_Path (Activity)
+               then
+                  Found := True;
+                  Gtk_New (Item, Label => Get_Name (Activity));
+                  Append (Submenu, Item);
+
+                  --  ??? don't we leak memory here
+                  A_Context := new Activity_Context;
+
+                  Set_Context_Information
+                    (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
+                  Set_File_Information
+                    (A_Context, File_Information (File_Name));
+                  Set_Activity_Information (A_Context, Image (Activity));
+
+                  Context_Callback.Connect
+                    (Item, "activate", On_Menu_Add_To_Activity'Access,
+                     Selection_Context_Access (A_Context));
+                  Set_Sensitive (Item, Section_Active);
+               end if;
+
+               Activity := Next (Activity);
+            end loop;
+
+            Set_Sensitive (Menu_Item, Found);
+         end;
       end if;
 
       --  Fill the section relative to directory
@@ -829,8 +770,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      List   : String_List.List;
-      Kernel : Kernel_Handle;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      List   : String_List.List       := Get_Selected_Files (Context);
 
       procedure Get_Location
         (File, ChangeLog_File : Virtual_File;
@@ -975,9 +916,6 @@ package body VCS_View_API is
       end Get_Location;
 
    begin
-      Kernel := Get_Kernel (Context);
-      List   := Get_Selected_Files (Context);
-
       while not String_List.Is_Empty (List) loop
          declare
             File           : constant Virtual_File :=
@@ -1071,236 +1009,6 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
-
-   ----------------
-   -- Save_Files --
-   ----------------
-
-   function Save_Files
-     (Kernel    : Kernel_Handle;
-      Files     : String_List.List;
-      Save_Logs : Boolean := False) return Boolean
-   is
-      use String_List;
-      Children   : MDI_Child_Array (1 .. Length (Files));
-      Logs       : MDI_Child_Array (Children'Range);
-      Files_Temp : List_Node := First (Files);
-      File       : Virtual_File;
-   begin
-      for C in Children'Range loop
-         File := Create (Full_Filename => Head (Files));
-         Children (C) := Get_File_Editor (Kernel, File);
-
-         if Save_Logs then
-            Logs (C) := Get_File_Editor
-              (Kernel, Get_Log_From_File (Kernel, File, False));
-         end if;
-
-         Files_Temp := Next (Files_Temp);
-      end loop;
-
-      if Save_Logs then
-         return Save_MDI_Children
-           (Kernel, Children & Logs, Force => Get_Pref (Kernel, Auto_Save));
-      else
-         return Save_MDI_Children
-           (Kernel, Children, Force => Get_Pref (Kernel, Auto_Save));
-      end if;
-   end Save_Files;
-
-   ----------------------
-   -- Log_Action_Files --
-   ----------------------
-
-   procedure Log_Action_Files
-     (Kernel : Kernel_Handle;
-      Ref    : VCS_Access;
-      Action : VCS_Action;
-      Files  : String_List.List)
-   is
-      use String_List;
-
-      Logs               : String_List.List;
-      Files_Temp         : List_Node := First (Files);
-
-      Commit_Command     : Log_Action_Command_Access;
-      Get_Status_Command : Get_Status_Command_Access;
-
-      Project            : Project_Type;
-
-      Success            : Boolean;
-      pragma Unreferenced (Success);
-
-      Cancel_All         : Boolean := False;
-
-      Log_Checks         : External_Command_Access;
-      File_Checks        : External_Command_Access;
-      File               : Virtual_File;
-
-      First_Check, Last_Check : Command_Access := null;
-
-   begin
-      if not Save_Files (Kernel, Files, Save_Logs => True) then
-         return;
-      end if;
-
-      while Files_Temp /= Null_Node loop
-         --  Save any open log editors, and then get the corresponding logs.
-
-         File := Create (Full_Filename => Data (Files_Temp));
-         Append (Logs, Get_Log (Kernel, File));
-         Files_Temp := Next (Files_Temp);
-      end loop;
-
-      --  Create the Commit command.
-      Create (Commit_Command, Ref, Action, Files, Logs);
-
-      --  Create the Get_Status command.
-      Create (Get_Status_Command, Ref, Files);
-
-      --  The Get_Status command is a consequence of the Commit command.
-      Add_Consequence_Action
-        (Command_Access (Commit_Command),
-         Command_Access (Get_Status_Command));
-
-      --  Create the file checks and the log checks.
-      Files_Temp := First (Files);
-
-      while Files_Temp /= Null_Node loop
-         File := Create (Full_Filename => Data (Files_Temp));
-         Project := Get_Project_From_File (Get_Registry (Kernel).all, File);
-
-         if Project /= No_Project then
-            declare
-               File_Check_Script : constant String := Get_Attribute_Value
-                 (Project, Vcs_File_Check);
-               Log_Check_Script  : constant String := Get_Attribute_Value
-                 (Project, Vcs_Log_Check);
-               Log_File  : constant Virtual_File :=
-                             Get_Log_From_File
-                               (Kernel, File, True,
-                                Suffix => Action_To_Log_Suffix (Action));
-               File_Args         : String_List.List;
-               Log_Args          : String_List.List;
-               Head_List         : String_List.List;
-               S                 : GNAT.OS_Lib.String_Access;
-
-               use type GNAT.OS_Lib.String_Access;
-
-            begin
-               if File_Check_Script /= "" then
-                  Append (File_Args, Data (Files_Temp));
-
-                  Create (File_Checks,
-                          Kernel,
-                          File_Check_Script,
-                          "",
-                          File_Args,
-                          Null_List,
-                          Check_Handler'Access,
-                          -"Version Control: Checking files");
-
-                  if First_Check = null then
-                     First_Check := Command_Access (File_Checks);
-                  else
-                     Add_Consequence_Action (Last_Check, File_Checks);
-                  end if;
-
-                  Last_Check := Command_Access (File_Checks);
-               end if;
-
-               if Log_Check_Script /= "" then
-                  --  Check that the log file is not empty.
-
-                  S := Read_File (Log_File);
-
-                  if S = null then
-                     Cancel_All := True;
-                     Insert (Kernel,
-                             (-"File could not be read: ")
-                             & Full_Name (Log_File).all);
-
-                     Free (File_Args);
-                     Free (Log_Args);
-                     Free (Head_List);
-                     exit;
-
-                  elsif S.all = "" then
-                     if Message_Dialog
-                       ((-"File: ") & Full_Name (File).all
-                        & ASCII.LF & ASCII.LF &
-                          (-"The revision log for this file is empty,")
-                        & ASCII.LF &
-                          (-"Commit anyway ?"),
-                        Confirmation,
-                        Button_Yes or Button_No,
-                        Button_Yes,
-                        "", -"Empty log detected",
-                        Gtk.Enums.Justify_Left) = Button_No
-                     then
-                        Cancel_All := True;
-
-                        GNAT.OS_Lib.Free (S);
-                        Free (File_Args);
-                        Free (Log_Args);
-                        Free (Head_List);
-                        exit;
-                     end if;
-                  end if;
-
-                  GNAT.OS_Lib.Free (S);
-
-                  Append (Log_Args, Full_Name (Log_File).all);
-                  Append
-                    (Head_List, -"File: " & Full_Name (File).all & ASCII.LF
-                     & (-"The revision log does not pass the checks."));
-
-                  Create
-                    (Log_Checks,
-                     Kernel,
-                     Log_Check_Script,
-                     "",
-                     Log_Args,
-                     Head_List,
-                     Check_Handler'Access,
-                     -"CVS: Checking file changelogs");
-
-                  if First_Check = null then
-                     First_Check := Command_Access (Log_Checks);
-                  else
-                     Add_Consequence_Action (Last_Check, Log_Checks);
-                  end if;
-
-                  Last_Check := Command_Access (Log_Checks);
-               end if;
-
-               Free (File_Args);
-               Free (Log_Args);
-               Free (Head_List);
-            end;
-         end if;
-
-         Files_Temp := Next (Files_Temp);
-      end loop;
-
-      --  Execute the commit command after the last file check or log check
-      --  command.
-
-      if Last_Check /= null then
-         Add_Consequence_Action (Last_Check, Commit_Command);
-      else
-         First_Check := Command_Access (Commit_Command);
-      end if;
-
-      if Cancel_All then
-         Destroy (First_Check);
-      else
-         Launch_Background_Command
-           (Kernel, First_Check, True, True, Name (Ref));
-      end if;
-
-      Free (Logs);
-   end Log_Action_Files;
 
    ---------------------
    -- Get_Current_Ref --
@@ -1413,12 +1121,12 @@ package body VCS_View_API is
       Action  : VCS_Action)
    is
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      Suffix         : constant String := Action_To_Log_Suffix (Action);
       Files          : String_List.List;
       Real_Files     : String_List.List;
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
-      Suffix         : constant String := Action_To_Log_Suffix (Action);
 
       use String_List;
       use type String_List.List_Node;
@@ -1430,6 +1138,9 @@ package body VCS_View_API is
            (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
          return;
       end if;
+
+      --  Add all files in Files, if we have a log selected then we add the
+      --  corresponding file.
 
       Files_Temp := String_List.First (Real_Files);
 
@@ -1460,7 +1171,7 @@ package body VCS_View_API is
 
       Files_Temp := String_List.First (Files);
 
-      --  Open log editors for files that don't have a log.
+      --  Open log editors for files that don't have a log
 
       while Files_Temp /= String_List.Null_Node loop
          File := Create (Full_Filename => String_List.Data (Files_Temp));
@@ -1478,10 +1189,11 @@ package body VCS_View_API is
          Files_Temp := String_List.Next (Files_Temp);
       end loop;
 
-      --  If All files have a log, commit the whole lot.
+      --  If All files have a log, commit the whole lot
 
       if All_Logs_Exist then
-         Log_Action_Files (Kernel, Get_Current_Ref (Context), Action, Files);
+         Log_Action_Files
+           (Kernel, Get_Current_Ref (Context), Action, Files, No_Activity);
       end if;
 
       String_List.Free (Files);
@@ -1748,8 +1460,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Files    : String_List.List;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Files  : String_List.List;
 
    begin
       Files := Get_Selected_Files (Context);
@@ -1999,8 +1711,7 @@ package body VCS_View_API is
 
          if Has_Project_Information (File_Context) then
             Files := Get_Files_In_Project
-              (Project_Information (File_Context),
-               Recursive);
+              (Project_Information (File_Context), Recursive);
          else
             Files := Get_Files_In_Project
               (Get_Project (Get_Kernel (Context)), Recursive);
@@ -2061,7 +1772,7 @@ package body VCS_View_API is
       pragma Unreferenced (Explorer);
 
       procedure Query_Status_For_Project (The_Project : Project_Type);
-      --  Display the status for The_Project only.
+      --  Display the status for The_Project only
 
       ------------------------------
       -- Query_Status_For_Project --
@@ -2705,68 +2416,6 @@ package body VCS_View_API is
          return null;
    end Context_Factory;
 
-   ---------------------------
-   -- Display_Editor_Status --
-   ---------------------------
-
-   procedure Display_Editor_Status
-     (Kernel : access Kernel_Handle_Record'Class;
-      Ref    : VCS_Access;
-      Status : File_Status_Record)
-   is
-      Status_Label   : String_Access;
-      Revision_Label : String_Access;
-
-      function Short_Revision (R : String) return String;
-      --  If R is too long, return only the last digits.
-
-      --------------------
-      -- Short_Revision --
-      --------------------
-
-      function Short_Revision (R : String) return String is
-      begin
-         if R'Length <= Max_Rev_Length then
-            return R;
-
-         else
-            return "[...]" & R (R'Last - Max_Rev_Length .. R'Last);
-         end if;
-      end Short_Revision;
-
-      use String_List_Utils.String_List;
-   begin
-      if Ref = null then
-         return;
-      end if;
-
-      if Status.Status = VCS.Unknown
-        or else Status.Status.Label = null
-      then
-         Status_Label := new String'("");
-      else
-         Status_Label := new String'
-           (" (" & Status.Status.Label.all & ")");
-      end if;
-
-      if not Is_Empty (Status.Working_Revision) then
-         Revision_Label := new String'
-           (Name (Ref) & ":"
-            & Short_Revision (Head (Status.Working_Revision)));
-      else
-         Revision_Label := new String'(Name (Ref));
-      end if;
-
-      Add_Editor_Label
-        (Kernel,
-         Status.File,
-         VCS_Module_Name,
-         Revision_Label.all & Status_Label.all);
-
-      Free (Status_Label);
-      Free (Revision_Label);
-   end Display_Editor_Status;
-
    -------------------------
    -- VCS_Command_Handler --
    -------------------------
@@ -2841,7 +2490,7 @@ package body VCS_View_API is
          Get_Status (Ref, Files);
 
       elsif Command = "commit" then
-         Log_Action_Files (Kernel, Ref, Commit, Files);
+         Log_Action_Files (Kernel, Ref, Commit, Files, No_Activity);
 
       elsif Command = "diff_head" then
          if Save_Files (Kernel, Files) then
