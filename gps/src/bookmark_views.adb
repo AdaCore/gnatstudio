@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
---                            AdaCore                                --
+--                        Copyright (C) 2005                         --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,44 +18,47 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Commands.Interactive; use Commands, Commands.Interactive;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
-with GPS.Kernel.Console;   use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Intl;             use GPS.Intl;
-with GUI_Utils;            use GUI_Utils;
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Glib.Values;          use Glib.Values;
-with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
+with System;                    use System;
+
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Values;               use Glib.Values;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Intl;                  use GPS.Intl;
+with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Main;             use Gtk.Main;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.MDI;           use Gtkada.MDI;
-with System;               use System;
-with XML_Parsers;          use XML_Parsers;
-with Traces;               use Traces;
+with XML_Parsers;               use XML_Parsers;
+with Traces;                    use Traces;
 
 package body Bookmark_Views is
    Me : constant Debug_Handle := Create ("Bookmarks");
@@ -116,8 +119,7 @@ package body Bookmark_Views is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -149,10 +151,11 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Bookmark_Data_Access;
    --  Return the entry selected by event
 
-   procedure Set (Tree   : access Gtk_Tree_Store_Record'Class;
-                  Iter   : Gtk_Tree_Iter;
-                  Column : Gint;
-                  Value  : System.Address);
+   procedure Set
+     (Tree   : access Gtk_Tree_Store_Record'Class;
+      Iter   : Gtk_Tree_Iter;
+      Column : Gint;
+      Value  : System.Address);
    --  Set a pointer in the tree
 
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
@@ -252,12 +255,12 @@ package body Bookmark_Views is
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      View : constant Bookmark_View_Access := Bookmark_View_Access
+      View  : constant Bookmark_View_Access := Bookmark_View_Access
         (Get_Widget (Open_View (Get_Kernel (Context.Context))));
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter : Gtk_Tree_Iter;
-      Id   : Idle_Handler_Id;
+                Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter  : Gtk_Tree_Iter;
+      Id    : Idle_Handler_Id;
       pragma Unreferenced (Command, Id);
    begin
       if Context.Event /= null then
@@ -280,10 +283,11 @@ package body Bookmark_Views is
    -- Set --
    ---------
 
-   procedure Set (Tree   : access Gtk_Tree_Store_Record'Class;
-                  Iter   : Gtk_Tree_Iter;
-                  Column : Gint;
-                  Value  : System.Address)
+   procedure Set
+     (Tree   : access Gtk_Tree_Store_Record'Class;
+      Iter   : Gtk_Tree_Iter;
+      Column : Gint;
+      Value  : System.Address)
    is
       procedure Internal
         (Tree   : System.Address;
@@ -319,8 +323,8 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Bookmark_Data_Access
    is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Iter : Gtk_Tree_Iter;
+                Gtk_Tree_Store (Get_Model (View.Tree));
+      Iter  : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (View.Tree, Model, Event);
       if Iter /= Null_Iter then
@@ -344,10 +348,10 @@ package body Bookmark_Views is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
       --  Nothing special in the context, just the module itself so that people
       --  can still add information if needed
-      V : constant Bookmark_View_Access := Bookmark_View_Access (Object);
-      Model : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
+      V       : constant Bookmark_View_Access := Bookmark_View_Access (Object);
+      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (V.Tree));
       Context : constant Selection_Context_Access := new Selection_Context;
-      Iter : Gtk_Tree_Iter;
+      Iter    : Gtk_Tree_Iter;
    begin
       Iter := Find_Iter_For_Event (V.Tree, Model, Event);
       Select_Iter (Get_Selection (V.Tree), Iter);
@@ -363,8 +367,8 @@ package body Bookmark_Views is
       Event : Gdk_Event) return Boolean
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Clip);
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
+      Model  : constant Gtk_Tree_Store :=
+                 Gtk_Tree_Store (Get_Model (View.Tree));
       Marker : Bookmark_Data_Access;
       Iter   : Gtk_Tree_Iter;
       Col    : Gtk_Tree_View_Column;
@@ -399,12 +403,12 @@ package body Bookmark_Views is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Mark   : constant Location_Marker := Create_Marker (Kernel);
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
+      Child  : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Bookmark_View_Record'Tag);
-      View  : Bookmark_View_Access;
-      Model : Gtk_Tree_Store;
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
+      View   : Bookmark_View_Access;
+      Model  : Gtk_Tree_Store;
+      Iter   : Gtk_Tree_Iter;
+      Path   : Gtk_Tree_Path;
    begin
       if Mark /= null then
          Append (Bookmark_Views_Module.List,
@@ -446,7 +450,7 @@ package body Bookmark_Views is
 
    procedure Refresh (View : access Bookmark_View_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
+                Gtk_Tree_Store (Get_Model (View.Tree));
       List  :  Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
    begin
@@ -469,12 +473,13 @@ package body Bookmark_Views is
      (V      : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      View : constant Gtk_Tree_View := Gtk_Tree_View (V);
-      M    : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (View));
-      Iter : Gtk_Tree_Iter;
+      View        : constant Gtk_Tree_View := Gtk_Tree_View (V);
+      M           : constant Gtk_Tree_Store :=
+                      Gtk_Tree_Store (Get_Model (View));
+      Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
       Text_Value  : constant GValue := Nth (Params, 2);
-      Mark : Bookmark_Data_Access;
+      Mark        : Bookmark_Data_Access;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Mark := Convert (Get_Address (M, Iter, Data_Column));
@@ -503,7 +508,7 @@ package body Bookmark_Views is
      (View   : out Bookmark_View_Access;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Scrolled    : Gtk_Scrolled_Window;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       View := new Bookmark_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
@@ -529,8 +534,7 @@ package body Bookmark_Views is
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
 
-      View.Goto_Icon := Render_Icon
-        (View, Stock_Jump_To, Icon_Size_Menu);
+      View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
 
       Return_Callback.Object_Connect
         (View.Tree,
@@ -558,8 +562,7 @@ package body Bookmark_Views is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
       N : Node_Ptr;
@@ -610,11 +613,10 @@ package body Bookmark_Views is
    ---------------
 
    function Open_View
-     (Kernel : access Kernel_Handle_Record'Class)
-      return MDI_Child
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
    is
-      Child   : MDI_Child;
-      View    : Bookmark_View_Access;
+      Child : MDI_Child;
+      View  : Bookmark_View_Access;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Bookmark_View_Record'Tag);
@@ -655,13 +657,17 @@ package body Bookmark_Views is
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename);
          XML_Parsers.Parse (Filename, File, Err);
+
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
             Free (Err);
+
          else
             Child := File.Child;
+
             while Child /= null loop
                Marker := Create_Marker (Kernel, Child);
+
                if Marker /= null then
                   declare
                      Name : constant String :=
@@ -683,8 +689,10 @@ package body Bookmark_Views is
 
                Child := Child.Next;
             end loop;
+
             Free (File);
          end if;
+
          Run_Hook (Kernel, Bookmark_Added_Hook);
       end if;
    end Load_Bookmarks;
@@ -702,15 +710,19 @@ package body Bookmark_Views is
       Trace (Me, "Saving " & Filename);
       File := new Node;
       File.Tag := new String'("Bookmarks");
+
       while List /= Null_Node loop
          Child := Save (Data (List).Marker);
+
          if Child /= null then
             Set_Attribute (Child, "bookmark_name",
                            Data (List).Name.all);
             Add_Child (File, Child, Append => True);
          end if;
+
          List := Next (List);
       end loop;
+
       Print (File, Filename);
       Free (File);
    end Save_Bookmarks;
@@ -761,7 +773,6 @@ package body Bookmark_Views is
       Register_Action
         (Kernel, "Bookmark Create", Command,
          -("Create a bookmark at the current location"));
-
    end Register_Module;
 
 end Bookmark_Views;

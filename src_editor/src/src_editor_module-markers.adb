@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                        Copyright (C) 2005                         --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -37,6 +37,7 @@ with Ada.Unchecked_Conversion;
 with Traces;                    use Traces;
 
 package body Src_Editor_Module.Markers is
+
    Me : constant Debug_Handle := Create ("Markers");
 
    function Convert is new Ada.Unchecked_Conversion
@@ -79,7 +80,7 @@ package body Src_Editor_Module.Markers is
    procedure Dump_Persistent_Markers is
       use Marker_List;
       Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                 Source_Editor_Module (Src_Editor_Module_Id);
       Node   : List_Node;
 
    begin
@@ -105,10 +106,10 @@ package body Src_Editor_Module.Markers is
    --------------------------------
 
    procedure Register_Persistent_Marker
-     (Marker  : access File_Marker_Record'Class)
+     (Marker : access File_Marker_Record'Class)
    is
       Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                 Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Marker.Id            := Module.Next_Mark_Id;
       Module.Next_Mark_Id  := Module.Next_Mark_Id + 1;
@@ -122,7 +123,7 @@ package body Src_Editor_Module.Markers is
    function Find_Mark (Id : Natural) return File_Marker is
       use type Marker_List.List_Node;
       Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                 Source_Editor_Module (Src_Editor_Module_Id);
       Marker : File_Marker;
       Node   : Marker_List.List_Node;
 
@@ -155,7 +156,7 @@ package body Src_Editor_Module.Markers is
    is
       use Marker_List;
       Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+                 Source_Editor_Module (Src_Editor_Module_Id);
       Node   : List_Node;
       Marker : File_Marker;
 
@@ -183,7 +184,7 @@ package body Src_Editor_Module.Markers is
    procedure Update_Marker_Location
      (Marker : access File_Marker_Record'Class)
    is
-      Iter   : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
    begin
       if Marker.Mark /= null then
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
@@ -200,7 +201,7 @@ package body Src_Editor_Module.Markers is
      (Marker : System.Address; Text_Mark : System.Address)
    is
       pragma Unreferenced (Text_Mark);
-      M    : constant File_Marker := Convert (Marker);
+      M : constant File_Marker := Convert (Marker);
    begin
       --  No need to remove the weak_ref on the mark since it has been
       --  cancelled automatically by gtk+ prior to calling On_Destroy_Mark.
@@ -216,11 +217,11 @@ package body Src_Editor_Module.Markers is
    procedure Destroy (Marker : in out File_Marker_Record) is
       use Marker_List;
       Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      M1    : constant File_Marker := Marker'Unchecked_Access;
-      M     : File_Marker;
-      Node  : Marker_List.List_Node;
-      Prev  : Marker_List.List_Node := Marker_List.Null_Node;
+                 Source_Editor_Module (Src_Editor_Module_Id);
+      M1     : constant File_Marker := Marker'Unchecked_Access;
+      M      : File_Marker;
+      Node   : Marker_List.List_Node;
+      Prev   : Marker_List.List_Node := Marker_List.Null_Node;
 
    begin
       if Module = null then
@@ -382,8 +383,8 @@ package body Src_Editor_Module.Markers is
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Child : constant MDI_Child := Find_Current_Editor (Kernel);
-      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Child    : constant MDI_Child := Find_Current_Editor (Kernel);
+      Box      : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
       Line, Column : Integer;
    begin
       if Box /= null then
@@ -406,14 +407,15 @@ package body Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean
    is
-      Child  : constant MDI_Child := Find_Editor (Kernel, Marker.File);
-      Box    : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Child : constant MDI_Child := Find_Editor (Kernel, Marker.File);
+      Box   : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Marker.Mark /= null then
          Raise_Child (Child);
          Set_Focus_Child (Child);
          Grab_Focus (Box);
          Scroll_To_Mark (Box, Marker.Mark, Marker.Length);
+
       else
          Open_File_Editor
            (Kernel,
@@ -487,7 +489,7 @@ package body Src_Editor_Module.Markers is
      (Kernel   : access Kernel_Handle_Record'Class;
       From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker
    is
-      Source  : Source_Editor_Box;
+      Source       : Source_Editor_Box;
       Line, Column : Integer;
    begin
       if From_XML /= null then

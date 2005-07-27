@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005                            --
+--                        Copyright (C) 2005                         --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,8 +40,8 @@ package Src_Editor_Module.Markers is
    --  position in the file, even if the file is closed, reopened or modified.
 
    function Create_File_Marker
-     (File   : VFS.Virtual_File;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
+     (File : VFS.Virtual_File;
+      Mark : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
 

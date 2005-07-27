@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with String_List_Utils;    use String_List_Utils;
 with VCS;                  use VCS;
 with Commands.Interactive; use Commands.Interactive;
@@ -92,7 +92,7 @@ package Commands.VCS is
    procedure Free (X : in out Get_Status_Command_Type);
    procedure Free (X : in out Update_Files_Command_Type);
    procedure Free (X : in out Generic_Kernel_Command);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
 private
    type Get_Status_Command_Type is new Root_Command with record

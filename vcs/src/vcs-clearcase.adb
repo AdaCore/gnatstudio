@@ -20,12 +20,12 @@
 
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -621,7 +621,7 @@ package body VCS.ClearCase is
    function Local_Get_Status
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
-     return File_Status_List.List
+      return File_Status_List.List
    is
       pragma Unreferenced (Rep);
 
@@ -790,7 +790,7 @@ package body VCS.ClearCase is
 
       File_Node : List_Node := First (Filenames);
 
-      --  ??? This checks-in every file with the same log.
+      --  ??? This checks-in every file with the same log
 
    begin
       while File_Node /= Null_Node loop
@@ -810,7 +810,7 @@ package body VCS.ClearCase is
                -"ClearCase: Checking-in element: "
                & File & " ...", Mode => Info);
 
-            --  Create the end of the message.
+            --  Create the end of the message
 
             Create
               (Fail_Message,
@@ -865,7 +865,7 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  Enqueue the actions.
+            --  Enqueue the actions
 
             Add_Consequence_Action
               (Checkin_File_Command,
@@ -913,7 +913,7 @@ package body VCS.ClearCase is
                     -"ClearCase: updating "
                       & File & " ...", Mode => Info);
 
-            --  Create the end of the message.
+            --  Create the end of the message
 
             Create (Success_Message,
                     Kernel,
@@ -936,7 +936,7 @@ package body VCS.ClearCase is
 
             Free (Args);
 
-            --  Enqueue the actions.
+            --  Enqueue the actions
 
             Launch_Background_Command
               (Rep.Kernel,
@@ -1004,7 +1004,7 @@ package body VCS.ClearCase is
    begin
       Node := First (List);
 
-      --  Delete the associated log file, if it exists.
+      --  Delete the associated log file, if it exists
 
       if not Is_Empty (Head) then
          Head_Node := String_List.First (Head);
@@ -1015,7 +1015,7 @@ package body VCS.ClearCase is
          end if;
       end if;
 
-      --  Check for error messages in the output.
+      --  Check for error messages in the output
 
       while Node /= Null_Node loop
          declare
@@ -1144,7 +1144,7 @@ package body VCS.ClearCase is
                     -"ClearCase: Adding element: "
                       & File & " ...", Mode => Info);
 
-            --  Create the end of the message.
+            --  Create the end of the message
 
             Create (Fail_Message,
                     Kernel,
@@ -1160,7 +1160,7 @@ package body VCS.ClearCase is
                     True,
                     Info);
 
-            --  Check out the directory.
+            --  Check out the directory
 
             Append (Args, "co");
             Append (Args, "-c");
@@ -1226,7 +1226,8 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  Check in the directory.
+            --  Check in the directory
+
             Append (Args, "ci");
             Append (Args, "-c");
             Append (Args, -"Added element: " & File);
@@ -1246,7 +1247,8 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  If the directory checkout was successful, create the element.
+            --  If the directory checkout was successful, create the element
+
             Add_Consequence_Action
               (Checkout_Dir_Command,
                Make_Element_Command);
@@ -1255,7 +1257,8 @@ package body VCS.ClearCase is
               (Checkout_Dir_Command,
                Fail_Message);
 
-            --  If the element was successfully created, check it in.
+            --  If the element was successfully created, check it in
+
             Add_Consequence_Action
               (Make_Element_Command,
                Checkin_Element_Command);
@@ -1321,7 +1324,7 @@ package body VCS.ClearCase is
                     -"ClearCase: Removing element: "
                       & File & " ...", Mode => Info);
 
-            --  Create the end of the message.
+            --  Create the end of the message
 
             Create (Fail_Message,
                     Kernel,
@@ -1337,7 +1340,7 @@ package body VCS.ClearCase is
                     True,
                     Info);
 
-            --  Check out the directory.
+            --  Check out the directory
 
             Append (Args, "co");
             Append (Args, "-c");
@@ -1382,7 +1385,8 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  Check in the directory.
+            --  Check in the directory
+
             Append (Args, "ci");
             Append (Args, "-c");
             Append (Args, Log);
@@ -1402,7 +1406,8 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  If the directory checkout was successful, create the element.
+            --  If the directory checkout was successful, create the element
+
             Add_Consequence_Action
               (Checkout_Dir_Command,
                Remove_Element_Command);
@@ -1474,7 +1479,7 @@ package body VCS.ClearCase is
 
             Free (Args);
 
-            --  Enqueue the actions.
+            --  Enqueue the actions
 
             Launch_Background_Command
               (Rep.Kernel,
@@ -1514,7 +1519,7 @@ package body VCS.ClearCase is
               -"ClearCase: getting differences for "
                 & Full_Name (File).all & " ...", Mode => Info);
 
-      --  Create the end of the message.
+      --  Create the end of the message
 
       Create (Fail_Message,
               Kernel,
@@ -1571,7 +1576,7 @@ package body VCS.ClearCase is
       Free (Args);
       Free (Head);
 
-      --  Enqueue the action.
+      --  Enqueue the action
 
       Launch_Background_Command
         (Rep.Kernel,
@@ -1635,7 +1640,7 @@ package body VCS.ClearCase is
       Args         : List;
 
       pragma Unreferenced (Rev);
-      --  ??? Should implement handling of specific revision.
+      --  ??? Should implement handling of specific revision
    begin
       Append (Args, "lshistory");
       Append (Args, Full_Name (File).all);
@@ -1741,7 +1746,7 @@ package body VCS.ClearCase is
 
       Register_VCS (Module_ID (VCS_Module_ID), ClearCase_Identifier);
 
-      --  ??? Need to adapt this to the ClearCase terminology.
+      --  ??? Need to adapt this to the ClearCase terminology
       Actions :=
         (None               => null,
          Status_Files       => new String'(-"Query status"),

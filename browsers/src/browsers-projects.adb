@@ -18,10 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Browsers.Canvas;        use Browsers.Canvas;
-with Gdk.Event;              use Gdk.Event;
+with Ada.Exceptions;         use Ada.Exceptions;
+
 with Glib;                   use Glib;
 with Glib.Xml_Int;           use Glib.Xml_Int;
+with Gdk.Event;              use Gdk.Event;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Canvas;          use Gtkada.Canvas;
+with Gtkada.MDI;             use Gtkada.MDI;
+with Pango.Layout;
+
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -29,16 +37,10 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Canvas;          use Gtkada.Canvas;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Pango.Layout;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
+with Browsers.Canvas;        use Browsers.Canvas;
 with Types;                  use Types;
-with Ada.Exceptions;         use Ada.Exceptions;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
