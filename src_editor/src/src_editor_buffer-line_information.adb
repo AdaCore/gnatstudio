@@ -44,8 +44,6 @@ with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Module;           use Src_Editor_Module;
-with Src_Editor_Module.Line_Highlighting;
-use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
 with Traces;                      use Traces;
 
@@ -1731,7 +1729,7 @@ package body Src_Editor_Buffer.Line_Information is
 
    procedure Highlight_Range
      (Buffer    : access Source_Buffer_Record'Class;
-      Category  : String;
+      Style     : Style_Access;
       Line      : Editable_Line_Type;
       Start_Col : Integer;
       End_Col   : Integer;
@@ -1746,18 +1744,20 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       --  Get the text tag, create it if necessary.
 
-      Tag := Lookup (Get_Tag_Table (Buffer), Category);
+      Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
 
       if Tag = null then
          if Remove then
             return;
          else
-            Gtk_New (Tag, Category);
+            Gtk_New (Tag, Get_Name (Style));
             New_Tag := True;
          end if;
       end if;
 
-      Color := Get_Color (Lookup_Category (Category));
+      Color := Get_Background_Color (Style);
+
+      --  ??? Should we do the following even if not New_Tag ?
 
       if Color /= Null_Color then
          Set_Property (Tag, Background_Gdk_Property, Color);

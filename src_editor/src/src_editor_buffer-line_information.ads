@@ -154,7 +154,7 @@ package Src_Editor_Buffer.Line_Information is
 
    procedure Highlight_Range
      (Buffer    : access Source_Buffer_Record'Class;
-      Category  : String;
+      Style     : Style_Access;
       Line      : Editable_Line_Type;
       Start_Col : Integer;
       End_Col   : Integer;
