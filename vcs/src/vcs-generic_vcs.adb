@@ -18,39 +18,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
-with Glib.Convert;                use Glib.Convert;
-with Glib.Xml_Int;                use Glib.Xml_Int;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Commands;                    use Commands;
-with Commands.Interactive;        use Commands.Interactive;
-with Commands.Custom;             use Commands.Custom;
-
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-
-with GPS.Kernel.Task_Manager;     use GPS.Kernel.Task_Manager;
-with VCS_Module;                  use VCS_Module;
-with VCS_View_Pkg;                use VCS_View_Pkg;
-with Traces;                      use Traces;
-with VFS;                         use VFS;
-
-with Basic_Types;                 use Basic_Types;
-with GNAT.Regpat;                 use GNAT.Regpat;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;
-with GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
 
+with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+with Commands.Custom;           use Commands.Custom;
+
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+
+with VCS_Module;                use VCS_Module;
+with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Activities_View;       use VCS_Activities_View;
+with VCS_Activities;            use VCS_Activities;
+
+with Traces;                    use Traces;
+with VFS;                       use VFS;
+with Basic_Types;               use Basic_Types;
 with Generic_List;
-with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;              use Ada.Exceptions;
 
 package body VCS.Generic_VCS is
 
@@ -170,7 +173,7 @@ package body VCS.Generic_VCS is
    type Parser_Command_Access is access all Parser_Command_Type;
 
    procedure Free (Command : in out Parser_Command_Type);
-   --  Free memory associated to Command.
+   --  Free memory associated to Command
 
    ----------
    -- Free --
@@ -232,9 +235,7 @@ package body VCS.Generic_VCS is
          Kernel  => Kernel,
          Creator => Abstract_Module_ID (VCS_Generic_Module_ID));
 
-      Set_File_Information
-        (Context,
-         File => File);
+      Set_File_Information (Context, File => File);
 
       return Selection_Context_Access (Context);
    end Create_File_Context;
@@ -334,11 +335,11 @@ package body VCS.Generic_VCS is
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
       The_Action : constant Action_Record_Access :=
-        Lookup_Action (Kernel, Ref.Commands (Dir_Action));
+                     Lookup_Action (Kernel, Ref.Commands (Dir_Action));
 
-      Node   : List_Node;
-      Custom : Command_Access;
-      Index  : Natural := 1;
+      Node       : List_Node;
+      Custom     : Command_Access;
+      Index      : Natural := 1;
 
       use type GNAT.OS_Lib.String_List_Access;
 
@@ -351,15 +352,14 @@ package body VCS.Generic_VCS is
 
       while Node /= Null_Node loop
          declare
-            Args      : GNAT.OS_Lib.String_List_Access;
-            Dir       : GNAT.Strings.String_Access;
+            Args : GNAT.OS_Lib.String_List_Access;
+            Dir  : GNAT.Strings.String_Access;
 
          begin
             --  Args and Dir freed when the command proxy is destroyed.
 
             if First_Args = null then
-               Args := new GNAT.OS_Lib.String_List
-                 (1 .. 1);
+               Args := new GNAT.OS_Lib.String_List (1 .. 1);
             else
                Args := new GNAT.OS_Lib.String_List
                  (1 .. 1 + First_Args'Length);
@@ -378,19 +378,11 @@ package body VCS.Generic_VCS is
 
             Custom := Create_Proxy
               (The_Action.Command,
-               (null,
-                null,
-                Dir,
-                Args,
+               (null, null, Dir, Args,
                 new String'(Describe_Action (Ref, Dir_Action))));
 
             Launch_Background_Command
-              (Kernel,
-               Custom,
-               False,
-               Show_Bar,
-               Ref.Id.all,
-               True);
+              (Kernel, Custom, False, Show_Bar, Ref.Id.all, True);
          end;
 
          Node := Next (Node);
@@ -408,16 +400,17 @@ package body VCS.Generic_VCS is
       Action     : VCS_Action;
       Show_Bar   : Boolean := True)
    is
-      Kernel : Kernel_Handle renames Ref.Kernel;
+      Kernel            : Kernel_Handle renames Ref.Kernel;
 
-      The_Action : constant Action_Record_Access :=
-        Lookup_Action (Kernel, Ref.Commands (Action));
+      The_Action        : constant Action_Record_Access :=
+                            Lookup_Action (Kernel, Ref.Commands (Action));
+      Length            : constant Natural := String_List.Length (Files);
 
-      Node   : List_Node;
-      Custom : Command_Access;
-      Index  : Natural := 1;
-      Length : constant Natural := String_List.Length (Files);
+      Node              : List_Node;
+      Custom            : Command_Access;
+      Index             : Natural := 1;
       First_Args_Length : Natural := 0;
+      Dir               : GNAT.Strings.String_Access;
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
@@ -431,13 +424,50 @@ package body VCS.Generic_VCS is
          First_Args_Length := First_Args'Length;
       end if;
 
+      if Ref.Absolute_Names then
+         --  In this case we want to compute the root directory common to
+         --  all files to avoid a too long command line if possible.
+         --  ??? This is a nice feature and note also that it workaround a
+         --  problem on Windows when using Cygwin Subversion which does not
+         --  understand the standard drive specifiction (c:/ or c:\). It only
+         --  support the Cygwin /cygdrive/c format. So here we have a potential
+         --  problem if we have files on multiple drives. This should be a very
+         --  rare case and it is certainly not possible to support atomic
+         --  commit across multiple drive/repository anyway.
+
+         Node := First (Files);
+
+         declare
+            Prefix : constant String :=
+                       GNAT.Directory_Operations.Dir_Name (Data (Node));
+            Last   : Natural := Prefix'Last;
+         begin
+            while Node /= Null_Node loop
+               declare
+                  Filename : constant String := Data (Node);
+               begin
+                  while Prefix (1 .. Last) /= Filename (1 .. Last) loop
+                     Last := Last - 1;
+                  end loop;
+               end;
+               exit when Last = 0;
+               Node := Next (Node);
+            end loop;
+
+            if Last /= 0 then
+               --  We have found a common prefix, set Dir
+               Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
+            end if;
+         end;
+      end if;
+
+      --  Handles files
+
       Node := First (Files);
 
       while Node /= Null_Node loop
          declare
             Args : GNAT.OS_Lib.String_List_Access;
-            Dir  : GNAT.Strings.String_Access;
-
          begin
             --  Args, Dir and Dir_Args are freed when the command proxy is
             --  destroyed.
@@ -455,9 +485,7 @@ package body VCS.Generic_VCS is
             end if;
 
             if not Ref.Absolute_Names then
-               Dir := new String'
-                 (GNAT.Directory_Operations.Dir_Name
-                    (Locale_From_UTF8 (Data (Node))));
+               Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
             end if;
 
             while Node /= Null_Node loop
@@ -470,10 +498,22 @@ package body VCS.Generic_VCS is
                end if;
 
                if Ref.Absolute_Names then
-                  Args (Index) := new String'(Data (Node));
+                  declare
+                     Filename : constant String := Data (Node);
+                  begin
+                     if Ref.Dir_Sep /= System_Default then
+                        Args (Index) := new String'
+                          (Format_Pathname
+                             (Filename (1 + Dir.all'Length .. Filename'Last),
+                              Ref.Dir_Sep));
+                     else
+                        Args (Index) := new String'
+                          (Filename (1 + Dir.all'Length .. Filename'Last));
+                     end if;
+                  end;
+
                else
-                  Args (Index) := new String'
-                    (GNAT.Directory_Operations.Base_Name (Data (Node)));
+                  Args (Index) := new String'(Base_Name (Data (Node)));
                end if;
 
                Index := Index + 1;
@@ -482,19 +522,11 @@ package body VCS.Generic_VCS is
 
             Custom := Create_Proxy
               (The_Action.Command,
-               (null,
-                null,
-                Dir,
-                Args,
+               (null, null, Dir, Args,
                 new String'(Describe_Action (Ref, Action))));
 
             Launch_Background_Command
-              (Kernel,
-               Custom,
-               False,
-               Show_Bar,
-               Ref.Id.all,
-               True);
+              (Kernel, Custom, False, Show_Bar, Ref.Id.all, True);
          end;
       end loop;
    end Generic_Command;
@@ -507,7 +539,7 @@ package body VCS.Generic_VCS is
    is
       Kernel     : Kernel_Handle renames Ref.Kernel;
       The_Action : constant Action_Record_Access :=
-        Lookup_Action (Kernel, Ref.Commands (Action));
+                     Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
       Args       : GNAT.OS_Lib.String_List_Access;
       Dir        : GNAT.Strings.String_Access;
@@ -520,9 +552,7 @@ package body VCS.Generic_VCS is
          return;
       end if;
 
-      if not Ref.Absolute_Names then
-         Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
-      end if;
+      Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
 
       if First_Args /= null then
          Args := new GNAT.OS_Lib.String_List (1 .. First_Args'Length + 1);
@@ -536,29 +566,15 @@ package body VCS.Generic_VCS is
          Args := new GNAT.OS_Lib.String_List (1 .. 1);
       end if;
 
-      if Ref.Absolute_Names then
-         Args (Args'Last) := new String'
-           (Locale_From_UTF8 (Full_Name (File).all));
-      else
-         Args (Args'Last) := new String'
-           (Locale_From_UTF8 (Base_Name (File)));
-      end if;
+      Args (Args'Last) := new String'(Locale_From_UTF8 (Base_Name (File)));
 
       Custom := Create_Proxy
         (The_Action.Command,
-         (null,
-          Create_File_Context (Kernel, File),
-          Dir,
-          Args,
+         (null, Create_File_Context (Kernel, File), Dir, Args,
           new String'(Describe_Action (Ref, Action))));
 
       Launch_Background_Command
-        (Kernel,
-         Custom,
-         False,
-         True,
-         Ref.Id.all,
-         True);
+        (Kernel, Custom, False, True, Ref.Id.all, True);
    end Generic_Command;
 
    ----------------
@@ -589,6 +605,7 @@ package body VCS.Generic_VCS is
          end if;
 
          Generic_Command (Rep, Sorted, Args, Local_Status_Files, False);
+
       else
          if Rep.Status_Parser.File_Index = 0 then
             Rep.Current_Query_Files := Copy_String_List (Sorted);
@@ -646,8 +663,7 @@ package body VCS.Generic_VCS is
    begin
       while Current_Filename /= Null_Node loop
          Current_Status := Blank_Status;
-         Current_Status.File :=
-           Create (Data (Current_Filename));
+         Current_Status.File := Create (Data (Current_Filename));
 
          File_Status_List.Append (Result, Current_Status);
 
@@ -1064,8 +1080,11 @@ package body VCS.Generic_VCS is
          Ref.Id := new String'(Name);
 
          Ref.Absolute_Names := Boolean'Value
-           (Get_Attribute (M, "absolute_names", "TRUE"));
-         --  ??? What should be the default value of absolute_names
+           (Get_Attribute (M, "absolute_names", "FALSE"));
+         Ref.Atomic_Commands := Boolean'Value
+           (Get_Attribute (M, "atomic_commands", "FALSE"));
+         Ref.Dir_Sep := Path_Style'Value
+           (Get_Attribute (M, "dir_sep", "System_Default"));
 
          --  Find the command descriptions
 
@@ -1154,9 +1173,8 @@ package body VCS.Generic_VCS is
    function Execute
      (Command : access Parser_Command_Type) return Command_Return_Type
    is
-      S       : String renames Command.Text.all;
-      Matches : Match_Array (0 .. Command.Parser.Matches_Num);
-
+      S           : String renames Command.Text.all;
+      Matches     : Match_Array (0 .. Command.Parser.Matches_Num);
       Num_Matches : Natural := 0;
    begin
       Command.Prev_Start := Command.Start;
@@ -1165,8 +1183,22 @@ package body VCS.Generic_VCS is
          Match (Command.Parser.Regexp.all, S, Matches, Command.Start, S'Last);
 
          if Matches (0) = No_Match then
+            --  Update the status in the VCS Explorer
+
             Display_File_Status
               (Command.Rep.Kernel,
+               Command.Status,
+               VCS_Access (Command.Rep),
+               Override_Cache => Command.Override_Cache,
+               Force_Display  => True,
+               Clear_Logs     => Command.Clear_Logs,
+               Display        => Command.Override_Cache);
+
+            --  Update also the status in the VCS Activities explorer
+
+            Display_File_Status
+              (Command.Rep.Kernel,
+               No_Activity,
                Command.Status,
                VCS_Access (Command.Rep),
                Override_Cache => Command.Override_Cache,
@@ -1297,14 +1329,14 @@ package body VCS.Generic_VCS is
       end if;
 
       Command := new Parser_Command_Type;
-      Command.Parser := Parser;
-      Command.Text   := new String'(Text);
-      Command.Start  := Text'First;
-      Command.Prev_Start := Text'First - 1;
+      Command.Parser         := Parser;
+      Command.Text           := new String'(Text);
+      Command.Start          := Text'First;
+      Command.Prev_Start     := Text'First - 1;
       Command.Override_Cache := Override_Cache;
-      Command.Clear_Logs := Clear_Logs;
-      Command.Rep        := Generic_VCS_Access (Rep);
-      Command.Dir        := new String'(Dir);
+      Command.Clear_Logs     := Clear_Logs;
+      Command.Rep            := Generic_VCS_Access (Rep);
+      Command.Dir            := new String'(Dir);
 
       Launch_Background_Command
         (Rep.Kernel, Command_Access (Command), False, False, "");
@@ -1458,10 +1490,10 @@ package body VCS.Generic_VCS is
       VCS_Generic_Module_ID := new VCS_Generic_Module_ID_Record;
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
-        (Module                  => Module_ID (VCS_Generic_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => VCS_Generic_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Module_ID (VCS_Generic_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => VCS_Generic_Module_Name,
+         Priority    => Default_Priority);
    end Register_Module;
 
    ----------
