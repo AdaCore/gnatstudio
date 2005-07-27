@@ -549,6 +549,7 @@ package body GPS.Kernel.Contexts is
 
    procedure Destroy (Context : in out Activity_Context) is
    begin
+      Destroy (File_Selection_Context (Context));
       Free (Context.Id);
    end Destroy;
 
