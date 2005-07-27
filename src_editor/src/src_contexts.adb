@@ -49,6 +49,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
@@ -584,7 +585,7 @@ package body Src_Contexts is
             Column    => To_Positive (Match.Column),
             Length    => Match.End_Column - Match.Column,
             Highlight => True,
-            Highlight_Category => Search_Result_Highlighting,
+            Highlight_Category => Search_Results_Style,
             Has_Markups        => True);
       end if;
    end Highlight_Result;
