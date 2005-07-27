@@ -37,6 +37,7 @@ package GPS.Kernel.MDI is
    Position_VCS_Explorer   : constant Child_Position := 102;
    Position_Debugger_Stack : constant Child_Position := 103;
    Position_Debugger_Data  : constant Child_Position := 104;
+   Position_VCS_Activities : constant Child_Position := 105;
 
    function Get_Current_Window
      (Handle : access Kernel_Handle_Record'Class) return Gtk.Window.Gtk_Window;
