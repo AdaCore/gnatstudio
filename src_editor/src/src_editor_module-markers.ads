@@ -92,6 +92,7 @@ private
          Column : Natural;
          Length : Natural := 1;
          Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+         Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       end record;
 
    procedure Destroy (Marker : in out File_Marker_Record);
