@@ -18,19 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Notebook;             use Gtk.Notebook;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Notebook;         use Gtk.Notebook;
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel;           use GPS.Kernel;
 
-with String_List_Utils;        use String_List_Utils;
+with String_List_Utils;    use String_List_Utils;
 
-with VCS;                      use VCS;
-with VFS;                      use VFS;
+with VCS;                  use VCS;
+with VFS;                  use VFS;
 
 with Ada.Unchecked_Deallocation;
 with HTables;
@@ -43,19 +42,19 @@ package VCS_View_Pkg is
    procedure Gtk_New
      (VCS_View : out VCS_View_Access;
       Kernel   : Kernel_Handle := null);
-   --  Create a new VCS explorer.
+   --  Create a new VCS explorer
 
    procedure Initialize
      (VCS_View : access VCS_View_Record'Class;
       Kernel   : Kernel_Handle);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    function Get_Kernel
      (VCS_View : access VCS_View_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with VCS_View
 
    procedure Clear (Explorer : VCS_View_Access);
-   --  Clear all the files in the model.
+   --  Clear all the files in the model
 
    procedure Display_File_Status
      (Kernel         : Kernel_Handle;
@@ -81,21 +80,15 @@ package VCS_View_Pkg is
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
-   --  Return the list of files that are selected.
-
-   procedure Push_Message
-     (Kernel   : Kernel_Handle;
-      M_Type   : Message_Type;
-      Message  : String);
-   --  Display a message.
+   --  Return the list of files that are selected
 
    function Get_Current_Dir
      (Context : Selection_Context_Access) return String;
-   --  Convenience function to get the current directory.
+   --  Convenience function to get the current directory
 
    function Get_Current_File
      (Context : Selection_Context_Access) return VFS.Virtual_File;
-   --  Convenience function to get the current file.
+   --  Convenience function to get the current file
 
    function Get_Selected_Files
      (Kernel : Kernel_Handle) return String_List.List;
@@ -104,7 +97,7 @@ package VCS_View_Pkg is
 
    function Get_Current_Ref
      (Explorer : access VCS_View_Record) return VCS_Access;
-   --  Return the VCS reference currently being viewed in Explorer.
+   --  Return the VCS reference currently being viewed in Explorer
 
    function Get_Current_Context
      (Explorer : access VCS_View_Record) return Selection_Context_Access;
@@ -116,7 +109,7 @@ package VCS_View_Pkg is
    procedure Refresh_Log
      (Explorer : access VCS_View_Record;
       File     : VFS.Virtual_File);
-   --  Refresh the "Log" column for File.
+   --  Refresh the "Log" column for File
 
    function Get_Cached_Status
      (Explorer : access VCS_View_Record;
@@ -128,19 +121,19 @@ package VCS_View_Pkg is
 private
    type Line_Record is record
       Status : File_Status_Record;
-      --  The file status.
+      --  The file status
 
       Log    : Boolean;
-      --  Whether the file is associated with a changelog.
+      --  Whether the file is associated with a changelog
    end record;
-   --  The information stored in one line of the VCS explorer.
+   --  The information stored in one line of the VCS explorer
 
    No_Data : constant Line_Record :=
                ((VFS.No_File, Unknown, others => String_List.Null_List),
                 False);
 
    procedure Free (X : in out Line_Record);
-   --  Free memory associated with X.
+   --  Free memory associated with X
 
    ----------------------
    -- Cache Hash-table --
@@ -180,42 +173,45 @@ private
      (Page_Status_Array, Page_Status_Array_Access);
 
    type VCS_Page_Record is new Gtk_Hbox_Record with record
-      Kernel : Kernel_Handle;
+      Kernel          : Kernel_Handle;
 
-      Reference : VCS_Access;
+      Reference       : VCS_Access;
 
-      Tree   : Gtk_Tree_View;
-      Model  : Gtk_Tree_Store;
+      Tree            : Gtk_Tree_View;
+      Model           : Gtk_Tree_Store;
 
       Stored_Status   : Status_Hash.HTable;
       Cached_Status   : Status_Hash.HTable;
 
-      Shown : Boolean := False;
+      Shown           : Boolean := False;
 
-      File_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      --  The column containing the file names.
+      File_Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  The column containing the file names
 
-      Status_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      --  The column containing the file status.
+      Status_Column   : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  The column containing the file status
 
-      Log_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      --  The column corresponding to the log file indicator.
+      Log_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  The column corresponding to the log file indicator
 
-      Status     : Page_Status_Array_Access;
+      Activity_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  The column containing the activity name
+
+      Status          : Page_Status_Array_Access;
    end record;
 
    type VCS_View_Record is new Gtk_Hbox_Record with record
-      Kernel : Kernel_Handle;
-      --  Reference to the kernel that launched the explorer, if any.
+      Kernel          : Kernel_Handle;
+      --  Reference to the kernel that launched the explorer, if any
 
-      Context : Selection_Context_Access;
-      --  The current context being shown / selected in the explorer.
+      Context         : Selection_Context_Access;
+      --  The current context being shown / selected in the explorer
 
-      Notebook   : Gtk_Notebook;
-      --  The notebook containing the actual explorer pages.
+      Notebook        : Gtk_Notebook;
+      --  The notebook containing the actual explorer pages
 
       Number_Of_Pages : Integer := 0;
-      --  The number of pages in the notebook.
+      --  The number of pages in the notebook
    end record;
 
 end VCS_View_Pkg;
