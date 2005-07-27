@@ -37,6 +37,7 @@ with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View;       use VCS_Activities_View;
 with VCS_Module;                use VCS_Module;
+with VCS_View_Pkg;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Log_Utils;                 use Log_Utils;
@@ -157,7 +158,35 @@ package body VCS_Activities_View_API is
 
          Activity := Value (Activity_Information (A_Context));
 
-         Add_File (Kernel, Activity, File_Information (A_Context));
+         if Has_File_Information (A_Context) then
+            --  If we have a file information, then there is a single file to
+            --  handle.
+            Add_File (Kernel, Activity, File_Information (A_Context));
+
+         else
+            --  We have no file information, use the selected file in the VCS
+            --  explorer.
+
+            declare
+               use type String_List.List_Node;
+               Files    : String_List.List :=
+                            VCS_View_Pkg.Get_Selected_Files (Kernel);
+               File     : Virtual_File;
+               Files_It : String_List.List_Node;
+            begin
+               Files_It := String_List.First (Files);
+
+               while Files_It /= String_List.Null_Node loop
+                  File := Create
+                    (Full_Filename => String_List.Data (Files_It));
+                  Add_File (Kernel, Activity, File);
+
+                  Files_It := String_List.Next (Files_It);
+               end loop;
+
+               String_List.Free (Files);
+            end;
+         end if;
 
          Query_Activities_Files
            (Get_Activities_Explorer (Kernel, False, False),
@@ -178,13 +207,25 @@ package body VCS_Activities_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      F_Context : constant File_Selection_Context_Access :=
-                    File_Selection_Context_Access (Context);
-      File      : constant Virtual_File := File_Information (F_Context);
-      Activity  : constant Activity_Id := Get_File_Activity (File);
+
+      use type String_List.List_Node;
+
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      File     : Virtual_File;
+      Files    : String_List.List;
+      Files_It : String_List.List_Node;
    begin
-      On_Remove_From_Activity (Kernel, Activity, File);
+      Files := Get_Selected_Files (Get_Activities_Explorer (Kernel, False));
+
+      Files_It := String_List.First (Files);
+
+      while Files_It /= String_List.Null_Node loop
+         File := Create (Full_Filename => String_List.Data (Files_It));
+         On_Remove_From_Activity (Kernel, Get_File_Activity (File), File);
+
+         Files_It := String_List.Next (Files_It);
+      end loop;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
