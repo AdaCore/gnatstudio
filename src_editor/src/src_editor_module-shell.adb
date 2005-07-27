@@ -1477,12 +1477,21 @@ package body Src_Editor_Module.Shell is
             Child       : MDI_Child;
             Box         : Source_Editor_Box;
             Highlight_Category : Natural := 0;
+            Style       : Style_Access;
          begin
             Child := Find_Editor (Kernel, Filename);
 
             if Number_Of_Arguments (Data) >= 4 then
-               Highlight_Category :=
-                 Line_Highlighting.Lookup_Category (Nth_Arg (Data, 4));
+               Style := Get_Or_Create_Style
+                 (Kernel, Nth_Arg (Data, 4), False);
+
+               if Style = null then
+                  Set_Error_Msg (Data, -"No such style: " & Nth_Arg (Data, 4));
+                  return;
+               else
+                  Highlight_Category :=
+                    Line_Highlighting.Lookup_Category (Style);
+               end if;
             end if;
 
             if Child /= null then
