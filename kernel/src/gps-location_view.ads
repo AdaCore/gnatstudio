@@ -29,6 +29,7 @@ with Gtk.Main;                  use Gtk.Main;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with VFS;
 
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
@@ -77,7 +78,7 @@ package GPS.Location_View is
       Column             : Positive;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "";
+      Highlight_Category : Style_Access := null;
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True;
@@ -119,7 +120,7 @@ package GPS.Location_View is
      (View          : access Location_View_Record'Class;
       Identifier    : String;
       Category      : String;
-      H_Category    : String;
+      H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
@@ -134,9 +135,9 @@ package GPS.Location_View is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Highlight_Category      : String := "";
-      Style_Category          : String := "";
-      Warning_Category        : String := "";
+      Highlight_Category      : Style_Access := null;
+      Style_Category          : Style_Access := null;
+      Warning_Category        : Style_Access := null;
       File_Location_Regexp    : String := "";
       File_Index_In_Regexp    : Integer := -1;
       Line_Index_In_Regexp    : Integer := -1;
