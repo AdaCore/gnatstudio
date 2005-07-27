@@ -23,7 +23,6 @@ with Ada.Unchecked_Deallocation;
 with Glib.Object;
 with Glib;               use Glib;
 with Glib.Xml_Int;       use Glib.Xml_Int;
-with Gdk.Color;          use Gdk.Color;
 with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
@@ -36,6 +35,7 @@ with Commands.Controls;  use Commands.Controls;
 with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Styles;  use GPS.Kernel.Styles;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
@@ -177,13 +177,11 @@ private
    -- Highlighting categories --
    -----------------------------
 
-   type Highlighting_Category_Record (L : Natural) is record
-      GC    : Gdk.GC.Gdk_GC;
-      Color : Gdk_Color;
+   type Highlighting_Category_Record is record
+      Style : Style_Access;
       Mark_In_Speedbar : Boolean := False;
       --  If True, a mark is added in the speedbar even when we only highlight
       --  a small range of a line, as opposed to the whole line.
-      Id    : String (1 .. L);
    end record;
 
    type Highlighting_Category is access Highlighting_Category_Record;
