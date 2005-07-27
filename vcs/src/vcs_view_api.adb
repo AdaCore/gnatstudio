@@ -43,6 +43,7 @@ with String_List_Utils;         use String_List_Utils;
 with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
+with VCS_Activities_View;       use VCS_Activities_View;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
@@ -1055,10 +1056,12 @@ package body VCS_View_API is
       Files      : String_List.List;
       Files_Temp : String_List.List_Node;
       Explorer   : VCS_View_Access;
+      A_Explorer : VCS_Activities_View_Access;
 
    begin
       Files := Get_Selected_Files (Context);
       Explorer := Get_Explorer (Kernel);
+      A_Explorer := Get_Activities_Explorer (Kernel);
       Files_Temp := First (Files);
 
       while Files_Temp /= Null_Node loop
@@ -1077,6 +1080,10 @@ package body VCS_View_API is
 
             if Explorer /= null then
                Refresh_Log (Explorer, File);
+            end if;
+
+            if A_Explorer /= null then
+               Refresh_Log (A_Explorer, File);
             end if;
          end;
 
