@@ -2958,16 +2958,12 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
-      Color   : Gdk_Color;
-      Success : Boolean;
-      Iter    : Child_Iterator;
-      Child   : MDI_Child;
+      Iter  : Child_Iterator;
+      Child : MDI_Child;
    begin
-      Color := Get_Pref (Kernel, Search_Results_Color);
-      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-
       Line_Highlighting.Add_Category
-        (Search_Result_Highlighting, Color, Mark_In_Speedbar => True);
+        (Search_Results_Style,
+         Mark_In_Speedbar => True);
 
       if Pref_Display_Subprogram_Names /= Id.Show_Subprogram_Names then
          --  The preference for showing the subprogram name has changed:
