@@ -21,6 +21,7 @@
 with Builder_Module;     use Builder_Module;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Styles;  use GPS.Kernel.Styles;
 with GPS.Location_View;  use GPS.Location_View;
 with String_Utils;       use String_Utils;
 with String_List_Utils;
@@ -36,14 +37,14 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-
 package body Commands.Builder is
 
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
       Category         : String;
-      Warning_Category : String;
-      Style_Category   : String;
+      Error_Category   : Style_Access;
+      Warning_Category : Style_Access;
+      Style_Category   : Style_Access;
       Output           : String;
       Quiet            : Boolean := False);
    --  Parse the output of build engine and insert the result
@@ -60,8 +61,9 @@ package body Commands.Builder is
    procedure Parse_Compiler_Output
      (Kernel           : Kernel_Handle;
       Category         : String;
-      Warning_Category : String;
-      Style_Category   : String;
+      Error_Category   : Style_Access;
+      Warning_Category : Style_Access;
+      Style_Category   : Style_Access;
       Output           : String;
       Quiet            : Boolean := False) is
    begin
@@ -76,7 +78,7 @@ package body Commands.Builder is
          Output,
          Category           => Category,
          Highlight          => True,
-         Highlight_Category => Category,
+         Highlight_Category => Error_Category,
          Style_Category     => Style_Category,
          Warning_Category   => Warning_Category,
          Quiet              => Quiet);
@@ -136,8 +138,9 @@ package body Commands.Builder is
          Parse_Compiler_Output
            (Kernel_Handle (Kernel),
             -Error_Category,
-            -Warning_Category,
-            -Style_Category,
+            Builder_Errors_Style,
+            Builder_Warnings_Style,
+            Builder_Style_Style,
             To_String (Buffer),
             Quiet);
       end if;
