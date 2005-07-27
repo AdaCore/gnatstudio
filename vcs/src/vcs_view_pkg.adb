@@ -1096,14 +1096,13 @@ package body VCS_View_Pkg is
    is
       pragma Unreferenced (Event_Widget);
 
+      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
+
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
       Context  : File_Selection_Context_Access;
-
       Submenu  : Gtk_Menu;
-
       Files    : String_List.List;
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
       Page     : VCS_Page_Access;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
@@ -1467,7 +1466,7 @@ package body VCS_View_Pkg is
       if Page /= null then
          return Page.Reference;
       else
-         return Get_VCS_From_Id ("");
+         return null;
       end if;
    end Get_Current_Ref;
 
@@ -1476,8 +1475,7 @@ package body VCS_View_Pkg is
    ------------------
 
    function Copy_Context
-     (Context : Selection_Context_Access)
-      return Selection_Context_Access
+     (Context : Selection_Context_Access) return Selection_Context_Access
    is
       Result : Selection_Context_Access;
       File   : File_Selection_Context_Access;
@@ -1510,8 +1508,7 @@ package body VCS_View_Pkg is
    -------------------------
 
    function Get_Current_Context
-     (Explorer : access VCS_View_Record)
-      return Selection_Context_Access is
+     (Explorer : access VCS_View_Record) return Selection_Context_Access is
    begin
       if Explorer.Context = null then
          declare
@@ -1535,10 +1532,12 @@ package body VCS_View_Pkg is
 
                String_List.Free (Files);
                return Selection_Context_Access (Context);
+
             else
                return null;
             end if;
          end;
+
       else
          return Copy_Context (Explorer.Context);
       end if;
