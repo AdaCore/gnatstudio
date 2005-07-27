@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;   use GPS.Kernel;
+with String_List_Utils; use String_List_Utils;
+with GPS.Kernel;        use GPS.Kernel;
+with VCS;               use VCS;
+with VCS_Activities;    use VCS_Activities;
 with VFS;
 
 package Log_Utils is
@@ -48,12 +51,12 @@ package Log_Utils is
    function Get_File_From_Log
      (Kernel   : access Kernel_Handle_Record'Class;
       Log_Name : VFS.Virtual_File) return VFS.Virtual_File;
-   --  Return the name for the file corresponding to Log_Name;
+   --  Return the name for the file corresponding to Log_Name
 
    function Get_Log
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File) return String;
-   --   Return the log for the given file.
+   --   Return the log content for the given file
 
    procedure Get_Log_From_ChangeLog
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -69,5 +72,19 @@ package Log_Utils is
       File_Name : VFS.Virtual_File);
    --  Remove the entry File_Name from the logs mapping,
    --  if such an entry exists.
+
+   function Action_To_Log_Suffix (Action : VCS_Action) return String;
+   --  Return the suffix to be used in log files that correspond to Action.
+
+   procedure Log_Action_Files
+     (Kernel   : Kernel_Handle;
+      Ref      : VCS_Access;
+      Action   : VCS_Action;
+      Files    : String_List.List;
+      Activity : Activity_Id);
+   --  Perform Action on the list of files, assuming that they all belong to
+   --  the VCS system identified by Ref.
+   --  This subprogram will do all the necessary file/log checks before
+   --  performing Action.
 
 end Log_Utils;
