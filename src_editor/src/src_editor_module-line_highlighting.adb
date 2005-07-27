@@ -18,10 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;               use Gdk.Color;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Window;              use Gtk.Window;
-
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
@@ -55,6 +51,11 @@ package body Src_Editor_Module.Line_Highlighting is
       4 => Start_Col_Cst'Access,
       5 => End_Col_Cst'Access);
 
+   procedure Create_Category
+     (Style            : Style_Access;
+      Mark_In_Speedbar : Boolean := False);
+   --  Create a new category with Style and Mark_In_Speedbar.
+
    --------------------------
    -- Edit_Command_Handler --
    --------------------------
@@ -71,11 +72,18 @@ package body Src_Editor_Module.Line_Highlighting is
          declare
             File     : constant Virtual_File  :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Category : constant String  := Nth_Arg (Data, 2);
+            Style_ID : constant String  := Nth_Arg (Data, 2);
             Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Box   : Source_Editor_Box;
             Child : MDI_Child;
+            Style : constant Style_Access := Get_Or_Create_Style
+              (Kernel, Style_ID, False);
          begin
+            if Style = null then
+               Set_Error_Msg (Data, -"No such style: " & Style_ID);
+               return;
+            end if;
+
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
@@ -84,13 +92,11 @@ package body Src_Editor_Module.Line_Highlighting is
                   Add_Line_Highlighting
                     (Get_Buffer (Box),
                      Editable_Line_Type (Line),
-                     Category,
+                     Style,
                      Highlight_In => (others => True));
                else
                   Remove_Line_Highlighting
-                    (Get_Buffer (Box),
-                     Editable_Line_Type (Line),
-                     Category);
+                    (Get_Buffer (Box), Editable_Line_Type (Line), Style);
                end if;
             else
                Set_Error_Msg
@@ -103,21 +109,15 @@ package body Src_Editor_Module.Line_Highlighting is
          Name_Parameters (Data, Register_Highlighting_Parameters);
          declare
             Category : constant String := Nth_Arg (Data, 1);
-            Color_Id : constant String := Nth_Arg (Data, 2);
+            Color    : constant String := Nth_Arg (Data, 2);
             Mark_In_Speedbar : constant Boolean := Nth_Arg (Data, 3, False);
-            Color    : Gdk_Color;
-            Success  : Boolean;
+            Style    : Style_Access;
          begin
-            begin
-               Color := Parse (Color_Id);
-            exception
-               when Wrong_Color =>
-                  Set_Error_Msg (Data, -"Could not parse color: " & Color_Id);
-            end;
+            --  Create the style corresponding to the higlighing category
+            Style := Get_Or_Create_Style (Kernel, Category, Create => True);
+            Set_Background (Style, Color);
 
-            Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-            Add_Category (Category, Color,
-                          Mark_In_Speedbar => Mark_In_Speedbar);
+            Add_Category (Style, Mark_In_Speedbar => Mark_In_Speedbar);
          end;
 
       elsif Command = "highlight_range"
@@ -129,23 +129,30 @@ package body Src_Editor_Module.Line_Highlighting is
               Source_Editor_Module (Src_Editor_Module_Id);
             File      : constant Virtual_File  :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Category  : constant String  := Nth_Arg (Data, 2);
+            Style_ID  : constant String  := Nth_Arg (Data, 2);
             Line      : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Start_Col : constant Integer := Nth_Arg (Data, 4, Default => 0);
             End_Col   : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Box       : Source_Editor_Box;
             Child     : MDI_Child;
+            Style     : constant Style_Access :=
+              Get_Or_Create_Style (Kernel, Style_ID, False);
             Category_Index : Integer;
          begin
+            if Style = null then
+               Set_Error_Msg (Data, -"No such style: " & Style_ID);
+               return;
+            end if;
+
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
-               Category_Index := Lookup_Category (Category);
+               Category_Index := Lookup_Category (Style);
 
                if Command = "highlight_range" then
                   Highlight_Range
-                    (Get_Buffer (Box), Category,
+                    (Get_Buffer (Box), Style,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col);
 
@@ -155,13 +162,13 @@ package body Src_Editor_Module.Line_Highlighting is
                   then
                      Add_Line_Highlighting
                        (Get_Buffer (Box),
-                        Editable_Line_Type (Line), Category,
+                        Editable_Line_Type (Line), Style,
                         Highlight_In => (Highlight_Speedbar => True,
                                          others             => False));
                   end if;
                else
                   Highlight_Range
-                    (Get_Buffer (Box), Category,
+                    (Get_Buffer (Box), Style,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col, Remove => True);
 
@@ -172,7 +179,7 @@ package body Src_Editor_Module.Line_Highlighting is
                      Remove_Line_Highlighting
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
-                        Category);
+                        Style);
                   end if;
                end if;
             else
@@ -184,40 +191,24 @@ package body Src_Editor_Module.Line_Highlighting is
       end if;
    end Edit_Command_Handler;
 
-   ------------------
-   -- Add_Category --
-   ------------------
+   ---------------------
+   -- Create_Category --
+   ---------------------
 
-   procedure Add_Category
-     (Id    : String;
-      Color : Gdk_Color;
+   procedure Create_Category
+     (Style            : Style_Access;
       Mark_In_Speedbar : Boolean := False)
    is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       A : Highlighting_Category_Array_Access;
-      N : Natural;
    begin
-      --  If this category is already registered, change its parameters.
-
-      N := Lookup_Category (Id);
-
-      if N /= 0 then
-         --  ??? Should the data be unref'ed befor it's replaced ?
-         Module_Id.Categories (N).Color := Color;
-         return;
-      end if;
-
-      --  If we reach this point, the category wasn't previously found.
 
       if Module_Id.Categories = null then
          Module_Id.Categories := new Highlighting_Category_Array (1 .. 1);
          Module_Id.Categories (1) := new Highlighting_Category_Record'
-           (L  => Id'Length,
-            Id => Id,
-            GC => null,
-            Mark_In_Speedbar => Mark_In_Speedbar,
-            Color => Color);
+           (Mark_In_Speedbar => Mark_In_Speedbar,
+            Style => Style);
 
       else
          A := new Highlighting_Category_Array
@@ -228,33 +219,65 @@ package body Src_Editor_Module.Line_Highlighting is
          Unchecked_Free (Module_Id.Categories);
 
          A (A'Last) := new Highlighting_Category_Record'
-           (L  => Id'Length,
-            Id => Id,
-            GC => null,
-            Mark_In_Speedbar => Mark_In_Speedbar,
-            Color => Color);
+           (Mark_In_Speedbar => Mark_In_Speedbar,
+            Style => Style);
 
          Module_Id.Categories := A;
       end if;
+   end Create_Category;
+
+   ------------------
+   -- Add_Category --
+   ------------------
+
+   procedure Add_Category
+     (Style            : Style_Access;
+      Mark_In_Speedbar : Boolean := False)
+   is
+      Module_Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      N : Natural;
+   begin
+      --  If this category is already registered, change its parameters.
+
+      N := Lookup_Category (Style);
+
+      if N /= 0 then
+         Module_Id.Categories (N).Style := Style;
+         Module_Id.Categories (N).Mark_In_Speedbar := Mark_In_Speedbar;
+         return;
+      end if;
+
+      --  If we reach this point, the category wasn't previously found.
+      Create_Category (Style, Mark_In_Speedbar);
    end Add_Category;
 
    ---------------------
    -- Lookup_Category --
    ---------------------
 
-   function Lookup_Category (Id : String) return Natural is
+   function Lookup_Category (Style : Style_Access) return Natural is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
+
    begin
+      if Style = null then
+         return 0;
+      end if;
+
       if Module_Id.Categories /= null then
          for J in Module_Id.Categories'Range loop
-            if Module_Id.Categories (J).Id = Id then
+            if Module_Id.Categories (J).Style = Style then
                return J;
             end if;
          end loop;
       end if;
 
-      return 0;
+      --  If the Category doesn't exist, but the style exists, create a
+      --  category for this style.
+
+      Create_Category (Style, False);
+      return Module_Id.Categories'Last;
    end Lookup_Category;
 
    ------------
@@ -264,45 +287,15 @@ package body Src_Editor_Module.Line_Highlighting is
    function Get_GC (Index : Natural) return Gdk_GC is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Main_Window : constant Gtk_Window :=
-        Get_Main_Window (Get_Kernel (Module_Id.all));
 
       use type Gdk_GC;
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
-         --  If the GC is null, create it now.
-
-         if Module_Id.Categories (Index).GC = null
-           and then Realized_Is_Set (Main_Window)
-         then
-            Gdk_New
-              (Module_Id.Categories (Index).GC,
-               Get_Window (Main_Window));
-            Set_Foreground
-              (Module_Id.Categories (Index).GC,
-               Module_Id.Categories (Index).Color);
-         end if;
-
-         return Module_Id.Categories (Index).GC;
+         return Get_Background_GC (Module_Id.Categories (Index).Style);
       else
          return null;
       end if;
    end Get_GC;
-
-   ---------------
-   -- Get_Color --
-   ---------------
-
-   function Get_Color (Index : Natural) return Gdk_Color is
-      Module_Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-   begin
-      if Index > 0 and then Index <= Module_Id.Categories'Last then
-         return Module_Id.Categories (Index).Color;
-      else
-         return Null_Color;
-      end if;
-   end Get_Color;
 
    --------------------
    -- Get_Last_Index --
