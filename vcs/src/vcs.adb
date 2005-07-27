@@ -171,6 +171,26 @@ package body VCS is
       Free (F.Users);
    end Free;
 
+   ----------------------------------
+   -- Absolute_Filenames_Supported --
+   ----------------------------------
+
+   function Absolute_Filenames_Supported
+     (Ref : access VCS_Record) return Boolean is
+   begin
+      return Ref.Absolute_Names;
+   end Absolute_Filenames_Supported;
+
+   -------------------------------
+   -- Atomic_Commands_Supported --
+   -------------------------------
+
+   function Atomic_Commands_Supported
+     (Ref : access VCS_Record) return Boolean is
+   begin
+      return Ref.Atomic_Commands;
+   end Atomic_Commands_Supported;
+
    -----------------
    -- Check_Files --
    -----------------
