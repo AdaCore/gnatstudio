@@ -70,6 +70,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
@@ -222,6 +223,9 @@ package body GPS.Kernel is
       Handle.Preferences := new GPS_Preferences_Record;
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
+
+      --  Load the styles
+      Load_Styles (Handle, Create (Handle.Home_Dir.all & "styles.xml"));
 
       On_Preferences_Changed (Handle);
 
@@ -1285,6 +1289,9 @@ package body GPS.Kernel is
       Trace
         (Me, "Saving preferences in " & Handle.Home_Dir.all & "preferences");
       Save_Preferences (Handle, Handle.Home_Dir.all & "preferences");
+      Save_Styles
+        (Kernel_Handle (Handle),
+         Create (Handle.Home_Dir.all & "styles.xml"));
 
       Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
@@ -1310,6 +1317,7 @@ package body GPS.Kernel is
       end if;
 
       Reset (Handle.Actions);
+      Reset (Handle.Styles);
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
       GPS.Kernel.Scripts.Finalize (Handle);
 
