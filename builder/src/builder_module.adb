@@ -21,7 +21,6 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
-with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;
@@ -218,10 +217,6 @@ package body Builder_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
-
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
 
    procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
    --  Remove from the accel_map the key bindings set for previous projects
@@ -484,6 +479,10 @@ package body Builder_Module is
       end if;
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
+
+      if Builder_Module_ID.Build_Count = 0 then
+         Compilation_Finished (Data.Kernel, VFS.No_File, Error_Category);
+      end if;
    end Free_Temporary_Files;
 
    --------------
@@ -1880,44 +1879,7 @@ package body Builder_Module is
       Register_Command
         (Kernel, "get_build_output",
          Handler      => Compile_Command'Access);
-
-      Add_Hook
-        (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Args : Argument_List (1 .. 2);
-   begin
-      Args :=
-        (1 => new String'(-Error_Category),
-         2 => new String'
-           (To_String (Get_Pref (Kernel, Error_Src_Highlight))));
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-
-      Args :=
-        (1 => new String'(-Style_Category),
-         2 => new String'
-           (To_String (Get_Pref (Kernel, Style_Src_Highlight))));
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-
-      Args :=
-        (1 => new String'(-Warning_Category),
-         2 => new String'
-           (To_String (Get_Pref (Kernel, Warning_Src_Highlight))));
-      Execute_GPS_Shell_Command
-        (Kernel, "Editor.register_highlighting", Args);
-      Free (Args);
-   end Preferences_Changed;
 
    ---------------
    -- Deep_Free --
