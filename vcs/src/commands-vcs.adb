@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl; use GPS.Intl;
-with VFS;        use VFS;
-with Traces;     use Traces;
+with GPS.Intl;    use GPS.Intl;
+with VFS;         use VFS;
+with Traces;      use Traces;
 with Basic_Types; use Basic_Types;
 
 package body Commands.VCS is
@@ -85,34 +85,53 @@ package body Commands.VCS is
 
       File : List;
    begin
-      Node := First (Command.Filenames);
-      Log  := First (Command.Logs);
+      --  If we have a single element in Log, then the same log must be used
+      --  for all files.
 
-      --  Launch one command for each commit.
-      --  ??? This needs to be modified when allowing multiple-file commit
-      --  with same changelog.
+      Log := First (Command.Logs);
 
-      while Node /= Null_Node loop
-         Append (File, Data (Node));
-
+      if Length (Command.Logs) = 1 then
          case Command.Action is
             when Commit =>
-               Commit (Command.Rep, File, Data (Log));
+               Commit (Command.Rep, Command.Filenames, Data (Log));
 
             when Add =>
-               Add (Command.Rep, File, Data (Log));
+               Add (Command.Rep, Command.Filenames, Data (Log));
 
             when Remove =>
-               Remove (Command.Rep, File, Data (Log));
+               Remove (Command.Rep, Command.Filenames, Data (Log));
 
             when others =>
                raise Program_Error;
          end case;
 
-         Free (File);
-         Node := Next (Node);
-         Log  := Next (Log);
-      end loop;
+      else
+         --  Log is not shared, launch one command for each commit
+
+         Node := First (Command.Filenames);
+
+         while Node /= Null_Node loop
+            Append (File, Data (Node));
+
+            case Command.Action is
+               when Commit =>
+                  Commit (Command.Rep, File, Data (Log));
+
+               when Add =>
+                  Add (Command.Rep, File, Data (Log));
+
+               when Remove =>
+                  Remove (Command.Rep, File, Data (Log));
+
+               when others =>
+                  raise Program_Error;
+            end case;
+
+            Free (File);
+            Node := Next (Node);
+            Log  := Next (Log);
+         end loop;
+      end if;
 
       Command_Finished (Command, True);
       return Success;
@@ -208,7 +227,7 @@ package body Commands.VCS is
 
    function Name (X : access Log_Action_Command_Type) return String is
       Action_String : constant Basic_Types.String_Access :=
-        Get_Identified_Actions (X.Rep) (X.Action);
+                        Get_Identified_Actions (X.Rep) (X.Action);
    begin
       if Action_String /= null then
          return Action_String.all;
