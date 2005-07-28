@@ -1,37 +1,375 @@
 <?xml version="1.0"?>
 
 <Custom>
-  <Protocol>
-    <Name>ssh</Name>
-    <Description>This protocol is used to create and keep open a permanent SSH connection to the remote host. Files are transfered inline and the remote host is assumed to be a Unix-like system, which can execute a /bin/sh shell. ""ssh"" itself must be found in your PATH.</Description>
-    <Commands>
-      <Shell_Cmd>ssh %h -C %U -e none -q /bin/sh</Shell_Cmd>
-      <User_Name_In_Shell_Cmd>-l %u</User_Name_In_Shell_Cmd>
-      <Has_Shell_Prompt>False</Has_Shell_Prompt>
-      <Inline_Read_File_Cmd>cat %F</Inline_Read_File_Cmd>
-      <Exit_Status_Cmd>echo $?</Exit_Status_Cmd>
-      <Is_Regular_File_Cmd>test -r %F</Is_Regular_File_Cmd>
-      <Is_Writable_Cmd>test -w %F</Is_Writable_Cmd>
-      <Is_Directory_Cmd>test -d %F</Is_Directory_Cmd>
-      <Delete_File_Cmd>rm -f %F</Delete_File_Cmd>
-      <Timestamp_Cmd>ls -l %F 2&gt;/dev/null</Timestamp_Cmd>
-      <Inline_Write_File_Cmd>cat &gt; %F &lt;&lt;'GPSEOF'</Inline_Write_File_Cmd>
-      <Set_Readable_Cmd>chmod u+r %F</Set_Readable_Cmd>
-      <Set_Writable_Cmd>chmod u+w %F</Set_Writable_Cmd>
-      <Set_Unreadable_Cmd>chmod u-r %F</Set_Unreadable_Cmd>
-      <Set_Unwritable_Cmd>chmod u-w %F</Set_Unwritable_Cmd>
-   </Commands>
-  </Protocol>
-  <Protocol>
-    <Name>scp</Name>
-    <Description>This protocol uses a combination of ssh and scp. The former is used for commands that check the status and timestamp of files, the latter is used to transfer files in both direction</Description>
-    <Parent>ssh</Parent>
-    <Commands>
-      <Inline_Read_File_Cmd>null</Inline_Read_File_Cmd>
-      <Read_File_Cmd>@scp -C -p %U%h:%F %t</Read_File_Cmd>
-      <User_Name_In_Shell_Cmd>%u@</User_Name_In_Shell_Cmd>
-      <Inline_Write_File_Cmd>null</Inline_Write_File_Cmd>
-      <Write_File_Cmd>@scp -C -p %t %U%h:%F</Write_File_Cmd>
-    </Commands>
-  </Protocol>
+  <!--
+     Return values
+      ok
+      *  tells gps that the command is successfull
+      nok
+      *  tells gps that the command is unsuccessfull
+      nok_invalidpassword
+      *  same as nok + reports to the user that the password is invalid
+      nok_unknownhost
+      *  same as nok + reports to the user that the host is invalid
+      nok_timeout
+      *  the command execution timed out
+
+      Actions kind available
+      spawn
+      *  local shell command
+      set_session
+      *  set spawned command as session shell
+      return_value
+      *  returns command result
+      input_login
+      *  ask user for a login and send it to remote
+      input_password
+      *  ask user for a password ans send it to remote
+      send
+      *  send param to remote
+      echo_file
+      *  send file to remote
+      read_file
+      *  reads remote output as file
+      read_timestamp
+      *  reads remote output as timestamp
+      read_tmp_file
+      *  reads tmp file as file
+      create_tmp_file
+      *  creates tmp file for read transfer
+      null_action
+      *  does nothing
+
+  -->
+
+  <!-- Answers and their meaning -->
+  <remote_connection_regexps>
+    <regexp id="common_login">(.*ogin|Name \([^\)]*\)): *$</regexp>
+    <regexp id="common_password">^.*(password|passphrase.*): *$</regexp>
+    <regexp id="common_confirm">^.*continue connecting \(yes.no\).*$</regexp>
+    <regexp id="common_invalid_password">^.*(Permission denied.|Login incorrect|Received signal [0-9]+|Connection (refused|closed)|Sorry, try again.).*$</regexp>
+    <regexp id="common_invalid_host">Name or service not known</regexp>
+    <regexp id="common_shell_prompt">^[^#$%&gt;\n]*[#$%&gt;] *$</regexp>
+    <regexp id="gps_shell_prompt">^.*---GPS--#$</regexp>
+    <regexp id="ftp_Shell_Prompt">^ftp&gt;$</regexp>
+    <regexp id="sh_exit_status_ok">0</regexp>
+    <regexp id="sh_exit_status_nok">1</regexp>
+    <regexp id="scp_ok">^.*100%.*$</regexp>
+    <regexp id="telnet_md5">^.*Response</regexp>
+  </remote_connection_regexps>
+
+  <!-- SSH -->
+
+  <remote_connection name="ssh">
+    <description>This protocol is used to create and keep open a permanent SSH connection to the remote host. Files are transfered inline and the remote host is assumed to be a Unix-like system, which can execute a /bin/sh shell. ""ssh"" itself must be found in your PATH.</description>
+    <max_password_attempts>2</max_password_attempts>
+    <commands>
+      <open_session_cmd>
+        <action kind="spawn" param="ssh %h -C %{-l %u} -e none -q">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="common_confirm">
+            <action kind="send" param="yes"/>
+          </expect>
+          <expect regexp_id="common_shell_prompt">
+            <action kind="send" param="PS1=---GPS--#">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="set_session"/>
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </open_session_cmd>
+
+      <read_file_cmd>
+        <action kind="send" param="cat %F">
+          <expect regexp_id="common_shell_prompt">
+            <action kind="read_file"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </read_file_cmd>
+
+      <write_file_cmd>
+        <action kind="send" param="cat &gt; %F &lt;&lt; GPSEOF"/>
+        <action kind="echo_file"/>
+        <action kind="send" param="GPSEOF">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </write_file_cmd>
+
+      <is_regular_file_cmd>
+        <action kind="send" param="test -r %F; echo -e &quot;$?&quot;">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </is_regular_file_cmd>
+
+      <is_writable_cmd>
+        <action kind="send" param="test -w %F; echo -e &quot;$?&quot;">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </is_writable_cmd>
+
+      <is_directory_cmd>
+        <action kind="send" param="test -d %F; echo -e &quot;$?&quot;">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </is_directory_cmd>
+
+      <delete_file_cmd>
+        <action kind="send" param="rm -f %F">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </delete_file_cmd>
+
+      <timestamp_cmd>
+        <action kind="send" param="ls -l %F 2&gt;/dev/null">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="read_timestamp"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </timestamp_cmd>
+
+      <set_readable_cmd>
+        <action kind="send" param="chmod u+r %F">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </set_readable_cmd>
+
+      <set_writable_cmd>
+        <action kind="send" param="chmod u+w %F">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </set_writable_cmd>
+
+      <set_unreadable_cmd>
+        <action kind="send" param="chmod u-r %F">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </set_unreadable_cmd>
+
+      <set_unwritable_cmd>
+        <action kind="send" param="chmod u-w %F">
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </set_unwritable_cmd>
+    </commands>
+  </remote_connection>
+
+  <!-- SCP -->
+
+  <remote_connection name="scp">
+    <description>.</description>
+    <max_password_attempts>2</max_password_attempts>
+    <parent>ssh</parent>
+    <commands>
+      <read_file_cmd>
+        <action kind="create_tmp_file"/>
+        <action kind="spawn" param="scp %{%u@}%h:%F %t">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="scp_ok">
+            <action kind="read_tmp_file"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </read_file_cmd>
+      <write_file_cmd>
+        <action kind="spawn" param="scp %t %{%u@}%h:%F">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="scp_ok">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </write_file_cmd>
+    </commands>
+  </remote_connection>
+
+  <!-- TELNET -->
+
+  <remote_connection name="telnet">
+    <description>.</description>
+    <max_password_attempts>2</max_password_attempts>
+    <parent>ssh</parent>
+    <commands>
+      <open_session_cmd>
+        <action kind="spawn" param="telnet -E %{-l %u} %h">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="telnet_md5">
+            <action kind="send" param=" "/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="common_shell_prompt">
+            <action kind="send" param="stty -echo"/>
+            <action kind="send" param="PS1=---GPS--#">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="set_session"/>
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </open_session_cmd>
+    </commands>
+  </remote_connection>
+
+  <!-- RSH -->
+
+  <remote_connection name="rsh">
+    <description>This protocol is used to create and keep open a permanent RSH connection to the remote host. Files are transfered inline and the remote host is assumed to be a Unix-like system, which can execute a /bin/sh shell. ""ssh"" itself must be found in your PATH.</description>
+    <max_password_attempts>2</max_password_attempts>
+    <parent>ssh</parent>
+    <commands>
+      <open_session_cmd>
+        <action kind="spawn" param="rsh %{-l %u} %h">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="common_shell_prompt">
+            <action kind="send" param="PS1=---GPS--#">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="set_session"/>
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </open_session_cmd>
+    </commands>
+  </remote_connection>
+
+  <!-- RSYNC -->
+
+  <remote_connection name="rsync">
+    <description>.</description>
+    <max_password_attempts>2</max_password_attempts>
+    <parent>rsh</parent>
+    <commands>
+      <read_file_cmd>
+        <action kind="create_tmp_file"/>
+        <action kind="spawn" param="rsync -p %{%u@}%h:%F %t">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="scp_ok">
+            <action kind="read_tmp_file"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </read_file_cmd>
+      <write_file_cmd>
+        <action kind="spawn" param="rsync %t %{%u@}%h:%F">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="scp_ok">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </write_file_cmd>
+    </commands>
+  </remote_connection>
+
+  <!-- FTP -->
+
 </Custom>
