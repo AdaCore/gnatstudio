@@ -814,7 +814,13 @@ separate lines, without having to go back and forth between the two editors.
 The @code{Clipboard View} provides a graphical mean of seeing what is currently
 stored in the clipboard. It appears as a list of lines, each of which is
 associated with one level of the clipboard. The text that shows in these lines
-is the first line of the selection at that level.
+is the first line of the selection at that level that contains non blank
+characters. Leading characters are discarded. @code{[...]} is prepended
+or appended in case the selection has been truncated.
+
+If you bring the mouse over a line in the @code{Clipboard View}, a tooltip will
+pop up showing the entire selection corresponding to the line by opposition to
+the possibly truncated one.
 
 In addition, one of the lines has an arrow on its left. This indicates the
 line that will be pasted when you select the menu @code{Edit->Paste}. If you
@@ -2272,7 +2278,7 @@ Remove the selected substring from the case substring exception dictionary.
 @noindent
 GPS includes basic facilities for refactoring your code. Refactoring is the
 standard term used to describe manipulation of the source code that do not
-affect the behavior of the application, but help reorganize the source code 
+affect the behavior of the application, but help reorganize the source code
 to make it more readable, more extendable,...
 
 Refactoring technics are generally things that programmers are used to do by
@@ -2331,7 +2337,7 @@ in the original subprogram by a call to the new subprogram.
       Local1 := Local1 + 4;
    end Proc;
 
-When lines 4 and 5 are extracted, we get: 
+When lines 4 and 5 are extracted, we get:
    function New_Method (Param1 : Integer) return Integer is
       Local1 : Integer;
    begin
@@ -2345,7 +2351,7 @@ When lines 4 and 5 are extracted, we get:
    begin
       Local1 := New_Method (Param1);
       Local1 := Local1 + 4;
-   end Proc; 
+   end Proc;
 @end smallexample
 
 The above example, albeit trivial, shows in particular that GPS knows how
@@ -9637,7 +9643,8 @@ appearance. They are all customizable through the Edit->Preferences menu.
 
 However, you might wish to add your own kind of preferences for your extension
 modules. This can easily be done through the usual GPS customization files.
-Preferences are different from project attributes (@pxref{Defining project attributes}), in that the latter will vary depending on which project is loaded
+Preferences are different from project attributes (@pxref{Defining project attributes}),
+in that the latter will vary depending on which project is loaded
 by the user, whereas preferences are always set to the same value no matter
 what project is loaded.
 
@@ -9666,7 +9673,9 @@ Subpages are references by separating pages name with colons (':').
 
 @item default (optional, default depends on the type of the preference)
 
-The default value of the preference, when not set by the user. This is 0 for integer preferences, the empty string for string preferences, True for boolean values, and the first possible choice for choice preferences.
+The default value of the preference, when not set by the user. This is 0 for
+integer preferences, the empty string for string preferences, True for boolean
+values, and the first possible choice for choice preferences.
 
 @item tip (optional, default is "")
 
@@ -10543,7 +10552,7 @@ can choose to activate the editor and add the attribute to the project.
 @item @code{disable} (a space-separated list of attribute names, default: "")
 
 This is a list of attribute whose editor should be greyed out if the current
-attribute is specified. This only works if both the current attribute and the 
+attribute is specified. This only works if both the current attribute and the
 referenced attributes have their @code{disable_if_not_set} attribute set to "true".
 This can be used to have mutually exclusive attributes present in the editor
 
@@ -13236,7 +13245,9 @@ parameter, the command to be executed. This is a subprogram parameter (@pxref{Su
 @itemize @bullet
 @item GPS shell
 
-The command can be any GPS action (@pxref{Defining Actions}). The arguments for the hook will be passed to the action, and are available as $1, $2,@dots{}. In the following example, the message "Just executed
+The command can be any GPS action (@pxref{Defining Actions}). The arguments for
+the hook will be passed to the action, and are available as $1, $2,@dots{}.
+In the following example, the message "Just executed
 the hook: project_changed" will be printed in the Shell console. Note that we
 are defining the action to be executed inline, but this could in fact be
 defined in a separate XML customization file for convenience.
