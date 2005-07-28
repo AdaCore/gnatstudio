@@ -606,20 +606,20 @@ package body Vsearch_Ext is
 
    procedure Create_Context (Vsearch : access Vsearch_Extended_Record'Class) is
       use Widget_List;
-      Data           : constant Search_Module_Data :=
-                         Find_Module
-                           (Vsearch.Kernel,
-                            Get_Text (Get_Entry (Vsearch.Context_Combo)));
-      Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
-      All_Occurences : constant Boolean :=
-                         Get_Active (Vsearch.Search_All_Check);
-      Options        : Search_Options;
+      Data            : constant Search_Module_Data :=
+                          Find_Module
+                            (Vsearch.Kernel,
+                             Get_Text (Get_Entry (Vsearch.Context_Combo)));
+      Pattern         : constant String := Get_Text (Vsearch.Pattern_Entry);
+      All_Occurrences : constant Boolean :=
+                          Get_Active (Vsearch.Search_All_Check);
+      Options         : Search_Options;
    begin
       Free (Vsearch.Last_Search_Context);
 
       if Data.Factory /= null and then Pattern /= "" then
          Vsearch.Last_Search_Context := Data.Factory
-           (Vsearch.Kernel, All_Occurences, Data.Extra_Information);
+           (Vsearch.Kernel, All_Occurrences, Data.Extra_Information);
 
          if Vsearch.Last_Search_Context /= null then
             Options :=
@@ -642,7 +642,7 @@ package body Vsearch_Ext is
          Add_To_History
            (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, Pattern);
 
-         --  It sometimes happen that another entry is selected, for some
+         --  It sometimes happens that another entry is selected, for some
          --  reason. This also resets the options to the unwanted selection,
          --  so we also need to override them.
          Set_Text (Vsearch.Pattern_Entry, Pattern);
@@ -1184,7 +1184,7 @@ package body Vsearch_Ext is
       loop
          declare
             Data : constant Search_Module_Data :=
-              Get_Nth_Search_Module (Kernel, Num);
+                     Get_Nth_Search_Module (Kernel, Num);
          begin
             exit when Data = No_Search;
 
@@ -1441,6 +1441,9 @@ package body Vsearch_Ext is
       then
          Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
       end if;
+
+      --  Reset the all occurrences check box.
+      Set_Active (Vsearch_Module_Id.Search.Search_All_Check, False);
 
       if Raise_Widget then
          Raise_Child (Child);
