@@ -800,7 +800,11 @@ package body Custom_Module is
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Handler, Kernel, Current_Node);
 
-         elsif To_Lower (Current_Node.Tag.all) = "protocol" then
+         elsif To_Lower (Current_Node.Tag.all) =
+                "remote_connection_regexps" then
+            Initialize_Regexps (Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "remote_connection" then
             Connection := new Remote_Connections.Custom.Custom_Connection;
             Initialize (Connection, Current_Node);
 
