@@ -526,6 +526,11 @@ package body Clipboard_Views is
       View := Open_View (Kernel);
       Raise_Child (View);
       Set_Focus_Child (Get_MDI (Kernel), View);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end On_Open_View;
 
    ---------------
