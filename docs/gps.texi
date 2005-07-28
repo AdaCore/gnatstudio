@@ -1015,8 +1015,18 @@ Toggle the sorting of the entries by sub-categories. This is useful,
 for example, for separating the warnings from the errors in the build
 results.
 
+@item Expand category
+Expand all the files in the current categories.
+
+@item Collapse all
+Collapse all the categories in the Locations View
+
 @item Jump to location
 Open the location contained in the message, if any.
+
+@item Clear Locations View
+Remove all entries from the Locations View.
+
 @end table
 
 In some cases, a wrench icon will be associated on the left of a compilation
