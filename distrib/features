@@ -41,6 +41,11 @@ New features in GPS 3.1.0
   This preferenced is used to specify the time before a tooltip is displayed
   in source editors.
 
+- E414-009 Enhancements in the Locations View.
+   - Reorganize the layout to improve use of the screen space
+   - Highlight the matching pattern in the search results
+   - Add contextual menus to collapse or expand the view
+
 - E404-002 The current location is saved when the user selects Goto Line,
   does a search, or jumps to a location through the Outline View or Locations
   Window. This way, it is easier to navigate back to the previous position
