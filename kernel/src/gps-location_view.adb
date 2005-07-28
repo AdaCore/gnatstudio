@@ -276,6 +276,12 @@ package body GPS.Location_View is
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View.
 
+   procedure Expand_Category (Object   : access Gtk_Widget_Record'Class);
+   --  Expand all files in the selected Category.
+
+   procedure Collapse (Object   : access Gtk_Widget_Record'Class);
+   --  Collapse all categories in the Location View.
+
    type Clear_Locations_View_Command is new Interactive_Command
       with null record;
    function Execute
@@ -736,6 +742,48 @@ package body GPS.Location_View is
 
       Remove (View.Tree.Model, Iter);
    end Remove_Category_Or_File_Iter;
+
+   ---------------------
+   -- Expand_Category --
+   ---------------------
+
+   procedure Expand_Category (Object   : access Gtk_Widget_Record'Class) is
+      View  : constant Location_View := Location_View (Object);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
+   begin
+      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Path := Get_Path (View.Tree.Model, Iter);
+
+      while Get_Depth (Path) > 1 loop
+         Dummy := Up (Path);
+      end loop;
+
+      Dummy := Expand_Row (View.Tree, Path, True);
+
+      Path_Free (Path);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Expand_Category;
+
+   --------------
+   -- Collapse --
+   --------------
+
+   procedure Collapse (Object   : access Gtk_Widget_Record'Class) is
+      View  : constant Location_View := Location_View (Object);
+   begin
+      Collapse_All (View.Tree);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Collapse;
 
    ---------------------
    -- Remove_Category --
@@ -1295,6 +1343,18 @@ package body GPS.Location_View is
          (Check, "activate", Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, -"Expand category");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Mitem, "activate", Expand_Category'Access, Explorer,
+         After => False);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, -"Collapse all");
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Mitem, "activate", Collapse'Access, Explorer,
+         After => False);
       Append (Menu, Mitem);
 
       if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
