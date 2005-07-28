@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E727-022 Right-click in single-line selection cancels it
+  Problem:    If you have selected part of a line, and right-click in it to
+              display the contextual menu, the selection is cancelled. As a
+              result, the action can no longer rely on the selection (for
+              instance if you have put Copy/Paste/Cut in the contexual menu)
+
 - E708-005 International characters converted to local character set when saving
   Problem:    When saving files, GPS ignores the preference in Character Set
               and saves to the local character set.
