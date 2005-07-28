@@ -18,39 +18,50 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
-with Commands.Interactive; use Commands, Commands.Interactive;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Clipboard; use GPS.Kernel.Clipboard;
-with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Intl;             use GPS.Intl;
-with GUI_Utils;            use GUI_Utils;
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Pixmaps_IDE;          use Pixmaps_IDE;
-with String_Utils;         use String_Utils;
-with Traces; use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Window;                use Gdk.Window;
+with Gdk.Types;                 use Gdk.Types;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Intl;                  use GPS.Intl;
+with GUI_Utils;                 use GUI_Utils;
+with Pixmaps_IDE;               use Pixmaps_IDE;
+with String_Utils;              use String_Utils;
+with Tooltips;                  use Tooltips;
+with Traces;                    use Traces;
 
 package body Clipboard_Views is
---   Me : constant Debug_Handle := Create ("Clipboard");
 
    type Clipboard_Views_Module_Record is new Module_ID_Record with null record;
    Clipboard_Views_Module : Module_ID;
@@ -121,6 +132,81 @@ package body Clipboard_Views is
      (Command : access Merge_With_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Merge the selected entry with the previous one
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Clipboard_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
+      Clipboard_View : Clipboard_View_Access;
+   end record;
+   type Clipboard_View_Tooltips_Access is
+     access all Clipboard_View_Tooltips'Class;
+   procedure Draw
+     (Tooltip : access Clipboard_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   ----------
+   -- Draw --
+   ----------
+
+   procedure Draw
+     (Tooltip : access Clipboard_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Window     : Gdk.Window.Gdk_Window;
+      New_Window : Gdk_Window;
+      Mask       : Gdk_Modifier_Type;
+
+      Model      : constant Gtk_Tree_Model :=
+                     Get_Model (Tooltip.Clipboard_View.Tree);
+
+      X, Y       : Gint;
+      Path       : Gtk_Tree_Path;
+      Column     : Gtk_Tree_View_Column;
+      Cell_X,
+      Cell_Y     : Gint;
+      Row_Found  : Boolean := False;
+      Iter       : Gtk_Tree_Iter;
+      Selected   : Integer;
+
+      Text       : GNAT.OS_Lib.String_Access;
+   begin
+      Pixmap := null;
+      Area   := (0, 0, 0, 0);
+
+      Window := Get_Bin_Window (Tooltip.Clipboard_View.Tree);
+      Get_Pointer (Window, X, Y, Mask, New_Window);
+
+      Get_Path_At_Pos
+        (Tooltip.Clipboard_View.Tree, X, Y, Path,
+         Column, Cell_X, Cell_Y, Row_Found);
+
+      if not Row_Found then
+         return;
+      end if;
+
+      Get_Cell_Area (Tooltip.Clipboard_View.Tree, Path, Column, Area);
+      Iter := Get_Iter (Model, Path);
+      Path_Free (Path);
+      Selected := Integer (Get_Int (Model, Iter, 2));
+
+      Text := new String'
+        (Get_Content
+           (Get_Clipboard (Tooltip.Clipboard_View.Kernel)) (Selected).all);
+
+      if Text /= null then
+         Create_Pixmap_From_Text
+           (Text.all,
+            Get_Pref (Tooltip.Clipboard_View.Kernel, Default_Font),
+            White (Get_Default_Colormap),
+            Tooltip.Clipboard_View.Tree,
+            Pixmap);
+         Free (Text);
+      end if;
+   end Draw;
 
    -------------
    -- Execute --
@@ -251,14 +337,17 @@ package body Clipboard_Views is
    -------------
 
    procedure Refresh (View : access Clipboard_View_Record'Class) is
-      Model     : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (View.Tree));
-      Selection : constant Selection_List :=
-        Get_Content (Get_Clipboard (View.Kernel));
-      Iter      : Gtk_Tree_Iter;
-      Last_Paste : constant Integer :=
-        Get_Last_Paste (Get_Clipboard (View.Kernel));
-      Index, First : Natural;
+      Model           : constant Gtk_Tree_Store :=
+                          Gtk_Tree_Store (Get_Model (View.Tree));
+      Selection       : constant Selection_List :=
+                          Get_Content (Get_Clipboard (View.Kernel));
+      Iter            : Gtk_Tree_Iter;
+      Last_Paste      : constant Integer :=
+                          Get_Last_Paste (Get_Clipboard (View.Kernel));
+      Index, First    : Natural;
+      Start_Truncated : Boolean;
+      End_Truncated   : Boolean;
+      Result          : Unbounded_String;
    begin
       Clear (Model);
 
@@ -284,22 +373,42 @@ package body Clipboard_Views is
                First := Selection (S)'Last;
             end if;
 
+            Start_Truncated := False;
+            End_Truncated := False;
+
             Index := Selection (S)'First;
             --  Search the first non-whitespace character
             while Index <= Selection (S)'Last
               and then Is_Blank (Selection (S)(Index))
             loop
+               Start_Truncated := True;
                Index := Index + 1;
             end loop;
 
             --  and only display the first line starting from there
-            while Index <= Selection (S)'Last
-              and then Selection (S)(Index) /= ASCII.LF
-            loop
+            while Index <= Selection (S)'Last loop
+               if Selection (S) (Index) = ASCII.LF then
+                  End_Truncated := True;
+                  exit;
+               end if;
+
                Index := Index + 1;
             end loop;
-            Set (Model, Iter, 1,
-                 Selection (S) (First .. Index - 1));
+
+            Result := To_Unbounded_String (Selection (S) (First .. Index - 1));
+
+            if Start_Truncated then
+               Result := "[...] " & Result;
+            end if;
+
+            if End_Truncated then
+               Result := Result & " [...]";
+            end if;
+
+            --  There is a pathological case here: if only ASCII.LF was
+            --  selected, it will be shown in the view on 2 lines.
+
+            Set (Model, Iter, 1, To_String (Result));
             Set (Model, Iter, 2, Gint (S));
          end if;
       end loop;
@@ -314,6 +423,7 @@ package body Clipboard_Views is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
+      Tooltip  : Clipboard_View_Tooltips_Access;
    begin
       View := new Clipboard_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
@@ -357,6 +467,12 @@ package body Clipboard_Views is
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 On_Preferences_Changed'Access, Watch => GObject (View));
       Refresh (View);
+
+      --  Initialize tooltips
+
+      Tooltip := new Clipboard_View_Tooltips;
+      Tooltip.Clipboard_View := View;
+      Set_Tooltip (Tooltip, View.Tree, 250);
    end Gtk_New;
 
    ------------------
