@@ -1088,28 +1088,25 @@ package body Src_Editor_Box is
       X, Y          : Gint;
       Start_Iter    : Gtk_Text_Iter;
       End_Iter      : Gtk_Text_Iter;
-      Context       : Entity_Selection_Context_Access;
+      Entity_Start  : Gtk_Text_Iter;
+      Entity_End    : Gtk_Text_Iter;
+      Context       : File_Selection_Context_Access;
       Filename      : constant VFS.Virtual_File :=
         Get_Filename (Editor.Source_Buffer);
-      Result        : Boolean;
+      Has_Selection : Boolean;
       Out_Of_Bounds : Boolean := False;
+      Start_Line, End_Line : Integer;
 
    begin
-      Context := new Entity_Selection_Context;
-      Set_Context_Information
-        (Context => Context,
-         Kernel  => Kernel,
-         Creator => Abstract_Module_ID (Src_Editor_Module_Id));
-
       --  Click in the line numbers area ?
 
       if Event /= null
         and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
       then
+         Context := new Entity_Selection_Context;
          Window_To_Buffer_Coords
            (Editor.Source_View, Text_Window_Left,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)),
-            X, Y);
+            Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
          Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
          Line := Get_Line (Start_Iter);
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
@@ -1127,109 +1124,102 @@ package body Src_Editor_Box is
 
          else
             Event_To_Buffer_Coords
-              (Editor.Source_View, Event, Line,
-               Column, Out_Of_Bounds);
+              (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
          end if;
 
          if Out_Of_Bounds then
             --  Invalid position: the cursor is outside the text.
-
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter, Line, Column);
-            Set_File_Information
-              (Context,
-               File      => Filename,
-               Line      => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-               Column    => Integer (To_Box_Column (Column)));
+            Context := new File_Selection_Context;
 
          else
+            --  Get the current entity bounds
+
+            Get_Iter_At_Line_Offset
+              (Editor.Source_Buffer, Entity_Start, Line, Column);
+            Search_Entity_Bounds (Entity_Start, Entity_End);
+
             --  Check whether there is a selection
 
             Get_Selection_Bounds
-              (Editor.Source_Buffer, Start_Iter, End_Iter, Result);
+              (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
 
-            if Result
-              and then Get_Line (Start_Iter) /= Get_Line (End_Iter)
+            --  If we click in the current selection, use this as the context.
+            --  However, if the selection is a single entity, we should create
+            --  a context such that cross-references menus also appear
+
+            if Has_Selection
+              and then (not Equal (Entity_Start, Start_Iter)
+                        or else not Equal (Entity_End, End_Iter))
+              and then Line >= Get_Line (Start_Iter)
+              and then Line <= Get_Line (End_Iter)
+              and then Column >= Get_Line_Offset (Start_Iter)
+              and then Column <= Get_Line_Offset (End_Iter)
             then
-               --  Multiple-line selection: return an area context.
+               Context := new File_Area_Context;
 
-               Unref (Selection_Context_Access (Context));
+               Start_Line := To_Box_Line
+                 (Editor.Source_Buffer, Get_Line (Start_Iter));
+               End_Line   := To_Box_Line
+                 (Editor.Source_Buffer, Get_Line (End_Iter));
 
-               declare
-                  Area       : File_Area_Context_Access;
-                  Start_Line : Integer;
-                  End_Line   : Integer;
-               begin
-                  Area := new File_Area_Context;
+               --  Do not consider the last line selected if only the first
+               --  character is selected.
 
-                  Set_Context_Information
-                    (Context => Area,
-                     Kernel  => Kernel,
-                     Creator => Abstract_Module_ID (Src_Editor_Module_Id));
-                  Set_File_Information
-                    (Area,
-                     File => Filename);
+               if Get_Line_Offset (End_Iter) = 0 then
+                  End_Line := End_Line - 1;
+               end if;
 
-                  Start_Line := To_Box_Line
-                    (Editor.Source_Buffer, Get_Line (Start_Iter));
-                  End_Line   := To_Box_Line
-                    (Editor.Source_Buffer, Get_Line (End_Iter));
+               --  Do not consider the first line selected if only the last
+               --  character is selected.
 
-                  --  Do not consider the last line selected if only the first
-                  --  character is selected.
+               if Ends_Line (Start_Iter) then
+                  Start_Line := Start_Line + 1;
+               end if;
 
-                  if Get_Line_Offset (End_Iter) = 0 then
-                     End_Line := End_Line - 1;
-                  end if;
+               Set_Area_Information
+                 (File_Area_Context_Access (Context), Start_Line, End_Line);
 
-                  --  Do not consider the first line selected if only the last
-                  --  character is selected.
-
-                  if Ends_Line (Start_Iter) then
-                     Start_Line := Start_Line + 1;
-                  end if;
-
-                  Set_Area_Information (Area, Start_Line, End_Line);
-
-                  return Selection_Context_Access (Area);
-               end;
-
-            elsif not Result
-              or else Line /= Get_Line (Start_Iter)
-              or else Column < Get_Line_Offset (Start_Iter) - 1
-              or else Column > Get_Line_Offset (End_Iter) + 1
-            then
-               --  No selection, get the entity under the cursor.
+            else
+               Context := new Entity_Selection_Context;
 
                Get_Iter_At_Line_Offset
                  (Editor.Source_Buffer, Start_Iter, Line, Column);
-               Search_Entity_Bounds (Start_Iter, End_Iter);
-            end if;
 
-            if not Out_Of_Bounds then
                --  Expand the tabs
                Get_Screen_Position
                  (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
 
                Set_Entity_Information
-                 (Context,
-                  Get_Text (Start_Iter, End_Iter),
+                 (Entity_Selection_Context_Access (Context),
+                  Get_Text (Entity_Start, Entity_End),
                   To_Box_Column (Entity_Column));
+
+
+               if Menu /= null then
+                  --  Move the cursor at the correct location. The cursor is
+                  --  grabbed automatically by the kernel when displaying the
+                  --  menu, and this would result in unwanted scrolling
+                  --  otherwise..
+                  --  Do not move the cursor if we have clicked in the
+                  --  selection, since otherwise that cancels the selection
+
+                  Place_Cursor (Editor.Source_Buffer, Start_Iter);
+               end if;
             end if;
          end if;
 
-         Set_File_Information
-           (Context,
-            File   => Filename,
-            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-            Column => Integer (To_Box_Column (Column)));
-
-         if Menu /= null then
-            --  Move the cursor at the correct location. The cursor is grabbed
-            --  automatically by the kernel when displaying the menu, and this
-            --  would result in unwanted scrolling otherwise.
-
-            Place_Cursor (Editor.Source_Buffer, Start_Iter);
+         if Context /= null then
+            Set_File_Information
+              (Context,
+               File   => Filename,
+               Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+               Column => Integer (To_Box_Column (Column)));
+            Set_Context_Information
+              (Context => Context,
+               Kernel  => Kernel,
+               Creator => Abstract_Module_ID (Src_Editor_Module_Id));
          end if;
       end if;
 
