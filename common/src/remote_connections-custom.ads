@@ -31,6 +31,52 @@ with VFS;             use VFS;
 
 package Remote_Connections.Custom is
 
+   type Return_Enum is
+     (OK,
+      --  tells gps that the command is successfull
+      NOK,
+      --  tells gps that the command is unsuccessfull
+      NOK_InvalidPassword,
+      --  same as NOK + reports to the user that the password is invalid
+      NOK_UnknownHost,
+      --  same as NOK + reports to the user that the host is invalid
+      NOK_Timeout,
+      --  the command execution timed out
+      No_Statement
+      --  nothing to return
+     );
+
+   type Action_Enum is
+     (Null_Action,
+      --  null action: does nothing
+      Spawn,
+      --  local shell command
+      Set_Session,
+      --  set spawned command as session shell
+      Return_Value,
+      --  returns command result
+      Input_Login,
+      --  ask user for a login and send it to remote
+      Input_Password,
+      --  ask user for a password ans send it to remote
+      Send,
+      --  send param to remote
+      Send_File,
+      --  send file to remote
+      Read_File,
+      --  reads remote output as file
+      Read_Timestamp,
+      --  reads remote output as timestamp
+      Read_Tmp_File,
+      --  reads tmp file as file
+      Create_Tmp_File
+      --  creates tmp file for reading transfer
+     );
+
+   procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr);
+   --  Initialize Connection based on the content of an XML node.
+   --  The connection is automatically registered
+
    type Custom_Connection is new Remote_Connection_Record with private;
    type Custom_Connection_Access is access all Custom_Connection'Class;
 
@@ -87,85 +133,98 @@ package Remote_Connections.Custom is
 
 private
 
-   type Commands_Record is record
-      Shell_Cmd           : String_Ptr;
+   type Answer_Regexp;
+   type Answer_Regexp_Access is access all Answer_Regexp;
+
+   type Answer_Regexp is record
+      Id     : String_Ptr;
+      Regexp : Pattern_Matcher_Access;
+      Next   : Answer_Regexp_Access;
+   end record;
+
+   Null_Answer_Regexp : constant Answer_Regexp :=
+     (Id     => null,
+      Regexp => null,
+      Next   => null);
+
+   type Action_Record (kind : Action_Enum);
+   type Action_Access is access all Action_Record;
+
+   type Answer_Record;
+   type Answer_Access is access all Answer_Record;
+
+   type Action_Record (Kind : Action_Enum) is record
+      Answers : Answer_Access;
+      Next    : Action_Access;
+      case Kind is
+         when Spawn =>
+            Cmd         : String_Ptr;
+
+         when Return_Value =>
+            Value       : Return_Enum;
+
+         when Send =>
+            Param       : String_Ptr;
+
+         when others =>
+            null;
+      end case;
+   end record;
+
+   Null_Action_Record : constant Action_Record :=
+     (kind    => Null_Action,
+      Answers => null,
+      Next    => null);
+
+   type Answer_Record is record
+      Regexp  : Pattern_Matcher_Access;
+      Actions : Action_Access;
+      Next    : Answer_Access;
+   end record;
+
+   Null_Answer_Record : constant Answer_Record :=
+     (Regexp  => null,
+      Actions => null,
+      Next    => null);
+
+   type Cmd_Enum is
+     (Open_Session_Cmd,
       --  Command to execute to initialize the connection
 
-      User_Name_In_Shell_Cmd : String_Ptr;
-      --  The substitution for %U in Shell_Cmd (this is only called if the
-      --  user name was specified explicitly by the user, and %U is replaced
-      --  with "" otherwise. Note that this part is substituted in turn, so it
-      --  can contain special characters like %u
-
-      Read_File_Cmd        : String_Ptr;
-      Inline_Read_File_Cmd : String_Ptr;
+      Read_File_Cmd,
       --  Command to execute on the remote host to see the contents of a file.
-      --  The inline version is used if it is defined, and uses the same
-      --  connection as previously open. The normal version indicates that the
-      --  file will be fetched directly, and copied to a local temporary file
-      --  the name of which is supplied in the %t parameter.
-      --  If Read_File_Cmd starts with the '@' character, a new connection is
-      --  started to emit the command, rather than sending the command to the
-      --  already open connection. The new connection is immediately closed
-      --  after the command.
 
-      Exit_Status_Cmd     : String_Ptr;
-      --  Command to execute on the host to get the status of the previous
-      --  command. This is used in conjunction with the test commands. If this
-      --  notion doesn't make sense on the system, this command should be the
-      --  empty string.
-
-      Is_Regular_File_Cmd : String_Ptr;
+      Is_Regular_File_Cmd,
       --  Command to execute to find whether a file is readable. This will be
       --  executed just before Exit_Status_Cmd, and the file is considered
       --  readable if the combination of the two outputs is exactly "0"
 
-      Is_Writable_Cmd     : String_Ptr;
+      Is_Writable_Cmd,
       --  Same as Is_Regular_File_Cmd, but check whether the file is writable
 
-      Is_Directory_Cmd    : String_Ptr;
+      Is_Directory_Cmd,
       --  Same as Is_Regular_File_Cmd, but check whether the file is in fact
       --  a directory
 
-      Delete_File_Cmd     : String_Ptr;
+      Delete_File_Cmd,
       --  Command to execute to delete a file
 
-      Timestamp_Cmd       : String_Ptr;
+      Timestamp_Cmd,
       --  Command to execute to get the timestamp. The expected output of the
       --  command is that of the Unix "ls" utility.
       --  ??? Add support for other output formats, through regexps
 
-      Write_File_Cmd        : String_Ptr;
-      Inline_Write_File_Cmd : String_Ptr;
-      --  Command to execute to write the file on the remote host. The contents
-      --  of the file is sent on standard input, and the string
-      --  End_Of_File_Mark is sent on its own at the end of the file
-      --  The inline version is used if it is defined, and uses the same
-      --  connection as previously open.
-      --  The same behavior is provided for Write_File_Cmd as for
-      --  Read_File_Cmd.
+      Write_File_Cmd,
+      --  Command to execute to write the file on the remote host.
 
-      Has_Shell_Prompt    : Boolean := False;
-      --  Whether we are expecting a prompt from the remote shell, or whether
-      --  we should emulate it.
-
-      Set_Readable_Cmd    : String_Ptr;
-      Set_Writable_Cmd    : String_Ptr;
-      Set_Unreadable_Cmd  : String_Ptr;
-      Set_Unwritable_Cmd  : String_Ptr;
+      Set_Readable_Cmd,
+      Set_Writable_Cmd,
+      Set_Unreadable_Cmd,
+      Set_Unwritable_Cmd
       --  Commands to use to change the readable/writable status of files
-   end record;
-   --  In these commands, the following substitutions are available:
-   --    %F => full local file name on the host, utf8 encoded
-   --    %f => base local file name
-   --    %d => directory local file name
-   --    %h => host name
-   --    %u => user name
-   --    %t => temporary local file to use (only for read and write)
-   --    %U => value of User_Name_In_Shell_Cmd, only if the user name was
-   --          explicitly specified by the user, the empty string otherwise
-   --  Any of these command can be left to null, and a reasonnable default is
-   --  provided.
+     );
+
+   type Command_Array is array (Cmd_Enum) of Action_Access;
 
    type Custom_Connection is new Remote_Connection_Record with record
       Description : String_Ptr;
@@ -174,16 +233,31 @@ private
       Name : String_Ptr;
       --  Name of the protocol; This is also the suffix in URLs
 
-      Is_Open  : Boolean := False;
-      Fd       : TTY_Process_Descriptor;
-      Commands : Commands_Record;
+      Max_Password_Attempts : Natural := 0;
+      Password_Attempts     : Natural;
+      --  Max and current number of password attempts
+
+      Commands : Command_Array;
+      --  All commands for the protocol
+
+      --  Intermal values --
+
+      Buffer               : GNAT.OS_Lib.String_Access;
+      --  Buffer containing data readed
+      Timestamp            : Ada.Calendar.Time;
+      --  Last read timestamp
+
+      Is_Open              : Boolean := False;
+      Fd                   : TTY_Process_Descriptor;
 
       Last_Connection_Attempt : Time := VFS.No_Time;
       --  Time when we last attempted a connection, so that we avoid
       --  asking the password over and over again when the user cancelled a
       --  query.
 
-      Next : Custom_Connection_Access := null;
+      In_Get_Return_Status_Method : Boolean := False;
+
+      Next : Custom_Connection_Access;
    end record;
 
 end Remote_Connections.Custom;

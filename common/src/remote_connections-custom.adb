@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
 with Ada.Calendar;       use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;     use Ada.Exceptions;
-with Ada.IO_Exceptions;  use Ada.IO_Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 pragma Warnings (Off);
@@ -39,19 +39,14 @@ with VFS;                use VFS;
 package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
+   Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
+                                              On);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
 
-   Prompt_String : constant String := "---GPS--#";
-   --  The string to print to simulate a prompt. It should match Prompt_Regexp
-
-   Internal_Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ('^' & Prompt_String & '$', Multiple_Lines);
-
-   End_Of_File_Mark : constant String := "GPSEOF";
-   --  Mark sent at the end of a file when it is written back to the remote
-   --  host
+   Regexp_Root : Answer_Regexp_Access := null;
+   --  List of all answers
 
    Temporary_Dir : constant String := Get_Tmp_Dir;
    --  Where temporary files are stored. This could also be in ~/.gps or
@@ -67,9 +62,6 @@ package body Remote_Connections.Custom is
    Ls_Year_Parens  : constant := 10;
    --  Regexp to match the output of ls, and extract the required fields
 
-   Max_Passwd_Attempts : constant := 2;
-   --  Maximum number of attempts to enter the password
-
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -77,46 +69,47 @@ package body Remote_Connections.Custom is
    function Get_String (S : in String_Ptr) return String;
    --  returns "" if S is null, S.all else
 
-   procedure Ensure_Connection
-     (Connection : access Custom_Connection'Class);
-   --  Make sure the connection is already open
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd        : String;
-      Cmd2       : String := "";
-      Cmd3       : String := "") return String;
-   --  Send a command, and get its output.
-   --  If Cmd2 is not the empty string, it is executed also, and its output is
-   --  appended to the one of Cmd
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd     : String;
-      Cmd2    : String := "") return Boolean;
-   --  Execute command, and return its exit status.
-
    function Substitute
-     (Cmd, Local_Full_Name : String;
+     (Cmd                  : String;
+      Local_Full_Name      : String;
       Connection           : access Custom_Connection'Class;
-      Temporary_File : String := "") return String;
+      Temporary_File       : String := "") return String;
    --  Substitute the special variables in Cmd (%f, %F, ...)
    --  %t is only defined if Temporary_File is not the empty string.
    --  User_Name_Is_Explicit should be true if the user name was specified by
    --  the user in the command.
 
-   procedure Open_Connection
-     (Cmd                  : String;
-      Connection           : access Custom_Connection'Class;
-      Is_Interactive_Shell : Boolean;
-      Fd                   : out TTY_Process_Descriptor;
-      Is_Open              : out Boolean);
-   --  Open a new connection with Cmd.
-   --  The password is assumed to be the same as in Connection. However, if it
-   --  doesn't match, the user will be asked interactively.
-   --  If Is_Interactive_Shell is true, the connection is assumed to be
-   --  interactive, and the shell will be setup.
-   --  Is_Open is set to False if the connection couldn't be initialized.
+   function Get_Regexp_Array (Action : in Action_Access)
+                              return Compiled_Regexp_Array;
+   --  Get a Compiled_Regexp_Array structure from a list of expected answers
+
+   procedure Ensure_Connection
+     (Connection : access Custom_Connection'Class;
+      Result     : out Return_Enum);
+   --  Makes sure that the remote is connected
+
+   function Execute_Cmd
+     (Connection      : access Custom_Connection'Class;
+      Cmd             : in     Action_Access;
+      Local_Full_Name : in     String  := "";
+      WriteTmpFile    : in     String  := "";
+      Is_Mount        : in     Boolean := False)
+      return Return_Enum;
+   --  Execute the Command given in input for the Connection.
+   --  returns the answer to this command
+
+   function Analyze_Timestamp (Str : in String) return Ada.Calendar.Time;
+   --  analyze Str and determine the date
+
+   procedure Trace_Filter_Input
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address);
+   procedure Trace_Filter_Output
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address);
+   --  Filter all input/output of the shell
 
    ----------------
    -- Get_String --
@@ -125,125 +118,22 @@ package body Remote_Connections.Custom is
    function Get_String (S : in String_Ptr) return String is
    begin
       if S = null then
+         Trace (Full_Me, "Get_String from a null ptr");
          return "";
       else
          return S.all;
       end if;
    end Get_String;
 
-   -----------------------
-   -- Ensure_Connection --
-   -----------------------
-
-   procedure Ensure_Connection
-     (Connection : access Custom_Connection'Class)
-   is
-      Min_Delay_Between_Attempts : constant Duration := 10.0;  --  seconds
-   begin
-      if not Connection.Is_Open then
-         if Clock - Connection.Last_Connection_Attempt >=
-           Min_Delay_Between_Attempts
-         then
-            Connection.Last_Connection_Attempt := Clock;
-
-            declare
-               Connect_Cmd : constant String := Substitute
-                 (Connection.Commands.Shell_Cmd.all, "", Connection);
-            begin
-               Open_Connection
-                 (Connect_Cmd, Connection, True,
-                  Connection.Fd, Connection.Is_Open);
-            end;
-         end if;
-      end if;
-   end Ensure_Connection;
-
-   -----------------------------
-   -- Send_Cmd_And_Get_Result --
-   -----------------------------
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd        : String;
-      Cmd2       : String := "";
-      Cmd3       : String := "") return String
-   is
-      Result  : Expect_Match;
-      Matched : Match_Array (0 .. 0);
-   begin
-      Trace (Me, "Sending " & Cmd);
-      Send (Connection.Fd, Cmd, Add_LF => True, Empty_Buffer => True);
-
-      if Cmd2 /= "" then
-         Send (Connection.Fd, Cmd2, Add_LF => True);
-      end if;
-
-      if Cmd3 /= "" then
-         Send (Connection.Fd, Cmd3, Add_LF => True);
-      end if;
-
-      if not Connection.Commands.Has_Shell_Prompt then
-         Send (Connection.Fd, "echo " & Prompt_String, Add_LF => True);
-      end if;
-
-      Expect (Connection.Fd, Result, Internal_Prompt_Regexp, Matched);
-
-      declare
-         Output : constant String := Expect_Out (Connection.Fd);
-      begin
-         --  We should also ignore the last newline character, part of the
-         --  prompt
-         return Output (Output'First .. Matched (0).First - 2);
-      end;
-
-   exception
-      when Process_Died =>
-      Close (Connection, GPS_Termination => False);
-         Connection.Is_Open := False;
-         return "";
-   end Send_Cmd_And_Get_Result;
-
-   -----------------------------
-   -- Send_Cmd_And_Get_Result --
-   -----------------------------
-
-   function Send_Cmd_And_Get_Result
-     (Connection : access Custom_Connection'Class;
-      Cmd     : String;
-      Cmd2    : String := "") return Boolean
-   is
-   begin
-      if Connection.Commands.Exit_Status_Cmd = null then
-         return True;
-      else
-         declare
-            Result : constant String := Send_Cmd_And_Get_Result
-              (Connection, Cmd, Cmd2,
-               Connection.Commands.Exit_Status_Cmd.all);
-            Index : Natural := Result'First;
-            Last  : Natural;
-            Success : Boolean;
-         begin
-            Skip_Blanks (Result, Index);
-            Last := Index + 1;
-            Skip_Blanks (Result, Last);
-            Success := Index <= Result'Last
-              and then Result (Index) = '0'
-              and then Last > Result'Last;
-            Trace (Me, "Result is " & Success'Img);
-            return Success;
-         end;
-      end if;
-   end Send_Cmd_And_Get_Result;
-
    ----------------
    -- Substitute --
    ----------------
 
    function Substitute
-     (Cmd, Local_Full_Name : String;
+     (Cmd                  : String;
+      Local_Full_Name      : String;
       Connection           : access Custom_Connection'Class;
-      Temporary_File : String := "") return String
+      Temporary_File       : String := "") return String
    is
       function Sub (Param : String; Quoted : Boolean) return String;
       --  Perform the substitution for Param
@@ -251,7 +141,14 @@ package body Remote_Connections.Custom is
       function Sub (Param : String; Quoted : Boolean) return String is
          pragma Unreferenced (Quoted);
       begin
-         if Param = "F" then
+         if Param'Length > 1 then
+            if User_Is_Specified (Connection) then
+               return Substitute (Param, Local_Full_Name,
+                                  Connection, Temporary_File);
+            else
+               return "";
+            end if;
+         elsif Param = "F" then
             return Local_Full_Name;
          elsif Param = "f" then
             return Base_Name (Local_Full_Name);
@@ -261,18 +158,6 @@ package body Remote_Connections.Custom is
             return Get_Host (Connection);
          elsif Param = "u" then
             return Get_User (Connection);
-         elsif Param = "U" then
-            if User_Is_Specified (Connection) then
-               if Connection.Commands.User_Name_In_Shell_Cmd = null then
-                  raise Invalid_Substitution;
-               else
-                  return Substitute
-                    (Connection.Commands.User_Name_In_Shell_Cmd.all,
-                     Local_Full_Name, Connection, Temporary_File);
-               end if;
-            else
-               return "";
-            end if;
          elsif Param = "t" then
             return Temporary_File;
          else
@@ -285,627 +170,406 @@ package body Remote_Connections.Custom is
          Substitution_Char => '%',
          Callback          => Sub'Unrestricted_Access);
    begin
+      Trace (Full_Me, "Substitute : result is """ & C & """");
       return C;
    end Substitute;
 
-   ---------------------
-   -- Open_Connection --
-   ---------------------
+   ----------------------
+   -- Get_Regexp_Array --
+   ----------------------
 
-   procedure Open_Connection
-     (Cmd                  : String;
-      Connection           : access Custom_Connection'Class;
-      Is_Interactive_Shell : Boolean;
-      Fd                   : out TTY_Process_Descriptor;
-      Is_Open              : out Boolean)
+   function Get_Regexp_Array (Action : in Action_Access)
+                              return Compiled_Regexp_Array
    is
-      Login_Match        : constant := 1;
-      Passwd_Match       : constant := 2;
-      Wrong_Passwd_Match : constant := 3;
-      Shell_Prompt_Match : constant := 4;
-      Unknown_Host_Match : constant := 5;
-      Scp_Match          : constant := 6;
-      Regexps            : constant Compiled_Regexp_Array :=
-        (Login_Match        => Login_Regexp,
-         Passwd_Match       => Passwd_Regexp,
-         Wrong_Passwd_Match => Wrong_Passwd_Regexp,
-         Shell_Prompt_Match => Shell_Prompt_Regexp,
-         Unknown_Host_Match => Unknown_Host_Regexp,
-         Scp_Match          => Scp_Regexp);
-
-      Args : Argument_List_Access;
-      Passwd_Attempts : Natural := 1;
-
-      --  Note: We *must* use a TTY_Process_Description, or we won't
-      --  detect when we get asked for the password
-      Result   : Expect_Match;
-      Response : Message_Dialog_Buttons;
-      pragma Unreferenced (Response);
-
+      Answer   : Answer_Access;
+      Nb_Items : Natural;
    begin
-      Args := Argument_String_To_List (Cmd);
-      Trace (Me, "Connecting with """ & Cmd & """");
-
-      --  Do not create a TTY on the remote site, so that commands we
-      --  send are not echoed. Otherwise, getting a file results in the
-      --  "cat" command sometimes appearing
-      Non_Blocking_Spawn
-        (Fd,
-         Command     => Args (Args'First).all,
-         Args        => Args (Args'First + 1 .. Args'Last),
-         Buffer_Size => 0,
-         Err_To_Out  => True);
-
-      Free (Args);
-
-      if Is_Interactive_Shell
-        and then not Connection.Commands.Has_Shell_Prompt
-      then
-         Send (Fd, "echo " & Prompt_String, Add_LF => True);
+      if Action = null then
+         return (1 .. 0 => null);
       end if;
-
-      loop
-         Expect (Fd, Result, Regexps, Timeout => 10_000);
-
-         case Result is
-            when Expect_Timeout =>
-               Response := Message_Dialog
-                 ("Timeout when connection to "
-                  & Get_Host (Connection),
-                  Dialog_Type   => Error,
-                  Buttons       => Button_OK,
-                  Title         => "Time out",
-                  Justification => Justify_Left);
-               Close (Fd);
-               Is_Open := False;
-               return;
-
-            when Login_Match =>
-               Send (Fd, Get_User (Connection), Add_LF => True);
-
-            when Passwd_Match =>
-               Trace (Me, "Asking for password");
-               if Get_Passwd (Connection) /= "" then
-                  Send (Fd, Get_Passwd (Connection), Add_LF => True);
-               else
-                  declare
-                     Passwd : constant String := Query_Password
-                       (Get_User (Connection) & "'s password on "
-                        & Get_Host (Connection));
-                  begin
-                     Set_Passwd (Connection, Passwd);
-                     if Passwd = "" then
-                        Trace (Me, "Interrupted password query");
-                        Interrupt (Fd);
-                        Is_Open := False;
-                        return;
-                     end if;
-
-                     Send (Fd, Passwd, Add_LF => True);
-
-                     if Is_Interactive_Shell
-                       and then not Connection.Commands.Has_Shell_Prompt
-                     then
-                        Send (Fd, "echo " & Prompt_String,
-                              Add_LF => True);
-                     end if;
-                  end;
-               end if;
-
-            when Wrong_Passwd_Match =>
-               Trace (Me, "Invalid password " & Expect_Out (Fd));
-               Passwd_Attempts := Passwd_Attempts + 1;
-               Response := Message_Dialog
-                 ("Incorrect password",
-                  Dialog_Type   => Error,
-                  Buttons       => Button_OK,
-                  Title         => "Incorrect password",
-                  Justification => Justify_Left);
-               Set_Passwd (Connection, "");
-
-               if Passwd_Attempts > Max_Passwd_Attempts then
-                  Close (Fd);
-                  Is_Open := False;
-                  return;
-               end if;
-
-            when Shell_Prompt_Match =>
-               Is_Open := True;
-               Trace (Me, "Connected");
-
-               if Is_Interactive_Shell
-                 and then Connection.Commands.Has_Shell_Prompt
-               then
-                  Send (Fd, "PS1=" & Prompt_String, Add_LF => True);
-                  Expect (Fd, Result, Internal_Prompt_Regexp);
-                  Send (Fd, "stty -echo", Add_LF => True);
-
-                  Expect (Fd, Result, Internal_Prompt_Regexp);
-                  Flush (Fd);
-               end if;
-
-               return;
-
-            when Unknown_Host_Match =>
-               Is_Open := False;
-               Trace (Me, "Invalid host " & Expect_Out (Fd));
-               Response := Message_Dialog
-                 ("Unknown host: " & Get_Host (Connection),
-                  Dialog_Type   => Error,
-                  Buttons       => Button_OK,
-                  Title         => "Unknown host",
-                  Justification => Justify_Left);
-               Close (Fd);
-               Connection.Is_Open := False;
-               return;
-
-            when Scp_Match =>
-               Is_Open := True;
-               Trace (Me, "Scp OK");
-               Close (Fd);
-               return;
-
-            when others =>
-               null;
-         end case;
+      --  get the size of the structure
+      Answer := Action.Answers;
+      Nb_Items := 0;
+      while Answer /= null loop
+         Nb_Items := Nb_Items + 1;
+         Answer := Answer.Next;
       end loop;
 
-   exception
-      when Process_Died =>
-         Trace (Me, "Timeout");
-         Set_Passwd (Connection, "");
-         Close (Fd);
-         Is_Open := False;
-   end Open_Connection;
+      declare
+         Regexps : Compiled_Regexp_Array (1 .. Nb_Items);
+      begin
+         Answer := Action.Answers;
+         for J in Regexps'Range loop
+            Regexps (J) := Answer.Regexp;
+            Answer := Answer.Next;
+         end loop;
+         return Regexps;
+      end;
+   end Get_Regexp_Array;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   -----------------------
+   -- Ensure_Connection --
+   -----------------------
 
-   procedure Initialize
+   procedure Ensure_Connection
      (Connection : access Custom_Connection'Class;
-      Top        : Glib.Xml_Int.Node_Ptr)
+      Result     : out Return_Enum)
    is
-      Node        : Node_Ptr;
-      Tmp_Str     : String_Ptr;
+      Min_Delay_Between_Attempts : constant Duration := 10.0;  --  seconds
+   begin
+      Trace (Me, "Ensure_Connection");
+      if not Connection.Is_Open then
+         if Clock - Connection.Last_Connection_Attempt >=
+           Min_Delay_Between_Attempts
+         then
+            Connection.Last_Connection_Attempt := Clock;
 
-      function Get_String (S : String_Ptr) return String_Ptr;
-      --  Return a deep copy of S, or null if S is null.
+            Result := Execute_Cmd (Connection,
+                                   Connection.Commands (Open_Session_Cmd),
+                                   Is_Mount => True);
+         else
+            Result := NOK;
+         end if;
+      else
+         Result := OK;
+      end if;
+   end Ensure_Connection;
 
-      procedure Parse_Boolean
-        (Node   : Node_Ptr;
-         Name   : String;
-         Result : in out Boolean);
-      --  Parse a boolean from field Name in a given Node.
-      --  If the field cannot be found, set Result is not changed.
+   procedure Execute_Action_Recursive
+     (Connection      : access Custom_Connection'Class;
+      Action          : in     Action_Access;
+      Local_Full_Name : in     String := "";
+      WriteTmpFile    : in     String := "";
+      ReadTmpBase     : in out Temp_File_Name;
+      Result          : in     String := "";
+      Fd              : in out TTY_Process_Descriptor;
+      Keep_Fd         : in out Boolean;
+      New_Fd          : in out Boolean;
+      Ret_Value       :    out Return_Enum);
+   --  executes the action recursively
 
-      procedure Parse_String
-        (Node   : Node_Ptr;
-         Name   : String;
-         Result : in out String_Ptr);
-      --  Parse a string from field Name is a given Node.
-      --  If the field cannot be found, the result is not changed
+   --------------------
+   -- Execute_Action --
+   --------------------
+
+   procedure Execute_Action_Recursive
+     (Connection      : access Custom_Connection'Class;
+      Action          : in     Action_Access;
+      Local_Full_Name : in     String := "";
+      WriteTmpFile    : in     String := "";
+      ReadTmpBase     : in out Temp_File_Name;
+      Result          : in     String := "";
+      Fd              : in out TTY_Process_Descriptor;
+      Keep_Fd         : in out Boolean;
+      New_Fd          : in out Boolean;
+      Ret_Value       :    out Return_Enum)
+   is
+      Regexps    : constant Compiled_Regexp_Array :=
+        Get_Regexp_Array (Action);
+      Args       : Argument_List_Access;
+      L_Action   : Action_Access;
+      Answer     : Answer_Access;
+      Tmp        : String_Access;
+      Matched    : Match_Array (0 .. 0);
+      Exp_Result : Expect_Match;
+      Success    : Boolean;
+      Tmp_Fd     : File_Descriptor;
+
+      function getTmpFile return String;
+      --  function used to determine if we need read or write tmp file
 
       ----------------
-      -- Get_String --
+      -- getTmpFile --
       ----------------
 
-      function Get_String (S : String_Ptr) return String_Ptr is
+      function getTmpFile return String is
       begin
-         if S = null then
-            return null;
+         if WriteTmpFile = "" then
+            return Temporary_Dir & ReadTmpBase;
          else
-            return new String'(S.all);
+            return WriteTmpFile;
          end if;
-      end Get_String;
-
-      -------------------
-      -- Parse_Boolean --
-      -------------------
-
-      procedure Parse_Boolean
-        (Node   : Node_Ptr;
-         Name   : String;
-         Result : in out Boolean)
-      is
-         Field : String_Ptr;
-      begin
-         Field := Get_Field (Node, Name);
-
-         if Field /= null then
-            Result := Boolean'Value (Field.all);
-         end if;
-
-      exception
-         when Constraint_Error =>
-            Result := False;
-      end Parse_Boolean;
-
-      ------------------
-      -- Parse_String --
-      ------------------
-
-      procedure Parse_String
-        (Node   : Node_Ptr;
-         Name   : String;
-         Result : in out String_Ptr)
-      is
-         Field : String_Ptr;
-      begin
-         Field := Get_Field (Node, Name);
-
-         if Field /= null then
-            if Field.all /= "null" then
-               Result := Get_String (Field);
-            else
-               Result := null;
-            end if;
-         end if;
-      end Parse_String;
+      end getTmpFile;
 
    begin
-      --  Insert connection in custom connections list
-      Connection.Next := Custom_Root;
-      Custom_Root     := Custom_Connection_Access (Connection);
+      Ret_Value := No_Statement;
 
-      Connection.Name :=
-        Get_String (Get_Field (Top, "Name"));
-      Connection.Description :=
-        Get_String (Get_Field (Top, "Description"));
-
-      --  If Parent is defined, first set Commands to parent's ones
-      Tmp_Str := Get_Field (Top, "Parent");
-      if Tmp_Str /= null then
-         declare
-            Tmp_Connect : Custom_Connection_Access := Custom_Root.Next;
-            The_Name    : constant String := To_Lower (Tmp_Str.all);
-         begin
-            while Tmp_Connect /= null loop
-               if To_Lower (Tmp_Str.all) = The_Name then
-                  Connection.Commands := Tmp_Connect.Commands;
-                  exit;
-               end if;
-
-               Tmp_Connect := Tmp_Connect.Next;
-            end loop;
-         end;
+      if Action = null then
+         return;
       end if;
 
-      --  Get Commands node
-      Node := Find_Tag (Top.Child, "Commands");
+      --  for each action, first execute it
+      case Action.Kind is
+         when Null_Action =>
+            null;
 
-      if Node /= null then
-         Parse_String
-           (Node   => Node,
-            Name   => "Shell_Cmd",
-            Result => Connection.Commands.Shell_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "User_Name_In_Shell_Cmd",
-            Result => Connection.Commands.User_Name_In_Shell_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Read_File_Cmd",
-            Result => Connection.Commands.Read_File_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Inline_Read_File_Cmd",
-            Result => Connection.Commands.Inline_Read_File_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Exit_Status_Cmd",
-            Result => Connection.Commands.Exit_Status_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Is_Regular_File_Cmd",
-            Result => Connection.Commands.Is_Regular_File_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Is_Writable_Cmd",
-            Result => Connection.Commands.Is_Writable_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Is_Directory_Cmd",
-            Result => Connection.Commands.Is_Directory_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Delete_File_Cmd",
-            Result => Connection.Commands.Delete_File_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Timestamp_Cmd",
-            Result => Connection.Commands.Timestamp_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Write_File_Cmd",
-            Result => Connection.Commands.Write_File_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Inline_Write_File_Cmd",
-            Result => Connection.Commands.Inline_Write_File_Cmd);
-         Parse_Boolean
-           (Node   => Node,
-            Name   => "Has_Shell_Prompt",
-            Result => Connection.Commands.Has_Shell_Prompt);
-         Parse_String
-           (Node   => Node,
-            Name   => "Set_Readable_Cmd",
-            Result => Connection.Commands.Set_Readable_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Set_Writable_Cmd",
-            Result => Connection.Commands.Set_Writable_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Set_Unreadable_Cmd",
-            Result => Connection.Commands.Set_Unreadable_Cmd);
-         Parse_String
-           (Node   => Node,
-            Name   => "Set_Unwritable_Cmd",
-            Result => Connection.Commands.Set_Unwritable_Cmd);
-      end if;
-
-      Remote_Connections.Register_Protocol (Connection);
-   end Initialize;
-
-   ------------------
-   -- Get_Protocol --
-   ------------------
-
-   function Get_Protocol
-     (Connection : access Custom_Connection) return String is
-   begin
-      return Get_String (Connection.Name);
-   end Get_Protocol;
-
-   ---------------------
-   -- Get_Description --
-   ---------------------
-
-   function Get_Description
-     (Connection : access Custom_Connection) return String is
-   begin
-      return Get_String (Connection.Description);
-   end Get_Description;
-
-   -----------
-   -- Close --
-   -----------
-
-   procedure Close
-     (Connection      : access Custom_Connection;
-      GPS_Termination : Boolean) is
-   begin
-      if Connection.Is_Open and GPS_Termination then
-         Close (Connection.Fd);
-         Close
-           (Remote_Connection_Record (Connection.all)'Access, GPS_Termination);
-
-      else
-         --  Do nothing, since we want to keep the connection open as long as
-         --  possible
-         null;
-      end if;
-   end Close;
-
-   ---------------------
-   -- Is_Regular_File --
-   ---------------------
-
-   function Is_Regular_File
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String) return Boolean is
-   begin
-      if Connection.Commands.Is_Regular_File_Cmd = null then
-         --  Assume the file exists, we'll make sure when we try to fetch it
-         return True;
-      else
-         Trace (Me, "Is_Regular_File " & Local_Full_Name);
-         Ensure_Connection (Connection);
-
-         --  If we can't open the connection, assume the file doesn't exist.
-         --  Otherwise, GPS will always believe there is an auto-save file
-         --  available for the remote files.
-         --  On the other hand, this means that when attempting to open an
-         --  invalid remote file, GPS will try to create a new file since it
-         --  thinks it doesn't have a regular file.
-
-         return Connection.Is_Open and then Send_Cmd_And_Get_Result
-           (Connection,
-            Substitute
-              (Connection.Commands.Is_Regular_File_Cmd.all, Local_Full_Name,
-               Connection));
-      end if;
-   end Is_Regular_File;
-
-   ---------------
-   -- Read_File --
-   ---------------
-
-   function Read_File
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String)
-      return GNAT.OS_Lib.String_Access
-   is
-   begin
-      if Connection.Commands.Inline_Read_File_Cmd /= null then
-         Trace (Me, "Read_File inline " & Local_Full_Name);
-         Ensure_Connection (Connection);
-
-         if not Connection.Is_Open then
-            Trace (Me, "File could not be read");
-            return null;
-         else
-            return new String'
-              (Send_Cmd_And_Get_Result
-                 (Connection, Substitute
-                    (Connection.Commands.Inline_Read_File_Cmd.all,
-                     Local_Full_Name, Connection)));
-         end if;
-
-      elsif Connection.Commands.Read_File_Cmd /= null then
-         declare
-            Base_Tmp    : String (1 .. Temp_File_Len);
-            Index       : Natural;
-            Current_Dir : constant String := Get_Current_Dir;
-            Fd          : File_Descriptor;
-            Success     : Boolean;
-            Result      : String_Access;
-            Pd          : TTY_Process_Descriptor;
-
-         begin
-            Change_Dir (Temporary_Dir);
-            Create_Temp_File (Fd, Base_Tmp);
-            Change_Dir (Current_Dir);
-
-            for J in Base_Tmp'Range loop
-               exit when Base_Tmp (J) = ASCII.NUL;
-               Index := J;
-            end loop;
-
+         when Spawn =>
+            Trace (Full_Me, "Action : Spawn");
             declare
-               Str_Base_Tmp : constant String :=
-                 Temporary_Dir & Base_Tmp (Base_Tmp'First .. Index);
+               The_Command : constant String
+                 := Substitute (Get_String (Action.Cmd),
+                                Local_Full_Name,
+                                Connection,
+                                getTmpFile);
             begin
-               if Connection.Commands.Read_File_Cmd
-                 (Connection.Commands.Read_File_Cmd'First) = '@'
-               then
-                  Open_Connection
-                    (Substitute
-                       (Connection.Commands.Read_File_Cmd.all
-                          (Connection.Commands.Read_File_Cmd'First + 1
-                           .. Connection.Commands.Read_File_Cmd'Last),
-                        Local_Full_Name, Connection,
-                        Str_Base_Tmp),
-                     Connection,
-                     False,
-                     Pd,
-                     Is_Open => Success);
+               Trace (Me, "Execute_Local_Command " & The_Command);
+               Args := Argument_String_To_List (The_Command);
 
-                  if Success then
-                     Close (Pd);
-                  else
-                     return null;
-                  end if;
-
-               else
-                  Trace (Me, "Read_File " & Local_Full_Name);
-                  Ensure_Connection (Connection);
-
-                  if not Connection.Is_Open then
-                     Trace (Me, "File could not be read");
-                     return null;
-                  else
-                     declare
-                        Result : constant String := Send_Cmd_And_Get_Result
-                          (Connection, Substitute
-                             (Connection.Commands.Read_File_Cmd.all,
-                              Local_Full_Name, Connection,
-                              Str_Base_Tmp));
-                        pragma Unreferenced (Result);
-
-                     begin
-                        null;
-                     end;
-
-                  end if;
+               Non_Blocking_Spawn
+                 (Fd,
+                  Command     => Args (Args'First).all,
+                  Args        => Args (Args'First + 1 .. Args'Last),
+                  Buffer_Size => 0,
+                  Err_To_Out  => True);
+               Keep_Fd := False;
+               New_Fd := True;
+               if Active (Full_Me) then
+                  Add_Filter (Fd, Trace_Filter_Output'Access, Output);
+                  Add_Filter (Fd, Trace_Filter_Input'Access, Input);
                end if;
+
+               Free (Args);
             end;
 
-            Result := Read_File (Temporary_Dir & Base_Tmp);
-            Delete_File (Temporary_Dir & Base_Tmp, Success);
-            return Result;
-         end;
+         when Set_Session =>
+            Trace (Full_Me, "Action : Set_Session");
+            Keep_Fd := True;
 
-      else
-         return null;
+         when Return_Value =>
+            Trace (Full_Me, "Action : ReturnValue");
+            Ret_Value := Action.Value;
+
+         when Input_Login =>
+            Trace (Full_Me, "Action : InputLogin");
+            Send (Fd, Get_User (Connection), Add_LF => True);
+
+         when Input_Password =>
+            Trace (Full_Me, "Action : InputPassword");
+            if Connection.Password_Attempts <
+              Connection.Max_Password_Attempts then
+               Connection.Password_Attempts :=
+                 Connection.Password_Attempts + 1;
+               declare
+                  Passwd : constant String := Query_Password
+                    (Get_User (Connection) & "'s password on "
+                     & Get_Host (Connection));
+               begin
+                  Set_Passwd (Connection, Passwd);
+                  if Passwd = "" then
+                     Trace (Me, "Interrupted password query");
+                     Interrupt (Fd);
+                     Ret_Value := NOK_InvalidPassword;
+                  else
+                     Send (Fd, Passwd, Add_LF => True);
+                  end if;
+               end;
+            else
+               Connection.Password_Attempts := 0;
+               Ret_Value := NOK_InvalidPassword;
+            end if;
+
+         when Send =>
+            declare
+               The_Command : constant String
+                 := Substitute (Get_String (Action.Param),
+                                Local_Full_Name,
+                                Connection,
+                                getTmpFile);
+            begin
+               Trace (Full_Me, "Action : Send '" & The_Command & "'");
+               Send (Fd, The_Command, Add_LF => True);
+            end;
+
+         when Send_File =>
+            Trace (Full_Me, "Action : Send_File");
+            Tmp := Read_File (WriteTmpFile);
+            if Tmp /= null then
+               Send (Fd, Tmp.all,
+                     Add_LF => True, Empty_Buffer => True);
+               Free (Tmp);
+            end if;
+
+         when Read_File =>
+            Trace (Full_Me, "Action : Read_File");
+            Connection.Buffer := new String'(Result);
+
+         when Read_Timestamp =>
+            Trace (Full_Me, "Action : Read_Timestamp");
+            Connection.Timestamp := Analyze_Timestamp (Result);
+
+         when Read_Tmp_File =>
+            Trace (Full_Me, "Action : Read_Tmp_File");
+            Connection.Buffer := Read_File (Temporary_Dir & ReadTmpBase);
+            Delete_File (Temporary_Dir & ReadTmpBase, Success);
+
+         when Create_Tmp_File =>
+            Trace (Full_Me, "Action : Create_Tmp_File");
+            Change_Dir (Temporary_Dir);
+            Create_Temp_File (Tmp_Fd, ReadTmpBase);
+            Close (Tmp_Fd);
+
+      end case;
+
+      --  once the action executed, wait for answers (if any)
+      if Regexps'Length > 0 then
+         while Ret_Value = No_Statement loop
+            Expect (Fd, Exp_Result, Regexps, Matched, Timeout => 10_000);
+            if Exp_Result = Expect_Timeout then
+               Ret_Value := NOK_Timeout;
+               return;
+            end if;
+            Answer := Action.Answers;
+            for I in 2 .. Exp_Result loop
+               Answer := Answer.Next;
+            end loop;
+            if Answer /= null then
+               declare
+                  Output : constant String := Expect_Out (Fd);
+               begin
+                  L_Action := Answer.Actions;
+                  while L_Action /= null loop
+                     Execute_Action_Recursive
+                       (Connection,
+                        L_Action,
+                        Local_Full_Name,
+                        WriteTmpFile,
+                        ReadTmpBase,
+                        Output (Output'First .. Matched (0).First - 2),
+                        Fd,
+                        Keep_Fd,
+                        New_Fd,
+                        Ret_Value);
+                     L_Action := L_Action.Next;
+                  end loop;
+               end;
+
+            else
+               --  should never happend... (except bug in expect call)
+               Ret_Value := NOK;
+            end if;
+         end loop;
       end if;
-   end Read_File;
-
-   ------------
-   -- Delete --
-   ------------
-
-   procedure Delete
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String)
-   is
-      Success : Boolean;
-      pragma Unreferenced (Success);
-   begin
-      if Connection.Commands.Delete_File_Cmd = null then
-         --  Don't do anything
-         null;
-      else
-         Trace (Me, "Delete " & Local_Full_Name);
-         Ensure_Connection (Connection);
-         Success := Connection.Is_Open and then Send_Cmd_And_Get_Result
-           (Connection,
-            Substitute
-              (Connection.Commands.Delete_File_Cmd.all, Local_Full_Name,
-               Connection));
-      end if;
-   end Delete;
-
-   -----------------
-   -- Is_Writable --
-   -----------------
-
-   function Is_Writable
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String) return Boolean
-   is
-   begin
-      if Connection.Commands.Is_Writable_Cmd = null then
-         --  Assume it is writable if we do not have a command defined for
-         --  this, we'll check when we try to write it.
-
-         return Connection.Commands.Write_File_Cmd /= null
-           or else Connection.Commands.Inline_Write_File_Cmd /= null;
-
-      else
-         Trace (Me, "Is_Writable " & Local_Full_Name);
-         Ensure_Connection (Connection);
-         return Connection.Is_Open and then Send_Cmd_And_Get_Result
-           (Connection,
-            Substitute
-              (Connection.Commands.Is_Writable_Cmd.all, Local_Full_Name,
-               Connection));
-      end if;
-   end Is_Writable;
-
-   ------------------
-   -- Is_Directory --
-   ------------------
-
-   function Is_Directory
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String) return Boolean is
-   begin
-      if Connection.Commands.Is_Directory_Cmd = null then
-         --  Assume it is a directory only if it ends with a directory
-         --  separator
-         return Local_Full_Name (Local_Full_Name'Last) = '/'
-           or else Local_Full_Name (Local_Full_Name'Last) = '\';
-      else
-         Trace (Me, "Is_Directory " & Local_Full_Name);
-         Ensure_Connection (Connection);
-         return Connection.Is_Open and then Send_Cmd_And_Get_Result
-           (Connection,
-            Substitute
-              (Connection.Commands.Is_Directory_Cmd.all, Local_Full_Name,
-               Connection));
-      end if;
-   end Is_Directory;
+   exception
+      when Process_Died =>
+         raise;
+      when E : others =>
+         Trace (Me, "** Exception : ");
+         Trace (Me, Ada.Exceptions.Exception_Information (E));
+         Ret_Value := NOK;
+   end Execute_Action_Recursive;
 
    ---------------------
-   -- File_Time_Stamp --
+   -- Execute_Command --
    ---------------------
 
-   function File_Time_Stamp
-     (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String)
-      return Ada.Calendar.Time is
+   function Execute_Cmd
+     (Connection      : access Custom_Connection'Class;
+      Cmd             : in     Action_Access;
+      Local_Full_Name : in     String  := "";
+      WriteTmpFile    : in     String  := "";
+      Is_Mount        : in     Boolean := False)
+      return Return_Enum
+   is
+      L_Action      : Action_Access;
+      ReadTmpBase   : String (1 .. Temp_File_Len) := (others => ' ');
+      L_Fd          : TTY_Process_Descriptor;
+      Keep_Fd       : Boolean;
+      New_Fd        : Boolean;
+      Ret_Value     : Return_Enum;
+      Response      : Message_Dialog_Buttons;
+      pragma Unreferenced (Response);
+   begin
+      if not Is_Mount then
+         Ensure_Connection
+           (Connection => Connection,
+            Result     => Ret_Value);
+         if Ret_Value /= OK then
+            return Ret_Value;
+         end if;
+      end if;
+      L_Fd    := Connection.Fd;
+      Keep_Fd := True;
+      New_Fd  := False;
+
+      L_Action := Cmd;
+      while L_Action /= null loop
+         Execute_Action_Recursive
+           (Connection      => Connection,
+            Action          => L_Action,
+            Local_Full_Name => Local_Full_Name,
+            WriteTmpFile    => WriteTmpFile,
+            ReadTmpBase     => ReadTmpBase,
+            Fd              => L_Fd,
+            Keep_Fd         => Keep_Fd,
+            New_Fd          => New_Fd,
+            Ret_Value       => Ret_Value);
+         L_Action := L_Action.Next;
+      end loop;
+
+      Trace (Full_Me, "Ret_Value is " &
+             Return_Enum'Image (Ret_Value));
+
+      case Ret_Value is
+         when NOK_InvalidPassword =>
+            Response := Message_Dialog
+              ("Invalid password when connecting to "
+               & Get_Host (Connection),
+               Dialog_Type   => Error,
+               Buttons       => Button_OK,
+               Title         => "Invalid password",
+               Justification => Justify_Left);
+            Keep_Fd := False;
+
+         when NOK_UnknownHost =>
+            Response := Message_Dialog
+              ("host " & Get_Host (Connection) & " is unknown",
+               Dialog_Type   => Error,
+               Buttons       => Button_OK,
+               Title         => "Unknown host",
+               Justification => Justify_Left);
+            Keep_Fd := False;
+
+         when NOK_Timeout =>
+            Response := Message_Dialog
+              ("Timeout when connection to "
+               & Get_Host (Connection),
+               Dialog_Type   => Error,
+               Buttons       => Button_OK,
+               Title         => "Time out",
+               Justification => Justify_Left);
+            Keep_Fd := False;
+
+         when others =>
+            null;
+      end case;
+      if not New_Fd then
+         if Keep_Fd then
+            Connection.Fd := L_Fd;
+            Connection.Is_Open := True;
+         else
+            Close (L_Fd);
+         end if;
+      else
+         Connection.Fd := L_Fd;
+         if not Keep_Fd then
+            Connection.Is_Open := False;
+            Close (Connection.Fd);
+         end if;
+      end if;
+
+      return Ret_Value;
+   exception
+      when Process_Died =>
+         Connection.Is_Open := False;
+         return NOK_Timeout;
+   end Execute_Cmd;
+
+   -----------------------
+   -- Analyze_Timestamp --
+   -----------------------
+
+   function Analyze_Timestamp (Str : in String) return Ada.Calendar.Time
+   is
       function Safe_Value (S : String; Default : Integer := 1) return Integer;
       --  Same as 'Value but doesn't crash on invalid input
 
@@ -958,73 +622,56 @@ package body Remote_Connections.Custom is
          end if;
       end Month_Name_To_Number;
 
-   begin
-      if Connection.Commands.Timestamp_Cmd = null then
-         return VFS.No_Time;
+      Month  : Month_Number := 1;
+      Day    : Day_Number;
+      Year   : Year_Number := Ada.Calendar.Year (Clock);
+      Hour   : Hour_Number := 1;
+      Minute : Minute_Number := 1;
+      Matched : Match_Array (0 .. 20);
 
-      else
-         Trace (Me, "Time_Stamp " & Local_Full_Name);
-         Ensure_Connection (Connection);
-         if not Connection.Is_Open then
-            return VFS.No_Time;
+   begin
+      Trace (Me, "Analyze_Timestamp");
+      if Str = "" then
+         return VFS.No_Time;
+      end if;
+
+      Match (Ls_Regexp, Str, Matched);
+
+      if Matched (0) /= No_Match then
+         Month := Month_Name_To_Number
+           (To_Lower (Str
+                        (Matched (Ls_Month_Parens).First
+                         .. Matched (Ls_Month_Parens).Last)));
+
+         Day := Day_Number
+           (Safe_Value
+              (Str
+                 (Matched (Ls_Day_Parens).First
+                  .. Matched (Ls_Day_Parens).Last)));
+
+         if Matched (Ls_Hour_Parens) /= No_Match then
+            Hour := Hour_Number
+              (Safe_Value
+                 (Str
+                    (Matched (Ls_Hour_Parens).First
+                     .. Matched (Ls_Hour_Parens).Last)));
+            Minute := Minute_Number
+              (Safe_Value
+                 (Str
+                    (Matched (Ls_Min_Parens).First
+                     .. Matched (Ls_Min_Parens).Last)));
          end if;
 
-         declare
-            C       : constant String := Substitute
-              (Connection.Commands.Timestamp_Cmd.all, Local_Full_Name,
-               Connection);
-            Result  : constant String :=
-              Send_Cmd_And_Get_Result (Connection, C);
-            Month   : Month_Number := 1;
-            Day     : Day_Number;
-            Year    : Year_Number := Ada.Calendar.Year (Clock);
-            Hour    : Hour_Number := 1;
-            Minute  : Minute_Number := 1;
-            Matched : Match_Array (0 .. 20);
+         if Matched (Ls_Year_Parens) /= No_Match then
+            Year := Year_Number
+              (Safe_Value
+                 (Str
+                    (Matched (Ls_Year_Parens).First
+                     .. Matched (Ls_Year_Parens).Last)));
+         end if;
 
-         begin
-            if Result = "" then
-               return VFS.No_Time;
-            end if;
-
-            Match (Ls_Regexp, Result, Matched);
-            if Matched (0) /= No_Match then
-               Month := Month_Name_To_Number
-                 (To_Lower (Result
-                              (Matched (Ls_Month_Parens).First
-                                 .. Matched (Ls_Month_Parens).Last)));
-
-               Day := Day_Number
-                 (Safe_Value
-                    (Result
-                       (Matched (Ls_Day_Parens).First
-                          .. Matched (Ls_Day_Parens).Last)));
-
-               if Matched (Ls_Hour_Parens) /= No_Match then
-                  Hour := Hour_Number
-                    (Safe_Value
-                       (Result
-                          (Matched (Ls_Hour_Parens).First
-                             .. Matched (Ls_Hour_Parens).Last)));
-                  Minute := Minute_Number
-                    (Safe_Value
-                       (Result
-                          (Matched (Ls_Min_Parens).First
-                             .. Matched (Ls_Min_Parens).Last)));
-               end if;
-
-               if Matched (Ls_Year_Parens) /= No_Match then
-                  Year := Year_Number
-                    (Safe_Value
-                       (Result
-                          (Matched (Ls_Year_Parens).First
-                             .. Matched (Ls_Year_Parens).Last)));
-               end if;
-
-               return GNAT.Calendar.Time_Of
-                 (Year, Month, Day, Hour, Minute, Second => 0);
-            end if;
-         end;
+         return GNAT.Calendar.Time_Of
+           (Year, Month, Day, Hour, Minute, Second => 0);
       end if;
 
       return VFS.No_Time;
@@ -1034,7 +681,644 @@ package body Remote_Connections.Custom is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
          return VFS.No_Time;
+
+   end Analyze_Timestamp;
+
+   ------------------------
+   -- Trace_Filter_Input --
+   ------------------------
+
+   procedure Trace_Filter_Input
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address)
+   is
+      pragma Unreferenced (Descriptor, User_Data);
+   begin
+      Trace (Full_Me, '>' & Str);
+   end Trace_Filter_Input;
+
+   -------------------------
+   -- Trace_Filter_Output --
+   -------------------------
+
+   procedure Trace_Filter_Output
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address)
+   is
+      pragma Unreferenced (Descriptor, User_Data);
+   begin
+      Trace (Full_Me, '<' & Str);
+   end Trace_Filter_Output;
+
+   ------------------------------------------------
+   -- Initialization functions from the xml file --
+   ------------------------------------------------
+
+   procedure Initialize_Answer_Regexp
+     (Regexp :    out Answer_Regexp;
+      Top    : in     Glib.Xml_Int.Node_Ptr);
+   --  initializes a new answer_record structure from xml node
+
+   procedure Initialize_Action
+     (Top     : in     Glib.Xml_Int.Node_Ptr;
+      Actions :    out Action_Access);
+   --  Initializes a command from xml node
+
+   -----------------------
+   -- Initialize_Answer --
+   -----------------------
+
+   procedure Initialize_Answer_Regexp
+     (Regexp :    out Answer_Regexp;
+      Top    : in     Glib.Xml_Int.Node_Ptr)
+   is
+      Id      : constant String := Get_Attribute (Top, "id");
+   begin
+      Trace (Full_Me, "Initialize regexp '" & Id & "'");
+
+      --  Init id field
+      Regexp := Null_Answer_Regexp;
+      if Id = "" then
+         Trace (Me, "** Error : the regexp has no 'id' attribute");
+         return;
+      end if;
+      Regexp.Id := new String'(Id);
+
+      --  Init Regexp field
+      if Top.Value = null then
+         Trace (Me, "** Error : Regexp has no value");
+         Glib.Free (Regexp.Id);
+         Regexp := Null_Answer_Regexp;
+         return;
+      end if;
+      Trace (Full_Me, "Regexp is """ & Top.Value.all & """");
+      Regexp.Regexp := +(Compile (Top.Value.all,
+                                  Case_Insensitive or Multiple_Lines));
+   end Initialize_Answer_Regexp;
+
+   ------------------------
+   -- Initialize_Answers --
+   ------------------------
+
+   procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr)
+   is
+      Regexp : Answer_Regexp;
+      Node   : Node_Ptr;
+   begin
+      Node := Top.Child;
+      while Node /= null loop
+         if To_Lower (Node.Tag.all) = "regexp" then
+            Initialize_Answer_Regexp (Regexp, Node);
+            if Regexp /= Null_Answer_Regexp then
+               Regexp.Next := Regexp_Root;
+               Regexp_Root := new Answer_Regexp'(Regexp);
+            end if;
+         end if;
+         Node := Node.Next;
+      end loop;
+   end Initialize_Regexps;
+
+   ------------------------
+   -- Initialize_Command --
+   ------------------------
+
+   procedure Initialize_Action
+     (Top     : in     Glib.Xml_Int.Node_Ptr;
+      Actions :    out Action_Access)
+   is
+      Node          : Node_Ptr;
+      Child_Node    : Node_Ptr;
+      Action        : Action_Access;
+      Action_Last   : Action_Access;
+      Is_Valid      : Boolean;
+      Action_Kind   : Action_Enum;
+      Regexp        : Answer_Regexp_Access;
+      Answer        : Answer_Record;
+   begin
+      Trace (Full_Me, "Initialize_Action");
+      --  Initialize default values
+      Action  := null;
+      Actions := null;
+      Action_Last := null;
+
+      if Top = null then
+         Trace (Full_Me, "no action defined");
+         return;
+      end if;
+
+      Node := Top.Child;
+      while Node /= null loop
+         if To_Lower (Node.Tag.all) = "action" then
+            Is_Valid := True;
+            declare
+               Kind : constant String := Get_Attribute (Node, "kind");
+            begin
+               if Kind = "" then
+                  Trace (Me, "** Error: this action has no attribute 'kind'");
+                  Is_Valid := False;
+               else
+                  Action_Kind := Action_Enum'Value (Kind);
+                  Trace (Full_Me, "Action Kind is '" & Kind & "'");
+               end if;
+            exception
+               when E : others =>
+                  Trace (Me, "*** Error : Invalid Action kind : " & Kind);
+                  Trace (Me, Ada.Exceptions.Exception_Information (E));
+                  Is_Valid := False;
+            end;
+            if Is_Valid then
+               --  first initialize the action itself
+               case Action_Kind is
+                  when Spawn =>
+                     declare
+                        Cmd          : constant String
+                          := Get_Attribute (Node, "param");
+                        Spawn_Action : Action_Record (Spawn);
+                     begin
+                        if Cmd = "" then
+                           Trace (Me,
+                                  "** Error: this Spawn action has " &
+                                  "no attribute 'cmd'");
+                           Is_Valid := False;
+                        else
+                           Spawn_Action.Cmd := new String'(Cmd);
+                           Action := new Action_Record'(Spawn_Action);
+                        end if;
+                     end;
+
+                  when Return_Value =>
+                     declare
+                        Value        : constant String
+                          := Get_Attribute (Node, "param");
+                        Return_Action : Action_Record (Action_Kind);
+                     begin
+                        if Value = "" then
+                           Trace (Me,
+                                  "** Error: this Return_Value action has " &
+                                  "no attribute value");
+                           Is_Valid := False;
+                        else
+                           Return_Action.Value := Return_Enum'Value (Value);
+                           Action := new Action_Record'(Return_Action);
+                        end if;
+                     exception
+                        when E : others =>
+                           Trace (Me, "Error : Invalid value attribute : " &
+                                  Value);
+                           Trace (Me,
+                                  Ada.Exceptions.Exception_Information (E));
+                           Is_Valid := False;
+                     end;
+
+                  when Send =>
+                     declare
+                        Param       : constant String
+                          := Get_Attribute (Node, "param");
+                        Send_Action : Action_Record (Send);
+                     begin
+                        Send_Action.Param := new String'(Param);
+                        Action := new Action_Record'(Send_Action);
+                     end;
+
+                  when others =>
+                     Action := new Action_Record (Action_Kind);
+
+               end case;
+            end if;
+         else
+            Is_Valid := False;
+         end if;
+         if Is_Valid then
+            --  retrieve the eventual answers
+            Action.Answers := null;
+            Child_Node := Node.Child;
+            while Child_Node /= null loop
+               if To_Lower (Child_Node.Tag.all) = "expect" then
+                  declare
+                     Id : constant String
+                       := Get_Attribute (Child_Node, "regexp_id");
+                  begin
+                     if Id = "" then
+                        Trace (Me, "** Error: answer field has no " &
+                               "attribute kind");
+                        Is_Valid := False;
+                     else
+                        Regexp := Regexp_Root;
+                        while Regexp /= null loop
+                           if Regexp.Id.all = Id then
+                              Trace (Full_Me, "found regexp " & Id);
+                              exit;
+                           end if;
+                           Regexp := Regexp.Next;
+                        end loop;
+                        if Regexp = null then
+                           Trace (Me, "*** Error: no regexp exist with the " &
+                                  "id " & Id);
+                           Is_Valid := False;
+                        else
+                           --  init the fields of the answer
+                           Answer.Regexp := Regexp.Regexp;
+                           Initialize_Action
+                             (Child_Node,
+                              Answer.Actions);
+                           Answer.Next := Action.Answers;
+                           Action.Answers := new Answer_Record'(Answer);
+                        end if;
+                     end if;
+                  end;
+               else
+                  Trace (Me,
+                         "** Warning: unexpected field as child of action: " &
+                         Child_Node.Tag.all);
+               end if;
+               Child_Node := Child_Node.Next;
+            end loop;
+         end if;
+         --  add the new action at the end of the list
+         if Is_Valid then
+            if Action_Last = null then
+               Action.Next := null;
+               Actions := Action;
+               Action_Last := Action;
+            else
+               Action.Next := null;
+               Action_Last.Next := Action;
+               Action_Last := Action;
+            end if;
+         end if;
+         Node := Node.Next;
+      end loop;
+   end Initialize_Action;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Connection : access Custom_Connection'Class;
+      Top        : Glib.Xml_Int.Node_Ptr)
+   is
+      Node        : Node_Ptr;
+      Parent      : Node_Ptr;
+      Tmp_Str     : String_Ptr;
+      Cmd         : Action_Access;
+
+      function Get_String (S : String_Ptr) return String_Ptr;
+      --  Return a deep copy of S, or null if S is null.
+
+      procedure Parse_Natural
+        (Node    : in     Node_Ptr;
+         Name    : in     String;
+         Default : in     Natural;
+         Result  :    out Natural);
+      --  Parse a natural from field Name in a given Node.
+      --  If the field cannot be found, set Result is set to Default
+
+      ----------------
+      -- Get_String --
+      ----------------
+
+      function Get_String (S : String_Ptr) return String_Ptr is
+      begin
+         if S = null then
+            return null;
+         else
+            return new String'(S.all);
+         end if;
+      end Get_String;
+
+      -------------------
+      -- Parse_Natural --
+      -------------------
+
+      procedure Parse_Natural
+        (Node    : in     Node_Ptr;
+         Name    : in     String;
+         Default : in     Natural;
+         Result  :    out Natural)
+      is
+         Field : String_Ptr;
+      begin
+         Field := Get_Field (Node, Name);
+
+         if Field /= null then
+            Result := Natural'Value (Field.all);
+         else
+            Result := Default;
+         end if;
+
+      exception
+         when Constraint_Error =>
+            Result := Default;
+      end Parse_Natural;
+
+   begin
+      Trace (Me, "Initialize");
+
+      --  Insert connection in custom connections list
+      Connection.Next := Custom_Root;
+      Custom_Root     := Custom_Connection_Access (Connection);
+
+      Connection.Name := new String'(Get_Attribute (Top, "name"));
+      if Connection.Name.all = "" then
+         Trace (Me, "** ERROR : remoteconnection item shall have an " &
+                "attribute name");
+         return;
+      end if;
+      Trace (Me, "Initialize name = " & Connection.Name.all);
+      Connection.Description :=
+        Get_String (Get_Field (Top, "description"));
+
+      Connection.Password_Attempts := 0;
+      Parse_Natural
+        (Node    => Top,
+         Name    => "max_password_attempts",
+         Default => 2,
+         Result  => Connection.Max_Password_Attempts);
+
+      --  If Parent is defined, first set Commands to parent's ones
+      Tmp_Str := Get_Field (Top, "parent");
+      if Tmp_Str /= null then
+         declare
+            Tmp_Connect : Custom_Connection_Access := Custom_Root.Next;
+            The_Name    : constant String := To_Lower (Tmp_Str.all);
+         begin
+            Trace (Me, "Initialize parent = " & Tmp_Str.all);
+            while Tmp_Connect /= null loop
+               if To_Lower (Tmp_Str.all) = The_Name then
+                  Connection.Commands := Tmp_Connect.Commands;
+                  exit;
+               end if;
+
+               Tmp_Connect := Tmp_Connect.Next;
+            end loop;
+         end;
+      end if;
+
+      --  Get Commands node
+      Parent := Find_Tag (Top.Child, "commands");
+
+      if Parent /= null then
+         Node := Find_Tag (Parent.Child, "open_session_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Trace (Me, "Initialize : get open_session_cmd");
+            Connection.Commands (Open_Session_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "read_file_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Trace (Me, "Initialize : get read_file_cmd");
+            Connection.Commands (Read_File_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "is_regular_file_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Is_Regular_File_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "is_writable_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Is_Writable_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "is_directory_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Is_Directory_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "delete_file_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Delete_File_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "timestamp_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Timestamp_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "write_file_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Write_File_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "set_readable_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Set_Readable_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "set_writable_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Set_Writable_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "set_unreadable_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Set_Unreadable_Cmd) := Cmd;
+         end if;
+
+         Node := Find_Tag (Parent.Child, "set_unwritable_cmd");
+         Initialize_Action (Node, Cmd);
+         if Cmd /= null then
+            Connection.Commands (Set_Unwritable_Cmd) := Cmd;
+         end if;
+
+      end if;
+
+      Remote_Connections.Register_Protocol (Connection);
+   end Initialize;
+
+   ------------------
+   -- Get_Protocol --
+   ------------------
+
+   function Get_Protocol
+     (Connection : access Custom_Connection) return String is
+   begin
+      Trace (Me, "Get_Protocol");
+      return Get_String (Connection.Name);
+   end Get_Protocol;
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description
+     (Connection : access Custom_Connection) return String is
+   begin
+      Trace (Me, "Get_Description");
+      return Get_String (Connection.Description);
+   end Get_Description;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close
+     (Connection      : access Custom_Connection;
+      GPS_Termination : Boolean) is
+   begin
+      if Connection.Is_Open and GPS_Termination then
+         Close (Connection.Fd);
+         Close
+           (Remote_Connection_Record (Connection.all)'Access, GPS_Termination);
+      end if;
+      --  else :
+      --  Do nothing, since we want to keep the connection open as long as
+      --  possible
+   end Close;
+
+   ---------------------
+   -- Is_Regular_File --
+   ---------------------
+
+   function Is_Regular_File
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String) return Boolean
+   is
+      Result : Return_Enum;
+   begin
+      Trace (Me, "Is_Regular_File " & Local_Full_Name);
+      if Connection.Commands (Is_Regular_File_Cmd) = null then
+         --  Assume the file exists, we'll make sure when we try to fetch it
+         return True;
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Is_Regular_File_Cmd),
+                                Local_Full_Name);
+
+         return Result = OK;
+      end if;
+   end Is_Regular_File;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String)
+   is
+      Result : Return_Enum;
+      pragma Unreferenced (Result);
+   begin
+      if Connection.Commands (Delete_File_Cmd) = null then
+         --  Don't do anything
+         null;
+      else
+         Trace (Me, "Delete " & Local_Full_Name);
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Delete_File_Cmd),
+                                Local_Full_Name);
+      end if;
+   end Delete;
+
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   function Is_Writable
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String) return Boolean
+   is
+      Result      : Return_Enum;
+   begin
+      Trace (Me, "Is_Writable " & Local_Full_Name);
+      if Connection.Commands (Is_Writable_Cmd) = null then
+         return Connection.Commands (Write_File_Cmd) /= null;
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Is_Writable_Cmd),
+                                Local_Full_Name);
+         return Result = OK;
+      end if;
+   end Is_Writable;
+
+   ------------------
+   -- Is_Directory --
+   ------------------
+
+   function Is_Directory
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String) return Boolean
+   is
+      Result      : Return_Enum;
+   begin
+      Trace (Me, "Is_Directory " & Local_Full_Name);
+      if Connection.Commands (Is_Directory_Cmd) = null then
+         --  Assume it is a directory only if it ends with a directory
+         --  separator
+         return Local_Full_Name (Local_Full_Name'Last) = '/'
+           or else Local_Full_Name (Local_Full_Name'Last) = '\';
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Is_Directory_Cmd),
+                                Local_Full_Name);
+         return Result = OK;
+      end if;
+   end Is_Directory;
+
+   ---------------------
+   -- File_Time_Stamp --
+   ---------------------
+
+   function File_Time_Stamp
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String)
+      return Ada.Calendar.Time
+   is
+      Result      : Return_Enum;
+      pragma Unreferenced (Result);
+   begin
+      Trace (Me, "File_Time_Stamp " & Local_Full_Name);
+      if Connection.Commands (Timestamp_Cmd) = null then
+         return VFS.No_Time;
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Timestamp_Cmd),
+                                Local_Full_Name);
+         return Connection.Timestamp;
+      end if;
    end File_Time_Stamp;
+
+   ---------------
+   -- Read_File --
+   ---------------
+
+   function Read_File
+     (Connection      : access Custom_Connection;
+      Local_Full_Name : Glib.UTF8_String)
+      return GNAT.OS_Lib.String_Access
+   is
+      Result      : Return_Enum;
+   begin
+      Trace (Me, "Read_File " & Local_Full_Name);
+
+      if Connection.Commands (Read_File_Cmd) = null then
+         return null;
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Read_File_Cmd),
+                                Local_Full_Name);
+         if Result = OK then
+            return Connection.Buffer;
+         else
+            return null;
+         end if;
+      end if;
+   end Read_File;
 
    -----------
    -- Write --
@@ -1045,70 +1329,17 @@ package body Remote_Connections.Custom is
       Local_Full_Name : Glib.UTF8_String;
       Temporary_File  : String)
    is
-      Success : Boolean;
-      Pd      : TTY_Process_Descriptor;
+      Result : Return_Enum;
+      pragma Unreferenced (Result);
    begin
-      if Connection.Commands.Inline_Write_File_Cmd /= null then
-         Trace (Me, "Write inline " & Local_Full_Name);
-         Ensure_Connection (Connection);
-
-         if Connection.Is_Open then
-            declare
-               Tmp : String_Access := Read_File (Temporary_File);
-               C : constant String := Substitute
-                 (Connection.Commands.Inline_Write_File_Cmd.all,
-                  Local_Full_Name, Connection);
-               Result : constant Boolean := Send_Cmd_And_Get_Result
-                 (Connection, C,
-                  Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
-
-            begin
-               Free (Tmp);
-
-               if not Result then
-                  raise Use_Error;
-               end if;
-            end;
-         else
-            raise Use_Error;
-         end if;
-
-      elsif Connection.Commands.Write_File_Cmd /= null then
-         if Connection.Commands.Write_File_Cmd
-           (Connection.Commands.Write_File_Cmd'First) = '@'
-         then
-            Open_Connection
-              (Substitute
-                 (Connection.Commands.Write_File_Cmd
-                    (Connection.Commands.Write_File_Cmd'First + 1
-                       .. Connection.Commands.Write_File_Cmd'Last),
-                  Local_Full_Name,
-                  Connection,
-                  Temporary_File),
-               Connection,
-               False,
-               Pd,
-               Success);
-            if Success then
-               Close (Pd);
-            else
-               raise Use_Error;
-            end if;
-
-         else
-            declare
-               Result : constant String := Send_Cmd_And_Get_Result
-                 (Connection,
-                  Substitute
-                    (Connection.Commands.Write_File_Cmd.all,
-                     Local_Full_Name, Connection,
-                     Temporary_File));
-               pragma Unreferenced (Result);
-
-            begin
-               null;
-            end;
-         end if;
+      Trace (Me, "Write " & Local_Full_Name & " - " & Temporary_File);
+      if Connection.Commands (Write_File_Cmd) = null then
+         return;
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Write_File_Cmd),
+                                Local_Full_Name,
+                                Temporary_File);
       end if;
    end Write;
 
@@ -1119,43 +1350,27 @@ package body Remote_Connections.Custom is
    procedure Set_Writable
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String;
-      Writable        : Boolean) is
+      Writable        : Boolean)
+   is
+      Result : Return_Enum;
+      pragma Unreferenced (Result);
    begin
-      if Connection.Commands.Set_Writable_Cmd = null then
+      Trace (Me,
+             "Set_Writable " & Local_Full_Name &
+             " " & Boolean'Image (Writable));
+      if Connection.Commands (Set_Writable_Cmd) = null then
          --  Nothing to do
          null;
 
       else
-         Trace (Me, "Set_Writable " & Local_Full_Name);
-         Ensure_Connection (Connection);
-
-         if Connection.Is_Open then
-            if Writable then
-               declare
-                  C : constant String := Substitute
-                    (Connection.Commands.Set_Writable_Cmd.all, Local_Full_Name,
-                     Connection);
-                  Result : constant String :=
-                    Send_Cmd_And_Get_Result (Connection, C);
-                  pragma Unreferenced (Result);
-
-               begin
-                  null;
-               end;
-
-            else
-               declare
-                  C : constant String := Substitute
-                    (Connection.Commands.Set_Unwritable_Cmd.all,
-                     Local_Full_Name, Connection);
-                  Result : constant String :=
-                    Send_Cmd_And_Get_Result (Connection, C);
-                  pragma Unreferenced (Result);
-
-               begin
-                  null;
-               end;
-            end if;
+         if Writable then
+            Result := Execute_Cmd (Connection,
+                                   Connection.Commands (Set_Writable_Cmd),
+                                   Local_Full_Name);
+         else
+            Result := Execute_Cmd (Connection,
+                                   Connection.Commands (Set_Unwritable_Cmd),
+                                   Local_Full_Name);
          end if;
       end if;
    end Set_Writable;
@@ -1167,42 +1382,26 @@ package body Remote_Connections.Custom is
    procedure Set_Readable
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String;
-      Readable        : Boolean) is
+      Readable        : Boolean)
+   is
+      Result : Return_Enum;
+      pragma Unreferenced (Result);
    begin
-      if Connection.Commands.Set_Readable_Cmd = null then
+      Trace (Me, "Set_Readable " & Local_Full_Name &
+            " (" & Boolean'Image (Readable) & ")");
+      if Connection.Commands (Set_Readable_Cmd) = null then
          --  Nothing to do
          null;
 
       else
-         Trace (Me, "Set_Readable " & Local_Full_Name);
-         Ensure_Connection (Connection);
-
-         if Connection.Is_Open then
-            if Readable then
-               declare
-                  C : constant String := Substitute
-                    (Connection.Commands.Set_Readable_Cmd.all, Local_Full_Name,
-                     Connection);
-                  Result : constant String :=
-                    Send_Cmd_And_Get_Result (Connection, C);
-                  pragma Unreferenced (Result);
-               begin
-                  null;
-               end;
-
-            else
-               declare
-                  C : constant String := Substitute
-                    (Connection.Commands.Set_Unreadable_Cmd.all,
-                     Local_Full_Name, Connection);
-                  Result : constant String :=
-                    Send_Cmd_And_Get_Result (Connection, C);
-                  pragma Unreferenced (Result);
-
-               begin
-                  null;
-               end;
-            end if;
+         if Readable then
+            Result := Execute_Cmd (Connection,
+                                   Connection.Commands (Set_Readable_Cmd),
+                                   Local_Full_Name);
+         else
+            Result := Execute_Cmd (Connection,
+                                   Connection.Commands (Set_Unreadable_Cmd),
+                                   Local_Full_Name);
          end if;
       end if;
    end Set_Readable;
