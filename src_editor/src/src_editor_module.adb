@@ -2725,8 +2725,6 @@ package body Src_Editor_Module is
          Toolbar_Destroy_Cb'Access,
          Kernel_Handle (Kernel));
 
-      Append_Space (Toolbar);
-
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"_Select All",  "",
