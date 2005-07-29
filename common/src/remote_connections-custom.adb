@@ -40,7 +40,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              Off);
+                                              On);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -417,16 +417,17 @@ package body Remote_Connections.Custom is
 
          when Force_Reconnect =>
             if Connection.Is_Open then
-               Close (Connection.Fd);
+               Close (Fd);
+               Ret_Value := NOK_Timeout;
             end if;
-            Connection.Is_Open := False;
-            Ensure_Connection
-              (Connection => Connection,
-               Result     => Ret_Value);
-            if Ret_Value = OK then
-               Fd := Connection.Fd;
-               Ret_Value := No_Statement; --  reconnected, go on
-            end if;
+--              Connection.Is_Open := False;
+--              Ensure_Connection
+--                (Connection => Connection,
+--                 Result     => Ret_Value);
+--              if Ret_Value = OK then
+--                 Fd := Connection.Fd;
+--                 Ret_Value := No_Statement; --  reconnected, go on
+--              end if;
       end case;
 
       --  once the action executed, wait for Expects (if any)
@@ -504,9 +505,8 @@ package body Remote_Connections.Custom is
          end loop;
       end if;
    exception
-      when E : Process_Died =>
+      when Process_Died =>
          Trace (Me, "** Process died !");
-         Trace (Me, Ada.Exceptions.Exception_Information (E));
          raise;
       when E : others =>
          Trace (Me, "** Exception : ");
@@ -880,9 +880,8 @@ package body Remote_Connections.Custom is
                   Trace (Full_Me, "Action Kind is '" & Kind & "'");
                end if;
             exception
-               when E : others =>
-                  Trace (Me, "*** Error : Invalid Action kind : " & Kind);
-                  Trace (Me, Ada.Exceptions.Exception_Information (E));
+               when Constraint_Error =>
+                  Trace (Me, "** Error : Invalid Action kind : " & Kind);
                   Is_Valid := False;
             end;
             if Is_Valid then
@@ -921,11 +920,9 @@ package body Remote_Connections.Custom is
                            Action := new Action_Record'(Return_Action);
                         end if;
                      exception
-                        when E : others =>
-                           Trace (Me, "Error : Invalid value attribute : " &
+                        when Constraint_Error =>
+                           Trace (Me, "** Error : Invalid value attribute : " &
                                   Value);
-                           Trace (Me,
-                                  Ada.Exceptions.Exception_Information (E));
                            Is_Valid := False;
                      end;
 
@@ -1005,7 +1002,7 @@ package body Remote_Connections.Custom is
                        (Child_Node,
                         Action.Timeout.Actions);
                   exception
-                     when others =>
+                     when Constraint_Error =>
                         Trace (Me, "** ERROR: invalid expect_timeout tag");
                         Action.Timeout := Default_Timeout_Record;
                   end;
