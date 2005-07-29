@@ -27,7 +27,7 @@
       *  ask user for a password ans send it to remote
       send
       *  send param to remote
-      echo_file
+      send_file
       *  send file to remote
       read_file
       *  reads remote output as file
@@ -39,6 +39,8 @@
       *  creates tmp file for read transfer
       null_action
       *  does nothing
+      force_reconnect
+      *  forces gps to reconnect to the remote
 
   -->
 
@@ -51,7 +53,7 @@
     <regexp id="common_invalid_host">Name or service not known</regexp>
     <regexp id="common_shell_prompt">^[^#$%&gt;\n]*[#$%&gt;] *$</regexp>
     <regexp id="gps_shell_prompt">^.*---GPS--#$</regexp>
-    <regexp id="ftp_Shell_Prompt">^ftp&gt;$</regexp>
+    <regexp id="ftp_shell_prompt">^ftp&gt; *$</regexp>
     <regexp id="sh_exit_status_ok">0</regexp>
     <regexp id="sh_exit_status_nok">1</regexp>
     <regexp id="scp_ok">^.*100%.*$</regexp>
@@ -100,7 +102,7 @@
 
       <write_file_cmd>
         <action kind="send" param="cat &gt; %F &lt;&lt; GPSEOF"/>
-        <action kind="echo_file"/>
+        <action kind="send_file"/>
         <action kind="send" param="GPSEOF">
           <expect regexp_id="gps_shell_prompt">
             <action kind="return_value" param="ok"/>
@@ -161,7 +163,7 @@
                 <action kind="return_value" param="nok"/>
               </expect>
             </action>
-          </expect>
+          </expect>force_reconnect
         </action>
       </is_directory_cmd>
 
@@ -371,5 +373,130 @@
   </remote_connection>
 
   <!-- FTP -->
+
+  <remote_connection name="ftp">
+    <description>.</description>
+    <max_password_attempts>1</max_password_attempts>
+    <commands>
+      <open_session_cmd>
+        <action kind="spawn" param="ftp %h">
+          <expect regexp_id="common_login">
+            <action kind="input_login"/>
+          </expect>
+          <expect regexp_id="common_password">
+            <action kind="input_password"/>
+          </expect>
+          <expect regexp_id="common_invalid_password">
+            <action kind="return_value" param="nok_invalidpassword"/>
+          </expect>
+          <expect regexp_id="common_invalid_host">
+            <action kind="return_value" param="nok_unknownhost"/>
+          </expect>
+          <expect regexp_id="ftp_shell_prompt">
+             <action kind="send" param="bin">
+               <expect regexp_id="ftp_shell_prompt">
+                 <action kind="set_session"/>
+                 <action kind="return_value" param="ok"/>
+               </expect>
+             </action>
+          </expect>
+        </action>
+      </open_session_cmd>
+
+      <read_file_cmd>
+        <action kind="create_tmp_file"/>
+        <action kind="send" param="get %F %t">
+          <expect regexp_id="ftp_shell_prompt">
+            <action kind="read_tmp_file"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </read_file_cmd>
+
+      <write_file_cmd>
+        <action kind="send" param="put %t %F">
+          <expect regexp_id="ftp_shell_prompt">
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </write_file_cmd>
+
+      <timestamp_cmd>
+        <action kind="send" param="ls %F">
+          <expect regexp="^.*(Timeout|Not connected).*$">
+            <action kind="force_reconnect"/>
+            <action kind="send" param="ls %F"/>
+          </expect>
+          <expect regexp_id="ftp_shell_prompt">
+            <action kind="read_timestamp"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </timestamp_cmd>
+
+      <is_writable_cmd>
+        <action kind="send" param="ls %F">
+          <expect regexp="^[-d][-rx]*w.*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp="^[-d][^w ]* .*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect_timeout value="2">
+            <action kind="return_value" param="ok"/>
+          </expect_timeout>
+        </action>
+      </is_writable_cmd>
+
+      <is_readable_cmd>
+        <action kind="send" param="ls %F">
+          <expect regexp="^[-d][-wx]*r.*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp="^[-d][^r ]* .*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect_timeout value="2">
+            <action kind="return_value" param="ok"/>
+          </expect_timeout>
+        </action>
+      </is_readable_cmd>
+
+      <is_regular_file_cmd>
+        <action kind="send" param="ls %F">
+          <expect regexp="^.*Transfer complete.*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp="^.*No such file or directory.*$">
+            <action kind="null_action">
+              <expect regexp_id="ftp_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </is_regular_file_cmd>
+    </commands>
+  </remote_connection>
 
 </Custom>
