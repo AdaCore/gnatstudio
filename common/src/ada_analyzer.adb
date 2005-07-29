@@ -306,6 +306,9 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
 
+   function Is_Within_Record (Stack : Token_Stack.Simple_Stack) return Boolean;
+   --  Return True if the current scope in Stack is in a record.
+
    ---------------
    -- Get_Token --
    ---------------
@@ -600,6 +603,29 @@ package body Ada_Analyzer is
 
       return True;
    end Is_Library_Level;
+
+   ----------------------
+   -- Is_Within_Record --
+   ----------------------
+
+   function Is_Within_Record
+     (Stack : Token_Stack.Simple_Stack) return Boolean
+   is
+      Tmp : Token_Stack.Simple_Stack;
+   begin
+      Tmp := Stack;
+
+      while Tmp /= null and then Tmp.Val.Token /= No_Token loop
+         if Tmp.Val.Token = Tok_Record then
+            return True;
+         end if;
+
+         Tmp := Tmp.Next;
+      end loop;
+
+      return False;
+   end Is_Within_Record;
+
 
    ------------------------
    -- Analyze_Ada_Source --
@@ -1465,10 +1491,11 @@ package body Ada_Analyzer is
                   when Tok_Identifier =>
                      if Is_Library_Level (Stack) then
                         Constructs.Current.Category := Cat_Variable;
+                     elsif Is_Within_Record (Stack) then
+                        Constructs.Current.Category := Cat_Field;
                      else
                         Constructs.Current.Category := Cat_Local_Variable;
                      end if;
-
                   when Tok_With =>
                      Constructs.Current.Category := Cat_With;
                   when Tok_Use =>
@@ -1516,7 +1543,7 @@ package body Ada_Analyzer is
             end if;
 
             case Constructs.Current.Category is
-               when Cat_Variable | Cat_Local_Variable |
+               when Cat_Variable | Cat_Local_Variable | Cat_Field |
                     Cat_Declare_Block | Cat_Simple_Block |
                     Cat_Type | Cat_Subtype | Enclosing_Entity_Category
                =>
@@ -1715,9 +1742,9 @@ package body Ada_Analyzer is
                Num_Parens      := 0;
             end if;
 
-            if Prev_Token = Tok_Access then
+            if Prev_Token = Tok_Access or else Prev_Token = Tok_Protected then
                --  Ada 2005 anonymous access subprogram parameter:
-               --  procedure P (F : access procedure);
+               --  procedure P (F : access [protected] procedure);
 
                null;
 
@@ -1972,6 +1999,7 @@ package body Ada_Analyzer is
 
                if Top_Token.Token = Tok_Type then
                   Top_Token.Record_Type := True;
+                  Temp.Record_Type := True;
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                   if Align_On_Colons then
@@ -3166,13 +3194,14 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
-            if Top_Token.Declaration
+            if (Top_Token.Declaration or else Top_Token.Record_Type)
               and then not In_Generic
               and then Num_Parens = 0
               and then (Prev_Token not in Reserved_Token_Type
                         or else Prev_Token = Tok_Declare
                         or else Prev_Token = Tok_Is
-                        or else Prev_Token = Tok_Private)
+                        or else Prev_Token = Tok_Private
+                        or else Prev_Token = Tok_Record)
             then
                --  This is a variable declaration
 
