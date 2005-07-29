@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces;                  use Traces;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+
 with Basic_Types;             use Basic_Types;
 with Language;                use Language;
 with Language_Handlers;       use Language_Handlers;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Traces;                  use Traces;
 
 package body Docgen.Backend is
 
@@ -255,7 +255,7 @@ package body Docgen.Backend is
          Ref := List_Reference_In_File.Data_Ref (E_L_I);
 
          if Ref.Line = Line
-           and then To_Lower (Text) = Get_Name (Ref.Entity).all
+           and then Text = Get_Name (Ref.Entity).all
          --  The column should be tested as well but cannot be with the
          --  current implementation since the text has been reformated.
          then
@@ -270,7 +270,6 @@ package body Docgen.Backend is
 
    begin
       Loc_Start := Sloc_Start.Index;
-
 
       --  Take apart parsed entites with any "."'s in the middle
       for J in 1 ..
