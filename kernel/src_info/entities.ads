@@ -420,7 +420,9 @@ package Entities is
 
    procedure Set_Unit_Name (File : Source_File; Name : String);
    function  Get_Unit_Name (File : Source_File) return String;
-   --  Changes the name of the toplevel unit stored in File
+   --  Changes the name of the toplevel unit stored in File.
+   --  Note that unit names found in ALI files are lower case and remain as
+   --  is if not overwritten.
    --  ??? What if there are multiple of these ?
    --  ??? What do we do for C files ?
 
