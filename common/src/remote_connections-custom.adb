@@ -40,7 +40,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              On);
+                                              Off);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -283,7 +283,6 @@ package body Remote_Connections.Custom is
       Exp_Result : Expect_Match;
       Success    : Boolean;
       Tmp_Fd     : File_Descriptor;
-      Dead       : Return_Enum;
 
       function getTmpFile return String;
       --  function used to determine if we need read or write tmp file
@@ -314,7 +313,6 @@ package body Remote_Connections.Custom is
             null;
 
          when Spawn =>
-            Trace (Full_Me, "Action : Spawn");
             declare
                The_Command : constant String
                  := Substitute (Get_String (Action.Cmd),
@@ -322,7 +320,7 @@ package body Remote_Connections.Custom is
                                 Connection,
                                 getTmpFile);
             begin
-               Trace (Me, "Execute_Local_Command " & The_Command);
+               Trace (Full_Me, "Action : Spawn " & The_Command);
                Args := Argument_String_To_List (The_Command);
 
                Non_Blocking_Spawn
@@ -424,8 +422,11 @@ package body Remote_Connections.Custom is
             Connection.Is_Open := False;
             Ensure_Connection
               (Connection => Connection,
-               Result     => Dead);
-
+               Result     => Ret_Value);
+            if Ret_Value = OK then
+               Fd := Connection.Fd;
+               Ret_Value := No_Statement; --  reconnected, go on
+            end if;
       end case;
 
       --  once the action executed, wait for Expects (if any)
@@ -433,6 +434,8 @@ package body Remote_Connections.Custom is
          while Ret_Value = No_Statement loop
             Trace (Full_Me, "Execute_Action : expecting" &
                    Natural'Image (Regexps'Length) & " Expect(s)");
+            Trace (Full_Me, "Execute_Action : timeout value is" &
+                   Integer'Image (Action.Timeout.Timeout / 1000) & " seconds");
             Expect (Fd, Exp_Result, Regexps, Matched,
                     Timeout => Action.Timeout.Timeout);
 
@@ -501,8 +504,9 @@ package body Remote_Connections.Custom is
          end loop;
       end if;
    exception
-      when Process_Died =>
+      when E : Process_Died =>
          Trace (Me, "** Process died !");
+         Trace (Me, Ada.Exceptions.Exception_Information (E));
          raise;
       when E : others =>
          Trace (Me, "** Exception : ");
@@ -893,7 +897,7 @@ package body Remote_Connections.Custom is
                         if Cmd = "" then
                            Trace (Me,
                                   "** Error: this Spawn action has " &
-                                  "no attribute 'cmd'");
+                                  "no attribute 'param'");
                            Is_Valid := False;
                         else
                            Spawn_Action.Cmd := new String'(Cmd);
@@ -910,7 +914,7 @@ package body Remote_Connections.Custom is
                         if Value = "" then
                            Trace (Me,
                                   "** Error: this Return_Value action has " &
-                                  "no attribute value");
+                                  "no attribute 'param'");
                            Is_Valid := False;
                         else
                            Return_Action.Value := Return_Enum'Value (Value);
@@ -946,6 +950,7 @@ package body Remote_Connections.Custom is
          if Is_Valid then
             --  retrieve the eventual Expects
             Action.Expects := null;
+            Action.Timeout := Default_Timeout_Record;
             Child_Node := Node.Child;
             while Child_Node /= null loop
                if To_Lower (Child_Node.Tag.all) = "expect" then
@@ -1223,7 +1228,7 @@ package body Remote_Connections.Custom is
    function Get_Protocol
      (Connection : access Custom_Connection) return String is
    begin
-      Trace (Me, "Get_Protocol");
+      Trace (Full_Me, "Get_Protocol");
       return Get_String (Connection.Name);
    end Get_Protocol;
 
@@ -1234,7 +1239,7 @@ package body Remote_Connections.Custom is
    function Get_Description
      (Connection : access Custom_Connection) return String is
    begin
-      Trace (Me, "Get_Description");
+      Trace (Full_Me, "Get_Description");
       return Get_String (Connection.Description);
    end Get_Description;
 
