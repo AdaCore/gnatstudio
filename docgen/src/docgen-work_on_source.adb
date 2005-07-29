@@ -18,24 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Basic_Types;
+with Doc_Utils;                 use Doc_Utils;
+with Docgen.Backend;            use Docgen.Backend;
+with Entities.Queries;          use Entities.Queries;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with Entities.Queries;          use Entities.Queries;
-with VFS;                       use VFS;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Projects.Registry;         use Projects.Registry;
-with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Projects;                  use Projects;
-with String_Utils;              use String_Utils;
-with Docgen.Backend;            use Docgen.Backend;
-with Language;                  use Language;
 with OS_Utils;                  use OS_Utils;
-with Doc_Utils;                 use Doc_Utils;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Docgen.Work_On_Source is
 
@@ -476,7 +475,9 @@ package body Docgen.Work_On_Source is
             while Entity_Node /= TEL.Null_Node loop
                Entity := TEL.Data_Ref (Entity_Node);
 
-               if Get_Full_Name (Entity.Entity) = Unit_Name then
+               if To_Lower (Get_Full_Name (Entity.Entity)) =
+                 To_Lower (Unit_Name)
+               then
                   Found_Main_Unit := True;
                   exit;
                end if;
@@ -2415,18 +2416,16 @@ package body Docgen.Work_On_Source is
                --  whereas functions which permit to build the list of entities
                --  return the name without " (eg. <).
 
-               if To_Lower
-                 (Parse_Node.Name
-                    (Parse_Node.Name'First + 1 .. Parse_Node.Name'Last - 1)) =
+               if Parse_Node.Name
+                 (Parse_Node.Name'First + 1 .. Parse_Node.Name'Last - 1) =
                  Get_Name (Entity.Entity).all
                then
                   return File_Text
                     (Parse_Node.Sloc_Start.Index .. Parse_Node.Sloc_End.Index);
                end if;
 
-            elsif To_Lower (Parse_Node.Name.all) = Get_Name (Entity.Entity).all
-              or else To_Lower (Parse_Node.Name.all) =
-                 Get_Full_Name (Entity.Entity)
+            elsif Parse_Node.Name.all = Get_Name (Entity.Entity).all
+              or else Parse_Node.Name.all = Get_Full_Name (Entity.Entity)
             then
                return File_Text
                  (Line_Start (File_Text, Parse_Node.Sloc_Start.Index) ..
