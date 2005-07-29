@@ -391,9 +391,10 @@ package body Docgen.Work_On_Source is
    --  It must be sure, that Comment_List is a comment line!
 
    function Get_Whole_Header
-     (File_Text   : String;
-      Parsed_List : Construct_List;
-      Entity      : Entity_List_Information)
+     (File_Text      : String;
+      Parsed_List    : Construct_List;
+      Entity         : Entity_List_Information;
+      Case_Sensitive : Boolean)
       return String;
    --  Return the header of the declarative part of an entity.
 
@@ -1389,6 +1390,11 @@ package body Docgen.Work_On_Source is
    is
       pragma Unreferenced (Package_Name);
       use TEL;
+      Case_Sensitive    : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       First_Already_Set : Boolean := False;
@@ -1510,7 +1516,8 @@ package body Docgen.Work_On_Source is
                        Get_Whole_Header
                          (File_Text.all,
                           Parsed_List,
-                          Entity.all);
+                          Entity.all,
+                          Case_Sensitive);
                      Header       : GNAT.OS_Lib.String_Access;
                      Header_Lines : Natural;
                   begin
@@ -1597,6 +1604,11 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       use type Basic_Types.String_Access;
+      Case_Sensitive    : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
@@ -1626,7 +1638,8 @@ package body Docgen.Work_On_Source is
                     Get_Whole_Header
                       (File_Text.all,
                        Parsed_List,
-                       Entity.all);
+                       Entity.all,
+                       Case_Sensitive);
                begin
                --  Check if it was an entity with its own header
 
@@ -1712,6 +1725,11 @@ package body Docgen.Work_On_Source is
       Level            : in out Natural)
    is
       use TEL;
+      Case_Sensitive    : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
@@ -1741,7 +1759,8 @@ package body Docgen.Work_On_Source is
                     Get_Whole_Header
                       (File_Text.all,
                        Parsed_List,
-                       Entity.all);
+                       Entity.all,
+                       Case_Sensitive);
                begin
                   --  Check if it was a entity with its own header
 
@@ -1863,14 +1882,19 @@ package body Docgen.Work_On_Source is
       Level                     : in out Natural)
    is
       use TEL;
-      Entity_Node              : Type_Entity_List.List_Node;
-      Description              : GNAT.OS_Lib.String_Access;
-      Header                   : GNAT.OS_Lib.String_Access;
-      Header_Lines             : Natural;
-      First_Already_Set        : Boolean;
-      Entity                   : TEL.Data_Access;
-      Kind                     : E_Kinds;
-      Info                     : Entity_Information;
+      Case_Sensitive    : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      Header            : GNAT.OS_Lib.String_Access;
+      Header_Lines      : Natural;
+      First_Already_Set : Boolean;
+      Entity            : TEL.Data_Access;
+      Kind              : E_Kinds;
+      Info              : Entity_Information;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -1911,7 +1935,8 @@ package body Docgen.Work_On_Source is
                     Get_Whole_Header
                       (File_Text.all,
                        Parsed_List,
-                       Entity.all);
+                       Entity.all,
+                       Case_Sensitive);
                begin
                   --  Check if it was a entity with its own header
 
@@ -2031,12 +2056,17 @@ package body Docgen.Work_On_Source is
       Level            : in out Natural)
    is
       use TEL;
-      Entity_Node              : Type_Entity_List.List_Node;
-      Description              : GNAT.OS_Lib.String_Access;
-      Header                   : GNAT.OS_Lib.String_Access;
-      Header_Lines             : Natural;
-      First_Already_Set        : Boolean;
-      Entity                   : TEL.Data_Access;
+      Case_Sensitive    : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
+      Entity_Node       : Type_Entity_List.List_Node;
+      Description       : GNAT.OS_Lib.String_Access;
+      Header            : GNAT.OS_Lib.String_Access;
+      Header_Lines      : Natural;
+      First_Already_Set : Boolean;
+      Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2060,7 +2090,8 @@ package body Docgen.Work_On_Source is
                     Get_Whole_Header
                       (File_Text.all,
                        Parsed_List,
-                       Entity.all);
+                       Entity.all,
+                       Case_Sensitive);
                begin
                   --  Check if it was a entity with its own header
 
@@ -2219,6 +2250,11 @@ package body Docgen.Work_On_Source is
       Level            : in out Natural)
    is
       use TEL;
+      Case_Sensitive    : constant Boolean :=
+                            Get_Language_Context
+                              (Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Source_Filename)).Case_Sensitive;
       Entity_Node       : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
@@ -2252,7 +2288,8 @@ package body Docgen.Work_On_Source is
                     Get_Whole_Header
                       (File_Text.all,
                        Parsed_List,
-                       Entity.all);
+                       Entity.all,
+                       Case_Sensitive);
                begin
                   --  Check if it was an entity with its own header
 
@@ -2392,9 +2429,10 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    function Get_Whole_Header
-     (File_Text   : String;
-      Parsed_List : Construct_List;
-      Entity      : Entity_List_Information)
+     (File_Text      : String;
+      Parsed_List    : Construct_List;
+      Entity         : Entity_List_Information;
+      Case_Sensitive : Boolean)
       return String
    is
       use type Basic_Types.String_Access;
@@ -2416,16 +2454,22 @@ package body Docgen.Work_On_Source is
                --  whereas functions which permit to build the list of entities
                --  return the name without " (eg. <).
 
-               if Parse_Node.Name
-                 (Parse_Node.Name'First + 1 .. Parse_Node.Name'Last - 1) =
-                 Get_Name (Entity.Entity).all
+               if Equal
+                 (Parse_Node.Name
+                    (Parse_Node.Name'First + 1 .. Parse_Node.Name'Last - 1),
+                  Get_Name (Entity.Entity).all,
+                  Case_Sensitive)
                then
                   return File_Text
                     (Parse_Node.Sloc_Start.Index .. Parse_Node.Sloc_End.Index);
                end if;
 
-            elsif Parse_Node.Name.all = Get_Name (Entity.Entity).all
-              or else Parse_Node.Name.all = Get_Full_Name (Entity.Entity)
+            elsif Equal
+              (Parse_Node.Name.all, Get_Name (Entity.Entity).all,
+               Case_Sensitive)
+              or else Equal
+                (Parse_Node.Name.all, Get_Full_Name (Entity.Entity),
+                 Case_Sensitive)
             then
                return File_Text
                  (Line_Start (File_Text, Parse_Node.Sloc_Start.Index) ..

@@ -24,6 +24,7 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Basic_Types;             use Basic_Types;
 with Language;                use Language;
 with Language_Handlers;       use Language_Handlers;
+with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
 
 package body Docgen.Backend is
@@ -213,6 +214,12 @@ package body Docgen.Backend is
       use List_Reference_In_File;
       use Type_Entity_List;
 
+      Case_Sensitive     : constant Boolean :=
+                             Get_Language_Context
+                               (Get_Language_From_File
+                                  (Get_Language_Handler (Kernel),
+                                   File_Name)).Case_Sensitive;
+
       Loc_End            : Natural;
       Loc_Start          : Natural;
       Point_In_Column    : Natural := 0;
@@ -255,7 +262,7 @@ package body Docgen.Backend is
          Ref := List_Reference_In_File.Data_Ref (E_L_I);
 
          if Ref.Line = Line
-           and then Text = Get_Name (Ref.Entity).all
+           and then Equal (Text, Get_Name (Ref.Entity).all, Case_Sensitive)
          --  The column should be tested as well but cannot be with the
          --  current implementation since the text has been reformated.
          then
