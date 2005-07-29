@@ -69,6 +69,8 @@ package Remote_Connections.Custom is
       --  reads remote output as timestamp
       Read_Tmp_File,
       --  reads tmp file as file
+      Force_Reconnect,
+      --  forces GPS to reconnect to the remote
       Create_Tmp_File
       --  creates tmp file for reading transfer
      );
@@ -133,16 +135,16 @@ package Remote_Connections.Custom is
 
 private
 
-   type Answer_Regexp;
-   type Answer_Regexp_Access is access all Answer_Regexp;
+   type Regexp_Record;
+   type Regexp_Access is access all Regexp_Record;
 
-   type Answer_Regexp is record
+   type Regexp_Record is record
       Id     : String_Ptr;
       Regexp : Pattern_Matcher_Access;
-      Next   : Answer_Regexp_Access;
+      Next   : Regexp_Access;
    end record;
 
-   Null_Answer_Regexp : constant Answer_Regexp :=
+   Null_Regexp_Record : constant Regexp_Record :=
      (Id     => null,
       Regexp => null,
       Next   => null);
@@ -150,11 +152,21 @@ private
    type Action_Record (kind : Action_Enum);
    type Action_Access is access all Action_Record;
 
-   type Answer_Record;
-   type Answer_Access is access all Answer_Record;
+   type Expect_Record;
+   type Expect_Access is access all Expect_Record;
+
+   type Expect_Timeout_Record is record
+      Timeout : Integer;
+      Actions : Action_Access;
+   end record;
+
+   Default_Timeout_Record : constant Expect_Timeout_Record :=
+     (Timeout => 10_000,
+      Actions => null);
 
    type Action_Record (Kind : Action_Enum) is record
-      Answers : Answer_Access;
+      Expects : Expect_Access;
+      Timeout : Expect_Timeout_Record;
       Next    : Action_Access;
       case Kind is
          when Spawn =>
@@ -173,16 +185,17 @@ private
 
    Null_Action_Record : constant Action_Record :=
      (kind    => Null_Action,
-      Answers => null,
+      Timeout => Default_Timeout_Record,
+      Expects => null,
       Next    => null);
 
-   type Answer_Record is record
+   type Expect_Record is record
       Regexp  : Pattern_Matcher_Access;
       Actions : Action_Access;
-      Next    : Answer_Access;
+      Next    : Expect_Access;
    end record;
 
-   Null_Answer_Record : constant Answer_Record :=
+   Null_Expected_Record : constant Expect_Record :=
      (Regexp  => null,
       Actions => null,
       Next    => null);

@@ -45,8 +45,8 @@ package body Remote_Connections.Custom is
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
 
-   Regexp_Root : Answer_Regexp_Access := null;
-   --  List of all answers
+   Regexp_Root : Regexp_Access := null;
+   --  List of all regexps
 
    Temporary_Dir : constant String := Get_Tmp_Dir;
    --  Where temporary files are stored. This could also be in ~/.gps or
@@ -81,7 +81,7 @@ package body Remote_Connections.Custom is
 
    function Get_Regexp_Array (Action : in Action_Access)
                               return Compiled_Regexp_Array;
-   --  Get a Compiled_Regexp_Array structure from a list of expected answers
+   --  Get a Compiled_Regexp_Array structure from a list of expected Expects
 
    procedure Ensure_Connection
      (Connection : access Custom_Connection'Class;
@@ -96,7 +96,7 @@ package body Remote_Connections.Custom is
       Is_Mount        : in     Boolean := False)
       return Return_Enum;
    --  Execute the Command given in input for the Connection.
-   --  returns the answer to this command
+   --  returns the Expect to this command
 
    function Analyze_Timestamp (Str : in String) return Ada.Calendar.Time;
    --  analyze Str and determine the date
@@ -139,6 +139,7 @@ package body Remote_Connections.Custom is
       --  Perform the substitution for Param
 
       function Sub (Param : String; Quoted : Boolean) return String is
+         Last : Natural;
          pragma Unreferenced (Quoted);
       begin
          if Param'Length > 1 then
@@ -149,7 +150,11 @@ package body Remote_Connections.Custom is
                return "";
             end if;
          elsif Param = "F" then
-            return Local_Full_Name;
+            for J in Local_Full_Name'Range loop
+               exit when Local_Full_Name (J) = ASCII.NUL;
+               Last := J;
+            end loop;
+            return Local_Full_Name (Local_Full_Name'First .. Last);
          elsif Param = "f" then
             return Base_Name (Local_Full_Name);
          elsif Param = "d" then
@@ -159,7 +164,11 @@ package body Remote_Connections.Custom is
          elsif Param = "u" then
             return Get_User (Connection);
          elsif Param = "t" then
-            return Temporary_File;
+            for J in Temporary_File'Range loop
+               exit when Temporary_File (J) = ASCII.NUL;
+               Last := J;
+            end loop;
+            return Temporary_File (Temporary_File'First .. Last);
          else
             raise Invalid_Substitution;
          end if;
@@ -181,27 +190,27 @@ package body Remote_Connections.Custom is
    function Get_Regexp_Array (Action : in Action_Access)
                               return Compiled_Regexp_Array
    is
-      Answer   : Answer_Access;
+      Expect   : Expect_Access;
       Nb_Items : Natural;
    begin
       if Action = null then
          return (1 .. 0 => null);
       end if;
       --  get the size of the structure
-      Answer := Action.Answers;
+      Expect := Action.Expects;
       Nb_Items := 0;
-      while Answer /= null loop
+      while Expect /= null loop
          Nb_Items := Nb_Items + 1;
-         Answer := Answer.Next;
+         Expect := Expect.Next;
       end loop;
 
       declare
          Regexps : Compiled_Regexp_Array (1 .. Nb_Items);
       begin
-         Answer := Action.Answers;
+         Expect := Action.Expects;
          for J in Regexps'Range loop
-            Regexps (J) := Answer.Regexp;
-            Answer := Answer.Next;
+            Regexps (J) := Expect.Regexp;
+            Expect := Expect.Next;
          end loop;
          return Regexps;
       end;
@@ -268,12 +277,13 @@ package body Remote_Connections.Custom is
         Get_Regexp_Array (Action);
       Args       : Argument_List_Access;
       L_Action   : Action_Access;
-      Answer     : Answer_Access;
+      Expect_Ptr : Expect_Access;
       Tmp        : String_Access;
       Matched    : Match_Array (0 .. 0);
       Exp_Result : Expect_Match;
       Success    : Boolean;
       Tmp_Fd     : File_Descriptor;
+      Dead       : Return_Enum;
 
       function getTmpFile return String;
       --  function used to determine if we need read or write tmp file
@@ -364,7 +374,6 @@ package body Remote_Connections.Custom is
                   end if;
                end;
             else
-               Connection.Password_Attempts := 0;
                Ret_Value := NOK_InvalidPassword;
             end if;
 
@@ -408,54 +417,97 @@ package body Remote_Connections.Custom is
             Create_Temp_File (Tmp_Fd, ReadTmpBase);
             Close (Tmp_Fd);
 
+         when Force_Reconnect =>
+            if Connection.Is_Open then
+               Close (Connection.Fd);
+            end if;
+            Connection.Is_Open := False;
+            Ensure_Connection
+              (Connection => Connection,
+               Result     => Dead);
+
       end case;
 
-      --  once the action executed, wait for answers (if any)
+      --  once the action executed, wait for Expects (if any)
       if Regexps'Length > 0 then
          while Ret_Value = No_Statement loop
-            Expect (Fd, Exp_Result, Regexps, Matched, Timeout => 10_000);
+            Trace (Full_Me, "Execute_Action : expecting" &
+                   Natural'Image (Regexps'Length) & " Expect(s)");
+            Expect (Fd, Exp_Result, Regexps, Matched,
+                    Timeout => Action.Timeout.Timeout);
+
+            Trace (Full_Me, "Expect answered " &
+                   Expect_Match'Image (Exp_Result));
+
             if Exp_Result = Expect_Timeout then
-               Ret_Value := NOK_Timeout;
-               return;
-            end if;
-            Answer := Action.Answers;
-            for I in 2 .. Exp_Result loop
-               Answer := Answer.Next;
-            end loop;
-            if Answer /= null then
-               declare
-                  Output : constant String := Expect_Out (Fd);
-               begin
-                  L_Action := Answer.Actions;
-                  while L_Action /= null loop
+               Trace (Full_Me, "Timeout !");
+               --  if no action is defined for timeout
+               if Action.Timeout.Actions = null then
+                  Ret_Value := NOK_Timeout;
+               else
+                  L_Action := Action.Timeout.Actions;
+                  while Ret_Value = No_Statement and L_Action /= null loop
                      Execute_Action_Recursive
                        (Connection,
                         L_Action,
                         Local_Full_Name,
                         WriteTmpFile,
                         ReadTmpBase,
-                        Output (Output'First .. Matched (0).First - 2),
+                        "",
                         Fd,
                         Keep_Fd,
                         New_Fd,
                         Ret_Value);
                      L_Action := L_Action.Next;
                   end loop;
-               end;
-
+               end if;
             else
-               --  should never happend... (except bug in expect call)
-               Ret_Value := NOK;
+
+               Expect_Ptr := Action.Expects;
+
+               for I in 2 .. Exp_Result loop
+                  Expect_Ptr := Expect_Ptr.Next;
+               end loop;
+
+               if Expect_Ptr = null then
+                  Trace (Me, "** ERROR ! Regexp answered " &
+                         Expect_Match'Image (Exp_Result) &
+                         " which is unexpected");
+                  --  should never happend... (except bug in expect call)
+                  Ret_Value := NOK_Timeout;
+               else
+                  declare
+                     Output : constant String := Expect_Out (Fd);
+                  begin
+                     Trace (Full_Me, "execute Expect's actions");
+                     L_Action := Expect_Ptr.Actions;
+                     while Ret_Value = No_Statement and L_Action /= null loop
+                        Execute_Action_Recursive
+                          (Connection,
+                           L_Action,
+                           Local_Full_Name,
+                           WriteTmpFile,
+                           ReadTmpBase,
+                           Output (Output'First .. Matched (0).First - 2),
+                           Fd,
+                           Keep_Fd,
+                           New_Fd,
+                           Ret_Value);
+                        L_Action := L_Action.Next;
+                     end loop;
+                  end;
+               end if;
             end if;
          end loop;
       end if;
    exception
       when Process_Died =>
+         Trace (Me, "** Process died !");
          raise;
       when E : others =>
          Trace (Me, "** Exception : ");
          Trace (Me, Ada.Exceptions.Exception_Information (E));
-         Ret_Value := NOK;
+         Ret_Value := NOK_Timeout;
    end Execute_Action_Recursive;
 
    ---------------------
@@ -540,6 +592,7 @@ package body Remote_Connections.Custom is
             Keep_Fd := False;
 
          when others =>
+            Connection.Password_Attempts := 0;
             null;
       end case;
       if not New_Fd then
@@ -716,8 +769,8 @@ package body Remote_Connections.Custom is
    -- Initialization functions from the xml file --
    ------------------------------------------------
 
-   procedure Initialize_Answer_Regexp
-     (Regexp :    out Answer_Regexp;
+   procedure Initialize_Regexp
+     (Regexp :    out Regexp_Record;
       Top    : in     Glib.Xml_Int.Node_Ptr);
    --  initializes a new answer_record structure from xml node
 
@@ -730,8 +783,8 @@ package body Remote_Connections.Custom is
    -- Initialize_Answer --
    -----------------------
 
-   procedure Initialize_Answer_Regexp
-     (Regexp :    out Answer_Regexp;
+   procedure Initialize_Regexp
+     (Regexp :    out Regexp_Record;
       Top    : in     Glib.Xml_Int.Node_Ptr)
    is
       Id      : constant String := Get_Attribute (Top, "id");
@@ -739,7 +792,7 @@ package body Remote_Connections.Custom is
       Trace (Full_Me, "Initialize regexp '" & Id & "'");
 
       --  Init id field
-      Regexp := Null_Answer_Regexp;
+      Regexp := Null_Regexp_Record;
       if Id = "" then
          Trace (Me, "** Error : the regexp has no 'id' attribute");
          return;
@@ -750,30 +803,30 @@ package body Remote_Connections.Custom is
       if Top.Value = null then
          Trace (Me, "** Error : Regexp has no value");
          Glib.Free (Regexp.Id);
-         Regexp := Null_Answer_Regexp;
+         Regexp := Null_Regexp_Record;
          return;
       end if;
       Trace (Full_Me, "Regexp is """ & Top.Value.all & """");
       Regexp.Regexp := +(Compile (Top.Value.all,
                                   Case_Insensitive or Multiple_Lines));
-   end Initialize_Answer_Regexp;
+   end Initialize_Regexp;
 
    ------------------------
-   -- Initialize_Answers --
+   -- Initialize_Expects --
    ------------------------
 
    procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr)
    is
-      Regexp : Answer_Regexp;
+      Regexp : Regexp_Record;
       Node   : Node_Ptr;
    begin
       Node := Top.Child;
       while Node /= null loop
          if To_Lower (Node.Tag.all) = "regexp" then
-            Initialize_Answer_Regexp (Regexp, Node);
-            if Regexp /= Null_Answer_Regexp then
+            Initialize_Regexp (Regexp, Node);
+            if Regexp /= Null_Regexp_Record then
                Regexp.Next := Regexp_Root;
-               Regexp_Root := new Answer_Regexp'(Regexp);
+               Regexp_Root := new Regexp_Record'(Regexp);
             end if;
          end if;
          Node := Node.Next;
@@ -794,8 +847,8 @@ package body Remote_Connections.Custom is
       Action_Last   : Action_Access;
       Is_Valid      : Boolean;
       Action_Kind   : Action_Enum;
-      Regexp        : Answer_Regexp_Access;
-      Answer        : Answer_Record;
+      Regexp        : Regexp_Access;
+      Expect        : Expect_Record;
    begin
       Trace (Full_Me, "Initialize_Action");
       --  Initialize default values
@@ -891,20 +944,19 @@ package body Remote_Connections.Custom is
             Is_Valid := False;
          end if;
          if Is_Valid then
-            --  retrieve the eventual answers
-            Action.Answers := null;
+            --  retrieve the eventual Expects
+            Action.Expects := null;
             Child_Node := Node.Child;
             while Child_Node /= null loop
                if To_Lower (Child_Node.Tag.all) = "expect" then
+                  --  try to get the regexp from its id first
                   declare
                      Id : constant String
                        := Get_Attribute (Child_Node, "regexp_id");
+                     Regexp_Str : constant String
+                       := Get_Attribute (Child_Node, "regexp");
                   begin
-                     if Id = "" then
-                        Trace (Me, "** Error: answer field has no " &
-                               "attribute kind");
-                        Is_Valid := False;
-                     else
+                     if Id /= "" then
                         Regexp := Regexp_Root;
                         while Regexp /= null loop
                            if Regexp.Id.all = Id then
@@ -918,15 +970,39 @@ package body Remote_Connections.Custom is
                                   "id " & Id);
                            Is_Valid := False;
                         else
-                           --  init the fields of the answer
-                           Answer.Regexp := Regexp.Regexp;
-                           Initialize_Action
-                             (Child_Node,
-                              Answer.Actions);
-                           Answer.Next := Action.Answers;
-                           Action.Answers := new Answer_Record'(Answer);
+                           Expect.Regexp := Regexp.Regexp;
                         end if;
+                     elsif Regexp_Str /= "" then
+                        Expect.Regexp := +(Compile (Regexp_Str,
+                            Case_Insensitive or Multiple_Lines));
+                     else
+                        Trace (Me, "** Error: Invalid expect tag: no regexp " &
+                               "or regexp_id attribute is defined");
+                        Is_Valid := False;
                      end if;
+
+                  end;
+                  --  init the other fields of the Expect
+                  if Is_Valid then
+                     Initialize_Action
+                       (Child_Node,
+                        Expect.Actions);
+                     Expect.Next := Action.Expects;
+                     Action.Expects := new Expect_Record'(Expect);
+                  end if;
+               elsif To_Lower (Child_Node.Tag.all) = "expect_timeout" then
+                  declare
+                     Value : constant String :=
+                       Get_Attribute (Child_Node, "value");
+                  begin
+                     Action.Timeout.Timeout := Integer'Value (Value) * 1000;
+                     Initialize_Action
+                       (Child_Node,
+                        Action.Timeout.Actions);
+                  exception
+                     when others =>
+                        Trace (Me, "** ERROR: invalid expect_timeout tag");
+                        Action.Timeout := Default_Timeout_Record;
                   end;
                else
                   Trace (Me,
@@ -1192,8 +1268,19 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Is_Regular_File " & Local_Full_Name);
       if Connection.Commands (Is_Regular_File_Cmd) = null then
-         --  Assume the file exists, we'll make sure when we try to fetch it
-         return True;
+         declare
+            Base : constant String := Base_Name (Local_Full_Name);
+         begin
+            if Base (Base'First .. Base'First + 1) = ".#" and then
+              Base (Base'Last) = '#' then
+               --  checking tmp file. assume none exist
+               return False;
+            else
+               --  Assume the file exists, we'll make sure when we try to
+               --  fetch it
+               return True;
+            end if;
+         end;
       else
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Is_Regular_File_Cmd),
