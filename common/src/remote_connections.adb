@@ -245,6 +245,42 @@ package body Remote_Connections is
      (Protocol, User, Host : String;
       Force_New            : Boolean := False) return Remote_Connection
    is
+      function Same (Connection : Remote_Connection;
+                     Protocol, User, Host : String) return Boolean;
+      --  tells if connection parameters are identical
+
+      ----------
+      -- Same --
+      ----------
+
+      function Same (Connection : Remote_Connection;
+                     Protocol, User, Host : String) return Boolean
+      is
+      begin
+         if Get_Protocol (Connection) /= Protocol then
+            return False;
+         end if;
+         if Get_Host (Connection) /= Host then
+            return False;
+         end if;
+
+         --  check user
+         if Connection.Remote_User = null then
+            --  no user defined for connection. Check that 'User' is the
+            --  default one, or undefined
+            if Get_User (Connection) /= User and User /= "" then
+               return False;
+            end if;
+         elsif Get_User (Connection) /= User then
+            --  Connection defines a user which is different from the specified
+            --  one
+            return False;
+         end if;
+
+         --  all checks performed. Return OK
+         return True;
+      end Same;
+
       Tmp  : Connection_List := Open_Connections;
       Fact : Remote_Connection;
       C    : Remote_Connection;
@@ -254,9 +290,7 @@ package body Remote_Connections is
 
       --  Check open connections first, in case we can reuse
       while Tmp /= null loop
-         exit when Get_Protocol (Tmp.Connection) = Protocol
-           and then Get_User (Tmp.Connection) = User
-           and then Get_Host (Tmp.Connection) = Host;
+         exit when Same (Tmp.Connection, Protocol, User, Host);
          Tmp := Tmp.Next;
       end loop;
 
