@@ -1396,13 +1396,17 @@ package body Src_Editor_Module is
       Open_File_Dialog : Gtk_Dialog;
       Open_File_Entry  : Gtkada_Entry;
       Hist             : constant String_List_Access :=
-        Get_History (Get_History (Kernel).all, Open_From_Path_History);
-      List1 : File_Array_Access := Get_Source_Files
-        (Project   => Get_Project (Kernel),
-         Recursive => True);
-      List2 : File_Array_Access :=
-        Get_Predefined_Source_Files (Get_Registry (Kernel).all);
-      Compl : File_Completion_Factory;
+                           Get_History
+                             (Get_History (Kernel).all,
+                              Open_From_Path_History);
+      List1            : File_Array_Access :=
+                           Get_Source_Files
+                             (Project   => Get_Project (Kernel),
+                              Recursive => True);
+      List2            : File_Array_Access :=
+                           Get_Predefined_Source_Files
+                             (Get_Registry (Kernel).all);
+      Compl            : File_Completion_Factory;
 
    begin
       Push_State (Kernel,  Busy);
@@ -1439,11 +1443,7 @@ package body Src_Editor_Module is
       Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
-      List1 := Get_Source_Files
-        (Project   => Get_Project (Kernel), Recursive => True);
       Compl.File1 := List1;
-
-      List2 := Get_Predefined_Source_Files (Get_Registry (Kernel).all);
       Compl.File2 := List2;
 
       Set_Completions (Open_File_Entry, Compl);
