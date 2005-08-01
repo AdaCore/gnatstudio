@@ -1059,8 +1059,11 @@ package body Docgen.Backend.Text is
          Body_File,
          First_File_Line,
          No_Body_Line_Needed,
-         True, Options, Source_File_List, Level,
-         Get_Indent (B.all));
+         Is_Body          => True,
+         Options          => Options,
+         Source_File_List => Source_File_List,
+         Level            => Level,
+         Indent           => Get_Indent (B.all));
    end Doc_Body;
 
    ---------------------
