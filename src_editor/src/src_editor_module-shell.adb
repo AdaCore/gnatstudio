@@ -36,7 +36,6 @@ with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Text_View;          use Gtkada.Text_View;
 with Pango.Enums;               use Pango.Enums;
 
 with Commands;                  use Commands;
@@ -776,10 +775,10 @@ package body Src_Editor_Module.Shell is
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
 
       Id      : constant Source_Editor_Module :=
-         Source_Editor_Module (Src_Editor_Module_Id);
+                  Source_Editor_Module (Src_Editor_Module_Id);
 
       Inst    : constant Class_Instance :=
-                 Nth_Arg (Data, 1, Get_File_Class (Kernel));
+                  Nth_Arg (Data, 1, Get_File_Class (Kernel));
       File    : constant Virtual_File := Get_File (Get_Data (Inst));
       Pattern : constant String := Nth_Arg (Data, 2);
       Casing  : constant Boolean := Nth_Arg (Data, 3, False);
