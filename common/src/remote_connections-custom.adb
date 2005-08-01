@@ -22,11 +22,9 @@ with System;
 with Ada.Calendar;       use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;     use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNAT.Calendar;      use GNAT.Calendar;
 with Gtk.Enums;          use Gtk.Enums;
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
@@ -40,7 +38,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              On);
+                                              Off);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -65,6 +63,9 @@ package body Remote_Connections.Custom is
    -----------------------
    -- Local Subprograms --
    -----------------------
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (TTY_Process_Descriptor, TTY_Process_Descriptor_Access);
 
    function Get_String (S : in String_Ptr) return String;
    --  returns "" if S is null, S.all else
@@ -226,8 +227,8 @@ package body Remote_Connections.Custom is
    is
       Min_Delay_Between_Attempts : constant Duration := 10.0;  --  seconds
    begin
-      Trace (Me, "Ensure_Connection");
       if not Connection.Is_Open then
+         Trace (Me, "Ensure_Connection");
          if Clock - Connection.Last_Connection_Attempt >=
            Min_Delay_Between_Attempts
          then
@@ -251,15 +252,14 @@ package body Remote_Connections.Custom is
       WriteTmpFile    : in     String := "";
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
-      Fd              : in out TTY_Process_Descriptor;
-      Keep_Fd         : in out Boolean;
-      New_Fd          : in out Boolean;
+      Pd              : in     TTY_Process_Descriptor_Access;
+      Keep_Pd         : in out Boolean;
       Ret_Value       :    out Return_Enum);
    --  executes the action recursively
 
-   --------------------
-   -- Execute_Action --
-   --------------------
+   ------------------------------
+   -- Execute_Action_Recursive --
+   ------------------------------
 
    procedure Execute_Action_Recursive
      (Connection      : access Custom_Connection'Class;
@@ -268,9 +268,8 @@ package body Remote_Connections.Custom is
       WriteTmpFile    : in     String := "";
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
-      Fd              : in out TTY_Process_Descriptor;
-      Keep_Fd         : in out Boolean;
-      New_Fd          : in out Boolean;
+      Pd              : in     TTY_Process_Descriptor_Access;
+      Keep_Pd         : in out Boolean;
       Ret_Value       :    out Return_Enum)
    is
       Regexps    : constant Compiled_Regexp_Array :=
@@ -283,22 +282,24 @@ package body Remote_Connections.Custom is
       Exp_Result : Expect_Match;
       Success    : Boolean;
       Tmp_Fd     : File_Descriptor;
+      L_Pd       : TTY_Process_Descriptor_Access;
+      New_Pd     : Boolean;
 
-      function getTmpFile return String;
+      function Get_Tmp_File return String;
       --  function used to determine if we need read or write tmp file
 
-      ----------------
-      -- getTmpFile --
-      ----------------
+      ------------------
+      -- Get_Tmp_File --
+      ------------------
 
-      function getTmpFile return String is
+      function Get_Tmp_File return String is
       begin
          if WriteTmpFile = "" then
             return Temporary_Dir & ReadTmpBase;
          else
             return WriteTmpFile;
          end if;
-      end getTmpFile;
+      end Get_Tmp_File;
 
    begin
       Ret_Value := No_Statement;
@@ -306,6 +307,8 @@ package body Remote_Connections.Custom is
       if Action = null then
          return;
       end if;
+      L_Pd := Pd;
+      New_Pd := False;
 
       --  for each action, first execute it
       case Action.Kind is
@@ -318,22 +321,23 @@ package body Remote_Connections.Custom is
                  := Substitute (Get_String (Action.Cmd),
                                 Local_Full_Name,
                                 Connection,
-                                getTmpFile);
+                                Get_Tmp_File);
             begin
-               Trace (Full_Me, "Action : Spawn " & The_Command);
+               Trace (Me, "Action : Spawn " & The_Command);
                Args := Argument_String_To_List (The_Command);
 
+               L_Pd := new TTY_Process_Descriptor;
                Non_Blocking_Spawn
-                 (Fd,
+                 (L_Pd.all,
                   Command     => Args (Args'First).all,
                   Args        => Args (Args'First + 1 .. Args'Last),
                   Buffer_Size => 0,
                   Err_To_Out  => True);
-               Keep_Fd := False;
-               New_Fd := True;
+               Keep_Pd := False;
+               New_Pd := True;
                if Active (Full_Me) then
-                  Add_Filter (Fd, Trace_Filter_Output'Access, Output);
-                  Add_Filter (Fd, Trace_Filter_Input'Access, Input);
+                  Add_Filter (L_Pd.all, Trace_Filter_Output'Access, Output);
+                  Add_Filter (L_Pd.all, Trace_Filter_Input'Access, Input);
                end if;
 
                Free (Args);
@@ -341,7 +345,7 @@ package body Remote_Connections.Custom is
 
          when Set_Session =>
             Trace (Full_Me, "Action : Set_Session");
-            Keep_Fd := True;
+            Keep_Pd := True;
 
          when Return_Value =>
             Trace (Full_Me, "Action : ReturnValue");
@@ -349,7 +353,7 @@ package body Remote_Connections.Custom is
 
          when Input_Login =>
             Trace (Full_Me, "Action : InputLogin");
-            Send (Fd, Get_User (Connection), Add_LF => True);
+            Send (L_Pd.all, Get_User (Connection), Add_LF => True);
 
          when Input_Password =>
             Trace (Full_Me, "Action : InputPassword");
@@ -365,10 +369,10 @@ package body Remote_Connections.Custom is
                   Set_Passwd (Connection, Passwd);
                   if Passwd = "" then
                      Trace (Me, "Interrupted password query");
-                     Interrupt (Fd);
+                     Interrupt (L_Pd.all);
                      Ret_Value := NOK_InvalidPassword;
                   else
-                     Send (Fd, Passwd, Add_LF => True);
+                     Send (L_Pd.all, Passwd, Add_LF => True);
                   end if;
                end;
             else
@@ -381,17 +385,17 @@ package body Remote_Connections.Custom is
                  := Substitute (Get_String (Action.Param),
                                 Local_Full_Name,
                                 Connection,
-                                getTmpFile);
+                                Get_Tmp_File);
             begin
                Trace (Full_Me, "Action : Send '" & The_Command & "'");
-               Send (Fd, The_Command, Add_LF => True);
+               Send (L_Pd.all, The_Command, Add_LF => True);
             end;
 
          when Send_File =>
             Trace (Full_Me, "Action : Send_File");
             Tmp := Read_File (WriteTmpFile);
             if Tmp /= null then
-               Send (Fd, Tmp.all,
+               Send (L_Pd.all, Tmp.all,
                      Add_LF => True, Empty_Buffer => True);
                Free (Tmp);
             end if;
@@ -416,18 +420,17 @@ package body Remote_Connections.Custom is
             Close (Tmp_Fd);
 
          when Force_Reconnect =>
-            if Connection.Is_Open then
-               Close (Fd);
-               Ret_Value := NOK_Timeout;
+            Trace (Full_Me, "Action : Force_Reconnect");
+            Close (Connection.Pd.all);
+            Free (Connection.Pd);
+            Connection.Is_Open := False;
+            Ensure_Connection
+              (Connection => Connection,
+               Result     => Ret_Value);
+            if Ret_Value = OK then
+               L_Pd := Connection.Pd;
+               Ret_Value := No_Statement; --  reconnected, go on
             end if;
---              Connection.Is_Open := False;
---              Ensure_Connection
---                (Connection => Connection,
---                 Result     => Ret_Value);
---              if Ret_Value = OK then
---                 Fd := Connection.Fd;
---                 Ret_Value := No_Statement; --  reconnected, go on
---              end if;
       end case;
 
       --  once the action executed, wait for Expects (if any)
@@ -437,7 +440,7 @@ package body Remote_Connections.Custom is
                    Natural'Image (Regexps'Length) & " Expect(s)");
             Trace (Full_Me, "Execute_Action : timeout value is" &
                    Integer'Image (Action.Timeout.Timeout / 1000) & " seconds");
-            Expect (Fd, Exp_Result, Regexps, Matched,
+            Expect (L_Pd.all, Exp_Result, Regexps, Matched,
                     Timeout => Action.Timeout.Timeout);
 
             Trace (Full_Me, "Expect answered " &
@@ -458,9 +461,8 @@ package body Remote_Connections.Custom is
                         WriteTmpFile,
                         ReadTmpBase,
                         "",
-                        Fd,
-                        Keep_Fd,
-                        New_Fd,
+                        L_Pd,
+                        Keep_Pd,
                         Ret_Value);
                      L_Action := L_Action.Next;
                   end loop;
@@ -481,7 +483,7 @@ package body Remote_Connections.Custom is
                   Ret_Value := NOK_Timeout;
                else
                   declare
-                     Output : constant String := Expect_Out (Fd);
+                     Output : constant String := Expect_Out (L_Pd.all);
                   begin
                      Trace (Full_Me, "execute Expect's actions");
                      L_Action := Expect_Ptr.Actions;
@@ -493,9 +495,8 @@ package body Remote_Connections.Custom is
                            WriteTmpFile,
                            ReadTmpBase,
                            Output (Output'First .. Matched (0).First - 2),
-                           Fd,
-                           Keep_Fd,
-                           New_Fd,
+                           L_Pd,
+                           Keep_Pd,
                            Ret_Value);
                         L_Action := L_Action.Next;
                      end loop;
@@ -504,6 +505,16 @@ package body Remote_Connections.Custom is
             end if;
          end loop;
       end if;
+      if New_Pd then
+         if Keep_Pd and Ret_Value = OK then
+            Connection.Pd := L_Pd;
+            Connection.Is_Open := True;
+         else
+            Close (L_Pd.all);
+            Free (L_Pd);
+         end if;
+      end if;
+
    exception
       when Process_Died =>
          Trace (Me, "** Process died !");
@@ -528,11 +539,10 @@ package body Remote_Connections.Custom is
    is
       L_Action      : Action_Access;
       ReadTmpBase   : String (1 .. Temp_File_Len) := (others => ' ');
-      L_Fd          : TTY_Process_Descriptor;
-      Keep_Fd       : Boolean;
-      New_Fd        : Boolean;
+      Keep_Pd       : Boolean;
       Ret_Value     : Return_Enum;
       Response      : Message_Dialog_Buttons;
+      Close_Cnx     : Boolean;
       pragma Unreferenced (Response);
    begin
       if not Is_Mount then
@@ -543,9 +553,7 @@ package body Remote_Connections.Custom is
             return Ret_Value;
          end if;
       end if;
-      L_Fd    := Connection.Fd;
-      Keep_Fd := True;
-      New_Fd  := False;
+      Keep_Pd := True;
 
       L_Action := Cmd;
       while L_Action /= null loop
@@ -555,9 +563,8 @@ package body Remote_Connections.Custom is
             Local_Full_Name => Local_Full_Name,
             WriteTmpFile    => WriteTmpFile,
             ReadTmpBase     => ReadTmpBase,
-            Fd              => L_Fd,
-            Keep_Fd         => Keep_Fd,
-            New_Fd          => New_Fd,
+            Pd              => Connection.Pd,
+            Keep_Pd         => Keep_Pd,
             Ret_Value       => Ret_Value);
          L_Action := L_Action.Next;
       end loop;
@@ -565,6 +572,7 @@ package body Remote_Connections.Custom is
       Trace (Full_Me, "Ret_Value is " &
              Return_Enum'Image (Ret_Value));
 
+      Close_Cnx := False;
       case Ret_Value is
          when NOK_InvalidPassword =>
             Response := Message_Dialog
@@ -574,7 +582,7 @@ package body Remote_Connections.Custom is
                Buttons       => Button_OK,
                Title         => "Invalid password",
                Justification => Justify_Left);
-            Keep_Fd := False;
+            Close_Cnx := True;
 
          when NOK_UnknownHost =>
             Response := Message_Dialog
@@ -583,7 +591,7 @@ package body Remote_Connections.Custom is
                Buttons       => Button_OK,
                Title         => "Unknown host",
                Justification => Justify_Left);
-            Keep_Fd := False;
+            Close_Cnx := True;
 
          when NOK_Timeout =>
             Response := Message_Dialog
@@ -593,25 +601,17 @@ package body Remote_Connections.Custom is
                Buttons       => Button_OK,
                Title         => "Time out",
                Justification => Justify_Left);
-            Keep_Fd := False;
+            Close_Cnx := True;
 
          when others =>
             Connection.Password_Attempts := 0;
             null;
       end case;
-      if not New_Fd then
-         if Keep_Fd then
-            Connection.Fd := L_Fd;
-            Connection.Is_Open := True;
-         else
-            Close (L_Fd);
-         end if;
-      else
-         Connection.Fd := L_Fd;
-         if not Keep_Fd then
-            Connection.Is_Open := False;
-            Close (Connection.Fd);
-         end if;
+
+      if Close_Cnx and Connection.Is_Open then
+         Close (Connection.Pd.all);
+         Free (Connection.Pd);
+         Connection.Is_Open := False;
       end if;
 
       return Ret_Value;
@@ -1225,7 +1225,6 @@ package body Remote_Connections.Custom is
    function Get_Protocol
      (Connection : access Custom_Connection) return String is
    begin
-      Trace (Full_Me, "Get_Protocol");
       return Get_String (Connection.Name);
    end Get_Protocol;
 
@@ -1249,7 +1248,7 @@ package body Remote_Connections.Custom is
       GPS_Termination : Boolean) is
    begin
       if Connection.Is_Open and GPS_Termination then
-         Close (Connection.Fd);
+         Close (Connection.Pd.all);
          Close
            (Remote_Connection_Record (Connection.all)'Access, GPS_Termination);
       end if;
