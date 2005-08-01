@@ -378,7 +378,9 @@ package body Docgen.Work_On_File is
       while not At_End (Entity_Iter) loop
          Info := Get (Entity_Iter);
 
-         if File_Is_Spec then
+         if File_Is_Spec
+           or else Options.Process_Body_Files
+         then
             Process_New_Entity
               (Info                          => Info,
                Options                       => Options,
