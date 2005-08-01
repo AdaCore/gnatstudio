@@ -27,8 +27,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Text_Buffer;
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
-with Gtk.Text_Mark;   use Gtk.Text_Mark;
 
 package Gtkada.Text_Buffer is
 
@@ -46,39 +44,9 @@ package Gtkada.Text_Buffer is
    procedure Clear (Buffer : access Gtkada_Text_Buffer_Record'Class);
    --  Delete all characters from the given buffer, leaving an empty buffer.
 
-   procedure Get_Cursor_Position
-     (Buffer : access Gtkada_Text_Buffer_Record'Class;
-      Iter   : out Gtk_Text_Iter);
-   --  Return the current cursor position. Such a query should rather be done
-   --  on the specific view in which you are interested
-
-   ---------------
-   -- Get / Set --
-   ---------------
-
-   function Get_Insert_Mark
-     (Buffer : access Gtkada_Text_Buffer_Record'Class)
-      return Gtk_Text_Mark;
-   pragma Inline (Get_Insert_Mark);
-   --  Return the current insert mark.
-
-   procedure Set_Insert_Mark
-     (Buffer : access Gtkada_Text_Buffer_Record'Class;
-      Mark   : Gtk_Text_Mark);
-   pragma Inline (Set_Insert_Mark);
-   --  Store the current insert mark.
-
 private
 
    type Gtkada_Text_Buffer_Record is
-     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
-   with record
-      Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  This is a copy of the "insert" mark or the "gtk_drag_target" mark.
-      --  This could be easily looked-up when needed, but having a copy is
-      --  helping performance-wise, since a  lot of subprograms use it.
-      --  This must always be a valid text mark.
-
-   end record;
+     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with null record;
 
 end Gtkada.Text_Buffer;

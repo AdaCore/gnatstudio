@@ -21,7 +21,6 @@
 with Glib;              use Glib;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
-with Gtkada.Text_View;  use Gtkada.Text_View;
 
 with Commands;          use Commands;
 with GPS.Kernel;        use GPS.Kernel;
@@ -97,7 +96,7 @@ package body Src_Editor_View.Commands is
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Iter   : Gtk_Text_Iter;
-      Mark   : constant Gtk_Text_Mark := Get_Saved_Cursor_Mark (View);
+      Mark   : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
 
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
@@ -123,7 +122,7 @@ package body Src_Editor_View.Commands is
    begin
       Scroll_To_Mark
         (View,
-         Get_Saved_Cursor_Mark (View),
+         View.Saved_Cursor_Mark,
          Within_Margin => 0.0,
          Use_Align     => True,
          Xalign        => 0.0,
@@ -147,7 +146,7 @@ package body Src_Editor_View.Commands is
       Iter, Start : Gtk_Text_Iter;
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Get_Saved_Cursor_Mark (View));
+      Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
       Copy (Source => Iter, Dest => Start);
       Move_Iter (Iter, Command.Kind, Command.Count);
       Delete (Buffer, Iter, Start);

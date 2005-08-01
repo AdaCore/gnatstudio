@@ -763,7 +763,7 @@ package body Src_Editor_Buffer is
       end Check_Char;
 
    begin
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
 
       --  Highlight previous parenthesis, if necessary.
 
@@ -1262,7 +1262,7 @@ package body Src_Editor_Buffer is
       Buffer.Setting_Mark := True;
 
       if Get_Name (Mark) = "insert" then
-            Set_Insert_Mark (Buffer, Mark);
+            Buffer.Insert_Mark := Mark;
             Emit_New_Cursor_Position (Buffer);
             Cursor_Move_Hook (Buffer);
       end if;
@@ -2167,7 +2167,7 @@ package body Src_Editor_Buffer is
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
 
-      Set_Insert_Mark (Buffer, Get_Insert (Buffer));
+      Buffer.Insert_Mark := Get_Insert (Buffer);
 
       --  Initialize the queue for editor commands
 
@@ -3085,7 +3085,7 @@ package body Src_Editor_Buffer is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Get_Screen_Position (Buffer, Iter, Line, Column);
    end Get_Screen_Position;
 
@@ -3100,7 +3100,7 @@ package body Src_Editor_Buffer is
    is
       Iter : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
    end Get_Cursor_Position;
@@ -3121,6 +3121,17 @@ package body Src_Editor_Buffer is
       end if;
 
       Column := Positive (Get_Line_Offset (Iter) + 1);
+   end Get_Cursor_Position;
+
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter) is
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
    end Get_Cursor_Position;
 
    -------------------------
@@ -3200,7 +3211,7 @@ package body Src_Editor_Buffer is
       Start_Iter, End_Iter, Iter : Gtk_Text_Iter;
 
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
 
       if not (Inside_Word (Iter) or else Get_Char (Iter) = '_') then
          return;
@@ -4365,7 +4376,7 @@ package body Src_Editor_Buffer is
          end if;
 
       else
-         Get_Iter_At_Mark (Buffer, Iter, Get_Insert_Mark (Buffer));
+         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
          Copy (Iter, Dest => End_Pos);
       end if;
 
@@ -4556,7 +4567,7 @@ package body Src_Editor_Buffer is
 
       --  Where is the cursor (so we can keep it on the same line)
 
-      Get_Iter_At_Mark (Buffer, Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Cursor_Line   := Natural (Get_Line (Iter)) + 1;
       Cursor_Offset := Get_Line_Offset (Iter);
 

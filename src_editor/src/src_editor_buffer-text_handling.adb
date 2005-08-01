@@ -21,7 +21,6 @@
 with Ada.Strings.Maps;   use Ada.Strings.Maps;
 
 with Gtk.Text_Iter;      use Gtk.Text_Iter;
-with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
 
 with Case_Handling;      use Case_Handling;
 with Casing_Exceptions;  use Casing_Exceptions;

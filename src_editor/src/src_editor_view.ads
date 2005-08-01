@@ -31,6 +31,8 @@ with Glib;                   use Glib;
 with Gtk.Drawing_Area;
 with Gtk.Main;
 with Gtk.Scrolled_Window;
+with Gtk.Text_Iter;
+with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 with Pango.Font;
@@ -129,6 +131,15 @@ package Src_Editor_View is
       Child : MDI_Child);
    --  Inform View that it is being contained in Child.
 
+   procedure Save_Cursor_Position
+     (View : access Source_View_Record'Class);
+   --  Save the cursor position
+
+   procedure Get_Cursor_Position
+     (View : access Source_View_Record'Class;
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the cursor location in that view.
+
 private
 
    type Source_View_Record is
@@ -141,6 +152,7 @@ private
       --  The drawing area used for the speed column.
 
       Kernel              : GPS.Kernel.Kernel_Handle;
+      Saved_Cursor_Mark   : Gtk_Text_Mark;
 
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;

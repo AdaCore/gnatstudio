@@ -26,8 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Gtk.Text_Iter;
-with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_View;
 with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
 
@@ -48,37 +46,9 @@ package Gtkada.Text_View is
    --  Internal initialization procedure.
    --  See he section "Creating your own widgets" in the documentation.
 
-   procedure Save_Cursor_Position
-     (View : access Gtkada_Text_View_Record'Class);
-   --  Save the cursor position
-
-   procedure Get_Cursor_Position
-     (View : access Gtkada_Text_View_Record'Class;
-      Iter : out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  Return the cursor location in that view.
-
-   ---------------
-   -- Get / Set --
-   ---------------
-
-   function Get_Saved_Cursor_Mark
-     (View : access Gtkada_Text_View_Record'Class)
-      return Gtk_Text_Mark;
-   pragma Inline (Get_Saved_Cursor_Mark);
-
-   procedure Set_Saved_Cursor_Mark
-     (View   : access Gtkada_Text_View_Record'Class;
-      Cursor : Gtk_Text_Mark);
-   pragma Inline (Set_Saved_Cursor_Mark);
-
 private
 
    type Gtkada_Text_View_Record is
-     new Gtk.Text_View.Gtk_Text_View_Record
-   with record
-      Saved_Cursor_Mark : Gtk_Text_Mark;
-      --  Copy of the cursor location.
-
-   end record;
+     new Gtk.Text_View.Gtk_Text_View_Record with null record;
 
 end Gtkada.Text_View;

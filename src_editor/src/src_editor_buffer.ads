@@ -155,6 +155,12 @@ package Src_Editor_Buffer is
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the current cursor position. Such a query should rather be done
+   --  on the specific view in which you are interested
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
       Line   : out Gint;
       Column : out Gint);
    --  Return the current cursor position
@@ -867,6 +873,12 @@ private
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted.
+
+      Insert_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  This is a copy of the "insert" mark.
+      --  This could be easily looked-up when needed, but having a copy is
+      --  helping performance-wise, since a  lot of subprograms use it.
+      --  This must always be a valid text mark.
 
       Inserting : Boolean := False;
       --  Used to avoid recursion, when using commands.

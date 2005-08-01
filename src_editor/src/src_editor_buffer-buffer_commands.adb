@@ -23,7 +23,6 @@ with Ada.Tags;                  use Ada.Tags;
 with Gtk;                       use Gtk;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
 with GPS.Kernel;                use GPS.Kernel;
 with Src_Editor_View;           use Src_Editor_View;
@@ -66,7 +65,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
         (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
       Get_Iter_At_Mark
         (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Get_Insert_Mark (Buffer));
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
 
       if Equal (First_Highlight_Iter, On_Cursor_Iter) then
          Place_Cursor (Buffer, Last_Highlight_Iter);

@@ -116,7 +116,7 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  This procedure handles all expose events happening on the left border
-   --  window. It will the redraw the exposed area (this window may contains
+   --  window. It will redraw the exposed area (this window may contains
    --  things such as line number, breakpoint icons, etc).
 
    function Focus_Out_Event_Cb
@@ -325,7 +325,7 @@ package body Src_Editor_View is
    is
       Y, Height   : Gint;
       Rect        : Gdk_Rectangle;
-      Insert_Mark : constant Gtk_Text_Mark := Get_Saved_Cursor_Mark (View);
+      Insert_Mark : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
       Iter        : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Get_Buffer (Source_View (View)), Iter, Insert_Mark);
@@ -348,6 +348,18 @@ package body Src_Editor_View is
       Gtk.Handlers.Add_Watch (Id, Data);
    end Setup;
 
+   --------------------------
+   -- Save_Cursor_Position --
+   --------------------------
+
+   procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Insert_Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
+   end Save_Cursor_Position;
+
    -----------------------------
    -- Restore_Cursor_Position --
    -----------------------------
@@ -359,7 +371,7 @@ package body Src_Editor_View is
       Cursor_Iter : Gtk_Text_Iter;
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Saved_Cursor_Mark (View));
+      Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
 
       --  If the cursor has not moved, do not do anything.
 
@@ -399,7 +411,7 @@ package body Src_Editor_View is
          View.Speed_Column_Buffer := null;
       end if;
 
-      Delete_Mark (Get_Buffer (View), Get_Saved_Cursor_Mark (View));
+      Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
       if View.Connect_Expose_Registered then
          Idle_Remove (View.Connect_Expose_Id);
@@ -1010,7 +1022,7 @@ package body Src_Editor_View is
          end loop;
 
          Get_Iter_At_Mark
-           (Get_Buffer (View), Cursor_Iter, Get_Saved_Cursor_Mark (View));
+           (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
 
          Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
 
@@ -1223,8 +1235,8 @@ package body Src_Editor_View is
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-      Hook : Preferences_Hook;
-      F_Hook : File_Hook;
+      Hook        : Preferences_Hook;
+      F_Hook      : File_Hook;
       use Config;
 
    begin
@@ -1392,7 +1404,7 @@ package body Src_Editor_View is
          Source_View (View));
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      Set_Saved_Cursor_Mark (View, Create_Mark (Buffer, "", Insert_Iter));
+      View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
 
       Invalidate_Window (Source_View (View));
    end Initialize;
@@ -1612,7 +1624,7 @@ package body Src_Editor_View is
       --  behavior.
 
       Scroll_To_Mark
-        (View, Get_Saved_Cursor_Mark (View), Use_Align => Center,
+        (View, View.Saved_Cursor_Mark, Use_Align => Center,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
@@ -1627,6 +1639,22 @@ package body Src_Editor_View is
         (View, Insert_Mark, Use_Align => False,
          Within_Margin => 0.1, Xalign => 0.5, Yalign => 0.5);
    end Center_Cursor;
+
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
+
+   procedure Get_Cursor_Position
+     (View : access Source_View_Record'Class;
+      Iter : out Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+   begin
+      if Has_Focus_Is_Set (View) then
+         Get_Cursor_Position (Source_Buffer (Get_Buffer (View)), Iter);
+      else
+         Get_Iter_At_Mark (Get_Buffer (View), Iter, View.Saved_Cursor_Mark);
+      end if;
+   end Get_Cursor_Position;
 
    -----------------------------
    -- Window_To_Buffer_Coords --

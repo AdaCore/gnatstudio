@@ -26,8 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Glib;          use Glib;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Glib;            use Glib;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
 
 package body Gtkada.Text_Buffer is
 
@@ -63,38 +64,5 @@ package body Gtkada.Text_Buffer is
          Delete (Buffer, Start_Iter, End_Iter);
       end if;
    end Clear;
-
-   -------------------------
-   -- Get_Cursor_Position --
-   -------------------------
-
-   procedure Get_Cursor_Position
-     (Buffer : access Gtkada_Text_Buffer_Record'Class;
-      Iter   : out Gtk_Text_Iter) is
-   begin
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-   end Get_Cursor_Position;
-
-   ---------------------
-   -- Get_Insert_Mark --
-   ---------------------
-
-   function Get_Insert_Mark
-     (Buffer : access Gtkada_Text_Buffer_Record'Class)
-      return Gtk_Text_Mark is
-   begin
-      return Buffer.Insert_Mark;
-   end Get_Insert_Mark;
-
-   ---------------------
-   -- Set_Insert_Mark --
-   ---------------------
-
-   procedure Set_Insert_Mark
-     (Buffer : access Gtkada_Text_Buffer_Record'Class;
-      Mark   : Gtk_Text_Mark) is
-   begin
-      Buffer.Insert_Mark := Mark;
-   end Set_Insert_Mark;
 
 end Gtkada.Text_Buffer;
