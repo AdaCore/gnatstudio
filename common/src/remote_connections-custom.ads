@@ -239,6 +239,8 @@ private
 
    type Command_Array is array (Cmd_Enum) of Action_Access;
 
+   type TTY_Process_Descriptor_Access is access all TTY_Process_Descriptor;
+
    type Custom_Connection is new Remote_Connection_Record with record
       Description : String_Ptr;
       --  A description of the protocol
@@ -261,7 +263,7 @@ private
       --  Last read timestamp
 
       Is_Open              : Boolean := False;
-      Fd                   : TTY_Process_Descriptor;
+      Pd                   : TTY_Process_Descriptor_Access;
 
       Last_Connection_Attempt : Time := VFS.No_Time;
       --  Time when we last attempted a connection, so that we avoid
