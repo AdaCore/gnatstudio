@@ -2286,12 +2286,10 @@ package body Entities.Queries is
       end if;
       Iter.File := File;
       Iter.Index_In_EL := Entity_Information_Arrays.First;
+      Iter.Processing_Entities := True;
 
       if Iter.EL = null then
-         Iter.Processing_Entities := False;
          Next (Iter);
-      else
-         Iter.Processing_Entities := True;
       end if;
    end Find_All_Entities_In_File;
 
