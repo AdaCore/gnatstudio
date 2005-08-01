@@ -49,7 +49,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Text_View;          use Gtkada.Text_View;
 with Gtkada.Types;              use Gtkada.Types;
 with Pango.Layout;              use Pango.Layout;
 
@@ -1195,7 +1194,6 @@ package body Src_Editor_Box is
                  (Entity_Selection_Context_Access (Context),
                   Get_Text (Entity_Start, Entity_End),
                   To_Box_Column (Entity_Column));
-
 
                if Menu /= null then
                   --  Move the cursor at the correct location. The cursor is
