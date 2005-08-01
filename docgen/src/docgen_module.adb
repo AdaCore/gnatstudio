@@ -18,43 +18,45 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Intl;                  use GPS.Intl;
-with Glib.Object;               use Glib.Object;
-with VFS;                       use VFS;
-with Docgen.Work_On_File;       use Docgen.Work_On_File;
-with Entities;                  use Entities;
-with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Projects;                  use Projects;
-with Glib;                      use Glib;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Projects.Registry;         use Projects.Registry;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
 with Docgen_Registry;           use Docgen_Registry;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Templates_Parser;          use Templates_Parser;
+with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
+with Docgen.Work_On_File;       use Docgen.Work_On_File;
+with Entities;                  use Entities;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Language_Handlers;         use Language_Handlers;
 with Language.Ada;              use Language, Language.Ada;
-
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Radio_Button;          use Gtk.Radio_Button;
-with Gtk.Tooltips;              use Gtk.Tooltips;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with Templates_Parser;          use Templates_Parser;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Docgen_Module is
 
@@ -374,7 +376,7 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
       File    : aliased Virtual_File;
 
    begin
@@ -969,8 +971,7 @@ package body Docgen_Module is
            Default => False,
            Blurb   =>
              -("Whether Docgen should compute references (e.g. call graph)"),
-           Nick    => -"Call graph",
-           Flags   => Param_Readable)); --  ??? For 3.0.0
+            Nick    => -"Call graph"));
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
