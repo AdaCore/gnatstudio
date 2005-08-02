@@ -199,6 +199,9 @@ procedure GPS.Main is
    Started                : Boolean := False;
    --  Whether the main loop is started
 
+   Exiting                : Boolean := False;
+   --  Whether GPS is exiting
+
    Button                 : Message_Dialog_Buttons;
    Result                 : Boolean;
    Timeout_Id             : Timeout_Handler_Id;
@@ -1489,7 +1492,9 @@ procedure GPS.Main is
       pragma Unreferenced (MDI);
       C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
    begin
-      Set_Main_Title (Kernel, C);
+      if not Exiting then
+         Set_Main_Title (Kernel, C);
+      end if;
    end Title_Changed;
 
    --------------------
@@ -1523,6 +1528,10 @@ procedure GPS.Main is
       pragma Unreferenced (Mdi);
       Child : constant MDI_Child := MDI_Child (To_Object (Params, 1));
    begin
+      if Exiting then
+         return;
+      end if;
+
       Set_Main_Title (Kernel, Child);
 
       if Started then
@@ -1579,17 +1588,13 @@ procedure GPS.Main is
       end if;
 
       Cleanup_Needed := False;
+      Exiting := True;
 
       if Started and then Get_Pref (Kernel, Save_Desktop_On_Exit) then
          Save_Desktop (Kernel);
       end if;
 
       Save_Accel_Map (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
-
-      --  Close MDI children at this point, so that the MDI won't access
-      --  modules during the finalization of modules below.
-
-      Close_All_Children (Kernel);
 
       Free_Modules (Kernel);
 
