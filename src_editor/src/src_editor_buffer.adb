@@ -4545,12 +4545,12 @@ package body Src_Editor_Buffer is
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
 
+      if Force then
+         Indent_Style := Extended;
+      end if;
+
       if Indent_Style = None then
-         if Force then
-            Indent_Style := Extended;
-         else
-            return False;
-         end if;
+         return False;
       end if;
 
       --  Set proper casing policy, we want to disable the auto-casing here if
