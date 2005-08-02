@@ -1586,6 +1586,11 @@ procedure GPS.Main is
 
       Save_Accel_Map (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
+      --  Close MDI children at this point, so that the MDI won't access
+      --  modules during the finalization of modules below.
+
+      Close_All_Children (Kernel);
+
       Free_Modules (Kernel);
 
       --  Call Handlers_Destroy after Free_Modules and Destroy (GPS),
