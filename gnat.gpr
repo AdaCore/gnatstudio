@@ -8,7 +8,7 @@ project GNAT is
       case Shared.Build is
           when "Debug" =>
              for Default_Switches ("Ada") use
-               ("-g", "-gnata", "-gnatpg", "-O", "-gnatws");
+               ("-g", "-gnata", "-gnatpg", "-O");
           when "Production" =>
              for Default_Switches ("Ada") 
                 use ("-gnatn", "-gnatpg", "-O2", "-gnatws", "-g");
