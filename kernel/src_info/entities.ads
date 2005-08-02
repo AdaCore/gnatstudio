@@ -473,7 +473,7 @@ package Entities is
 
    type Entity_Instantiation is private;
    No_Instantiation : constant Entity_Instantiation;
-   --  Describe in the context in which an entity is instantiated.
+   --  Describe the context in which an entity is instantiated.
    --  It isn't safe to store this type anywhere, since it might cease to be
    --  valid when the database is reparsed, even partly.
 
@@ -956,9 +956,9 @@ private
       --  changed.
    end record;
 
-   ---------------------
-   --  Entities_Tries --
-   ---------------------
+   --------------------
+   -- Entities_Tries --
+   --------------------
 
    type Header_Num is range 0 .. 336;
    type Entity_Information_List_Access is access Entity_Information_List;

@@ -3345,6 +3345,7 @@ package body GVD_Module is
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;
       Subprogram_Filter : Action_Filter;
+
    begin
       GVD_Module_ID := new GVD_Module_Record;
       Debugger_Module_ID := Module_ID (GVD_Module_ID);
