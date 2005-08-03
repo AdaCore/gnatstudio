@@ -183,8 +183,6 @@ private
       Stored_Status   : Status_Hash.HTable;
       Cached_Status   : Status_Hash.HTable;
 
-      Shown           : Boolean := False;
-
       File_Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       --  The column containing the file names
 
