@@ -18,24 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Builder_Module;     use Builder_Module;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Styles;  use GPS.Kernel.Styles;
-with GPS.Location_View;  use GPS.Location_View;
-with String_Utils;       use String_Utils;
-with String_List_Utils;
-
-with GPS.Intl;              use GPS.Intl;
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
-with Traces;                use Traces;
-
 pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;       use GNAT.Expect.TTY;
 pragma Warnings (On);
+
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Console;    use GPS.Kernel.Console;
+with GPS.Kernel.Styles;     use GPS.Kernel.Styles;
+with GPS.Location_View;     use GPS.Location_View;
+with String_Utils;          use String_Utils;
+with String_List_Utils;
+with Builder_Module;        use Builder_Module;
+with GPS.Intl;              use GPS.Intl;
+with Traces;                use Traces;
 
 package body Commands.Builder is
 
@@ -106,7 +105,7 @@ package body Commands.Builder is
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
       Matched : Match_Array (0 .. 3);
       Start, Eol, Eol2   : Integer := Output'First;
-      Buffer       : Unbounded_String;
+      Buffer  : Unbounded_String;
    begin
       while Start <= Output'Last loop
          Eol := Next_Line (Output, Start);
