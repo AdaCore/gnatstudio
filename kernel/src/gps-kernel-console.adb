@@ -35,7 +35,6 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 
-with Interactive_Consoles;   use Interactive_Consoles;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -142,6 +141,7 @@ package body GPS.Kernel.Console is
    begin
       if Console = null then
          Put_Line (Text);
+
       elsif Text /= "" then
          if Mode = Error then
             Trace (Me, "Error: " & Text);
@@ -149,6 +149,7 @@ package body GPS.Kernel.Console is
               (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
                Add_LF, Mode = Error);
             Raise_Console (Kernel);
+
          else
             Insert (Console, Text, Add_LF, Mode = Error);
             Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
@@ -342,12 +343,12 @@ package body GPS.Kernel.Console is
 
       Child := Put
         (Kernel, Console,
-         Default_Width  => 400,
-         Default_Height => 120,
-         Position       => Position_Bottom,
-         Focus_Widget   => Gtk_Widget (Get_View (Console)),
-         Flags          => 0,
-         Module         => Console_Module_Id,
+         Default_Width       => 400,
+         Default_Height      => 120,
+         Position            => Position_Bottom,
+         Focus_Widget        => Gtk_Widget (Get_View (Console)),
+         Flags               => 0,
+         Module              => Console_Module_Id,
          Desktop_Independent => True);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Messages");
@@ -416,6 +417,7 @@ package body GPS.Kernel.Console is
             end if;
             Raise_Child (Child);
             Set_Title (Child, Title, Title);
+
          elsif Child /= null then
             Console := Interactive_Console (Get_Widget (Child));
             Enable_Prompt_Display (Console, True);
@@ -424,6 +426,7 @@ package body GPS.Kernel.Console is
          end if;
 
          return Console;
+
       else
          Highlight_Child (Console_Module_Id.Child);
          return Get_Console (Kernel);
