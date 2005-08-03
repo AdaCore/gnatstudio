@@ -20,13 +20,13 @@
 
 --  This package defines the GPS module for communication with VCS.
 
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
+
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with VCS_View_Pkg;        use VCS_View_Pkg;
 with VCS_Activities_View; use VCS_Activities_View;
 
