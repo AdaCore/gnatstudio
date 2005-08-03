@@ -766,6 +766,7 @@ package body Builder_Module is
       Compilable_File : Virtual_File := File;
       Success         : Boolean;
       Files_To_Free   : File_Array_Access;
+      Cb_Data         : Files_Callback_Data_Access;
 
    begin
       --  Is there a file to compile ?
@@ -909,6 +910,10 @@ package body Builder_Module is
                Index    => Ada_String,
                Use_Initial_Value => True);
          begin
+            if Files_To_Free /= null then
+               Cb_Data := new Files_Callback_Data'(Files => Files_To_Free);
+            end if;
+
             Launch_Process
               (Kernel,
                Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
@@ -922,8 +927,7 @@ package body Builder_Module is
                Show_Command     => not Quiet,
                Show_Output      => False,
                Success          => Success,
-               Callback_Data    => new Files_Callback_Data'
-                 (Files => Files_To_Free),
+               Callback_Data    => Callback_Data_Access (Cb_Data),
                Line_By_Line     => False,
                Exit_Cb          => Free_Temporary_Files'Access,
                Callback         => Parse_Compiler_Output'Access,
