@@ -18,24 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;              use String_Utils;
-with String_List_Utils;         use String_List_Utils;
+with Ada.Text_IO;               use Ada.Text_IO;
+
+with GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Expect;               use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
+pragma Warnings (On);
+
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
-
-with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Expect;               use GNAT.Expect;
-with Ada.Text_IO;               use Ada.Text_IO;
-
-pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-pragma Warnings (On);
+with String_Utils;              use String_Utils;
+with String_List_Utils;         use String_List_Utils;
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
@@ -419,6 +419,10 @@ package body VCS.ClearCase is
       --  Append necessary data to local variables to query the status for
       --  File.
 
+      ------------
+      -- Status --
+      ------------
+
       procedure Status (File : in String) is
       begin
          Append (Args, File);
@@ -630,6 +634,10 @@ package body VCS.ClearCase is
 
       function Status (File : in String) return File_Status_Record;
       --  Return the local file status for File.
+
+      ------------
+      -- Status --
+      ------------
 
       function Status (File : in String) return File_Status_Record is
          Result : File_Status_Record;
@@ -1290,6 +1298,126 @@ package body VCS.ClearCase is
       end loop;
    end Add;
 
+   -------------------
+   -- Add_No_Commit --
+   -------------------
+
+   procedure Add_No_Commit
+     (Rep       : access ClearCase_Record;
+      Filenames : String_List.List;
+      Log       : String)
+   is
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
+
+   begin
+      while File_Node /= Null_Node loop
+         declare
+            Args : List;
+            Head : List;
+            File : constant String := Data (File_Node);
+            Dir  : constant String := Dir_Name (Data (File_Node));
+
+            Checkout_Dir_Command : External_Command_Access;
+            Make_Element_Command : External_Command_Access;
+
+            Fail_Message    : Console_Command_Access;
+            Success_Message : Console_Command_Access;
+
+         begin
+            Insert (Kernel,
+                    -"ClearCase: Adding element: "
+                      & File & " ...", Mode => Info);
+
+            --  Create the end of the message
+
+            Create (Fail_Message,
+                    Kernel,
+                    -("ClearCase error: Adding of ") & File & (-" failed."),
+                    False,
+                    True,
+                    Info);
+
+            Create (Success_Message,
+                    Kernel,
+                    ("ClearCase: Adding of ") & File & (-" done."),
+                    False,
+                    True,
+                    Info);
+
+            --  Check out the directory
+
+            Append (Args, "co");
+            Append (Args, "-c");
+            Append (Args, -"Adding " & File);
+            Append (Args, Dir);
+
+            Append (Head, -"ClearCase error: could not checkout " & Dir);
+
+            Create (Checkout_Dir_Command,
+                    Kernel,
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access,
+                    -"ClearCase: Checking out");
+
+            Free (Args);
+            Free (Head);
+
+            --  Add the file
+
+            Append (Args, "mkelem");
+            Append (Args, "-c");
+            Append (Args, Log);
+            Append (Args, File);
+
+            Append
+              (Head,
+               -"ClearCase error: could not create the repository element "
+                 & File);
+
+            Create (Make_Element_Command,
+                    Kernel,
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access,
+                    -"ClearCase: Making element");
+
+            Free (Args);
+            Free (Head);
+
+            --  If the directory checkout was successful, create the element
+
+            Add_Consequence_Action
+              (Checkout_Dir_Command,
+               Make_Element_Command);
+
+            Add_Alternate_Action
+              (Checkout_Dir_Command,
+               Fail_Message);
+
+            Add_Consequence_Action
+              (Make_Element_Command,
+               Success_Message);
+
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkout_Dir_Command),
+               False,
+               True,
+               ClearCase_Identifier);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
+   end Add_No_Commit;
+
    ------------
    -- Remove --
    ------------
@@ -1616,7 +1744,6 @@ package body VCS.ClearCase is
    procedure Diff_Working
      (Rep  : access ClearCase_Record;
       File : VFS.Virtual_File)
-
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1735,10 +1862,10 @@ package body VCS.ClearCase is
       VCS_ClearCase_Module_ID := new VCS_ClearCase_Module_ID_Record;
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
-        (Module                  => Module_ID (VCS_ClearCase_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => VCS_ClearCase_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Module_ID (VCS_ClearCase_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => VCS_ClearCase_Module_Name,
+         Priority    => Default_Priority);
 
       VCS_ClearCase_Module_ID.ClearCase_Reference := new ClearCase_Record;
       VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel
@@ -1766,6 +1893,7 @@ package body VCS.ClearCase is
          Diff               => new String'(-"Diff against specific rev."),
          Diff2              => new String'(-"Diff between two revisions"),
          Add                => new String'(-"Add to repository"),
+         Add_No_Commit      => new String'(-"Add to repository (no commit)"),
          Remove             => new String'(-"Remove from repository"),
          Revert             => new String'(-"Revert to repository revision"));
    end Register_Module;
