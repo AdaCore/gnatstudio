@@ -69,6 +69,6 @@ package GPS.Kernel.Console is
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
-   --  Return the interactive console associated with the kernel.
+   --  Return the interactive console associated with the kernel
 
 end GPS.Kernel.Console;

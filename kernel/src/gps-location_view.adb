@@ -2308,10 +2308,10 @@ package body GPS.Location_View is
       Warning_Index_In_Regexp : Integer := -1;
       Quiet                   : Boolean := False)
    is
-      View      : constant Location_View :=
-        Get_Or_Create_Location_View (Kernel);
-      Model     : Gtk_Tree_Store;
-      Expand    : Boolean := Quiet;
+      View   : constant Location_View :=
+                 Get_Or_Create_Location_View (Kernel);
+      Model  : Gtk_Tree_Store;
+      Expand : Boolean := Quiet;
 
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
@@ -2362,17 +2362,18 @@ package body GPS.Location_View is
 
       File_Location : constant Pattern_Matcher := Get_File_Location;
       File_Index    : constant Integer :=
-        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
+                        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
       Line_Index    : constant Integer :=
-        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
+                        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
       Col_Index     : constant Integer :=
-        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
+                        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
       Msg_Index     : constant Integer :=
-        Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
-      Style_Index  : constant Integer :=
-        Get_Index (Style_Pattern_Index, Style_Index_In_Regexp);
+                        Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
+      Style_Index   : constant Integer :=
+                        Get_Index (Style_Pattern_Index, Style_Index_In_Regexp);
       Warning_Index : constant Integer :=
-        Get_Index (Warning_Pattern_Index, Warning_Index_In_Regexp);
+                        Get_Index
+                          (Warning_Pattern_Index, Warning_Index_In_Regexp);
       Matched    : Match_Array (0 .. Max);
       Start      : Natural := Text'First;
       Last       : Natural;

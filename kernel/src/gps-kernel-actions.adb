@@ -170,7 +170,7 @@ package body GPS.Kernel.Actions is
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String) return Action_Record_Access
    is
-      Action : Action_Record_Access;
+      Action  : Action_Record_Access;
       Command : Menu_Command;
    begin
       if Kernel.Actions = null then

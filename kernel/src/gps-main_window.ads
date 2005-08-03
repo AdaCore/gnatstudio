@@ -38,7 +38,7 @@ package GPS.Main_Window is
    type GPS_Window_Record is new Gtk_Window_Record with record
       Kernel            : GPS.Kernel.Kernel_Handle;
       Main_Accel_Group  : Gtk_Accel_Group;
-      --  The default accelerators for the window.
+      --  The default accelerators for the window
 
       Menu_Box          : Gtk.Box.Gtk_Hbox;
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
