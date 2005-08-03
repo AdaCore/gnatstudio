@@ -82,6 +82,17 @@
       <shell>delete "%2"</shell>
    </action>
 
+   <!-- CVS add (no commit) -->
+
+   <action name="generic_cvs_add_no_commit" show-command="true" output="none">
+      <shell output="">echo "adding (no commit) file(s) $2-"</shell>
+      <external>cvs add "$2-"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
    <!-- CVS remove -->
 
    <action name="generic_cvs_remove" show-command="true" output="none">
@@ -258,6 +269,7 @@
       <history_revision   action="generic_cvs_history_rev"    label="View specific revision history"/>
       <annotate           action="generic_cvs_annotate"       label="Annotations"/>
       <add                action="generic_cvs_add"            label="Add"/>
+      <add_no_commit      action="generic_cvs_add_no_commit"  label="Add/No commit"/>
       <remove             action="generic_cvs_remove"         label="Remove"/>
       <revert             action="generic_cvs_revert"         label="Revert"/>
       <diff_head          action="generic_cvs_diff_head"      label="Compare against head revision"/>
