@@ -564,7 +564,7 @@ package body VCS_Module is
          On_Menu_View_Log'Access);
 
       Register_Action_Menu
-        ("History for revision....",
+        ("History for revision...",
          -"View the revision history for one revision of the current file",
          -"View specific revision history",
          File_Filter,
@@ -648,6 +648,13 @@ package body VCS_Module is
          -"Add",
          File_Filter,
          On_Menu_Add'Access);
+
+      Register_Action_Menu
+        ("Add no commit",
+         -"Add the current file to repository, do not commit",
+         -"Add/No commit",
+         File_Filter,
+         On_Menu_Add_No_Commit'Access);
 
       Register_Action_Menu
         ("Remove",
