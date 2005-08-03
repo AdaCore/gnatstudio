@@ -65,7 +65,8 @@ package VCS is
       Diff_Base_Head,     --  Diff base against head revision
       Diff,               --  Diff current against specified revision
       Diff2,              --  Diff between two specified revisions
-      Add,                --  Add one file or dir to the repository
+      Add,                --  Add and commit one file or dir to the repository
+      Add_No_Commit,      --  Add one file or dir to the repository
       Remove,             --  Remove one file or dir from repository
       Revert);            --  Revert files or dirs to repository revision
 
@@ -252,6 +253,13 @@ package VCS is
    --  The user must free Filenames.
 
    procedure Add
+     (Rep       : access VCS_Record;
+      Filenames : String_List.List;
+      Log       : String) is abstract;
+   --  Add and Commit files to the specified VCS repository
+   --  The user must free Filenames.
+
+   procedure Add_No_Commit
      (Rep       : access VCS_Record;
       Filenames : String_List.List;
       Log       : String) is abstract;
