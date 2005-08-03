@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -415,10 +415,6 @@ package body VCS_View_Pkg is
             Page := VCS_Page_Access
               (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
 
-            if Page.Shown then
-               Scroll_To_Point (Page.Tree, 0, 0);
-            end if;
-
             Clear (Page.Model);
             Status_Hash.Reset (Page.Stored_Status);
          end loop;
@@ -433,8 +429,9 @@ package body VCS_View_Pkg is
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Event, View);
+      pragma Unreferenced (Event);
    begin
+      Clear (VCS_View_Access (View));
       Hide_VCS_Explorer;
       return True;
 
@@ -482,8 +479,8 @@ package body VCS_View_Pkg is
    begin
       Push_State (Explorer.Kernel, Busy);
       Page := VCS_Page_Access
-        (Get_Nth_Page (Explorer.Notebook,
-                       Get_Current_Page (Explorer.Notebook)));
+        (Get_Nth_Page
+           (Explorer.Notebook, Get_Current_Page (Explorer.Notebook)));
 
       Scroll_To_Point (Page.Tree, 0, 0);
 
@@ -640,9 +637,14 @@ package body VCS_View_Pkg is
          return;
       end if;
 
+      Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
+
+      if Page = null then
+         return;
+      end if;
+
       Status_Temp := File_Status_List.First (Status);
 
-      Page := Get_Page_For_Identifier (Explorer, VCS_Identifier);
       Status_Hash.Get_First (Page.Cached_Status, Iter);
       Cache_Empty := Get_Element (Iter) = No_Element;
 
@@ -722,6 +724,7 @@ package body VCS_View_Pkg is
                         if Iter /= Null_Iter then
                            Fill_Info (Page, Iter, New_Status, Success);
                         end if;
+
                      else
                         if Iter /= Null_Iter then
                            Remove (Page.Model, Iter);
@@ -876,13 +879,17 @@ package body VCS_View_Pkg is
          return Result;
       end if;
 
-      Page := VCS_Page_Access (Get_Nth_Page (Explorer.Notebook,
-                               Get_Current_Page (Explorer.Notebook)));
+      Page := VCS_Page_Access
+        (Get_Nth_Page
+           (Explorer.Notebook, Get_Current_Page (Explorer.Notebook)));
 
-      Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Page.Tree),
-         Add_Selected_Item'Unrestricted_Access,
-         Explorer_Selection_Foreach.Data_Type_Access (Explorer));
+      if Page /= null then
+         Explorer_Selection_Foreach.Selected_Foreach
+           (Get_Selection (Page.Tree),
+            Add_Selected_Item'Unrestricted_Access,
+            Explorer_Selection_Foreach.Data_Type_Access (Explorer));
+      end if;
+
       return Result;
    end Get_Selected_Files;
 
@@ -1307,8 +1314,6 @@ package body VCS_View_Pkg is
    is
       Vbox1 : Gtk_Vbox;
       Hook  : File_Hook;
-      Page  : VCS_Page_Access;
-      pragma Unreferenced (Page);
 
    begin
       Init_Graphics;
@@ -1331,22 +1336,13 @@ package body VCS_View_Pkg is
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (VCS_View, "destroy", On_Destroy'Access, VCS_View);
 
-      declare
-         VCS_List : constant GNAT.OS_Lib.Argument_List :=
-           Get_VCS_List (Module_ID (VCS_Module_ID));
-      begin
-         for J in VCS_List'Range loop
-            Page := Get_Page_For_Identifier
-              (VCS_View, Get_VCS_From_Id (VCS_List (J).all));
-         end loop;
-      end;
-
       Hook := new File_Hook_Record'
         (Hook_Args_Record with Explorer => VCS_View_Access (VCS_View));
       Add_Hook (Kernel, File_Edited_Hook, Hook, Watch => GObject (VCS_View));
 
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.
+
       Widget_Callback.Connect
         (VCS_View, "grab_focus", On_Selected'Access, After => True);
    end Initialize;
@@ -1366,6 +1362,14 @@ package body VCS_View_Pkg is
       Tooltip         : VCS_Tooltips_Access;
 
    begin
+      if Identifier /= null
+        and then Name (Identifier) = "Unknown VCS"
+      then
+         --  ??? this certainly needs to be fixed, we do not want the
+         --  "Unknown VCS" page to be present on the notebook.
+         return null;
+      end if;
+
       for J in 1 .. Explorer.Number_Of_Pages loop
          Page := VCS_Page_Access
            (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
@@ -1379,6 +1383,10 @@ package body VCS_View_Pkg is
       --  Identifier could be found, therefore we create it.
 
       Explorer.Number_Of_Pages := Explorer.Number_Of_Pages + 1;
+
+      if Explorer.Number_Of_Pages > 1 then
+         Set_Show_Tabs (Explorer.Notebook);
+      end if;
 
       Page := new VCS_Page_Record;
       Initialize_Hbox (Page);
@@ -1420,6 +1428,8 @@ package body VCS_View_Pkg is
 
       Append_Page (Explorer.Notebook, Page, Label);
 
+      Show_All (Explorer.Notebook);
+
       Tooltip := new VCS_Tooltips;
       Tooltip.Page := Page;
       Set_Tooltip (Tooltip, Page.Tree);
@@ -1443,6 +1453,7 @@ package body VCS_View_Pkg is
             end;
          end loop;
       end;
+
       --  Emit a "clicked" signal on the file column to sort it.
 
       Clicked (Page.File_Column);
@@ -1556,7 +1567,8 @@ package body VCS_View_Pkg is
          Explorer.Context := null;
       end if;
 
-      Explorer.Context := Copy_Context (Context);
+      Explorer.Context := Context;
+      Ref (Explorer.Context);
    end Set_Current_Context;
 
    ------------------------
@@ -1664,7 +1676,14 @@ package body VCS_View_Pkg is
       Page : constant VCS_Page_Access :=
                Get_Page_For_Identifier (Explorer, Ref);
    begin
-      return Get_Cached_Data (Page, File).Status;
+      if Page = null then
+         return
+           (No_File, VCS.Unknown,
+            String_List.Null_List, String_List.Null_List,
+            String_List.Null_List, String_List.Null_List);
+      else
+         return Get_Cached_Data (Page, File).Status;
+      end if;
    end Get_Cached_Status;
 
    ----------
