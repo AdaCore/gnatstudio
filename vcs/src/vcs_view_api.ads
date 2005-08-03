@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget;
 with Glib.Object;        use Glib.Object;
+with Gtk.Widget;
+with Gtk.Menu;           use Gtk.Menu;
+
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Gtk.Menu;           use Gtk.Menu;
 with VCS;                use VCS;
 with Projects;           use Projects;
 
@@ -41,6 +42,10 @@ package VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Add
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Add_No_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
