@@ -18,50 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gtk.Accel_Group;           use Gtk.Accel_Group;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
-with Gtk.Widget;                use Gtk.Widget;
-
-with GPS.Intl;                  use GPS.Intl;
-
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Location_View;         use GPS.Location_View;
-with VFS;                       use VFS;
-with Projects;                  use Projects;
-with Interactive_Consoles;       use Interactive_Consoles;
-with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
-with Projects.Registry;         use Projects.Registry;
-with Entities;                  use Entities;
-with Histories;                 use Histories;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-
-with Basic_Types;
-with Std_Dialogs;               use Std_Dialogs;
-with File_Utils;                use File_Utils;
-with String_Utils;              use String_Utils;
-with String_List_Utils;
-with GUI_Utils;                 use GUI_Utils;
-with OS_Utils;                  use OS_Utils;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with Ada.Tags;                  use Ada.Tags;
 with System;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -72,11 +31,49 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
-with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with Ada.Tags;                  use Ada.Tags;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Enums;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Widget;                use Gtk.Widget;
 
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Location_View;         use GPS.Location_View;
+
+with VFS;                       use VFS;
+with Projects;                  use Projects;
+with Interactive_Consoles;      use Interactive_Consoles;
+with Language_Handlers;         use Language_Handlers;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Projects.Registry;         use Projects.Registry;
+with Entities;                  use Entities;
+with Histories;                 use Histories;
+
+with Basic_Types;
+with Std_Dialogs;               use Std_Dialogs;
+with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
+with String_List_Utils;
+with GUI_Utils;                 use GUI_Utils;
+with OS_Utils;                  use OS_Utils;
+with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
 
@@ -548,7 +545,7 @@ package body Builder_Module is
 
       Prj := Project;
 
-      --  If no file was specified in data, simply compile the current file.
+      --  If no file was specified in data, simply compile the current file
 
       if File = VFS.No_File and then Project = No_Project then
          Context := Get_Current_Context (Kernel);
@@ -753,7 +750,9 @@ package body Builder_Module is
       Shadow      : Boolean := False)
    is
       Prj             : constant Project_Type :=
-        Get_Project_From_File (Get_Registry (Kernel).all, File);
+                          Get_Project_From_File
+                            (Get_Registry (Kernel).all, File);
+      Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Cmd             : String_Access;
       Fd              : Process_Descriptor_Access;
       Local_File      : String_Access;
@@ -761,7 +760,6 @@ package body Builder_Module is
         (Get_Language_Handler (Kernel), File);
       Common_Args     : Argument_List_Access;
       Args            : Argument_List_Access;
-      Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
       Shadow_Path     : String_Access;
       Compilable_File : Virtual_File := File;
       Success         : Boolean;
@@ -819,7 +817,7 @@ package body Builder_Module is
          return;
 
       elsif Lang = "ada" then
-         Cmd    := new String'
+         Cmd := new String'
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
                Default => "gnatmake", Index => "ada"));
@@ -891,6 +889,7 @@ package body Builder_Module is
             Files_To_Free := new File_Array'
               (1 => Temp_File, 2 => Temp_Project);
          end;
+
       else
          Local_File := new String'(Locale_Full_Name (File));
          Change_Dir (Dir_Name (Project_Path (Prj)));
@@ -898,8 +897,7 @@ package body Builder_Module is
       end if;
 
       if not Shadow
-        and then (Status (Prj) /= From_File
-                  or else Syntax_Only)
+        and then (Status (Prj) /= From_File or else Syntax_Only)
       then
          --  Use the default switches for that tool
          declare
@@ -1059,8 +1057,7 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
       Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-
+                  Get_Current_Context (Kernel);
    begin
       if Context = null
         or else not (Context.all in File_Selection_Context'Class)
@@ -1121,19 +1118,19 @@ package body Builder_Module is
       begin
          Launch_Process
            (Kernel,
-            Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
-            Remote_Host    => Get_Attribute_Value
+            Remote_Protocol      => Get_Pref (Kernel, Remote_Protocol),
+            Remote_Host          => Get_Attribute_Value
               (Get_Project (Kernel), Remote_Host_Attribute),
-            Command        => Args (Args'First).all,
-            Arguments      => Args (Args'First + 1 .. Args'Last),
-            Fd             => Fd,
-            Console        => Get_Console (Kernel),
-            Show_Command   => True,
-            Show_Output    => False,
-            Success        => Success,
-            Line_By_Line   => False,
-            Callback       => Parse_Compiler_Output'Access,
-            Exit_Cb        => Free_Temporary_Files'Access,
+            Command              => Args (Args'First).all,
+            Arguments            => Args (Args'First + 1 .. Args'Last),
+            Fd                   => Fd,
+            Console              => Get_Console (Kernel),
+            Show_Command         => True,
+            Show_Output          => False,
+            Success              => Success,
+            Line_By_Line         => False,
+            Callback             => Parse_Compiler_Output'Access,
+            Exit_Cb              => Free_Temporary_Files'Access,
             Show_In_Task_Manager => True,
             Synchronous          => False);
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
@@ -1249,6 +1246,10 @@ package body Builder_Module is
          Title     : String);
       --  Launch Command (with Args) locally, or remotely if necessary.
 
+      ------------
+      -- Launch --
+      ------------
+
       procedure Launch
         (Command   : String;
          Arguments : GNAT.OS_Lib.Argument_List;
@@ -1256,7 +1257,8 @@ package body Builder_Module is
       is
          Remote_Cmd  : constant String := Get_Pref (K, Remote_Protocol);
          Remote_Host : constant String :=
-           Get_Attribute_Value (Data.Project, Remote_Host_Attribute);
+                         Get_Attribute_Value
+                           (Data.Project, Remote_Host_Attribute);
          Exec        : String_Access;
          Fd          : Process_Descriptor_Access;
          Console     : Interactive_Console;
@@ -1286,12 +1288,12 @@ package body Builder_Module is
          else
             declare
                Full_Command : constant String :=
-                 To_Unix_Pathname (Command) & " "
-                 & Argument_List_To_String (Arguments);
+                                To_Unix_Pathname (Command) & " "
+                                & Argument_List_To_String (Arguments);
                New_Args     : Argument_List_Access :=
-                 Argument_String_To_List (Remote_Cmd & " " & Remote_Host);
+                                Argument_String_To_List
+                                  (Remote_Cmd & " " & Remote_Host);
                Last_Arg     : String_Access := new String'(Full_Command);
-
             begin
                Console := Create_Interactive_Console (K, Title);
                Launch_Process
@@ -1485,8 +1487,8 @@ package body Builder_Module is
       Kernel       : access Kernel_Handle_Record'Class;
       Set_Shortcut : Boolean)
    is
-      Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+      Mitem : Dynamic_Menu_Item;
    begin
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Project_Make_Suffix);
@@ -1531,8 +1533,8 @@ package body Builder_Module is
       Kernel  : access Kernel_Handle_Record'Class;
       Mains   : Argument_List)
    is
-      Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+      Mitem : Dynamic_Menu_Item;
    begin
       if Menu = null then
          if Mains'Length = 0 then
@@ -1576,6 +1578,10 @@ package body Builder_Module is
          Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
          Changed    : Boolean);
       --  Remove one specific binding if necessary
+
+      ---------------------
+      -- Cleanup_Binding --
+      ---------------------
 
       procedure Cleanup_Binding
         (Data       : System.Address;
@@ -1748,13 +1754,13 @@ package body Builder_Module is
    is
       pragma Unreferenced (Object);
       File_Context : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+                       File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
 
       Mains : Argument_List := Get_Attribute_Value
         (Project_Information (File_Context),
          Attribute => Main_Attribute);
-      M : Gtk_Menu := Gtk_Menu (Menu);
+      M     : Gtk_Menu := Gtk_Menu (Menu);
    begin
       if Mains'Length /= 0 then
          Add_Build_Menu
@@ -1778,19 +1784,19 @@ package body Builder_Module is
    is
       pragma Unreferenced (Object);
       File_Context : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+                       File_Selection_Context_Access (Context);
       --  The filter garantees we are on a File_Selection_Context
 
       Mains : Argument_List := Get_Attribute_Value
         (Project_Information (File_Context),
          Attribute => Main_Attribute);
-      M : Gtk_Menu := Gtk_Menu (Menu);
+      M     : Gtk_Menu := Gtk_Menu (Menu);
    begin
       Add_Run_Menu
-        (Menu         => M,
-         Project      => Project_Information (File_Context),
-         Kernel       => Get_Kernel (Context),
-         Mains        => Mains);
+        (Menu    => M,
+         Project => Project_Information (File_Context),
+         Kernel  => Get_Kernel (Context),
+         Mains   => Mains);
       Free (Mains);
    end Run_Contextual;
 
@@ -1809,10 +1815,10 @@ package body Builder_Module is
 
       Builder_Module_ID := new Builder_Module_ID_Record;
       Register_Module
-        (Module       => Builder_Module_ID,
-         Kernel       => Kernel,
-         Module_Name  => Builder_Module_Name,
-         Priority     => Default_Priority);
+        (Module      => Builder_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Builder_Module_Name,
+         Priority    => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Build, -"Check _Syntax", "",
@@ -1863,26 +1869,26 @@ package body Builder_Module is
 
       Register_Command
         (Kernel, "compile",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Compile_Command'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "check_syntax",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Compile_Command'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "shadow_check_syntax",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Compile_Command'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "make",
-         Class        => Get_File_Class (Kernel),
-         Handler      => Compile_Command'Access);
+         Class   => Get_File_Class (Kernel),
+         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "compute_xref",
-         Handler      => Compile_Command'Access);
+         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "get_build_output",
-         Handler      => Compile_Command'Access);
+         Handler => Compile_Command'Access);
    end Register_Module;
 
    ---------------
