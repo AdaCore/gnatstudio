@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -1536,6 +1537,7 @@ package body VCS_Activities_View is
                return null;
             end if;
          end;
+
       else
          return Copy_Context (Explorer.Context);
       end if;
@@ -1554,7 +1556,8 @@ package body VCS_Activities_View is
          Explorer.Context := null;
       end if;
 
-      Explorer.Context := Copy_Context (Context);
+      Explorer.Context := Context;
+      Ref (Explorer.Context);
    end Set_Current_Context;
 
    ------------------------
