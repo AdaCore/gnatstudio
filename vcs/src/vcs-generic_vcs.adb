@@ -762,6 +762,26 @@ package body VCS.Generic_VCS is
       GNAT.Strings.Free (Args);
    end Add;
 
+   -------------------
+   -- Add_No_Commit --
+   -------------------
+
+   procedure Add_No_Commit
+     (Rep       : access Generic_VCS_Record;
+      Filenames : String_List.List;
+      Log       : String)
+   is
+      Args : GNAT.OS_Lib.String_List_Access;
+
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Log);
+
+      Generic_Command (Rep, Filenames, Args, Add_No_Commit);
+
+      GNAT.Strings.Free (Args);
+   end Add_No_Commit;
+
    ------------
    -- Remove --
    ------------
@@ -908,8 +928,8 @@ package body VCS.Generic_VCS is
 
       function Parse_Node (M : Node_Ptr) return Boolean is
          Name   : constant String := Get_Attribute (M, "name");
-         Ref    : Generic_VCS_Access;
          Child  : constant Node_Ptr := M.Child;
+         Ref    : Generic_VCS_Access;
          P      : Node_Ptr;
          Num    : Natural := 0;
          Node   : Node_Ptr;
@@ -1142,7 +1162,7 @@ package body VCS.Generic_VCS is
          Ref.Local_Status_Parser := Parse_Status_Parser
            (Find_Tag (Child, "local_status_parser"));
 
-         --  Parse the annotations parser data.
+         --  Parse the annotations parser data
 
          Ref.Annotations_Parser := Parse_Status_Parser
            (Find_Tag (Child, "annotations_parser"));
@@ -1213,9 +1233,7 @@ package body VCS.Generic_VCS is
             St : File_Status_Record;
          begin
             if Command.Parser.File_Index /= 0 then
-               if Command.Dir = null
-                 or else Command.Dir.all = ""
-               then
+               if Command.Dir = null or else Command.Dir.all = "" then
                   St.File := GPS.Kernel.Create
                     (S (Matches (Command.Parser.File_Index).First
                         .. Matches (Command.Parser.File_Index).Last),
