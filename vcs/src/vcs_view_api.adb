@@ -345,8 +345,8 @@ package body VCS_View_API is
                   Set_File_Information
                     (File_Name,
                      Original,
-                     Get_Project_From_File (Get_Registry (Kernel).all,
-                                            Original));
+                     Get_Project_From_File
+                       (Get_Registry (Kernel).all, Original));
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (Base_Name (Original)) & ")");
@@ -357,6 +357,11 @@ package body VCS_View_API is
                      when Add =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Add'Access,
+                           Selection_Context_Access (File_Name));
+
+                     when Add_No_Commit =>
+                        Context_Callback.Connect
+                          (Item, "activate", On_Menu_Add_No_Commit'Access,
                            Selection_Context_Access (File_Name));
 
                      when Remove =>
@@ -433,6 +438,8 @@ package body VCS_View_API is
             Add_Separator;
 
             Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
+            Add_Action
+              (Add_No_Commit, On_Menu_Add_No_Commit'Access, not Log_Exists);
             Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             Add_Action (Revert, On_Menu_Revert'Access);
             Add_Action (Resolved, On_Menu_Resolved'Access);
@@ -1155,6 +1162,7 @@ package body VCS_View_API is
             if S'Length > 4
               and then S (S'Last - 3 .. S'Last) = "$log"
             then
+               --  This is a log file, add the corresponding file
                declare
                   L : constant Virtual_File :=
                     Get_File_From_Log (Kernel, Create (Full_Filename => S));
@@ -1163,7 +1171,9 @@ package body VCS_View_API is
                      Append (Files, Full_Name (L).all);
                   end if;
                end;
+
             else
+               --  Not a log file
                Append (Files, S);
             end if;
          end;
@@ -1254,6 +1264,24 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Add;
+
+   ---------------------------
+   -- On_Menu_Add_No_Commit --
+   ---------------------------
+
+   procedure On_Menu_Add_No_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      On_Log_Action (Context, Add_No_Commit);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Add_No_Commit;
 
    --------------------
    -- On_Menu_Revert --
