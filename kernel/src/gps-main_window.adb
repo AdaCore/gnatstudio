@@ -305,11 +305,11 @@ package body GPS.Main_Window is
       Throbber : constant String := Normalize_Pathname
         ("gps-animation.gif",
          Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
-      Image : constant String := Normalize_Pathname
+      Image    : constant String := Normalize_Pathname
         ("gps-animation.png",
          Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
-      Error  : GError;
-      Pixbuf : Gdk_Pixbuf;
+      Error    : GError;
+      Pixbuf   : Gdk_Pixbuf;
 
    begin
       if Is_Regular_File (Image) then
@@ -343,8 +343,8 @@ package body GPS.Main_Window is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       use Glib;
-      Win : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Pos : Gtk_Position_Type;
+      Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Pos    : Gtk_Position_Type;
       Policy : Show_Tabs_Policy_Enum;
    begin
       Gtk.Rc.Parse_String
@@ -715,7 +715,6 @@ package body GPS.Main_Window is
          Minimum_Args => Exit_Cmd_Parameters'Length - 1,
          Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
-
 
       Register_Command
         (Main_Window.Kernel, Constructor_Method,

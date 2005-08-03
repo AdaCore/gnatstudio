@@ -363,7 +363,8 @@ package body GPS.Kernel.Standard_Hooks is
 --        end if;
 
       if not Run_Hook_Until_Success
-        (Kernel, Open_File_Action_Hook, Data'Unchecked_Access) then
+        (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
+      then
          Trace (Me, "No file editor was registered");
       end if;
    end Open_File_Editor;

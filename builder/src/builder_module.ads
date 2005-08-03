@@ -46,7 +46,7 @@ package Builder_Module is
       --  Number of on-going builds
    end record;
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
-   --  Data stored with the module id.
+   --  Data stored with the module id
 
    Builder_Module_ID : Builder_Module_ID_Access;
    Builder_Module_Name : constant String := "Builder";
