@@ -81,6 +81,11 @@ package VCS.Generic_VCS is
       Filenames : String_List.List;
       Log       : String);
 
+   procedure Add_No_Commit
+     (Rep       : access Generic_VCS_Record;
+      Filenames : String_List.List;
+      Log       : String);
+
    procedure Remove
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;

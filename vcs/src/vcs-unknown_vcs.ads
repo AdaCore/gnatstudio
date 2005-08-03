@@ -80,6 +80,11 @@ package VCS.Unknown_VCS is
       Filenames : String_List.List;
       Log       : String);
 
+   procedure Add_No_Commit
+     (Rep       : access Unknown_VCS_Record;
+      Filenames : String_List.List;
+      Log       : String);
+
    procedure Remove
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;

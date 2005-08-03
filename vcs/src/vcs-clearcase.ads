@@ -76,6 +76,11 @@ package VCS.ClearCase is
       Filenames : String_List.List;
       Log       : String);
 
+   procedure Add_No_Commit
+     (Rep       : access ClearCase_Record;
+      Filenames : String_List.List;
+      Log       : String);
+
    procedure Remove
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
