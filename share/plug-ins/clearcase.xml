@@ -137,7 +137,7 @@
    <!-- ClearCase Add -->
 
    <action name="clearcase_add" show-command="true" output="">
-      <shell>dump "$1 TRUE</shell>
+      <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool mkelem -cfile "%2" "$2"</external>
       <external>cleartool ci -cfile "%3" "$2"</external>
@@ -145,10 +145,20 @@
       <shell>delete "%5"</shell>
    </action>
 
+   <!-- ClearCase Add (no commit) -->
+
+   <action name="clearcase_add_no_commit" show-command="true" output="">
+      <shell>dump "$1" TRUE</shell>
+      <external>cleartool co -cfile "%1" .</external>
+      <external>cleartool mkelem -cfile "%2" "$2"</external>
+      <external>cleartool ci -cfile "%4" .</external>
+      <shell>delete "%4"</shell>
+   </action>
+
    <!-- ClearCase Remove -->
 
    <action name="clearcase_remove" show-command="true" output="">
-      <shell>dump "$1 TRUE</shell>
+      <shell>dump "$1" TRUE</shell>
       <external>cleartool co -cfile "%1" .</external>
       <external>cleartool rm -cfile "%2" "$2"</external>
       <external>cleartool ci -cfile "%3" "$2"</external>
@@ -168,6 +178,7 @@
       <history_revision action="clearcase_history_rev"    label="View specific revision history"/>
       <annotate         action="clearcase_annotate"       label="Annotations"/>
       <add              action="clearcase_add"            label="Add"/>
+      <add_no_commit    action="clearcase_add_no_commit"  label="Add/No commit"/>
       <remove           action="clearcase_remove"         label="Remove"/>
       <revert           action="clearcase_uncheckout"     label="Cancel checkout"/>
       <diff_head        action="clearcase_diff_head"      label="Compare against latest"/>
