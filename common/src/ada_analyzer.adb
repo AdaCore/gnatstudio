@@ -2751,17 +2751,19 @@ package body Ada_Analyzer is
                      then
                         --  This is an operator symbol, e.g function ">=" (...)
 
+                        if Prev_Token /= Tok_End then
+                           Len := P - First + 1;
+                           Top_Token.Identifier (1 .. Len) :=
+                             Buffer (First .. P);
+                           Top_Token.Ident_Len := Len;
+                           Top_Token.Sloc_Name.Line := Line_Count;
+                           Top_Token.Sloc_Name.Column :=
+                             First - Start_Of_Line + 1;
+                           Top_Token.Sloc_Name.Index := First;
+                        end if;
+
                         Prev_Token := Tok_Operator_Symbol;
                         Entity     := Identifier_Text;
-
-                        Len := P - First + 1;
-                        Top_Token.Identifier (1 .. Len) := Buffer (First .. P);
-                        Top_Token.Ident_Len := Len;
-                        Top_Token.Sloc_Name.Line := Line_Count;
-                        Top_Token.Sloc_Name.Column :=
-                          First - Start_Of_Line + 1;
-                        Top_Token.Sloc_Name.Index := First;
-
                      else
                         Prev_Token := Tok_String_Literal;
                         Entity     := String_Text;
