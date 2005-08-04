@@ -1458,6 +1458,8 @@ package body VCS_View_Pkg is
 
       Clicked (Page.File_Column);
 
+      Refresh (VCS_View_Access (Explorer));
+
       return Page;
    end Get_Page_For_Identifier;
 
