@@ -170,6 +170,16 @@ case "${host}" in
     esac
   ;;
 
+  # AMD64 processors
+  x86_64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+        opsys=gnu-linux
+	PRINT_CMD="a2ps"
+        ;;
+    esac
+  ;;
+
   ## Intel 386 machines where we don't care about the manufacturer
   i[[3456]]86-*-* )
     machine=intel386
