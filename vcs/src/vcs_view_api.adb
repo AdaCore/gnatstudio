@@ -382,6 +382,7 @@ package body VCS_View_API is
               File_Name /= null and then
               Get_Log_From_File
                 (Kernel, File_Information (File_Name), False) /= VFS.No_File;
+
             Add_Action (Status_Files, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
             Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
@@ -481,6 +482,12 @@ package body VCS_View_API is
                   Set_Context_Information
                     (A_Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
                   Set_Activity_Information (A_Context, Image (Activity));
+
+                  if Log_File then
+                     --  In this case record the original file
+                     Set_File_Information
+                       (A_Context, File_Information (File_Name));
+                  end if;
 
                   Context_Callback.Connect
                     (Item, "activate", On_Menu_Add_To_Activity'Access,
