@@ -106,6 +106,9 @@ package VCS_View_Pkg is
      (Explorer : access VCS_View_Record;
       Context  : Selection_Context_Access);
 
+   procedure Refresh (Explorer : VCS_View_Access);
+   --  Redraw the files in the VCS Explorer
+
    procedure Refresh_Log
      (Explorer : access VCS_View_Record;
       File     : VFS.Virtual_File);
