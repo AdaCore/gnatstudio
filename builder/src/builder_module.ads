@@ -20,9 +20,10 @@
 
 --  Builder module.
 
-with GPS.Kernel.Modules;
 with Gtk.Menu;
 with Gtk.Menu_Item;
+
+with GPS.Kernel.Modules;
 with String_List_Utils;
 with Projects;
 
