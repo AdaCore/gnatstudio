@@ -65,7 +65,7 @@ package GPS.Kernel.Contexts is
    --  True if the context has information about a selected file
 
    function File_Information
-     (Context : access File_Selection_Context) return VFS.Virtual_File;
+     (Context  : access File_Selection_Context) return VFS.Virtual_File;
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.
@@ -240,6 +240,8 @@ private
 
    type File_Selection_Context is new Selection_Context with record
       File              : VFS.Virtual_File      := VFS.No_File;
+      Checked           : Boolean               := False;
+      --  Set to True if File has already been validated
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line, Column      : Integer := 0;
