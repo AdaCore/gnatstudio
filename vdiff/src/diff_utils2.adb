@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -255,17 +255,17 @@ package body Diff_Utils2 is
      (Diff_Command       : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
-      Descriptor   : TTY_Process_Descriptor;
-      Pattern      : constant Pattern_Matcher :=
+      Descriptor : TTY_Process_Descriptor;
+      Pattern    : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n",
                  Multiple_Lines);
-      Matches      : Match_Array (0 .. 5);
-      Args         : Argument_List (1 .. 2);
-      Result       : Expect_Match;
-      Ret          : Diff_List;
-      Occurrence   : Diff_Chunk_Access;
-      Cmd          : String_Access;
-      Cmd_Args     : Argument_List_Access;
+      Matches    : Match_Array (0 .. 5);
+      Args       : Argument_List (1 .. 2);
+      Result     : Expect_Match;
+      Ret        : Diff_List;
+      Occurrence : Diff_Chunk_Access;
+      Cmd        : String_Access;
+      Cmd_Args   : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);

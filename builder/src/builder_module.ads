@@ -29,7 +29,8 @@ with Projects;
 
 package Builder_Module is
 
-   type Builder_Module_ID_Record is new GPS.Kernel.Modules.Module_ID_Record
+   type Builder_Module_ID_Record is
+     new GPS.Kernel.Modules.Module_ID_Record
    with record
       Make_Menu  : Gtk.Menu.Gtk_Menu;
       Run_Menu   : Gtk.Menu.Gtk_Menu;
