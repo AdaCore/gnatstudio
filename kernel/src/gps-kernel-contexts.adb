@@ -18,13 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Projects;             use Projects;
-with Projects.Registry;    use Projects.Registry;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+
+with Projects;           use Projects;
+with Projects.Registry;  use Projects.Registry;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
-with VFS;                  use VFS;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Entities;             use Entities;
-with Entities.Queries;     use Entities.Queries;
+with VFS;                use VFS;
+with Entities;           use Entities;
+with Entities.Queries;   use Entities.Queries;
 
 package body GPS.Kernel.Contexts is
 
@@ -172,12 +173,12 @@ package body GPS.Kernel.Contexts is
       Line              : Integer := 0;
       Column            : Integer := 0) is
    begin
-      Context.File := File;
-      Context.Line := Line;
-      Context.Column := Column;
+      Context.File                     := File;
+      Context.Line                     := Line;
+      Context.Column                   := Column;
       Context.Creator_Provided_Project := Project /= No_Project;
-      Context.Project := Project;
-      Context.Importing_Project := Importing_Project;
+      Context.Project                  := Project;
+      Context.Importing_Project        := Importing_Project;
    end Set_File_Information;
 
    -----------------------------
@@ -242,9 +243,32 @@ package body GPS.Kernel.Contexts is
    ----------------------
 
    function File_Information
-     (Context : access File_Selection_Context) return Virtual_File is
+     (Context  : access File_Selection_Context) return Virtual_File is
    begin
-      return Context.File;
+      if Context.Checked then
+         return Context.File;
+
+      else
+         declare
+            Name : constant String := Base_Name (Context.File);
+         begin
+            if Context.Kernel /= null
+              and then Name (Name'First .. Name'First + 3) = "ref$"
+            then
+               --  This is a reference file, we have no need of it in the
+               --  context. We record then the corresponding file.
+               Context.File := Create
+                 (Get_Full_Path_From_File
+                    (Get_Registry (Context.Kernel).all,
+                     Name (Name'First + 4 .. Name'Last),
+                     Use_Source_Path => True,
+                     Use_Object_Path => False));
+            end if;
+         end;
+
+         Context.Checked := True;
+         return Context.File;
+      end if;
    end File_Information;
 
    ---------------------------------------
