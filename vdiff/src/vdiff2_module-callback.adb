@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                              use Glib;
-with Glib.Object;                       use Glib.Object;
+with Ada.Exceptions;                    use Ada.Exceptions;
+
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtk.Window;                        use Gtk.Window;
 
-with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
@@ -43,14 +43,22 @@ with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with OS_Utils;                          use OS_Utils;
 with VFS;                               use VFS;
 
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-
-with Ada.Exceptions;                    use Ada.Exceptions;
-
-
 package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
+
+   function Get_Ref_Filename (File : Virtual_File) return String;
+   pragma Inline (Get_Ref_Filename);
+   --  Returns the ref filename for the give file
+
+   ----------------------
+   -- Get_Ref_Filename --
+   ----------------------
+
+   function Get_Ref_Filename (File : Virtual_File) return String is
+   begin
+      return Get_Tmp_Dir & "ref$" & Base_Name (File);
+   end Get_Ref_Filename;
 
    ---------------------------
    -- On_Compare_Tree_Files --
@@ -324,9 +332,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Base  : constant String := Base_Name (D.New_File);
             Ref_F : constant Virtual_File :=
-              Create (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
+                      Create (Full_Filename => Get_Ref_Filename (D.New_File));
             Res   : Boolean;
          begin
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
@@ -340,9 +347,8 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Base  : constant String := Base_Name (D.Orig_File);
-            Ref_F : constant Virtual_File := Create
-              (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
+            Ref_F : constant Virtual_File :=
+                      Create (Full_Filename => Get_Ref_Filename (D.Orig_File));
             Res   : Boolean;
          begin
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
@@ -410,12 +416,14 @@ package body Vdiff2_Module.Callback is
       if Command = "visual_diff" then
          declare
             File1 : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+                      Create (Nth_Arg (Data, 1), Kernel,
+                              Use_Source_Path => True);
             File2 : constant Virtual_File :=
-              Create (Nth_Arg (Data, 2), Kernel, Use_Source_Path => True);
+                      Create (Nth_Arg (Data, 2), Kernel,
+                              Use_Source_Path => True);
             File3 : constant Virtual_File :=
-              Create (Nth_Arg (Data, 3, Default => ""),
-                      Kernel, Use_Source_Path => True);
+                      Create (Nth_Arg (Data, 3, Default => ""),
+                              Kernel, Use_Source_Path => True);
          begin
             Visual_Diff (File1, File2, File3);
          end;
@@ -471,7 +479,10 @@ package body Vdiff2_Module.Callback is
          Change_Ref_File'Access);
 
       Selected_File :=
-        File_Information (File_Selection_Context_Access (Context.Context));
+        Create (Get_Ref_Filename
+                  (File_Information
+                     (File_Selection_Context_Access (Context.Context))));
+
       Node := Is_In_Diff_List
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
@@ -515,7 +526,9 @@ package body Vdiff2_Module.Callback is
          Unhighlight_Difference'Access);
 
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context.Context));
+        Create (Get_Ref_Filename
+                  (File_Information
+                     (File_Selection_Context_Access (Context.Context))));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -548,7 +561,9 @@ package body Vdiff2_Module.Callback is
          Reload_Difference'Access);
 
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context.Context));
+        Create (Get_Ref_Filename
+                  (File_Information
+                     (File_Selection_Context_Access (Context.Context))));
 
       Node := Is_In_Diff_List
         (Selected_File,
@@ -587,8 +602,11 @@ package body Vdiff2_Module.Callback is
          Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
+
       Selected_File :=
-         File_Information (File_Selection_Context_Access (Context.Context));
+        Create (Get_Ref_Filename
+                  (File_Information
+                     (File_Selection_Context_Access (Context.Context))));
 
       Node := Is_In_Diff_List
         (Selected_File,
