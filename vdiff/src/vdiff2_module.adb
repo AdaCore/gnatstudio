@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,23 +19,22 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Gtk.Handlers;              use Gtk.Handlers;
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 
 with Diff_Utils2;               use Diff_Utils2;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
-
-with Gtk.Handlers;              use Gtk.Handlers;
 
 package body Vdiff2_Module is
 
