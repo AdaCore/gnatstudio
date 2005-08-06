@@ -21,12 +21,13 @@
 --  This package provides low-level utilities to handle differences between
 --  files.
 
-with Generic_List;
-with GPS.Kernel;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-use GPS.Kernel;
-with VFS;                        use VFS;
+
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+
+with GPS.Kernel;   use GPS.Kernel;
+with VFS;          use VFS;
+with Generic_List;
 
 package Diff_Utils2 is
 
@@ -97,8 +98,8 @@ package Diff_Utils2 is
    --  Execute diff on Item
 
    Null_Head : constant Diff_Head :=
-     (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
-      VFS.No_File, Diff_Chunk_List.Null_Node, 2);
+                 (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
+                  VFS.No_File, Diff_Chunk_List.Null_Node, 2);
 
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
@@ -131,8 +132,7 @@ package Diff_Utils2 is
       return Diff_List;
    --  Execute diff on File1,File2 and File3 and return a list of differences.
 
-   function Diff
-     (Ref_File, New_File : VFS.Virtual_File) return Diff_List;
+   function Diff (Ref_File, New_File : VFS.Virtual_File) return Diff_List;
    --  Just for Testing
 
    function Diff3
@@ -145,21 +145,21 @@ package Diff_Utils2 is
    --  calculate the displayable version of Diff with reference file Ref_File
 
    function Horizontal_Diff
-     (Line1, Line2 : String)
-      return Diff_List;
+     (Line1, Line2 : String) return Diff_List;
    --  Do a fine diff between two lines.
    --  The only fields set in the resulting list is Range1 and Next, other
    --  fields should be ignored.
 
 private
 
-   function Diff3 (Diff3_Command  : String;
-                   My_Change, Old_File, Your_Change : VFS.Virtual_File)
-                   return Diff_List;
+   function Diff3
+     (Diff3_Command : String;
+      My_Change, Old_File, Your_Change : VFS.Virtual_File)
+      return Diff_List;
    --  Execute diff3 on File1, File2, File3 and return list of Chunk
 
    function Diff
-     (Diff_Command  : String;
+     (Diff_Command : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences.
 
