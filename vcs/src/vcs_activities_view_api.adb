@@ -571,15 +571,17 @@ package body VCS_Activities_View_API is
            (Item, "activate", On_Menu_Commit_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
-         Gtk_New (Item, Label => -"Diff against head revision");
+         Gtk_New (Item, Label => -"Compare against head revision");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Diff_Activity'Access, Context);
          Set_Sensitive (Item, True);
       end if;
 
-      Gtk_New (Item);
-      Append (Menu, Item);
+      if Activity_Section or else File_Section then
+         Gtk_New (Item);
+         Append (Menu, Item);
+      end if;
 
       if File_Section then
          Gtk_New (Item, Label => -"Remove from activity");
@@ -589,7 +591,7 @@ package body VCS_Activities_View_API is
          Set_Sensitive (Item, File_Section);
       end if;
 
-      if Context /= null then
+      if Activity_Section or else File_Section then
          --  Fill the section relative to files
 
          Gtk_New (Item, Label => -"Edit revision log");
