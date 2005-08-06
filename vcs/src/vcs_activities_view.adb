@@ -59,6 +59,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with VCS;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
@@ -558,6 +559,8 @@ package body VCS_Activities_View is
       Iter := Get_Iter_From_Activity (Explorer, Activity);
 
       Remove (Explorer.Model, Iter);
+
+      Refresh (Get_Explorer (Kernel, False, False));
    end On_Delete_Activity;
 
    -----------------------------
@@ -575,6 +578,8 @@ package body VCS_Activities_View is
 
       Iter := Get_Iter_From_Name (Explorer, File);
       Remove (Explorer.Model, Iter);
+
+      Refresh (Get_Explorer (Kernel, False, False));
    end On_Remove_From_Activity;
 
    -----------------
