@@ -192,6 +192,8 @@ package body VCS_Activities_View_API is
            (Get_Activities_Explorer (Kernel, False, False),
             Kernel, Real_Query => False);
       end if;
+
+      VCS_View_Pkg.Refresh (Get_Explorer (Kernel, False, False));
    exception
       when E : others =>
          Trace (Exception_Handle,
