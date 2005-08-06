@@ -165,6 +165,7 @@ Debugging
 
 Version Control System
 * The VCS Explorer::
+* The VCS Activities::
 * The VCS Menu::
 * The Version Control Contextual Menu::
 
@@ -6168,6 +6169,7 @@ displaying a contextual menu, which is not possible in GVD.
 
 @menu
 * The VCS Explorer::
+* The VCS Activities::
 * The VCS Menu::
 * The Version Control Contextual Menu::
 * Working with global ChangeLog file::
@@ -6345,9 +6347,13 @@ The file contains conflicts from a previous update operation.
 @item Log
 This column indicates whether a revision log exists for this file.
 
-@item File
+@item File name
 The name of the file. This column can be sorted by clicking on the
 header.
+
+@item Activity
+The name of the activity the file belongs to. See @ref{The VCS Activities}
+for more details.
 
 @item Working rev.
 Indicates the version of the local file.
@@ -6372,6 +6378,105 @@ search is @key{Ctrl-i}. See @ref{Interactive Search} for more details.
 The VCS contextual menu can be brought up from the VCS explorer by
 left-clicking on a selection or on a single line. @xref{The Version
 Control Contextual Menu}.
+
+@node The VCS Activities
+@section The VCS Activities
+@cindex VCS activities
+@cindex version control
+@noindent
+
+The VCS Activities give the ability to group files to be committed
+together. The set of files can be committed atomically if supported by
+the external version control system used.
+
+@c ??? would be nice to add a screen shot here
+
+The way to bring up the VCS Activities is through the menu
+@code{VCS->Activities}.
+
+The VCS Activities contains the following columns:
+
+@table @b
+@item Activity
+The name of the activity. This column can be sorted by clicking on the header.
+
+@item Status
+Shows the status of the file. This column can be sorted by clicking on
+the header. See @ref{The VCS Explorer} for a full description.
+
+@item Log
+This column indicates whether a revision log exists for this file.
+
+@item File name
+The name of the file. This column can be sorted by clicking on the
+header.
+
+@item Working rev.
+Indicates the version of the local file.
+
+@item Head rev.
+Indicates the most recent version of the file in the repository.
+@end table
+
+The VCS Explorer supports multiple selections. To select a single
+line, simply left-click on it. To select a range of lines, select the
+first line in the range, then hold down the @key{Shift} key and select the
+last line in the range. To add or remove single columns from the
+selection, hold down the @key{Control} key and left-click on the
+columns that you want to select/unselect.
+
+There is different contextual menus depending on position on the
+screen. On an area we have a simple contextual menu:
+
+@table @b
+@item Create new activity
+Create a new activity. The name can be edited by double clicking on it.
+@end table
+
+On an activity line the contextual menu is:
+
+@table @b
+@item Group commit
+This is a selectable menu entry. It is activated only if the external
+VCS supports atomic commit and absolute filenames. See @ref{The VCS node}
+for full details.
+
+@item Create new activity
+Create a new activity. The name can be edited by double clicking on
+it.
+
+@item Delete activity
+Remove the activity.
+
+@item Commit activity
+Commit the activity. If group commit is activated then the shared log
+content is the catenation of the activity file's log plus the activity
+log. If group commit is not activated then the log content for each
+activity file is the file log catenated with the activity log.
+
+@item Compare against head revision
+Show a visual comparison between the local activity files and the most recent
+version of those files in the repository.
+
+@item Edit revision log
+Edit the current revision log for activity. This log is shared with
+all the activity files.
+@end table
+
+On a file line the contextual menu contains:
+
+@table @b
+@item Create new activity
+Create a new activity. The name can be edited by double clicking on
+it.
+
+@item Remove from activity
+Removes the selected file from the activity.
+
+@item Edit revision log
+Edit the current revision log for the selected file.
+
+@end table
 
 @node The VCS Menu
 @section The VCS Menu
@@ -6496,7 +6601,13 @@ Clear the current revision associated to the selected file.
 
 @item Add
 Add a file to the repository, using the current revision log for this
-file. If no revision log exists, activating this menu will create one.
+file. If no revision log exists, activating this menu will create
+one. The file is committed in the repository.
+
+@item Add/No commit
+Add a file to the repository, using the current revision log for this
+file. If no revision log exists, activating this menu will create
+one. The file is not commited in the repository.
 
 @item Remove
 Remove a file from the repository, using the current revision log for
@@ -6506,6 +6617,14 @@ one.
 @item Revert
 Revert a locale file to the repository revision, discarding all local
 changes.
+
+@item Resolved
+Mark files' merge conflics as resolved. Some version control systems
+(like Subversion) will block any commit until this action is called.
+
+@item Add to Activity
+A menu containing all the current activities. Selecting one will add
+the current file to this activity.
 
 @item Directory
 Only available when the current context contains directory information
@@ -13577,6 +13696,22 @@ commands in the VCS will work on absolute file names. If it set to
 @code{FALSE}, it means that all actions work on base file names, and
 that GPS will move to the appropriate directory before executing an
 action.
+
+The attribute @code{atomic_commands} specify if the VCS supports
+atomicity and can take the values @code{TRUE} or @code{FALSE}. If it
+is set to @code{TRUE} it means that the VCS supports atomic
+commands. It is @code{FALSE} by default. This attribute is important
+to trigger the activities group commit feature. see @xref{The VCS Activities}.
+
+The attribute @code{dir_sep} specify which kind of directory separator
+is supported by the external VCS and can take the values @code{UNIX},
+@code{DOS} or @code{System_Default}. The later value is the default
+value. With this attribute it is possible to control the directory
+separator to use when specifying files to the VCS.
+
+Note that to support group commit with shared log on GPS both
+absolute_name and atomic_commands must be true. This is the case for
+the Subversion VCS for example.
 
 Here is an example, adapted to the use of CVS:
 
