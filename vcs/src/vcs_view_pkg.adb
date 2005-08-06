@@ -153,9 +153,6 @@ package body VCS_View_Pkg is
    -- Local subprograms --
    -----------------------
 
-   procedure Refresh (Explorer : VCS_View_Access);
-   --  Redraw the files in the VCS Explorer
-
    procedure Create_Model (VCS_View : access VCS_Page_Record'Class);
    --  Creates the underlying tree model for VCS_View
 
