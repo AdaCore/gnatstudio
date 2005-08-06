@@ -328,7 +328,7 @@ package GPS.Kernel is
    --  instance a new child has been selected automatically at that point)
 
    function Get_Context_For_Child
-     (Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
+     (Child : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
    --  Return the context associated with Child.
    --  The user should free the returned value.
 

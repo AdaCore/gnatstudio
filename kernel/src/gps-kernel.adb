@@ -1916,4 +1916,5 @@ package body GPS.Kernel is
                 Data'Unchecked_Access,
                 Set_Busy => False);
    end Push_Marker_In_History;
+
 end GPS.Kernel;

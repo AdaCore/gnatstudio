@@ -22,9 +22,9 @@
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with Commands.Interactive; use Commands, Commands.Interactive;
 
 package Vdiff2_Module.Callback is
@@ -54,11 +54,11 @@ package Vdiff2_Module.Callback is
    procedure File_Closed_Cb
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data    : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Callback for the "file_closed" signal.
+   --  Callback for the "file_closed" signal
 
    procedure Diff_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
-   --  Interactive command handler for the Visual_Diff module.
+   --  Interactive command handler for the Visual_Diff module
 
    procedure On_Preferences_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
