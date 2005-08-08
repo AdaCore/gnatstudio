@@ -48,6 +48,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
+with VFS;                       use VFS;
 
 package body Creation_Wizard is
 
@@ -247,14 +248,15 @@ package body Creation_Wizard is
    is
       P : constant Name_And_Location_Page_Access :=
         Name_And_Location_Page_Access (Page);
-      Name : constant String := Select_Directory
+      Name : constant VFS.Virtual_File := Select_Directory
         (Title          => -"Select project file location",
          Parent         => Gtk_Window (Get_Toplevel (Widget)),
-         Base_Directory => Name_As_Directory (Get_Text (P.Project_Location)),
+         Base_Directory => VFS.Create (Get_Text (P.Project_Location)),
          History        => Get_History (P.Kernel));
    begin
-      if Name /= "" then
-         Set_Text (P.Project_Location, Name);
+      if Name /= VFS.No_File then
+         VFS.Ensure_Directory (Name);
+         Set_Text (P.Project_Location, VFS.Full_Name (Name).all);
       end if;
    end Advanced_Prj_Location;
 
@@ -471,6 +473,5 @@ package body Creation_Wizard is
    begin
       return Page.Project_Name;
    end Get_Name_Widget;
-
 
 end Creation_Wizard;
