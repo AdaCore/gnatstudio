@@ -464,13 +464,14 @@ package body Builder_Module is
       pragma Unreferenced (Status);
       Files : constant Files_Callback_Data_Access :=
         Files_Callback_Data_Access (Data.Callback_Data);
+      Success : Boolean;
    begin
       if Files /= null then
          for F in Files.Files'Range loop
             if Is_Regular_File (Files.Files (F)) then
                Trace (Me, "Deleting temporary file "
                       & Full_Name (Files.Files (F)).all);
-               Delete (Files.Files (F));
+               Delete (Files.Files (F), Success);
             end if;
          end loop;
       end if;
