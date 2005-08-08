@@ -306,8 +306,9 @@ package body Ada_Analyzer is
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
 
-   function Is_Within_Record (Stack : Token_Stack.Simple_Stack) return Boolean;
-   --  Return True if the current scope in Stack is in a record.
+   function Is_Within_Composite (Stack : Token_Stack.Simple_Stack)
+                                 return Boolean;
+   --  Return True if the closest enclosing entity is a composite type
 
    ---------------
    -- Get_Token --
@@ -604,11 +605,11 @@ package body Ada_Analyzer is
       return True;
    end Is_Library_Level;
 
-   ----------------------
-   -- Is_Within_Record --
-   ----------------------
+   -------------------------
+   -- Is_Within_Composite --
+   -------------------------
 
-   function Is_Within_Record
+   function Is_Within_Composite
      (Stack : Token_Stack.Simple_Stack) return Boolean
    is
       Tmp : Token_Stack.Simple_Stack;
@@ -616,15 +617,21 @@ package body Ada_Analyzer is
       Tmp := Stack;
 
       while Tmp /= null and then Tmp.Val.Token /= No_Token loop
-         if Tmp.Val.Token = Tok_Record then
-            return True;
-         end if;
+         case Tmp.Val.Token is
+            when Tok_Type | Tok_Protected =>
+               return True;
+            when Tok_Function | Tok_Package | Tok_Procedure | Tok_Entry |
+                 Tok_Task =>
+               return False;
+            when others =>
+               null;
+         end case;
 
          Tmp := Tmp.Next;
       end loop;
 
       return False;
-   end Is_Within_Record;
+   end Is_Within_Composite;
 
 
    ------------------------
@@ -1145,6 +1152,7 @@ package body Ada_Analyzer is
                   and then
                     (Prev_Token /= Tok_Arrow
                      or else (Top_Tok /= Tok_Case
+                              and then not Top (Tokens).Declaration
                               and then Top_Tok /= Tok_When
                               and then Top_Tok /= Tok_Select
                               and then Top_Tok /= Tok_Exception)))
@@ -1491,7 +1499,7 @@ package body Ada_Analyzer is
                   when Tok_Identifier =>
                      if Is_Library_Level (Stack) then
                         Constructs.Current.Category := Cat_Variable;
-                     elsif Is_Within_Record (Stack) then
+                     elsif Is_Within_Composite (Stack) then
                         Constructs.Current.Category := Cat_Field;
                      else
                         Constructs.Current.Category := Cat_Local_Variable;
@@ -1617,6 +1625,21 @@ package body Ada_Analyzer is
               and then Top_Token.Token = Tok_Record
             then
                Temp.Align_Colon := Compute_Alignment (Prec);
+            end if;
+
+            Temp.Visibility_Section := Top_Token.Visibility_Section;
+
+            --  If the case is in a type declaration (e.g. protected), then
+            --  mark itself as a type declaration so we will extract the
+            --  corresponding fields.
+            if Top_Token.Type_Declaration then
+               Temp.Type_Declaration := True;
+            end if;
+
+            --  If the case is in a record, then mark itself as a record so we
+            --  will extract the corresponding fields.
+            if Top_Token.Record_Type then
+               Temp.Record_Type := True;
             end if;
 
             Do_Indent (Prec, Num_Spaces);
@@ -3196,7 +3219,9 @@ package body Ada_Analyzer is
                Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
-            if (Top_Token.Declaration or else Top_Token.Record_Type)
+            if (Top_Token.Declaration
+                or else Top_Token.Type_Declaration
+                or else Top_Token.Record_Type)
               and then not In_Generic
               and then Num_Parens = 0
               and then (Prev_Token not in Reserved_Token_Type
@@ -3205,7 +3230,7 @@ package body Ada_Analyzer is
                         or else Prev_Token = Tok_Private
                         or else Prev_Token = Tok_Record)
             then
-               --  This is a variable declaration
+               --  This is a variable or a field declaration
 
                declare
                   Val : Extended_Token;
