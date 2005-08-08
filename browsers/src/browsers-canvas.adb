@@ -18,13 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with GNAT.Strings;           use GNAT.Strings;
+
 with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
 with Glib.Error;             use Glib.Error;
 with Glib.Graphs;            use Glib.Graphs;
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
-with Pango.Enums;            use Pango.Enums;
+
 with Gdk.Color;              use Gdk.Color;
 with Gdk.GC;                 use Gdk.GC;
 with Gdk.Drawable;           use Gdk.Drawable;
@@ -34,6 +38,7 @@ with Gdk.Pixmap;             use Gdk.Pixmap;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Window;             use Gdk.Window;
+
 with Gtk.Accel_Group;        use Gtk.Accel_Group;
 with Gtk.Adjustment;         use Gtk.Adjustment;
 with Gtk.Button;             use Gtk.Button;
@@ -43,28 +48,26 @@ with Gtk.Hbutton_Box;        use Gtk.Hbutton_Box;
 with Gtk.Image;              use Gtk.Image;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Style;              use Gtk.Style;
 with Gtk.Widget;             use Gtk.Widget;
-with Pango.Layout;           use Pango.Layout;
-with Pango.Context;          use Pango.Context;
-with Pango.Font;             use Pango.Font;
 
-with Ada.Exceptions;         use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with GNAT.Strings;           use GNAT.Strings;
+with Pango.Context;          use Pango.Context;
+with Pango.Enums;            use Pango.Enums;
+with Pango.Font;             use Pango.Font;
+with Pango.Layout;           use Pango.Layout;
 
 with Gtkada.Canvas;          use Gtkada.Canvas;
-with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
+
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Intl;               use GPS.Intl;
 with Layouts;                use Layouts;
 with VFS;                    use VFS;
 with Traces;                 use Traces;
@@ -116,6 +119,9 @@ package body Browsers.Canvas is
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
+
+   procedure On_Select_All (Browser : access Gtk_Widget_Record'Class);
+   --  Select all the items in the canvas.
 
    procedure Toggle_Links
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
@@ -737,6 +743,11 @@ package body Browsers.Canvas is
          Set_Submenu (Mitem, Zooms_Menu);
       end if;
 
+      Gtk_New (Mitem, Label => -"Select all");
+      Append (Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, "activate", On_Select_All'Access, B);
+
       return Context;
    end Default_Browser_Context_Factory;
 
@@ -867,6 +878,20 @@ package body Browsers.Canvas is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end On_Refresh;
+
+   -------------------
+   -- On_Select_All --
+   -------------------
+
+   procedure On_Select_All (Browser : access Gtk_Widget_Record'Class)  is
+      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
+   begin
+      Select_All (Canvas);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
+   end On_Select_All;
 
    -----------------------
    -- Toggle_Orthogonal --
