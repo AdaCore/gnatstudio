@@ -208,16 +208,10 @@ package body Gtkada.Entry_Completion is
    -----------------------
 
    procedure Selection_Changed (The_Entry : access Gtk_Widget_Record'Class) is
-      Ent   : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
-      Model : Gtk_Tree_Model;
-      Iter, Children  : Gtk_Tree_Iter;
-
+      Ent            : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
+      Model          : Gtk_Tree_Model;
+      Iter, Children : Gtk_Tree_Iter;
    begin
-      if Ent.Completion_Index = Integer'Last then
-         --  "<no completion>" has been selected.
-         return;
-      end if;
-
       Get_Selected
         (Selection => Get_Selection (Ent.View),
          Model     => Model,
@@ -434,6 +428,8 @@ package body Gtkada.Entry_Completion is
         or else Get_Key_Val (Event) = GDK_KP_Tab
       then
          declare
+            Selection      : constant Gtk_Tree_Selection :=
+                               Get_Selection (GEntry.View);
             T              : constant String :=
                                Get_Text (Get_Entry (GEntry));
             Compl_Access   : String_Access;
@@ -444,6 +440,8 @@ package body Gtkada.Entry_Completion is
             Iter           : Gtk_Tree_Iter;
 
          begin
+            Set_Mode (Selection, Selection_Single);
+
             --  If there is no current series of tab (ie the user has pressed a
             --  key other than tab since the last tab)
             if GEntry.Completion_Index = Integer'Last then
@@ -487,7 +485,7 @@ package body Gtkada.Entry_Completion is
                   Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
                   Set (GEntry.List, Iter, 0, "<no completion>");
                   Set (GEntry.List, Iter, 1, 1);
-                  GEntry.Completion_Index := -1;
+                  Set_Mode (Selection, Selection_None);
                end if;
 
                Thaw_Sort (GEntry.List, Col);
