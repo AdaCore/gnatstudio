@@ -18,94 +18,95 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Exceptions;              use Ada.Exceptions;
-with Ada.IO_Exceptions;           use Ada.IO_Exceptions;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Exceptions;                    use Ada.Exceptions;
+with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 
-with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Glib.Xml_Int;                use Glib.Xml_Int;
-with Gdk;                         use Gdk;
-with Gdk.Color;                   use Gdk.Color;
-with Gdk.GC;                      use Gdk.GC;
-with Gdk.Types;                   use Gdk.Types;
-with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
-with Glib.Values;                 use Glib.Values;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Main_Window;             use GPS.Main_Window;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Console;          use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;          use GPS.Kernel.Project;
-with GPS.Kernel.Timeout;          use GPS.Kernel.Timeout;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with Language;                    use Language;
-with Language_Handlers;           use Language_Handlers;
-with Basic_Types;                 use Basic_Types;
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Button;                  use Gtk.Button;
-with Gtk.Dialog;                  use Gtk.Dialog;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.GEntry;                  use Gtk.GEntry;
+with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+
+with Gdk;                               use Gdk;
+with Gdk.Color;                         use Gdk.Color;
+with Gdk.GC;                            use Gdk.GC;
+with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+with Gdk.Types;                         use Gdk.Types;
+with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
+
+with Glib;                              use Glib;
+with Glib.Object;                       use Glib.Object;
+with Glib.Properties.Creation;          use Glib.Properties.Creation;
+with Glib.Values;                       use Glib.Values;
+with Glib.Xml_Int;                      use Glib.Xml_Int;
+
+with Gtk.Box;                           use Gtk.Box;
+with Gtk.Button;                        use Gtk.Button;
+with Gtk.Dialog;                        use Gtk.Dialog;
+with Gtk.Enums;                         use Gtk.Enums;
+with Gtk.GEntry;                        use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Label;                   use Gtk.Label;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
-with Gtk.Main;                    use Gtk.Main;
-with Gtk.Rc;                      use Gtk.Rc;
-with Gtk.Stock;                   use Gtk.Stock;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Window;                  use Gtk.Window;
-with Gtkada.Entry_Completion;     use Gtkada.Entry_Completion;
-with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.File_Selector;        use Gtkada.File_Selector;
-with Src_Editor_Box;              use Src_Editor_Box;
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Gtk.Label;                         use Gtk.Label;
+with Gtk.Main;                          use Gtk.Main;
+with Gtk.Menu_Item;                     use Gtk.Menu_Item;
+with Gtk.Rc;                            use Gtk.Rc;
+with Gtk.Stock;                         use Gtk.Stock;
+with Gtk.Toolbar;                       use Gtk.Toolbar;
+with Gtk.Widget;                        use Gtk.Widget;
+with Gtk.Window;                        use Gtk.Window;
+
+with Gtkada.Entry_Completion;           use Gtkada.Entry_Completion;
+with Gtkada.File_Selector;              use Gtkada.File_Selector;
+with Gtkada.Handlers;                   use Gtkada.Handlers;
+with Gtkada.MDI;                        use Gtkada.MDI;
+with Gtkada.Types;                      use Gtkada.Types;
+
+with Pango.Enums;
+with Pango.Font;
+with Pango.Layout;                      use Pango.Layout;
+
+with Aliases_Module;                    use Aliases_Module;
+with Basic_Types;                       use Basic_Types;
+with Casing_Exceptions;                 use Casing_Exceptions;
+with Commands.Interactive;              use Commands, Commands.Interactive;
+with Completion_Module;                 use Completion_Module;
+with Default_Preferences;               use Default_Preferences;
+with File_Utils;                        use File_Utils;
+with Find_Utils;                        use Find_Utils;
+with Histories;                         use Histories;
+with Generic_List;
+with GPS.Intl;                          use GPS.Intl;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
+with GPS.Kernel.Console;                use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;                use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
+with GPS.Main_Window;                   use GPS.Main_Window;
+with Language;                          use Language;
+with Language_Handlers;                 use Language_Handlers;
+with Projects.Registry;                 use Projects, Projects.Registry;
+with Src_Contexts;                      use Src_Contexts;
+with Src_Editor_Box;                    use Src_Editor_Box;
+with Src_Editor_Buffer;                 use Src_Editor_Buffer;
+with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
+with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Module.Markers;   use Src_Editor_Module.Markers;
-with Src_Editor_Module.Shell;     use Src_Editor_Module.Shell;
-with Src_Editor_View;             use Src_Editor_View;
-with Src_Editor_View.Commands;    use Src_Editor_View.Commands;
-with String_Utils;                use String_Utils;
-with Traces;                      use Traces;
-with Projects.Registry;           use Projects, Projects.Registry;
-with Src_Contexts;                use Src_Contexts;
-with Find_Utils;                  use Find_Utils;
-with Histories;                   use Histories;
-with Aliases_Module;              use Aliases_Module;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with VFS;                         use VFS;
-with Casing_Exceptions;           use Casing_Exceptions;
-with Default_Preferences;         use Default_Preferences;
-with Glib.Properties.Creation;    use Glib.Properties.Creation;
-with Completion_Module;           use Completion_Module;
-
-with Gtkada.Types;                use Gtkada.Types;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-
-with Generic_List;
-with File_Utils;                  use File_Utils;
-
-with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
-with Src_Editor_Buffer.Line_Information;
-with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
-
+with Src_Editor_Module.Line_Highlighting;
+with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
+with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
+with Src_Editor_View;                   use Src_Editor_View;
+with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Printing;
-with Pango.Font;
-with Pango.Layout; use Pango.Layout;
-with Pango.Enums;
+with String_Utils;                      use String_Utils;
+with Traces;                            use Traces;
+with VFS;                               use VFS;
 
 package body Src_Editor_Module is
 
@@ -1457,10 +1458,10 @@ package body Src_Editor_Module is
 
          declare
             Complet : constant Integer :=
-              Current_Completion (Open_File_Entry);
-            Text : constant String :=
-              Get_Text (Get_Entry (Open_File_Entry));
-            Full : Virtual_File;
+                        Current_Completion (Open_File_Entry);
+            Text    : constant String :=
+                        Get_Text (Get_Entry (Open_File_Entry));
+            Full    : Virtual_File;
          begin
             if Complet /= 0 then
                if Complet > List1'Length then
