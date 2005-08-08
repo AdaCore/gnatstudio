@@ -223,6 +223,7 @@ package body VCS.ClearCase is
       Text_File    : constant Virtual_File :=
         Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
       File         : File_Type;
+      Success      : Boolean;
 
    begin
       Create (File, Name => Full_Name (Text_File).all);
@@ -234,7 +235,7 @@ package body VCS.ClearCase is
 
       Close (File);
       Open_File_Editor (Kernel, Text_File);
-      Delete (Text_File);
+      Delete (Text_File, Success);
 
       return True;
    end Text_Output_Handler;
@@ -277,6 +278,7 @@ package body VCS.ClearCase is
         (Full_Filename =>
            Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
       File         : File_Type;
+      Success      : Boolean;
 
    begin
       Create (File, Name => Full_Name (Patch_File).all);
@@ -295,7 +297,7 @@ package body VCS.ClearCase is
 
       Display_Differences
         (Kernel, New_File => Current_File, Diff_File => Patch_File);
-      Delete (Patch_File);
+      Delete (Patch_File, Success);
 
       return True;
    end Diff_Handler;
