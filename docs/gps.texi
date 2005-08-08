@@ -6387,14 +6387,14 @@ Control Contextual Menu}.
 
 The VCS Activities give the ability to group files to be committed
 together. The set of files can be committed atomically if supported by
-the external version control system used.
+the version control system used.
 
 @c ??? would be nice to add a screen shot here
 
-The way to bring up the VCS Activities is through the menu
-@code{VCS->Activities}.
+The way to bring up the VCS Activities view is through the
+@code{VCS->Activities} menu.
 
-The VCS Activities contains the following columns:
+The VCS Activities view contains the following columns:
 
 @table @b
 @item Activity
@@ -6425,8 +6425,9 @@ last line in the range. To add or remove single columns from the
 selection, hold down the @key{Control} key and left-click on the
 columns that you want to select/unselect.
 
-There is different contextual menus depending on position on the
-screen. On an area we have a simple contextual menu:
+There are different contextual menu entries depending on the
+position on the screen.
+On an empty area we have a simple contextual menu:
 
 @table @b
 @item Create new activity
@@ -6437,13 +6438,12 @@ On an activity line the contextual menu is:
 
 @table @b
 @item Group commit
-This is a selectable menu entry. It is activated only if the external
+This is a selectable menu entry. It is activated only if the
 VCS supports atomic commit and absolute filenames. See @ref{The VCS node}
 for full details.
 
 @item Create new activity
-Create a new activity. The name can be edited by double clicking on
-it.
+Create a new activity. The name can be edited by double clicking on it.
 
 @item Delete activity
 Remove the activity.
@@ -13697,14 +13697,14 @@ commands in the VCS will work on absolute file names. If it set to
 that GPS will move to the appropriate directory before executing an
 action.
 
-The attribute @code{atomic_commands} specify if the VCS supports
+The attribute @code{atomic_commands} specifies if the VCS supports
 atomicity and can take the values @code{TRUE} or @code{FALSE}. If it
 is set to @code{TRUE} it means that the VCS supports atomic
 commands. It is @code{FALSE} by default. This attribute is important
-to trigger the activities group commit feature. see @xref{The VCS Activities}.
+to trigger the activities group commit feature. See @xref{The VCS Activities}.
 
-The attribute @code{dir_sep} specify which kind of directory separator
-is supported by the external VCS and can take the values @code{UNIX},
+The attribute @code{dir_sep} specifies which kind of directory separator
+is supported by the VCS and can take the values @code{UNIX},
 @code{DOS} or @code{System_Default}. The later value is the default
 value. With this attribute it is possible to control the directory
 separator to use when specifying files to the VCS.
