@@ -226,12 +226,14 @@ package body VFS_Module is
       File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
       Dir     : constant String := Directory_Information (File);
+      Success : Boolean;
+
    begin
       Push_State (Get_Kernel (File), Busy);
       Trace (Me, "deleting " & Full_Name (File_Information (File)).all);
 
       if Has_File_Information (File) then
-         Delete (File_Information (File));
+         Delete (File_Information (File), Success);
       else
          begin
             Remove_Dir (Dir, True);
