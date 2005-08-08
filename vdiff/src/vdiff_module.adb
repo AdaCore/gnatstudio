@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
@@ -249,6 +248,7 @@ package body Vdiff_Module is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Child   : MDI_Child;
       pragma Unreferenced (Child);
+      Success : Boolean;
    begin
       if D.Orig_File = VFS.No_File then
          if D.New_File = VFS.No_File then
@@ -265,7 +265,7 @@ package body Vdiff_Module is
                Base & (-" <reference>"), Full_Name (D.New_File).all,
                Diff (Kernel, Ref_File, D.New_File, D.Diff_File,
                      Revert => True));
-            Delete (Ref_File);
+            Delete (Ref_File, Success);
          end;
 
       elsif D.New_File = VFS.No_File then
@@ -282,7 +282,7 @@ package body Vdiff_Module is
               (Kernel, D.Orig_File, Ref_File,
                Full_Name (D.Orig_File).all, Base & (-" <reference>"),
                Diff (Kernel, D.Orig_File, Ref_File, D.Diff_File));
-            Delete (Ref_File);
+            Delete (Ref_File, Success);
          end;
 
       else
@@ -356,7 +356,6 @@ package body Vdiff_Module is
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-
 
       Diff_Context_Length := Param_Spec_Int (Gnew_Int
         (Name    => "Diff_Utils-Context-Length",
