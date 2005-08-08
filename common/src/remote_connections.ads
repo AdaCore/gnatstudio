@@ -108,11 +108,11 @@ package Remote_Connections is
    --  The caller is responsible for freeing the returned memory.
    --  No special encoding/decoding for charsets is done on the file.
 
-   procedure Delete
+   function Delete
      (Connection      : access Remote_Connection_Record;
-      Local_Full_Name : Glib.UTF8_String) is abstract;
-   --  Remove the file from the disk.
-   --  If this operation is not available for this protocol, nothing is done.
+      Local_Full_Name : Glib.UTF8_String) return Boolean is abstract;
+   --  Remove the file from the disk. Returns the status of the operation.
+   --  If this operation is not available for this protocol, false is returned.
 
    function Is_Writable
      (Connection      : access Remote_Connection_Record;
@@ -154,6 +154,32 @@ package Remote_Connections is
       Readable        : Boolean) is abstract;
    --  If Readable is True, make the file readable, otherwise make the file
    --  unreadable.
+
+   --------------------------
+   -- Directory management --
+   --------------------------
+
+   function Make_Dir
+     (Connection     : access Remote_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String)
+      return Boolean is abstract;
+   --  creates a new directory on remote named Local_Dir_Name. Returns the
+   --  creation status
+
+   function Remove_Dir
+     (Connection     : access Remote_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String;
+      Recursive      : Boolean)
+      return Boolean is abstract;
+   --  deletes an empty directory on remote named Local_Dir_Name. Returns the
+   --  deletion status
+
+   function Read_Dir
+     (Connection : access Remote_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String) return GNAT.OS_Lib.String_List
+   is abstract;
+   --  reads the specified directory and returns a list of filenames
+   --  (base names)
 
    --------------
    -- Registry --
