@@ -595,9 +595,10 @@ package body VCS_View_Pkg is
 
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
-            S    : constant File_Status_Record :=
+            S       : constant File_Status_Record :=
                      File_Status_List.Data (Status_Temp);
-            File : constant Virtual_File := S.File;
+            File    : constant Virtual_File := S.File;
+            Success : Boolean;
          begin
             --  Clear the logs
 
@@ -607,7 +608,7 @@ package body VCS_View_Pkg is
                           Get_Log_From_File (Kernel, File, False);
                begin
                   if Log /= VFS.No_File and then Is_Regular_File (Log) then
-                     Delete (Log);
+                     Delete (Log, Success);
                      Close_File_Editors (Kernel, Log);
                   end if;
 
