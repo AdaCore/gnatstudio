@@ -1135,7 +1135,8 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Buffer_Destroy (Data : System.Address; Buf : System.Address) is
-      Stub : Source_Buffer_Record;
+      Stub    : Source_Buffer_Record;
+      Success : Boolean;
       pragma Unreferenced (Data);
       pragma Warnings (Off, Stub);
 
@@ -1184,7 +1185,7 @@ package body Src_Editor_Buffer is
          Buffer.Timeout_Registered := False;
 
          if Buffer.Filename /= VFS.No_File then
-            Delete (Autosaved_File (Buffer.Filename));
+            Delete (Autosaved_File (Buffer.Filename), Success);
          end if;
       end if;
 
@@ -2843,6 +2844,7 @@ package body Src_Editor_Buffer is
       Internal : Boolean := False)
    is
       Name_Changed : constant Boolean := Buffer.Filename /= Filename;
+      Result       : Boolean;
    begin
       if not Internal then
          if Name_Changed then
@@ -2882,7 +2884,7 @@ package body Src_Editor_Buffer is
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
 
          if Buffer.Filename /= VFS.No_File then
-            Delete (Autosaved_File (Buffer.Filename));
+            Delete (Autosaved_File (Buffer.Filename), Result);
          end if;
 
          Set_Modified (Buffer, False);
