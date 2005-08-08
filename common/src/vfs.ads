@@ -142,11 +142,6 @@ package VFS is
    --  created by anyone, and is just a private type.
    --  If the file doesn't exist, No_Time is returned.
 
---   procedure Define_Translation
---     (Host_Dir : String; Remote_Dir : String);
-   --  Defines a translation for file names: any occurrence of Host_Dir at
-   --  the beginning of the file name will be replaced by Remote_Dir.
-
    procedure Sort (Files : in out File_Array);
    --  Sort the array of files, in the order given by the full names
 
@@ -167,7 +162,7 @@ package VFS is
    function Get_Current_Dir return Virtual_File;
 
    procedure Ensure_Directory (Dir : Virtual_File);
-   --  Ensures that the file is a directory : adds directory separator if
+   --  Ensures that the file is a directory: add directory separator if
    --  needed.
 
    function Get_Root (File : Virtual_File) return Virtual_File;
@@ -308,10 +303,6 @@ private
 
    procedure Finalize (File : in out Virtual_File);
    procedure Adjust (File : in out Virtual_File);
-
-   type Readable_File is record
-      File     : Virtual_File;
-   end record;
 
    type Writable_File is record
       File     : Virtual_File;
