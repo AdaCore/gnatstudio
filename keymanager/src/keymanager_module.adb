@@ -398,8 +398,6 @@ package body KeyManager_Module is
       Button_Item : Macro_Item_Mouse_Access;
       Motion_Item : Macro_Item_Motion_Access;
       Scroll_Item : Macro_Item_Scroll_Access;
-      Prev_Time   : Guint32 renames
-        Keymanager_Module.Key_Manager.Events.Prev_Time;
 
       procedure Save_Item (Item : Macro_Item_Access);
       --  Save item in list of current events, if non null
@@ -423,11 +421,21 @@ package body KeyManager_Module is
                Keymanager_Module.Key_Manager.Events.Last_Event := Item;
             end if;
 
-            Prev_Time := Get_Time (Event);
+            Keymanager_Module.Key_Manager.Events.Prev_Time := Get_Time (Event);
          end if;
       end Save_Item;
 
    begin
+      if Keymanager_Module = null
+        or else Keymanager_Module.Key_Manager = null
+      then
+         --  This can happen when GPS is exiting and modules have been
+         --  deallocated already.
+
+         Gtk.Main.Do_Event (Event);
+         return;
+      end if;
+
       --  We do not put a global exception handler in this procedure since
       --  it is called very often, so when using setjmp/longjmp, the cost
       --  may not be negligible.
@@ -436,7 +444,8 @@ package body KeyManager_Module is
          begin
             case Event_Type is
                when Key_Press | Key_Release =>
-                  Key_Item := Create_Item (Event, Prev_Time);
+                  Key_Item := Create_Item
+                    (Event, Keymanager_Module.Key_Manager.Events.Prev_Time);
                   Save_Item (Macro_Item_Access (Key_Item));
 
                   if Process_Event
@@ -449,15 +458,18 @@ package body KeyManager_Module is
                     | Gdk_2button_Press
                     | Gdk_3button_Press
                =>
-                  Button_Item := Create_Item (Event, Prev_Time);
+                  Button_Item := Create_Item
+                    (Event, Keymanager_Module.Key_Manager.Events.Prev_Time);
                   Save_Item (Macro_Item_Access (Button_Item));
 
                when Motion_Notify =>
-                  Motion_Item := Create_Item (Event, Prev_Time);
+                  Motion_Item := Create_Item
+                    (Event, Keymanager_Module.Key_Manager.Events.Prev_Time);
                   Save_Item (Macro_Item_Access (Motion_Item));
 
                when Scroll =>
-                  Scroll_Item := Create_Item (Event, Prev_Time);
+                  Scroll_Item := Create_Item
+                    (Event, Keymanager_Module.Key_Manager.Events.Prev_Time);
                   Save_Item (Macro_Item_Access (Scroll_Item));
 
                --  Other events should not be needed: they will be generated as
