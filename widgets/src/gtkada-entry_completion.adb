@@ -127,7 +127,7 @@ package body Gtkada.Entry_Completion is
 
       Gtk_New (The_Entry.View);
       Add (Scrolled, The_Entry.View);
-      Set_Mode (Get_Selection (The_Entry.View), Selection_Single);
+      Set_Mode (Get_Selection (The_Entry.View), Selection_None);
 
       Gtk_New (The_Entry.List, (0 => GType_String,
                                 1 => GType_Int,
@@ -180,9 +180,13 @@ package body Gtkada.Entry_Completion is
      (The_Entry : access Gtk_Widget_Record'Class;
       Event     : Gdk_Event) return Boolean
    is
+      GEntry : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
       Window : Gtk_Window;
    begin
-      if Get_Event_Type (Event) = Gdk_2button_Press then
+      if Get_Mode (Get_Selection (GEntry.View)) = Selection_Single
+        and then
+          Get_Event_Type (Event) = Gdk_2button_Press
+      then
          Window := Gtk_Window (Get_Toplevel (The_Entry));
          return Activate_Default (Window);
       end if;
