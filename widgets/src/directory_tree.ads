@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,6 +44,8 @@ with Gtk.Scrolled_Window;
 with Generic_List;
 with Gtk.Tree_Selection;
 
+with VFS;
+
 package Directory_Tree is
 
    ----------------------------------
@@ -62,15 +64,15 @@ package Directory_Tree is
 
    procedure Gtk_New
      (Tree    : out Dir_Tree;
-      Root    : String;
-      Initial : String := "");
+      Root    : VFS.Virtual_File;
+      Initial : VFS.Virtual_File := VFS.No_File);
    --  Create a new tree, whose root node points to the directory Root,
    --  pointing at the Initial directory, if it is a subdirectory of Root.
 
    procedure Initialize
      (Tree    : access Dir_Tree_Record'Class;
-      Root    : String;
-      Initial : String);
+      Root    : VFS.Virtual_File;
+      Initial : VFS.Virtual_File);
    --  Internal function used to create the tree.
 
    procedure Show_Parent (Tree : access Dir_Tree_Record);
@@ -78,7 +80,7 @@ package Directory_Tree is
 
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
-      Dir            : String;
+      Dir            : VFS.Virtual_File;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null);
    --  Expand the tree so that the directory Dir is visible.
    --  If Busy_Cursor_On is not null, then the cursor is that window is set to
@@ -88,7 +90,8 @@ package Directory_Tree is
    --
    --  If the directory doesn't exist, the closest possible parent is selected.
 
-   function Get_Selection (Tree : access Dir_Tree_Record) return String;
+   function Get_Selection (Tree : access Dir_Tree_Record)
+                           return VFS.Virtual_File;
    --  Return the absolute directory for the selected node.
    --  An empty string "" is returned if there is no selection currently.
 
@@ -110,8 +113,8 @@ package Directory_Tree is
 
    procedure Gtk_New
      (Selector             : out Directory_Selector;
-      Initial_Directory    : String;
-      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
+      Initial_Directory    : VFS.Virtual_File;
+      Root_Directory       : VFS.Virtual_File := VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
@@ -124,15 +127,16 @@ package Directory_Tree is
 
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
-      Initial_Directory    : String;
-      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
+      Initial_Directory    : VFS.Virtual_File;
+      Root_Directory       : VFS.Virtual_File := VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
    --  Internal function for the creation of new widgets.
 
    function Get_Single_Selection
-     (Selector  : access Directory_Selector_Record'Class) return String;
+     (Selector  : access Directory_Selector_Record'Class)
+      return VFS.Virtual_File;
    --  Return the directory selected by the user.
    --  If Selector allowed multiple directories, only the first one is
    --  returned.
@@ -140,7 +144,7 @@ package Directory_Tree is
 
    function Get_Multiple_Selection
      (Selector : access Directory_Selector_Record'Class)
-      return GNAT.OS_Lib.Argument_List;
+      return VFS.File_Array;
    --  Return the list of all selected directories in Selector.
    --  If Selector only allowed the selection of a single directory, then an
    --  array of size 1 is returned.
@@ -170,7 +174,7 @@ private
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;
       Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
 
-      Current_Dir         : GNAT.OS_Lib.String_Access;
+      Current_Dir         : VFS.Virtual_File;
 
       Fill_Timeout_Ids : Timeout_Id_List.List;
    end record;

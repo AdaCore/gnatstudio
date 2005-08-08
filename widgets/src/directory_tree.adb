@@ -54,12 +54,10 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
+with VFS;                       use VFS;
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
-with String_List_Utils;         use String_List_Utils;
 with File_Utils;                use File_Utils;
 with OS_Utils;                  use OS_Utils;
-with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 with Unchecked_Deallocation;
@@ -67,9 +65,9 @@ with Generic_List;
 
 package body Directory_Tree is
 
-   Icon_Column          : constant := 0;
-   Base_Name_Column     : constant := 1;
-   Absolute_Name_Column : constant := 2;
+   Icon_Column      : constant := 0;
+   Base_Name_Column : constant := 1;
+   File_Column      : constant := 2;
 
    --------------
    -- Graphics --
@@ -118,14 +116,17 @@ package body Directory_Tree is
    --  because Gdk.Pixbuf.Get_Type cannot be called before
    --  Gtk.Main.Init.
 
+   procedure Free (File : in out Virtual_File);
+   package Dir_List is new Generic_List (Virtual_File, Free => Free);
+   use Dir_List;
+
    type Append_Directory_Idle_Data is record
       Explorer      : Dir_Tree;
-      Norm_Dest     : Basic_Types.String_Access;
-      Norm_Dir      : Basic_Types.String_Access;
-      D             : GNAT.Directory_Operations.Dir_Type;
+      Norm_Dest     : Virtual_File;
+      Norm_Dir      : Virtual_File;
       Depth         : Integer := 0;
       Base          : Gtk_Tree_Iter;
-      Dirs          : String_List_Utils.String_List.List;
+      Dirs          : Dir_List.List;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True;
    end record;
@@ -134,15 +135,21 @@ package body Directory_Tree is
      new Unchecked_Deallocation (Append_Directory_Idle_Data,
                                  Append_Directory_Idle_Data_Access);
 
+   procedure Free (File : in out Virtual_File) is
+      pragma Unreferenced (File);
+   begin
+      null;
+   end Free;
+
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view.
 
    procedure File_Append_Directory
      (Explorer      : access Dir_Tree_Record'Class;
-      Dir           : String;
+      Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : String  := "";
+      Append_To_Dir : Virtual_File  := No_File;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True);
    --  Add to the file view the directory Dir, at node given by Iter.
@@ -202,7 +209,7 @@ package body Directory_Tree is
 
    procedure Refresh
      (Explorer : access Dir_Tree_Record'Class;
-      Dir      : String);
+      Dir      : Virtual_File);
    --  Refresh the contents of the explorer.
    --  Show directory Dir.
 
@@ -217,7 +224,7 @@ package body Directory_Tree is
 
    procedure Add_Directory
      (Selector  : access Directory_Selector_Record'Class;
-      Dir       : String;
+      Dir       : Virtual_File;
       Recursive : Boolean);
    --  Add Dir in the tree to the list of source directories associated with
    --  the project. If recursive is True, then all the subdirectories are also
@@ -246,7 +253,8 @@ package body Directory_Tree is
    --  doesn't remove children of the directory.
 
    function Find_Directory_In_Selection
-     (Selector : access Directory_Selector_Record'Class; Name : String)
+     (Selector : access Directory_Selector_Record'Class;
+      File     : Virtual_File)
       return Gtk_Tree_Iter;
    --  -1 if Name is not a source directory for the project defined in Wiz.
    --  Otherwise, the index of Name in the list is returned.
@@ -323,9 +331,12 @@ package body Directory_Tree is
       Get_Selected (Get_Selection (Tree.File_Tree), Model, Iter);
 
       if Iter /= Null_Iter then
-         Free (Tree.Current_Dir);
-         Tree.Current_Dir := new String'
-           (Get_String (Tree.File_Model, Iter, Absolute_Name_Column));
+         declare
+            Value : GValue;
+         begin
+            Get_Value (Tree.File_Model, Iter, File_Column, Value);
+            Tree.Current_Dir := VFS.Get_File (Value);
+         end;
       end if;
    end On_Tree_Select_Row;
 
@@ -377,73 +388,67 @@ package body Directory_Tree is
 
    procedure Show_Directory
      (Tree           : access Dir_Tree_Record;
-      Dir            : String;
+      Dir            : VFS.Virtual_File;
       Busy_Cursor_On : Gdk.Window.Gdk_Window := null)
    is
-      Abs_D    : constant String := Name_As_Directory
-        (Normalize_Pathname (Dir));
-
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
       Success  : Boolean;
+      Value    : GValue;
+      Curr_Dir : Virtual_File;
       pragma Unreferenced (Busy_Cursor_On);
-
-      function Is_Parent (Parent : String) return Boolean;
-      --  Return True if Parent is a directory parent of D.
-
-      function Is_Parent (Parent : String) return Boolean is
-      begin
-         return Parent'Length <= Abs_D'Length
-           and then Abs_D
-             (Abs_D'First .. Abs_D'First + Parent'Length - 1) = Parent;
-      end Is_Parent;
 
    begin
       --  Find the first non-expanded iter
 
       Parent := Get_Iter_First (Tree.File_Model);
-
+      if Parent /= Null_Iter then
+         Get_Value
+           (Tree.File_Model, Parent, File_Column, Value);
+         Curr_Dir := Get_File (Value);
+         --  we changed the remote host. rebuild whole tree
+         if Get_Root (Curr_Dir) /= Get_Root (Dir) then
+            Refresh (Tree, Dir);
+         end if;
+      end if;
       Iter := Parent;
 
       while Iter /= Null_Iter loop
          Path := Get_Path (Tree.File_Model, Iter);
 
-         declare
-            Curr_Dir : constant String := Get_String
-              (Tree.File_Model, Iter, Absolute_Name_Column);
-         begin
-            if Curr_Dir = Abs_D then
-               Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
-               Set_Cursor (Tree.File_Tree, Path, null, False);
-               Path_Free (Path);
+         Get_Value
+           (Tree.File_Model, Iter, File_Column, Value);
+         Curr_Dir := Get_File (Value);
+         if Curr_Dir = Dir then
+            Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+            Set_Cursor (Tree.File_Tree, Path, null, False);
+            Path_Free (Path);
 
-               return;
-            end if;
+            return;
+         end if;
 
-            if Is_Parent (Curr_Dir) then
-               if Row_Expanded (Tree.File_Tree, Path) then
+         if Is_Parent (Curr_Dir, Dir) then
+            if Row_Expanded (Tree.File_Tree, Path) then
+               Iter := Children (Tree.File_Model, Iter);
+            else
+               Success := Expand_Row (Tree.File_Tree, Path, False);
+
+               if Success then
                   Iter := Children (Tree.File_Model, Iter);
                else
-                  Success := Expand_Row (Tree.File_Tree, Path, False);
-
-                  if Success then
-                     Iter := Children (Tree.File_Model, Iter);
-                  else
-                     Set_Cursor (Tree.File_Tree, Path, null, False);
-                     Next (Tree.File_Model, Iter);
-                  end if;
+                  Set_Cursor (Tree.File_Tree, Path, null, False);
+                  Next (Tree.File_Model, Iter);
                end if;
-            else
-               Next (Tree.File_Model, Iter);
             end if;
-         end;
+         else
+            Next (Tree.File_Model, Iter);
+         end if;
 
          Path_Free (Path);
       end loop;
 
-      Free (Tree.Current_Dir);
-      Tree.Current_Dir := new String'(Dir);
+      Tree.Current_Dir := Dir;
    end Show_Directory;
 
    ---------------------------------
@@ -451,17 +456,18 @@ package body Directory_Tree is
    ---------------------------------
 
    function Find_Directory_In_Selection
-     (Selector : access Directory_Selector_Record'Class; Name : String)
+     (Selector : access Directory_Selector_Record'Class;
+      File     : Virtual_File)
       return Gtk_Tree_Iter
    is
-      Iter : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      Value : GValue;
    begin
       Iter := Get_Iter_First (Selector.List_Model);
 
       while Iter /= Null_Iter loop
-         if Get_String (Selector.List_Model, Iter, Absolute_Name_Column) =
-           Name
-         then
+         Get_Value (Selector.List_Model, Iter, File_Column, Value);
+         if Get_File (Value) = File then
             return Iter;
          end if;
 
@@ -477,48 +483,41 @@ package body Directory_Tree is
 
    procedure Add_Directory
      (Selector  : access Directory_Selector_Record'Class;
-      Dir       : String;
+      Dir       : Virtual_File;
       Recursive : Boolean)
    is
       Row     : Gtk_Tree_Iter;
-      Handle  : Dir_Type;
-      File    : String (1 .. 1024);
-      Last    : Natural;
+      Value   : GValue;
 
    begin
       Row := Find_Directory_In_Selection (Selector, Dir);
 
       if Row = Null_Iter then
          Append (Selector.List_Model, Row, Null_Iter);
-         Set (Selector.List_Model, Row, Absolute_Name_Column, Dir);
-         Set (Selector.List_Model, Row, Base_Name_Column, Dir);
+         Set_File (Value, Dir);
+         Set_Value (Selector.List_Model, Row, File_Column, Value);
+         Set (Selector.List_Model, Row, Base_Name_Column,
+              Base_Name (Dir));
       end if;
 
       if Recursive then
-         Open (Handle, Dir);
-
-         loop
-            Read (Handle, File, Last);
-
-            exit when Last = 0;
-
-            declare
-               Dir_Name : constant String := Dir & File (1 .. Last);
-            begin
-               if Is_Directory (Dir_Name)
-                 and then not Is_Symbolic_Link (Dir_Name)
-                 and then Filter (Selector.Directory, File (1 .. Last))
+         declare
+            Files : constant File_Array_Access := Read_Dir (Dir);
+         begin
+            for F in Files'Range loop
+               if Is_Directory (Files (F))
+                 and then Filter (Selector.Directory,
+                                  Full_Name (Files (F)).all)
                then
-                  Add_Directory (Selector, Name_As_Directory (Dir_Name), True);
+                  --  ??? we should also test for non symbolic links...
+                  Add_Directory (Selector, Files (F), True);
                end if;
-            end;
-         end loop;
-
-         Close (Handle);
+            end loop;
+         end;
       end if;
 
    exception
-      when Directory_Error =>
+      when VFS_Directory_Error =>
          null;
    end Add_Directory;
 
@@ -527,12 +526,13 @@ package body Directory_Tree is
    -------------------
 
    function Get_Selection
-     (Tree : access Dir_Tree_Record) return String is
+     (Tree : access Dir_Tree_Record)
+     return VFS.Virtual_File is
    begin
-      if Tree.Current_Dir = null then
-         return "";
+      if Tree.Current_Dir = No_File then
+         return No_File;
       else
-         return Tree.Current_Dir.all;
+         return Tree.Current_Dir;
       end if;
    end Get_Selection;
 
@@ -552,11 +552,11 @@ package body Directory_Tree is
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
-      Dir      : constant String  := Get_Selection (Selector.Directory);
+      Dir      : constant Virtual_File := Get_Selection (Selector.Directory);
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
    begin
-      if Dir /= "" then
+      if Dir /= No_File then
          Unselect_All (Get_Selection (Selector.List_Tree));
          Add_Directory (Selector, Dir, Recursive => True);
 
@@ -592,22 +592,21 @@ package body Directory_Tree is
 
          if Recursive then
             declare
-               Dir : constant String := Get_String
-                 (Selector.List_Model, Iter, Absolute_Name_Column);
+               Value : GValue;
+               Dir   : Virtual_File;
             begin
+               Get_Value (Selector.List_Model, Iter, File_Column, Value);
+               Dir  := Get_File (Value);
                Iter := Get_Iter_First (Selector.List_Model);
 
                while Iter /= Null_Iter loop
                   declare
-                     Iter_String : constant String := Get_String
-                       (Selector.List_Model, Iter, Absolute_Name_Column);
+                     Iter_Dir : Virtual_File;
                      Delete_Iter : Gtk_Tree_Iter;
                   begin
-                     if Iter_String'Length >= Dir'Length and then
-                       Iter_String
-                         (Iter_String'First
-                          .. Iter_String'First -  1 + Dir'Length) = Dir
-                     then
+                     Get_Value (Selector.List_Model, Iter, File_Column, Value);
+                     Iter_Dir := Get_File (Value);
+                     if Is_Parent (Dir, Iter_Dir) then
                         Delete_Iter := Iter;
                         Next (Selector.List_Model, Iter);
                         Remove (Selector.List_Model, Delete_Iter);
@@ -775,7 +774,8 @@ package body Directory_Tree is
      (W : access Gtk_Widget_Record'Class)
    is
       Selector    : constant Directory_Selector := Directory_Selector (W);
-      Current_Dir : constant String := Get_Selection (Selector.Directory);
+      Current_Dir : constant Virtual_File :=
+                     Get_Selection (Selector.Directory);
       Dialog      : Gtk_Dialog;
       Label       : Gtk_Label;
       Ent         : Gtk_Entry;
@@ -793,7 +793,7 @@ package body Directory_Tree is
 
       Gtk_New (Ent, Max => 1024);
       Set_Width_Chars (Ent, 30);
-      Set_Text (Ent, Current_Dir);
+      Set_Text (Ent, Full_Name (Current_Dir).all);
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
       Widget := Add_Button (Dialog, "Create", Gtk_Response_OK);
@@ -863,8 +863,8 @@ package body Directory_Tree is
 
    procedure Gtk_New
      (Selector             : out Directory_Selector;
-      Initial_Directory    : String;
-      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
+      Initial_Directory    : Virtual_File;
+      Root_Directory       : Virtual_File := Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection) is
@@ -881,8 +881,8 @@ package body Directory_Tree is
 
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
-      Initial_Directory    : String;
-      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
+      Initial_Directory    : Virtual_File;
+      Root_Directory       : Virtual_File := Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
@@ -894,6 +894,8 @@ package body Directory_Tree is
       Arrow    : Gtk_Arrow;
       Vbox     : Gtk_Box;
       Iter     : Gtk_Tree_Iter;
+      Value    : GValue;
+      Dir      : Virtual_File;
 
    begin
       Initialize_Vpaned (Selector);
@@ -945,14 +947,13 @@ package body Directory_Tree is
 
          for J in Initial_Selection'Range loop
             Append (Selector.List_Model, Iter, Null_Iter);
-            Set (Selector.List_Model, Iter, Absolute_Name_Column,
-                 Normalize_Pathname
-                   (Initial_Selection (J).all,
-                    Resolve_Links => False));
+
+            Dir := Create (Initial_Selection (J).all);
+            Ensure_Directory (Dir);
+            Set_File (Value, Dir);
+            Set_Value (Selector.List_Model, Iter, File_Column, Value);
             Set (Selector.List_Model, Iter, Base_Name_Column,
-                 Normalize_Pathname
-                   (Initial_Selection (J).all,
-                    Resolve_Links => False));
+                 Base_Name (Dir));
          end loop;
 
       else
@@ -989,18 +990,19 @@ package body Directory_Tree is
    --------------------------
 
    function Get_Single_Selection
-     (Selector  : access Directory_Selector_Record'Class) return String
+     (Selector  : access Directory_Selector_Record'Class) return Virtual_File
    is
       Iter : Gtk_Tree_Iter;
+      Value : GValue;
    begin
       Iter := Get_First_Selected (Directory_Selector (Selector));
 
       if Iter /= Null_Iter then
-         return Get_String
-           (Selector.List_Model, Iter, Absolute_Name_Column);
+         Get_Value (Selector.List_Model, Iter, File_Column, Value);
+         return Get_File (Value);
       end if;
 
-      return "";
+      return No_File;
    end Get_Single_Selection;
 
    ----------------------------
@@ -1009,7 +1011,7 @@ package body Directory_Tree is
 
    function Get_Multiple_Selection
      (Selector : access Directory_Selector_Record'Class)
-      return GNAT.OS_Lib.Argument_List
+      return VFS.File_Array
    is
       Iter   : Gtk_Tree_Iter;
       Length : Integer := 0;
@@ -1022,14 +1024,15 @@ package body Directory_Tree is
       end loop;
 
       declare
-         Args    : Argument_List (1 .. Natural (Length));
+         Args    : File_Array (1 .. Natural (Length));
          Current : Integer := 1;
+         Value   : GValue;
       begin
          Iter := Get_Iter_First (Selector.List_Model);
 
          while Iter /= Null_Iter loop
-            Args (Current) := new String'
-              (Get_String (Selector.List_Model, Iter, Absolute_Name_Column));
+            Get_Value (Selector.List_Model, Iter, File_Column, Value);
+            Args (Current) := Get_File (Value);
             Current := Current + 1;
             Next (Selector.List_Model, Iter);
          end loop;
@@ -1058,13 +1061,10 @@ package body Directory_Tree is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
-      File       : String (1 .. 4096);
-      Last       : Natural;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       New_D      : Append_Directory_Idle_Data_Access;
-
-      use String_List_Utils.String_List;
+      Value      : GValue;
 
    begin
       --  If we are appending at the base, create a node indicating the
@@ -1073,10 +1073,15 @@ package body Directory_Tree is
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
 
-         Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-              Locale_To_UTF8 (D.Norm_Dir.all));
-         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-              Locale_To_UTF8 (D.Norm_Dir.all));
+         Set_File (Value, D.Norm_Dir);
+         Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
+         if D.Depth = 1 and then Get_Host (D.Norm_Dir) /= "" then
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+                 Get_Host (D.Norm_Dir) & ":" & Base_Name (D.Norm_Dir));
+         else
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+                 Base_Name (D.Norm_Dir));
+         end if;
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
@@ -1112,31 +1117,49 @@ package body Directory_Tree is
          end;
       end if;
 
-      Read (D.D, File, Last);
+      declare
+         Files : File_Array_Access := Read_Dir (D.Norm_Dir);
+      begin
+         D.Depth := D.Depth + 1;
+         for F in Files'Range loop
+            if D.Depth >= 0 and then Files (F) /= No_File then
+               Ensure_Directory (Files (F));
 
-      if D.Depth >= 0 and then Last /= 0 then
-         if not (Last = 1 and then File (1) = '.')
-           and then not (Last = 2 and then File (1 .. 2) = "..")
-         then
-            if Is_Directory (D.Norm_Dir.all & File (File'First .. Last)) then
-               Append (D.Dirs, File (File'First .. Last));
+               --  if not ./ and not ../ directories
+               if Files (F) /= D.Norm_Dir
+                 and then not Is_Parent (Files (F), D.Norm_Dir)
+               then
+
+                  if Is_Directory (Files (F)) then
+
+                     declare
+                        Iter : Dir_List.List_Node;
+                        Prev : Dir_List.List_Node;
+                        Inserted : Boolean;
+                     begin
+                        Iter     := First (D.Dirs);
+                        Prev     := Null_Node;
+                        Inserted := False;
+                        while Iter /= Null_Node loop
+                           if Files (F) < Data (Iter) then
+                              Append (D.Dirs, Prev, Files (F));
+                              Inserted := True;
+                              exit;
+                           end if;
+                           Prev := Iter;
+                           Iter := Next (Iter);
+                        end loop;
+
+                        if not Inserted then
+                           Append (D.Dirs, Files (F));
+                        end if;
+                     end;
+                  end if;
+               end if;
             end if;
-
-            if D.Depth = 0 then
-               D.Depth := -1;
-            end if;
-         end if;
-
-         return True;
-      end if;
-
-      Close (D.D);
-
-      if Filenames_Are_Case_Sensitive then
-         Sort (D.Dirs);
-      else
-         Sort_Case_Insensitive (D.Dirs);
-      end if;
+         end loop;
+         Unchecked_Free (Files);
+      end;
 
       if Is_Empty (D.Dirs) then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
@@ -1145,13 +1168,15 @@ package body Directory_Tree is
 
       while not Is_Empty (D.Dirs) loop
          declare
-            Dir : constant String := Head (D.Dirs);
+            Dir   : constant Virtual_File := Head (D.Dirs);
+            Value : GValue;
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
-            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-                 Locale_To_UTF8 (D.Norm_Dir.all & Dir & Directory_Separator));
+            Ensure_Directory (Dir);
+            Set_File (Value, Dir);
+            Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Locale_To_UTF8 (Dir));
+                 Base_Name (Dir));
 
             if D.Depth = 0 then
                exit;
@@ -1160,13 +1185,7 @@ package body Directory_Tree is
             --  Are we on the path to the target directory ?
 
             if not Path_Found
-              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
-              and then Equal
-                (D.Norm_Dest
-                   (D.Norm_Dest'First
-                    .. D.Norm_Dest'First + D.Norm_Dir'Length + Dir'Length - 1),
-                 D.Norm_Dir.all & Dir,
-                 Case_Sensitive => Filenames_Are_Case_Sensitive)
+              and then Is_Parent (Dir, D.Norm_Dest)
             then
                Path_Found := True;
 
@@ -1191,9 +1210,7 @@ package body Directory_Tree is
 
                --  Are we on the target directory ?
 
-               if File_Equal
-                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator)
-               then
+               if D.Norm_Dest = Dir then
                   declare
                      Success   : Boolean;
                      pragma Unreferenced (Success);
@@ -1203,9 +1220,7 @@ package body Directory_Tree is
                      D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
 
                      File_Append_Directory
-                       (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                        Iter, D.Depth, D.Norm_Dest.all,
-                        False);
+                       (D.Explorer, Dir, Iter, D.Depth, D.Norm_Dest, False);
 
                      D.Explorer.Expanding := True;
                      Success := Expand_Row
@@ -1225,8 +1240,7 @@ package body Directory_Tree is
 
                else
                   File_Append_Directory
-                    (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                     Iter, D.Depth, D.Norm_Dest.all, D.Idle);
+                    (D.Explorer, Dir, Iter, D.Depth, D.Norm_Dest, D.Idle);
                end if;
 
             else
@@ -1240,16 +1254,13 @@ package body Directory_Tree is
          end;
       end loop;
 
-      Free (D.Norm_Dir);
-      Free (D.Norm_Dest);
-
       New_D := D;
       Free (New_D);
 
       return False;
 
    exception
-      when Directory_Error =>
+      when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions.
 
          New_D := D;
@@ -1268,38 +1279,24 @@ package body Directory_Tree is
 
    procedure File_Append_Directory
      (Explorer      : access Dir_Tree_Record'Class;
-      Dir           : String;
+      Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : String  := "";
+      Append_To_Dir : Virtual_File := No_File;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True)
    is
-      D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      D : constant Append_Directory_Idle_Data_Access
+        := new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
       Timeout_Id : Timeout_Handler_Id;
 
    begin
-      if Physical_Read then
-         begin
-            Open (D.D, Dir);
-         exception
-            when Directory_Error =>
-               Free (D);
-               return;
-         end;
-
-         D.Norm_Dir := new String'
-           (Name_As_Directory (Normalize_Pathname (Dir)));
-
-      else
-         D.Norm_Dir := new String'
-           (Name_As_Directory (Normalize_Pathname (Dir)));
-      end if;
-
-      D.Norm_Dest     := new String'
-        (Name_As_Directory (Normalize_Pathname (Append_To_Dir)));
+      Ensure_Directory (Dir);
+      Ensure_Directory (Append_To_Dir);
+      D.Norm_Dir      := Dir;
+      D.Norm_Dest     := Append_To_Dir;
       D.Depth         := Depth;
       D.Base          := Base;
       D.Explorer      := Dir_Tree (Explorer);
@@ -1354,9 +1351,9 @@ package body Directory_Tree is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Icon_Column          => Gdk.Pixbuf.Get_Type,
-         Absolute_Name_Column => GType_String,
-         Base_Name_Column     => GType_String);
+        (Icon_Column      => Gdk.Pixbuf.Get_Type,
+         File_Column      => VFS.Get_Virtual_File_Type,
+         Base_Name_Column => GType_String);
    end Columns_Types;
 
    -------------
@@ -1365,8 +1362,8 @@ package body Directory_Tree is
 
    procedure Gtk_New
      (Tree    : out Dir_Tree;
-      Root    : String;
-      Initial : String := "") is
+      Root    : Virtual_File;
+      Initial : Virtual_File := No_File) is
    begin
       Tree := new Dir_Tree_Record;
       Directory_Tree.Initialize (Tree, Root, Initial);
@@ -1378,8 +1375,10 @@ package body Directory_Tree is
 
    procedure Initialize
      (Tree    : access Dir_Tree_Record'Class;
-      Root    : String;
-      Initial : String) is
+      Root    : Virtual_File;
+      Initial : Virtual_File)
+   is
+      pragma Unreferenced (Root);
    begin
       Gtk.Scrolled_Window.Initialize (Tree);
       Set_Policy (Tree, Policy_Automatic, Policy_Automatic);
@@ -1424,28 +1423,18 @@ package body Directory_Tree is
          400);
 
       declare
-         Root_Dir    : GNAT.OS_Lib.String_Access;
-         Initial_Dir : GNAT.OS_Lib.String_Access;
+         Initial_Dir : Virtual_File;
       begin
-         if Root = "" then
-            Root_Dir := new String'("" & Directory_Separator);
+         if Initial = No_File then
+            Initial_Dir := Get_Current_Dir;
          else
-            Root_Dir := new String'(Root);
-         end if;
-
-         if Initial = "" then
-            Initial_Dir := new String'(Get_Current_Dir);
-         else
-            Initial_Dir := new String'(Initial);
+            Initial_Dir := Initial;
          end if;
 
          --  ??? Root_Dir is not taken into account yet.
-         Refresh (Tree, Initial_Dir.all);
+         Refresh (Tree, Initial_Dir);
 
-         Tree.Current_Dir := new String'(Initial_Dir.all);
-
-         Free (Root_Dir);
-         Free (Initial_Dir);
+         Tree.Current_Dir := Initial_Dir;
       end;
 
       Object_Callback.Object_Connect
@@ -1481,7 +1470,6 @@ package body Directory_Tree is
       E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
       File_Remove_Idle_Calls (E);
-      Free (E.Current_Dir);
    end On_File_Destroy;
 
    -------------------------------
@@ -1503,10 +1491,12 @@ package body Directory_Tree is
 
       if Iter /= Null_Iter then
          declare
-            Iter_Name : constant String :=
-              Get_String (T.File_Model, Iter, Absolute_Name_Column);
-
+            Iter_Name : Virtual_File;
+            Value     : GValue;
          begin
+            Get_Value (T.File_Model, Iter, File_Column, Value);
+            Iter_Name := Get_File (Value);
+
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
                     Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
@@ -1589,9 +1579,12 @@ package body Directory_Tree is
          T.Expanding := True;
 
          declare
-            Iter_Name : constant String :=
-              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            Iter_Name : Virtual_File;
+            Value     : GValue;
          begin
+            Get_Value (T.File_Model, Iter, File_Column, Value);
+            Iter_Name := Get_File (Value);
+
             Free_Children (T, Iter);
             Set (T.File_Model, Iter, Icon_Column,
                        Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
@@ -1699,7 +1692,7 @@ package body Directory_Tree is
 
    procedure Refresh
      (Explorer : access Dir_Tree_Record'Class;
-      Dir      : String)
+      Dir      : Virtual_File)
    is
       Buffer       : aliased String (1 .. 1024);
       Last, Len    : Integer;
@@ -1713,7 +1706,7 @@ package body Directory_Tree is
 
       if Len = 0 then
          File_Append_Directory
-           (Explorer, (1 => Directory_Separator),
+           (Explorer, Get_Root (Dir),
             Null_Iter, 1, Dir, True);
 
       else
@@ -1721,20 +1714,16 @@ package body Directory_Tree is
 
          for J in 1 .. Len loop
             if Buffer (J) = ASCII.NUL then
-               if File_Equal
-                 (Buffer (Last .. J - 1),
-                  Dir (Dir'First ..
-                       Dir'First + J - Last - 1))
-               then
+               if Is_Parent (Create (Buffer (Last .. J - 1)), Dir) then
                   File_Append_Directory
-                    (Explorer, Buffer (Last .. J - 1),
+                    (Explorer, Create (Buffer (Last .. J - 1)),
                      Null_Iter, 1, Dir, True);
                   Dir_Inserted := True;
 
                else
                   File_Append_Directory
-                    (Explorer, Buffer (Last .. J - 1),
-                     Null_Iter, 0, "", False, False);
+                    (Explorer, Create (Buffer (Last .. J - 1)),
+                     Null_Iter, 0, No_File, False, False);
                end if;
 
                Last := J + 1;
@@ -1742,19 +1731,9 @@ package body Directory_Tree is
          end loop;
 
          if not Dir_Inserted then
-            declare
-               J : Natural := Dir'First;
-            begin
-               while J < Dir'Last
-                 and then not Is_Directory_Separator (Dir (J))
-               loop
-                  J := J + 1;
-               end loop;
-
-               File_Append_Directory
-                 (Explorer, Dir (Dir'First .. J),
-                  Null_Iter, 1, Dir, True);
-            end;
+            File_Append_Directory
+              (Explorer, Local_Root_Dir,
+               Null_Iter, 0, No_File, False, False);
          end if;
       end if;
 
