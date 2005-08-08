@@ -375,15 +375,15 @@ package body Welcome is
 
    procedure On_Browse_Default (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
-      Dir : constant String := Select_Directory
+      Dir : constant Virtual_File := Select_Directory
         (Title             => -"Select a directory",
-         Base_Directory    => Get_Text (S.Default_Dir),
+         Base_Directory    => Create (Get_Text (S.Default_Dir)),
          Parent            => Gtk_Window (S),
          Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
          History           => Get_History (S.Kernel));
    begin
-      if Dir /= "" then
-         Set_Text (S.Default_Dir, Dir);
+      if Dir /= No_File then
+         Set_Text (S.Default_Dir, Full_Name (Dir).all);
       end if;
 
    exception
@@ -399,19 +399,19 @@ package body Welcome is
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Get_Text (Get_Entry (S.Open_Project));
-      Dir : String_Access;
+      Dir : Virtual_File;
    begin
       Push_State (S.Kernel, Busy);
       if Project_Name = "" then
-         Dir := new String'(Get_Text (S.Default_Dir));
+         Dir := Create (Get_Text (S.Default_Dir));
       else
-         Dir := new String'(Dir_Name (Project_Name));
+         Dir := Create (Dir_Name (Project_Name));
       end if;
 
       declare
          File : constant Virtual_File := Select_File
            (Title             => -"Select project file",
-            Base_Directory    => Dir.all,
+            Base_Directory    => Dir,
             File_Pattern      => "*.gpr",
             Pattern_Name      => -"Project Files",
             Parent            => Gtk_Window (Get_Toplevel (Screen)),
@@ -425,7 +425,6 @@ package body Welcome is
          end if;
       end;
 
-      Free (Dir);
       Pop_State (S.Kernel);
 
    exception
