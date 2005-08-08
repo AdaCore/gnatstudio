@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,12 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;
 with Gtk.Box;
 with Gtk.Combo;
 with Gtk.GEntry;
 with Gtk.Tree_Store;
 with Gtk.Tree_View;
+
+with Basic_Types;
 
 package Gtkada.Entry_Completion is
 
@@ -32,8 +33,8 @@ package Gtkada.Entry_Completion is
 
    procedure Gtk_New
      (The_Entry      : out Gtkada_Entry;
-      Use_Combo         : Boolean := True;
-      Case_Sensitive    : Boolean := True);
+      Use_Combo      : Boolean := True;
+      Case_Sensitive : Boolean := True);
    --  Create a new entry. If Use_Combo is true, then the top field will be
    --  a combo box, to which you can associate a history. Otherwise, it will
    --  be a simple entry field.
@@ -94,8 +95,6 @@ package Gtkada.Entry_Completion is
    --  Called when the factory (and the associated list of possible
    --  completions) are no longer needed and can be freed. By default, this
    --  does nothing
-
-
 
    procedure Set_Completions
      (The_Entry   : access Gtkada_Entry_Record;
