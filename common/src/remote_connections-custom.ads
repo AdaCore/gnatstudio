@@ -71,8 +71,10 @@ package Remote_Connections.Custom is
       --  reads tmp file as file
       Force_Reconnect,
       --  forces GPS to reconnect to the remote
-      Create_Tmp_File
+      Create_Tmp_File,
       --  creates tmp file for reading transfer
+      List_Files
+      --  read the files in directory listing using regexp parameter
      );
 
    procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr);
@@ -102,9 +104,9 @@ package Remote_Connections.Custom is
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String)
       return GNAT.OS_Lib.String_Access;
-   procedure Delete
+   function Delete
      (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String);
+      Local_Full_Name : Glib.UTF8_String) return Boolean;
    function Is_Writable
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String) return Boolean;
@@ -127,6 +129,19 @@ package Remote_Connections.Custom is
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String;
       Readable        : Boolean);
+   function Make_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String)
+      return Boolean;
+   function Remove_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String;
+      Recursive      : Boolean)
+      return Boolean;
+   function Read_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String) return GNAT.OS_Lib.String_List;
+
    function Factory
      (Protocol   : access Custom_Connection;
       User, Host : String;
@@ -169,14 +184,8 @@ private
       Timeout : Expect_Timeout_Record;
       Next    : Action_Access;
       case Kind is
-         when Spawn =>
-            Cmd         : String_Ptr;
-
-         when Return_Value =>
-            Value       : Return_Enum;
-
-         when Send =>
-            Param       : String_Ptr;
+         when Spawn | Return_Value | Send | List_Files =>
+            Param : String_Ptr;
 
          when others =>
             null;
@@ -233,8 +242,20 @@ private
       Set_Readable_Cmd,
       Set_Writable_Cmd,
       Set_Unreadable_Cmd,
-      Set_Unwritable_Cmd
+      Set_Unwritable_Cmd,
       --  Commands to use to change the readable/writable status of files
+
+      Make_Dir_Cmd,
+      --  Command used to create a directory
+
+      Remove_Dir_Cmd,
+      --  Command used to delete a directory
+
+      Remove_Dir_Recursive_Cmd,
+      --  Command used to delete recursively a directory
+
+      Ls_Dir_Cmd
+      --  Command used to list the files in a directory
      );
 
    type Command_Array is array (Cmd_Enum) of Action_Access;
@@ -264,6 +285,7 @@ private
 
       Is_Open              : Boolean := False;
       Pd                   : TTY_Process_Descriptor_Access;
+      File_List            : GNAT.OS_Lib.String_List_Access;
 
       Last_Connection_Attempt : Time := VFS.No_Time;
       --  Time when we last attempted a connection, so that we avoid
