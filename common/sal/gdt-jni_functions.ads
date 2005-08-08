@@ -108,6 +108,13 @@ package GDT.JNI_Functions is
       Java_ConstructAccess_getProfileInt,
       "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getProfileInt");
 
+   function Java_ConstructAccess_getIsDeclarationInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
+   pragma Export
+     (C,
+      Java_ConstructAccess_getIsDeclarationInt,
+      "Java_com_adacore_gdt_study_gpsjni_ConstructAccess_getIsDeclarationInt");
+
    function Java_ConstructList_getFirstInt
      (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint;
    pragma Export
