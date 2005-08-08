@@ -38,7 +38,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              Off);
+                                              On);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -101,6 +101,10 @@ package body Remote_Connections.Custom is
 
    function Analyze_Timestamp (Str : in String) return Ada.Calendar.Time;
    --  analyze Str and determine the date
+
+   function Analyze_Ls (Str : in String; Regexp : in String)
+                        return GNAT.OS_Lib.String_List_Access;
+   --  analyze Str and determine a list of files
 
    procedure Trace_Filter_Input
      (Descriptor : Process_Descriptor'Class;
@@ -253,7 +257,6 @@ package body Remote_Connections.Custom is
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
       Pd              : in     TTY_Process_Descriptor_Access;
-      Keep_Pd         : in out Boolean;
       Ret_Value       :    out Return_Enum);
    --  executes the action recursively
 
@@ -269,7 +272,6 @@ package body Remote_Connections.Custom is
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
       Pd              : in     TTY_Process_Descriptor_Access;
-      Keep_Pd         : in out Boolean;
       Ret_Value       :    out Return_Enum)
    is
       Regexps    : constant Compiled_Regexp_Array :=
@@ -318,7 +320,7 @@ package body Remote_Connections.Custom is
          when Spawn =>
             declare
                The_Command : constant String
-                 := Substitute (Get_String (Action.Cmd),
+                 := Substitute (Get_String (Action.Param),
                                 Local_Full_Name,
                                 Connection,
                                 Get_Tmp_File);
@@ -333,7 +335,6 @@ package body Remote_Connections.Custom is
                   Args        => Args (Args'First + 1 .. Args'Last),
                   Buffer_Size => 0,
                   Err_To_Out  => True);
-               Keep_Pd := False;
                New_Pd := True;
                if Active (Full_Me) then
                   Add_Filter (L_Pd.all, Trace_Filter_Output'Access, Output);
@@ -345,11 +346,12 @@ package body Remote_Connections.Custom is
 
          when Set_Session =>
             Trace (Full_Me, "Action : Set_Session");
-            Keep_Pd := True;
+            Connection.Pd := L_Pd;
+            Connection.Is_Open := True;
 
          when Return_Value =>
             Trace (Full_Me, "Action : ReturnValue");
-            Ret_Value := Action.Value;
+            Ret_Value := Return_Enum'Value (Action.Param.all);
 
          when Input_Login =>
             Trace (Full_Me, "Action : InputLogin");
@@ -431,6 +433,10 @@ package body Remote_Connections.Custom is
                L_Pd := Connection.Pd;
                Ret_Value := No_Statement; --  reconnected, go on
             end if;
+
+         when List_Files =>
+            Connection.File_List := Analyze_Ls (Result, Action.Param.all);
+
       end case;
 
       --  once the action executed, wait for Expects (if any)
@@ -462,7 +468,6 @@ package body Remote_Connections.Custom is
                         ReadTmpBase,
                         "",
                         L_Pd,
-                        Keep_Pd,
                         Ret_Value);
                      L_Action := L_Action.Next;
                   end loop;
@@ -496,7 +501,6 @@ package body Remote_Connections.Custom is
                            ReadTmpBase,
                            Output (Output'First .. Matched (0).First - 2),
                            L_Pd,
-                           Keep_Pd,
                            Ret_Value);
                         L_Action := L_Action.Next;
                      end loop;
@@ -505,14 +509,10 @@ package body Remote_Connections.Custom is
             end if;
          end loop;
       end if;
-      if New_Pd then
-         if Keep_Pd and Ret_Value = OK then
-            Connection.Pd := L_Pd;
-            Connection.Is_Open := True;
-         else
-            Close (L_Pd.all);
-            Free (L_Pd);
-         end if;
+      --  if we spawned a process and this process has not been set as seesion
+      if New_Pd and then Connection.Pd /= L_Pd then
+         Close (L_Pd.all);
+         Free (L_Pd);
       end if;
 
    exception
@@ -539,7 +539,6 @@ package body Remote_Connections.Custom is
    is
       L_Action      : Action_Access;
       ReadTmpBase   : String (1 .. Temp_File_Len) := (others => ' ');
-      Keep_Pd       : Boolean;
       Ret_Value     : Return_Enum;
       Response      : Message_Dialog_Buttons;
       Close_Cnx     : Boolean;
@@ -553,7 +552,6 @@ package body Remote_Connections.Custom is
             return Ret_Value;
          end if;
       end if;
-      Keep_Pd := True;
 
       L_Action := Cmd;
       while L_Action /= null loop
@@ -564,7 +562,6 @@ package body Remote_Connections.Custom is
             WriteTmpFile    => WriteTmpFile,
             ReadTmpBase     => ReadTmpBase,
             Pd              => Connection.Pd,
-            Keep_Pd         => Keep_Pd,
             Ret_Value       => Ret_Value);
          L_Action := L_Action.Next;
       end loop;
@@ -741,6 +738,51 @@ package body Remote_Connections.Custom is
 
    end Analyze_Timestamp;
 
+   ----------------
+   -- Analyze_Ls --
+   ----------------
+
+   function Analyze_Ls (Str : in String; Regexp : in String)
+                        return GNAT.OS_Lib.String_List_Access
+   is
+      Matched  : Match_Array (0 .. 1);
+      First    : Natural := Str'First;
+      Last     : Natural := Str'Last;
+      Nb_Files : Natural := 0;
+      F_Array  : GNAT.OS_Lib.String_List_Access;
+      Pattern  : constant Pattern_Matcher := Compile (Regexp, Multiple_Lines);
+   begin
+      loop
+         Match (Pattern, Str, Matched,
+                Data_First => First,
+                Data_Last  => Last);
+         exit when Matched (0) = No_Match;
+         Nb_Files := Nb_Files + 1;
+         First := Matched (0).Last + 1;
+         exit when First > Last;
+      end loop;
+
+      if Nb_Files > 0 then
+         F_Array := new GNAT.OS_Lib.String_List (1 .. Nb_Files);
+         First := Str'First;
+         Last  := Str'Last;
+
+         for J in F_Array'Range loop
+            Match (Pattern, Str, Matched,
+                   Data_First => First,
+                   Data_Last  => Last);
+            First := Matched (0).Last + 1;
+            F_Array (J) := new String'(
+                                 Str (Matched (1).First .. Matched (1).Last));
+         end loop;
+
+         return F_Array;
+
+      else
+         return null;
+      end if;
+   end Analyze_Ls;
+
    ------------------------
    -- Trace_Filter_Input --
    ------------------------
@@ -887,53 +929,22 @@ package body Remote_Connections.Custom is
             if Is_Valid then
                --  first initialize the action itself
                case Action_Kind is
-                  when Spawn =>
+                  when Spawn | Return_Value | Send | List_Files =>
                      declare
-                        Cmd          : constant String
+                        Param : constant String
                           := Get_Attribute (Node, "param");
-                        Spawn_Action : Action_Record (Spawn);
+                        The_Action : Action_Record (Action_Kind);
                      begin
-                        if Cmd = "" then
+                        if Param = "" then
                            Trace (Me,
-                                  "** Error: this Spawn action has " &
-                                  "no attribute 'param'");
+                                  "** Error: this " &
+                                  Action_Enum'Image (Action_Kind) &
+                                  " action has no attribute 'param'");
                            Is_Valid := False;
                         else
-                           Spawn_Action.Cmd := new String'(Cmd);
-                           Action := new Action_Record'(Spawn_Action);
+                           The_Action.Param := new String'(Param);
+                           Action := new Action_Record'(The_Action);
                         end if;
-                     end;
-
-                  when Return_Value =>
-                     declare
-                        Value        : constant String
-                          := Get_Attribute (Node, "param");
-                        Return_Action : Action_Record (Action_Kind);
-                     begin
-                        if Value = "" then
-                           Trace (Me,
-                                  "** Error: this Return_Value action has " &
-                                  "no attribute 'param'");
-                           Is_Valid := False;
-                        else
-                           Return_Action.Value := Return_Enum'Value (Value);
-                           Action := new Action_Record'(Return_Action);
-                        end if;
-                     exception
-                        when Constraint_Error =>
-                           Trace (Me, "** Error : Invalid value attribute : " &
-                                  Value);
-                           Is_Valid := False;
-                     end;
-
-                  when Send =>
-                     declare
-                        Param       : constant String
-                          := Get_Attribute (Node, "param");
-                        Send_Action : Action_Record (Send);
-                     begin
-                        Send_Action.Param := new String'(Param);
-                        Action := new Action_Record'(Send_Action);
                      end;
 
                   when others =>
@@ -1118,12 +1129,14 @@ package body Remote_Connections.Custom is
 
       --  If Parent is defined, first set Commands to parent's ones
       Tmp_Str := Get_Field (Top, "parent");
+
       if Tmp_Str /= null then
          declare
             Tmp_Connect : Custom_Connection_Access := Custom_Root.Next;
             The_Name    : constant String := To_Lower (Tmp_Str.all);
          begin
             Trace (Me, "Initialize parent = " & Tmp_Str.all);
+
             while Tmp_Connect /= null loop
                if To_Lower (Tmp_Str.all) = The_Name then
                   Connection.Commands := Tmp_Connect.Commands;
@@ -1139,80 +1152,16 @@ package body Remote_Connections.Custom is
       Parent := Find_Tag (Top.Child, "commands");
 
       if Parent /= null then
-         Node := Find_Tag (Parent.Child, "open_session_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Trace (Me, "Initialize : get open_session_cmd");
-            Connection.Commands (Open_Session_Cmd) := Cmd;
-         end if;
 
-         Node := Find_Tag (Parent.Child, "read_file_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Trace (Me, "Initialize : get read_file_cmd");
-            Connection.Commands (Read_File_Cmd) := Cmd;
-         end if;
+         for C in Connection.Commands'Range loop
+            Node := Find_Tag (Parent.Child, To_Lower (Cmd_Enum'Image (C)));
+            Initialize_Action (Node, Cmd);
 
-         Node := Find_Tag (Parent.Child, "is_regular_file_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Is_Regular_File_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "is_writable_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Is_Writable_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "is_directory_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Is_Directory_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "delete_file_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Delete_File_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "timestamp_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Timestamp_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "write_file_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Write_File_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "set_readable_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Set_Readable_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "set_writable_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Set_Writable_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "set_unreadable_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Set_Unreadable_Cmd) := Cmd;
-         end if;
-
-         Node := Find_Tag (Parent.Child, "set_unwritable_cmd");
-         Initialize_Action (Node, Cmd);
-         if Cmd /= null then
-            Connection.Commands (Set_Unwritable_Cmd) := Cmd;
-         end if;
-
+            if Cmd /= null then
+               Trace (Me, "Initialize : " & To_Lower (Cmd_Enum'Image (C)));
+               Connection.Commands (C) := Cmd;
+            end if;
+         end loop;
       end if;
 
       Remote_Connections.Register_Protocol (Connection);
@@ -1295,21 +1244,21 @@ package body Remote_Connections.Custom is
    -- Delete --
    ------------
 
-   procedure Delete
+   function Delete
      (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String)
+      Local_Full_Name : Glib.UTF8_String) return Boolean
    is
       Result : Return_Enum;
-      pragma Unreferenced (Result);
    begin
       if Connection.Commands (Delete_File_Cmd) = null then
          --  Don't do anything
-         null;
+         return False;
       else
          Trace (Me, "Delete " & Local_Full_Name);
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Delete_File_Cmd),
                                 Local_Full_Name);
+         return Result = OK;
       end if;
    end Delete;
 
@@ -1493,6 +1442,91 @@ package body Remote_Connections.Custom is
          end if;
       end if;
    end Set_Readable;
+
+   --------------
+   -- Make_Dir --
+   --------------
+
+   function Make_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String)
+      return Boolean
+   is
+      Result : Return_Enum;
+   begin
+      Trace (Me, "Make_Dir " & Local_Dir_Name);
+      if Connection.Commands (Make_Dir_Cmd) = null then
+         --  Nothing to do
+         return False;
+
+      else
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Make_Dir_Cmd),
+                                Local_Dir_Name);
+         return Result = OK;
+      end if;
+   end Make_Dir;
+
+   ----------------
+   -- Remove_Dir --
+   ----------------
+
+   function Remove_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String;
+      Recursive      : Boolean)
+      return Boolean
+   is
+      Result : Return_Enum;
+   begin
+      Trace (Me, "Remove_Dir " & Local_Dir_Name);
+      if Connection.Commands (Remove_Dir_Recursive_Cmd) /= null
+        and Recursive then
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Remove_Dir_Recursive_Cmd),
+                                Local_Dir_Name);
+         return Result = OK;
+      elsif Connection.Commands (Remove_Dir_Cmd) /= null
+        and not Recursive then
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Remove_Dir_Cmd),
+                                Local_Dir_Name);
+         return Result = OK;
+      end if;
+      return False;
+   end Remove_Dir;
+
+   --------------
+   -- Read_Dir --
+   --------------
+
+   function Read_Dir
+     (Connection     : access Custom_Connection;
+      Local_Dir_Name : Glib.UTF8_String) return GNAT.OS_Lib.String_List
+   is
+      Result : Return_Enum;
+      procedure Free is new Ada.Unchecked_Deallocation
+        (GNAT.OS_Lib.String_List, GNAT.OS_Lib.String_List_Access);
+      --  do not use GNAT.OS_Lib.Free procedure as it also frees the string
+      --  items of the list, which we do not want.
+   begin
+      Trace (Me, "Read_Dir " & Local_Dir_Name);
+      if Connection.Commands (Ls_Dir_Cmd) /= null then
+         Result := Execute_Cmd (Connection,
+                                Connection.Commands (Ls_Dir_Cmd),
+                                Local_Dir_Name);
+         if Result = OK and then Connection.File_List /= null then
+            declare
+               List : constant GNAT.OS_Lib.String_List
+                 := Connection.File_List.all;
+            begin
+               Free (Connection.File_List);
+               return List;
+            end;
+         end if;
+      end if;
+      return (1 .. 0 => null);
+   end Read_Dir;
 
    -------------
    -- Factory --
