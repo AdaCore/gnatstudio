@@ -2085,15 +2085,12 @@ package body Project_Properties is
       File : Virtual_File;
    begin
       if Ed.As_Directory then
-         declare
-            Dir : constant String := Select_Directory
-              (Parent => Gtk_Window (Get_Toplevel (Editor)),
-               Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
-         begin
-            if Dir /= "" then
-               Set_Text (Gtk_Entry (Ed.Ent), Dir);
-            end if;
-         end;
+         File := Select_Directory
+           (Parent => Gtk_Window (Get_Toplevel (Editor)),
+            Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+         if File /= VFS.No_File then
+            Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
+         end if;
       else
          File := Select_File
            (Parent => Gtk_Window (Get_Toplevel (Editor)),
@@ -2529,14 +2526,14 @@ package body Project_Properties is
                if Current = "" then
                   File := Select_File
                     (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Project_Path,
+                     Base_Directory    => Create (Project_Path),
                      Default_Name      => "",
                      Use_Native_Dialog =>
                        Get_Pref (Kernel, Use_Native_Dialogs));
                else
                   File := Select_File
                     (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Dir_Name (Current),
+                     Base_Directory    => Create (Dir_Name (Current)),
                      Default_Name      => Base_Name (Current),
                      Use_Native_Dialog =>
                        Get_Pref (Kernel, Use_Native_Dialogs));
@@ -2554,17 +2551,22 @@ package body Project_Properties is
                  (Project, Description, Index => Attribute_Index);
             begin
                if Current = "" then
-                  return Select_Directory
+                  File := Select_Directory
                     (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Project_Path,
+                     Base_Directory    => Create (Project_Path),
                      Use_Native_Dialog =>
                        Get_Pref (Kernel, Use_Native_Dialogs));
                else
-                  return Select_Directory
+                  File := Select_Directory
                     (Parent            => Gtk_Window (Toplevel),
-                     Base_Directory    => Current,
+                     Base_Directory    => Create (Current),
                      Use_Native_Dialog =>
                        Get_Pref (Kernel, Use_Native_Dialogs));
+               end if;
+               if File /= VFS.No_File then
+                  return Full_Name (File).all;
+               else
+                  return "";
                end if;
             end;
 
