@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2001-2005                      --
+--                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@
 with Gtk.Window; use Gtk.Window;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with GPS.Intl; use GPS.Intl;
+with VFS; use VFS;
 
 package body Files_Extra_Info_Pkg.Callbacks is
 
@@ -44,14 +45,14 @@ package body Files_Extra_Info_Pkg.Callbacks is
    is
       Extra : constant Files_Extra_Info_Access :=
         Files_Extra_Info_Access (Object);
-      S     : constant String := Select_Directory
+      S     : constant VFS.Virtual_File := Select_Directory
         (-"Select a directory",
          Parent  => Gtk_Window (Get_Toplevel (Object)),
          History => null);  --  ??? No history
 
    begin
-      if S /= "" then
-         Set_Text (Extra.Directory_Entry, S);
+      if S /= No_File then
+         Set_Text (Extra.Directory_Entry, VFS.Full_Name (S).all);
       end if;
    end On_Browse_Button_Clicked;
 
