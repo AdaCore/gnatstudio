@@ -1084,9 +1084,10 @@ package body VCS_View_API is
               Create (Full_Filename => Data (Files_Temp));
             Log   : constant Virtual_File :=
               Get_Log_From_File (Kernel, File, False);
+            Success : Boolean;
          begin
             if Is_Regular_File (Log) then
-               Delete (Log);
+               Delete (Log, Success);
                Close_File_Editors (Kernel, Log);
             end if;
 

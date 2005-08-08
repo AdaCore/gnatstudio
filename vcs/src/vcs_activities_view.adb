@@ -739,6 +739,7 @@ package body VCS_Activities_View is
             S    : constant File_Status_Record :=
                      File_Status_List.Data (Status_Temp);
             File : constant Virtual_File := S.File;
+            Success : Boolean;
          begin
             --  Clear the logs
 
@@ -748,7 +749,7 @@ package body VCS_Activities_View is
                           Get_Log_From_File (Kernel, File, False);
                begin
                   if Log /= VFS.No_File and then Is_Regular_File (Log) then
-                     Delete (Log);
+                     Delete (Log, Success);
                      Close_File_Editors (Kernel, Log);
                   end if;
 
