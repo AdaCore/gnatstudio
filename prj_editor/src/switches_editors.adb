@@ -45,7 +45,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
@@ -1127,13 +1126,13 @@ package body Switches_Editors is
      (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       F   : constant Gtk_Entry := Gtk_Entry (Field);
-      Dir : constant String := Select_Directory
-        (Base_Directory    => Get_Text (F),
+      Dir : constant Virtual_File := Select_Directory
+        (Base_Directory    => Create (Get_Text (F)),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
    begin
-      if Dir /= "" then
-         Set_Text (F, Dir);
+      if Dir /= VFS.No_File then
+         Set_Text (F, Full_Name (Dir).all);
       end if;
    end Browse_Directory;
 
@@ -1145,9 +1144,10 @@ package body Switches_Editors is
      (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       F   : constant Gtk_Entry := Gtk_Entry (Field);
+      VF : constant Virtual_File := Create (Get_Text (F));
       File : constant Virtual_File := Select_File
-        (Base_Directory    => Dir_Name (Get_Text (F)),
-         Default_Name      => Base_Name (Get_Text (F)),
+        (Base_Directory    => Dir (VF),
+         Default_Name      => Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
    begin
