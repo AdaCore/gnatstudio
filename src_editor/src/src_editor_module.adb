@@ -1044,7 +1044,10 @@ package body Src_Editor_Module is
             if Writable /= Invalid_File then
                begin
                   Close (Writable);
-                  Delete (File);
+                  Delete (File, Success);
+                  if not Success then
+                     Is_Writable := False;
+                  end if;
                exception
                   when Use_Error =>
                      Is_Writable := False;
@@ -1577,7 +1580,7 @@ package body Src_Editor_Module is
               Select_File
                 (Title             => -"Save File As",
                  Parent            => Get_Current_Window (Kernel),
-                 Base_Directory    => Dir_Name (Old_Name).all,
+                 Base_Directory    => Dir (Old_Name),
                  Default_Name      => Base_Name (Old_Name),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Save_File,
@@ -1624,13 +1627,13 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      Dir    : constant String := Select_Directory
+      Dir    : constant Virtual_File := Select_Directory
         (-"Select a directory",
          History => Get_History (Kernel),
          Parent  => Gtk_Window (Get_Current_Window (Kernel)));
 
    begin
-      if Dir /= "" then
+      if Dir /= No_File then
          Change_Dir (Dir);
       end if;
    end On_Change_Dir;
