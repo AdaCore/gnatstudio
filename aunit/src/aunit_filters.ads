@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,8 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Gdk.Pixbuf;  use Gdk.Pixbuf;
 
 with Gtkada.File_Selector; use Gtkada.File_Selector;
+
+with VFS; use VFS;
 
 package Aunit_Filters is
 
@@ -63,8 +65,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Ada;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access);
@@ -74,8 +75,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Suites;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access);
@@ -85,8 +85,7 @@ package Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Tests;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access);

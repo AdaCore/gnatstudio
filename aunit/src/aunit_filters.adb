@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2001-2005                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -141,8 +141,7 @@ package body Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Suites;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access)
@@ -150,14 +149,15 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
       Suite_Name   : GNAT.OS_Lib.String_Access;
       Package_Name : GNAT.OS_Lib.String_Access;
+      Base         : constant String := Base_Name (File);
 
    begin
       --  To find suites, look for tests and suites in body files.
 
-      if File'Length > 4
-        and then File (File'Last - 3 .. File'Last) = ".adb"
+      if Base'Length > 4
+        and then Base (Base'Last - 3 .. Base'Last) = ".adb"
       then
-         Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
+         Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name);
 
          if Suite_Name /= null then
             State  := Normal;
@@ -179,8 +179,7 @@ package body Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Tests;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access)
@@ -189,7 +188,7 @@ package body Aunit_Filters is
       Suite_Name   : GNAT.OS_Lib.String_Access;
       Package_Name : GNAT.OS_Lib.String_Access;
    begin
-      Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
+      Get_Suite_Name (Full_Name (File).all, Package_Name, Suite_Name);
 
       if Suite_Name /= null then
          State  := Normal;
@@ -212,20 +211,20 @@ package body Aunit_Filters is
    procedure Use_File_Filter
      (Filter : access Filter_Show_Ada;
       Win    : access File_Selector_Window_Record'Class;
-      Dir    : String;
-      File   : String;
+      File   : VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
       Text   : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
+      Base : constant String := Base_Name (File);
    begin
       --  ??? In fact, we should gather all the possible extensions in the
       --  projects, as well as the naming scheme exceptions.
 
-      if File'Length >= 4
-        and then (File (File'Last - 3 .. File'Last) = ".ads"
-                  or else File (File'Last - 3 .. File'Last) = ".adb")
+      if Base'Length >= 4
+        and then (Base (Base'Last - 3 .. Base'Last) = ".ads"
+                  or else Base (Base'Last - 3 .. Base'Last) = ".adb")
       then
          State := Normal;
 
@@ -237,7 +236,8 @@ package body Aunit_Filters is
             Line_Last : Integer;
 
          begin
-            Ada.Text_IO.Open (File_T, In_File, Dir & File);
+            --  ??? We should not use Ada.Text_IO files here...
+            Ada.Text_IO.Open (File_T, In_File, Full_Name (File).all);
 
             while not Found loop
                Get_Line (File_T, Line, Line_Last);
@@ -261,8 +261,8 @@ package body Aunit_Filters is
                Close (File_T);
          end;
 
-      elsif File'Length >= 4
-        and then File (File'Last - 3 .. File'Last) = Project_File_Extension
+      elsif Base'Length >= 4
+        and then Base (Base'Last - 3 .. Base'Last) = Project_File_Extension
       then
          State := Highlighted;
          Text := new String'("Project");
@@ -273,11 +273,11 @@ package body Aunit_Filters is
 
       Pixbuf := Null_Pixbuf;
 
-      if File'Length >= 4 then
-         if File (File'Last - 3 .. File'Last) = ".adb" then
+      if Base'Length >= 4 then
+         if Base (Base'Last - 3 .. Base'Last) = ".adb" then
             Pixbuf := Filter.Body_Pixbuf;
 
-         elsif File (File'Last - 3 .. File'Last) = ".ads" then
+         elsif Base (Base'Last - 3 .. Base'Last) = ".ads" then
             Pixbuf := Filter.Spec_Pixbuf;
          end if;
       end if;
