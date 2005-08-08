@@ -82,12 +82,9 @@ with Generic_Stack;
 with Generic_List;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Histories;
 with VFS;
-
-with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
 
@@ -95,7 +92,7 @@ package Gtkada.File_Selector is
 
    function Select_File
      (Title             : String  := "Select a file";
-      Base_Directory    : String  := "";
+      Base_Directory    : VFS.Virtual_File := VFS.No_File;
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
@@ -119,10 +116,10 @@ package Gtkada.File_Selector is
 
    function Select_Directory
      (Title             : String  := "Select a directory";
-      Base_Directory    : String  := "";
+      Base_Directory    : VFS.Virtual_File := VFS.No_File;
       Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
-      History           : Histories.History := null) return String;
+      History           : Histories.History := null) return VFS.Virtual_File;
    --  Create a directory selection dialog, display it, and return the absolute
    --  name of the selected directory, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -154,7 +151,7 @@ package Gtkada.File_Selector is
 
    function Select_Directory
      (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return String;
+      Parent        : Gtk_Window := null) return VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute dir name is returned, or the empty string if the
    --  user cancelled the dialog.
@@ -206,15 +203,13 @@ package Gtkada.File_Selector is
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
       Win       : access File_Selector_Window_Record'Class;
-      Dir       : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       State     : out File_State;
       Pixbuf    : out Gdk_Pixbuf;
       Text      : out String_Access) is abstract;
    --  This is the function that is called every time that a file could
    --  be shown in the file explorer.
-   --  Dir is the directory the file is in.
-   --  File is the file name.
+   --  File is the considered file.
    --  State is the state the file should be displayed in.
    --  Pixmap is an icon that can be associated to a file,
    --  with the associated Mask.
@@ -242,8 +237,8 @@ package Gtkada.File_Selector is
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
-      Root                 : String;
-      Initial_Directory    : String;
+      Root                 : VFS.Virtual_File;
+      Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
       History              : Histories.History);
@@ -258,8 +253,8 @@ package Gtkada.File_Selector is
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Root                 : String;
-      Initial_Directory    : String;
+      Root                 : VFS.Virtual_File;
+      Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
       History              : Histories.History);
@@ -267,9 +262,9 @@ package Gtkada.File_Selector is
 
 private
 
-   procedure Free (S : in out String);
-   package String_List is new Generic_List (String);
-   use String_List;
+   procedure Free (F : in out VFS.Virtual_File);
+   package File_List is new Generic_List (VFS.Virtual_File);
+   use File_List;
 
    procedure Free (Filter : in out File_Filter);
 
@@ -279,18 +274,13 @@ private
    package File_Selector_Idle is new Idle (File_Selector_Window_Access);
    use File_Selector_Idle;
 
-   package String_Stack is new Generic_Stack (String_Access);
-   use String_Stack;
-
-   type Dir_Type_Access is access Dir_Type;
-   procedure Free is new Unchecked_Deallocation
-     (Dir_Type, Dir_Type_Access);
+   package Dir_Stack is new Generic_Stack (VFS.Virtual_File);
+   use Dir_Stack;
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
       Win       : access File_Selector_Window_Record'Class;
-      Dir       : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       State     : out File_State;
       Pixbuf    : out Gdk_Pixbuf;
       Text      : out String_Access);
@@ -298,19 +288,17 @@ private
    --  the Filter_Show_All filter.
 
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
-      Current_Directory    : String_Access := new String'("");
-      Current_Directory_Id : Dir_Type_Access := new Dir_Type;
+      Current_Directory    : VFS.Virtual_File := VFS.Create_From_Base ("");
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with
       --  a directory separator.
 
-      Current_Directory_Is_Open : Boolean := False;
-      --  Tells whether the current directory is being read.
+      Current_Host : String_Access;
 
-      Files : String_List.List;
+      Files : File_List.List;
       --  The list of files in the current directory.
 
-      Remaining_Files : String_List.List_Node;
+      Remaining_Files : File_List.List_Node;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
@@ -337,7 +325,7 @@ private
       Display_Idle_Handler   : Idle_Handler_Id := 0;
       --  Identifier for display idle loops.
 
-      Home_Directory : String_Access := new String'("");
+      Home_Directory : VFS.Virtual_File := VFS.Get_Current_Dir;
 
       Past_History : Simple_Stack;
       Future_History : Simple_Stack;
