@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                            AdaCore                                --
+--                     Copyright (C) 2004-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -773,6 +773,47 @@ package body GPR_Creation is
 
       Free (Obj_Dirs);
       File_Htables.Reset (Src_Files);
+   end Create_Gpr_Files;
+
+   procedure Create_Gpr_Files
+     (Registry          : Projects.Registry.Project_Registry'Class;
+      Root_Project      : Projects.Project_Type;
+      Source_Dirs       : VFS.File_Array;
+      Object_Dirs       : VFS.File_Array;
+      Spec_Extension    : String;
+      Body_Extension    : String;
+      Main_Units        : GNAT.OS_Lib.String_List_Access := null;
+      Builder_Switches  : String;
+      Compiler_Switches : String;
+      Binder_Switches   : String;
+      Linker_Switches   : String;
+      Cross_Prefix      : String := "")
+   is
+      S_Source_Dirs       : GNAT.OS_Lib.String_List (Source_Dirs'Range);
+      S_Object_Dirs       : GNAT.OS_Lib.String_List (Object_Dirs'Range);
+   begin
+
+      for J in Source_Dirs'Range loop
+         S_Source_Dirs (J) := new String'(VFS.Full_Name (Source_Dirs (J)).all);
+      end loop;
+
+      for J in Object_Dirs'Range loop
+         S_Object_Dirs (J) := new String'(VFS.Full_Name (Object_Dirs (J)).all);
+      end loop;
+
+      Create_Gpr_Files
+        (Registry,
+         Root_Project,
+         S_Source_Dirs,
+         S_Object_Dirs,
+         Spec_Extension,
+         Body_Extension,
+         Main_Units,
+         Builder_Switches,
+         Compiler_Switches,
+         Binder_Switches,
+         Linker_Switches,
+         Cross_Prefix);
    end Create_Gpr_Files;
 
 end GPR_Creation;
