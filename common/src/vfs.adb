@@ -111,6 +111,7 @@ package body VFS is
       Protocol, User, Host : String_Access;
       Connection : Remote_Connection;
       Start      : Integer;
+
    begin
       Parse_URL (Full_Filename, Protocol, User, Host, Start);
 
@@ -184,6 +185,7 @@ package body VFS is
       if File.Value.Normalized_Full = null then
          --  If the user didn't create a file with a full name, no need to
          --  spend time now trying to find the file.
+
          if File.Value.Connection = null and then
            not Is_Absolute_Path (File.Value.Full_Name.all) then
             File.Value.Normalized_Full :=
@@ -192,11 +194,13 @@ package body VFS is
          elsif File.Value.Connection /= null then
             --  Simplified normalization
             --  ../ and ./ directories handling
+
             declare
                --  Normalized path cannot be greater than initial one.
                Normalized : UTF8_String (1 .. File.Value.Full_Name'Length);
                Norm_Index : Natural := 1;
                Start, Last : Natural;
+
             begin
                --  first copy header (i.e. protocol://host/)
                Last := File.Value.Start_Of_Path;
@@ -208,9 +212,7 @@ package body VFS is
                Last  := Start;
 
                while Last <= File.Value.Full_Name'Last loop
-
                   if File.Value.Full_Name (Last) = '/' then
-
                      if File.Value.Full_Name (Start .. Last) = "./" then
                         --  just ignore it
                         Start := Last + 1;
@@ -235,12 +237,14 @@ package body VFS is
                         Norm_Index := Norm_Index + Last - Start;
                         Start := Last + 1;
                      end if;
+
                   elsif Last = File.Value.Full_Name'Last then
                      Norm_Index := Norm_Index + 1;
                      Normalized (Norm_Index .. Norm_Index + Last - Start) :=
                        File.Value.Full_Name (Start .. Last);
                      Norm_Index := Norm_Index + Last - Start;
                   end if;
+
                   Last := Last + 1;
                end loop;
 
@@ -273,6 +277,7 @@ package body VFS is
                        (Normalized);
                   end if;
                end;
+
             else
                File.Value.Normalized_Full := new UTF8_String'
                  (Normalize_Pathname
@@ -392,9 +397,9 @@ package body VFS is
    -- Delete --
    ------------
 
-   procedure Delete (File    : in     Virtual_File;
-                     Success :    out Boolean)
-   is
+   procedure Delete
+     (File    : Virtual_File;
+      Success : out Boolean) is
    begin
       if File.Value.Connection = null then
          Delete_File (Locale_Full_Name (File), Success);
@@ -482,6 +487,7 @@ package body VFS is
            (File.Value.Connection,
             File.Value.Full_Name
               (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+
       else
          return Is_Writable_File (Locale_Full_Name (File));
       end if;
@@ -500,6 +506,7 @@ package body VFS is
            (File.Value.Connection,
             File.Value.Full_Name
               (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+
       else
          return Is_Directory (Locale_Full_Name (File));
       end if;
@@ -594,6 +601,7 @@ package body VFS is
       Written : aliased Natural;
       Read    : aliased Natural;
       S       : chars_ptr;
+
    begin
       if As_UTF8 then
          S := Locale_From_UTF8 (Str, Read'Access, Written'Access);
@@ -606,6 +614,7 @@ package body VFS is
             Written := Write (File.FD, To_Address (S), Written);
             C_Free (S);
          end if;
+
       else
          Written := Write (File.FD, Str'Address, Str'Length);
       end if;
@@ -628,6 +637,7 @@ package body VFS is
                 File.Filename.all);
          Close (File.FD);
          Delete_File (File.Filename.all, Success);
+
       else
          Close (File.FD);
       end if;
@@ -733,10 +743,12 @@ package body VFS is
          Full := new String'(Dir.Value.Full_Name.all & Sep);
          Free (Dir.Value.Full_Name);
          Dir.Value.Full_Name := Full;
+
          if Dir.Value.Normalized_Full /= null then
             Free (Dir.Value.Normalized_Full);
             Ensure_Normalized (Dir);
          end if;
+
          if Dir.Value.Dir_Name /= null then
             Free (Dir.Value.Dir_Name);
             Dir.Value.Dir_Name := new String'(Full.all);
@@ -748,8 +760,7 @@ package body VFS is
    -- Get_Root --
    --------------
 
-   function Get_Root (File : Virtual_File) return Virtual_File
-   is
+   function Get_Root (File : Virtual_File) return Virtual_File is
       Dir : Virtual_File;
    begin
       if File.Value = null or else File.Value.Connection = null then
@@ -765,8 +776,8 @@ package body VFS is
    -- Sub_Dir --
    -------------
 
-   function Sub_Dir (Dir : Virtual_File; Name : UTF8_String)
-                     return Virtual_File
+   function Sub_Dir
+     (Dir : Virtual_File; Name : UTF8_String) return Virtual_File
    is
       New_Dir : Virtual_File;
    begin
@@ -784,16 +795,14 @@ package body VFS is
    -- Change_Dir --
    ----------------
 
-   procedure Change_Dir (Dir : Virtual_File)
-   is
-      Result               : Boolean;
+   procedure Change_Dir (Dir : Virtual_File) is
+      Result : Boolean;
    begin
       if Dir.Value = null then
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
       if Dir.Value.Connection = null then
-
          GNAT.Directory_Operations.Change_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
 
@@ -803,7 +812,6 @@ package body VFS is
          end if;
 
       else
-
          Result := Is_Directory (Dir);
 
          if Result then
@@ -815,7 +823,6 @@ package body VFS is
             Raise_Exception (VFS_Directory_Error'Identity,
                              "Dir is not a directory");
          end if;
-
       end if;
 
    exception
@@ -830,8 +837,7 @@ package body VFS is
    -- Make_Dir --
    --------------
 
-   procedure Make_Dir (Dir : Virtual_File)
-   is
+   procedure Make_Dir (Dir : Virtual_File) is
       Result : Boolean;
    begin
       if Dir.Value = null then
@@ -839,12 +845,9 @@ package body VFS is
       end if;
 
       if Dir.Value.Connection /= null then
-
          GNAT.Directory_Operations.Make_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all));
-
       else
-
          Result := Make_Dir
            (Dir.Value.Connection,
             Dir.Value.Full_Name
@@ -854,7 +857,6 @@ package body VFS is
             Raise_Exception (VFS_Directory_Error'Identity,
                              "Dir cannot be created");
          end if;
-
       end if;
 
    exception
@@ -869,8 +871,7 @@ package body VFS is
    -- Make_Dir_Recursive --
    ------------------------
 
-   procedure Make_Dir_Recursive (Dir : Virtual_File)
-   is
+   procedure Make_Dir_Recursive (Dir : Virtual_File) is
       Result : Boolean;
    begin
       if Dir.Value = null then
@@ -878,23 +879,21 @@ package body VFS is
       end if;
 
       if Dir.Value.Connection = null then
-
          Make_Dir_Recursive (Locale_From_UTF8 (Full_Name (Dir).all));
-
       else
-
          declare
             Name : constant String :=
               Dir.Value.Full_Name
                 (Dir.Value.Start_Of_Path .. Dir.Value.Full_Name'Last);
             Last : Natural := Name'First + 1;
+
          begin
             --  set to true by default (do not raise exception if no
             --  directory is created)
+
             Result := True;
 
             while Last < Name'Last loop
-
                while Last <= Name'Last
                  and then Name (Last) /= '/'
                loop
@@ -910,6 +909,7 @@ package body VFS is
 
                Last := Last + 1;
             end loop;
+
             if not Result then
                Raise_Exception (VFS_Directory_Error'Identity,
                                 "Cannot create " & Name (Name'First .. Last));
@@ -918,7 +918,6 @@ package body VFS is
       end if;
 
    exception
-
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
@@ -929,23 +928,22 @@ package body VFS is
    -- Remove_Dir --
    ----------------
 
-   procedure Remove_Dir (Dir       : Virtual_File;
-                         Recursive : Boolean := False)
+   procedure Remove_Dir
+     (Dir       : Virtual_File;
+      Recursive : Boolean := False)
    is
-      Result               : Boolean;
+      Result : Boolean;
    begin
       if Dir.Value = null then
          Raise_Exception (VFS_Directory_Error'Identity, "Dir is No_File");
       end if;
 
       if Dir.Value.Connection = null then
-
          GNAT.Directory_Operations.Remove_Dir
            (Locale_From_UTF8 (Full_Name (Dir).all),
             Recursive);
 
       else
-
          Result := Remove_Dir
            (Dir.Value.Connection,
             Dir.Value.Full_Name
@@ -964,15 +962,13 @@ package body VFS is
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
-
    end Remove_Dir;
 
    ----------
    -- Read --
    ----------
 
-   function Read_Dir (Dir : in Virtual_File) return File_Array_Access
-   is
+   function Read_Dir (Dir : in Virtual_File) return File_Array_Access is
       Nb_Files  : Natural := 0;
       Tmp       : File_Array_Access;
       F_Array   : File_Array_Access;
@@ -986,6 +982,7 @@ package body VFS is
       end if;
 
       Ensure_Directory (Dir);
+
       if not Is_Directory (Dir) then
          Raise_Exception (VFS_Directory_Error'Identity,
                           "Dir is not a directory");
@@ -1022,7 +1019,6 @@ package body VFS is
          Unchecked_Free (Tmp);
 
       else
-
          declare
             List : GNAT.OS_Lib.String_List := Read_Dir
               (Dir.Value.Connection,
@@ -1050,7 +1046,6 @@ package body VFS is
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
-
    end Read_Dir;
 
    --------------
@@ -1062,10 +1057,13 @@ package body VFS is
    begin
       VDir.File := Dir;
       VDir.Files_List := Read_Dir (Dir);
+
       if VDir.Files_List /= null then
          VDir.Current := VDir.Files_List'First - 1;
       end if;
+
       return VDir;
+
    exception
       when VFS_Directory_Error =>
          return Invalid_Dir;
@@ -1075,9 +1073,9 @@ package body VFS is
    -- Read --
    ----------
 
-   procedure Read (VDir : in out Virtual_Dir;
-                   File :    out Virtual_File)
-   is
+   procedure Read
+     (VDir : in out Virtual_Dir;
+      File :    out Virtual_File) is
    begin
       if VDir.Files_List /= null
         and then VDir.Current < VDir.Files_List'Last
@@ -1175,6 +1173,7 @@ package body VFS is
             end if;
 
          end loop;
+
          return True;
       end if;
    end "<";
@@ -1183,8 +1182,7 @@ package body VFS is
    -- Is_Parent --
    ---------------
 
-   function Is_Parent (Parent, Child : Virtual_File) return Boolean
-   is
+   function Is_Parent (Parent, Child : Virtual_File) return Boolean is
       C1, C2 : Character;
       Case_Sensitive : Boolean;
    begin
@@ -1324,6 +1322,7 @@ package body VFS is
            ("Virtual_File", Virtual_File_Boxed_Copy'Access,
             Virtual_File_Boxed_Free'Access);
       end if;
+
       return Virtual_File_Type;
    end Get_Virtual_File_Type;
 
