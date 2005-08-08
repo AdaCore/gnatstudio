@@ -86,7 +86,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select First Changes",
-              Base_Directory    => "",
+              Base_Directory    => VFS.Get_Current_Dir,
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
@@ -103,7 +103,7 @@ package body Vdiff2_Module.Callback is
             File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
-                 Base_Directory    => "",
+                 Base_Directory    => VFS.Get_Current_Dir,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -133,7 +133,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
-           Base_Directory    => "",
+           Base_Directory    => VFS.Get_Current_Dir,
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
@@ -150,7 +150,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select Second File",
-              Base_Directory    => "",
+              Base_Directory    => VFS.Get_Current_Dir,
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
@@ -181,7 +181,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
-           Base_Directory    => "",
+           Base_Directory    => VFS.No_File,
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
@@ -198,7 +198,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select First Changes",
-              Base_Directory    => "",
+              Base_Directory    => VFS.No_File,
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
@@ -213,7 +213,7 @@ package body Vdiff2_Module.Callback is
             File3 : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Second Changes",
-                 Base_Directory    => "",
+                 Base_Directory    => VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -231,7 +231,7 @@ package body Vdiff2_Module.Callback is
                Merge     : constant Virtual_File :=
                  Select_File
                    (Title             => -"Select Merge File",
-                    Base_Directory    => "",
+                    Base_Directory    => VFS.No_File,
                     Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                     Kind              => Unspecified,
@@ -278,7 +278,7 @@ package body Vdiff2_Module.Callback is
          File2 : constant Virtual_File :=
            Select_File
              (Title             => -"Select Second File",
-              Base_Directory    => "",
+              Base_Directory    => VFS.No_File,
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
@@ -295,7 +295,7 @@ package body Vdiff2_Module.Callback is
             Merge     : constant Virtual_File :=
               Select_File
                 (Title             => -"Select Merge File",
-                 Base_Directory    => "",
+                 Base_Directory    => VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -325,6 +325,7 @@ package body Vdiff2_Module.Callback is
    is
       pragma Unreferenced (Kernel);
       D : Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
+      Success : Boolean;
    begin
       if D.Orig_File = VFS.No_File then
          if D.New_File = VFS.No_File then
@@ -337,7 +338,7 @@ package body Vdiff2_Module.Callback is
             Res   : Boolean;
          begin
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
-            Delete (Ref_F);
+            Delete (Ref_F, Success);
             return Res;
          end;
 
@@ -352,7 +353,7 @@ package body Vdiff2_Module.Callback is
             Res   : Boolean;
          begin
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
-            Delete (Ref_F);
+            Delete (Ref_F, Success);
             return Res;
          end;
 
@@ -552,6 +553,7 @@ package body Vdiff2_Module.Callback is
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Arg           : String_Access;
+      Success       : Boolean;
 
    begin
       Create
@@ -577,7 +579,7 @@ package body Vdiff2_Module.Callback is
 
       Unchecked_Execute (Cmd, Node);
 
-      Delete (Data (Node).File1);
+      Delete (Data (Node).File1, Success);
 
       Free (Root_Command (Cmd.all));
       return Commands.Success;
