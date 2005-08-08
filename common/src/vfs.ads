@@ -33,6 +33,8 @@ with Remote_Connections;
 
 package VFS is
 
+   VFS_Directory_Error : exception;
+
    No_Time : constant Ada.Calendar.Time := GNAT.Calendar.Time_Of
      (GNAT.OS_Lib.GM_Year (GNAT.OS_Lib.Invalid_Time),
       GNAT.OS_Lib.GM_Month (GNAT.OS_Lib.Invalid_Time),
@@ -46,6 +48,7 @@ package VFS is
 
    type Virtual_File is private;
    No_File : constant Virtual_File;
+   Local_Root_Dir : constant Virtual_File;
 
    type Virtual_File_Access is access constant Virtual_File;
 
@@ -78,6 +81,10 @@ package VFS is
    --  Compare two files, possibly case insensitively on file systems that
    --  require this.
 
+   function Is_Parent (Parent, Child : Virtual_File) return Boolean;
+   --  Compare Parent and Child directory and determines if Parent contains
+   --  Child directory
+
    function Base_Name
      (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
    --  Return the base name of the file
@@ -97,17 +104,19 @@ package VFS is
    --  extension. This extension includes the last dot and all the following
    --  characters;
 
+   function Get_Host (File : Virtual_File) return UTF8_String;
+   --  Returns the host containing the file. If the host is the localhost,
+   --  the empty string is returned.
+
    function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
    --  Return the directory name for File. This includes any available
    --  on the protocol, so that relative files names are properly found.
 
-   function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
-   --  Return the contents of an entire file, encoded with the locale encoding.
-   --  If the file cannot be found, return null.
-   --  The caller is responsible for freeing the returned memory.
-   --  This works transparently for remote files
+   function Dir (File : Virtual_File) return Virtual_File;
+   --  Return the virtual file corresponding to the directory of the file.
 
-   procedure Delete (File : Virtual_File);
+   procedure Delete (File    : in     Virtual_File;
+                     Success :    out Boolean);
    --  Remove file from the disk. This also works for remote files
 
    function Is_Writable (File : Virtual_File) return Boolean;
@@ -140,6 +149,72 @@ package VFS is
 
    procedure Sort (Files : in out File_Array);
    --  Sort the array of files, in the order given by the full names
+
+   -------------------
+   -- Reading files --
+   -------------------
+
+   function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
+   --  Return the contents of an entire file, encoded with the locale encoding.
+   --  If the file cannot be found, return null.
+   --  The caller is responsible for freeing the returned memory.
+   --  This works transparently for remote files
+
+   --------------------------
+   -- Directory operations --
+   --------------------------
+
+   function Get_Current_Dir return Virtual_File;
+
+   procedure Ensure_Directory (Dir : Virtual_File);
+   --  Ensures that the file is a directory : adds directory separator if
+   --  needed.
+
+   function Get_Root (File : Virtual_File) return Virtual_File;
+   --  returns root directory on remote host
+
+   function Sub_Dir (Dir : Virtual_File; Name : UTF8_String)
+                     return Virtual_File;
+   --  returns sub directory Name if it exists, else No_File is returned.
+
+   procedure Change_Dir (Dir : Virtual_File);
+   --  Changes working directory. Raises Directory_Error if Dir_Name does not
+   --  exist or is not a readable directory
+
+   procedure Make_Dir (Dir : Virtual_File);
+   --  Create a new directory named Dir_Name. Raises Directory_Error if
+   --  Dir_Name cannot be created.
+
+   procedure Make_Dir_Recursive (Dir : Virtual_File);
+   --  Create recursively a new directory named Dir_Name. Raises
+   --  Directory_Error if Dir_Name cannot be created.
+
+   procedure Remove_Dir (Dir : Virtual_File;
+                         Recursive : Boolean := False);
+   --  Remove the directory named Dir_Name. If Recursive is set to True, then
+   --  Remove_Dir removes all the subdirectories and files that are in
+   --  Dir_Name. Raises Directory_Error if Dir_Name cannot be removed.
+
+   function Read_Dir (Dir : in Virtual_File) return File_Array_Access;
+   --  Reads all entries from the directory and returns a File_Array containing
+   --  those entries. The list of files returned
+   --  includes directories in systems providing a hierarchical directory
+   --  structure, including . (the current directory) and .. (the parent
+   --  directory) in systems providing these entries.
+
+   type Virtual_Dir is private;
+
+   Invalid_Dir : constant Virtual_Dir;
+
+   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir;
+   --  Opens for reading a file.
+
+   procedure Read (VDir : in out Virtual_Dir;
+                   File :    out Virtual_File);
+   --  Returns next file or No_File is no file is left for current directory
+
+   procedure Close (VDir : in out Virtual_Dir);
+   --  Closes the Virtual_Dir
 
    -------------------
    -- Writing files --
@@ -187,6 +262,9 @@ package VFS is
    function Locale_Base_Name (File : Virtual_File) return String;
    --  Same as Base_Name
 
+   function Locale_Dir_Name (File : Virtual_File) return String;
+   --  Same as Dir_Name
+
    -------------
    -- Gvalues --
    -------------
@@ -231,6 +309,10 @@ private
    procedure Finalize (File : in out Virtual_File);
    procedure Adjust (File : in out Virtual_File);
 
+   type Readable_File is record
+      File     : Virtual_File;
+   end record;
+
    type Writable_File is record
       File     : Virtual_File;
       FD       : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
@@ -240,8 +322,28 @@ private
    No_File : constant Virtual_File :=
      (Ada.Finalization.Controlled with Value => null);
 
+   Local_Root_Dir : constant Virtual_File :=
+     (Ada.Finalization.Controlled with Value => new Contents_Record'(
+        Connection      => null,
+        Start_Of_Path   => 1,
+        Ref_Count       => 1,
+        Full_Name       => new String'(1 => GNAT.OS_Lib.Directory_Separator),
+        Normalized_Full => new String'(1 => GNAT.OS_Lib.Directory_Separator),
+        Dir_Name        => new String'(1 => GNAT.OS_Lib.Directory_Separator)));
+
    Invalid_File : constant Writable_File :=
-     (Virtual_File'(Ada.Finalization.Controlled with Value => null),
-       GNAT.OS_Lib.Invalid_FD, null);
+     ((Ada.Finalization.Controlled with Value => null),
+      GNAT.OS_Lib.Invalid_FD, null);
+
+   type Virtual_Dir is record
+      File       : Virtual_File;
+      Files_List : File_Array_Access;
+      Current    : Natural;
+   end record;
+
+   Invalid_Dir : constant Virtual_Dir :=
+     ((Ada.Finalization.Controlled with Value => null),
+      null,
+      0);
 
 end VFS;
