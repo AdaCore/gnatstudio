@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2004-2005                      --
+--                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,8 +47,9 @@ package body HTTP_Protocol is
    function Read_File
      (Http : access Http_Connection_Record; Local_Name : Glib.UTF8_String)
       return GNAT.OS_Lib.String_Access;
-   procedure Delete
-     (Http : access Http_Connection_Record; Local_Name : Glib.UTF8_String);
+   function Delete
+     (Http : access Http_Connection_Record; Local_Name : Glib.UTF8_String)
+     return Boolean;
    function Is_Writable
      (Http : access Http_Connection_Record; Local_Name : Glib.UTF8_String)
      return Boolean;
@@ -70,6 +71,19 @@ package body HTTP_Protocol is
      (Http            : access Http_Connection_Record;
       Local_Full_Name : String;
       Readable        : Boolean);
+   function Make_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String)
+      return Boolean;
+   function Remove_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String;
+      Recursive      : Boolean)
+      return Boolean;
+   function Read_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String) return GNAT.OS_Lib.String_List;
+
    function Factory
      (Http       : access Http_Connection_Record;
       User, Host : String;
@@ -93,6 +107,42 @@ package body HTTP_Protocol is
         (Remote_Connection_Record
          with Host => new String'(Host));
    end Factory;
+
+   --------------
+   -- Make_Dir --
+   --------------
+
+   function Make_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String) return Boolean
+   is
+      pragma Unreferenced (Http, Local_Dir_Name);
+   begin
+      return False;
+   end Make_Dir;
+
+   ----------------
+   -- Remove_Dir --
+   ----------------
+
+   function Remove_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String;
+      Recursive      : Boolean) return Boolean
+   is
+      pragma Unreferenced (Http, Local_Dir_Name, Recursive);
+   begin
+      return False;
+   end Remove_Dir;
+
+   function Read_Dir
+     (Http           : access Http_Connection_Record;
+      Local_Dir_Name : Glib.UTF8_String) return GNAT.OS_Lib.String_List
+   is
+      pragma Unreferenced (Http, Local_Dir_Name);
+   begin
+      return (1 .. 0 => null);
+   end Read_Dir;
 
    ------------------
    -- Set_Readable --
@@ -179,12 +229,13 @@ package body HTTP_Protocol is
    -- Delete --
    ------------
 
-   procedure Delete
+   function Delete
      (Http : access Http_Connection_Record; Local_Name : Glib.UTF8_String)
+     return Boolean
    is
       pragma Unreferenced (Http, Local_Name);
    begin
-      null;
+      return False;
    end Delete;
 
    ---------------
