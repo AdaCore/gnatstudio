@@ -18,34 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;            use Basic_Types;
-with Glib;                   use Glib;
-with Gdk.Event;              use Gdk.Event;
-with Gdk.Types;              use Gdk.Types;
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.GEntry;             use Gtk.GEntry;
-with Gtk.Combo;              use Gtk.Combo;
-with Gtk.Frame;              use Gtk.Frame;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Tree_View;          use Gtk.Tree_View;
-with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Window;             use Gtk.Window;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with String_Utils;           use String_Utils;
-with Ada.Exceptions;         use Ada.Exceptions;
-with Traces;                 use Traces;
-with Generic_List;
+with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Glib;                       use Glib;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.Combo;                  use Gtk.Combo;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Frame;                  use Gtk.Frame;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtk.Tree_Store;             use Gtk.Tree_Store;
+with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+
+with Basic_Types;                use Basic_Types;
+with Generic_List;
+with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
+
 package body Gtkada.Entry_Completion is
+
    procedure On_Destroy (The_Entry : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
 
@@ -211,6 +213,11 @@ package body Gtkada.Entry_Completion is
       Iter, Children  : Gtk_Tree_Iter;
 
    begin
+      if Ent.Completion_Index = Integer'Last then
+         --  "<no completion>" has been selected.
+         return;
+      end if;
+
       Get_Selected
         (Selection => Get_Selection (Ent.View),
          Model     => Model,
@@ -306,8 +313,8 @@ package body Gtkada.Entry_Completion is
       GEntry : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
 
       function Next_Matching (T : String; Start_At : Positive) return Integer;
-      --  Return the integer of the first possible completion for T, after
-      --  index Start_At, and found before End_At.
+      --  Return the index of the first possible completion for T after
+      --  index Start_At.
       --  Integer'Last is returned if no completion was found.
 
       procedure Append
@@ -335,7 +342,7 @@ package body Gtkada.Entry_Completion is
          loop
             declare
                Compl : constant String :=
-                 Completion (GEntry.Completions.all, S);
+                         Completion (GEntry.Completions.all, S);
             begin
                exit when Compl = "";
 
@@ -369,15 +376,15 @@ package body Gtkada.Entry_Completion is
          Descr_Matched   : in out String_List.List)
       is
          use String_List;
-         Choice : constant String :=
-           Completion (GEntry.Completions.all, Index);
-         Descr : constant String :=
-           Description (GEntry.Completions.all, Index);
-         Current : Integer;
-         Tmp     : String_Access;
+         Choice     : constant String :=
+                        Completion (GEntry.Completions.all, Index);
+         Descr      : constant String :=
+                        Description (GEntry.Completions.all, Index);
+         Current    : Integer;
+         Tmp        : String_Access;
          Node       : List_Node := First (Matched);
          Descr_Node : List_Node := First (Descr_Matched);
-         Iter    : Gtk_Tree_Iter;
+         Iter       : Gtk_Tree_Iter;
       begin
          while Node /= Null_Node loop
             if Data (Node).all = Choice
@@ -427,18 +434,18 @@ package body Gtkada.Entry_Completion is
         or else Get_Key_Val (Event) = GDK_KP_Tab
       then
          declare
-            T                     : constant String :=
-              Get_Text (Get_Entry (GEntry));
-            Compl_Access          : String_Access;
-            S, First_Index        : Integer;
-            Col                   : Gint;
-            Matched               : String_List.List;
-            Descr_Matched         : String_List.List;
-            Iter                  : Gtk_Tree_Iter;
+            T              : constant String :=
+                               Get_Text (Get_Entry (GEntry));
+            Compl_Access   : String_Access;
+            S, First_Index : Integer;
+            Col            : Gint;
+            Matched        : String_List.List;
+            Descr_Matched  : String_List.List;
+            Iter           : Gtk_Tree_Iter;
 
          begin
             --  If there is no current series of tab (ie the user has pressed a
-            --  key other than tab since the last tab).
+            --  key other than tab since the last tab)
             if GEntry.Completion_Index = Integer'Last then
                Col := Freeze_Sort (GEntry.List);
                Clear (GEntry.List);
@@ -460,7 +467,7 @@ package body Gtkada.Entry_Completion is
                              Matched, Descr_Matched);
                   end loop;
 
-                  --  Do we have a common prefix for all the possible choices ?
+                  --  Do we have a common prefix for all the possible choices?
                   if Compl_Access'Length /= 0 then
                      Append_Text (Get_Entry (GEntry), Compl_Access.all);
                      Set_Position (Get_Entry (GEntry), -1);
@@ -472,11 +479,20 @@ package body Gtkada.Entry_Completion is
 
                   First_Index := -1;
                   Set_Visible (Get_Column (GEntry.View, 1), Has_Description);
+
+               --  No match. To make it clear to the user, we display
+               --  '<no completion>' in place of the list of possible
+               --  completions.
+               else
+                  Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
+                  Set (GEntry.List, Iter, 0, "<no completion>");
+                  Set (GEntry.List, Iter, 1, 1);
+                  GEntry.Completion_Index := -1;
                end if;
 
                Thaw_Sort (GEntry.List, Col);
 
-            --  Else we display the next possible match
+            --  else we display the next possible match
             else
                First_Index := GEntry.Completion_Index + 1;
                if Gint (First_Index) >= N_Children (GEntry.List) then
