@@ -342,6 +342,21 @@ package body GDT.JNI_Functions is
       end if;
    end Java_ConstructAccess_getProfileInt;
 
+   ----------------------------------------------
+   -- Java_ConstructAccess_getIsDeclarationInt --
+   ----------------------------------------------
+
+   function Java_ConstructAccess_getIsDeclarationInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint) return Jint
+   is
+      pragma Unreferenced (This);
+      Construct : constant Construct_Access_Ptr := Construct_Access_Ptr
+        (Construct_Information_Conversion.To_Pointer
+           (To_Address (Integer_Address (Addr))));
+   begin
+      return Jint (Boolean'Pos (Construct.Is_Declaration));
+   end Java_ConstructAccess_getIsDeclarationInt;
+
    ------------------------------------
    -- Java_ConstructList_getFirstInt --
    ------------------------------------
@@ -412,7 +427,8 @@ package body GDT.JNI_Functions is
    -- Java_ConstructList_freeInt --
    --------------------------------
 
-   procedure Java_ConstructList_freeInt (Env : JNIEnv; This : Jobject; Addr : Jint)
+   procedure Java_ConstructList_freeInt
+     (Env : JNIEnv; This : Jobject; Addr : Jint)
    is
       pragma Unreferenced (Env, This);
       Constructs : Construct_List_Ptr := Construct_List_Ptr
