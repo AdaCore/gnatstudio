@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2001-2005                    --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -159,8 +159,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
          Gtk_New
            (Suite_Window.Explorer,
-            "/",
-            Name_As_Directory (Get_Text (Suite_Window.Directory_Entry)),
+            Local_Root_Dir,
+            Create (Get_Text (Suite_Window.Directory_Entry)),
             "Select test suite",
             History => null);
 
