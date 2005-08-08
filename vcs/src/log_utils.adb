@@ -96,6 +96,7 @@ package body Log_Utils is
                    Create (Full_Filename => Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
       Button   : Message_Dialog_Buttons;
+      Success  : Boolean;
       pragma Unreferenced (Button);
 
       --  Create the mappings file and read it
@@ -130,7 +131,7 @@ package body Log_Utils is
                Buttons => Button_OK,
                Parent  => Get_Current_Window (Kernel));
 
-            Delete (Mapping);
+            Delete (Mapping, Success);
 
             declare
                File : File_Descriptor;
