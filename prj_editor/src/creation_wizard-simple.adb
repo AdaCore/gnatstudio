@@ -25,10 +25,10 @@ with Projects;                  use Projects;
 with Directory_Tree;            use Directory_Tree;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Basic_Types;               use Basic_Types;
 with Creation_Wizard;           use Creation_Wizard;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
+with VFS;                       use VFS;
 
 package body Creation_Wizard.Simple is
 
@@ -97,7 +97,7 @@ package body Creation_Wizard.Simple is
       Initial_Dirs : constant String_List := (1 => Current'Unchecked_Access);
    begin
       Gtk_New (Page.Dirs,
-               Initial_Directory    => Get_Current_Dir,
+               Initial_Directory    => VFS.Get_Current_Dir,
                Multiple_Directories => True,
                Initial_Selection    => Initial_Dirs);
       return Gtk_Widget (Page.Dirs);
@@ -112,26 +112,26 @@ package body Creation_Wizard.Simple is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Selection   : String_List := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
-      Current     : GNAT.OS_Lib.String_Access;
-      Current_Dir : aliased String := Get_Current_Dir;
+      Selection   : File_Array := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
+      Current     : Virtual_File;
+      Current_Dir : Virtual_File := Get_Current_Dir;
    begin
       if Selection'Length /= 0 then
          Current := Selection (Selection'First);
       else
-         Current := Current_Dir'Unchecked_Access;
+         Current := Current_Dir;
       end if;
 
       declare
-         Initial_Dirs : constant String_List := (1 => Current);
+         Initial_Dirs : constant Argument_List :=
+           (1 => new String'(Full_Name (Current).all));
       begin
          Gtk_New (Page.Dirs,
-                  Initial_Directory    => Current.all,
+                  Initial_Directory    => Current,
                   Multiple_Directories => True,
                   Initial_Selection    => Initial_Dirs);
       end;
 
-      Free (Selection);
       return Gtk_Widget (Page.Dirs);
    end Create_Content;
 
@@ -163,8 +163,8 @@ package body Creation_Wizard.Simple is
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Scenario_Variables);
-      Src_Dirs : String_List := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
-      Obj_Dirs : String_List := Get_Multiple_Selection (Page.Dirs);
+      Src_Dirs : File_Array := Get_Multiple_Selection (Page.Src_Dirs.Dirs);
+      Obj_Dirs : File_Array := Get_Multiple_Selection (Page.Dirs);
    begin
       Create_Gpr_Files
         (Registry          => Get_Registry (Kernel).all,
@@ -179,8 +179,6 @@ package body Creation_Wizard.Simple is
          Binder_Switches   => "-g",
          Linker_Switches   => "",
          Cross_Prefix      => "");
-      Free (Src_Dirs);
-      Free (Obj_Dirs);
       Changed := True;
    end Generate_Project;
 
