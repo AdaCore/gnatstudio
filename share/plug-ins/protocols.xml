@@ -111,7 +111,7 @@
       </write_file_cmd>
 
       <is_regular_file_cmd>
-        <action kind="send" param="test -r %F; echo -e &quot;$?&quot;">
+        <action kind="send" param="test -r &quot;%F&quot;; echo $?">
           <expect regexp_id="sh_exit_status_ok">
             <action kind="null_action">
               <expect regexp_id="gps_shell_prompt">
@@ -130,7 +130,7 @@
       </is_regular_file_cmd>
 
       <is_writable_cmd>
-        <action kind="send" param="test -w %F; echo -e &quot;$?&quot;">
+        <action kind="send" param="test -w &quot;%F&quot;; echo $?">
           <expect regexp_id="sh_exit_status_ok">
             <action kind="null_action">
               <expect regexp_id="gps_shell_prompt">
@@ -149,7 +149,7 @@
       </is_writable_cmd>
 
       <is_directory_cmd>
-        <action kind="send" param="test -d %F; echo -e &quot;$?&quot;">
+        <action kind="send" param="test -d &quot;%F&quot;; echo $?">
           <expect regexp_id="sh_exit_status_ok">
             <action kind="null_action">
               <expect regexp_id="gps_shell_prompt">
@@ -215,6 +215,75 @@
           </expect>
         </action>
       </set_unwritable_cmd>
+
+      <make_dir_cmd>
+        <action kind="send" param="mkdir %F; echo $?">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </make_dir_cmd>
+
+      <remove_dir_cmd>
+        <action kind="send" param="rm -r %F; echo $?">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </remove_dir_cmd>
+
+      <remove_dir_recursive_cmd>
+        <action kind="send" param="rm -rf %F; echo $?">
+          <expect regexp_id="sh_exit_status_ok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="ok"/>
+              </expect>
+            </action>
+          </expect>
+          <expect regexp_id="sh_exit_status_nok">
+            <action kind="null_action">
+              <expect regexp_id="gps_shell_prompt">
+                <action kind="return_value" param="nok"/>
+              </expect>
+            </action>
+          </expect>
+        </action>
+      </remove_dir_recursive_cmd>
+
+      <ls_dir_cmd>
+        <action kind="send" param="ls -a1 %F">
+          <expect regexp="^ls: .*$">
+            <action kind="return_value" param="ko"/>
+          </expect>
+          <expect regexp_id="gps_shell_prompt">
+            <action kind="list_files" param="^(.*)$"/>
+            <action kind="return_value" param="ok"/>
+          </expect>
+        </action>
+      </ls_dir_cmd>
     </commands>
   </remote_connection>
 
