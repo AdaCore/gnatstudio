@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;
-with VFS;
 with Glib.Xml_Int;
 with Gtk.Text_Mark;
+
+with GPS.Kernel;
+with VFS;
 
 package Src_Editor_Module.Markers is
 
@@ -40,8 +41,9 @@ package Src_Editor_Module.Markers is
    --  position in the file, even if the file is closed, reopened or modified.
 
    function Create_File_Marker
-     (File : VFS.Virtual_File;
-      Mark : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
 
@@ -93,6 +95,7 @@ private
          Length : Natural := 1;
          Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
          Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
+         Kernel : Kernel_Handle;
       end record;
 
    procedure Destroy (Marker : in out File_Marker_Record);
