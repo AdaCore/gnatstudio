@@ -18,42 +18,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Entities;          use Entities;
-with Entities.Queries;  use Entities.Queries;
-with Projects.Registry; use Projects.Registry;
-with SN.Browse;         use SN.Browse;
-with SN.DB_Structures;  use SN.DB_Structures;
-with SN.Find_Fns;       use SN.Find_Fns;
-with Traces;            use Traces;
-with VFS;               use VFS;
-with SN;                use SN;
-with DB_API;            use DB_API;
-with Projects;          use Projects;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Text_IO;               use Ada.Text_IO;
-with File_Utils;                use File_Utils;
-with String_Utils;              use String_Utils;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with Types;                     use Types;
-with Snames;                    use Snames;
-with Language_Handlers;         use Language_Handlers;
-with Language;                  use Language;
-
 pragma Warnings (Off);
-with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
+with DB_API;                    use DB_API;
+with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
+with File_Utils;                use File_Utils;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+with Snames;                    use Snames;
+with SN;                        use SN;
+with SN.Browse;                 use SN.Browse;
+with SN.DB_Structures;          use SN.DB_Structures;
+with SN.Find_Fns;               use SN.Find_Fns;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
+with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body CPP_Parser is
 
    Me : constant Debug_Handle := Create ("CPP");
 
    Xref_Suffix : constant String := ".xref";
-   DBIMP    : constant String := "dbimp";    --  SN database engine
-   CBrowser : constant String := "cbrowser"; --  SN C and C++ parser
+   DBIMP       : constant String := "dbimp";    --  SN database engine
+   CBrowser    : constant String := "cbrowser"; --  SN C and C++ parser
 
    Base_Time : constant Ada.Calendar.Time := GNAT.Calendar.Time_Of
      (1970, 1, 1, 0, 0, 0);
