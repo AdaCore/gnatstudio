@@ -895,15 +895,6 @@ package body Gtkada.File_Selector is
             Set_Text (Win.Location_Combo_Entry, Full_Name (Dir, True).all);
          end if;
 
-         --  If we changed host, then rebuild the Explorer_Tree
-
---           if (Win.Current_Host = null and Host_Name (Dir) /= "")
---             or else (Win.Current_Host /= null
---                      and then Host_Name (Dir) /= Win.Current_Host)
---           then
---              Change_Root (Win.Explorer_Tree, Dir, Get_Window (Win));
---           end if;
-
          --  If the new directory is not the one currently shown
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
