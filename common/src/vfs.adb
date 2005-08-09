@@ -32,6 +32,7 @@ with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Calendar;               use Ada.Calendar;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with File_Utils;                 use File_Utils;
+with String_Utils;               use String_Utils;
 with OS_Utils;                   use OS_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
@@ -86,6 +87,7 @@ package body VFS is
    ---------
 
    function "=" (File1, File2 : Virtual_File) return Boolean is
+      Case_Sensitive : Boolean;
    begin
       if File1.Value = null then
          return File2.Value = null;
@@ -93,13 +95,18 @@ package body VFS is
          return False;
       elsif File1.Value = File2.Value then
          return True;
+      elsif File1.Value.Connection /= File2.Value.Connection then
+         return False;
       else
          Ensure_Normalized (File1);
          Ensure_Normalized (File2);
+         Case_Sensitive := Filenames_Are_Case_Sensitive
+           or File1.Value.Connection /= null;
 
-         return File_Equal
+         return Equal
            (File2.Value.Normalized_Full.all,
-            File1.Value.Normalized_Full.all);
+            File1.Value.Normalized_Full.all,
+            Case_Sensitive);
       end if;
    end "=";
 
@@ -129,7 +136,8 @@ package body VFS is
                        Ref_Count       => 1,
                        Full_Name       => new String'(Full_Filename),
                        Normalized_Full => null,
-                       Dir_Name        => null));
+                       Dir_Name        => null,
+                       Kind            => Unknown));
          else
             --  Behave as if we have a local file, although nobody will be
             --  able to open it
@@ -141,7 +149,8 @@ package body VFS is
                        Ref_Count       => 1,
                        Full_Name       => new String'(Full_Filename),
                        Normalized_Full => null,
-                       Dir_Name        => null));
+                       Dir_Name        => null,
+                       Kind            => Unknown));
          end if;
 
       else
@@ -152,7 +161,8 @@ package body VFS is
                     Ref_Count       => 1,
                     Full_Name       => new String'(Full_Filename),
                     Normalized_Full => null,
-                    Dir_Name        => null));
+                    Dir_Name        => null,
+                    Kind            => Unknown));
       end if;
    end Create;
 
@@ -170,7 +180,8 @@ package body VFS is
                   Ref_Count       => 1,
                   Full_Name       => new String'(Base_Name),
                   Normalized_Full => null,
-                  Dir_Name        => null));
+                  Dir_Name        => null,
+                  Kind            => Unknown));
       else
          return No_File;
       end if;
@@ -389,8 +400,11 @@ package body VFS is
    ---------
 
    function Dir (File : Virtual_File) return Virtual_File is
+      The_Dir : Virtual_File;
    begin
-      return Create (Dir_Name (File).all);
+      The_Dir := Create (Dir_Name (File).all);
+      The_Dir.Value.Kind := Directory;
+      return The_Dir;
    end Dir;
 
    ------------
@@ -408,6 +422,9 @@ package body VFS is
            (File.Value.Connection,
             File.Value.Full_Name
               (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      end if;
+      if Success then
+         File.Value.Kind := Unknown;
       end if;
    end Delete;
 
@@ -497,20 +514,52 @@ package body VFS is
    -- Is_Directory --
    ------------------
 
-   function Is_Directory (File : Virtual_File) return Boolean is
+   function Is_Directory (File : Virtual_File) return Boolean
+   is
+      Ret : Boolean;
    begin
       if File.Value = null then
          return False;
+
+      elsif File.Value.Kind = Unknown then
+         if File.Value.Connection /= null then
+            Ret := Is_Directory
+              (File.Value.Connection,
+               File.Value.Full_Name
+                 (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+
+         else
+            Ret := Is_Directory (Locale_Full_Name (File));
+         end if;
+
+         if Ret then
+            File.Value.Kind := Directory;
+            Ensure_Directory (File);
+         end if;
+      end if;
+
+      return File.Value.Kind = Directory;
+   end Is_Directory;
+
+   ----------------------
+   -- Is_Symbolic_Link --
+   ----------------------
+
+   function Is_Symbolic_Link (File : Virtual_File) return Boolean
+   is
+   begin
+      if File.Value = null then
+         return False;
+
       elsif File.Value.Connection /= null then
-         return Is_Directory
-           (File.Value.Connection,
-            File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+         --  ??? for now, no specific remote test for this
+         --  just verify the existence of the file
+         return Is_Regular_File (File);
 
       else
-         return Is_Directory (Locale_Full_Name (File));
+         return Is_Symbolic_Link (Locale_Full_Name (File));
       end if;
-   end Is_Directory;
+   end Is_Symbolic_Link;
 
    ----------------------
    -- Is_Absolute_Path --
@@ -542,6 +591,8 @@ package body VFS is
    begin
       if File.Value = null then
          return null;
+      elsif File.Value.Kind = Directory then
+         return null;
       elsif File.Value.Connection = null then
          return Read_File (Full_Name (File).all);
       else
@@ -560,7 +611,9 @@ package body VFS is
       Tmp : GNAT.OS_Lib.String_Access;
       Fd  : File_Descriptor;
    begin
-      if File.Value.Connection /= null then
+      if File.Value = null then
+         return Invalid_File;
+      elsif File.Value.Connection /= null then
          declare
             Current_Dir : constant String := Get_Current_Dir;
             Base        : String_Access;
@@ -710,13 +763,16 @@ package body VFS is
    ---------------------
 
    function Get_Current_Dir return Virtual_File is
+      File : Virtual_File;
    begin
       if Working_Dir = null then
-         return Create (Locale_To_UTF8
+         File := Create (Locale_To_UTF8
                           (GNAT.Directory_Operations.Get_Current_Dir));
       else
-         return Create (Working_Dir.all);
+         File := Create (Working_Dir.all);
       end if;
+      File.Value.Kind := Directory;
+      return File;
    end Get_Current_Dir;
 
    ----------------------
@@ -767,7 +823,8 @@ package body VFS is
          return Local_Root_Dir;
       else
          Dir := Create (File.Value.Full_Name
-              (File.Value.Full_Name'First .. File.Value.Start_Of_Path));
+                     (File.Value.Full_Name'First .. File.Value.Start_Of_Path));
+         Dir.Value.Kind := Directory;
          return Dir;
       end if;
    end Get_Root;
@@ -858,6 +915,7 @@ package body VFS is
                              "Dir cannot be created");
          end if;
       end if;
+      Dir.Value.Kind := Directory;
 
    exception
 
@@ -916,6 +974,7 @@ package body VFS is
             end if;
          end;
       end if;
+      Dir.Value.Kind := Directory;
 
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
@@ -956,6 +1015,9 @@ package body VFS is
                              Locale_Full_Name (Dir));
          end if;
 
+      end if;
+      if Result then
+         Dir.Value.Kind := Unknown;
       end if;
 
    exception
@@ -1052,16 +1114,20 @@ package body VFS is
    -- Open_Dir --
    --------------
 
-   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir is
+   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir
+   is
       VDir : Virtual_Dir;
    begin
+      if Dir.Value = null then
+         return Invalid_Dir;
+      end if;
       VDir.File := Dir;
       VDir.Files_List := Read_Dir (Dir);
 
       if VDir.Files_List /= null then
          VDir.Current := VDir.Files_List'First - 1;
       end if;
-
+      Dir.Value.Kind := Directory;
       return VDir;
 
    exception
