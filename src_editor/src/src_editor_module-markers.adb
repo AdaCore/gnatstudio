@@ -18,6 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with System;                    use System;
+with System.Address_Image;
+
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_Mark;             use Gtk.Text_Mark;
+
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;                       use VFS;
@@ -25,15 +35,7 @@ with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with String_Utils;              use String_Utils;
-with System;                    use System;
-with System.Address_Image;
-with Ada.Unchecked_Conversion;
 with Traces;                    use Traces;
 
 package body Src_Editor_Module.Markers is
@@ -340,13 +342,14 @@ package body Src_Editor_Module.Markers is
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
-         Id     => Natural'Last,
-         File   => File,
-         Line   => Line,
-         Column => Column,
-         Length => Length,
-         Buffer => null,
-         Mark   => null);
+         Id      => Natural'Last,
+         File    => File,
+         Line    => Line,
+         Column  => Column,
+         Length  => Length,
+         Buffer  => null,
+         Mark    => null,
+         Kernel  => Kernel_Handle (Kernel));
       Create_Text_Mark (Kernel, Marker);
       Register_Persistent_Marker (Marker);
       return Marker;
@@ -357,20 +360,22 @@ package body Src_Editor_Module.Markers is
    ------------------------
 
    function Create_File_Marker
-     (File   : VFS.Virtual_File;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker
    is
       Marker : File_Marker;
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
-         Id     => Natural'Last,
-         File   => File,
-         Line   => 0,
-         Column => 1,
-         Length => 0,
-         Buffer => Get_Buffer (Mark),
-         Mark   => Mark);
+         Id      => Natural'Last,
+         File    => File,
+         Line    => 0,
+         Column  => 1,
+         Length  => 0,
+         Buffer  => Get_Buffer (Mark),
+         Mark    => Mark,
+         Kernel  => Kernel_Handle (Kernel));
       Update_Marker_Location (Marker);
       Register_Persistent_Marker (Marker);
       return Marker;
@@ -456,12 +461,34 @@ package body Src_Editor_Module.Markers is
    ---------------
 
    function To_String
-     (Marker : access File_Marker_Record) return String is
+     (Marker : access File_Marker_Record) return String
+   is
+      function Get_Subprogram_Name return String;
+      --  Returns the subprogram name at the marker position
+
+      -------------------------
+      -- Get_Subprogram_Name --
+      -------------------------
+
+      function Get_Subprogram_Name return String is
+         Box : constant Source_Editor_Box :=
+                 Get_Source_Box_From_MDI
+                   (Find_Editor (Marker.Kernel, Marker.File));
+      begin
+         if Box /= null then
+            return " (" & Get_Subprogram_Name
+              (Box, Editable_Line_Type (Marker.Line)) & ')';
+         else
+            return "";
+         end if;
+      end Get_Subprogram_Name;
+
    begin
       Update_Marker_Location (Marker);
       return Base_Name (Marker.File)
         & ":"  & Image (Marker.Line)
-        & ":"  & Image (Marker.Column);
+        & ":"  & Image (Marker.Column)
+        & Get_Subprogram_Name;
    end To_String;
 
    ----------
