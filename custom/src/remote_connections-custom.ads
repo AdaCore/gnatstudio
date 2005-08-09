@@ -28,6 +28,7 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Glib;            use Glib;
 with Glib.Xml_Int;    use Glib.Xml_Int;
 with VFS;             use VFS;
+with GPS.Kernel;
 
 package Remote_Connections.Custom is
 
@@ -77,7 +78,9 @@ package Remote_Connections.Custom is
       --  read the files in directory listing using regexp parameter
      );
 
-   procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr);
+   procedure Initialize_Regexps
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top    : Glib.Xml_Int.Node_Ptr);
    --  Initialize Connection based on the content of an XML node.
    --  The connection is automatically registered
 
@@ -85,7 +88,8 @@ package Remote_Connections.Custom is
    type Custom_Connection_Access is access all Custom_Connection'Class;
 
    procedure Initialize
-     (Connection : access Custom_Connection'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Connection : access Custom_Connection'Class;
       Top        : Glib.Xml_Int.Node_Ptr);
    --  Initialize Connection based on the content of an XML node.
    --  The connection is automatically registered

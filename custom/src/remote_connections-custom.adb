@@ -33,6 +33,7 @@ with OS_Utils;           use OS_Utils;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 with VFS;                use VFS;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
 
 package body Remote_Connections.Custom is
 
@@ -816,13 +817,15 @@ package body Remote_Connections.Custom is
    ------------------------------------------------
 
    procedure Initialize_Regexp
-     (Regexp :    out Regexp_Record;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Regexp :    out Regexp_Record;
       Top    : in     Glib.Xml_Int.Node_Ptr);
    --  initializes a new answer_record structure from xml node
 
    procedure Initialize_Action
-     (Top     : in     Glib.Xml_Int.Node_Ptr;
-      Actions :    out Action_Access);
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top        : in     Glib.Xml_Int.Node_Ptr;
+      Actions    :    out Action_Access);
    --  Initializes a command from xml node
 
    -----------------------
@@ -830,7 +833,8 @@ package body Remote_Connections.Custom is
    -----------------------
 
    procedure Initialize_Regexp
-     (Regexp :    out Regexp_Record;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Regexp :    out Regexp_Record;
       Top    : in     Glib.Xml_Int.Node_Ptr)
    is
       Id      : constant String := Get_Attribute (Top, "id");
@@ -840,14 +844,18 @@ package body Remote_Connections.Custom is
       --  Init id field
       Regexp := Null_Regexp_Record;
       if Id = "" then
-         Trace (Me, "** Error : the regexp has no 'id' attribute");
+         GPS.Kernel.Console.Insert
+           (Kernel, "** XML Error : the regexp has no 'id' attribute",
+            Add_LF => True, Mode => Error);
          return;
       end if;
       Regexp.Id := new String'(Id);
 
       --  Init Regexp field
       if Top.Value = null then
-         Trace (Me, "** Error : Regexp has no value");
+         GPS.Kernel.Console.Insert
+           (Kernel, "** XML Error : Regexp " & Id & "has no value",
+            Add_LF => True, Mode => Error);
          Glib.Free (Regexp.Id);
          Regexp := Null_Regexp_Record;
          return;
@@ -861,7 +869,9 @@ package body Remote_Connections.Custom is
    -- Initialize_Expects --
    ------------------------
 
-   procedure Initialize_Regexps (Top : Glib.Xml_Int.Node_Ptr)
+   procedure Initialize_Regexps
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top    : Glib.Xml_Int.Node_Ptr)
    is
       Regexp : Regexp_Record;
       Node   : Node_Ptr;
@@ -869,7 +879,7 @@ package body Remote_Connections.Custom is
       Node := Top.Child;
       while Node /= null loop
          if To_Lower (Node.Tag.all) = "regexp" then
-            Initialize_Regexp (Regexp, Node);
+            Initialize_Regexp (Kernel, Regexp, Node);
             if Regexp /= Null_Regexp_Record then
                Regexp.Next := Regexp_Root;
                Regexp_Root := new Regexp_Record'(Regexp);
@@ -884,8 +894,9 @@ package body Remote_Connections.Custom is
    ------------------------
 
    procedure Initialize_Action
-     (Top     : in     Glib.Xml_Int.Node_Ptr;
-      Actions :    out Action_Access)
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Top        : in     Glib.Xml_Int.Node_Ptr;
+      Actions    :    out Action_Access)
    is
       Node          : Node_Ptr;
       Child_Node    : Node_Ptr;
@@ -915,7 +926,10 @@ package body Remote_Connections.Custom is
                Kind : constant String := Get_Attribute (Node, "kind");
             begin
                if Kind = "" then
-                  Trace (Me, "** Error: this action has no attribute 'kind'");
+                  GPS.Kernel.Console.Insert
+                    (Kernel, "** XML Error : action items shall have a " &
+                              "'kind' attribute",
+                     Add_LF => True, Mode => Error);
                   Is_Valid := False;
                else
                   Action_Kind := Action_Enum'Value (Kind);
@@ -923,7 +937,9 @@ package body Remote_Connections.Custom is
                end if;
             exception
                when Constraint_Error =>
-                  Trace (Me, "** Error : Invalid Action kind : " & Kind);
+                  GPS.Kernel.Console.Insert
+                    (Kernel, "** XML Error : invalid attribute kind " & Kind,
+                     Add_LF => True, Mode => Error);
                   Is_Valid := False;
             end;
             if Is_Valid then
@@ -935,16 +951,8 @@ package body Remote_Connections.Custom is
                           := Get_Attribute (Node, "param");
                         The_Action : Action_Record (Action_Kind);
                      begin
-                        if Param = "" then
-                           Trace (Me,
-                                  "** Error: this " &
-                                  Action_Enum'Image (Action_Kind) &
-                                  " action has no attribute 'param'");
-                           Is_Valid := False;
-                        else
-                           The_Action.Param := new String'(Param);
-                           Action := new Action_Record'(The_Action);
-                        end if;
+                        The_Action.Param := new String'(Param);
+                        Action := new Action_Record'(The_Action);
                      end;
 
                   when others =>
@@ -979,8 +987,11 @@ package body Remote_Connections.Custom is
                            Regexp := Regexp.Next;
                         end loop;
                         if Regexp = null then
-                           Trace (Me, "*** Error: no regexp exist with the " &
-                                  "id " & Id);
+                           GPS.Kernel.Console.Insert
+                             (Kernel,
+                              "*** XML Error: no regexp exist with the " &
+                              "id " & Id,
+                              Add_LF => True, Mode => Error);
                            Is_Valid := False;
                         else
                            Expect.Regexp := Regexp.Regexp;
@@ -989,17 +1000,18 @@ package body Remote_Connections.Custom is
                         Expect.Regexp := +(Compile (Regexp_Str,
                             Case_Insensitive or Multiple_Lines));
                      else
-                        Trace (Me, "** Error: Invalid expect tag: no regexp " &
-                               "or regexp_id attribute is defined");
+                        GPS.Kernel.Console.Insert
+                          (Kernel,
+                           "** XML Error: Invalid expect tag: no regexp " &
+                           "or regexp_id attribute is defined",
+                           Add_LF => True, Mode => Error);
                         Is_Valid := False;
                      end if;
 
                   end;
                   --  init the other fields of the Expect
                   if Is_Valid then
-                     Initialize_Action
-                       (Child_Node,
-                        Expect.Actions);
+                     Initialize_Action (Kernel, Child_Node, Expect.Actions);
                      Expect.Next := Action.Expects;
                      Action.Expects := new Expect_Record'(Expect);
                   end if;
@@ -1009,12 +1021,14 @@ package body Remote_Connections.Custom is
                        Get_Attribute (Child_Node, "value");
                   begin
                      Action.Timeout.Timeout := Integer'Value (Value) * 1000;
-                     Initialize_Action
-                       (Child_Node,
-                        Action.Timeout.Actions);
+                     Initialize_Action (Kernel, Child_Node,
+                                        Action.Timeout.Actions);
                   exception
                      when Constraint_Error =>
-                        Trace (Me, "** ERROR: invalid expect_timeout tag");
+                        GPS.Kernel.Console.Insert
+                          (Kernel,
+                           "** XML Error: invalid expect_timeout tag",
+                           Add_LF => True, Mode => Error);
                         Action.Timeout := Default_Timeout_Record;
                   end;
                else
@@ -1046,7 +1060,8 @@ package body Remote_Connections.Custom is
    ----------------
 
    procedure Initialize
-     (Connection : access Custom_Connection'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Connection : access Custom_Connection'Class;
       Top        : Glib.Xml_Int.Node_Ptr)
    is
       Node        : Node_Ptr;
@@ -1112,8 +1127,10 @@ package body Remote_Connections.Custom is
 
       Connection.Name := new String'(Get_Attribute (Top, "name"));
       if Connection.Name.all = "" then
-         Trace (Me, "** ERROR : remoteconnection item shall have an " &
-                "attribute name");
+         GPS.Kernel.Console.Insert
+           (Kernel, "** XML Error : remoteconnection items shall have a" &
+                     " name attribute",
+            Add_LF => True, Mode => Error);
          return;
       end if;
       Trace (Me, "Initialize name = " & Connection.Name.all);
@@ -1155,7 +1172,7 @@ package body Remote_Connections.Custom is
 
          for C in Connection.Commands'Range loop
             Node := Find_Tag (Parent.Child, To_Lower (Cmd_Enum'Image (C)));
-            Initialize_Action (Node, Cmd);
+            Initialize_Action (Kernel, Node, Cmd);
 
             if Cmd /= null then
                Trace (Me, "Initialize : " & To_Lower (Cmd_Enum'Image (C)));
