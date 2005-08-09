@@ -1626,16 +1626,23 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Dir    : Virtual_File;
 
-      Dir    : constant Virtual_File := Select_Directory
+   begin
+      Dir :=  Select_Directory
         (-"Select a directory",
          History => Get_History (Kernel),
          Parent  => Gtk_Window (Get_Current_Window (Kernel)));
-
-   begin
       if Dir /= No_File then
          Change_Dir (Dir);
       end if;
+   exception
+      when VFS_Directory_Error =>
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            "Cannot change to directory: " &
+            Full_Name (Dir).all,
+            Mode => Error);
    end On_Change_Dir;
 
    ---------------------
