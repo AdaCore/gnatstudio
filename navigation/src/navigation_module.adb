@@ -18,35 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
-with Gdk.Types;                   use Gdk.Types;
-with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
-with Gtk.Button;                  use Gtk.Button;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
-with Gtk.Stock;                   use Gtk.Stock;
-with Gtk.Toolbar;                 use Gtk.Toolbar;
-with Gtk.Widget;                  use Gtk.Widget;
-with Glib.Xml_Int;                use Glib.Xml_Int;
-
-with Projects;                    use Projects;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;           use GPS.Location_View;
-with GPS.Intl;                  use GPS.Intl;
-
-with Traces;                      use Traces;
-with String_Utils;                use String_Utils;
-with VFS;                         use VFS;
-with Language;                    use Language;
-
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
+with Glib;                       use Glib;
+with Glib.Object;                use Glib.Object;
+with Glib.Xml_Int;               use Glib.Xml_Int;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Gtk.Button;                 use Gtk.Button;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Toolbar;                use Gtk.Toolbar;
+with Gtk.Widget;                 use Gtk.Widget;
+
+with Projects;                   use Projects;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Location_View;          use GPS.Location_View;
+with GPS.Intl;                   use GPS.Intl;
+
+with Traces;                     use Traces;
+with String_Utils;               use String_Utils;
+with VFS;                        use VFS;
+with Language;                   use Language;
 
 package body Navigation_Module is
 
@@ -193,7 +194,6 @@ package body Navigation_Module is
       Data   : access Hooks_Data'Class);
    --  Called when a new marker is added in the history
 
-
    procedure Check_Marker_History_Status
      (Kernel           : access Kernel_Handle_Record'Class;
       Can_Move_Back    : out Boolean;
@@ -327,7 +327,6 @@ package body Navigation_Module is
         Execute_GPS_Shell_Command
           (Kernel, "Editor.cursor_get_line",
            (1 => Full_Name (File).all'Unrestricted_Access));
-
    begin
       return Natural'Value (S_Line);
    exception
@@ -373,7 +372,6 @@ package body Navigation_Module is
         Execute_GPS_Shell_Command
           (Kernel, "Editor.get_last_line",
            (1 => Full_Name (File).all'Unrestricted_Access));
-
    begin
       return Natural'Value (S_Line);
    exception
@@ -397,7 +395,6 @@ package body Navigation_Module is
            "Editor.block_get_end",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
-
    begin
       return Natural'Value (S_Line);
    exception
@@ -421,7 +418,6 @@ package body Navigation_Module is
            "Editor.block_get_start",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
-
    begin
       return Natural'Value (S_Line);
    exception
@@ -445,7 +441,6 @@ package body Navigation_Module is
            "Editor.block_get_type",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
-
    begin
       return Language_Category'Value (B_Type);
    exception
