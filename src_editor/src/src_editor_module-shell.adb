@@ -1498,7 +1498,7 @@ package body Src_Editor_Module.Shell is
 
                if Line >= 0 and then Number > 0 then
                   Marker := Create_File_Marker
-                    (Filename,
+                    (Kernel, Filename,
                      Add_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
