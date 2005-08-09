@@ -2360,8 +2360,7 @@ package body Src_Editor_Module is
      (Module : access Source_Editor_Module_Record;
       Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker is
    begin
-      return Src_Editor_Module.Markers.Load
-        (Get_Kernel (Module.all), Load);
+      return Src_Editor_Module.Markers.Load (Get_Kernel (Module.all), Load);
    end Bookmark_Handler;
 
    ---------------
@@ -2372,8 +2371,7 @@ package body Src_Editor_Module is
      (Module : access Source_Editor_Module_Record;
       File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
-      Level  : Customization_Level)
-   is
+      Level  : Customization_Level) is
    begin
       Casing_Customize (Get_Kernel (Module.all), File, Node, Level);
    end Customize;

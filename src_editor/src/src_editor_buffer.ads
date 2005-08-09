@@ -27,22 +27,22 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Gdk.GC; use Gdk.GC;
-with Glib; use Glib;
+with Gdk.GC;                    use Gdk.GC;
+with Glib;                      use Glib;
 with Gtk;
 with Gtk.Main;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtkada.Text_Buffer;          use Gtkada.Text_Buffer;
+with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
-with Commands;                    use Commands;
+with Commands;                  use Commands;
 with Generic_List;
 with GPS.Kernel;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;           use GPS.Kernel.Styles;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with Language;
 with Src_Highlighting;
 with VFS;
@@ -396,7 +396,7 @@ package Src_Editor_Buffer is
 
    procedure Register_View
      (Buffer : access Source_Buffer_Record; Add : Boolean);
-   --  Register or Unregister a view for the buffer.
+   --  Register or Unregister a view for the buffer
 
    -------------------
    -- Buffer Status --
@@ -412,22 +412,21 @@ package Src_Editor_Buffer is
 
    procedure Status_Changed
      (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "status_changed" signal.
+   --  Emit the "status_changed" signal
 
    function Get_Last_Status
      (Buffer : access Source_Buffer_Record'Class)
       return Status_Type;
-   --  Return the last calculated status.
+   --  Return the last calculated status
 
    procedure Set_Last_Status
      (Buffer : access Source_Buffer_Record'Class;
       Status : Status_Type);
-   --  Set the last calculated status.
+   --  Set the last calculated status
 
    function Needs_To_Be_Saved
-     (Buffer : access Source_Buffer_Record'Class)
-      return Boolean;
-   --  Return True if the buffer needs to be saved.
+     (Buffer : access Source_Buffer_Record'Class) return Boolean;
+   --  Return True if the buffer needs to be saved
 
    -----------------------
    -- Extra Information --
@@ -504,11 +503,11 @@ package Src_Editor_Buffer is
    function Line_Needs_Refresh
      (Buffer : access Source_Buffer_Record;
       Line   : Buffer_Line_Type) return Boolean;
-   --  Return True if Line needs to be refreshed.
+   --  Return True if Line needs to be refreshed
 
    function Get_Total_Column_Width
      (Buffer : access Source_Buffer_Record) return Natural;
-   --  Return the size of the total column width, in pixels.
+   --  Return the size of the total column width, in pixels
 
    type Highlight_Location is (Highlight_Speedbar, Highlight_Editor);
    type Highlight_Location_Array is array (Highlight_Location) of Boolean;

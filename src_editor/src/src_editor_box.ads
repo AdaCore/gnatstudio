@@ -185,7 +185,7 @@ package Src_Editor_Box is
      (Editor  : access Source_Editor_Box_Record;
       Line    : out Positive;
       Column  : out Positive);
-   --  Get the current cursor position.
+   --  Get the current cursor position
 
    procedure Replace_Slice
      (Editor       : access Source_Editor_Box_Record;
@@ -221,9 +221,9 @@ package Src_Editor_Box is
    --  Clear the subprogram name label (set to empty string)
 
    procedure Show_Subprogram_Name
-     (Box              : Source_Editor_Box;
+     (Box             : Source_Editor_Box;
       Subprogram_Name : String);
-   --  Show the name of the current subprogram.
+   --  Show the name of the current subprogram
 
    procedure Scroll_To_Mark
      (Editor : access Source_Editor_Box_Record;
