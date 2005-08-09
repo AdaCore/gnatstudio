@@ -336,10 +336,7 @@ package body Gtkada.File_Selector is
          declare
             File : constant String := Get_Text (Dialog.Selection_Entry);
          begin
-            Ensure_Directory (Dialog.Current_Directory);
-            return Create
-              (Full_Filename =>
-                 Full_Name (Dialog.Current_Directory, True).all & File);
+            return Create (File);
          end;
       end if;
    end Get_Selection;
