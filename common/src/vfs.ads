@@ -29,6 +29,7 @@ with GNAT.OS_Lib;
 
 with Glib;               use Glib;
 with Glib.Values;
+
 with Remote_Connections;
 
 package VFS is
@@ -124,6 +125,9 @@ package VFS is
 
    function Is_Directory (File : Virtual_File) return Boolean;
    --  Return True if File is in fact a directory
+
+   function Is_Symbolic_Link (File : Virtual_File) return Boolean;
+   --  Return True if File is a symbolic link
 
    function Is_Absolute_Path (File : Virtual_File) return Boolean;
    --  Return True if File contains an absolute path name, False if it only
@@ -283,6 +287,15 @@ private
    --  not work properly, since the functions above cannot modify File
    --  itself, although they do compute some information lazily).
 
+   type File_Type is
+     (Unknown,
+      --  File is not determined
+      File,
+      --  Regular file
+      Directory
+      --  Directory
+      );
+
    type Contents_Record is record
       Connection      : Remote_Connections.Remote_Connection;
       Start_Of_Path   : Integer;
@@ -290,6 +303,7 @@ private
       Full_Name       : GNAT.OS_Lib.String_Access;
       Normalized_Full : GNAT.OS_Lib.String_Access;
       Dir_Name        : GNAT.OS_Lib.String_Access;
+      Kind            : File_Type := Unknown;
    end record;
    --  Start_Of_Path is the index in Full_Name where the remote path starts.
    --  For local files, this is Full_Name'First, for remote file it points
@@ -320,7 +334,8 @@ private
         Ref_Count       => 1,
         Full_Name       => new String'(1 => GNAT.OS_Lib.Directory_Separator),
         Normalized_Full => new String'(1 => GNAT.OS_Lib.Directory_Separator),
-        Dir_Name        => new String'(1 => GNAT.OS_Lib.Directory_Separator)));
+        Dir_Name        => new String'(1 => GNAT.OS_Lib.Directory_Separator),
+        Kind            => Directory));
 
    Invalid_File : constant Writable_File :=
      ((Ada.Finalization.Controlled with Value => null),
