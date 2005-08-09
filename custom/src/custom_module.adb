@@ -802,11 +802,11 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) =
                 "remote_connection_regexps" then
-            Initialize_Regexps (Current_Node);
+            Initialize_Regexps (Kernel, Current_Node);
 
          elsif To_Lower (Current_Node.Tag.all) = "remote_connection" then
             Connection := new Remote_Connections.Custom.Custom_Connection;
-            Initialize (Connection, Current_Node);
+            Initialize (Kernel, Connection, Current_Node);
 
          elsif Current_Node.Tag.all = "menu" then
             Parse_Menu_Node (Current_Node, Parent_Path);
