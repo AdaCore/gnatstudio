@@ -138,6 +138,7 @@ package body VFS is
                        Normalized_Full => null,
                        Dir_Name        => null,
                        Kind            => Unknown));
+
          else
             --  Behave as if we have a local file, although nobody will be
             --  able to open it
@@ -423,6 +424,7 @@ package body VFS is
             File.Value.Full_Name
               (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
       end if;
+
       if Success then
          File.Value.Kind := Unknown;
       end if;
@@ -514,8 +516,7 @@ package body VFS is
    -- Is_Directory --
    ------------------
 
-   function Is_Directory (File : Virtual_File) return Boolean
-   is
+   function Is_Directory (File : Virtual_File) return Boolean is
       Ret : Boolean;
    begin
       if File.Value = null then
@@ -545,16 +546,16 @@ package body VFS is
    -- Is_Symbolic_Link --
    ----------------------
 
-   function Is_Symbolic_Link (File : Virtual_File) return Boolean
-   is
+   function Is_Symbolic_Link (File : Virtual_File) return Boolean is
    begin
       if File.Value = null then
          return False;
 
       elsif File.Value.Connection /= null then
-         --  ??? for now, no specific remote test for this
-         --  just verify the existence of the file
-         return Is_Regular_File (File);
+         --  ??? for now, no specific remote test for this,
+         --  assume the file is not a symbolic link
+
+         return False;
 
       else
          return Is_Symbolic_Link (Locale_Full_Name (File));
@@ -841,6 +842,7 @@ package body VFS is
       Ensure_Directory (Dir);
       New_Dir := Create (Dir.Value.Full_Name.all & Name);
       Ensure_Directory (New_Dir);
+
       if Is_Directory (New_Dir) then
          return New_Dir;
       else
@@ -883,11 +885,9 @@ package body VFS is
       end if;
 
    exception
-
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
-
    end Change_Dir;
 
    --------------
@@ -915,14 +915,13 @@ package body VFS is
                              "Dir cannot be created");
          end if;
       end if;
+
       Dir.Value.Kind := Directory;
 
    exception
-
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
-
    end Make_Dir;
 
    ------------------------
@@ -974,13 +973,13 @@ package body VFS is
             end if;
          end;
       end if;
+
       Dir.Value.Kind := Directory;
 
    exception
       when E : GNAT.Directory_Operations.Directory_Error =>
          Raise_Exception (VFS_Directory_Error'Identity,
                           Exception_Message (E));
-
    end Make_Dir_Recursive;
 
    ----------------
@@ -1014,8 +1013,8 @@ package body VFS is
                              "Cannot remove directory " &
                              Locale_Full_Name (Dir));
          end if;
-
       end if;
+
       if Result then
          Dir.Value.Kind := Unknown;
       end if;
@@ -1073,6 +1072,7 @@ package body VFS is
             F_Array (Nb_Files) := Create (Full_Name (Dir, True).all &
                                           Name (1 .. Last));
          end loop;
+
          GNAT.Directory_Operations.Close (Local_Dir);
 
          Tmp := F_Array;
@@ -1089,12 +1089,12 @@ package body VFS is
          begin
             F_Array := new File_Array (1 .. List'Length);
             Nb_Files := List'Length;
+
             for J in List'Range loop
                F_Array (J) := Create (Full_Name (Dir).all &
                                       List (List'First + J - 1).all);
                Free (List (J));
             end loop;
-
          end;
       end if;
 
@@ -1114,19 +1114,20 @@ package body VFS is
    -- Open_Dir --
    --------------
 
-   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir
-   is
+   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir is
       VDir : Virtual_Dir;
    begin
       if Dir.Value = null then
          return Invalid_Dir;
       end if;
+
       VDir.File := Dir;
       VDir.Files_List := Read_Dir (Dir);
 
       if VDir.Files_List /= null then
          VDir.Current := VDir.Files_List'First - 1;
       end if;
+
       Dir.Value.Kind := Directory;
       return VDir;
 
@@ -1162,6 +1163,7 @@ package body VFS is
       if VDir.Files_List /= null then
          Unchecked_Free (VDir.Files_List);
       end if;
+
       VDir := Invalid_Dir;
    end Close;
 
@@ -1237,7 +1239,6 @@ package body VFS is
             elsif C1 > C2 then
                return False;
             end if;
-
          end loop;
 
          return True;
@@ -1281,6 +1282,7 @@ package body VFS is
             C1 := To_Lower (Parent.Value.Normalized_Full (C));
             C2 := To_Lower (Child.Value.Normalized_Full (C));
          end if;
+
          if C1 /= C2 then
             return False;
          end if;
@@ -1332,6 +1334,7 @@ package body VFS is
       if Value /= null then
          Value.Ref_Count := Value.Ref_Count + 1;
       end if;
+
       return Boxed;
    end Virtual_File_Boxed_Copy;
 
