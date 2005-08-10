@@ -12,6 +12,14 @@
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
+    <Categories>
+      <Category>
+        <Name>procedure</Name>
+        <Pattern>^@node\s+([^\n,]+)</Pattern>
+        <Index>1</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+    </Categories>
   </Language>
 
   <Language>
