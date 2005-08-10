@@ -51,8 +51,7 @@ package VFS is
    No_File : constant Virtual_File;
    Local_Root_Dir : constant Virtual_File;
 
-   type Virtual_File_Access is access Virtual_File;
-   procedure Unchecked_Free (Arr : in out Virtual_File_Access);
+   type Virtual_File_Access is access constant Virtual_File;
 
    type File_Array is array (Natural range <>) of Virtual_File;
    type File_Array_Access is access File_Array;
