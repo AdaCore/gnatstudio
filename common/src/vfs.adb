@@ -486,17 +486,6 @@ package body VFS is
    -- Unchecked_Free --
    --------------------
 
-   procedure Unchecked_Free (Arr : in out Virtual_File_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Virtual_File, Virtual_File_Access);
-   begin
-      Internal (Arr);
-   end Unchecked_Free;
-
-   --------------------
-   -- Unchecked_Free --
-   --------------------
-
    procedure Unchecked_Free (Arr : in out File_Array_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
         (File_Array, File_Array_Access);
