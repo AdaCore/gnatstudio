@@ -458,7 +458,10 @@ package body VCS.Generic_VCS is
                Node := Next (Node);
             end loop;
 
-            if Last /= 0 then
+            if Last = 0 then
+               --  No common prefix, run the command from the current directory
+               Dir := new String'(".");
+            else
                --  We have found a common prefix, set Dir
                Dir := new String'(Locale_From_UTF8 (Prefix (1 .. Last)));
             end if;
@@ -488,7 +491,9 @@ package body VCS.Generic_VCS is
                end loop;
             end if;
 
-            if not Ref.Absolute_Names then
+            if Ref.Absolute_Names then
+               Dir := new String'(Dir.all);
+            else
                Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
             end if;
 
@@ -504,14 +509,20 @@ package body VCS.Generic_VCS is
                if Ref.Absolute_Names then
                   declare
                      Filename : constant String := Data (Node);
+                     Pref_Len : Natural := Dir.all'Length;
                   begin
+                     if Dir.all = "." then
+                        --  No prefix found
+                        Pref_Len := 0;
+                     end if;
+
                      if Ref.Dir_Sep = System_Default then
                         Args (Index) := new String'
-                          (Filename (1 + Dir.all'Length .. Filename'Last));
+                          (Filename (1 + Pref_Len .. Filename'Last));
                      else
                         Args (Index) := new String'
                           (Format_Pathname
-                             (Filename (1 + Dir.all'Length .. Filename'Last),
+                             (Filename (1 + Pref_Len .. Filename'Last),
                               Ref.Dir_Sep));
                      end if;
                   end;
