@@ -476,8 +476,8 @@ package body Gtkada.File_Selector is
      (File_Selector : File_Selector_Window_Access;
       Parent        : Gtk_Window := null) return VFS.Virtual_File
    is
-      Filter_A : constant Filter_Show_All_Access := new Filter_Show_All;
-      Selected_File : Virtual_File_Access := File_Selector.Selected_File;
+      Filter_A      : constant Filter_Show_All_Access := new Filter_Show_All;
+      Selected_File : aliased Virtual_File := No_File;
    begin
       pragma Assert (File_Selector /= null);
 
@@ -502,15 +502,11 @@ package body Gtkada.File_Selector is
 
       File_Selector.Own_Main_Loop := True;
 
-      Gtk.Main.Main;
-      Destroy (File_Selector);
+      File_Selector.Selected_File := Selected_File'Unchecked_Access;
 
-      declare
-         File : constant Virtual_File := Selected_File.all;
-      begin
-         Unchecked_Free (Selected_File);
-         return File;
-      end;
+      Gtk.Main.Main;
+
+      return Selected_File;
    end Select_File;
 
    ----------------------
@@ -555,7 +551,7 @@ package body Gtkada.File_Selector is
       Parent        : Gtk_Window := null) return Virtual_File
    is
       Filter_A      : constant Filter_Show_All_Access := new Filter_Show_All;
-      Selected_File : Virtual_File_Access := File_Selector.Selected_File;
+      Selected_File : aliased Virtual_File := No_File;
    begin
       pragma Assert (File_Selector /= null);
 
@@ -575,16 +571,12 @@ package body Gtkada.File_Selector is
       Show_All (File_Selector);
       File_Selector.Own_Main_Loop := True;
 
+      File_Selector.Selected_File := Selected_File'Unchecked_Access;
+
       Gtk.Main.Main;
       Destroy (File_Selector);
 
-      declare
-         File : constant Virtual_File := Selected_File.all;
-      begin
-         Unchecked_Free (Selected_File);
-         return File;
-      end;
-
+      return Selected_File;
    end Select_Directory;
 
    ------------------
@@ -1163,10 +1155,13 @@ package body Gtkada.File_Selector is
       if Get_Text (Win.Selection_Entry) /= ""
         and then Win.Own_Main_Loop
       then
-         Win.Selected_File.all := Get_Selection (Win);
+         if Win.Selected_File /= null then
+            Win.Selected_File.all := Get_Selection (Win);
+         end if;
          Last_Directory := Win.Current_Directory;
          Main_Quit;
          Win.Own_Main_Loop := False;
+         Destroy (Win);
       end if;
 
    exception
@@ -1200,10 +1195,13 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Object);
    begin
-      Win.Selected_File.all := Get_Selection (Win);
+      if Win.Selected_File /= null then
+         Win.Selected_File.all := Get_Selection (Win);
+      end if;
       Last_Directory := Win.Current_Directory;
       Main_Quit;
       Win.Own_Main_Loop := False;
+      Destroy (Win);
 
    exception
       when E : others =>
@@ -1228,6 +1226,7 @@ package body Gtkada.File_Selector is
 
       Main_Quit;
       Win.Own_Main_Loop := False;
+      Destroy (Win);
 
    exception
       when E : others =>
@@ -1583,8 +1582,7 @@ package body Gtkada.File_Selector is
       Initial_Directory    : Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History;
-      Selected_File        : VFS.Virtual_File_Access := null) is
+      History              : Histories.History) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
@@ -1593,11 +1591,11 @@ package body Gtkada.File_Selector is
       then
          Initialize
            (File_Selector_Window, Root, Initial_Directory,
-            Dialog_Title, Show_Files, History, Selected_File);
+            Dialog_Title, Show_Files, History);
       else
          Initialize
            (File_Selector_Window, VFS.Get_Current_Dir, Initial_Directory,
-            Dialog_Title, Show_Files, History, Selected_File);
+            Dialog_Title, Show_Files, History);
       end if;
    end Gtk_New;
 
@@ -1646,8 +1644,7 @@ package body Gtkada.File_Selector is
       Initial_Directory    : Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History;
-      Selected_File        : VFS.Virtual_File_Access := null)
+      History              : Histories.History)
    is
       pragma Suppress (All_Checks);
 
@@ -1671,12 +1668,6 @@ package body Gtkada.File_Selector is
       Gtk.Dialog.Initialize (File_Selector_Window);
 
       Set_Has_Separator (File_Selector_Window, False);
-
-      if Selected_File /= null then
-         File_Selector_Window.Selected_File := Selected_File;
-      else
-         File_Selector_Window.Selected_File := new Virtual_File'(No_File);
-      end if;
 
       File_Selector_Window.History := History;
 
