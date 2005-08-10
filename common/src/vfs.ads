@@ -116,8 +116,8 @@ package VFS is
    function Dir (File : Virtual_File) return Virtual_File;
    --  Return the virtual file corresponding to the directory of the file.
 
-   procedure Delete (File    : in     Virtual_File;
-                     Success :    out Boolean);
+   procedure Delete (File    : Virtual_File;
+                     Success : out Boolean);
    --  Remove file from the disk. This also works for remote files
 
    function Is_Writable (File : Virtual_File) return Boolean;
@@ -194,7 +194,7 @@ package VFS is
    --  Remove_Dir removes all the subdirectories and files that are in
    --  Dir_Name. Raises Directory_Error if Dir_Name cannot be removed.
 
-   function Read_Dir (Dir : in Virtual_File) return File_Array_Access;
+   function Read_Dir (Dir : Virtual_File) return File_Array_Access;
    --  Reads all entries from the directory and returns a File_Array containing
    --  those entries. The list of files returned
    --  includes directories in systems providing a hierarchical directory
@@ -205,7 +205,7 @@ package VFS is
 
    Invalid_Dir : constant Virtual_Dir;
 
-   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir;
+   function Open_Dir (Dir : Virtual_File) return Virtual_Dir;
    --  Opens for reading a file.
 
    procedure Read (VDir : in out Virtual_Dir;

@@ -1114,7 +1114,7 @@ package body VFS is
    -- Open_Dir --
    --------------
 
-   function Open_Dir (Dir : in Virtual_File) return Virtual_Dir is
+   function Open_Dir (Dir : Virtual_File) return Virtual_Dir is
       VDir : Virtual_Dir;
    begin
       if Dir.Value = null then
