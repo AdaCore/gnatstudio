@@ -241,8 +241,7 @@ package Gtkada.File_Selector is
       Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History;
-      Selected_File        : VFS.Virtual_File_Access := null);
+      History              : Histories.History);
    --  Create a new file selector.
    --  Root is the directory shown in the root node of the tree. The user will
    --  not be able to select directories higher up in the hierarchy.
@@ -258,8 +257,7 @@ package Gtkada.File_Selector is
       Initial_Directory    : VFS.Virtual_File;
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
-      History              : Histories.History;
-      Selected_File        : VFS.Virtual_File_Access := null);
+      History              : Histories.History);
    --  Internal initialization function.
 
 private
@@ -289,8 +287,11 @@ private
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
 
+   --  ??? Ada2005: no need for this new type
+   type VF_Access is access all VFS.Virtual_File;
+
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
-      Selected_File        : VFS.Virtual_File_Access := null;
+      Selected_File        : VF_Access;
       --  Contains the selected file upon close
       --  If the file is not furnished at initialize call, it is created.
 
