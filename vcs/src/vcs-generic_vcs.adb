@@ -446,7 +446,11 @@ package body VCS.Generic_VCS is
                declare
                   Filename : constant String := Data (Node);
                begin
-                  while Prefix (1 .. Last) /= Filename (1 .. Last) loop
+                  while Prefix (1 .. Last) /= Filename (1 .. Last)
+                    or else (Last /= 0
+                             and then Prefix (Last) /= '/'
+                             and then Prefix (Last) /= '\')
+                  loop
                      Last := Last - 1;
                   end loop;
                end;
@@ -501,14 +505,14 @@ package body VCS.Generic_VCS is
                   declare
                      Filename : constant String := Data (Node);
                   begin
-                     if Ref.Dir_Sep /= System_Default then
+                     if Ref.Dir_Sep = System_Default then
+                        Args (Index) := new String'
+                          (Filename (1 + Dir.all'Length .. Filename'Last));
+                     else
                         Args (Index) := new String'
                           (Format_Pathname
                              (Filename (1 + Dir.all'Length .. Filename'Last),
                               Ref.Dir_Sep));
-                     else
-                        Args (Index) := new String'
-                          (Filename (1 + Dir.all'Length .. Filename'Last));
                      end if;
                   end;
 
