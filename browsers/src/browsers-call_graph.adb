@@ -18,58 +18,61 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Glib.Object;          use Glib.Object;
-with Gdk.GC;               use Gdk.GC;
-with Gdk.Event;            use Gdk.Event;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Check_Button;     use Gtk.Check_Button;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Frame;            use Gtk.Frame;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Object;           use Gtk.Object;
-with Gtk.Radio_Button;     use Gtk.Radio_Button;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Vbutton_Box;      use Gtk.Vbutton_Box;
-with Gtk.Widget;           use Gtk.Widget;
-with Histories;            use Histories;
-with Pango.Layout;         use Pango.Layout;
-with Gtkada.Canvas;        use Gtkada.Canvas;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.MDI;           use Gtkada.MDI;
-
-with Entities;                      use Entities;
-with Entities.Debug;                use Entities.Debug;
-with Entities.Queries;              use Entities.Queries;
-with GPS.Kernel;                    use GPS.Kernel;
-with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
-with GPS.Kernel.Console;            use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
-with GPS.Location_View;             use GPS.Location_View;
-with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
-with Commands.Generic_Asynchronous; use Commands;
-with String_Utils;                  use String_Utils;
-with Browsers.Canvas;               use Browsers.Canvas;
-with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
-with VFS;                           use VFS;
-with Commands.Interactive;          use Commands, Commands.Interactive;
-with GPS.Intl;                      use GPS.Intl;
-with Browsers.Canvas;               use Browsers.Canvas;
-
-with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Exceptions;                use Ada.Exceptions;
-with System;                        use System;
+with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                   use GNAT.OS_Lib;
+with System;                        use System;
+
+with Gdk.GC;                        use Gdk.GC;
+with Gdk.Event;                     use Gdk.Event;
+
+with Glib;                          use Glib;
+with Glib.Xml_Int;                  use Glib.Xml_Int;
+with Glib.Object;                   use Glib.Object;
+
+with Gtk.Box;                       use Gtk.Box;
+with Gtk.Button;                    use Gtk.Button;
+with Gtk.Check_Button;              use Gtk.Check_Button;
+with Gtk.Dialog;                    use Gtk.Dialog;
+with Gtk.Enums;                     use Gtk.Enums;
+with Gtk.Frame;                     use Gtk.Frame;
+with Gtk.Menu;                      use Gtk.Menu;
+with Gtk.Object;                    use Gtk.Object;
+with Gtk.Radio_Button;              use Gtk.Radio_Button;
+with Gtk.Stock;                     use Gtk.Stock;
+with Gtk.Vbutton_Box;               use Gtk.Vbutton_Box;
+with Gtk.Widget;                    use Gtk.Widget;
+
+with Gtkada.Canvas;                 use Gtkada.Canvas;
+with Gtkada.Handlers;               use Gtkada.Handlers;
+with Gtkada.MDI;                    use Gtkada.MDI;
+
+with Pango.Layout;                  use Pango.Layout;
+
+with Browsers.Canvas;               use Browsers.Canvas;
+with Commands.Generic_Asynchronous; use Commands;
+with Commands.Interactive;          use Commands, Commands.Interactive;
+with Entities;                      use Entities;
+with Entities.Debug;                use Entities.Debug;
+with Entities.Queries;              use Entities.Queries;
+with Histories;                     use Histories;
+with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel;                    use GPS.Kernel;
+with GPS.Kernel.Console;            use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
+with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
+with GPS.Location_View;             use GPS.Location_View;
+with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
+with VFS;                           use VFS;
 
 package body Browsers.Call_Graph is
 
@@ -1389,14 +1392,14 @@ package body Browsers.Call_Graph is
             Remove_Location_Category (Kernel, Category_Title);
 
             Ref (Info);
-            Data := (Kernel           => Kernel_Handle (Kernel),
-                     Iter             => new Entity_Reference_Iterator,
-                     Filter           => Filter,
-                     Category         => new String'(Category_Title),
-                     Iter_Started     => False,
-                     Show_Caller      => Show_Caller,
+            Data := (Kernel             => Kernel_Handle (Kernel),
+                     Iter               => new Entity_Reference_Iterator,
+                     Filter             => Filter,
+                     Category           => new String'(Category_Title),
+                     Iter_Started       => False,
+                     Show_Caller        => Show_Caller,
                      Include_Overriding => Include_Overriding,
-                     Entity           => Info);
+                     Entity             => Info);
 
             Xref_Commands.Create
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
@@ -1487,7 +1490,7 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Widget, Child);
 
       Context     : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+                      Get_Current_Context (Kernel);
       Entity      : Entity_Selection_Context_Access;
       Node_Entity : Entity_Information;
    begin
@@ -1523,7 +1526,7 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+                  Get_Current_Context (Kernel);
       Entity  : Entity_Information;
 
    begin
@@ -2237,6 +2240,8 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "reset_xref_db",
          Handler      => Xref_Command_Handler'Access);
+
+      Browsers.Canvas.Register_Actions (Kernel);
    end Register_Module;
 
    ------------------
