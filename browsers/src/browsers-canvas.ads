@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
+with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;
+
 with Gdk.Color;
 with Gdk.Event;
 with Gdk.GC;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
-with Gtkada.Canvas;
-with GPS.Kernel;
 with Glib.Object;
 with Gtk.Box;
 with Gtk.Handlers;
@@ -33,9 +33,10 @@ with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
 with Gtk.Widget;
+with Gtkada.Canvas;
 with Pango.Layout;
-with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;
+
+with GPS.Kernel;
 
 package Browsers.Canvas is
 
@@ -53,8 +54,8 @@ package Browsers.Canvas is
    --  highlighted if they connect a selected item to another one.
 
    procedure Initialize
-     (Browser : access General_Browser_Record'Class;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Browser         : access General_Browser_Record'Class;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
       Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
@@ -64,6 +65,9 @@ package Browsers.Canvas is
    --  If Create_Toolbar is True, then a button_bar is added at the bottom.
    --  Parents_Pixmap and Children_Pixmap are the pixmaps to use in the title
    --  bar to get access to the parents/ancestors of an item or its children.
+
+   procedure Register_Actions
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
 
    function Get_Toolbar (Browser : access General_Browser_Record)
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
