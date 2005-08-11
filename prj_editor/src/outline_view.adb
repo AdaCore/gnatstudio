@@ -18,47 +18,47 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                        use Glib;
+with Basic_Types;                 use Basic_Types;
+with Basic_Types;                 use Basic_Types;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with Entities.Queries;            use Entities.Queries;
+with Entities;                    use Entities;
+with Entities;                    use Entities;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                  use GPS.Kernel;
+with GUI_Utils;                   use GUI_Utils;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Glib.Object;                 use Glib.Object;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Glib.Xml_Int;                use Glib.Xml_Int;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GUI_Utils;                   use GUI_Utils;
-with Basic_Types;                 use Basic_Types;
-with VFS;                         use VFS;
-with Pixmaps_IDE;                 use Pixmaps_IDE;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-with Gdk.Event;                   use Gdk.Event;
+with Glib;                        use Glib;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_View;               use Gtk.Tree_View;
-with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
+with Gtk.Tree_Store;              use Gtk.Tree_Store;
+with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GPS.Intl;                    use GPS.Intl;
-with Entities;                    use Entities;
-with Entities.Queries;            use Entities.Queries;
-with String_Utils;                use String_Utils;
-with Projects;                    use Projects;
 with Language;                    use Language;
 with Language_Handlers.GPS;       use Language_Handlers.GPS;
-with Basic_Types;                 use Basic_Types;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Pixmaps_IDE;                 use Pixmaps_IDE;
 with Project_Explorers_Common;    use Project_Explorers_Common;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Entities;                    use Entities;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Projects;                    use Projects;
+with String_Utils;                use String_Utils;
+with VFS;                         use VFS;
 
 package body Outline_View is
 
@@ -245,7 +245,11 @@ package body Outline_View is
                --  Next find all occurrences for entities with the same name,
                --  and select the closest one to the current line
 
-               Iter := Children (Model, Get_Iter_First (Model));
+               if Outline.Show_File_Node then
+                  Iter := Children (Model, Get_Iter_First (Model));
+               else
+                  Iter := Get_Iter_First (Model);
+               end if;
                while Iter /= Null_Iter loop
                   if Equal
                     (Get_String (Model, Iter, Entity_Name_Column),
