@@ -10223,6 +10223,9 @@ nodes:
    @item Index
    Index in the pattern used to extract the name of the entity contained in
    this category.
+
+   @item Icon
+   Name of a stock icon that should be used for that category (@pxref{Adding stock icons}).
    @end table
 
 @ifset extendedlanguage
@@ -11471,7 +11474,7 @@ This tag accepts the following children, described in separate sections:
    (@pxref{Defining tool switches})
 @item <language>
    (@pxref{Defining supported languages})
-@item <default-cmd-line>
+@item <initial-cmd-line>
    (@pxref{Defining default command line})
 @end table
 
