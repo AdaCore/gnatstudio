@@ -63,8 +63,11 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
+with Commands;               use Commands;
+with Commands.Interactive;   use Commands.Interactive;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -122,6 +125,11 @@ package body Browsers.Canvas is
 
    procedure On_Select_All (Browser : access Gtk_Widget_Record'Class);
    --  Select all the items in the canvas.
+
+   type Select_All_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Select_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure Toggle_Links
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
@@ -2436,5 +2444,41 @@ package body Browsers.Canvas is
       return new Browser_Marker_Record'
         (Location_Marker_Record with Title => new String'(Browser_Name));
    end Create_Browser_Marker;
+
+   ----------------------
+   -- Register_Actions --
+   ----------------------
+
+   procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
+      Command : constant Interactive_Command_Access := new Select_All_Command;
+   begin
+      Register_Action
+        (Kernel,
+         "Select All In Browser",
+         Command,
+         "Select all items in a browser");
+   end Register_Actions;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Select_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Child  : constant MDI_Child :=
+                  Get (First_Child (Get_MDI (Get_Kernel (Context.Context))));
+      Widget : constant Gtk_Widget := Get_Widget (Child);
+   begin
+      if Widget.all in General_Browser_Record'Class then
+         On_Select_All (General_Browser (Widget));
+         return Commands.Success;
+      else
+         return
+           Commands.Failure;
+      end if;
+   end Execute;
 
 end Browsers.Canvas;
