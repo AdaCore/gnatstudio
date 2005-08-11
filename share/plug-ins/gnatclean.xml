@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<Clean-project>
+<GPS>
   <action name="build-clean-root-project">
     <shell output="none">Project.scenario_variables_cmd_line -X</shell>
     <shell>echo gnatclean "%PPs" %1</shell>
@@ -36,5 +36,5 @@
   <contextual action="build-clean-subproject">
     <title>Build/Clean</title>
   </contextual>
-</Clean-project>
+</GPS>
 

@@ -2,7 +2,7 @@
 
 <!--  This file adds support for C and C++ (GCC) switches and aliases  -->
 
-<C>
+<GPS>
    <tool name="C" package="Compiler" index="c" >
       <language>C</language>
       <switches lines="2" columns="2">
@@ -160,4 +160,4 @@
      <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
    </vsearch-pattern>
 
-</C>
+</GPS>

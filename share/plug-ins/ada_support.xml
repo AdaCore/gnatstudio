@@ -2,7 +2,7 @@
 
 <!--  This file adds support for Ada (GNAT) switches and aliases  -->
 
-<Ada>
+<GPS>
    <tool name="Make" package="Builder" index="ada">
       <language>Ada</language>
       <initial-cmd-line></initial-cmd-line>
@@ -403,4 +403,4 @@ end if;</text>
    %_
 end;</text>
   </alias>
-</Ada> 
+</GPS> 

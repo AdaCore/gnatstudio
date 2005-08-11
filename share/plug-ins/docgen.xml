@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<docgen>
+<GPS>
    <docgen_backend name="HTML" format="text">
       <extension>html</extension>
       <description>HTML documentation</description>
@@ -38,4 +38,4 @@
       <link_template>html/link.thtml</link_template>
       <description_template>html/description.thtml</description_template>
    </docgen_backend>
-</docgen>
+</GPS>

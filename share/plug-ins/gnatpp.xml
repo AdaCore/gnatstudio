@@ -2,7 +2,7 @@
 <!--  This file adds support for the gnatpp utility.
       This is a pretty printer for Ada files -->
 
-<gnatpp>
+<GPS>
    <action name="Pretty print" output="none" >
       <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>
       <!-- This action only applies to Ada files -->
@@ -16,12 +16,12 @@
       <shell>Editor.edit "%F" 0 0 0 true</shell>
    </action>
 
-   <Submenu>
-     <Title>Edit</Title>
+   <submenu>
+     <title>Edit</title>
      <menu action="Pretty print" before="Unit Testing" >
-        <Title>P_retty Print</Title>
+        <title>P_retty Print</title>
      </menu>
-   </Submenu>
+   </submenu>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >
       <language>Ada</language>
@@ -75,5 +75,5 @@
       </switches>
    </tool>
 
-</gnatpp>
+</GPS>
 

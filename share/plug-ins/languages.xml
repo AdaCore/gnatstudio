@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<Custom>
+<GPS>
   <Language>
     <Name>Texinfo</Name>
     <Spec_Suffix>.texi</Spec_Suffix>
@@ -90,8 +90,8 @@
 
     <Context>
       <New_Line_Comment_Start>//</New_Line_Comment_Start>
-      <comment_start>(*</comment_start>
-      <comment_end>*)</comment_end>
+      <Comment_Start>(*</Comment_Start>
+      <Comment_End>*)</Comment_End>
       <String_Delimiter>'</String_Delimiter>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
@@ -205,4 +205,4 @@
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
   </Language>
-</Custom>
+</GPS>

@@ -4,7 +4,7 @@
       as well as how they should be edited through the project properties
       editor -->
 
-<custom>
+<GPS>
    <project_attribute
        name="languages" 
        editor_page="Languages"
@@ -355,4 +355,4 @@
        <string type="directory" />
    </project_attribute>
 
-</custom>
+</GPS>

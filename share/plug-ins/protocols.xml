@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<Custom>
+<GPS>
   <!--
      Return values
       ok
@@ -568,4 +568,4 @@
     </commands>
   </remote_connection>
 
-</Custom>
+</GPS>

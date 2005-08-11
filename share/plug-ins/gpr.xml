@@ -2,7 +2,7 @@
 
 <!--  This file adds support for editing GPS Project Files (.gpr) -->
 
-<gpr>
+<GPS>
   <Language>
     <Name>Project File</Name>
     <Parent>Ada</Parent>
@@ -18,4 +18,4 @@
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
   </Language>
-</gpr>
+</GPS>

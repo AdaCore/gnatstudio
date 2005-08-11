@@ -3,7 +3,7 @@
 <!--  This file adds support for the gnatstub utility.
       This external tool creates the Ada body from an Ada spec -->
 
-<gnatstub>
+<GPS>
    <action name="Generate body" output="none" >
       <description>Generate the body for an Ada spec file</description>
       <!-- This action only applies to Ada files -->
@@ -23,10 +23,10 @@
       <shell>Editor.edit "%1"</shell>
    </action>
 
-   <Submenu>
-     <Title>Edit</Title>
+   <submenu>
+     <title>Edit</title>
      <menu action="Generate body" before="Unit Testing" >
-        <Title>_Generate Body</Title>
+        <title>_Generate Body</title>
      </menu>
-   </Submenu>
-</gnatstub>
+   </submenu>
+</GPS>

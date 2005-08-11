@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<doc>
-<submenu before="About" action="" >
+<GPS>
+<submenu before="About">
    <title>/Help/GNAT Runtime</title>
 </submenu>
 <documentation_file>
@@ -1479,4 +1479,4 @@
    <menu>/Help/GNAT Runtime/System/Wch__Cnv</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
-</doc>
+</GPS>

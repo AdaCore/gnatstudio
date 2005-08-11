@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!--  This file adds support for the emacs theme -->
 
-<emacs>
+<GPS>
 
   <theme name="Emacs" description="Emacs mode" category="">
      <key action="subprogram box">control-c n</key>
@@ -42,4 +42,4 @@
      <key action="Move to previous word">alt-Left</key>
   </theme>
 
-</emacs>
+</GPS>

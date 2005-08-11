@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--  This file adds support for Subversion -->
 
-<svn_support>
+<GPS>
 
    <!-- SVN status -->
 
@@ -307,4 +307,4 @@
       </annotations_parser>
    </vcs>
 
-</svn_support>
+</GPS>

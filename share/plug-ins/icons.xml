@@ -2,7 +2,7 @@
 
 <!--  This file adds default icons -->
 
-<icons>
+<GPS>
 
   <stock>
     <icon id="gps-vcs-added"          file="../icons/gps-vcs-added.png" />
@@ -16,4 +16,4 @@
     <icon id="gps-vcs-has-conflicts"  file="../icons/gps-vcs-has-conflicts.png" />
   </stock>
 
-</icons>
+</GPS>

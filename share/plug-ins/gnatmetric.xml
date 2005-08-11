@@ -3,7 +3,7 @@
 <!--  This file adds support for the gnatmetric utility.
       This external tool generates a set of software metrics -->
 
-<gnatmetric>
+<GPS>
   <action name="metrics project" >
      <filter id="Project only" language="ada" />
      <description>Run GNAT Metrics on a project</description>
@@ -45,20 +45,20 @@
   </action>
 
   <contextual action="metrics project" >
-     <Title>Compute metrics for %p</Title>
+     <title>Compute metrics for %p</title>
   </contextual>
   <contextual action="metrics file" >
-     <Title>Compute metrics for %f</Title>
+     <title>Compute metrics for %f</title>
   </contextual>
 
-  <Submenu>
-     <Title>Tools/Metrics</Title>
+  <submenu>
+     <title>Tools/Metrics</title>
      <menu action="metrics root project">
-        <Title>Compute metrics for root project</Title>
+        <title>Compute metrics for root project</title>
      </menu>
      <menu action="metrics file">
-        <Title>Compute metrics for current file</Title>
+        <title>Compute metrics for current file</title>
      </menu>
-  </Submenu>
+  </submenu>
 
-</gnatmetric>
+</GPS>

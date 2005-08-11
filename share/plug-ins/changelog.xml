@@ -2,7 +2,7 @@
 
 <!--  This file adds support for editing global ChangeLog files -->
 
-<ChangeLog>
+<GPS>
   <Language>
     <Name>Changelog</Name>
     <Spec_Suffix>changelog</Spec_Suffix>
@@ -22,4 +22,4 @@
     <param name="USER" environment="true"/>
     <text>%D  %(USER)  &lt;%(USER)@&gt;</text>
   </alias>
-</ChangeLog>
+</GPS>
