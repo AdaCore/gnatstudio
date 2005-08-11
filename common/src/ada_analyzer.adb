@@ -718,6 +718,7 @@ package body Ada_Analyzer is
       Terminated          : Boolean := False;
       Last_Replace_Line   : Natural := 0;
       Padding             : Integer := 0;
+      Paren_In_Middle     : Boolean := False;
 
       function Handle_Reserved_Word (Reserved : Token_Type) return Boolean;
       --  Handle reserved words.
@@ -851,6 +852,7 @@ package body Ada_Analyzer is
             return;
          end if;
 
+         Paren_In_Middle := False;
          Start := Line_Start (Buffer, Prec);
          Index := Start;
 
@@ -983,7 +985,11 @@ package body Ada_Analyzer is
             J := J + 1;
          end loop Main_Loop;
 
-         return 0;
+         if Local_Num_Parens > 0 then
+            return Found;
+         else
+            return 0;
+         end if;
       end Find_Multi_Line_Paren;
 
       -----------------------
@@ -1179,8 +1185,7 @@ package body Ada_Analyzer is
                  or else
                    (Top_Tok = Tok_Type
                     and then (Token = Tok_Null or else Token = Tok_Tagged))
-                 or else
-                   (Token = Tok_When and then Top_Tok = Tok_Entry));
+                 or else (Token = Tok_When and then Top_Tok = Tok_Entry));
          end Is_Continuation_Line;
 
       begin
@@ -2174,6 +2179,7 @@ package body Ada_Analyzer is
          Char            : Character;
          Prev_Prev_Token : Token_Type;
          Top_Token       : Token_Stack.Generic_Type_Access;
+         Tmp             : Boolean;
 
          procedure Close_Parenthesis;
          --  Current buffer contents is a closed parenthesis,
@@ -2227,13 +2233,16 @@ package body Ada_Analyzer is
 
                Top_Token := Top (Tokens);
 
-               if Num_Parens = 0
-                 and then Top_Token.Token in Token_Class_Declk
-                 and then Top_Token.Profile_End = 0
-                 and then Subprogram_Decl
-               then
-                  Top_Token.Profile_End := P;
-                  Top_Token.Align_Colon := 0;
+               if Num_Parens = 0 then
+                  Paren_In_Middle := False;
+
+                  if Top_Token.Token in Token_Class_Declk
+                    and then Top_Token.Profile_End = 0
+                    and then Subprogram_Decl
+                  then
+                     Top_Token.Profile_End := P;
+                     Top_Token.Align_Colon := 0;
+                  end if;
                end if;
             end if;
          end Close_Parenthesis;
@@ -2651,6 +2660,7 @@ package body Ada_Analyzer is
 
                   if Indent_Done then
                      Adjust := Indent_Continue + Continuation_Val;
+                     Paren_In_Middle := True;
 
                      if Format_Operators
                        and then not Is_Blank (Char)
@@ -2685,7 +2695,15 @@ package body Ada_Analyzer is
                         end if;
 
                         Adjust := Adjust + Continuation_Val;
-                        Do_Indent (P, Num_Spaces, Continuation => True);
+                        Tmp := Paren_In_Middle;
+                        Do_Indent
+                          (P, Num_Spaces,
+                           Continuation =>
+                             Prev_Prev_Token = Tok_Apostrophe
+                             or else Prev_Prev_Token = Tok_Arrow
+                             or else not Paren_In_Middle
+                             or else Prev_Prev_Token in Reserved_Token_Type);
+                        Paren_In_Middle := Tmp;
                      end if;
                   end if;
 
