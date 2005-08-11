@@ -1633,9 +1633,11 @@ package body Src_Editor_Module is
         (-"Select a directory",
          History => Get_History (Kernel),
          Parent  => Gtk_Window (Get_Current_Window (Kernel)));
+
       if Dir /= No_File then
          Change_Dir (Dir);
       end if;
+
    exception
       when VFS_Directory_Error =>
          GPS.Kernel.Console.Insert
@@ -1643,6 +1645,9 @@ package body Src_Editor_Module is
             "Cannot change to directory: " &
             Full_Name (Dir).all,
             Mode => Error);
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Change_Dir;
 
    ---------------------
