@@ -13692,7 +13692,7 @@ The attribute @code{name} indicates the identifier of the VCS. The
 casing of this name is important, and the same casing must be used in
 the project files.
 
-The attribute @code{absolute_name} indicates the behavior of the
+The attribute @code{absolute_names} indicates the behavior of the
 VCS relative to file names, and can take the values @code{TRUE} or
 @code{FALSE}. If it is set to @code{TRUE}, it means that all
 commands in the VCS will work on absolute file names. If it set to
