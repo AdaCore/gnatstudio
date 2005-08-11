@@ -12,7 +12,37 @@ It is used by GPS to validate the customization files it is given as input.
       </xsd:documentation>
    </xsd:annotation>
 
-   <xsd:element name="GPS">
+   <xsd:complexType name="gps_all_nodes">
+     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+       <xsd:element ref="action" />
+       <xsd:element ref="alias" />
+<!--
+       <xsd:element ref="button" />
+       <xsd:element ref="case_exceptions" />
+-->
+       <xsd:element ref="contextual" />
+       <xsd:element ref="docgen_backend" />
+       <xsd:element ref="documentation_file" />
+<!--
+       <xsd:element ref="entry" />
+-->
+       <xsd:element ref="filter" />
+       <xsd:element ref="key" />
+       <xsd:element ref="Language" />
+       <xsd:element ref="menu" />
+       <xsd:element ref="pref" />
+       <xsd:element ref="preference" />
+       <xsd:element ref="project_attribute" />
+       <xsd:element ref="stock" />
+       <xsd:element ref="submenu" />
+       <xsd:element ref="theme" />
+       <xsd:element ref="tool" />
+       <xsd:element ref="vcs" />
+       <xsd:element ref="vsearch-pattern" />
+     </xsd:choice>
+   </xsd:complexType>
+
+   <xsd:element name="GPS" type="gps_all_nodes">
       <xsd:annotation>
          <xsd:documentation xml:lang="en">
 This is the root element of all GPS customization files, if they contain
@@ -22,36 +52,6 @@ the root node in the customization file. As usual, there can be only one such
 root node.
          </xsd:documentation>
       </xsd:annotation>
-      <xsd:complexType>
-         <xsd:choice minOccurs="0" maxOccurs="unbounded">
-             <xsd:element ref="action" />
-             <xsd:element ref="alias" />
-<!--
-             <xsd:element ref="button" />
-             <xsd:element ref="case_exceptions" />
--->
-             <xsd:element ref="contextual" />
-             <xsd:element ref="docgen_backend" />
-<!--
-             <xsd:element ref="documentation_file" />
-             <xsd:element ref="entry" />
--->
-             <xsd:element ref="filter" />
-             <xsd:element ref="key" />
-             <xsd:element ref="Language" />
-             <xsd:element ref="menu" />
-<!--
-             <xsd:element ref="pref" />
-             <xsd:element ref="preference" />
-             <xsd:element ref="project_attribute" />
-             <xsd:element ref="stock" />
--->
-             <xsd:element ref="submenu" />
-             <xsd:element ref="tool" />
-             <xsd:element ref="vcs" />
-             <xsd:element ref="vsearch-pattern" />
-        </xsd:choice>
-      </xsd:complexType>
    </xsd:element>
 
    <xsd:simpleType name="emptyNode" >
@@ -81,6 +81,21 @@ root node.
      </xsd:restriction>
    </xsd:simpleType>
 
+   <!--********************************************************************
+     **             Theme                                                **
+     ********************************************************************-->
+
+   <xsd:element name="theme">
+     <xsd:complexType>
+       <xsd:complexContent>
+         <xsd:extension base="gps_all_nodes">
+           <xsd:attribute name="name"        use="required" type="xsd:string" />
+           <xsd:attribute name="description" use="optional" type="xsd:string" />
+           <xsd:attribute name="category"    use="optional" type="xsd:string" default="General" />
+         </xsd:extension>
+       </xsd:complexContent>
+     </xsd:complexType>
+   </xsd:element>
 
    <!--********************************************************************
      **             Actions                                              **
@@ -510,12 +525,13 @@ to limit the scope of an action for instance</xsd:documentation>
        <xsd:element name="Name"    type="gps_language_category_list" minOccurs="1" maxOccurs="1" />
        <xsd:element name="Pattern" type="xsd:string"                 minOccurs="1" maxOccurs="1" />
        <xsd:element name="Index"   type="xsd:byte"                   minOccurs="1" maxOccurs="1" />
+       <xsd:element name="Icon"    type="xsd:string"                 minOccurs="1" maxOccurs="1" />
      </xsd:choice>
    </xsd:complexType>
 
    <xsd:complexType name="gps_language_categories">
      <xsd:choice maxOccurs="unbounded">
-       <xsd:element name="category" type="gps_language_category" />
+       <xsd:element name="Category" type="gps_language_category" />
      </xsd:choice>
    </xsd:complexType>
 
@@ -541,6 +557,20 @@ to limit the scope of an action for instance</xsd:documentation>
          <xsd:element name="Parse_Entities"   type="xsd:string"              maxOccurs="1" />
          <xsd:element name="Context"          type="gps_language_context"    maxOccurs="1" />
          <xsd:element name="Categories"       type="gps_language_categories" maxOccurs="1" />
+
+         <!--  This element is currently not documented in gps.texi, but it
+               isn't used either in the Ada core. Since it is present in some
+               XML files, we have to support it at the schema level, though -->
+         <xsd:element name="Project_Field">
+           <xsd:complexType>
+             <xsd:simpleContent>
+               <xsd:restriction base="xsd:string">
+                 <xsd:attribute name="name"  type="xsd:string" use="required" />
+                 <xsd:attribute name="index" type="xsd:string" use="required" />
+               </xsd:restriction>
+             </xsd:simpleContent>
+            </xsd:complexType>
+         </xsd:element>
        </xsd:choice>
      </xsd:complexType>
    </xsd:element>
@@ -668,6 +698,157 @@ to limit the scope of an action for instance</xsd:documentation>
        </xsd:choice>
        <xsd:attribute name="name" use="required"   type="xsd:string" />
        <xsd:attribute name="format" use="optional" type="xsd:string" fixed="text" />
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Icons                                              **
+     ********************************************************************-->
+
+   <xsd:element name="stock">
+     <xsd:complexType>
+       <xsd:sequence maxOccurs="unbounded">
+         <xsd:element name="icon">
+           <xsd:complexType>
+             <xsd:attribute name="id"   use="required" type="xsd:string" />
+             <xsd:attribute name="file" use="required" type="xsd:string" />
+           </xsd:complexType>
+         </xsd:element>
+       </xsd:sequence>
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Preferences                                        **
+     ********************************************************************-->
+
+   <xsd:simpleType name="gps_preference_type">
+     <xsd:restriction base="xsd:string">
+       <xsd:enumeration value="boolean" />
+       <xsd:enumeration value="integer" />
+       <xsd:enumeration value="string"  />
+       <xsd:enumeration value="color"   />
+       <xsd:enumeration value="font"    />
+       <xsd:enumeration value="choices" />
+     </xsd:restriction>
+   </xsd:simpleType>
+
+   <xsd:element name="preference">
+     <xsd:complexType>
+       <xsd:attribute name="name"    use="required" type="xsd:string" />
+       <xsd:attribute name="page"    use="optional" type="xsd:string" default="General" />
+       <xsd:attribute name="default" use="optional" type="xsd:string" />
+       <xsd:attribute name="tip"     use="optional" type="xsd:string" default="" />
+       <xsd:attribute name="label"   use="required" type="xsd:string" />
+       <xsd:attribute name="type"    use="required" type="gps_preference_type" />
+     </xsd:complexType>
+   </xsd:element>
+
+   <xsd:element name="pref">
+     <xsd:complexType>
+       <xsd:simpleContent>
+         <xsd:restriction base="xsd:string">
+           <xsd:attribute name="name" use="required" type="xsd:string" />
+         </xsd:restriction>
+       </xsd:simpleContent>
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Project attributes                                 **
+     ********************************************************************-->
+
+   <xsd:complexType name="gps_project_attribute_string">
+     <xsd:attribute name="default" use="optional" type="xsd:string" />
+     <xsd:attribute name="type"    use="optional" default="">
+       <xsd:simpleType>
+         <xsd:restriction base="xsd:string">
+           <xsd:enumeration value="" />
+           <xsd:enumeration value="file" />
+           <xsd:enumeration value="directory" />
+         </xsd:restriction>
+       </xsd:simpleType>
+     </xsd:attribute>
+   </xsd:complexType>
+
+   <xsd:group name="gps_project_attribute_choice">
+     <xsd:sequence>
+       <xsd:element name="choice" type="xsd:string" maxOccurs="unbounded">
+         <xsd:complexType>
+           <xsd:simpleContent>
+             <xsd:extension base="xsd:string">
+               <xsd:attribute name="default" use="optional" type="boolean" default="false" />
+             </xsd:extension>
+           </xsd:simpleContent>
+         </xsd:complexType>
+       </xsd:element>
+       <xsd:element name="string" type="emptyNode"  maxOccurs="1" />
+     </xsd:sequence>
+   </xsd:group>
+
+   <xsd:complexType name="gps_project_attribute_shell">
+     <xsd:simpleContent>
+       <xsd:extension base="xsd:string">
+         <xsd:attribute name="lang"    use="optional" type="shell_language" default="shell" />
+         <xsd:attribute name="default" use="optional" type="xsd:string"     default="" />
+       </xsd:extension>
+     </xsd:simpleContent>
+   </xsd:complexType>
+
+   <xsd:group name="gps_project_attribute_types">
+     <xsd:choice>
+       <xsd:group   ref="gps_project_attribute_choice" />
+       <xsd:element name="string"            type="gps_project_attribute_string"/>
+       <xsd:element name="shell"             type="gps_project_attribute_shell" />
+     </xsd:choice>
+   </xsd:group>
+
+   <xsd:complexType name="gps_project_attribute_index">
+     <xsd:choice>
+       <xsd:group ref="gps_project_attribute_types" minOccurs="1" maxOccurs="1" />
+     </xsd:choice>
+     <xsd:attribute name="attribute" use="required" type="xsd:string" />
+     <xsd:attribute name="package"   use="optional" type="xsd:string" default="" />
+   </xsd:complexType>
+
+   <xsd:complexType name="gps_project_attribute_specialized_index">
+     <xsd:choice>
+       <xsd:group ref="gps_project_attribute_types" minOccurs="1" maxOccurs="1" />
+     </xsd:choice>
+     <xsd:attribute name="value" use="required" type="xsd:string" />
+   </xsd:complexType>
+
+   <xsd:element name="project_attribute">
+     <xsd:complexType>
+       <xsd:choice>
+         <xsd:group   ref="gps_project_attribute_types" />
+         <xsd:sequence>
+           <xsd:element name="index"             type="gps_project_attribute_index" minOccurs="1" maxOccurs="1" />
+           <xsd:element name="specialized_index" type="gps_project_attribute_specialized_index" maxOccurs="unbounded" />
+         </xsd:sequence>
+       </xsd:choice>
+       <xsd:attribute name="package"              use="optional" type="xsd:string" default="" />
+       <xsd:attribute name="name"                 use="required" type="xsd:string" />
+       <xsd:attribute name="editor_page"          use="optional" type="xsd:string" default="General" />
+       <xsd:attribute name="editor_section"       use="optional" type="xsd:string" default="" />
+       <xsd:attribute name="label"                use="optional" type="xsd:string" />
+       <xsd:attribute name="description"          use="optional" type="xsd:string" default="" />
+       <xsd:attribute name="list"                 use="optional" type="boolean"    default="false" />
+       <xsd:attribute name="ordered"              use="optional" type="boolean"    default="false" />
+       <xsd:attribute name="omit_if_default"      use="optional" type="boolean"    default="true" />
+       <xsd:attribute name="base_name_only"       use="optional" type="boolean"    default="false" />
+       <xsd:attribute name="case_sensitive_index" use="optional" type="boolean"    default="false" />
+       <xsd:attribute name="hide_in"              use="optional"                   default="" >
+          <xsd:simpleType>
+             <xsd:list itemType="xsd:string" />
+          </xsd:simpleType>
+       </xsd:attribute>
+       <xsd:attribute name="disable_if_not_set"   use="optional" type="boolean"    default="false" />
+       <xsd:attribute name="disable"              use="optional"                   default="">
+          <xsd:simpleType>
+             <xsd:list itemType="xsd:string" />
+          </xsd:simpleType>
+       </xsd:attribute>
      </xsd:complexType>
    </xsd:element>
 
