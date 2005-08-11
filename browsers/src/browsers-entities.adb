@@ -19,24 +19,10 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+
 with GNAT.Heap_Sort_G;
 with GNAT.Strings;              use GNAT.Strings;
 
-with Entities.Queries;          use Entities, Entities.Queries;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Browsers.Canvas;           use Browsers.Canvas;
-with Traces;                    use Traces;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.GC;                    use Gdk.GC;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Drawable;              use Gdk.Drawable;
@@ -44,6 +30,11 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Region;                use Gdk.Region;
 with Gdk.Window;                use Gdk.Window;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -51,11 +42,25 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style;                 use Gtk.Style;
 with Gtk.Widget;                use Gtk.Widget;
+
 with Gtkada.Canvas;             use Gtkada.Canvas;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Pango.Layout;              use Pango.Layout;
 with Gtkada.Types;
+
+with Pango.Layout;              use Pango.Layout;
+
+with Browsers.Canvas;           use Browsers.Canvas;
+with Entities.Queries;          use Entities, Entities.Queries;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Traces;                    use Traces;
 
 package body Browsers.Entities is
 
@@ -419,7 +424,7 @@ package body Browsers.Entities is
    is
       pragma Unreferenced (Command);
       Child : constant MDI_Child :=
-        Open_Type_Browser_Child (Get_Kernel (Context.Context));
+                Open_Type_Browser_Child (Get_Kernel (Context.Context));
       Item  : Type_Item;
       pragma Unreferenced (Item);
    begin
