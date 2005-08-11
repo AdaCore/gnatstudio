@@ -2751,7 +2751,7 @@ package body Src_Editor_Module is
 
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
-      Register_Menu (Kernel, Edit, -"_Select All",  "",
+      Register_Menu (Kernel, Edit, -"_Select All", "",
                      On_Select_All'Access, Ref_Item => -"Preferences",
                      Filter => Src_Action_Context);
 
