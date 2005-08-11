@@ -13955,7 +13955,7 @@ parameters:
     @item $1  = log
     @item $2- = list of files or dirs
   @end table
-  Add file/dir to the repository, with the provided revision log. The
+  Add files/dirs to the repository, with the provided revision log. The
   added files/dirs are not commited.
 
 @item remove
