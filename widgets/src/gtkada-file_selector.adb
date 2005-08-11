@@ -728,6 +728,10 @@ package body Gtkada.File_Selector is
 
       end;
 
+   exception
+      --  ??? should catch VFS_Directory_Error
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Read_File;
 
    ---------------------
@@ -1567,6 +1571,7 @@ package body Gtkada.File_Selector is
       return False;
 
    exception
+      --  ??? should catch VFS_Directory_Error
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
