@@ -3293,7 +3293,11 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
    begin
-      return Id.Character_Width;
+      if Id = null then
+         return 0;
+      else
+         return Id.Character_Width;
+      end if;
    end Line_Number_Character_Width;
 
    ---------------------
