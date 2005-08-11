@@ -20,29 +20,29 @@
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Glib;                      use Glib;
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
+with Glib;                      use Glib;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Intl;                  use GPS.Intl;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Commands.Editor;           use Commands.Editor;
-with String_Utils;              use String_Utils;
-with String_List_Utils;         use String_List_Utils;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Intl;                  use GPS.Intl;
+with Language;                  use Language;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
-with Language;                  use Language;
-with VFS; use VFS;
+with String_List_Utils;         use String_List_Utils;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with VFS; use VFS;
 
 package body Completion_Module is
 
@@ -577,10 +577,10 @@ package body Completion_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Edit    : constant String := '/' & (-"Edit") & '/';
-      Command : Interactive_Command_Access;
+      Edit               : constant String := '/' & (-"Edit") & '/';
+      Command            : Interactive_Command_Access;
       Src_Action_Context : constant Action_Filter :=
-        new Src_Editor_Action_Context;
+                             new Src_Editor_Action_Context;
 
    begin
       Completion_Module := new Completion_Module_Record;
