@@ -384,6 +384,7 @@ package body KeyManager_Module is
    begin
       Free (Module.Key_Manager.all);
       Unchecked_Free (Module.Key_Manager);
+      Keymanager_Module := null;
    end Destroy;
 
    ---------------------------
