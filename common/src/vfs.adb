@@ -522,24 +522,22 @@ package body VFS is
       if File.Value = null then
          return False;
 
-      elsif File.Value.Kind = Unknown then
-         if File.Value.Connection /= null then
-            Ret := Is_Directory
-              (File.Value.Connection,
-               File.Value.Full_Name
-                 (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      elsif File.Value.Connection /= null then
+         Ret := Is_Directory
+           (File.Value.Connection,
+            File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
 
-         else
-            Ret := Is_Directory (Locale_Full_Name (File));
-         end if;
-
-         if Ret then
-            File.Value.Kind := Directory;
-            Ensure_Directory (File);
-         end if;
+      else
+         Ret := Is_Directory (Locale_Full_Name (File));
       end if;
 
-      return File.Value.Kind = Directory;
+      if Ret then
+         File.Value.Kind := Directory;
+         Ensure_Directory (File);
+      end if;
+
+      return Ret;
    end Is_Directory;
 
    ----------------------
