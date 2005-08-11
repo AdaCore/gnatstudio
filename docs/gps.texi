@@ -13944,10 +13944,19 @@ parameters:
 
 @item add
   @table @code
-    @item $1 = log
-    @item $2 = file or dir
+    @item $1  = log
+    @item $2- = list of files or dirs
   @end table
-  Add file/dir to the repository, with the provided revision log.
+  Add files/dirs to the repository, with the provided revision log. The
+  added files/dirs are commited. 
+
+@item add_no_commit
+  @table @code
+    @item $1  = log
+    @item $2- = list of files or dirs
+  @end table
+  Add file/dir to the repository, with the provided revision log. The
+  added files/dirs are not commited.
 
 @item remove
   @table @code
