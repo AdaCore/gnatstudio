@@ -16,16 +16,12 @@ It is used by GPS to validate the customization files it is given as input.
      <xsd:choice minOccurs="0" maxOccurs="unbounded">
        <xsd:element ref="action" />
        <xsd:element ref="alias" />
-<!--
        <xsd:element ref="button" />
        <xsd:element ref="case_exceptions" />
--->
        <xsd:element ref="contextual" />
        <xsd:element ref="docgen_backend" />
        <xsd:element ref="documentation_file" />
-<!--
        <xsd:element ref="entry" />
--->
        <xsd:element ref="filter" />
        <xsd:element ref="key" />
        <xsd:element ref="Language" />
@@ -647,8 +643,9 @@ to limit the scope of an action for instance</xsd:documentation>
           <xsd:element name="local_status_parser" type="gps_vcs_status_parser"      maxOccurs="unbounded" />
           <xsd:element name="annotations_parser"  type="gps_vcs_annotations_parser" maxOccurs="unbounded" />
        </xsd:choice>
-       <xsd:attribute name="name"           use="required" type="xsd:string" />
-       <xsd:attribute name="absolute_names" use="required" type="boolean" />
+       <xsd:attribute name="name"            use="required" type="xsd:string" />
+       <xsd:attribute name="absolute_names"  use="required" type="boolean" />
+       <xsd:attribute name="atomic_commands" use="optional" type="boolean" default="false"/>
      </xsd:complexType>
    </xsd:element>
 
@@ -849,6 +846,78 @@ to limit the scope of an action for instance</xsd:documentation>
              <xsd:list itemType="xsd:string" />
           </xsd:simpleType>
        </xsd:attribute>
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Case exceptions                                    **
+     ********************************************************************-->
+
+   <xsd:element name="case_exceptions" >
+     <xsd:complexType>
+       <xsd:choice maxOccurs="unbounded">
+         <xsd:element name="word"      type="xsd:string" />
+         <xsd:element name="substring" type="xsd:string" />
+       </xsd:choice>
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Documentation                                      **
+     ********************************************************************-->
+
+   <xsd:element name="documentation_file">
+     <xsd:complexType>
+       <xsd:choice maxOccurs="unbounded">
+         <xsd:element name="name"  type="xsd:string" minOccurs="0" maxOccurs="1" />
+         <xsd:element name="shell" minOccurs="0" maxOccurs="1">
+           <xsd:complexType>
+             <xsd:simpleContent>
+               <xsd:extension base="xsd:string">
+                 <xsd:attribute name="lang" type="shell_language" use="optional" default="shell" />
+               </xsd:extension>
+             </xsd:simpleContent>
+           </xsd:complexType>
+         </xsd:element>
+         <xsd:element name="descr"    type="xsd:string" minOccurs="0" maxOccurs="1" />
+         <xsd:element name="category" type="xsd:string" minOccurs="0" maxOccurs="1" />
+         <xsd:element name="menu"     type="xsd:string" minOccurs="0" maxOccurs="1" />
+       </xsd:choice>
+       <xsd:attribute name="before" use="optional" type="xsd:string" default="" />
+       <xsd:attribute name="after"  use="optional" type="xsd:string" default="" />
+     </xsd:complexType>
+   </xsd:element>
+
+   <!--******************************************************************
+     **             Toolbar                                            **
+     ********************************************************************-->
+
+   <xsd:element name="button">
+     <xsd:complexType>
+       <xsd:choice minOccurs="0" maxOccurs="2">
+         <xsd:element name="title"  type="xsd:string" maxOccurs="1"/>
+         <xsd:element name="pixmap" type="xsd:string" maxOccurs="1"/>
+       </xsd:choice>
+       <xsd:attribute name="action" use="required" type="xsd:string" />
+     </xsd:complexType>
+   </xsd:element>
+
+   <xsd:element name="entry">
+     <xsd:complexType>
+       <xsd:choice minOccurs="1" maxOccurs="unbounded">
+         <xsd:element name="choice">
+           <xsd:complexType>
+             <xsd:simpleContent>
+               <xsd:extension base="xsd:string">
+                 <xsd:attribute name="on-selected" use="optional" type="xsd:string" />
+               </xsd:extension>
+             </xsd:simpleContent>
+           </xsd:complexType>
+         </xsd:element>
+       </xsd:choice>
+       <xsd:attribute name="id"         use="required" type="xsd:string" />
+       <xsd:attribute name="label"      use="optional" type="xsd:string" default=""/>
+       <xsd:attribute name="on-changed" use="optional" type="xsd:string" default=""/>
      </xsd:complexType>
    </xsd:element>
 
