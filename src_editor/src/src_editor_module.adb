@@ -409,6 +409,11 @@ package body Src_Editor_Module is
       if Id /= null then
          Editors_Hash.Remove (Id.Editors, User);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Editor_Destroy;
 
    --------------
@@ -1791,6 +1796,11 @@ package body Src_Editor_Module is
             end;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Print;
 
    -------------------
