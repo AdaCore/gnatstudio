@@ -732,6 +732,7 @@ package body Gtkada.File_Selector is
       --  ??? should catch VFS_Directory_Error
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Read_File;
 
    ---------------------
