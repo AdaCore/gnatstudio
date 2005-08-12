@@ -413,6 +413,7 @@ package body Directory_Tree is
          --  we changed the remote host. rebuild whole tree
          if Get_Root (Curr_Dir) /= Get_Root (Dir) then
             Refresh (Tree, Dir);
+            Parent := Get_Iter_First (Tree.File_Model);
          end if;
       end if;
       Iter := Parent;
@@ -1699,7 +1700,12 @@ package body Directory_Tree is
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
 
-      Get_Logical_Drive_Strings (Buffer, Len);
+      if Get_Host (Dir) = "" then
+         --  Only look for logical drives if the access is local
+         Get_Logical_Drive_Strings (Buffer, Len);
+      else
+         Len := 0;
+      end if;
 
       if Len = 0 then
          File_Append_Directory
