@@ -39,7 +39,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              On);
+                                              Off);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
