@@ -656,44 +656,44 @@ to limit the scope of an action for instance</xsd:documentation>
    <xsd:element name="docgen_backend">
      <xsd:complexType>
        <xsd:choice maxOccurs="unbounded">
-         <xsd:element name="extension"                  type="xsd:string" minOccurs="1" maxOccurs="1" />
-         <xsd:element name="description"                type="xsd:string" minOccurs="1" maxOccurs="1" />
-         <xsd:element name="file_header_template"       type="xsd:string" maxOccurs="1" />
-         <xsd:element name="file_footer_template"       type="xsd:string" maxOccurs="1" />
-         <xsd:element name="comment_template"           type="xsd:string" maxOccurs="1" />
-         <xsd:element name="keyword_template"           type="xsd:string" maxOccurs="1" />
-         <xsd:element name="string_template"            type="xsd:string" maxOccurs="1" />
-         <xsd:element name="char_template"              type="xsd:string" maxOccurs="1" />
-         <xsd:element name="subtitle_template"          type="xsd:string" maxOccurs="1" />
-         <xsd:element name="package_desc_template"      type="xsd:string" maxOccurs="1" />
-         <xsd:element name="package_template"           type="xsd:string" maxOccurs="1" />
-         <xsd:element name="with_template"              type="xsd:string" maxOccurs="1" />
-         <xsd:element name="variable_template"          type="xsd:string" maxOccurs="1" />
-         <xsd:element name="exception_template"         type="xsd:string" maxOccurs="1" />
-         <xsd:element name="type_template"              type="xsd:string" maxOccurs="1" />
-         <xsd:element name="tagged_type_template"       type="xsd:string" maxOccurs="1" />
-         <xsd:element name="calls_references_template"  type="xsd:string" maxOccurs="1" />
-         <xsd:element name="caller_references_template" type="xsd:string" maxOccurs="1" />
-         <xsd:element name="entity_template"            type="xsd:string" maxOccurs="1" />
-         <xsd:element name="subprogram_template"        type="xsd:string" maxOccurs="1" />
-         <xsd:element name="header_template"            type="xsd:string" maxOccurs="1" />
-         <xsd:element name="footer_template"            type="xsd:string" maxOccurs="1" />
-         <xsd:element name="header_private_template"    type="xsd:string" maxOccurs="1" />
-         <xsd:element name="main_frame_template"        type="xsd:string" maxOccurs="1" />
-         <xsd:element name="unit_index_template"        type="xsd:string" maxOccurs="1" />
-         <xsd:element name="subprogram_index_template"  type="xsd:string" maxOccurs="1" />
-         <xsd:element name="type_index_template"        type="xsd:string" maxOccurs="1" />
-         <xsd:element name="tagged_type_index_template" type="xsd:string" maxOccurs="1" />
-         <xsd:element name="index_tagged_type_template" type="xsd:string" maxOccurs="1" />
-         <xsd:element name="index_item_template"        type="xsd:string" maxOccurs="1" />
-         <xsd:element name="private_index_template"     type="xsd:string" maxOccurs="1" />
-         <xsd:element name="public_index_template"      type="xsd:string" maxOccurs="1" />
-         <xsd:element name="end_index_template"         type="xsd:string" maxOccurs="1" />
-         <xsd:element name="block_template"             type="xsd:string" maxOccurs="1" />
-         <xsd:element name="link_template"              type="xsd:string" maxOccurs="1" />
-         <xsd:element name="description_template"       type="xsd:string" maxOccurs="1" />
+         <xsd:element name="block_template"                    type="xsd:string" maxOccurs="1" />
+         <xsd:element name="calls_references_template"         type="xsd:string" maxOccurs="1" />
+         <xsd:element name="caller_references_template"        type="xsd:string" maxOccurs="1" />
+         <xsd:element name="char_template"                     type="xsd:string" maxOccurs="1" />
+         <xsd:element name="comment_template"                  type="xsd:string" maxOccurs="1" />
+         <xsd:element name="description"                       type="xsd:string" minOccurs="1" maxOccurs="1" />
+         <xsd:element name="description_template"              type="xsd:string" maxOccurs="1" />
+         <xsd:element name="entity_template"                   type="xsd:string" maxOccurs="1" />
+         <xsd:element name="exception_template"                type="xsd:string" maxOccurs="1" />
+         <xsd:element name="extension"                         type="xsd:string" minOccurs="1" maxOccurs="1" />
+         <xsd:element name="file_footer_template"              type="xsd:string" maxOccurs="1" />
+         <xsd:element name="file_header_template"              type="xsd:string" maxOccurs="1" />
+         <xsd:element name="footer_template"                   type="xsd:string" maxOccurs="1" />
+         <xsd:element name="header_template"                   type="xsd:string" maxOccurs="1" />
+         <xsd:element name="index_footer_template"             type="xsd:string" maxOccurs="1" />
+         <xsd:element name="item_index_template"               type="xsd:string" maxOccurs="1" />
+         <xsd:element name="keyword_template"                  type="xsd:string" maxOccurs="1" />
+         <xsd:element name="link_template"                     type="xsd:string" maxOccurs="1" />
+         <xsd:element name="main_frame_template"               type="xsd:string" maxOccurs="1" />
+         <xsd:element name="package_desc_template"             type="xsd:string" maxOccurs="1" />
+         <xsd:element name="package_template"                  type="xsd:string" maxOccurs="1" />
+         <xsd:element name="private_header_template"           type="xsd:string" maxOccurs="1" />
+         <xsd:element name="private_index_header_template"     type="xsd:string" maxOccurs="1" />
+         <xsd:element name="public_index_header_template"      type="xsd:string" maxOccurs="1" />
+         <xsd:element name="string_template"                   type="xsd:string" maxOccurs="1" />
+         <xsd:element name="subprogram_index_header_template"  type="xsd:string" maxOccurs="1" />
+         <xsd:element name="subprogram_template"               type="xsd:string" maxOccurs="1" />
+         <xsd:element name="subtitle_template"                 type="xsd:string" maxOccurs="1" />
+         <xsd:element name="tagged_type_index_header_template" type="xsd:string" maxOccurs="1" />
+         <xsd:element name="tagged_type_index_template"        type="xsd:string" maxOccurs="1" />
+         <xsd:element name="tagged_type_template"              type="xsd:string" maxOccurs="1" />
+         <xsd:element name="type_index_header_template"        type="xsd:string" maxOccurs="1" />
+         <xsd:element name="type_template"                     type="xsd:string" maxOccurs="1" />
+         <xsd:element name="unit_index_header_template"        type="xsd:string" maxOccurs="1" />
+         <xsd:element name="variable_template"                 type="xsd:string" maxOccurs="1" />
+         <xsd:element name="with_template"                     type="xsd:string" maxOccurs="1" />
        </xsd:choice>
-       <xsd:attribute name="name" use="required"   type="xsd:string" />
+       <xsd:attribute name="name"   use="required" type="xsd:string" />
        <xsd:attribute name="format" use="optional" type="xsd:string" fixed="text" />
      </xsd:complexType>
    </xsd:element>
