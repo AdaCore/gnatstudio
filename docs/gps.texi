@@ -11239,10 +11239,9 @@ Point to a template file used to output strings.
 @item char_template
 Point to a template file used to output characters.
 
-@ignore
 @item subtitle_template
-Point to a template file used to output ???.
-@end ignore
+Point to a template file used to output a subtitle give its name, size and
+indentation level.
 
 @item package_desc_template
 Point to a template file used to output package's description.
@@ -11284,42 +11283,39 @@ Point to a template file used to output the start a package description.
 @item footer_template
 Point to a template file used to output the end of a package description.
 
-@item header_private_template
+@item private_header_template
 Point to a template file used to output the start of package's private section.
 
 @item main_frame_template
 Point to a template file used to output the main file (the file
 @file{index.html} in the HTML backend for example).
 
-@item unit_index_template
-Point to a template file used to output the units index.
+@item unit_index_header_template
+Point to a template file used to output the units index header.
 
-@item subprogram_index_template
-Point to a template file used to output the subprograms index.
+@item subprogram_index_header_template
+Point to a template file used to output the subprograms index header.
 
-@item type_index_template
-Point to a template file used to output the types index.
+@item type_index_header_template
+Point to a template file used to output the types index header.
+
+@item tagged_type_index_header_template
+Point to a template file used to output the tagged types index header.
+
+@item item_index_template
+Point to a template file used to output an item index.
 
 @item tagged_type_index_template
 Point to a template file used to output the tagged types index.
 
-@item index_item_template
-Point to a template file used to output an index item. This is used by
-all index templates.
+@item private_index_header_template
+Point to a template file used to output the private types index header.
 
-@item private_index_template
-Point to a template file used to output the private types index.
+@item public_index_header_template
+Point to a template file used to output the public types index header.
 
-@item public_index_template
-Point to a template file used to output the public types index.
-
-@item end_index_template
+@item index_footer_template
 Point to a template file used to output the end of indexes.
-
-@ignore
-@item index_tagged_type_template
-Point to a template file used to ???
-@end ignore
 
 @item block_template
 Point to a template file used to output block of text with a reference.
@@ -13951,7 +13947,7 @@ parameters:
     @item $2- = list of files or dirs
   @end table
   Add files/dirs to the repository, with the provided revision log. The
-  added files/dirs are commited. 
+  added files/dirs are commited.
 
 @item add_no_commit
   @table @code
