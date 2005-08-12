@@ -253,6 +253,7 @@ package body GPS.Kernel.Contexts is
             Name : constant String := Base_Name (Context.File);
          begin
             if Context.Kernel /= null
+              and then Name'Length > 4
               and then Name (Name'First .. Name'First + 3) = "ref$"
             then
                --  This is a reference file, we have no need of it in the
