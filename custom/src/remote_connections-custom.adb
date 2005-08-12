@@ -39,7 +39,7 @@ package body Remote_Connections.Custom is
 
    Me : constant Debug_Handle := Create ("Remote_Connections.Custom");
    Full_Me : constant Debug_Handle := Create ("Remote_Connections.Custom_Full",
-                                              Off);
+                                              On);
 
    Custom_Root : Custom_Connection_Access := null;
    --  List of all custom connections
@@ -1153,7 +1153,7 @@ package body Remote_Connections.Custom is
             Trace (Me, "Initialize parent = " & Tmp_Str.all);
 
             while Tmp_Connect /= null loop
-               if To_Lower (Tmp_Str.all) = The_Name then
+               if To_Lower (Get_Protocol (Tmp_Connect)) = The_Name then
                   Connection.Commands := Tmp_Connect.Commands;
                   exit;
                end if;
