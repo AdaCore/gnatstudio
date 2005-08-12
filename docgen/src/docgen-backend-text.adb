@@ -788,7 +788,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Header_Private_Kind),
+              (Get_Template_File_Name (B, Kernel, Private_Header_Kind),
                (Assoc ("LEVEL", Level),
                 Assoc ("INDENT", Level * Get_Indent (B.all)),
                 Assoc ("HEADER_TITLE", Header_Title)), Cache)));
@@ -854,7 +854,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Unit_Index_Kind),
+              (Get_Template_File_Name (B, Kernel, Unit_Index_Header_Kind),
                (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
                Cache)));
    end Doc_Unit_Index;
@@ -873,7 +873,8 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Subprogram_Index_Kind),
+              (Get_Template_File_Name
+                 (B, Kernel, Subprogram_Index_Header_Kind),
                (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
                Cache)));
    end Doc_Subprogram_Index;
@@ -892,7 +893,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Type_Index_Kind),
+              (Get_Template_File_Name (B, Kernel, Type_Index_Header_Kind),
                (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
                Cache)));
    end Doc_Type_Index;
@@ -910,7 +911,8 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Tagged_Type_Index_Kind),
+              (Get_Template_File_Name
+                 (B, Kernel, Tagged_Type_Index_Header_Kind),
                Cached => Cache)));
    end Doc_Tagged_Type_Index;
 
@@ -955,7 +957,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Index_Tagged_Type_Kind),
+              (Get_Template_File_Name (B, Kernel, Tagged_Type_Index_Kind),
                T_Set, Cache)));
    end Doc_Index_Tagged_Type;
 
@@ -976,7 +978,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Index_Item_Kind),
+              (Get_Template_File_Name (B, Kernel, Item_Index_Kind),
                (Assoc ("REF_FILE", Doc_File),
                 Assoc ("DECL_LINE", Line),
                 Assoc ("NAME", Name),
@@ -998,7 +1000,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Private_Index_Kind),
+              (Get_Template_File_Name (B, Kernel, Private_Index_Header_Kind),
                (1 => Assoc ("TITLE", Title)), Cache)));
    end Doc_Private_Index;
 
@@ -1016,7 +1018,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Public_Index_Kind),
+              (Get_Template_File_Name (B, Kernel, Public_Index_Header_Kind),
                (1 => Assoc ("TITLE", Title)), Cache)));
    end Doc_Public_Index;
 
@@ -1033,7 +1035,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, End_Index_Kind),
+              (Get_Template_File_Name (B, Kernel, Index_Footer_Kind),
                Cached => Cache)));
    end Doc_End_Of_Index;
 
