@@ -67,7 +67,7 @@
     <max_password_attempts>2</max_password_attempts>
     <commands>
       <open_session_cmd>
-        <action kind="spawn" param="ssh %h -C %{-l %u} -e none -q">
+        <action kind="spawn" param="ssh %h -C %{-l %u} -t -t -e none -q /bin/sh -i">
           <expect regexp_id="common_login">
             <action kind="input_login"/>
           </expect>
