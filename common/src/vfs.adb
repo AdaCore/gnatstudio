@@ -25,6 +25,7 @@
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Values;                use Glib.Values;
+with Glib.Unicode;               use Glib.Unicode;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -116,11 +117,28 @@ package body VFS is
 
    function Create (Full_Filename : UTF8_String) return Virtual_File is
       Protocol, User, Host : String_Access;
-      Connection : Remote_Connection;
-      Start      : Integer;
+      Connection  : Remote_Connection;
+      Start       : Integer;
+      Valid       : Boolean;
+      Invalid_Pos : Natural;
+      First       : Natural;
+      Last        : Natural;
 
    begin
-      Parse_URL (Full_Filename, Protocol, User, Host, Start);
+      UTF8_Validate (Full_Filename, Valid, Invalid_Pos);
+      if not Valid then
+         Last := Invalid_Pos - 1;
+      else
+         Last := Full_Filename'Last;
+      end if;
+      while Last >= Full_Filename'First loop
+         exit when Full_Filename (Last) /= ASCII.LF
+           and Full_Filename (Last) /= ASCII.CR;
+         Last := Last - 1;
+      end loop;
+      First := Full_Filename'First;
+
+      Parse_URL (Full_Filename (First .. Last), Protocol, User, Host, Start);
 
       if Protocol /= null then
          Connection := Get_Connection (Protocol.all, User.all, Host.all);
@@ -129,41 +147,47 @@ package body VFS is
          Free (Host);
 
          if Connection /= null then
-            return (Ada.Finalization.Controlled with
-                    Value => new Contents_Record'
-                      (Connection      => Connection,
-                       Start_Of_Path   => Start,
-                       Ref_Count       => 1,
-                       Full_Name       => new String'(Full_Filename),
-                       Normalized_Full => null,
-                       Dir_Name        => null,
-                       Kind            => Unknown));
+            return
+              (Ada.Finalization.Controlled with
+               Value => new Contents_Record'
+                 (Connection      => Connection,
+                  Start_Of_Path   => Start,
+                  Ref_Count       => 1,
+                  Full_Name       => new String'
+                    (Full_Filename (First .. Last)),
+                  Normalized_Full => null,
+                  Dir_Name        => null,
+                  Kind            => Unknown));
 
          else
             --  Behave as if we have a local file, although nobody will be
             --  able to open it
 
-            return (Ada.Finalization.Controlled with
-                    Value => new Contents_Record'
-                      (Connection      => null,
-                       Start_Of_Path   => Full_Filename'First,
-                       Ref_Count       => 1,
-                       Full_Name       => new String'(Full_Filename),
-                       Normalized_Full => null,
-                       Dir_Name        => null,
-                       Kind            => Unknown));
+            return
+              (Ada.Finalization.Controlled with
+               Value => new Contents_Record'
+                 (Connection      => null,
+                  Start_Of_Path   => Full_Filename'First,
+                  Ref_Count       => 1,
+                  Full_Name       => new String'
+                    (Full_Filename (First .. Last)),
+                  Normalized_Full => null,
+                  Dir_Name        => null,
+                  Kind            => Unknown));
          end if;
 
       else
-         return (Ada.Finalization.Controlled with
-                 Value => new Contents_Record'
-                   (Connection      => null,
-                    Start_Of_Path   => Full_Filename'First,
-                    Ref_Count       => 1,
-                    Full_Name       => new String'(Full_Filename),
-                    Normalized_Full => null,
-                    Dir_Name        => null,
-                    Kind            => Unknown));
+         return
+           (Ada.Finalization.Controlled with
+            Value => new Contents_Record'
+              (Connection      => null,
+               Start_Of_Path   => Full_Filename'First,
+               Ref_Count       => 1,
+               Full_Name       => new String'
+                 (Full_Filename (First .. Last)),
+               Normalized_Full => null,
+               Dir_Name        => null,
+               Kind            => Unknown));
       end if;
    end Create;
 
