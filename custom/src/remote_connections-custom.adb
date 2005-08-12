@@ -185,7 +185,7 @@ package body Remote_Connections.Custom is
          Substitution_Char => '%',
          Callback          => Sub'Unrestricted_Access);
    begin
-      Trace (Full_Me, "Substitute : result is """ & C & """");
+      Trace (Full_Me, "Substitute: result is """ & C & """");
       return C;
    end Substitute;
 
@@ -326,7 +326,7 @@ package body Remote_Connections.Custom is
                                 Connection,
                                 Get_Tmp_File);
             begin
-               Trace (Me, "Action : Spawn " & The_Command);
+               Trace (Me, "Action: Spawn " & The_Command);
                Args := Argument_String_To_List (The_Command);
 
                L_Pd := new TTY_Process_Descriptor;
@@ -346,20 +346,20 @@ package body Remote_Connections.Custom is
             end;
 
          when Set_Session =>
-            Trace (Full_Me, "Action : Set_Session");
+            Trace (Full_Me, "Action: Set_Session");
             Connection.Pd := L_Pd;
             Connection.Is_Open := True;
 
          when Return_Value =>
-            Trace (Full_Me, "Action : ReturnValue");
+            Trace (Full_Me, "Action: ReturnValue");
             Ret_Value := Return_Enum'Value (Action.Param.all);
 
          when Input_Login =>
-            Trace (Full_Me, "Action : InputLogin");
+            Trace (Full_Me, "Action: InputLogin");
             Send (L_Pd.all, Get_User (Connection), Add_LF => True);
 
          when Input_Password =>
-            Trace (Full_Me, "Action : InputPassword");
+            Trace (Full_Me, "Action: InputPassword");
             if Connection.Password_Attempts <
               Connection.Max_Password_Attempts then
                Connection.Password_Attempts :=
@@ -390,12 +390,12 @@ package body Remote_Connections.Custom is
                                 Connection,
                                 Get_Tmp_File);
             begin
-               Trace (Full_Me, "Action : Send '" & The_Command & "'");
+               Trace (Full_Me, "Action: Send '" & The_Command & "'");
                Send (L_Pd.all, The_Command, Add_LF => True);
             end;
 
          when Send_File =>
-            Trace (Full_Me, "Action : Send_File");
+            Trace (Full_Me, "Action: Send_File");
             Tmp := Read_File (WriteTmpFile);
             if Tmp /= null then
                Send (L_Pd.all, Tmp.all,
@@ -404,26 +404,26 @@ package body Remote_Connections.Custom is
             end if;
 
          when Read_File =>
-            Trace (Full_Me, "Action : Read_File");
+            Trace (Full_Me, "Action: Read_File");
             Connection.Buffer := new String'(Result);
 
          when Read_Timestamp =>
-            Trace (Full_Me, "Action : Read_Timestamp");
+            Trace (Full_Me, "Action: Read_Timestamp");
             Connection.Timestamp := Analyze_Timestamp (Result);
 
          when Read_Tmp_File =>
-            Trace (Full_Me, "Action : Read_Tmp_File");
+            Trace (Full_Me, "Action: Read_Tmp_File");
             Connection.Buffer := Read_File (Temporary_Dir & ReadTmpBase);
             Delete_File (Temporary_Dir & ReadTmpBase, Success);
 
          when Create_Tmp_File =>
-            Trace (Full_Me, "Action : Create_Tmp_File");
+            Trace (Full_Me, "Action: Create_Tmp_File");
             Change_Dir (Temporary_Dir);
             Create_Temp_File (Tmp_Fd, ReadTmpBase);
             Close (Tmp_Fd);
 
          when Force_Reconnect =>
-            Trace (Full_Me, "Action : Force_Reconnect");
+            Trace (Full_Me, "Action: Force_Reconnect");
             Close (Connection.Pd.all);
             Free (Connection.Pd);
             Connection.Is_Open := False;
@@ -443,9 +443,9 @@ package body Remote_Connections.Custom is
       --  once the action executed, wait for Expects (if any)
       if Regexps'Length > 0 then
          while Ret_Value = No_Statement loop
-            Trace (Full_Me, "Execute_Action : expecting" &
+            Trace (Full_Me, "Execute_Action: expecting" &
                    Natural'Image (Regexps'Length) & " Expect(s)");
-            Trace (Full_Me, "Execute_Action : timeout value is" &
+            Trace (Full_Me, "Execute_Action: timeout value is" &
                    Integer'Image (Action.Timeout.Timeout / 1000) & " seconds");
             Expect (L_Pd.all, Exp_Result, Regexps, Matched,
                     Timeout => Action.Timeout.Timeout);
@@ -521,8 +521,7 @@ package body Remote_Connections.Custom is
          Trace (Me, "** Process died !");
          raise;
       when E : others =>
-         Trace (Me, "** Exception : ");
-         Trace (Me, Ada.Exceptions.Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Ret_Value := NOK_Timeout;
    end Execute_Action_Recursive;
 
@@ -593,7 +592,7 @@ package body Remote_Connections.Custom is
 
          when NOK_Timeout =>
             Response := Message_Dialog
-              ("Timeout when connection to "
+              ("Timeout when connecting to "
                & Get_Host (Connection),
                Dialog_Type   => Error,
                Buttons       => Button_OK,
@@ -734,9 +733,8 @@ package body Remote_Connections.Custom is
    exception
       when E : others =>
          Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
+                "Unexpected exception: " & Exception_Information (E));
          return VFS.No_Time;
-
    end Analyze_Timestamp;
 
    ----------------
