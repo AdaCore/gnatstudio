@@ -549,106 +549,107 @@ package body Docgen_Module is
                   Out_Format.Extension := new String'(N.Value.all);
                elsif N.Tag.all = "file_header_template" then
                   Out_Format.Entities_Templates (File_Header_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "file_footer_template" then
                   Out_Format.Entities_Templates (File_Footer_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "comment_template" then
                   Out_Format.Entities_Templates (Comment_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "keyword_template" then
                   Out_Format.Entities_Templates (Keyword_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "string_template" then
                   Out_Format.Entities_Templates (String_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "char_template" then
                   Out_Format.Entities_Templates (Char_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "subtitle_template" then
                   Out_Format.Entities_Templates (Subtitle_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "package_desc_template" then
                   Out_Format.Entities_Templates (Package_Desc_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "package_template" then
                   Out_Format.Entities_Templates (Package_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "with_template" then
                   Out_Format.Entities_Templates (With_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "variable_template" then
                   Out_Format.Entities_Templates (Variable_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "exception_template" then
                   Out_Format.Entities_Templates (Exception_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "type_template" then
                   Out_Format.Entities_Templates (Type_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "tagged_type_template" then
                   Out_Format.Entities_Templates (Tagged_Type_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "calls_references_template" then
                   Out_Format.Entities_Templates (Calls_References_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "caller_references_template" then
                   Out_Format.Entities_Templates (Caller_References_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "entity_template" then
                   Out_Format.Entities_Templates (Entity_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "subprogram_template" then
                   Out_Format.Entities_Templates (Subprogram_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "header_template" then
                   Out_Format.Entities_Templates (Header_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "footer_template" then
                   Out_Format.Entities_Templates (Footer_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "header_private_template" then
-                  Out_Format.Entities_Templates (Header_Private_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "private_header_template" then
+                  Out_Format.Entities_Templates (Private_Header_Kind) :=
+                    new String'(N.Value.all);
                elsif N.Tag.all = "main_frame_template" then
                   Out_Format.Entities_Templates (Main_Frame_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "unit_index_template" then
-                  Out_Format.Entities_Templates (Unit_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "subprogram_index_template" then
-                  Out_Format.Entities_Templates (Subprogram_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "type_index_template" then
-                  Out_Format.Entities_Templates (Type_Index_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "unit_index_header_template" then
+                  Out_Format.Entities_Templates (Unit_Index_Header_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "subprogram_index_header_template" then
+                  Out_Format.Entities_Templates
+                    (Subprogram_Index_Header_Kind) := new String'(N.Value.all);
+               elsif N.Tag.all = "type_index_header_template" then
+                  Out_Format.Entities_Templates (Type_Index_Header_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "tagged_type_index_header_template" then
+                  Out_Format.Entities_Templates
+                    (Tagged_Type_Index_Header_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "item_index_template" then
+                  Out_Format.Entities_Templates (Item_Index_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "private_index_header_template" then
+                  Out_Format.Entities_Templates (Private_Index_Header_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "public_index_header_template" then
+                  Out_Format.Entities_Templates (Public_Index_Header_Kind) :=
+                    new String'(N.Value.all);
+               elsif N.Tag.all = "index_footer_template" then
+                  Out_Format.Entities_Templates (Index_Footer_Kind) :=
+                    new String'(N.Value.all);
                elsif N.Tag.all = "tagged_type_index_template" then
                   Out_Format.Entities_Templates (Tagged_Type_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "index_item_template" then
-                  Out_Format.Entities_Templates (Index_Item_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "private_index_template" then
-                  Out_Format.Entities_Templates (Private_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "public_index_template" then
-                  Out_Format.Entities_Templates (Public_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "end_index_template" then
-                  Out_Format.Entities_Templates (End_Index_Kind) :=
-                     new String'(N.Value.all);
-               elsif N.Tag.all = "index_tagged_type_template" then
-                  Out_Format.Entities_Templates (Index_Tagged_Type_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "block_template" then
                   Out_Format.Entities_Templates (Block_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "link_template" then
                   Out_Format.Entities_Templates (Link_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                elsif N.Tag.all = "description_template" then
                   Out_Format.Entities_Templates (Description_Kind) :=
-                     new String'(N.Value.all);
+                    new String'(N.Value.all);
                end if;
 
                N := N.Next;
