@@ -1742,6 +1742,15 @@ package body Src_Editor_Buffer.Line_Information is
       Tag                  : Gtk_Text_Tag;
       New_Tag              : Boolean := False;
    begin
+      --  Here we test whether the buffer is in destruction. If it is the case
+      --  we simply return since it is not worth taking care of unhighlighting
+      --  lines. Furthermore this prevents GPS from crashing when we close a
+      --  source file used in a visual diff whereas the reference file is still
+      --  being displayed.
+      if Buffer.In_Destruction then
+         return;
+      end if;
+
       --  Get the text tag, create it if necessary.
 
       Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
