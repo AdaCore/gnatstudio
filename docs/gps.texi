@@ -4522,9 +4522,18 @@ Recompute the cross-reference information for C and C++ source files.
    Similar to the entry above, except that you can run any arbitrary executable.
    @end table
 
-@item Interrupt
-Interrupt the current compilation or build.
 @end table
+
+The @code{Tools/Interrupt} menu can be used to interrupt the last compilation
+or run command. Once you have interrupted that last operation, you can
+interrupt the previous one by selecting the same menu again.
+
+However, the easiest way to interrupt a specific operation, no matter if it was
+started last or not, is to use the @code{Task Manager}, through the
+@code{Tools->Task Manager} menu. It will show one line per running process,
+and right-clicking on any of these lines gives the possibility to interrupt
+that process.
+
 
 @c --------------------------------------------------------------------
 @node Source Browsing
