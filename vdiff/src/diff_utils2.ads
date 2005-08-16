@@ -25,9 +25,9 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 
+with Generic_List;
 with GPS.Kernel;   use GPS.Kernel;
 with VFS;          use VFS;
-with Generic_List;
 
 package Diff_Utils2 is
 
@@ -77,12 +77,13 @@ package Diff_Utils2 is
    --  Free the memory associated with each node of the list Link.
 
    type Diff_Head is tagged record
-      List         : Diff_List;
-      File1        : VFS.Virtual_File;
-      File2        : VFS.Virtual_File;
-      File3        : VFS.Virtual_File := VFS.No_File;
-      Current_Node : Diff_List_Node;
-      Ref_File     : T_Loc := 2;
+      List           : Diff_List;
+      File1          : VFS.Virtual_File;
+      File2          : VFS.Virtual_File;
+      File3          : VFS.Virtual_File := VFS.No_File;
+      Current_Node   : Diff_List_Node;
+      Ref_File       : T_Loc := 2;
+      On_Destruction : Boolean := False;
    end record;
    type Diff_Head_Access is access all Diff_Head;
 
@@ -99,7 +100,7 @@ package Diff_Utils2 is
 
    Null_Head : constant Diff_Head :=
                  (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
-                  VFS.No_File, Diff_Chunk_List.Null_Node, 2);
+                  VFS.No_File, Diff_Chunk_List.Null_Node, 2, False);
 
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
