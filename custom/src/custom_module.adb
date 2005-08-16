@@ -392,6 +392,9 @@ package body Custom_Module is
                  Command        => Node.Child,
                  Default_Output => Get_Attribute
                    (Node, "output", Console_Output),
+                 Show_In_Task_Manager => To_Lower
+                   (Get_Attribute (Node, "show-task-manager", "true")) =
+                   "true",
                  Show_Command => To_Lower
                    (Get_Attribute (Node, "show-command", "true")) = "true");
 
