@@ -20,12 +20,13 @@
 
 --  New Visual Diff module.
 
-with GPS.Kernel.Modules;       use GPS.Kernel;
+with Glib;                     use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Gtk.Handlers;             use Gtk.Handlers;
+
 with Default_Preferences;      use Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
-with Gtk.Handlers;             use Gtk.Handlers;
-with Glib;                     use Glib;
+with GPS.Kernel.Modules;       use GPS.Kernel;
 
 package Vdiff2_Module is
 
