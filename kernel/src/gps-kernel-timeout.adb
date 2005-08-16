@@ -182,13 +182,15 @@ package body GPS.Kernel.Timeout is
          if Data.Interrupted then
             Insert
               (Console, ASCII.LF & (-"<^C> process interrupted"));
-         elsif Status = 0 then
-            Insert
-              (Console, ASCII.LF & (-"process terminated successfully"));
-         else
-            Insert
-              (Console, ASCII.LF & (-"process exited with status ") &
-               Image (Status));
+         elsif Data.Show_Output then
+            if Status = 0 then
+               Insert
+                 (Console, ASCII.LF & (-"process terminated successfully"));
+            else
+               Insert
+                 (Console, ASCII.LF & (-"process exited with status ") &
+                  Image (Status));
+            end if;
          end if;
 
          if Data.D.Exit_Cb /= null then
