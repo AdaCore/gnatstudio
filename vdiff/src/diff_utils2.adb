@@ -31,16 +31,17 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Basic_Types;
 with Generic_List;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 with VFS;                    use VFS;
 
 package body Diff_Utils2 is
+
    use Diff_Chunk_List;
    use Diff_Head_List;
 
