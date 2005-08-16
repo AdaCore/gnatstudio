@@ -1860,9 +1860,6 @@ package body Builder_Module is
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
---        Gtk_New (Mitem);
---        Register_Menu (Kernel, Tools, Mitem);
-
       Register_Menu
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
