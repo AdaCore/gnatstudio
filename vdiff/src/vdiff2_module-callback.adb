@@ -22,9 +22,10 @@ with Ada.Exceptions;                    use Ada.Exceptions;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
-with Gtkada.File_Selector;              use Gtkada.File_Selector;
-with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtk.Window;                        use Gtk.Window;
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
+with Gtkada.File_Selector;              use Gtkada.File_Selector;
+with Gtkada.MDI;                        use Gtkada.MDI;
 
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -33,14 +34,13 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                          use GPS.Intl;
 
-with Traces;                            use Traces;
 with Commands;                          use Commands;
-
 with Diff_Utils2;                       use Diff_Utils2;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with OS_Utils;                          use OS_Utils;
+with Traces;                            use Traces;
 with VFS;                               use VFS;
 
 package body Vdiff2_Module.Callback is
@@ -373,6 +373,7 @@ package body Vdiff2_Module.Callback is
       D         : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Diff      : Diff_Head_Access := new Diff_Head;
       Curr_Node : Diff_Head_List.List_Node;
+      Ref_File  : Virtual_File;
    begin
       if Vdiff_Module_ID = null then
          return;
@@ -382,18 +383,39 @@ package body Vdiff2_Module.Callback is
 
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff.all := Diff_Head_List.Data (Curr_Node);
-         exit when Diff.File1 = D.File
+         exit when Diff.On_Destruction
+           or else Diff.File1 = D.File
            or else Diff.File2 = D.File
            or else Diff.File3 = D.File;
          Curr_Node := Next (Curr_Node);
       end loop;
 
-      if Curr_Node /= Diff_Head_List.Null_Node then
+      if Curr_Node /= Diff_Head_List.Null_Node
+        and then not Diff.On_Destruction
+      then
+         Diff.On_Destruction := True;
+
          Hide_Differences (Kernel, Diff.all);
-         Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                       Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                             Curr_Node),
-                       Curr_Node);
+
+         Remove_Nodes
+           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Curr_Node),
+            Curr_Node);
+
+         if Diff.Ref_File /= 0 then
+            if Diff.Ref_File = 1 then
+               Ref_File := Diff.File1;
+            elsif Diff.Ref_File = 2 then
+               Ref_File := Diff.File2;
+            elsif Diff.Ref_File = 3 then
+               Ref_File := Diff.File3;
+            end if;
+
+            if Ref_File /= D.File then
+               Close_Child (Get_File_Editor (Kernel, Ref_File));
+            end if;
+         end if;
+
          Free_All (Diff.all);
       end if;
 
