@@ -370,8 +370,6 @@ package body GPS.Kernel.Task_Manager is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Tools : constant String := "/" & (-"Tools");
-      Shell : constant String := Tools &  "/" & (-"Shell Console");
-
       Push_Command, Pop_Command : Custom_Command_Access;
       Script                    : Scripting_Language;
    begin
@@ -405,7 +403,7 @@ package body GPS.Kernel.Task_Manager is
          Tools,
          -"Task Manager",
          Callback => On_Task_Manager'Access,
-         Ref_Item => Shell);
+         Ref_Item => -"Interrupt", Add_Before => True);
 
       Add_Hook (Kernel, Before_Exit_Action_Hook, On_Exit_Hook'Access);
    end Register_Module;
