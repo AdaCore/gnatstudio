@@ -1809,6 +1809,7 @@ package body Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Build : constant String := '/' & (-"Build") & '/';
+      Tools : constant String := '/' & (-"Tools") & '/';
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
    begin
@@ -1859,11 +1860,11 @@ package body Builder_Module is
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Build, Mitem);
+--        Gtk_New (Mitem);
+--        Register_Menu (Kernel, Tools, Mitem);
 
       Register_Menu
-        (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
+        (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
 
       Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
