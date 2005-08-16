@@ -176,6 +176,11 @@ package body Vdiff2_Module is
       Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
 
       Register_Menu
+        (Kernel, '/' & (-"Tools") & '/', (-"Visual Diff"),
+         Callback => null,
+         Ref_Item => -"Interrupt", Add_Before => True);
+
+      Register_Menu
         (Kernel, Tools, -"Compare Two Files...", "",
          On_Compare_Two_Files'Access);
       Register_Menu

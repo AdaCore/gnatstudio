@@ -52,13 +52,16 @@
   </contextual>
 
   <submenu>
-     <title>Tools/Metrics</title>
-     <menu action="metrics root project">
+    <title>Tools</title>
+    <submenu before="Interrupt">
+      <title>Metrics</title>
+      <menu action="metrics root project">
         <title>Compute metrics for root project</title>
-     </menu>
-     <menu action="metrics file">
+      </menu>
+      <menu action="metrics file">
         <title>Compute metrics for current file</title>
-     </menu>
+      </menu>
+    </submenu>
   </submenu>
 
 </GPS>
