@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;                      use GPS.Kernel;
-with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-
-with String_Utils;                      use String_Utils;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with Basic_Types;
 
 with Gdk.Color;                         use Gdk.Color;
+
+with Basic_Types;
+with GPS.Kernel;                        use GPS.Kernel;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
+with String_Utils;                      use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
 
@@ -338,7 +338,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
          4 => new String'(Text),
          5 => new String'(Image (Before)),
          6 => new String'(Image (After)));
-
    begin
       Execute_GPS_Shell_Command
         (Kernel, "Editor.replace_text", Args_Replace_Text);
@@ -359,7 +358,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (1 => new String'(Full_Name (File).all),
          2 => new String'(Style),
          3 => new String'(Image (Pos)));
-
    begin
       Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args_Highlight);
       Basic_Types.Free (Args_Highlight);
@@ -373,9 +371,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
       Pos   : Natural;
-      Style : String := "")
-   is
-
+      Style : String := "") is
    begin
       Unhighlight (Kernel, File, Pos, Style);
       Unhighlight_Range (Kernel, File, Fine_Change_Style, Pos);
@@ -399,11 +395,8 @@ package body Vdiff2_Module.Utils.Shell_Command is
          3 => new String'(Image (Line)),
          4 => new String'("-1"),
          5 => new String'("-1"));
-
    begin
-
       if Line /= 0 then
-
          if End_C >= 0  and then Start_C >= 0 then
             Free (Args_Highlight_Range (5));
             Args_Highlight_Range (5) := new String'(Image (End_C));
