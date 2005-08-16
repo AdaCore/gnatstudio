@@ -154,16 +154,20 @@ package body Commands.Custom is
    --  Free Execution and its contents
 
    function External_From_XML
-     (Command : Glib.Xml_Int.Node_Ptr) return Custom_Component;
+     (Command                      : Glib.Xml_Int.Node_Ptr;
+      Default_Show_In_Task_Manager : Boolean;
+      Default_Show_Command         : Boolean) return Custom_Component;
    function Shell_From_XML
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Glib.Xml_Int.Node_Ptr) return Custom_Component;
    --  Create a command component from an XML node
 
    function From_XML
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr;
-      Name    : String) return Components_Array_Access;
+     (Kernel                       : access Kernel_Handle_Record'Class;
+      Command                      : Glib.Xml_Int.Node_Ptr;
+      Name                         : String;
+      Default_Show_In_Task_Manager : Boolean;
+      Default_Show_Command         : Boolean) return Components_Array_Access;
    --  Create a list of components from an XML node
 
    function Output_Substitution
@@ -574,12 +578,18 @@ package body Commands.Custom is
    -----------------------
 
    function External_From_XML
-     (Command : Glib.Xml_Int.Node_Ptr) return Custom_Component
+     (Command                      : Glib.Xml_Int.Node_Ptr;
+      Default_Show_In_Task_Manager : Boolean;
+      Default_Show_Command         : Boolean) return Custom_Component
    is
       Output : constant String := Get_Attribute (Command, "output", "@@");
       Outp   : GNAT.OS_Lib.String_Access := null;
-      Show_Command : constant Boolean :=
-        Get_Attribute (Command, "show-command", "true") = "true";
+      Show_Command : constant String :=
+        Get_Attribute (Command, "show-command");
+      Show_C          : Boolean := Show_Command = "true";
+      Show_Task_Manager : constant String :=
+        Get_Attribute (Command, "show-task-manager");
+      Show_TM         : Boolean := Show_Task_Manager = "true";
       Progress_Regexp : constant String :=
         Get_Attribute (Command, "progress-regexp", "");
       Progress_Current : constant Integer :=
@@ -590,15 +600,24 @@ package body Commands.Custom is
         Get_Attribute (Command, "progress-hide", "true") = "true";
 
    begin
+      if Show_Task_Manager = "" then
+         Show_TM := Default_Show_In_Task_Manager;
+      end if;
+
+      if Show_Command = "" then
+         Show_C := Default_Show_Command;
+      end if;
+
       if Output /= "@@" then
          Outp := new String'(Output);
       end if;
 
       return new External_Component_Record'
         (Command_Component_Record with
-         Show_Command     => Show_Command,
+         Show_Command     => Show_C,
          Output           => Outp,
          Command          => new String'(Command.Value.all),
+         Show_In_Task_Manager => Show_TM,
          Progress_Regexp  => new String'(Progress_Regexp),
          Progress_Current => Progress_Current,
          Progress_Final   => Progress_Final,
@@ -610,9 +629,11 @@ package body Commands.Custom is
    --------------
 
    function From_XML
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr;
-      Name    : String) return Components_Array_Access
+     (Kernel                       : access Kernel_Handle_Record'Class;
+      Command                      : Glib.Xml_Int.Node_Ptr;
+      Name                         : String;
+      Default_Show_In_Task_Manager : Boolean;
+      Default_Show_Command         : Boolean) return Components_Array_Access
    is
       N, M   : Node_Ptr := Command;
       Count  : Natural := 0;
@@ -687,7 +708,11 @@ package body Commands.Custom is
             Result (Count) := (Shell_From_XML (Kernel, N), -1);
             Count := Count + 1;
          elsif N.Tag.all = "external" then
-            Result (Count) := (External_From_XML (N), -1);
+            Result (Count) := (External_From_XML
+              (N,
+               Default_Show_In_Task_Manager => Default_Show_In_Task_Manager,
+               Default_Show_Command         => Default_Show_Command),
+              -1);
             Count := Count + 1;
          elsif N.Tag.all = "on-failure" then
             if Count = Result'First
@@ -709,7 +734,12 @@ package body Commands.Custom is
                   Result (Count) := (Shell_From_XML (Kernel, M), On_Failure);
                   Count := Count + 1;
                elsif M.Tag.all = "external" then
-                  Result (Count) := (External_From_XML (M), On_Failure);
+                  Result (Count) := (External_From_XML
+                    (M,
+                     Default_Show_In_Task_Manager =>
+                       Default_Show_In_Task_Manager,
+                     Default_Show_Command => Default_Show_Command),
+                    On_Failure);
                   Count := Count + 1;
                end if;
 
@@ -727,19 +757,22 @@ package body Commands.Custom is
    ------------
 
    procedure Create
-     (Item           : out Custom_Command_Access;
-      Name           : String;
-      Kernel         : Kernel_Handle;
-      Command        : Glib.Xml_Int.Node_Ptr;
-      Default_Output : String := Console_Output;
-      Show_Command   : Boolean := True) is
+     (Item                 : out Custom_Command_Access;
+      Name                 : String;
+      Kernel               : Kernel_Handle;
+      Command              : Glib.Xml_Int.Node_Ptr;
+      Default_Output       : String := Console_Output;
+      Show_Command         : Boolean := True;
+      Show_In_Task_Manager : Boolean := True) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Default_Output_Destination := new String'(Default_Output);
-      Item.Default_Show_Command := Show_Command;
       Item.Name := new String'(Name);
-      Item.Components := From_XML (Kernel, Command, Name);
+      Item.Components := From_XML
+        (Kernel, Command, Name,
+         Default_Show_In_Task_Manager => Show_In_Task_Manager,
+         Default_Show_Command         => Show_Command);
    end Create;
 
    -------------
@@ -1084,13 +1117,15 @@ package body Commands.Custom is
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Console       => null,
+               Console       => Console,
                Callback      => Store_Command_Output'Access,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
                Show_Command  => Component.Show_Command,
+               Show_Output   => Output_Location.all /= No_Output,
                Callback_Data => new Custom_Callback_Data'
                  (Command => Custom_Command_Access (Command)),
+               Show_In_Task_Manager => Component.Show_In_Task_Manager,
                Line_By_Line  => False,
                Directory     => To_String (Context.Dir));
             Free (Args);
