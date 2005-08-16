@@ -1134,7 +1134,9 @@ package body VCS_View_Pkg is
          Files := Get_Selected_Files (Explorer);
       end if;
 
-      Path_Free (Path);
+      if Path /= null then
+         Path_Free (Path);
+      end if;
 
       --  Create the context
 
