@@ -5,7 +5,8 @@
 
    <!-- SVN status -->
 
-   <action name="generic_svn_status" show-command="true" output="none">
+   <action name="generic_svn_status" show-command="true" output="none"
+           show-task-manager='false'>
       <shell>pwd</shell>
       <shell output="">echo "Querying status for files in %1"</shell>
       <external>svn --non-interactive status -N -u -v "$2-"</external>
@@ -18,7 +19,8 @@
 
    <!-- SVN status dir -->
 
-   <action name="generic_svn_status_dir" show-command="true" output="none">
+   <action name="generic_svn_status_dir" show-command="true" output="none"
+           show-task-manager='false'>
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
       <external>svn --non-interactive status -N -u -v .</external>
@@ -31,7 +33,8 @@
 
    <!-- SVN annotate -->
 
-   <action name="generic_svn_annotate" show-command="true" output="">
+   <action name="generic_svn_annotate" show-command="true" output=""
+           show-task-manager='false'>
       <shell>echo "Querying annotations for $1"</shell>
       <external output="none">svn --non-interactive annotate -v "$1"</external>
       <on-failure>
@@ -43,7 +46,8 @@
 
    <!-- SVN local status -->
 
-   <action name="generic_svn_local_status" show-command="true" output="none">
+   <action name="generic_svn_local_status" show-command="true" output="none"
+           show-task-manager='false'>
       <shell>pwd</shell>
       <external>svn --non-interactive status -N -v .</external>
       <on-failure>
@@ -55,7 +59,8 @@
 
    <!-- SVN commit -->
 
-   <action name="generic_svn_commit" show-command="true" output="none">
+   <action name="generic_svn_commit" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Committing file(s) $2-"</shell>
       <shell>dump "$1" TRUE</shell>
       <external>svn --non-interactive commit -F "%1" "$2-"</external>
@@ -70,7 +75,8 @@
 
    <!-- SVN add -->
 
-   <action name="generic_svn_add" show-command="true" output="none">
+   <action name="generic_svn_add" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "adding file(s) $2-"</shell>
       <external>svn add "$2-"</external>
       <on-failure>
@@ -88,7 +94,8 @@
 
    <!-- SVN add (no commit) -->
 
-   <action name="generic_svn_add_no_commit" show-command="true" output="none">
+   <action name="generic_svn_add_no_commit" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "adding (no commit) file(s) $2-"</shell>
       <external>svn add "$2-"</external>
       <on-failure>
@@ -99,7 +106,8 @@
 
    <!-- SVN remove -->
 
-   <action name="generic_svn_remove" show-command="true" output="none">
+   <action name="generic_svn_remove" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "removing file(s) $2-"</shell>
       <shell>delete "$2-"</shell>
       <external>svn --non-interactive remove "$2-"</external>
@@ -113,7 +121,8 @@
 
    <!-- SVN history -->
 
-   <action name="generic_svn_history" show-command="true" output="none">
+   <action name="generic_svn_history" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Querying history for $1"</shell>
       <external>svn --non-interactive log "$1"</external>
       <on-failure>
@@ -126,7 +135,8 @@
       <shell>delete "%3"</shell>
    </action>
 
-   <action name="generic_svn_history_rev" show-command="true" output="none">
+   <action name="generic_svn_history_rev" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Querying history for $2"</shell>
       <external>svn --non-interactive log -r$1 "$2"</external>
       <on-failure>
@@ -141,7 +151,8 @@
 
    <!-- SVN update -->
 
-   <action name="generic_svn_update" show-command="true" output="none">
+   <action name="generic_svn_update" show-command="true" output="none"
+           show-task-manager='false'>
       <external output="">svn --non-interactive update "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -153,7 +164,8 @@
 
    <!-- SVN resolved -->
 
-   <action name="generic_svn_resolved" show-command="true" output="none">
+   <action name="generic_svn_resolved" show-command="true" output="none"
+           show-task-manager='false'>
       <external output="">svn resolved "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>
@@ -163,7 +175,8 @@
 
    <!-- SVN diff -->
 
-   <action name="generic_svn_diff_head" show-command="true" output="none">
+   <action name="generic_svn_diff_head" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
       <on-failure>
@@ -178,7 +191,8 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <action name="generic_svn_diff" show-command="true" output="none">
+   <action name="generic_svn_diff" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal -r $1 "$2"</external>
       <on-failure>
@@ -193,7 +207,8 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <action name="generic_svn_diff2" show-command="true" output="none">
+   <action name="generic_svn_diff2" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Getting comparison between revisions $1 / $2 of $3 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
@@ -208,7 +223,8 @@
       <shell>delete "%8"</shell>
    </action>
 
-   <action name="generic_svn_diff_base_head" show-command="true" output="none">
+   <action name="generic_svn_diff_base_head" show-command="true" output="none"
+           show-task-manager='false'>
       <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
       <on-failure>
@@ -225,7 +241,8 @@
 
    <!-- SVN revert -->
 
-   <action name="generic_svn_revert" show-command="true" output="none">
+   <action name="generic_svn_revert" show-command="true" output="none"
+           show-task-manager='false'>
       <external output="">svn revert "$*"</external>
       <on-failure>
          <shell output="">echo "SVN error:"</shell>

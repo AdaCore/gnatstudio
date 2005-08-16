@@ -137,6 +137,7 @@ of commands to perform if the command fails</xsd:documentation>
        <xsd:attribute name="name"         use="required" type="xsd:string" />
        <xsd:attribute name="output"       use="optional" type="xsd:string"   default=""/>
        <xsd:attribute name="show-command" use="optional" type="boolean"      default="true"/>
+       <xsd:attribute name="show-task-manager" use="optional" type="boolean"      default="true"/>
      </xsd:complexType>
    </xsd:element>
 
@@ -145,6 +146,7 @@ of commands to perform if the command fails</xsd:documentation>
        <xsd:simpleContent>
          <xsd:extension base="xsd:string">
            <xsd:attribute name="show-command"     use="optional" type="boolean"     default="true" />
+           <xsd:attribute name="show-task-manager" use="optional" type="boolean"      default="true"/>
            <xsd:attribute name="output"           use="optional" type="xsd:string"  default="" />
            <xsd:attribute name="progress-regexp"  use="optional" type="xsd:string"  default="" />
            <xsd:attribute name="progress-current" use="optional" type="xsd:byte"    default="1" />
