@@ -743,7 +743,8 @@ package body Bookmark_Views is
          Kernel      => Kernel);
       Register_Menu
         (Kernel,
-         "/" & (-"Tools"), -"Bookmarks", "", On_Open_View'Access);
+         "/" & (-"Tools"), -"Bookmarks", "", On_Open_View'Access,
+         Ref_Item => -"Interrupt", Add_Before => True);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
