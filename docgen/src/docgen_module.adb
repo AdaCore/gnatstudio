@@ -1009,6 +1009,10 @@ package body Docgen_Module is
       On_Preferences_Changed (Kernel);
 
       Register_Menu
+        (Kernel, Tools, "Documentation", Callback => null,
+         Ref_Item => -"Interrupt", Add_Before => True);
+
+      Register_Menu
         (Kernel,
          Tools & Generate,
          -"Generate _project",
