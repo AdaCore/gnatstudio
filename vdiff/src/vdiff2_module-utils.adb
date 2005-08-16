@@ -18,32 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;                    use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+
+with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+with Gtk.Enums;                         use Gtk.Enums;
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
+with Gtkada.MDI;                        use Gtkada.MDI;
+
+with Commands;                          use Commands;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
-
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with Gtkada.MDI;                        use Gtkada.MDI;
-with Gtk.Enums;                         use Gtk.Enums;
-
+with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
+with String_Utils;                      use String_Utils;
+with Traces;                            use Traces;
 with Vdiff2_Module;                     use Vdiff2_Module;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
-with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
-
-with Gdk.Pixbuf;                        use Gdk.Pixbuf;
-with Gtkada.Dialogs;                    use Gtkada.Dialogs;
-
-with String_Utils;                      use String_Utils;
-with Traces;                            use Traces;
-with Ada.Exceptions;                    use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with Commands;                          use Commands;
 
 package body Vdiff2_Module.Utils is
 
@@ -1128,12 +1127,13 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Item :=
-        (List         => Result,
-         File1        => File1,
-         File2        => File2,
-         File3        => File3,
-         Current_Node => First (Result),
-         Ref_File     => 2);
+        (List           => Result,
+         File1          => File1,
+         File2          => File2,
+         File3          => File3,
+         Current_Node   => First (Result),
+         Ref_File       => 2,
+         On_Destruction => False);
       Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
@@ -1166,12 +1166,13 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Item :=
-        (List         => Result,
-         File1        => Orig_File,
-         File2        => New_File,
-         File3        => VFS.No_File,
-         Current_Node => First (Result),
-         Ref_File     => 1);
+        (List           => Result,
+         File1          => Orig_File,
+         File2          => New_File,
+         File3          => VFS.No_File,
+         Current_Node   => First (Result),
+         Ref_File       => 1,
+         On_Destruction => False);
       Process_Differences (Kernel, Item, Id.List_Diff);
 
       return True;
