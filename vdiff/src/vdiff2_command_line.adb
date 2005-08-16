@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Standard_Hooks;       use GPS.Kernel.Standard_Hooks;
 with Diff_Utils2;                       use Diff_Utils2;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module.Utils.Shell_Command;
@@ -245,7 +245,7 @@ package body Vdiff2_Command_Line is
       end if;
 
       Delete_Block (Kernel, VFile (Diff.Ref_File),
-                  VRange (Num_File), VRange (Diff.Ref_File));
+                    VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
          Info           : constant Line_Information_Data :=
