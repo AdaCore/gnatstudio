@@ -479,8 +479,6 @@ package body VCS_View_Pkg is
         (Get_Nth_Page
            (Explorer.Notebook, Get_Current_Page (Explorer.Notebook)));
 
-      Scroll_To_Point (Page.Tree, 0, 0);
-
       Clear (Page.Model);
       Sort_Col := Freeze_Sort (Page.Model);
 
