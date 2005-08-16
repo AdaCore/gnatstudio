@@ -95,12 +95,13 @@ package Commands.Custom is
    --  Name is used in the progress bar while the command is executing
 
    procedure Create
-     (Item           : out Custom_Command_Access;
-      Name           : String;
-      Kernel         : Kernel_Handle;
-      Command        : Glib.Xml_Int.Node_Ptr;
-      Default_Output : String := Console_Output;
-      Show_Command   : Boolean := True);
+     (Item                 : out Custom_Command_Access;
+      Name                 : String;
+      Kernel               : Kernel_Handle;
+      Command              : Glib.Xml_Int.Node_Ptr;
+      Default_Output       : String := Console_Output;
+      Show_Command         : Boolean := True;
+      Show_In_Task_Manager : Boolean := True);
    --  Create a new command with a list of <shell> and <external> nodes, as
    --  done in the customization files. Filter is the filter that needs to
    --  be tested to make sure that all parameters can be satisfied.
@@ -110,6 +111,8 @@ package Commands.Custom is
    --  not overriden by any "output" attribute in the XML tree.
    --  If Show_Command is true, then the command itself will be shown along
    --  with its output if the latter is not No_Output.
+   --  If Show_In_Task_Manager is true, then the command will be shown in the
+   --  task manager.
    --  Name is used in the progress bar while the command is executing
 
    function Create_Filter
@@ -211,10 +214,11 @@ private
    --  A component that executes a shell command
 
    type External_Component_Record is new Custom_Component_Record with record
-      Progress_Regexp  : String_Access;
-      Progress_Current : Natural;
-      Progress_Final   : Natural;
-      Progress_Hide    : Boolean;
+      Show_In_Task_Manager : Boolean;
+      Progress_Regexp      : String_Access;
+      Progress_Current     : Natural;
+      Progress_Final       : Natural;
+      Progress_Hide        : Boolean;
    end record;
 
    function Component_Editor
