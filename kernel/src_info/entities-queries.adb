@@ -18,15 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VFS;                     use VFS;
-with Traces;                  use Traces;
-with Projects;                use Projects;
-with Projects.Registry;       use Projects.Registry;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
 with Glib.Unicode;            use Glib.Unicode;
 
-with Ada.Unchecked_Deallocation;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Projects;                use Projects;
+with Projects.Registry;       use Projects.Registry;
+with Traces;                  use Traces;
+with VFS;                     use VFS;
 
 package body Entities.Queries is
    Me : constant Debug_Handle := Create ("Entities.Queries", Off);
@@ -1125,8 +1126,8 @@ package body Entities.Queries is
                   Handler               => Get_LI_Handler_From_File
                     (GPS_Language_Handler (File.Db.Lang),
                      Get_Filename (File)),
-                  Total_Progress        => 0,
-                  Current_Progress      => 1,
+                  Total_Progress        => 1,
+                  Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
                   Source_File_Index     => 0,
                   File                  => File);
@@ -2139,7 +2140,6 @@ package body Entities.Queries is
          exit when E = null;
          Length := Length + E.Name'Length + Separator'Length;
       end loop;
-
 
       declare
          Result : String (1 .. Length);
