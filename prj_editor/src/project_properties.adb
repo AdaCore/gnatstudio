@@ -466,7 +466,8 @@ package body Project_Properties is
    function Create_Indexed_Attribute_Editor
      (Kernel      : access Kernel_Handle_Record'Class;
       Project     : Project_Type;
-      Attr        : Attribute_Description_Access)
+      Attr        : Attribute_Description_Access;
+      Path_Widget : Gtk_Entry)
       return Indexed_Attribute_Editor;
    --  Create the widget used to edit an indexed attribute.
 
@@ -2319,6 +2320,8 @@ package body Project_Properties is
       Editor.Path_Widget  := Path_Widget;
       Editor.Project      := Project;
 
+      Assert (Me, Editor.Path_Widget /= null, "No path widget given");
+
       if Is_List then
          Gtk_New (Scrolled);
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -3215,9 +3218,10 @@ package body Project_Properties is
    -------------------------------------
 
    function Create_Indexed_Attribute_Editor
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Type;
-      Attr    : Attribute_Description_Access)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Project     : Project_Type;
+      Attr        : Attribute_Description_Access;
+      Path_Widget : Gtk_Entry)
       return Indexed_Attribute_Editor
    is
       Index_Col     : constant := 0;
@@ -3312,6 +3316,7 @@ package body Project_Properties is
       Ed.Kernel      := Kernel_Handle (Kernel);
       Ed.Attribute   := Attr;
       Ed.Project     := Project;
+      Ed.Path_Widget := Path_Widget;
 
       Gtk_New (Ed.Model,
                (Index_Col      => GType_String,
@@ -3475,7 +3480,8 @@ package body Project_Properties is
 
       if Attr.Indexed then
          Attr.Editor := Attribute_Editor
-           (Create_Indexed_Attribute_Editor (Kernel, Project, Attr));
+           (Create_Indexed_Attribute_Editor
+              (Kernel, Project, Attr, Path_Widget => Path_Widget));
       else
          Attr.Editor := Create_Widget_Attribute
            (Kernel, Project, Attr, Attribute_Index => "",
