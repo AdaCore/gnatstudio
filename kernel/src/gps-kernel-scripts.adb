@@ -1215,6 +1215,25 @@ package body GPS.Kernel.Scripts is
                end loop;
             end;
 
+         elsif Command = "dependencies" then
+            declare
+               Iter : Imported_Project_Iterator;
+               P    : Project_Type;
+            begin
+               Project := Get_Data (Data, 1);
+               Set_Return_Value_As_List (Data);
+               Iter := Start
+                 (Project, Recursive => True, Direct_Only => True);
+
+               loop
+                  P := Current (Iter);
+                  exit when P = No_Project;
+                  Set_Return_Value
+                    (Data, Create_Project (Get_Script (Data), P));
+                  Next (Iter);
+               end loop;
+            end;
+
          elsif Command = "get_attribute_as_list"
            or else Command = "get_attribute_as_string"
          then
@@ -1769,6 +1788,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "ancestor_deps",
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dependencies",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
