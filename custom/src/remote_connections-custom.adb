@@ -23,17 +23,24 @@ with Ada.Calendar;       use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Calendar;      use GNAT.Calendar;
+
 with Gtk.Enums;          use Gtk.Enums;
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
+
 with GUI_Utils;          use GUI_Utils;
 with OS_Utils;           use OS_Utils;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 with VFS;                use VFS;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
+
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
+with Interactive_Consoles;   use Interactive_Consoles;
 
 package body Remote_Connections.Custom is
 
@@ -64,9 +71,6 @@ package body Remote_Connections.Custom is
    -----------------------
    -- Local Subprograms --
    -----------------------
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (TTY_Process_Descriptor, TTY_Process_Descriptor_Access);
 
    function Get_String (S : in String_Ptr) return String;
    --  Returns "" if S is null, S.all else
@@ -112,6 +116,14 @@ package body Remote_Connections.Custom is
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
    procedure Trace_Filter_Output
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address);
+   procedure Console_Filter_Input
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address);
+   procedure Console_Filter_Output
      (Descriptor : Process_Descriptor'Class;
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
@@ -257,9 +269,32 @@ package body Remote_Connections.Custom is
       WriteTmpFile    : in     String := "";
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
-      Pd              : in     TTY_Process_Descriptor_Access;
+      Pd              : in     Process_Descriptor_Access;
       Ret_Value       :    out Return_Enum);
    --  executes the action recursively
+
+   procedure Exit_Callback (Data : Process_Data; Status : Integer);
+   --  callback called when protocol's executable exits.
+
+   type Callback_Data is new Callback_Data_Record with record
+      Connection : Custom_Connection_Access;
+   end record;
+
+   -------------------
+   -- Exit_Callback --
+   -------------------
+
+   procedure Exit_Callback (Data : Process_Data; Status : Integer) is
+      pragma Unreferenced (Status);
+      D : Callback_Data renames Callback_Data (Data.Callback_Data.all);
+   begin
+      Trace (Me, "Callback Exit_Callback called");
+      --  no need to free the callback_data, it is automatically freed by the
+      --  caller.
+      if Data.Descriptor = Process_Descriptor_Access (D.Connection.Pd) then
+         D.Connection.Is_Open := False;
+      end if;
+   end Exit_Callback;
 
    ------------------------------
    -- Execute_Action_Recursive --
@@ -272,7 +307,7 @@ package body Remote_Connections.Custom is
       WriteTmpFile    : in     String := "";
       ReadTmpBase     : in out Temp_File_Name;
       Result          : in     String := "";
-      Pd              : in     TTY_Process_Descriptor_Access;
+      Pd              : in     Process_Descriptor_Access;
       Ret_Value       :    out Return_Enum)
    is
       Regexps    : constant Compiled_Regexp_Array :=
@@ -285,11 +320,17 @@ package body Remote_Connections.Custom is
       Exp_Result : Expect_Match;
       Success    : Boolean;
       Tmp_Fd     : File_Descriptor;
-      L_Pd       : TTY_Process_Descriptor_Access;
+      L_Pd       : Process_Descriptor_Access;
       New_Pd     : Boolean;
 
       function Get_Tmp_File return String;
       --  function used to determine if we need read or write tmp file
+
+      function Launch
+        (Command : String;
+         Args    : GNAT.OS_Lib.Argument_List;
+         Title   : String) return Boolean;
+      --  Used to spawn a new process
 
       ------------------
       -- Get_Tmp_File --
@@ -303,6 +344,49 @@ package body Remote_Connections.Custom is
             return WriteTmpFile;
          end if;
       end Get_Tmp_File;
+
+      ------------
+      -- Launch --
+      ------------
+
+      function Launch
+        (Command : String;
+         Args    : GNAT.OS_Lib.Argument_List;
+         Title   : String) return Boolean
+      is
+         Exec    : String_Access;
+         Console : Interactive_Console;
+         Success : Boolean;
+      begin
+         Exec := Locate_Exec_On_Path (Command);
+         if Exec = null then
+            Insert (Connection.K, -"Could not locate executable on path: " &
+                    Command);
+            return False;
+         else
+            Console := Create_Interactive_Console (Connection.K, Title);
+            Launch_Process
+              (Connection.K,
+               Command              => Exec.all,
+               Arguments            => Args (Args'First .. Args'Last),
+               Console              => Console,
+               Exit_Cb              => Exit_Callback'Access,
+               Callback_Data        => new Callback_Data'
+                 ((Connection => Custom_Connection_Access (Connection))),
+               Success              => Success,
+               Show_In_Task_Manager => False,
+               Fd                   => L_Pd);
+            if Success then
+               Add_Filter (L_Pd.all, Console_Filter_Output'Access, Output,
+                           User_Data => Console.all'Address);
+               Add_Filter (L_Pd.all, Console_Filter_Input'Access, Input,
+                           User_Data => Console.all'Address);
+            end if;
+            Free (Exec);
+            return Success;
+         end if;
+
+      end Launch;
 
    begin
       Ret_Value := No_Statement;
@@ -325,21 +409,22 @@ package body Remote_Connections.Custom is
                                 Local_Full_Name,
                                 Connection,
                                 Get_Tmp_File);
+               Success : Boolean;
             begin
                Trace (Me, "Action: Spawn " & The_Command);
                Args := Argument_String_To_List (The_Command);
-
-               L_Pd := new TTY_Process_Descriptor;
-               Non_Blocking_Spawn
-                 (L_Pd.all,
-                  Command     => Args (Args'First).all,
-                  Args        => Args (Args'First + 1 .. Args'Last),
-                  Buffer_Size => 0,
-                  Err_To_Out  => True);
-               New_Pd := True;
-               if Active (Full_Me) then
-                  Add_Filter (L_Pd.all, Trace_Filter_Output'Access, Output);
-                  Add_Filter (L_Pd.all, Trace_Filter_Input'Access, Input);
+               Success := Launch (Args (Args'First).all,
+                                  Args (Args'First + 1 .. Args'Last),
+                                  Args (Args'First).all & " - " &
+                                  Get_Host (Connection));
+               if Success then
+                  New_Pd := True;
+                  if Active (Full_Me) then
+                     Add_Filter (L_Pd.all, Trace_Filter_Output'Access, Output);
+                     Add_Filter (L_Pd.all, Trace_Filter_Input'Access, Input);
+                  end if;
+               else
+                  Ret_Value := NOK;
                end if;
 
                Free (Args);
@@ -425,7 +510,6 @@ package body Remote_Connections.Custom is
          when Force_Reconnect =>
             Trace (Full_Me, "Action: Force_Reconnect");
             Close (Connection.Pd.all);
-            Free (Connection.Pd);
             Connection.Is_Open := False;
             Ensure_Connection
               (Connection => Connection,
@@ -512,8 +596,12 @@ package body Remote_Connections.Custom is
       end if;
       --  if we spawned a process and this process has not been set as seesion
       if New_Pd and then Connection.Pd /= L_Pd then
-         Close (L_Pd.all);
-         Free (L_Pd);
+         begin
+            Interrupt (L_Pd.all);
+         exception
+            when GNAT.Expect.Invalid_Process =>
+               null;
+         end;
       end if;
 
    exception
@@ -607,8 +695,6 @@ package body Remote_Connections.Custom is
 
       if Close_Cnx and Connection.Is_Open then
          Close (Connection.Pd.all);
-         Free (Connection.Pd);
-         Connection.Is_Open := False;
       end if;
 
       return Ret_Value;
@@ -809,6 +895,48 @@ package body Remote_Connections.Custom is
    begin
       Trace (Full_Me, '<' & Str);
    end Trace_Filter_Output;
+
+   --------------------------
+   -- Console_Filter_Input --
+   --------------------------
+
+   procedure Console_Filter_Input
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address)
+   is
+      pragma Unreferenced (Descriptor);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Interactive_Console);
+      Console : Interactive_Console;
+      use System;
+   begin
+      if User_Data /= System.Null_Address then
+         Console := Convert (User_Data);
+         Insert (Console, Str, Add_Lf => False, Highlight => True);
+      end if;
+   end Console_Filter_Input;
+
+   ---------------------------
+   -- Console_Filter_Output --
+   ---------------------------
+
+   procedure Console_Filter_Output
+     (Descriptor : Process_Descriptor'Class;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address)
+   is
+      pragma Unreferenced (Descriptor);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Interactive_Console);
+      Console : Interactive_Console;
+      use System;
+   begin
+      if User_Data /= System.Null_Address then
+         Console := Convert (User_Data);
+         Insert (Console, Str, Add_Lf => False);
+      end if;
+   end Console_Filter_Output;
 
    ------------------------------------------------
    -- Initialization functions from the xml file --
@@ -1122,6 +1250,8 @@ package body Remote_Connections.Custom is
       --  Insert connection in custom connections list
       Connection.Next := Custom_Root;
       Custom_Root     := Custom_Connection_Access (Connection);
+
+      Connection.K := GPS.Kernel.Kernel_Handle (Kernel);
 
       Connection.Name := new String'(Get_Attribute (Top, "name"));
       if Connection.Name.all = "" then
