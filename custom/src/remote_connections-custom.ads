@@ -267,6 +267,9 @@ private
    type TTY_Process_Descriptor_Access is access all TTY_Process_Descriptor;
 
    type Custom_Connection is new Remote_Connection_Record with record
+      K           : GPS.Kernel.Kernel_Handle;
+      --  Handle on GPS kernel
+
       Description : String_Ptr;
       --  A description of the protocol
 
@@ -288,7 +291,7 @@ private
       --  Last read timestamp
 
       Is_Open              : Boolean := False;
-      Pd                   : TTY_Process_Descriptor_Access;
+      Pd                   : Process_Descriptor_Access;
       File_List            : GNAT.OS_Lib.String_List_Access;
 
       Last_Connection_Attempt : Time := VFS.No_Time;
