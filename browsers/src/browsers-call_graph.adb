@@ -900,10 +900,11 @@ package body Browsers.Call_Graph is
          Next (Data.Iter.all);
 
          if Command /= null then
-            Set_Progress (Command,
-                          (Running,
-                           Get_Current_Progress (Data.Iter.all),
-                           Get_Total_Progress (Data.Iter.all)));
+            Set_Progress
+              (Command,
+               (Running,
+                Get_Current_Progress (Data.Iter.all),
+                Get_Total_Progress (Data.Iter.all)));
          end if;
 
          Result := Execute_Again;
@@ -1817,7 +1818,7 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
+                   Entity_Selection_Context_Access (Context.Context);
       Info : Entity_Information;
    begin
       Push_State (Get_Kernel (Entity), Busy);
