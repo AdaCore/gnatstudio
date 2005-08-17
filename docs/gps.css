@@ -1,2 +1,13 @@
-   pre.smallexample {background-color:lightblue}
-   code             {color:red}
+   pre.smallexample {background-color:#DDDDDD;
+                     font-family: Courier New, Courier, monospace;
+                     font-size: 12pt;}
+   code             {color:red;
+                     font-family: Courier New, Courier, monospace;
+                     font-size: 12pt;}
+   body             {font-family: tahoma,serif;
+                     font-size: 12pt;
+                     width: 800px;
+                     text-align: justify}
+   samp             {font-family: Courier New, Courier, monospace;
+                     font-size: 12pt}
+                    
