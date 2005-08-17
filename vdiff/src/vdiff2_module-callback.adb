@@ -373,7 +373,7 @@ package body Vdiff2_Module.Callback is
       D         : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Diff      : Diff_Head_Access := new Diff_Head;
       Curr_Node : Diff_Head_List.List_Node;
-      Ref_File  : Virtual_File;
+      Ref_File  : Virtual_File := VFS.No_File;
    begin
       if Vdiff_Module_ID = null then
          return;
@@ -411,7 +411,9 @@ package body Vdiff2_Module.Callback is
                Ref_File := Diff.File3;
             end if;
 
-            if Ref_File /= D.File then
+            if Ref_File /= VFS.No_File
+              and then Ref_File /= D.File
+            then
                Close_Child (Get_File_Editor (Kernel, Ref_File));
             end if;
          end if;
