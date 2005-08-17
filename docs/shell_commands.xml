@@ -1017,6 +1017,13 @@ Related hooks:
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.Project.dependencies">
+      <param name="self">The instance of GPS.Project</param>
+      <param name="recursive" default="False">A boolean</param>
+      <return>A list of GPS.Project instances</return>
+      <description>Return the list of projects on which self depends (either directly if recursive is False, or including indirect dependencies if recursive is True).</description>
+  </shell_doc>
+
   <shell_doc name="GPS.Project.recompute">
        <description>Recompute the contents of a project, including the list of source files that are automatically loaded from the source directories. The project file is not reloaded from the disk, and this should only be used if you have created new source files outside of GPS for instance</description>
        <example lang="python">
