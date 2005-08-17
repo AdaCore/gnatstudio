@@ -546,6 +546,8 @@ package body Shell_Script is
          Get_Next (Shell_Module_Id.Commands_List, Current);
       end loop;
 
+      Sort (L);
+
       return L;
    end Commands_As_List;
 
@@ -1357,7 +1359,6 @@ package body Shell_Script is
 
          return Result (Result'First .. Index - 1);
       end Unprotect;
-
 
       Args          : Argument_List_Access;
       First, Last   : Integer;
