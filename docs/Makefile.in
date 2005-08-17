@@ -38,8 +38,8 @@ gps.html gps.pdf gps.txt: ${TEXI}
 ## We generate the documentation twice, in case the version of makeinfo is
 ## recent enough to support --css-include
 %.html::
-	makeinfo --html --no-validate --no-split --number-sections $<
-	@-makeinfo --html --no-validate --no-split --css-include=gps.css --number-sections $< >/dev/null 2>/dev/null
+	makeinfo --html --number-sections $<
+	@-makeinfo --html --css-include=gps.css --number-sections $< >/dev/null 2>/dev/null
 
 %.pdf::
 ifneq (${TEXI2DVI},)
@@ -68,11 +68,12 @@ install:
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
 	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
-	-$(INSTALL_DATA) gps.html $(docdir)/html
+	-$(INSTALL_DATA) -d gps   $(docdir)/html/gps/
+	# -$(INSTALL_DATA) gps.html $(docdir)/html
 	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
-	  $(INSTALL_DATA) $$img $(docdir)/html; \
+	  $(INSTALL_DATA) $$img $(docdir)/html/gps; \
 	done
 	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
 	-$(INSTALL_DATA) gps-animation.png $(sharedir)
