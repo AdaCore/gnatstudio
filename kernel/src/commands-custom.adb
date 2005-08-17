@@ -923,9 +923,9 @@ package body Commands.Custom is
         (Param  : String;
          Quoted : Boolean) return String
       is
-         Num     : Integer;
-         Macro   : constant String :=
-                     Substitute (Param, Command.Execution.Context, Quoted);
+         Num   : Integer;
+         Macro : constant String :=
+                   Substitute (Param, Command.Execution.Context, Quoted);
       begin
          if Macro /= "" then
             return Macro;
@@ -962,14 +962,14 @@ package body Commands.Custom is
             end loop;
 
             if Output (Output'First) = '''
-              and then Output (Last) = '''
+              and then Last > Output'First and then Output (Last) = '''
             then
                return String_Utils.Protect
                  (Output (Output'First + 1 .. Last - 1),
                   Protect_Quotes => Quoted);
 
             elsif Output (Output'First) = '"'
-              and then Output (Output'Last) = '"'
+              and then Last > Output'First and then Output (Output'Last) = '"'
             then
                return String_Utils.Protect
                  (Output (Output'First + 1 .. Last - 1),
@@ -990,7 +990,7 @@ package body Commands.Custom is
       function Execute_Simple_Command
         (Component : Custom_Component) return Boolean
       is
-         --  Perform arguments substitutions for the command.
+         --  Perform arguments substitutions for the command
 
          Subst_Percent   : constant String := Substitute
            (Component.Command.all,
@@ -1006,7 +1006,7 @@ package body Commands.Custom is
          Output_Location : GNAT.OS_Lib.String_Access;
 
          function To_String (P : in GNAT.OS_Lib.String_Access) return String;
-         --  Return the contents of P, or the empty string if P is null.
+         --  Return the contents of P, or the empty string if P is null
 
          function Execute_Shell
            (Component : Shell_Component_Record'Class) return Boolean;
