@@ -211,8 +211,7 @@ package body VCS_Activities_View is
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event)
-      return Boolean;
+      Event : Gdk_Event) return Boolean;
    --  Callback for the "button_press" event
 
    procedure Edited_Callback
@@ -223,8 +222,7 @@ package body VCS_Activities_View is
 
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event)
-      return Boolean;
+      Event : Gdk_Event) return Boolean;
    --  Callback for the "delete_event" signal
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
@@ -482,8 +480,6 @@ package body VCS_Activities_View is
    begin
       Push_State (Explorer.Kernel, Busy);
 
-      Scroll_To_Point (Explorer.Tree, 0, 0);
-
       Clear (Explorer.Model);
       Sort_Col := Freeze_Sort (Explorer.Model);
 
@@ -504,8 +500,6 @@ package body VCS_Activities_View is
       Path : Gtk_Tree_Path;
    begin
       if Explorer.Iter /= Null_Iter then
---           Set_Focus_Child (Get_MDI (Explorer.Kernel), Explorer);
---           Select_Iter (Get_Selection (Explorer.Tree), Explorer.Iter);
          Path := Get_Path (Explorer.Model, Explorer.Iter);
          Set_Cursor
            (Explorer.Tree,
@@ -795,15 +789,16 @@ package body VCS_Activities_View is
          end;
       end if;
 
-      --  Hanlde each files
+      --  Handle each files
 
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
             File   : constant Virtual_File :=
-                     File_Status_List.Data (Status_Temp).File;
+                       File_Status_List.Data (Status_Temp).File;
             A_Iter : constant Gtk_Tree_Iter := Get_Activity_Iter (File);
          begin
             if A_Iter /= Null_Iter then
+
                Line := Get_Cached_Data (Explorer, File);
 
                if Line = No_Data or else Override_Cache then
@@ -986,13 +981,18 @@ package body VCS_Activities_View is
       -------------
 
       function Look_In (Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter is
-         I : Gtk_Tree_Iter;
+         I, Res : Gtk_Tree_Iter;
       begin
          Iter_Copy (Iter, I);
 
          while I /= Null_Iter loop
             if Has_Child (Explorer.Model, I) then
-               return Look_In (Children (Explorer.Model, I));
+               Res := Look_In (Children (Explorer.Model, I));
+
+               if Res /= Null_Iter then
+                  return Res;
+               end if;
+
             else
                if Get_String (Explorer.Model, I, Name_Column) =
                  Full_Name (Name, True).all
