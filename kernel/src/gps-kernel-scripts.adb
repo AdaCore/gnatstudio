@@ -225,6 +225,7 @@ package body GPS.Kernel.Scripts is
    Sensitive_Cst  : aliased constant String := "sensitive";
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
+   Recursive_Cst  : aliased constant String := "recursive";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -1216,14 +1217,16 @@ package body GPS.Kernel.Scripts is
             end;
 
          elsif Command = "dependencies" then
+            Name_Parameters (Data, (1 => Recursive_Cst'Access));
             declare
+               Recursive : constant Boolean := Nth_Arg (Data, 2, False);
                Iter : Imported_Project_Iterator;
                P    : Project_Type;
             begin
                Project := Get_Data (Data, 1);
                Set_Return_Value_As_List (Data);
                Iter := Start
-                 (Project, Recursive => True, Direct_Only => True);
+                 (Project, Recursive => True, Direct_Only => not Recursive);
 
                loop
                   P := Current (Iter);
@@ -1793,6 +1796,8 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, "dependencies",
          Class        => Get_Project_Class (Kernel),
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "get_attribute_as_string",
