@@ -1,13 +1,13 @@
 \input texinfo   @c -*-texinfo-*-
 @input texiplus
 
-@set GPS
-@set GPSVersion 3.1.0
-
 @c %**start of header
 @setfilename gps_pg.info
 @settitle GPS Programmer's Guide
 @syncodeindex fn cp
+
+@set GPS
+@set GPSVersion 3.1.0
 
 @titlepage
 
@@ -15,7 +15,7 @@
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
-@author ACT Europe
+@author AdaCore
 
 @c Insist we have a draft
 @iftex
@@ -36,7 +36,7 @@ unmodified in any copy.
 
 @end titlepage
 
-@ifinfo
+@ifnottex
 @node Top, Introduction, (dir), (dir)
 @top GPS Programmer's Guide
 
@@ -67,7 +67,11 @@ unmodified in any copy.
 
 @end detailmenu
 @end menu
-@end ifinfo
+@end ifnottex
+
+@iftex
+@contents
+@end iftex
 
 @c --------------------------------------------------------------------
 @node Introduction
@@ -556,7 +560,5 @@ This will stop the application as soon as the gtk+ warning is printed.
 @unnumbered Index
 @printindex cp
 
-@c --------------------------------------------------------------------
-@contents
 
 @bye

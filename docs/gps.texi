@@ -39,11 +39,7 @@ unmodified in any copy.
 
 @end titlepage
 
-@ifnotinfo
-@contents
-@end ifnotinfo
-
-@ifinfo
+@ifnottex
 @node Top, Introduction, (dir), (dir)
 @top Using the GNAT Programming Studio
 
@@ -261,7 +257,11 @@ Environment
 
 @end detailmenu
 @end menu
-@end ifinfo
+@end ifnottex
+
+@iftex
+@contents
+@end iftex
 
 @c --------------------------------------------------------------------
 @node Introduction
@@ -8760,7 +8760,6 @@ If specified, this attribute indicates whether the text of the command itself
 should be displayed at the same location as its output. Neither will be
 displayed if the output is hidden. The default is to show the command along
 with its output.
-
 This attribute can be overridden for each command.
 
 @item show-task-manager (optional, default true)
@@ -8770,9 +8769,7 @@ bar indicator, so if you hide the entry, no progress will be shown. On the
 other hand, several progress bars might be displayed for your action if you
 show the progress bar here, which might be an issue depending on the
 context.
-
 This attribute can be overriden for each external command.
-
 @end table
 
 If you are defining the same action multiple times, the last definition will
@@ -14564,9 +14561,5 @@ copy of the code on your local machine).
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
-
-@ifinfo
-@contents
-@end ifinfo
 
 @bye
