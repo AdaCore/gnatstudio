@@ -68,12 +68,12 @@ install:
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
 	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
-	-$(INSTALL_DATA) -d gps   $(docdir)/html/gps/
-	# -$(INSTALL_DATA) gps.html $(docdir)/html
+	-$(INSTALL_DATA) gps/* $(docdir)/html/
+	-$(INSTALL_DATA) gps/index.html  $(docdir)/html/gps.html
 	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
-	  $(INSTALL_DATA) $$img $(docdir)/html/gps; \
+	  $(INSTALL_DATA) $$img $(docdir)/html/; \
 	done
 	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
 	-$(INSTALL_DATA) gps-animation.png $(sharedir)
