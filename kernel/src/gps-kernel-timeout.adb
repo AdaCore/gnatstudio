@@ -55,6 +55,7 @@ package body GPS.Kernel.Timeout is
       Console       : Interactive_Console;
       Delete_Id     : Gtk.Handlers.Handler_Id;
       Show_Output   : Boolean;
+      Show_Command  : Boolean;
 
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
 
@@ -182,7 +183,7 @@ package body GPS.Kernel.Timeout is
          if Data.Interrupted then
             Insert
               (Console, ASCII.LF & (-"<^C> process interrupted"));
-         elsif Data.Show_Output then
+         elsif Data.Show_Output or Data.Show_Command then
             if Status = 0 then
                Insert
                  (Console, ASCII.LF & (-"process terminated successfully"));
@@ -484,6 +485,7 @@ package body GPS.Kernel.Timeout is
 
       Data.Console := Console;
       Data.Show_Output := Show_Output;
+      Data.Show_Command := Show_Command;
 
       Spawn (Command, Arguments, Success, Remote_Host, Remote_Protocol);
 
