@@ -104,16 +104,10 @@ Output created by gprmake
 =========================
 
 - For the convenience of tools launched, gprmake will set an environment
-  variable to the full path of the current project file being handled, so that
-  this info is shared easily among tools.
+  variable to the full path of the current project file being handled (including
+  current sub-project), so that this info is shared easily among tools.
 
   This environment variable could be called GNAT_PROJECT
-
-  Note: this raises the interesting question of whether some gnat tools
-  (e.g. the gnat driver) should support this environment variable, and if set
-  and no -P switch is specified on the command line, use this project instead.
-  This will make things simpler for gprmake, in particular for setting
-  the Builder_Driver attribute described below.
 
 - Each -Xname=val gprmake switch is translated into setting the environment
   variable "name" to "val"
@@ -152,7 +146,7 @@ Input needed from gprmake
   Therefore, in order to support and generalize the use of gnatmake for Ada
   files on one hand, and on the other hand, support the invocation of
   'external tools' to handle build of a set of sources, we're adding a new
-  Builder_Driver (<language>) that will, if specified, be
+  Source_Builder (<language>) that will, if specified, be
   called to check sources and compile them if needed. In this case, gprmake
   won't perform any timestamp check nor compilation for the sources of the
   designated language.
@@ -186,7 +180,7 @@ In order to ease the reuse of these attributes in various projects via
 package renaming, we introduce a new package tentatively called
 Language_Processing with the following attributes:
 
-  - Builder_Driver (<language>): If set, use this tool to check
+  - Source_Builder (<language>): If set, use this tool to check
     dependencies of sources for a given language, and rebuild them if
     needed.
     Defaults to ("<prefix>gnat", "make", "-c") for "ada".
@@ -194,7 +188,7 @@ Language_Processing with the following attributes:
 
     where <prefix> is an optional prefix computed based on the name
     of the gprmake tool when launched (e.g. calling powerpc-elf-gprmake
-    will set the default Builder_Driver to
+    will set the default Source_Builder to
     ("powerpc-elf-gnat", "make", "-c").
 
     Note: the default for Ada assumes that the GNAT_PROJECT environment
@@ -202,9 +196,9 @@ Language_Processing with the following attributes:
     Alternatively, we could provide a wrapper that would recognize it,
     and call gnatmake -c -P $GNAT_PROJECT directly.
 
-    This tool is called for each subproject where Builder_Driver is set,
-    and assumes that Builder_Driver will build recursively all the dependent
-    projects. This means for instance that if Builder_Driver is set on the
+    This tool is called for each subproject where Source_Builder is set,
+    and assumes that Source_Builder will build recursively all the dependent
+    projects. This means for instance that if Source_Builder is set on the
     root project, no compilation for this language will occur.
     The current directory is set to the subproject's directory
     before each call to provide a straightforward environment (for instance,
@@ -238,6 +232,11 @@ Language_Processing with the following attributes:
     In addition, if only one empty option is specified, it means that no
     default option should be appended, e.g: ("jgnat", "") will call jgnat
     without any "-c".
+
+    ??? add default behavior for Ada
+
+  Note: Compiler_Driver and Compiler_Kind are closely linked together and
+  should be set consistently.
 
   See below 'Handling of dependencies' for more info on the
   following attributes:
@@ -359,7 +358,7 @@ Handling of dependencies
 
     - java: it seems that recompiling java files is handled either by IDEs
     directly or using tools such as 'ant', which is a make-like tool written in
-    Java. Using 'ant' is in line with the Builder_Driver attribute
+    Java. Using 'ant' is in line with the Source_Builder attribute
     proposed. Similarly with sun's javac.
 
     - assembler: no dependencies with assembler files.
@@ -443,13 +442,12 @@ Ability to specify that a given project should not be built
     -> Should an error be emitted if there are missing libs/objects ?
 
   Proposal from Arno:
-  This can be achieved by specifying an empty value to Builder_Driver: ("")
+  This can be achieved by specifying an empty value to Source_Builder: ("")
 
   Proposal from Vincent:
 
   I don't think that using this switch is appropriate, because it is
-  supposed to be a switch indexed by the language (Builder_Driver
-  (<language>)).
+  supposed to be a switch indexed by the language (Source_Builder (<language>)).
 
   How about a new project level attribute:
 
@@ -512,8 +510,9 @@ Handling of link phase between languages
   - Ada & C++: use gnatlink --LINK=Compiler_Command ("c++")
 
   The Default_Linker is called in the object directory of the main
-  project. This attribute is empty by default: (),
-  meaning that a built-in driver is used, which behaves as follows:
+  project with the object of the main unit specified on the command line.
+  This attribute is empty by default: (), meaning that a built-in driver is
+  used, which behaves as follows:
 
   - for projects with a single language, call Linker_Driver (<language>)
   followed by ("-o", <executable name>),
@@ -557,15 +556,15 @@ Handling of link phase between languages
   be contracted to develop a small linker driver based on the gnat project
   sources to solve a particular need.
 
-  At link time, when some sources or executable are not up-to-date,
+  At link time, when some sources or executables are not up-to-date,
   an archive is built containing the object files of each language
-  source for which no Builder_Driver is set, and recreated in the object
+  source for which no Source_Builder is set, and recreated in the object
   directory of the main project as lib<root_project>.a.
-  If Builder_Driver is set for all supported languages, no archive is created
-  nor used (rationale: some systems do not support creating empty archives).
+  If Source_Builder is set for all supported languages, no archive is created
+  nor used (some systems do not support creating empty archives).
 
-  Rationale: it is expected that when Builder_Driver is set, the specific
-  builder driver will keep track of the object files required itself, and
+  Rationale: it is expected that when Source_Builder is set, the specific
+  source builder will keep track of the object files required itself, and
   that they will be handled either by Linker_Driver, or via
   Linker'Default_Switches.
   Concerning the approach of building a single big archive, see also file
@@ -588,13 +587,8 @@ Handling of link phase between languages
 Command line option supported by gprmake
 ========================================
 
-  In order to keep gprmake as generic as possible, options such as
-  -ccargs or -cxxargs should be avoided.
-
-  Current gprmake options are:
-
-  gprmake -P<project file> [opts]  [name] {[-cargs opts] [-ccargs opts]
-          [-cxxargs opts] [-largs opts] [-gargs opts]}
+  gprmake -P<project file> [opts]  [name] {[-cargs:lang opts]
+          [-bargs opts] [-largs opts] [-margs opts]}
 
   name is zero or more file names
 
@@ -613,7 +607,7 @@ Command line option supported by gprmake
   -ccargs opts   opts are passed to the C compiler
   -cxxargs opts  opts are passed to the C++ compiler
   -largs opts    opts are passed to the linker
-  -gargs opts    opts directly interpreted by gprmake
+  -margs opts    opts directly interpreted by gprmake
 
   The first set of options is kept as is.
   A clarification: each name is considered as a main unit as far as bind and
@@ -621,8 +615,6 @@ Command line option supported by gprmake
   in the project are used instead. If no main is listed in the project
   file, all project files are compiled, and if some project files are library
   projects, they are are linked to produced the corresponding libraries.
-
-  The -cargs, -ccargs and -cxxargs options are replaced with:
 
   -cargs:<lang> opts
 
@@ -637,12 +629,11 @@ Command line option supported by gprmake
      -cargs:ada -O2 -g
      -cargs -O2 -g
 
-  In addition and for consistency, we give access to the Builder and Binder
-  options:
+  We also give access to the Builder and Binder options for consistency:
 
   -margs:<lang> opts
 
-  same as -cargs, for Builder_Driver (<lang>) (the 'make' driver), if any.
+  same as -cargs, for Source_Builder (<lang>) (the 'make' driver), if any.
 
   Typical usage from GPS: gprmake -P project -margs:ada -d
 
@@ -650,14 +641,92 @@ Command line option supported by gprmake
 
   same as -cargs, for Binder_Driver (<lang>), if any.
 
-  -largs is kept as is. Options following -largs apply to the linker whatever
-  the language of the main.
+  Options following -largs apply to the linker whatever the language of the
+  main.
 
-  -gargs is kept as is.
+  Options following -margs apply to gprmake
 
   In addition, a new switch "-d" is added, to display the build progress,
   in a way similar to what gnatmake -d does now, for the benefit of
   GPS.
+
+============ ??? ==========================
+
+  gprmake will pass -gnatxxx switches to the GNAT compiler, but no other
+  switches it does not understand.
+ 
+2) gnatmake switches:
+ 
+  -a       Consider all files, even readonly ali files
+  -C       Cache source mappings: invoke compiler with temp mapping file
+  -eI      Index of unit in multi-unit source file
+  -m       Minimal recompilation
+  -s       Recompile if compiler switches have changed
+  --RTS=dir specify the default source and object search path
+  switches relevant for GNAT only ?
+
+  -b       Bind only
+  -c       Compile only
+
+  -eL      Follow symbolic links when processing project files
+
+  -f       Force recompilations of non predefined units
+
+  -F       Full project path name in brief error messages
+
+  -jnum    Use nnn processes to compile
+
+  -k       Keep going after compilation errors
+
+  -l       Link only
+
+  -o name  Choose an alternate executable name
+
+  -Pproj   Use GNAT Project File proj
+
+  -q       Be quiet/terse
+
+  -u       Unique compilation. Only compile the given files.
+
+  -U       Unique compilation for all sources of all projects
+
+  -v
+
+  -vPx     Specify verbosity when parsing GNAT Project Files
+
+  -x       Allow compilation of needed units external to the projects
+
+  -Xnm=val Specify an external reference for GNAT Project Files
+
+  -aOdir    Specify library/object files search path
+  -aIdir    Specify source files search path
+  -Idir     Like -aIdir -aOdir
+
+useful for all GNU compilers (and others ?) ?
+
+<<
+  -nostdinc Don't look for sources in the system default directory
+  -nostdlib Don't look for library files in the system default directory
+
+  Switches passed to the compiler:
+
+  -fstack-check Generate stack checking code
+  -fno-inline   Inhibit all inlining (makes executable smaller)
+  -g            Generate debugging information
+  -Idir         Specify source files search path
+  -I-           Do not look for sources in current directory
+  -O[0123]      Control the optimization level
+
+  All -g switches are passed to GNU compilers (-g and -gx, whatever x).
+>>
+
+To pass an arbitrary switch to the Compiler, Binder or Linker:
+  -cargs[:lang] opts   opts are passed to the compiler for lang (default=Ada)
+  -bargs        opts   opts are passed to the binder
+  -largs        opts   opts are passed to the linker
+  -margs        opts   opts are passed to gnatmake
+
+============ ??? ==========================
 
 Unanswered questions
 ====================
