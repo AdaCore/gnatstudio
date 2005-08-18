@@ -2450,7 +2450,7 @@ package body Browsers.Canvas is
         (Kernel,
          "Select All In Browser",
          Command,
-         "Select all items in a browser");
+         -"Select all items in a browser");
    end Register_Actions;
 
    -------------
