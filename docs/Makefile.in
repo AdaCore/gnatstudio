@@ -29,17 +29,24 @@ tutorial: gps-tutorial.html
 doc:      gps.txt gps.html gps.pdf
 gps_pg:   gps_pg.pdf gps_pg.html
 
+.PHONY: gps.html
+
 gps-tutorial.html:                tutorial.texi
 	makeinfo --html --no-validate --no-split --number-sections $< -o $@
 
-gps_pg.html gps_pg.pdf:            gps_pg.texi
-gps.html gps.pdf gps.txt: ${TEXI}
+gps_pg.html:            gps_pg.texi
+	makeinfo --html --no-split --number-sections --no-headers $< -o $@
+
+gps_pg.pdf: gps_pg.texi
 
 ## We generate the documentation twice, in case the version of makeinfo is
 ## recent enough to support --css-include
-%.html::
-	makeinfo --html --number-sections $<
-	@-makeinfo --html --css-include=gps.css --number-sections $< >/dev/null 2>/dev/null
+gps.html: ${TEXI}
+	makeinfo --html --number-sections ${TEXI}
+	@-makeinfo --html --css-include=gps.css --number-sections ${TEXI}  >/dev/null 2>/dev/null
+	@sed -i -e 's,</head>,<base target="page"/></head>,' gps/index.html
+
+gps.pdf gps.txt: ${TEXI}
 
 %.pdf::
 ifneq (${TEXI2DVI},)
@@ -68,8 +75,8 @@ install:
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
 	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
-	-$(INSTALL_DATA) gps/* $(docdir)/html/
-	-$(INSTALL_DATA) gps/index.html  $(docdir)/html/gps.html
+	-$(CP) gps/* $(docdir)/html/
+	-$(INSTALL_DATA) gps.html  $(docdir)/html/
 	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
@@ -95,8 +102,8 @@ clean-temp-files:
 	-$(RM) *.vr
 
 clean: clean-temp-files
-	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.pdf gps.dvi gps.txt stamp-*
-	-${RM} -rf gps/ gps_pg/
+	-$(RM) gps-tutorial*.html gps_*.html gps.pdf gps.dvi gps.txt stamp-*
+	-${RM} -rf gps/
 
 mostlyclean: clean
 
