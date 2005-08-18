@@ -822,10 +822,12 @@ package body Project_Viewers is
 
    procedure Execute
      (Hook : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class) is
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
       Hook.Viewer.Default_Switches_Color :=
-        Get_Pref (Kernel, Default_Switches_Color);
+        Get_Pref (Default_Switches_Color);
       --  ??? Do we need to change the model to reflect this change
    end Execute;
 
@@ -876,8 +878,8 @@ package body Project_Viewers is
          Gtk_New (Viewer, Kernel);
          Child := Put
            (Kernel, Viewer,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module => Prj_Editor_Module_ID);
          Set_Title (Child, -"Switches editor");
       end if;
@@ -1439,7 +1441,7 @@ package body Project_Viewers is
             Relative : constant Boolean :=
               Get_Paths_Type (Project) = Projects.Relative
               or else (Get_Paths_Type (Project) = From_Pref
-                       and then Get_Pref (Kernel, Generate_Relative_Paths));
+                       and then Get_Pref (Generate_Relative_Paths));
             Error    : Import_Project_Error;
             pragma Unreferenced (Error);
          begin

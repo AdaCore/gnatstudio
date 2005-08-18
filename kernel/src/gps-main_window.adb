@@ -349,14 +349,14 @@ package body GPS.Main_Window is
    begin
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
-         To_String (Get_Pref (Kernel, Default_Font)) &
+         To_String (Get_Pref (Default_Font)) &
          '"' & ASCII.LF &
          "gtk-can-change-accels=" &
          Integer'Image
            (Boolean'Pos
-              (Get_Pref (Kernel, Can_Change_Accels))));
+              (Get_Pref (Can_Change_Accels))));
 
-      case Toolbar_Icons_Size'Val (Get_Pref (Kernel, Pref_Toolbar_Style)) is
+      case Toolbar_Icons_Size'Val (Get_Pref (Pref_Toolbar_Style)) is
          when Hide_Toolbar =>
             Set_Child_Visible (Win.Toolbar_Box, False);
             Hide_All (Win.Toolbar_Box);
@@ -374,28 +374,26 @@ package body GPS.Main_Window is
             Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
       end case;
 
-      if Get_Pref (Kernel, Toolbar_Show_Text) then
+      if Get_Pref (Toolbar_Show_Text) then
          Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
       else
          Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
-      case Tabs_Position_Preference'Val
-        (Get_Pref (Kernel, Pref_Tabs_Position))
-      is
+      case Tabs_Position_Preference'Val (Get_Pref (Pref_Tabs_Position)) is
          when Bottom => Pos := Pos_Bottom;
          when Right  => Pos := Pos_Right;
          when Top    => Pos := Pos_Top;
          when Left   => Pos := Pos_Left;
       end case;
 
-      case Tabs_Policy_Enum'Val (Get_Pref (Kernel, Pref_Tabs_Policy)) is
+      case Tabs_Policy_Enum'Val (Get_Pref (Pref_Tabs_Policy)) is
          when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
          when Never     => Policy := Show_Tabs_Policy_Enum'(Never);
          when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
-      if Get_Pref (Kernel, Pref_Show_Statusbar) then
+      if Get_Pref (Pref_Show_Statusbar) then
          Show_All (Win.Statusbar);
       else
          Hide_All (Win.Statusbar);
@@ -403,19 +401,19 @@ package body GPS.Main_Window is
 
       Configure
         (Get_MDI (Kernel),
-         Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
+         Opaque_Resize     => Get_Pref (MDI_Opaque),
          Close_Floating_Is_Unfloat =>
-           not Get_Pref (Kernel, MDI_Destroy_Floats),
-         Title_Font        => Get_Pref (Kernel, Default_Font),
-         Background_Color  => Get_Pref (Kernel, MDI_Background_Color),
-         Title_Bar_Color   => Get_Pref (Kernel, MDI_Title_Bar_Color),
-         Focus_Title_Color => Get_Pref (Kernel, MDI_Focus_Title_Color),
-         Draw_Title_Bars   => Get_Pref (Kernel, Pref_Draw_Title_Bars),
+           not Get_Pref (MDI_Destroy_Floats),
+         Title_Font        => Get_Pref (Default_Font),
+         Background_Color  => Get_Pref (MDI_Background_Color),
+         Title_Bar_Color   => Get_Pref (MDI_Title_Bar_Color),
+         Focus_Title_Color => Get_Pref (MDI_Focus_Title_Color),
+         Draw_Title_Bars   => Get_Pref (Pref_Draw_Title_Bars),
          Show_Tabs_Policy  => Policy,
          Tabs_Position     => Pos);
 
       Set_All_Floating_Mode
-        (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
+        (Get_MDI (Kernel), Get_Pref (MDI_All_Floating));
    end Preferences_Changed;
 
    ----------------

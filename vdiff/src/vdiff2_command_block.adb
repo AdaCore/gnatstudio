@@ -162,9 +162,9 @@ package body Vdiff2_Command_Block is
       Unhighlight_Difference (Kernel, Item);
 
       if Item.File3 = VFS.No_File then
-         Tmp := Diff (Kernel, Item.File1, Item.File2);
+         Tmp := Diff (Item.File1, Item.File2);
       else
-         Tmp := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
+         Tmp := Diff3 (Item.File1, Item.File2, Item.File3);
       end if;
 
       if Tmp = Diff_Chunk_List.Null_List then

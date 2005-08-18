@@ -646,8 +646,8 @@ package body Browsers.Entities is
          Child := Put
            (Kernel, Browser,
             Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Entity_Browser_Module);
          Set_Focus_Child (Child);
          Set_Title (Child, Title);
@@ -1570,8 +1570,8 @@ package body Browsers.Entities is
       if Node.Tag.all = "Entities_Browser" then
          Child := Put
            (User, Gtk_Widget (Open_Type_Browser (User)),
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Entity_Browser_Module);
          Set_Title (Child, -"Entity Browser");
 

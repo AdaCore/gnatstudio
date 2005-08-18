@@ -872,8 +872,7 @@ package body Src_Editor_View is
       --  current block, if needed.
 
       procedure Highlight_Text is
-         Column           : constant Gint :=
-           Get_Pref (View.Kernel, Highlight_Column);
+         Column           : constant Gint := Get_Pref (Highlight_Column);
          Rect             : Gdk_Rectangle;
          Line_Y           : Gint;
          Line_Height      : Gint;
@@ -1157,7 +1156,7 @@ package body Src_Editor_View is
       Gdk_New
         (View.Current_Line_GC,
          Get_Window (View, Text_Window_Text));
-      Color := Get_Pref (View.Kernel, Current_Line_Color);
+      Color := Get_Pref (Current_Line_Color);
       Set_Foreground (View.Current_Line_GC, Color);
       View.Highlight_Current :=
         not Equal (Color, White (Get_Default_Colormap));
@@ -1165,9 +1164,9 @@ package body Src_Editor_View is
       Gdk_New
         (View.Current_Block_GC,
          Get_Window (View, Text_Window_Text));
-      Color := Get_Pref (View.Kernel, Current_Block_Color);
+      Color := Get_Pref (Current_Block_Color);
       Set_Foreground (View.Current_Block_GC, Color);
-      View.Highlight_Blocks := Get_Pref (View.Kernel, Block_Highlighting);
+      View.Highlight_Blocks := Get_Pref (Block_Highlighting);
 
       Gdk_New
         (View.Default_GC,
@@ -1491,6 +1490,7 @@ package body Src_Editor_View is
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       Source  : constant Source_View := Source_View (Hook.View);
       Descr   : Pango_Font_Description;
       Layout  : Pango_Layout;
@@ -1500,7 +1500,7 @@ package body Src_Editor_View is
    begin
       --  Set the font.
 
-      Descr := Get_Pref_Font (Kernel, Default_Style);
+      Descr := Get_Pref_Font (Default_Style);
       Set_Font (Source, Descr);
 
       --  Recompute the width of one character.
@@ -1517,18 +1517,18 @@ package body Src_Editor_View is
       --  point.
 
       if Source.Current_Line_GC /= null then
-         Color := Get_Pref (Kernel, Current_Line_Color);
+         Color := Get_Pref (Current_Line_Color);
          Set_Foreground (Source.Current_Line_GC, Color);
          Source.Highlight_Current :=
            not Equal (Color, White (Get_Default_Colormap));
 
-         Color := Get_Pref (Kernel, Current_Block_Color);
+         Color := Get_Pref (Current_Block_Color);
          Set_Foreground (Source.Current_Block_GC, Color);
-         Source.Highlight_Blocks := Get_Pref (Kernel, Block_Highlighting);
+         Source.Highlight_Blocks := Get_Pref (Block_Highlighting);
       end if;
 
       Source.Speed_Column_Mode :=
-        Speed_Column_Policies'Val (Get_Pref (Kernel, Speed_Column_Policy));
+        Speed_Column_Policies'Val (Get_Pref (Speed_Column_Policy));
 
       if Source.Speed_Column_Mode /= Mode then
          if Source.Speed_Column_Mode = Never then
@@ -1550,14 +1550,14 @@ package body Src_Editor_View is
 
       --  Modify the text background and color.
 
-      Color := Get_Pref_Bg (Kernel, Default_Style);
+      Color := Get_Pref_Bg (Default_Style);
 
       if Color /= Source.Background_Color then
          Source.Background_Color := Color;
          Modify_Base (Source, State_Normal, Color);
       end if;
 
-      Color := Get_Pref_Fg (Kernel, Default_Style);
+      Color := Get_Pref_Fg (Default_Style);
 
       if Color /= Source.Text_Color then
          Source.Text_Color := Color;

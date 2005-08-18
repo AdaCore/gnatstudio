@@ -255,8 +255,7 @@ package body External_Editor_Module is
       Extended_Lisp  : String := "");
    --  Calls the client with the appropriate parameters
 
-   procedure Select_Client
-     (Kernel         : access Kernel_Handle_Record'Class);
+   procedure Select_Client;
    --  Select the appropriate external editor to use. They are tested in the
    --  order given in Clients, and are selected if both Command_Name and
    --  Lisp_Command_Name are found on the path.
@@ -297,14 +296,12 @@ package body External_Editor_Module is
    -- Select_Client --
    -------------------
 
-   procedure Select_Client
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Select_Client is
       Path  : GNAT.OS_Lib.String_Access;
       Args  : Argument_List_Access;
       Match : Boolean;
       Default_Client : constant Supported_Clients :=
-        Supported_Clients'Val (Get_Pref (Kernel, Default_External_Editor));
+        Supported_Clients'Val (Get_Pref (Default_External_Editor));
    begin
       --  If the user has specified a default client, use that one.
       if Default_Client /= Auto then
@@ -323,7 +320,7 @@ package body External_Editor_Module is
             begin
                if Command = Custom_Command then
                   Args := Argument_String_To_List
-                    (Get_Pref (Kernel, Custom_Editor));
+                    (Get_Pref (Custom_Editor));
 
                else
                   Args := Argument_String_To_List (Command);
@@ -649,7 +646,7 @@ package body External_Editor_Module is
          begin
             if Command = Custom_Command then
                Args := Argument_String_To_List
-                 (Get_Pref (Kernel, Custom_Editor));
+                 (Get_Pref (Custom_Editor));
             else
                Args := Argument_String_To_List (Command);
             end if;
@@ -671,7 +668,7 @@ package body External_Editor_Module is
       if Args'Length /= 0 then
          Path := Locate_Exec_On_Path (Args (Args'First).all);
       else
-         Insert (Kernel, """" & Get_Pref (Kernel, Custom_Editor)
+         Insert (Kernel, """" & Get_Pref (Custom_Editor)
                     & """ is not a valid external editor",
                  Mode => Error);
          return;
@@ -774,7 +771,7 @@ package body External_Editor_Module is
       D : Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
    begin
       if External_Editor_Module_Id.Client /= Auto
-        and then Get_Pref (Kernel, Always_Use_External_Editor)
+        and then Get_Pref (Always_Use_External_Editor)
       then
          if Is_Regular_File (D.File) then
             Push_State (Kernel_Handle (Kernel), Processing);
@@ -798,9 +795,11 @@ package body External_Editor_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
-      Select_Client (Kernel);
+      Select_Client;
    end Preferences_Changed;
 
    ---------------------

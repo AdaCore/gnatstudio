@@ -24,7 +24,7 @@ with Glib;                     use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Gtk.Handlers;             use Gtk.Handlers;
 
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
 with GPS.Kernel.Modules;       use GPS.Kernel;
 
@@ -36,12 +36,12 @@ package Vdiff2_Module is
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
    Diff3_Cmd              : Param_Spec_String;
-   Diff_Default_Color     : Param_Spec_Color;
-   Diff_Old_Color         : Param_Spec_Color;
-   Diff_Append_Color      : Param_Spec_Color;
-   Diff_Remove_Color      : Param_Spec_Color;
-   Diff_Change_Color      : Param_Spec_Color;
-   Diff_Fine_Change_Color : Param_Spec_Color;
+   Diff_Default_Color     : Default_Preferences.Param_Spec_Color;
+   Diff_Old_Color         : Default_Preferences.Param_Spec_Color;
+   Diff_Append_Color      : Default_Preferences.Param_Spec_Color;
+   Diff_Remove_Color      : Default_Preferences.Param_Spec_Color;
+   Diff_Change_Color      : Default_Preferences.Param_Spec_Color;
+   Diff_Fine_Change_Color : Default_Preferences.Param_Spec_Color;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

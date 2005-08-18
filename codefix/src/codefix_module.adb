@@ -376,37 +376,37 @@ package body Codefix_Module is
       Session.Current_Text := new GPS_Navigator;
 
       if File_Index = -1 then
-         Fi := Integer (Get_Pref (Kernel, File_Pattern_Index));
+         Fi := Integer (Get_Pref (File_Pattern_Index));
       else
          Fi := File_Index;
       end if;
 
       if Line_Index = -1 then
-         Li := Integer (Get_Pref (Kernel, Line_Pattern_Index));
+         Li := Integer (Get_Pref (Line_Pattern_Index));
       else
          Li := Line_Index;
       end if;
 
       if Col_Index = -1 then
-         Ci := Integer (Get_Pref (Kernel, Column_Pattern_Index));
+         Ci := Integer (Get_Pref (Column_Pattern_Index));
       else
          Ci := Col_Index;
       end if;
 
       if Msg_Index = -1 then
-         Mi := Integer (Get_Pref (Kernel, Message_Pattern_Index));
+         Mi := Integer (Get_Pref (Message_Pattern_Index));
       else
          Mi := Msg_Index;
       end if;
 
       if Style_Index = -1 then
-         Si := Integer (Get_Pref (Kernel, Style_Pattern_Index));
+         Si := Integer (Get_Pref (Style_Pattern_Index));
       else
          Si := Style_Index;
       end if;
 
       if Warning_Index = -1 then
-         Wi := Integer (Get_Pref (Kernel, Warning_Pattern_Index));
+         Wi := Integer (Get_Pref (Warning_Pattern_Index));
       else
          Wi := Warning_Index;
       end if;
@@ -414,7 +414,7 @@ package body Codefix_Module is
       if File_Location_Regexp = "" then
          Set_Regexp
            (Errors_Found,
-            File_Location_Regexp => Compile (Get_Pref (Kernel, File_Pattern)),
+            File_Location_Regexp => Compile (Get_Pref (File_Pattern)),
             File_Index_In_Regexp    => Fi,
             Line_Index_In_Regexp    => Li,
             Col_Index_In_Regexp     => Ci,

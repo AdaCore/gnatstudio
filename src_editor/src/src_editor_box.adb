@@ -754,7 +754,7 @@ package body Src_Editor_Box is
       Set_Tooltip
         (Tooltip   => Create_Tooltips (Box),
          On_Widget => Box.Source_View,
-         Timeout   => Guint32 (Get_Pref (Kernel, Tooltip_Timeout)));
+         Timeout   => Guint32 (Get_Pref (Tooltip_Timeout)));
 
       --  The status bar, at the bottom of the window...
 
@@ -1734,7 +1734,7 @@ package body Src_Editor_Box is
                     Parent            => Get_Current_Window (Editor.Kernel),
                     Default_Name      => New_Base_Name.all,
                     Use_Native_Dialog =>
-                      Get_Pref (Editor.Kernel, Use_Native_Dialogs),
+                      Get_Pref (Use_Native_Dialogs),
                     Kind              => Save_File,
                     History           => Get_History (Editor.Kernel));
 

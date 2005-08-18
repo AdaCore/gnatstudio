@@ -53,7 +53,6 @@ with Gtkada.MDI;                     use Gtkada.MDI;
 
 with Basic_Types;                    use Basic_Types;
 with Histories;                      use Histories;
-with Default_Preferences;            use Default_Preferences;
 with Display_Items;                  use Display_Items;
 with Breakpoints_Editor;             use Breakpoints_Editor;
 with Debugger;                       use Debugger;
@@ -1072,7 +1071,7 @@ package body GVD_Module is
            Select_File
              (Title             => -"Select Module",
               Parent            => Gtk_Window (Top),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
@@ -2136,7 +2135,7 @@ package body GVD_Module is
               File_Pattern      => "*" & Exec_Suffix,
               Pattern_Name      => -"Executable files",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin
@@ -2205,7 +2204,7 @@ package body GVD_Module is
               File_Pattern      => "core*",
               Pattern_Name      => -"Core files",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
 
@@ -2505,7 +2504,7 @@ package body GVD_Module is
             Create_Pixmap_From_Text
               (Text       => Value.all,
                Font       =>
-                 Get_Pref (Kernel, GPS.Kernel.Preferences.Default_Font),
+                 Get_Pref (GPS.Kernel.Preferences.Default_Font),
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
@@ -3284,7 +3283,7 @@ package body GVD_Module is
       if GVD_Module_ID.Initialized then
          Prev   := GVD_Module_ID.Show_Lines_With_Code;
          GVD_Module_ID.Show_Lines_With_Code :=
-           Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
+           Get_Pref (Editor_Show_Line_With_Code);
 
          if Prev /= GVD_Module_ID.Show_Lines_With_Code then
             Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
@@ -3352,7 +3351,7 @@ package body GVD_Module is
       GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
       GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
       GVD_Module_ID.Show_Lines_With_Code :=
-        Get_Pref (Kernel, Editor_Show_Line_With_Code);
+        Get_Pref (Editor_Show_Line_With_Code);
 
       Register_Module
         (Module          => Module_ID (GVD_Module_ID),

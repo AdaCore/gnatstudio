@@ -257,17 +257,17 @@ package body Vdiff2_Module.Utils.Shell_Command is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Default_Color : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Default_Color));
+        To_String (Get_Pref (Diff_Default_Color));
       Old_Color     : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Old_Color));
+        To_String (Get_Pref (Diff_Old_Color));
       Append_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Append_Color));
+        To_String (Get_Pref (Diff_Append_Color));
       Remove_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Remove_Color));
+        To_String (Get_Pref (Diff_Remove_Color));
       Change_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Change_Color));
+        To_String (Get_Pref (Diff_Change_Color));
       Change_Fine_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Fine_Change_Color));
+        To_String (Get_Pref (Diff_Fine_Change_Color));
       Args          : Argument_List :=
         (1 => new String'(Default_Style),
          2 => new String'(Default_Color));

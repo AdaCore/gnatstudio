@@ -327,7 +327,7 @@ package body Src_Editor_Box.Tooltips is
       Pixmap := null;
       Area   := (0, 0, 0, 0);
 
-      if not Get_Pref (Box.Kernel, Display_Tooltip) then
+      if not Get_Pref (Display_Tooltip) then
          return;
       end if;
 
@@ -437,7 +437,7 @@ package body Src_Editor_Box.Tooltips is
               Get_Instance (Entity_Ref)
               & Get_Documentation (Box.Kernel, Entity);
             Font : constant Pango_Font_Description :=
-              Get_Pref (Box.Kernel, Default_Font);
+              Get_Pref (Default_Font);
             Color : Gdk_Color;
             Layout1, Layout2, Layout3 : Pango_Layout;
             Width, Height, W1, H1, W2, H2, W3, H3 : Gint := 0;

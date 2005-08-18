@@ -874,7 +874,7 @@ package body Help_Module is
               File_Pattern      => "*.htm*",
               Pattern_Name      => -"HTML files",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               History           => Get_History (Kernel));
 
       begin

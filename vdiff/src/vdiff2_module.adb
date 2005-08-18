@@ -59,6 +59,7 @@ package body Vdiff2_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      use Default_Preferences;
       Tools          : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';
       Filter         : Action_Filter;

@@ -192,7 +192,7 @@ package body GPS.Kernel.Project is
       --  Output error messages from the project parser to the console.
 
       procedure Report_Error (S : String) is
-         Old_Pref : constant Boolean := Get_Pref (Kernel, Auto_Jump_To_First);
+         Old_Pref : constant Boolean := Get_Pref (Auto_Jump_To_First);
       begin
          --  Temporarily unset this, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
@@ -224,7 +224,7 @@ package body GPS.Kernel.Project is
          --  loading of GPS, since we always start from a default project,
 
          if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
-           and then Get_Pref (Kernel, Save_Desktop_On_Exit)
+           and then Get_Pref (Save_Desktop_On_Exit)
          then
             Save_Desktop (Kernel);
          end if;

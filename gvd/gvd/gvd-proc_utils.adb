@@ -24,8 +24,6 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with Default_Preferences;    use Default_Preferences;
-with GVD.Preferences;        use GVD.Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Config;                 use Config;
@@ -118,7 +116,7 @@ package body GVD.Proc_Utils is
       if Host = Windows then
          Args := new Argument_List'
            (1 => new String'("/c "),
-            2 => new String'(Get_Pref (GVD_Prefs, List_Processes)));
+            2 => new String'(Get_Pref (List_Processes)));
 
          Non_Blocking_Spawn (Handle.Descriptor.all, "cmd", Args.all);
 
@@ -129,7 +127,7 @@ package body GVD.Proc_Utils is
          begin
             Args := new Argument_List'
               (New_Args.all
-               & (1 => new String'(Get_Pref (GVD_Prefs, List_Processes))));
+               & (1 => new String'(Get_Pref (List_Processes))));
             Free (New_Args);
          end;
 
@@ -149,7 +147,7 @@ package body GVD.Proc_Utils is
    procedure Open_Processes (Handle : out Process_Handle; Host : String) is
       Match       : Expect_Match := 0;
       Remote_Args : Argument_List_Access :=
-        Argument_String_To_List (Get_Pref (GVD_Prefs, Remote_Protocol));
+        Argument_String_To_List (Get_Pref (Remote_Protocol));
       New_Args    : Argument_List (1 .. 1 + Remote_Args'Length);
 
    begin
@@ -160,7 +158,7 @@ package body GVD.Proc_Utils is
         Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last);
       New_Args (Remote_Args'Length) := new String'(Host);
       New_Args (Remote_Args'Length + 1) :=
-        new String'(Get_Pref (GVD_Prefs, List_Processes));
+        new String'(Get_Pref (List_Processes));
       Non_Blocking_Spawn
         (Handle.Descriptor.all,
          Remote_Args (Remote_Args'First).all, New_Args);

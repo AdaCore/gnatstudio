@@ -767,7 +767,7 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      if Get_Pref (GVD_Prefs, Execution_Window)
+      if Get_Pref (Execution_Window)
         and then Debugger.Remote_Host = null
       then
          if Host = Windows then
@@ -1067,7 +1067,7 @@ package body Debugger.Gdb is
          Send (Debugger, "list main,main", Mode => Internal);
       end if;
 
-      if Get_Pref (GVD_Prefs, Break_On_Exception) then
+      if Get_Pref (Break_On_Exception) then
          declare
             Cmd : constant String :=
                     Break_Exception

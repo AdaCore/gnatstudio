@@ -688,7 +688,7 @@ package body Shell_Script is
             "GPS> ",
             Interpret_Command_Handler'Access,
             Kernel.all'Address,
-            Get_Pref_Font (Kernel, Default_Style),
+            Get_Pref_Font (Default_Style),
             History_List => Get_History (Kernel),
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);

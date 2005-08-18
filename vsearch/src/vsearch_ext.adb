@@ -1778,8 +1778,7 @@ package body Vsearch_Ext is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Vsearch_Module_Id.Tab_Width :=
-        Natural (Get_Pref (Kernel, Tab_Width));
+      Vsearch_Module_Id.Tab_Width := Natural (Get_Pref (Tab_Width));
 
       --  Register the menus
       Register_Menu
@@ -1844,10 +1843,11 @@ package body Vsearch_Ext is
    -------------------------
 
    procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
-      Vsearch_Module_Id.Tab_Width :=
-        Natural (Get_Pref (Kernel, Tab_Width));
+      Vsearch_Module_Id.Tab_Width := Natural (Get_Pref (Tab_Width));
    end Preferences_Changed;
 
 end Vsearch_Ext;

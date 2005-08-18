@@ -91,16 +91,17 @@ package body Cpp_Module is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       Style  : constant Indentation_Kind := Indentation_Kind'Val
-        (Get_Pref (Kernel, C_Automatic_Indentation));
-      Tabs   : constant Boolean := Get_Pref (Kernel, C_Use_Tabs);
+        (Get_Pref (C_Automatic_Indentation));
+      Tabs   : constant Boolean := Get_Pref (C_Use_Tabs);
       Params : constant Indent_Parameters :=
                  (Indent_Level        =>
-                    Integer (Get_Pref (Kernel, C_Indentation_Level)),
+                    Integer (Get_Pref (C_Indentation_Level)),
                   Indent_Continue     => 0,
                   Indent_Decl         => 0,
                   Tab_Width           =>
-                    Integer (Get_Pref (Kernel, Tab_Width)),
+                    Integer (Get_Pref (Tab_Width)),
                   Indent_Case_Extra   => Automatic,
                   Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,

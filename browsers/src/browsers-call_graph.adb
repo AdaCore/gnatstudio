@@ -596,8 +596,8 @@ package body Browsers.Call_Graph is
       Child := Put
         (Kernel, Browser,
          Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-         Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-         Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+         Default_Width  => Get_Pref (Default_Widget_Width),
+         Default_Height => Get_Pref (Default_Widget_Height),
          Module         => Call_Graph_Module_Id);
       Set_Title (Child, -"Call graph Browser");
 

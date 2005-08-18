@@ -1176,7 +1176,7 @@ package body GPS.Location_View is
             Path_Free (Path);
 
             if not Quiet
-              and then Get_Pref (View.Kernel, Auto_Jump_To_First)
+              and then Get_Pref (Auto_Jump_To_First)
             then
                Goto_Location (View);
             end if;
@@ -1508,7 +1508,7 @@ package body GPS.Location_View is
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access,
                 Watch => GObject (View));
-      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end Initialize;
 
    ---------------------
@@ -1909,8 +1909,8 @@ package body GPS.Location_View is
          Child := Put
            (Kernel, Locations,
             Module              => Location_View_Module_Id,
-            Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width       => Get_Pref (Default_Widget_Width),
+            Default_Height      => Get_Pref (Default_Widget_Height),
             Position            => Position_Bottom,
             Desktop_Independent => True);
          Set_Focus_Child (Child);
@@ -1958,7 +1958,7 @@ package body GPS.Location_View is
       end if;
 
       View := Location_View (Get_Widget (Child));
-      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
       Node := First (View.Stored_Locations);
 
@@ -2332,7 +2332,7 @@ package body GPS.Location_View is
       function Get_File_Location return Pattern_Matcher is
       begin
          if File_Location_Regexp = "" then
-            return Compile (Get_Pref (Kernel, File_Pattern));
+            return Compile (Get_Pref (File_Pattern));
          else
             return Compile (File_Location_Regexp);
          end if;
@@ -2351,7 +2351,7 @@ package body GPS.Location_View is
          Location : Integer;
       begin
          if Value = -1 then
-            Location := Integer (Get_Pref (Kernel, Pref));
+            Location := Integer (Get_Pref (Pref));
          else
             Location := Value;
          end if;

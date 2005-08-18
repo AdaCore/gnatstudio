@@ -93,34 +93,36 @@ package body Ada_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
          Indent_Style => Indentation_Kind'Val
-           (Get_Pref (Kernel, Ada_Automatic_Indentation)),
+           (Get_Pref (Ada_Automatic_Indentation)),
          Params       =>
            (Indent_Level        =>
-              Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
+              Integer (Get_Pref (Ada_Indentation_Level)),
             Indent_Continue     =>
-              Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
+              Integer (Get_Pref (Ada_Continuation_Level)),
             Indent_Decl         =>
-              Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
-            Tab_Width           => Integer (Get_Pref (Kernel, Tab_Width)),
+              Integer (Get_Pref (Ada_Declaration_Level)),
+            Tab_Width           => Integer (Get_Pref (Tab_Width)),
             Indent_Case_Extra   => Indent_Style'Val
-              (Get_Pref (Kernel, Ada_Indent_Case_Extra)),
+              (Get_Pref (Ada_Indent_Case_Extra)),
             Casing_Policy       => Casing_Policy'Val
-              (Get_Pref (Kernel, Ada_Casing_Policy)),
+              (Get_Pref (Ada_Casing_Policy)),
             Reserved_Casing     => Casing_Type'Val
-              (Get_Pref (Kernel, Ada_Reserved_Casing)),
+              (Get_Pref (Ada_Reserved_Casing)),
             Ident_Casing        => Casing_Type'Val
-              (Get_Pref (Kernel, Ada_Ident_Casing)),
-            Format_Operators    => Get_Pref (Kernel, Ada_Format_Operators),
-            Use_Tabs            => Get_Pref (Kernel, Ada_Use_Tabs),
-            Align_On_Colons     => Get_Pref (Kernel, Ada_Align_On_Colons),
-            Align_On_Arrows     => Get_Pref (Kernel, Ada_Align_On_Arrows),
+              (Get_Pref (Ada_Ident_Casing)),
+            Format_Operators    => Get_Pref (Ada_Format_Operators),
+            Use_Tabs            => Get_Pref (Ada_Use_Tabs),
+            Align_On_Colons     => Get_Pref (Ada_Align_On_Colons),
+            Align_On_Arrows     => Get_Pref (Ada_Align_On_Arrows),
             Align_Decl_On_Colon =>
-              Get_Pref (Kernel, Ada_Align_Decl_On_Colon)));
+              Get_Pref (Ada_Align_Decl_On_Colon)));
    end On_Preferences_Changed;
 
    ---------------------

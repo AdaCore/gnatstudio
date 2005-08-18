@@ -123,10 +123,10 @@ package body VCS_Utils is
 
       if Save_Logs then
          return Save_MDI_Children
-           (Kernel, Children & Logs, Force => Get_Pref (Kernel, Auto_Save));
+           (Kernel, Children & Logs, Force => Get_Pref (Auto_Save));
       else
          return Save_MDI_Children
-           (Kernel, Children, Force => Get_Pref (Kernel, Auto_Save));
+           (Kernel, Children, Force => Get_Pref (Auto_Save));
       end if;
    end Save_Files;
 

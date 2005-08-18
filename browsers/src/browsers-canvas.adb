@@ -444,6 +444,7 @@ package body Browsers.Canvas is
      (Hook : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       Error           : GError;
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
@@ -451,29 +452,29 @@ package body Browsers.Canvas is
    begin
       if Realized_Is_Set (Hook.Browser) then
          Hook.Browser.Selected_Link_Color :=
-           Get_Pref (Kernel, Selected_Link_Color);
+           Get_Pref (Selected_Link_Color);
          Hook.Browser.Unselected_Link_Color :=
-           Get_Pref (Kernel, Unselected_Link_Color);
+           Get_Pref (Unselected_Link_Color);
 
          Set_Foreground
            (Hook.Browser.Selected_Item_GC,
-            Get_Pref (Kernel, GPS.Kernel.Preferences.Selected_Item_Color));
+            Get_Pref (GPS.Kernel.Preferences.Selected_Item_Color));
          Set_Foreground
            (Hook.Browser.Parent_Linked_Item_GC,
-            Get_Pref (Kernel, Parent_Linked_Item_Color));
+            Get_Pref (Parent_Linked_Item_Color));
          Set_Foreground
            (Hook.Browser.Child_Linked_Item_GC,
-            Get_Pref (Kernel, Child_Linked_Item_Color));
+            Get_Pref (Child_Linked_Item_Color));
          Set_Foreground
            (Hook.Browser.Text_GC,
-            Get_Pref (Kernel, Browsers_Hyper_Link_Color));
+            Get_Pref (Browsers_Hyper_Link_Color));
          Set_Foreground
-           (Hook.Browser.Title_GC, Get_Pref (Kernel, Title_Color));
+           (Hook.Browser.Title_GC, Get_Pref (Title_Color));
          Set_Foreground (Image_Canvas (Hook.Browser.Canvas).Bg_GC,
-                         Get_Pref (Hook.Browser.Kernel, Browsers_Bg_Color));
+                         Get_Pref (Browsers_Bg_Color));
       end if;
 
-      Annotation_Font := Copy (Get_Pref (Kernel, Default_Font));
+      Annotation_Font := Copy (Get_Pref (Default_Font));
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
@@ -481,16 +482,16 @@ package body Browsers.Canvas is
       Free (Annotation_Font);
 
       Image_Canvas (Hook.Browser.Canvas).Draw_Grid :=
-        Get_Pref (Kernel, Browsers_Draw_Grid);
+        Get_Pref (Browsers_Draw_Grid);
 
       if Image_Canvas (Hook.Browser.Canvas).Background /= null then
          Unref (Image_Canvas (Hook.Browser.Canvas).Background);
       end if;
 
-      if Get_Pref (Kernel, Browsers_Bg_Image) /= "" then
+      if Get_Pref (Browsers_Bg_Image) /= "" then
          Gdk_New_From_File
            (Image_Canvas (Hook.Browser.Canvas).Background,
-            Filename => Get_Pref (Kernel, Browsers_Bg_Image),
+            Filename => Get_Pref (Browsers_Bg_Image),
             Error    => Error);
       else
          Image_Canvas (Hook.Browser.Canvas).Background := null;
@@ -502,7 +503,7 @@ package body Browsers.Canvas is
       while Get (Iter) /= null loop
          Set_Font_Description
            (Browser_Item (Get (Iter)).Title_Layout,
-            Get_Pref (Kernel, Default_Font));
+            Get_Pref (Default_Font));
 
          Refresh (Browser_Item (Get (Iter)));
          Next (Iter);
@@ -568,19 +569,17 @@ package body Browsers.Canvas is
 
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
       use type Gdk_GC;
-
       B      : constant General_Browser := General_Browser (Browser);
       Color  : Gdk_Color;
-      Kernel : constant Kernel_Handle := Get_Kernel (B);
 
    begin
       if B.Selected_Item_GC = null then
-         B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
-         B.Unselected_Link_Color := Get_Pref (Kernel, Unselected_Link_Color);
+         B.Selected_Link_Color := Get_Pref (Selected_Link_Color);
+         B.Unselected_Link_Color := Get_Pref (Unselected_Link_Color);
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
          Color := Get_Pref
-           (Kernel, GPS.Kernel.Preferences.Selected_Item_Color);
+           (GPS.Kernel.Preferences.Selected_Item_Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
          Gdk_New (B.Default_Item_GC, Get_Window (B.Canvas));
@@ -589,23 +588,23 @@ package body Browsers.Canvas is
          Set_Foreground (B.Default_Item_GC, Color);
 
          Gdk_New (B.Parent_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Get_Pref (Kernel, Parent_Linked_Item_Color);
+         Color := Get_Pref (Parent_Linked_Item_Color);
          Set_Foreground (B.Parent_Linked_Item_GC, Color);
 
          Gdk_New (B.Child_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Get_Pref (Kernel, Child_Linked_Item_Color);
+         Color := Get_Pref (Child_Linked_Item_Color);
          Set_Foreground (B.Child_Linked_Item_GC, Color);
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
          Set_Foreground
-           (B.Text_GC, Get_Pref (B.Kernel, Browsers_Hyper_Link_Color));
+           (B.Text_GC, Get_Pref (Browsers_Hyper_Link_Color));
 
          Gdk_New (B.Title_GC, Get_Window (B.Canvas));
-         Set_Foreground (B.Title_GC, Get_Pref (B.Kernel, Title_Color));
+         Set_Foreground (B.Title_GC, Get_Pref (Title_Color));
 
          Gdk_New (Image_Canvas (B.Canvas).Bg_GC, Get_Window (B.Canvas));
          Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
-                         Get_Pref (B.Kernel, Browsers_Bg_Color));
+                         Get_Pref (Browsers_Bg_Color));
       end if;
    end Realized;
 
@@ -832,7 +831,7 @@ package body Browsers.Canvas is
              (Title             => -"Export Browser As PNG Image",
               Parent            => Get_Main_Window (Kernel),
               Default_Name      => "noname.png",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Save_File,
               History           => Get_History (Kernel));
          Pixbuf : Gdk_Pixbuf;
@@ -1055,9 +1054,7 @@ package body Browsers.Canvas is
       else
          if Item.Title_Layout = null then
             Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
-            Set_Font_Description
-              (Item.Title_Layout,
-               Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
+            Set_Font_Description (Item.Title_Layout, Get_Pref (Default_Font));
          else
             Set_Text (Item.Title_Layout, Title);
          end if;
@@ -1760,9 +1757,7 @@ package body Browsers.Canvas is
       Layout : Pango_Layout;
    begin
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description
-        (Layout,
-         Get_Pref (Get_Kernel (Get_Browser (Item)), Default_Font));
+      Set_Font_Description (Layout, Get_Pref (Default_Font));
 
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
       Redraw_Title_Bar (Item);
@@ -1808,8 +1803,7 @@ package body Browsers.Canvas is
       Layout
         (Get_Canvas (Browser),
          Force => Force,
-         Vertical_Layout =>
-           Get_Pref (Get_Kernel (Browser), Browsers_Vertical_Layout));
+         Vertical_Layout => Get_Pref (Browsers_Vertical_Layout));
    end Layout;
 
    ------------------------------------
@@ -1981,7 +1975,7 @@ package body Browsers.Canvas is
       Layout    : access Pango_Layout_Record'Class)
    is
       Descr              : constant Pango_Font_Description :=
-        Get_Pref (Get_Kernel (Browser), Default_Font);
+        Get_Pref (Default_Font);
       Font               : Pango_Font;
       Metrics            : Pango_Font_Metrics;
       Longest1, Longest2 : Gint := 0;

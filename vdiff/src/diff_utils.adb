@@ -119,8 +119,7 @@ package body Diff_Utils is
    ----------
 
    function Diff
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link
+     (File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link
    is
       Descriptor   : TTY_Process_Descriptor;
       Pattern      : constant Pattern_Matcher :=
@@ -131,7 +130,7 @@ package body Diff_Utils is
       Result       : Expect_Match;
       Ret          : Diff_Occurrence_Link;
       Occurrence   : Diff_Occurrence_Link;
-      Diff_Command : constant String := Get_Pref (Kernel, Diff_Cmd);
+      Diff_Command : constant String := Get_Pref (Diff_Cmd);
       Cmd          : String_Access;
       Cmd_Args     : Argument_List_Access;
 
@@ -192,7 +191,7 @@ package body Diff_Utils is
       Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Occurrence_Link
    is
-      Patch_Command : constant String := Get_Pref (Kernel, Patch_Cmd);
+      Patch_Command : constant String := Get_Pref (Patch_Cmd);
       Descriptor    : TTY_Process_Descriptor;
       Args          : Argument_List (1 .. 6);
       Ret           : Diff_Occurrence_Link;
@@ -324,13 +323,12 @@ package body Diff_Utils is
    -----------
 
    function Diff3
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File1, File2, File3 : VFS.Virtual_File) return Diff_Pair
+     (File1, File2, File3 : VFS.Virtual_File) return Diff_Pair
    is
       Result : Diff_Pair;
    begin
-      Result.List21 := Diff (Kernel, File2, File1);
-      Result.List23 := Diff (Kernel, File2, File3);
+      Result.List21 := Diff (File2, File1);
+      Result.List23 := Diff (File2, File3);
       return Result;
    end Diff3;
 

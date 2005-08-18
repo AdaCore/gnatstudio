@@ -560,8 +560,8 @@ package body Browsers.Projects is
          Child := Put
            (Kernel, Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module => Project_Browser_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, Title);
@@ -587,8 +587,8 @@ package body Browsers.Projects is
       if Node.Tag.all = "Project_Browser" then
          Child := Put
            (User, Gtk_Widget (Create_Project_Browser (User)),
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Project_Browser_Module_ID);
          Set_Title (Child, -"Project Browser");
 

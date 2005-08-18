@@ -169,7 +169,7 @@ package body Creation_Wizard.Adp is
       P    : constant Adp_Selection_Page_Access :=
         Adp_Selection_Page_Access (Page);
       Name : constant VFS.Virtual_File := Select_File
-        (Use_Native_Dialog  => Get_Pref (P.Kernel, Use_Native_Dialogs),
+        (Use_Native_Dialog  => Get_Pref (Use_Native_Dialogs),
          File_Pattern       => "*.adp",
          Parent             => Gtk_Window (Get_Toplevel (Widget)),
          Kind               => Open_File);

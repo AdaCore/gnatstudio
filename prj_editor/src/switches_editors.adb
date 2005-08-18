@@ -241,10 +241,8 @@ package body Switches_Editors is
    --  if we are changing the default switches.
    --  Return True if the switches were modified
 
-   procedure Browse_Directory
-     (Field : access GObject_Record'Class; Kernel : Kernel_Handle);
-   procedure Browse_File
-     (Field : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure Browse_Directory (Field : access GObject_Record'Class);
+   procedure Browse_File (Field : access GObject_Record'Class);
    --  Open a dialog to select a directory or a file
 
    procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
@@ -1123,13 +1121,13 @@ package body Switches_Editors is
    ----------------------
 
    procedure Browse_Directory
-     (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Field : access GObject_Record'Class)
    is
       F   : constant Gtk_Entry := Gtk_Entry (Field);
       Dir : constant Virtual_File := Select_Directory
         (Base_Directory    => Create (Get_Text (F)),
          Parent            => Gtk_Window (Get_Toplevel (F)),
-         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
    begin
       if Dir /= VFS.No_File then
          Set_Text (F, Full_Name (Dir).all);
@@ -1141,7 +1139,7 @@ package body Switches_Editors is
    -----------------
 
    procedure Browse_File
-     (Field : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Field : access GObject_Record'Class)
    is
       F   : constant Gtk_Entry := Gtk_Entry (Field);
       VF : constant Virtual_File := Create (Get_Text (F));
@@ -1149,7 +1147,7 @@ package body Switches_Editors is
         (Base_Directory    => Dir (VF),
          Default_Name      => Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
-         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
    begin
       if File /= VFS.No_File then
          Set_Text (F, Full_Name (File).all);
@@ -1199,18 +1197,16 @@ package body Switches_Editors is
       if As_File then
          Gtk_New (Button, -"Browse");
          Pack_Start (Hbox, Button, Expand => False);
-         Kernel_Callback.Object_Connect
+         Object_Callback.Object_Connect
            (Button, "clicked", Browse_File'Access,
-            User_Data   => Page.Kernel,
             Slot_Object => S.Field);
 
       elsif As_Directory then
          Gtk_New (Button, -"Browse");
          Pack_Start (Hbox, Button, Expand => False);
-         Kernel_Callback.Object_Connect
+         Object_Callback.Object_Connect
            (Button, "clicked",
             Browse_Directory'Access,
-            User_Data   => Page.Kernel,
             Slot_Object => S.Field);
       end if;
 

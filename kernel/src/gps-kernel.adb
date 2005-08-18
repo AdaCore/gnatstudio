@@ -249,7 +249,8 @@ package body GPS.Kernel is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Set_Trusted_Mode
-        (Get_Registry (Kernel).all, Get_Pref (Kernel, Trusted_Mode));
+        (Get_Registry (Kernel).all,
+         GPS.Kernel.Preferences.Get_Pref (Trusted_Mode));
    end On_Preferences_Changed;
 
    ------------------

@@ -872,8 +872,8 @@ package body VCS_Module is
       if Show and then M.Explorer_Child = null then
          M.Explorer_Child := Put
            (Kernel, M.Explorer,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Position       => Position_VCS_Explorer,
             Module         => VCS_Module_ID);
 
@@ -937,8 +937,8 @@ package body VCS_Module is
       if Show and then M.Activities_Child = null then
          M.Activities_Child := Put
            (Kernel, M.Activities,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Position       => Position_VCS_Activities,
             Module         => VCS_Module_ID);
 

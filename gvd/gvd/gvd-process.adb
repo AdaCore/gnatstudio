@@ -58,7 +58,6 @@ with Basic_Types;                use Basic_Types;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
-with Default_Preferences;        use Default_Preferences;
 with Display_Items;              use Display_Items;
 with Histories;                  use Histories;
 with GPS.Intl;                   use GPS.Intl;
@@ -969,7 +968,7 @@ package body GVD.Process is
       --  Initialize the canvas
 
       Annotation_Font :=
-        Copy (Get_Pref (GVD_Prefs, GPS.Kernel.Preferences.Default_Font));
+        Copy (Get_Pref (GPS.Kernel.Preferences.Default_Font));
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
@@ -1118,9 +1117,9 @@ package body GVD.Process is
       --  that time.
 
       Process.Debugger_Text_Highlight_Color :=
-        Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
+        Get_Pref (Debugger_Highlight_Color);
 
-      Process.Debugger_Text_Font := Get_Pref_Font (GVD_Prefs, Default_Style);
+      Process.Debugger_Text_Font := Get_Pref_Font (Default_Style);
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -1131,7 +1130,7 @@ package body GVD.Process is
       Configure
         (Process.Editor_Text,
          Source,
-         Get_Pref_Font (GVD_Prefs, Default_Style),
+         Get_Pref_Font (Default_Style),
          arrow_xpm, stop_xpm);
 
       Set_Current_Debugger (Window.Kernel, GObject (Process));
@@ -1192,7 +1191,7 @@ package body GVD.Process is
       Setup_Command_Window (Process);
       Setup_Data_Window (Process);
 
-      if Get_Pref (GVD_Prefs, Show_Call_Stack) then
+      if Get_Pref (Show_Call_Stack) then
          Create_Call_Stack (Process);
       end if;
 
@@ -1274,7 +1273,7 @@ package body GVD.Process is
          Set_Sensitive (Widget, WTX_Version >= 3);
       end if;
 
-      if Get_Pref (GVD_Prefs, Execution_Window)
+      if Get_Pref (Execution_Window)
         and then Support_TTY (Process.Debugger)
         and then GNAT.TTY.TTY_Supported
       then

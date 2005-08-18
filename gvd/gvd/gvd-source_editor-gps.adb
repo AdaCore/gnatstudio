@@ -37,7 +37,7 @@ with Commands.Debugger;         use Commands.Debugger;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with Default_Preferences;       use Default_Preferences;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GVD.Preferences;           use GVD.Preferences;
 
 package body GVD.Source_Editor.GPS is
@@ -511,7 +511,7 @@ package body GVD.Source_Editor.GPS is
                      Editor.Current_Breakpoints (J).File,
                      Editor.Current_Breakpoints (J).Line);
 
-                  if Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code) then
+                  if Get_Pref (Editor_Show_Line_With_Code) then
                      A (L).Image := Line_Has_Code_Pixbuf;
                   else
                      A (L).Image := Line_Might_Have_Code_Pixbuf;

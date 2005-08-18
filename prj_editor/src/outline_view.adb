@@ -192,7 +192,7 @@ package body Outline_View is
       Distance : Gint := Gint'Last;
       Closest  : Gtk_Tree_Iter;
    begin
-      if Get_Pref (Kernel, Outline_View_Link_Editor)
+      if Get_Pref (Outline_View_Link_Editor)
         and then Child /= null
       then
          Outline := Outline_View_Access (Get_Widget (Child));
@@ -294,9 +294,9 @@ package body Outline_View is
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
 
-         Modify_Font (Outline.Tree, Get_Pref (Kernel, View_Fixed_Font));
+         Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
 
-         if Get_Pref (Kernel, Outline_View_Sort_Alphabetically) then
+         if Get_Pref (Outline_View_Sort_Alphabetically) then
             Thaw_Sort (Gtk_Tree_Store (Get_Model (Outline.Tree)), 1);
          else
             Sort_Column :=
@@ -304,7 +304,7 @@ package body Outline_View is
          end if;
 
          Outline.Show_File_Node :=
-           Get_Pref (Kernel, Outline_View_Show_File_Node);
+           Get_Pref (Outline_View_Show_File_Node);
 
          if Outline.Show_File_Node then
             Set_Expander_Column (Outline.Tree, null);
@@ -501,11 +501,11 @@ package body Outline_View is
       Outline.Kernel := Kernel_Handle (Kernel);
       Initialize_Vbox (Outline, Homogeneous => False);
 
-      if not Get_Pref (Kernel, Outline_View_Sort_Alphabetically) then
+      if not Get_Pref (Outline_View_Sort_Alphabetically) then
          Initial_Sort := -1;
       end if;
 
-      Outline.Show_File_Node := Get_Pref (Kernel, Outline_View_Show_File_Node);
+      Outline.Show_File_Node := Get_Pref (Outline_View_Show_File_Node);
 
       Gtk_New (Scrolled);
       Pack_Start (Outline, Scrolled, Expand => True);
@@ -534,7 +534,7 @@ package body Outline_View is
       Outline.Icon := Gdk_New_From_Xpm_Data (var_xpm);
       Outline.File_Icon := Gdk_New_From_Xpm_Data (mini_page_xpm);
 
-      Modify_Font (Outline.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
 
       Return_Callback.Object_Connect
         (Outline.Tree,
@@ -629,7 +629,7 @@ package body Outline_View is
         GPS_Language_Handler (Get_Language_Handler (Outline.Kernel));
       Constructs : Construct_List;
       Show_Profiles : constant Boolean :=
-        Get_Pref (Outline.Kernel, Outline_View_Profiles);
+        Get_Pref (Outline_View_Profiles);
       Sort_Column : constant Gint := Freeze_Sort (Model);
       Args : Argument_List (1 .. 4);
    begin

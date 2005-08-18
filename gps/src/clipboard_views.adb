@@ -200,7 +200,7 @@ package body Clipboard_Views is
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Tooltip.Clipboard_View.Kernel, Default_Font),
+            Get_Pref (Default_Font),
             White (Get_Default_Colormap),
             Tooltip.Clipboard_View.Tree,
             Pixmap);
@@ -329,7 +329,7 @@ package body Clipboard_Views is
       View : constant Clipboard_View_Access := Clipboard_View_Access
         (Get_Widget (Open_View (Kernel)));
    begin
-      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
 
    -------------
@@ -444,7 +444,7 @@ package body Clipboard_Views is
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
 
-      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
 
       View.Current := Gdk_New_From_Xpm_Data (arrow_xpm);
 

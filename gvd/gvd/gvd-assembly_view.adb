@@ -53,7 +53,6 @@ with Pango.Font;              use Pango.Font;
 with Basic_Types;             use Basic_Types;
 with Config;                  use Config;
 with Debugger;                use Debugger;
-with Default_Preferences;     use Default_Preferences;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GVD.Process;             use GVD.Process;
@@ -298,7 +297,7 @@ package body GVD.Assembly_View is
       Gtk_New (Assembly_View.Highlight_Tag);
       Set_Property
         (Assembly_View.Highlight_Tag, Foreground_Gdk_Property,
-         Get_Pref (GVD_Prefs, Asm_Highlight_Color));
+         Get_Pref (Asm_Highlight_Color));
       Add (Tag_Table, Assembly_View.Highlight_Tag);
 
       --  Pc
@@ -308,7 +307,7 @@ package body GVD.Assembly_View is
       Gtk_New (Assembly_View.Pc_Tag);
       Set_Property
         (Assembly_View.Pc_Tag, Background_Gdk_Property,
-         Get_Pref (GVD_Prefs, Memory_Highlighted_Color));
+         Get_Pref (Memory_Highlighted_Color));
       Add (Tag_Table, Assembly_View.Pc_Tag);
    end Configure;
 
@@ -1236,8 +1235,8 @@ package body GVD.Assembly_View is
       Set_Property
         (Assembly_View.Highlight_Tag,
          Foreground_Gdk_Property,
-         Get_Pref (GVD_Prefs, Asm_Highlight_Color));
-      Set_Font (Assembly_View, Get_Pref_Font (GVD_Prefs, Default_Style));
+         Get_Pref (Asm_Highlight_Color));
+      Set_Font (Assembly_View, Get_Pref_Font (Default_Style));
 
       Update_Display (Assembly_View);
 
@@ -1259,7 +1258,7 @@ package body GVD.Assembly_View is
    begin
       Trace (Me, "[Meta_Scroll]");
       if Assembly_View.Current_Range /= null
-        and then Get_Pref (GVD_Prefs, Assembly_Range_Size) /= 0
+        and then Get_Pref (Assembly_Range_Size) /= 0
       then
          Set_Busy
            (Visual_Debugger (Assembly_View.Process), True,
@@ -1271,7 +1270,7 @@ package body GVD.Assembly_View is
                         Address_From_Line
                           (Assembly_View, Assembly_View.Current_Line);
 --                 F    : constant Gdk_Font := From_Description
---                   (Get_Pref_Font (GVD_Prefs, Default_Style));
+--                   (Get_Pref_Font (Default_Style));
 --                 Line  : Natural;
                Iter  : Gtk_Text_Iter;
                Found : Boolean;
@@ -1295,7 +1294,7 @@ package body GVD.Assembly_View is
                String_To_Address
                  (Add_Address
                     (Address_To_String (Assembly_View.Current_Range.High),
-                     Integer (Get_Pref (GVD_Prefs, Assembly_Range_Size)))));
+                     Integer (Get_Pref (Assembly_Range_Size)))));
          end if;
 
          if Down or else Assembly_View.Current_Range.High
@@ -1494,7 +1493,7 @@ package body GVD.Assembly_View is
       else
          Assembly_View.Current_Range := Find_In_Cache (Assembly_View, Pc);
          if Assembly_View.Current_Range = null then
-            if Get_Pref (GVD_Prefs, Assembly_Range_Size) = 0
+            if Get_Pref (Assembly_Range_Size) = 0
               or else End_Pc = Invalid_Address
             then
                Get_Machine_Code
@@ -1510,7 +1509,7 @@ package body GVD.Assembly_View is
                   Code            => S,
                   Start_Address   => Pc,
                   End_Address     => Set_Offset
-                    (Pc, Integer (Get_Pref (GVD_Prefs, Assembly_Range_Size))));
+                    (Pc, Integer (Get_Pref (Assembly_Range_Size))));
             end if;
 
             if Start /= Invalid_Address then

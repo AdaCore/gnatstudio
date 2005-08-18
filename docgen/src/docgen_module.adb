@@ -320,20 +320,17 @@ package body Docgen_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
       Set_Options
-        (Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
-         Get_Pref (Kernel, Docgen_Module (Docgen_Module_Id).Show_References),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_Id).Link_All_References),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_Id).Process_Tagged_Types));
+        (Get_Pref (Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
+         Get_Pref (Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
+         Get_Pref (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
+         Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References),
+         Get_Pref (Docgen_Module (Docgen_Module_Id).Link_All_References),
+         Get_Pref (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types));
    end On_Preferences_Changed;
 
    -------------
@@ -495,7 +492,7 @@ package body Docgen_Module is
         Select_File
           (Title             => -"Generate Documentation For",
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
    begin

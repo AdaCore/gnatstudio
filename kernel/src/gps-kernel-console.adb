@@ -212,7 +212,7 @@ package body GPS.Kernel.Console is
          File : constant Virtual_File :=
            Select_File
              (Title             => -"Save messages window as",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Save_File,
               Parent            => Get_Current_Window (Kernel),
               History           => Get_History (Kernel));
@@ -254,7 +254,7 @@ package body GPS.Kernel.Console is
    begin
       File := Select_File
         (Title             => -"Select file to load in the messages window",
-         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
          Kind              => Open_File,
          Parent            => Get_Current_Window (Kernel),
          History           => Get_History (Kernel));
@@ -334,8 +334,8 @@ package body GPS.Kernel.Console is
          "",
          null,
          Kernel.all'Address,
-         Get_Pref_Font (Kernel, Default_Style),
-         Highlight    => Get_Pref (Kernel, Message_Highlight),
+         Get_Pref_Font (Default_Style),
+         Highlight    => Get_Pref (Message_Highlight),
          History_List => null,
          Key          => "",
          Wrap_Mode    => Wrap_Char);
@@ -392,11 +392,11 @@ package body GPS.Kernel.Console is
          if Create then
             Gtk_New
               (Console, "", null,
-               System.Null_Address, Get_Pref_Font (Kernel, Default_Style),
+               System.Null_Address, Get_Pref_Font (Default_Style),
                History_List => Get_History (Kernel),
                Key          => History,
                Wrap_Mode    => Wrap_Char,
-               Highlight    => Get_Pref (Kernel, Message_Highlight));
+               Highlight    => Get_Pref (Message_Highlight));
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 

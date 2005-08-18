@@ -71,7 +71,7 @@ package body Vdiff2_Module.Callback is
         Select_File
           (Title             => -"Select Common Ancestor",
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
@@ -88,7 +88,7 @@ package body Vdiff2_Module.Callback is
              (Title             => -"Select First Changes",
               Base_Directory    => VFS.Get_Current_Dir,
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
          Dummy : Command_Return_Type;
@@ -105,7 +105,7 @@ package body Vdiff2_Module.Callback is
                 (Title             => -"Select Second Changes",
                  Base_Directory    => VFS.Get_Current_Dir,
                  Parent            => Get_Current_Window (Kernel),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
          begin
@@ -135,7 +135,7 @@ package body Vdiff2_Module.Callback is
           (Title             => -"Select First File",
            Base_Directory    => VFS.Get_Current_Dir,
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
@@ -152,7 +152,7 @@ package body Vdiff2_Module.Callback is
              (Title             => -"Select Second File",
               Base_Directory    => VFS.Get_Current_Dir,
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
 
@@ -183,7 +183,7 @@ package body Vdiff2_Module.Callback is
           (Title             => -"Select Common Ancestor",
            Base_Directory    => VFS.No_File,
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
@@ -200,7 +200,7 @@ package body Vdiff2_Module.Callback is
              (Title             => -"Select First Changes",
               Base_Directory    => VFS.No_File,
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
 
@@ -215,7 +215,7 @@ package body Vdiff2_Module.Callback is
                 (Title             => -"Select Second Changes",
                  Base_Directory    => VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
 
@@ -233,7 +233,7 @@ package body Vdiff2_Module.Callback is
                    (Title             => -"Select Merge File",
                     Base_Directory    => VFS.No_File,
                     Parent            => Get_Current_Window (Kernel),
-                    Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                    Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                     Kind              => Unspecified,
                     History           => Get_History (Kernel));
 
@@ -263,7 +263,7 @@ package body Vdiff2_Module.Callback is
         Select_File
           (Title             => -"Select First File",
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
@@ -280,7 +280,7 @@ package body Vdiff2_Module.Callback is
              (Title             => -"Select Second File",
               Base_Directory    => VFS.No_File,
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
 
@@ -297,7 +297,7 @@ package body Vdiff2_Module.Callback is
                 (Title             => -"Select Merge File",
                  Base_Directory    => VFS.No_File,
                  Parent            => Get_Current_Window (Kernel),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
 

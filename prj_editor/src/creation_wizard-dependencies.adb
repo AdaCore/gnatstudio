@@ -178,7 +178,7 @@ package body Creation_Wizard.Dependencies is
       Use_Relative_Path : constant Boolean :=
         Get_Paths_Type (Importing_Project) = Projects.Relative
         or else (Get_Paths_Type (Importing_Project) = From_Pref
-                 and then Get_Pref (Kernel, Generate_Relative_Paths));
+                 and then Get_Pref (Generate_Relative_Paths));
       Changed : Import_Project_Error;
       Result : Message_Dialog_Buttons;
       Must_Recompute : Boolean := False;
@@ -624,7 +624,7 @@ package body Creation_Wizard.Dependencies is
          File_Pattern      => "*.gpr",
          Pattern_Name      => "Project files",
          Parent            => Gtk_Window (Get_Toplevel (B.Tree)),
-         Use_Native_Dialog => Get_Pref (B.Kernel, Use_Native_Dialogs),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
          Kind              => Open_File,
          History           => Get_History (B.Kernel));
       Iter  : Gtk_Tree_Iter;

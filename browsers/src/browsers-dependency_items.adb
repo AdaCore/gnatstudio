@@ -518,8 +518,8 @@ package body Browsers.Dependency_Items is
          Child := Put
            (Kernel, Browser,
             Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module => Dependency_Browser_Module_ID);
          Set_Focus_Child (Child);
          Set_Title (Child, Title);
@@ -932,8 +932,7 @@ package body Browsers.Dependency_Items is
           (Title             => -"Select File",
            Parent            =>
              Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
-           Use_Native_Dialog =>
-             Get_Pref (Get_Kernel (Context), Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
            History           => Get_History (Get_Kernel (Context)));
       --  ??? Should set up filters to only open file from the current project.
@@ -1243,8 +1242,8 @@ package body Browsers.Dependency_Items is
       if Node.Tag.all = "Dependency_Browser" then
          Child := Put
            (User, Gtk_Widget (Create_Dependency_Browser (User)),
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module => Dependency_Browser_Module_ID);
          Set_Title (Child, -"Dependency Browser");
 

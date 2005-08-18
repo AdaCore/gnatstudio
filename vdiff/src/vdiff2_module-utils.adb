@@ -1113,9 +1113,9 @@ package body Vdiff2_Module.Utils is
 
    begin
       if File3 /= VFS.No_File then
-         Result := Diff3 (Kernel, File1, File2, File3);
+         Result := Diff3 (File1, File2, File3);
       else
-         Result := Diff (Kernel, File1, File2);
+         Result := Diff (File1, File2);
       end if;
 
       if Result = Diff_Chunk_List.Null_List then

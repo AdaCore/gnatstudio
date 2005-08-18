@@ -429,9 +429,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  If we reach this point, the info corresponds to line information.
 
       Layout := Create_Pango_Layout (Box);
-      Set_Font_Description
-        (Layout,
-         Get_Pref_Font (Buffer.Kernel, Default_Style));
+      Set_Font_Description (Layout, Get_Pref_Font (Default_Style));
 
       --  Compute the maximum width of the items to add.
       --  We compute this width once and for all and in advance,

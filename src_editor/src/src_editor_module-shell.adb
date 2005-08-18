@@ -44,6 +44,7 @@ with Casing_Exceptions;         use Casing_Exceptions;
 with Find_Utils;                use Find_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -1399,7 +1400,7 @@ package body Src_Editor_Module.Shell is
                   begin
                      Glib.Convert.Convert
                        (A.all,
-                        "UTF-8", Get_Pref (Kernel, Default_Charset),
+                        "UTF-8", Get_Pref (Default_Charset),
                         Ignore, Bytes, Result => Result_String);
                      Set_Return_Value (Data, Result_String (1 .. Bytes));
                   end;

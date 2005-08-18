@@ -23,7 +23,7 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with GPS.Intl;                 use GPS.Intl;
@@ -89,9 +89,10 @@ package body Theme_Manager_Module is
    end record;
    type Theme_Editor_Widget is access all Theme_Editor_Widget_Record'Class;
 
-   type Theme_Editor_Record is new Preferences_Page_Record with record
-      Kernel            : Kernel_Handle;
-   end record;
+   type Theme_Editor_Record is new Default_Preferences.Preferences_Page_Record
+     with record
+        Kernel            : Kernel_Handle;
+     end record;
    type Theme_Editor is access all Theme_Editor_Record'Class;
 
    function Name (Pref : access Theme_Editor_Record) return String;
@@ -249,7 +250,7 @@ package body Theme_Manager_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Themes : Theme_Description_Access;
       Str : GNAT.OS_Lib.String_Access;
-      Active : constant String := Get_Pref (Kernel, Active_Themes);
+      Active : constant String := Get_Pref (Active_Themes);
       Theme_Active : Boolean;
    begin
       if Node.Tag.all = "theme" then
@@ -300,9 +301,12 @@ package body Theme_Manager_Module is
       elsif Node.Tag.all = "pref" then
          declare
             Name : constant String := Get_Attribute (Node, "name");
+            Param : constant Param_Spec :=
+               Default_Preferences.Get_Pref_From_Name
+                 (Get_Preferences (Kernel), Name, True);
          begin
             if Name /= "" then
-               Set_Pref (Kernel, Name, Node.Value.all);
+               Set_Pref (Kernel, Param_Spec_String (Param), Node.Value.all);
             end if;
          end;
       end if;
@@ -461,8 +465,7 @@ package body Theme_Manager_Module is
          Next (W.Model, Category);
       end loop;
 
-      Set_Pref (W.Kernel, Pspec_Name (Param_Spec (Active_Themes)),
-                To_String (List));
+      Set_Pref (W.Kernel, Active_Themes, To_String (List));
    end Validate;
 
    ------------
@@ -487,7 +490,7 @@ package body Theme_Manager_Module is
       Text     : Gtk_Text_View;
       Themes   : Theme_Description_Access := Theme_Manager_Module.Themes;
       pragma Unreferenced (Action, Num, Iter);
-      Active : constant String := Get_Pref (Pref.Kernel, Active_Themes);
+      Active : constant String := Get_Pref (Active_Themes);
 
    begin
       if Themes = null then

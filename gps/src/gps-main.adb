@@ -294,7 +294,7 @@ procedure GPS.Main is
       FD     : File_Descriptor;
 
    begin
-      if Get_Pref (GPS_Main.Kernel, Splash_Screen)
+      if Get_Pref (Splash_Screen)
         and then Is_Regular_File (File)
       then
          FD := Open_Read (File, Binary);
@@ -1304,7 +1304,7 @@ procedure GPS.Main is
          GVD_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Get_Pref (GPS_Main.Kernel, Old_Vdiff) then
+      if Get_Pref (Old_Vdiff) then
          Vdiff_Module.Register_Module (GPS_Main.Kernel);
       else
          Vdiff2_Module.Register_Module (GPS_Main.Kernel);
@@ -1590,7 +1590,7 @@ procedure GPS.Main is
       Cleanup_Needed := False;
       Exiting := True;
 
-      if Started and then Get_Pref (Kernel, Save_Desktop_On_Exit) then
+      if Started and then Get_Pref (Save_Desktop_On_Exit) then
          Save_Desktop (Kernel);
       end if;
 

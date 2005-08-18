@@ -28,7 +28,7 @@ is
    URL : constant String := "file://" & Full_Name (Help_File, True).all;
 
    HTML_Browser : constant String :=
-     Get_Pref (Kernel, GPS.Kernel.Preferences.Html_Browser);
+     Get_Pref (GPS.Kernel.Preferences.Html_Browser);
 
    type Cst_String_Access is access constant String;
    type Browser_List is array (Natural range <>) of Cst_String_Access;

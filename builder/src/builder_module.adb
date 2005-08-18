@@ -517,7 +517,7 @@ package body Builder_Module is
 
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
-      elsif Get_Pref (Kernel, Multi_Language_Build) then
+      elsif Get_Pref (Multi_Language_Build) then
          Syntax := Make_Syntax;
       else
          Syntax := Make_Syntax;
@@ -538,7 +538,7 @@ package body Builder_Module is
       --  project whose name is changed when saving
 
       if not Save_MDI_Children
-        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+        (Kernel, Force => Get_Pref (Auto_Save))
       then
          Free (Args);
          return;
@@ -648,7 +648,7 @@ package body Builder_Module is
 
       Launch_Process
         (Kernel,
-         Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
+         Remote_Protocol  => Get_Pref (Remote_Protocol),
          Remote_Host      => Get_Attribute_Value (Prj, Remote_Host_Attribute),
          Command          => Cmd.all,
          Arguments        => Args.all,
@@ -786,7 +786,7 @@ package body Builder_Module is
 
       if not Shadow then
          if not Save_MDI_Children
-           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+           (Kernel, Force => Get_Pref (Auto_Save))
          then
             return;
          end if;
@@ -915,7 +915,7 @@ package body Builder_Module is
 
             Launch_Process
               (Kernel,
-               Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
+               Remote_Protocol  => Get_Pref (Remote_Protocol),
                Remote_Host      =>
                  Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command          => Cmd.all,
@@ -945,7 +945,7 @@ package body Builder_Module is
             Compile_Only => True);
          Launch_Process
            (Kernel,
-            Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
+            Remote_Protocol => Get_Pref (Remote_Protocol),
             Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command        => Cmd.all,
             Arguments      => Common_Args.all & Args.all,
@@ -1105,7 +1105,7 @@ package body Builder_Module is
       end if;
 
       if not Save_MDI_Children
-        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+        (Kernel, Force => Get_Pref (Auto_Save))
       then
          return;
       end if;
@@ -1119,7 +1119,7 @@ package body Builder_Module is
       begin
          Launch_Process
            (Kernel,
-            Remote_Protocol      => Get_Pref (Kernel, Remote_Protocol),
+            Remote_Protocol      => Get_Pref (Remote_Protocol),
             Remote_Host          => Get_Attribute_Value
               (Get_Project (Kernel), Remote_Host_Attribute),
             Command              => Args (Args'First).all,
@@ -1256,7 +1256,7 @@ package body Builder_Module is
          Arguments : GNAT.OS_Lib.Argument_List;
          Title     : String)
       is
-         Remote_Cmd  : constant String := Get_Pref (K, Remote_Protocol);
+         Remote_Cmd  : constant String := Get_Pref (Remote_Protocol);
          Remote_Host : constant String :=
                          Get_Attribute_Value
                            (Data.Project, Remote_Host_Attribute);
@@ -1334,7 +1334,7 @@ package body Builder_Module is
             else
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, GPS.Kernel.Preferences.Execute_Command) &
+                    (Get_Pref (GPS.Kernel.Preferences.Execute_Command) &
                      ' ' & Command);
                else
                   Args := Argument_String_To_List (Command);
@@ -1366,7 +1366,7 @@ package body Builder_Module is
             then
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, GPS.Kernel.Preferences.Execute_Command) &
+                    (Get_Pref (GPS.Kernel.Preferences.Execute_Command) &
                      ' ' & Full_Name (Data.File).all & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),

@@ -229,7 +229,7 @@ package body Creation_Wizard is
 
          Gtk_New (Page.Relative_Paths, -"Use relative paths in the projects");
          Set_Active (Page.Relative_Paths,
-                     Get_Pref (Get_Kernel (Wiz), Generate_Relative_Paths));
+                     Get_Pref (Generate_Relative_Paths));
          Pack_Start (Box, Page.Relative_Paths, Expand => False);
       else
          Page.Relative_Paths := null;

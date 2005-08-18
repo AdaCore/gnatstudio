@@ -60,6 +60,7 @@ with Commands.Controls;                   use Commands.Controls;
 with Completion_Module;                   use Completion_Module;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Kernel;                          use GPS.Kernel;
+with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
@@ -2158,7 +2159,7 @@ package body Src_Editor_Buffer is
       --  Create Delimiter_Tag and save it into the source buffer tag table.
 
       Create_Highlight_Line_Tag
-        (Buffer.Delimiter_Tag, Get_Pref (Kernel, Delimiter_Color));
+        (Buffer.Delimiter_Tag, Get_Pref (Delimiter_Color));
       Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
 
       Gtk_New (Buffer.Non_Editable_Tag);
@@ -2330,6 +2331,7 @@ package body Src_Editor_Buffer is
      (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
       B       : constant Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
@@ -2339,18 +2341,18 @@ package body Src_Editor_Buffer is
 
       Create_Syntax_Tags
         (B.Syntax_Tags,
-         Keyword_Color       => Get_Pref_Fg   (Kernel, Keywords_Style),
-         Keyword_Color_Bg    => Get_Pref_Bg   (Kernel, Keywords_Style),
-         Keyword_Font_Desc   => Get_Pref_Font (Kernel, Keywords_Style),
-         Comment_Color       => Get_Pref_Fg   (Kernel, Comments_Style),
-         Comment_Color_Bg    => Get_Pref_Bg   (Kernel, Comments_Style),
-         Comment_Font_Desc   => Get_Pref_Font (Kernel, Comments_Style),
-         Character_Color     => Get_Pref_Fg   (Kernel, Strings_Style),
-         Character_Color_Bg  => Get_Pref_Bg   (Kernel, Strings_Style),
-         Character_Font_Desc => Get_Pref_Font (Kernel, Strings_Style),
-         String_Color        => Get_Pref_Fg   (Kernel, Strings_Style),
-         String_Color_Bg     => Get_Pref_Bg   (Kernel, Strings_Style),
-         String_Font_Desc    => Get_Pref_Font (Kernel, Strings_Style));
+         Keyword_Color       => Get_Pref_Fg   (Keywords_Style),
+         Keyword_Color_Bg    => Get_Pref_Bg   (Keywords_Style),
+         Keyword_Font_Desc   => Get_Pref_Font (Keywords_Style),
+         Comment_Color       => Get_Pref_Fg   (Comments_Style),
+         Comment_Color_Bg    => Get_Pref_Bg   (Comments_Style),
+         Comment_Font_Desc   => Get_Pref_Font (Comments_Style),
+         Character_Color     => Get_Pref_Fg   (Strings_Style),
+         Character_Color_Bg  => Get_Pref_Bg   (Strings_Style),
+         Character_Font_Desc => Get_Pref_Font (Strings_Style),
+         String_Color        => Get_Pref_Fg   (Strings_Style),
+         String_Color_Bg     => Get_Pref_Bg   (Strings_Style),
+         String_Font_Desc    => Get_Pref_Font (Strings_Style));
 
       --  Connect timeout, to handle automatic saving of buffer
 
@@ -2359,7 +2361,7 @@ package body Src_Editor_Buffer is
          B.Timeout_Registered := False;
       end if;
 
-      Timeout := Get_Pref (Kernel, Periodic_Save);
+      Timeout := Get_Pref (Periodic_Save);
 
       if Timeout > 0 then
          B.Timeout_Id := Buffer_Timeout.Add
@@ -2368,14 +2370,14 @@ package body Src_Editor_Buffer is
       end if;
 
       Prev := B.Block_Highlighting;
-      B.Block_Highlighting := Get_Pref (Kernel, Block_Highlighting);
+      B.Block_Highlighting := Get_Pref (Block_Highlighting);
 
       if Prev /= B.Block_Highlighting then
          Register_Edit_Timeout (B);
       end if;
 
       Prev := B.Block_Folding;
-      B.Block_Folding := Get_Pref (Kernel, Block_Folding);
+      B.Block_Folding := Get_Pref (Block_Folding);
 
       if Prev /= B.Block_Folding then
          Register_Edit_Timeout (B);
@@ -2388,7 +2390,7 @@ package body Src_Editor_Buffer is
 
       Prev := B.Parse_Blocks;
       B.Parse_Blocks := B.Block_Folding or else B.Block_Highlighting
-        or else Get_Pref (Kernel, Display_Subprogram_Names);
+        or else Get_Pref (Display_Subprogram_Names);
 
       if Prev /= B.Parse_Blocks then
          Buffer_Information_Changed (B);
@@ -2398,9 +2400,9 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      B.Auto_Syntax_Check    := Get_Pref (Kernel, Automatic_Syntax_Check);
-      B.Highlight_Delimiters := Get_Pref (Kernel, Highlight_Delimiters);
-      B.Tab_Width            := Get_Pref (Kernel, Tab_Width);
+      B.Auto_Syntax_Check    := Get_Pref (Automatic_Syntax_Check);
+      B.Highlight_Delimiters := Get_Pref (Highlight_Delimiters);
+      B.Tab_Width            := Get_Pref (Tab_Width);
    end Execute;
 
    ---------------
@@ -2558,7 +2560,7 @@ package body Src_Editor_Buffer is
 
       UTF8 := Glib.Convert.Convert
         (Contents (Contents'First .. Last), "UTF-8",
-         Get_Pref (Buffer.Kernel, Default_Charset),
+         Get_Pref (Default_Charset),
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
@@ -2705,7 +2707,7 @@ package body Src_Editor_Buffer is
 
       declare
          Terminator_Pref : constant Line_Terminators :=
-           Line_Terminators'Val (Get_Pref (Buffer.Kernel, Line_Terminator));
+           Line_Terminators'Val (Get_Pref (Line_Terminator));
          Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
@@ -2722,7 +2724,7 @@ package body Src_Editor_Buffer is
                null;
          end case;
 
-         Strip_Blank := Get_Pref (Buffer.Kernel, Strip_Blanks);
+         Strip_Blank := Get_Pref (Strip_Blanks);
 
          for Line in
            Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
@@ -2739,7 +2741,7 @@ package body Src_Editor_Buffer is
                   declare
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (1 .. Str.Length),
-                        Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8");
+                        Get_Pref (Default_Charset), "UTF-8");
                   begin
                      if Strip_Blank then
                         Index := Contents'Length;
@@ -4726,7 +4728,7 @@ package body Src_Editor_Buffer is
    function Do_Refill (Buffer : Source_Buffer) return Boolean is
       Tab_Width : constant Integer := Integer (Buffer.Tab_Width);
       Max       : constant Positive :=
-                    Positive (Get_Pref (Buffer.Kernel, Highlight_Column));
+                    Positive (Get_Pref (Highlight_Column));
       --  Right margin, wrap line if longer than Max character
 
       From, To  : Gtk_Text_Iter;

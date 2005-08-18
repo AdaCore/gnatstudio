@@ -130,7 +130,7 @@ package body Wizards is
          Title      => Title,
          Parent     => Get_Main_Window (Kernel),
          Show_Toc   => Show_Toc,
-         Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
+         Title_Font => Get_Pref (Wizard_Title_Font));
 
       Set_Default_Size (Wiz, 640, 480);
 

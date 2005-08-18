@@ -67,12 +67,11 @@ package Diff_Utils is
    type Diff_Head_Access is access all Diff_List_Head;
 
    function Diff
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link;
+     (File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link;
    --  Execute diff on File1 and File2 and return a list of differences.
 
    function Diff
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
@@ -82,8 +81,7 @@ package Diff_Utils is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
 
    function Diff3
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File1, File2, File3 : VFS.Virtual_File) return Diff_Pair;
+     (File1, File2, File3 : VFS.Virtual_File) return Diff_Pair;
    --  Execute diff on File1, File2 and File3 and return a list of differences.
 
    procedure Free (Link : in out Diff_Occurrence_Link);

@@ -36,11 +36,9 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Types;               use Gtkada.Types;
 
 with Basic_Types;                use Basic_Types;
-with Default_Preferences;        use Default_Preferences;
 with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
-with GVD.Preferences;            use GVD.Preferences;
 with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Types;                  use GVD.Types;
@@ -272,7 +270,7 @@ package body Debugger is
       else
          declare
             Remote_Args : Argument_List_Access :=
-              Argument_String_To_List (Get_Pref (GVD_Prefs, Remote_Protocol));
+              Argument_String_To_List (Get_Pref (Remote_Protocol));
             Real_Arguments : Argument_List
               (1 .. Arguments'Length + 1 + Remote_Args'Length);
          begin
@@ -308,7 +306,7 @@ package body Debugger is
                      & (-"  debugger: ") & Debugger_Name & ASCII.LF
                      & (-"  machine: ") & Remote_Machine & ASCII.LF
                      & (-"  using protocol: ")
-                     & Get_Pref (GVD_Prefs, Remote_Protocol),
+                     & Get_Pref (Remote_Protocol),
                      Error,
                      Button_OK,
                      Button_OK);

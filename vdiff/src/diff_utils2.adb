@@ -227,23 +227,10 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Ref_File, New_File : VFS.Virtual_File) return Diff_List
-   is
-      Diff_Command : constant String := "diff";
-   begin
-      return Diff (Diff_Command, Ref_File, New_File);
-   end Diff;
-
-   ----------
-   -- Diff --
-   ----------
-
-   function Diff
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Ref_File, New_File : VFS.Virtual_File)
+     (Ref_File, New_File : VFS.Virtual_File)
       return Diff_List
    is
-      Diff_Command : constant String := Get_Pref (Kernel, Diff_Cmd);
+      Diff_Command : constant String := Get_Pref (Diff_Cmd);
    begin
       return Diff (Diff_Command, Ref_File, New_File);
    end Diff;
@@ -315,7 +302,7 @@ package body Diff_Utils2 is
       Revert    : Boolean := False) return Diff_List
    is
       Args          : Argument_List (1 .. 6);
-      Patch_Command : constant String := Get_Pref (Kernel, Patch_Cmd);
+      Patch_Command : constant String := Get_Pref (Patch_Cmd);
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
       Occurrence    : Diff_Chunk_Access;
@@ -407,17 +394,15 @@ package body Diff_Utils2 is
    -- Diff3 --
    -----------
 
-   procedure Diff3
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Item   : in out Diff_Head) is
+   procedure Diff3 (Item   : in out Diff_Head) is
    begin
       Free_List (Item.List);
 
       if Item.File1 /= VFS.No_File and Item.File2 /= VFS.No_File then
          if Item.File3 /= VFS.No_File then
-            Item.List := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
+            Item.List := Diff3 (Item.File1, Item.File2, Item.File3);
          else
-            Item.List := Diff (Kernel, Item.File1, Item.File2);
+            Item.List := Diff (Item.File1, Item.File2);
          end if;
       end if;
    end Diff3;
@@ -427,25 +412,9 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      My_Change, Old_File, Your_Change : VFS.Virtual_File)
-      return Diff_List
+     (My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
    is
-      Diff3_Command  : constant String := Get_Pref (Kernel, Diff3_Cmd);
-   begin
-      return Diff3 (Diff3_Command, My_Change,
-                    Old_File, Your_Change);
-   end Diff3;
-
-   -----------
-   -- Diff3 --
-   -----------
-
-   function Diff3
-     (My_Change, Old_File, Your_Change : VFS.Virtual_File)
-      return Diff_List
-   is
-      Diff3_Command : constant String := "diff3";
+      Diff3_Command  : constant String := Get_Pref (Diff3_Cmd);
    begin
       return Diff3 (Diff3_Command, My_Change, Old_File, Your_Change);
    end Diff3;

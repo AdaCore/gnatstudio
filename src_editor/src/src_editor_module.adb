@@ -69,7 +69,7 @@ with Basic_Types;                       use Basic_Types;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
-with Default_Preferences;               use Default_Preferences;
+with Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
 with Histories;                         use Histories;
@@ -129,7 +129,7 @@ package body Src_Editor_Module is
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
-   Cursor_Color        : Param_Spec_Color;
+   Cursor_Color        : Default_Preferences.Param_Spec_Color;
    Cursor_Aspect_Ratio : Param_Spec_Int;
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -928,8 +928,8 @@ package body Src_Editor_Module is
          Child := Put
            (Kernel, Child,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
          Set_Child (Get_View (Editor), Child);
 
@@ -1131,8 +1131,8 @@ package body Src_Editor_Module is
          Child := Put
            (Kernel, Child,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => Get_Pref (Default_Widget_Width),
+            Default_Height => Get_Pref (Default_Widget_Height),
             Module         => Src_Editor_Module_Id,
             Position       => Position);
          Set_Child (Get_View (Editor), Child);
@@ -1321,7 +1321,7 @@ package body Src_Editor_Module is
            Select_File
              (Title             => -"Open File",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
 
@@ -1587,7 +1587,7 @@ package body Src_Editor_Module is
                  Parent            => Get_Current_Window (Kernel),
                  Base_Directory    => Dir (Old_Name),
                  Default_Name      => Base_Name (Old_Name),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Save_File,
                  History           => Get_History (Kernel));
 
@@ -1746,9 +1746,9 @@ package body Src_Editor_Module is
       Success          : Boolean;
       Child            : constant MDI_Child := Find_Current_Editor (Kernel);
       Source           : Source_Editor_Box;
-      Print_Helper     : constant String := Get_Pref (Kernel, Print_Command);
+      Print_Helper     : constant String := Get_Pref (Print_Command);
       Source_Font      : constant Pango_Font_Description :=
-        Get_Pref_Font (Kernel, Default_Style);
+        Get_Pref_Font (Default_Style);
       Source_Font_Name : constant String := Get_Family (Source_Font);
       Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
 
@@ -1780,7 +1780,7 @@ package body Src_Editor_Module is
          if Save_MDI_Children
            (Kernel,
             Children => (1 => Child),
-            Force    => Get_Pref (Kernel, Auto_Save))
+            Force    => Get_Pref (Auto_Save))
          then
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
@@ -1841,7 +1841,7 @@ package body Src_Editor_Module is
               Select_File
                 (Title             => -"Insert File",
                  Parent            => Get_Current_Window (Kernel),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
                  History           => Get_History (Kernel));
             Buffer : GNAT.OS_Lib.String_Access;
@@ -2943,11 +2943,12 @@ package body Src_Editor_Module is
 
       --  Register preferences
 
-      Cursor_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Editor-Cursor-Color",
-         Default => "black",
-         Blurb   => -"Color to use for the cursor in editors",
-         Nick    => -"Cursor color"));
+      Cursor_Color := Default_Preferences.Param_Spec_Color
+        (Default_Preferences.Gnew_Color
+          (Name    => "Editor-Cursor-Color",
+           Default => "black",
+           Blurb   => -"Color to use for the cursor in editors",
+           Nick    => -"Cursor color"));
       Register_Property
         (Kernel, Param_Spec (Cursor_Color), -"Editor:Fonts & Colors");
 
@@ -2973,9 +2974,9 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Pref_Display_Line_Numbers     : constant Boolean :=
-        Get_Pref (Kernel, Display_Line_Numbers);
+        Get_Pref (Display_Line_Numbers);
       Pref_Display_Subprogram_Names : constant Boolean :=
-        Get_Pref (Kernel, Display_Subprogram_Names);
+        Get_Pref (Display_Subprogram_Names);
 
       Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -3014,11 +3015,11 @@ package body Src_Editor_Module is
 
       Parse_String ("style ""gps-style"" { " & ASCII.LF
                     & "GtkTextView::cursor-color="""
-                    & Get_Pref (Kernel, Cursor_Color)
+                    & Get_Pref (Cursor_Color)
                     & """" & ASCII.LF
                     & "GtkTextView::cursor-aspect-ratio="
                     & Float'Image
-                      (Float (Get_Pref (Kernel, Cursor_Aspect_Ratio))
+                      (Float (Get_Pref (Cursor_Aspect_Ratio))
                        / 100.0)
                     & ASCII.LF
                     & "}" & ASCII.LF
@@ -3035,7 +3036,7 @@ package body Src_Editor_Module is
                Width  : Gint;
             begin
                Set_Font_Description
-                 (Layout, Get_Pref_Font (Kernel, Default_Style));
+                 (Layout, Get_Pref_Font (Default_Style));
                Set_Markup (Layout, "0000");
                Get_Pixel_Size (Layout, Width, Height);
                Id.Character_Width := Width / 4;

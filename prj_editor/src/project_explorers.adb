@@ -1177,7 +1177,7 @@ package body Project_Explorers is
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Tooltip.Explorer.Kernel, Default_Font),
+            Get_Pref (Default_Font),
             White (Get_Default_Colormap),
             Tooltip.Explorer.Tree,
             Pixmap);

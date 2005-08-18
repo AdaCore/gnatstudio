@@ -427,7 +427,7 @@ package body Display_Items is
          Context,
          Lang,
          Mode           => Item.Mode,
-         Hide_Big_Items => Get_Pref (GVD_Prefs, Hide_Big_Items));
+         Hide_Big_Items => Get_Pref (Hide_Big_Items));
 
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
@@ -504,7 +504,7 @@ package body Display_Items is
       Layout := Create_Pango_Layout
         (Item.Debugger.Data_Canvas,
          Integer'Image (Item.Num) & ": " & Item.Name.all);
-      Set_Font_Description (Layout, Get_Pref (GVD_Prefs, Title_Font));
+      Set_Font_Description (Layout, Get_Pref (Title_Font));
 
       --  Compute the required size for the value itself.
 
@@ -763,7 +763,7 @@ package body Display_Items is
       end if;
 
       Update_Resize_Display
-        (Item, Was_Visible, Get_Pref (GVD_Prefs, Hide_Big_Items),
+        (Item, Was_Visible, Get_Pref (Hide_Big_Items),
          Redisplay_Canvas => Redisplay_Canvas);
 
       --  If we got an exception while parsing the value, we register the new

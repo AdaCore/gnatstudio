@@ -113,8 +113,8 @@ package body Vdiff_Module is
       Show_All (Vdiff);
       Child := Put
         (Kernel, Vdiff,
-         Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-         Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+         Default_Width  => Get_Pref (Default_Widget_Width),
+         Default_Height => Get_Pref (Default_Widget_Height),
          Module         => Vdiff_Module_ID);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Visual Comparison");
@@ -145,7 +145,7 @@ package body Vdiff_Module is
 
          return Compare_Two_Files
            (User, File1, File2, Title1.all, Title2.all,
-            Diff (User, File1, File2));
+            Diff (File1, File2));
       end if;
 
       return null;
@@ -203,7 +203,7 @@ package body Vdiff_Module is
         Select_File
           (Title             => -"Select First File",
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
       File2 : Virtual_File;
@@ -218,7 +218,7 @@ package body Vdiff_Module is
       File2 := Select_File
         (Title             => -"Select Second File",
          Parent            => Get_Current_Window (Kernel),
-         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
          Kind              => Unspecified,
          History           => Get_History (Kernel));
 
@@ -229,7 +229,7 @@ package body Vdiff_Module is
       Child := Compare_Two_Files
         (Kernel, File1, File2,
          Full_Name (File1).all, Full_Name (File2).all,
-         Diff (Kernel, File1, File2));
+         Diff (File1, File2));
 
    exception
       when E : others =>

@@ -42,7 +42,6 @@ with Gtkada.Canvas;            use Gtkada.Canvas;
 with Pango.Font;               use Pango.Font;
 
 with Debugger;                 use Debugger;
-with Default_Preferences;      use Default_Preferences;
 with Memory_View_Pkg;          use Memory_View_Pkg;
 with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
@@ -353,7 +352,7 @@ package body GVD.Memory_View is
       Buffer    : constant Gtk_Text_Buffer := Get_Buffer (View.View);
       Tag_Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Buffer);
       Font      : constant Pango_Font_Description :=
-                    Get_Pref_Font (GVD_Prefs, Default_Style);
+                    Get_Pref_Font (Default_Style);
    begin
       --  Tag used to display not modified memory
       Gtk_New (View.Default_Tag);
@@ -366,16 +365,16 @@ package body GVD.Memory_View is
       Gtk_New (View.Modified_Tag);
       Set_Property (View.Modified_Tag, Background_Gdk_Property, Null_Color);
       Set_Property (View.Modified_Tag, Foreground_Gdk_Property,
-                    Get_Pref (GVD_Prefs, Change_Color));
+                    Get_Pref (Change_Color));
       Set_Property (View.Modified_Tag, Font_Desc_Property, Font);
       Add (Tag_Table, View.Modified_Tag);
 
       --  Tag used to display memory addresses
       Gtk_New (View.Address_Tag);
       Set_Property (View.Address_Tag, Background_Gdk_Property,
-                    Get_Pref (GVD_Prefs, Memory_Highlighted_Color));
+                    Get_Pref (Memory_Highlighted_Color));
       Set_Property (View.Address_Tag, Foreground_Gdk_Property,
-                    Get_Pref (GVD_Prefs, Memory_View_Color));
+                    Get_Pref (Memory_View_Color));
       Set_Property (View.Address_Tag, Font_Desc_Property, Font);
       Set_Property (View.Address_Tag, Text_Tag.Editable_Property, False);
       Add (Tag_Table, View.Address_Tag);

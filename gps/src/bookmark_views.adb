@@ -497,7 +497,7 @@ package body Bookmark_Views is
       View : constant Bookmark_View_Access := Bookmark_View_Access
         (Get_Widget (Open_View (Kernel)));
    begin
-      Modify_Font (View.Tree, Get_Pref (Kernel, View_Fixed_Font));
+      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
    end On_Preferences_Changed;
 
    -------------

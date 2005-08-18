@@ -137,22 +137,16 @@ package body GPS.Kernel.Styles is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Kernel);
    begin
       Set_Background
-        (Search_Results_Style,
-         Get_Pref (Kernel, Search_Results_Color));
-
+        (Search_Results_Style, Get_Pref (Search_Results_Color));
       Set_Background
-        (Builder_Errors_Style,
-         Get_Pref (Kernel, Error_Src_Highlight));
-
+        (Builder_Errors_Style, Get_Pref (Error_Src_Highlight));
       Set_Background
-        (Builder_Warnings_Style,
-         Get_Pref (Kernel, Warning_Src_Highlight));
-
+        (Builder_Warnings_Style, Get_Pref (Warning_Src_Highlight));
       Set_Background
-        (Builder_Style_Style,
-         Get_Pref (Kernel, Style_Src_Highlight));
+        (Builder_Style_Style, Get_Pref (Style_Src_Highlight));
    end Preferences_Changed;
 
    --------------------

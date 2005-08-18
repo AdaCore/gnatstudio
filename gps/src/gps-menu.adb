@@ -181,7 +181,7 @@ package body GPS.Menu is
               File_Pattern      => "*.gpr",
               Pattern_Name      => -"Project files",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
       begin

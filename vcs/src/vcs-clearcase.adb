@@ -477,7 +477,7 @@ package body VCS.ClearCase is
       Create
         (C,
          Rep.Kernel,
-         Get_Pref (Rep.Kernel, ClearCase_Command),
+         Get_Pref (ClearCase_Command),
          "",
          Args,
          Command_Head,
@@ -742,7 +742,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_File_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -865,7 +865,7 @@ package body VCS.ClearCase is
             Create
               (Checkin_File_Command,
                Kernel,
-               Get_Pref (Rep.Kernel, ClearCase_Command),
+               Get_Pref (ClearCase_Command),
                "",
                Args,
                Head,
@@ -937,7 +937,7 @@ package body VCS.ClearCase is
 
             Create (Update_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Null_List,
@@ -1181,7 +1181,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_Dir_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1205,7 +1205,7 @@ package body VCS.ClearCase is
 
             Create (Make_Element_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1226,7 +1226,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Element_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1247,7 +1247,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Dir_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1360,7 +1360,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_Dir_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1384,7 +1384,7 @@ package body VCS.ClearCase is
 
             Create (Make_Element_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1481,7 +1481,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_Dir_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1505,7 +1505,7 @@ package body VCS.ClearCase is
 
             Create (Remove_Element_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1526,7 +1526,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Dir_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1600,7 +1600,7 @@ package body VCS.ClearCase is
 
             Create (Revert_Command,
                     Kernel,
-                    Get_Pref (Rep.Kernel, ClearCase_Command),
+                    Get_Pref (ClearCase_Command),
                     "",
                     Args,
                     Null_List,
@@ -1696,7 +1696,7 @@ package body VCS.ClearCase is
 
       Create (Diff_File_Command,
               Kernel,
-              Get_Pref (Rep.Kernel, ClearCase_Command),
+              Get_Pref (ClearCase_Command),
               "",
               Args,
               Head,
@@ -1779,7 +1779,7 @@ package body VCS.ClearCase is
       Create
         (C,
          Rep.Kernel,
-         Get_Pref (Rep.Kernel, ClearCase_Command),
+         Get_Pref (ClearCase_Command),
          Dir_Name (File).all,
          Args,
          Command_Head,
@@ -1825,7 +1825,7 @@ package body VCS.ClearCase is
       Create
         (C,
          Rep.Kernel,
-         Get_Pref (Rep.Kernel, ClearCase_Command),
+         Get_Pref (ClearCase_Command),
          Dir_Name (File).all,
          Args,
          Command_Head,

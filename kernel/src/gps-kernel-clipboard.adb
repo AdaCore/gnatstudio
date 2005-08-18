@@ -66,7 +66,7 @@ package body GPS.Kernel.Clipboard is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Size : constant Integer :=
-        Integer (Get_Pref (Kernel, Clipboard_Size_Pref));
+        Integer (Get_Pref (Clipboard_Size_Pref));
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
    begin
@@ -111,7 +111,7 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
-      Size := Integer (Get_Pref (Kernel, Clipboard_Size_Pref));
+      Size := Integer (Get_Pref (Clipboard_Size_Pref));
       Clipboard.List := new Selection_List (1 .. Size);
       Clipboard.Last_Paste := Clipboard.List'First;
 

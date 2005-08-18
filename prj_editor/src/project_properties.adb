@@ -537,9 +537,7 @@ package body Project_Properties is
      (Notebook : access GObject_Record'Class; Editor : GObject);
    --  Called when a new page is selected in the notebook
 
-   function Paths_Are_Relative
-     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
-      return Boolean;
+   function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
 
    type Project_Edition_Type is (Do_Not_Edit,
@@ -904,7 +902,7 @@ package body Project_Properties is
       Relative : constant Boolean :=
          Get_Paths_Type (Project) = Projects.Relative
          or else (Get_Paths_Type (Project) = From_Pref
-                  and then Get_Pref (Editor.Kernel, Generate_Relative_Paths));
+                  and then Get_Pref (Generate_Relative_Paths));
       Iter     : Gtk_Tree_Iter;
    begin
       if Editor.Ent /= null then
@@ -1649,15 +1647,12 @@ package body Project_Properties is
    -- Paths_Are_Relative --
    ------------------------
 
-   function Paths_Are_Relative
-     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
-      return Boolean
-   is
+   function Paths_Are_Relative (Project : Project_Type) return Boolean is
    begin
       case Get_Paths_Type (Project) is
          when Relative  => return True;
          when Absolute  => return False;
-         when From_Pref => return Get_Pref (Kernel, Generate_Relative_Paths);
+         when From_Pref => return Get_Pref (Generate_Relative_Paths);
       end case;
    end Paths_Are_Relative;
 
@@ -1769,7 +1764,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
       Set_Active
-        (Editor.Use_Relative_Paths, Paths_Are_Relative (Kernel, Project));
+        (Editor.Use_Relative_Paths, Paths_Are_Relative (Project));
       Pack_Start (Box, Editor.Use_Relative_Paths);
       Set_Tip (Get_Tooltips (Kernel), Editor.Use_Relative_Paths,
                -("If this field is activated, then all the path information in"
@@ -2088,14 +2083,14 @@ package body Project_Properties is
       if Ed.As_Directory then
          File := Select_Directory
            (Parent => Gtk_Window (Get_Toplevel (Editor)),
-            Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
          if File /= VFS.No_File then
             Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
          end if;
       else
          File := Select_File
            (Parent => Gtk_Window (Get_Toplevel (Editor)),
-            Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
          if File /= VFS.No_File then
             Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
          end if;
@@ -2532,14 +2527,14 @@ package body Project_Properties is
                      Base_Directory    => Create (Project_Path),
                      Default_Name      => "",
                      Use_Native_Dialog =>
-                       Get_Pref (Kernel, Use_Native_Dialogs));
+                       Get_Pref (Use_Native_Dialogs));
                else
                   File := Select_File
                     (Parent            => Gtk_Window (Toplevel),
                      Base_Directory    => Create (Dir_Name (Current)),
                      Default_Name      => Base_Name (Current),
                      Use_Native_Dialog =>
-                       Get_Pref (Kernel, Use_Native_Dialogs));
+                       Get_Pref (Use_Native_Dialogs));
                end if;
                if File /= VFS.No_File then
                   return Full_Name (File).all;
@@ -2558,13 +2553,13 @@ package body Project_Properties is
                     (Parent            => Gtk_Window (Toplevel),
                      Base_Directory    => Create (Project_Path),
                      Use_Native_Dialog =>
-                       Get_Pref (Kernel, Use_Native_Dialogs));
+                       Get_Pref (Use_Native_Dialogs));
                else
                   File := Select_Directory
                     (Parent            => Gtk_Window (Toplevel),
                      Base_Directory    => Create (Current),
                      Use_Native_Dialog =>
-                       Get_Pref (Kernel, Use_Native_Dialogs));
+                       Get_Pref (Use_Native_Dialogs));
                end if;
                if File /= VFS.No_File then
                   return Full_Name (File).all;
@@ -4066,7 +4061,7 @@ package body Project_Properties is
          --  conversion ourselves, since each attribute editor will take into
          --  account this setting when it saves the project.
 
-         if Relative /= Paths_Are_Relative (Kernel, Project) then
+         if Relative /= Paths_Are_Relative (Project) then
             if Relative then
                Set_Paths_Type (Project, Projects.Relative);
             else
