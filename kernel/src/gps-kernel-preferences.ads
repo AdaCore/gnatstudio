@@ -25,6 +25,7 @@ with Gdk.Types;
 with Pango.Font;
 with Language;
 with Glib.Generic_Properties;
+with GPS.Kernel.Charsets;
 
 package GPS.Kernel.Preferences is
 
@@ -58,41 +59,40 @@ package GPS.Kernel.Preferences is
    --  See Default_Preferences.Register_Property.
 
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint;
+     (Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
+     (Pref   : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_String) return String;
+     (Pref   : Glib.Properties.Creation.Param_Spec_String) return String
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color;
+     (Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Pref    : Param_Spec_Color) return String;
+     (Pref    : Param_Spec_Color) return String
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
+     (Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description
+     renames Default_Preferences.Get_Pref;
    function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Glib.Gint;
+     (Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Glib.Gint
+     renames Default_Preferences.Get_Pref;
    procedure Get_Pref
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Key;
+     (Pref     : Param_Spec_Key;
       Modifier : out Gdk.Types.Gdk_Modifier_Type;
-      Key      : out Gdk.Types.Gdk_Key_Type);
+      Key      : out Gdk.Types.Gdk_Key_Type)
+     renames Default_Preferences.Get_Pref;
    function Get_Pref_Font
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description;
+     (Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description
+     renames Default_Preferences.Get_Pref_Font;
    function Get_Pref_Fg
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
+     (Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     renames Default_Preferences.Get_Pref_Fg;
    function Get_Pref_Bg
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
-   pragma Inline (Get_Pref);
+     (Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     renames Default_Preferences.Get_Pref_Bg;
    --  See Default_Preferences.Get_Pref
 
    procedure Set_Pref
@@ -105,7 +105,7 @@ package GPS.Kernel.Preferences is
       Value  : Glib.Gint);
    procedure Set_Pref
      (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : String;
+      Pref   : Param_Spec_String;
       Value  : String);
    --  See Default_Preferences.Set_Pref
 
@@ -129,12 +129,6 @@ package GPS.Kernel.Preferences is
       Saved  : out Default_Preferences.Saved_Prefs_Data);
    --  Save the current value of the preferences.
    --  Saved must be freed by the user
-
-   procedure Restore_Preferences
-     (Kernel : access Kernel_Handle_Record'Class;
-      Saved  : Default_Preferences.Saved_Prefs_Data);
-   --  Restore the previous value of the preferences.
-   --  Saved must not be destroyed afterwards
 
    ------------------
    -- Enumerations --
@@ -162,7 +156,7 @@ package GPS.Kernel.Preferences is
    View_Fixed_Font       : Param_Spec_Font;
    Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
-   Default_Charset       : Param_Spec_String;
+   Default_Charset       : GPS.Kernel.Charsets.Param_Spec_Charset;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Splash_Screen         : Param_Spec_Boolean;

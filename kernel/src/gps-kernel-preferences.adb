@@ -24,7 +24,6 @@ with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
-with Gdk.Types;                use Gdk.Types;
 with Glib;                     use Glib;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib.Properties;          use Glib.Properties;
@@ -33,6 +32,7 @@ with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
 with GPS.Intl;                 use GPS.Intl;
 with Language;                 use Language;
+with GPS.Kernel.Charsets;      use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
@@ -64,7 +64,7 @@ package body GPS.Kernel.Preferences is
 
    function Get_Index
      (Enum  : Param_Spec_Enum;
-      Value : String) return String;
+      Value : String) return Gint;
    --  Return string representation of value's index in Enum
 
    function Get_Value
@@ -111,20 +111,20 @@ package body GPS.Kernel.Preferences is
 
    function Get_Index
      (Enum  : Param_Spec_Enum;
-      Value : String) return String
+      Value : String) return Gint
    is
       L_Value : constant String     := To_Upper (Value);
       --  Enumeration value are returned all upper case
       E_Klass : constant Enum_Class := Enumeration (Enum);
       Val     : Enum_Value;
-      K       : Guint := 0;
+      K       : Gint := 0;
    begin
       loop
-         Val := Nth_Value (E_Klass, K);
+         Val := Nth_Value (E_Klass, Guint (K));
          exit when Val = null;
 
          if Nick (Val) = L_Value then
-            return Guint'Image (K);
+            return K;
          end if;
 
          K := K + 1;
@@ -149,7 +149,8 @@ package body GPS.Kernel.Preferences is
       elsif Command = "get" then
          declare
             Pref  : constant String     := Get_Data (Inst, Class);
-            Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
+            Param : constant Param_Spec :=
+              Get_Pref_From_Name (Kernel.Preferences, Pref, False);
             Typ   : GType;
          begin
             if Param = null then
@@ -161,42 +162,30 @@ package body GPS.Kernel.Preferences is
 
             if Typ = GType_Int then
                Set_Return_Value
-                 (Data,
-                  Integer
-                    (Get_Pref (Kernel.Preferences, Param_Spec_Int (Param))));
+                 (Data, Integer (Get_Pref (Param_Spec_Int (Param))));
 
             elsif Typ = GType_Boolean then
                Set_Return_Value
-                 (Data,
-                  (Get_Pref (Kernel.Preferences, Param_Spec_Boolean (Param))));
+                 (Data, (Get_Pref (Param_Spec_Boolean (Param))));
 
             elsif Typ = GType_String then
                Set_Return_Value
-                 (Data,
-                  Get_Pref (Kernel.Preferences, Param_Spec_String (Param)));
+                 (Data, Get_Pref (Param_Spec_String (Param)));
 
             elsif Typ = Gdk.Color.Gdk_Color_Type then
                Set_Return_Value
-                 (Data,
-                  To_String
-                    (Get_Pref (Kernel.Preferences,
-                               Param_Spec_Color (Param))));
+                 (Data, To_String (Get_Pref (Param_Spec_Color (Param))));
 
             elsif Typ = Pango.Font.Get_Type then
                Set_Return_Value
-                 (Data,
-                  To_String
-                    (Get_Pref (Kernel.Preferences,
-                               Param_Spec_Font (Param))));
+                 (Data, To_String (Get_Pref (Param_Spec_Font (Param))));
 
             elsif Fundamental (Typ) = GType_Enum then
                Set_Return_Value
                  (Data,
                   Get_Value
                     (Param_Spec_Enum (Param),
-                     Guint
-                       (Get_Pref (Kernel.Preferences,
-                                  Param_Spec_Enum (Param)))));
+                     Guint (Get_Pref (Param_Spec_Enum (Param)))));
 
             else
                Set_Error_Msg (Data, -"Preference not supported");
@@ -210,7 +199,8 @@ package body GPS.Kernel.Preferences is
          Name_Parameters (Data, Set_Cmd_Parameters);
          declare
             Pref  : constant String     := Get_Data (Inst, Class);
-            Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
+            Param : constant Param_Spec :=
+              Get_Pref_From_Name (Kernel.Preferences, Pref, False);
             Typ   : GType;
             Done  : Boolean := True;
          begin
@@ -224,24 +214,26 @@ package body GPS.Kernel.Preferences is
             if Typ = GType_Int then
                Set_Pref
                  (Kernel.Preferences,
-                  Pref,
-                  Gint'Image (Gint (Integer'(Nth_Arg (Data, 2)))));
+                  Param_Spec_Int (Param),
+                  Gint (Integer'(Nth_Arg (Data, 2))));
 
             elsif Typ = GType_String
               or else Typ = Pango.Font.Get_Type
               or else Typ = Gdk_Color_Type
             then
                Set_Pref
-                 (Kernel.Preferences, Pref, String'(Nth_Arg (Data, 2)));
+                 (Kernel.Preferences,
+                  Param_Spec_String (Param), String'(Nth_Arg (Data, 2)));
 
             elsif Typ = GType_Boolean then
                Set_Pref
-                 (Kernel.Preferences, Pref, Boolean'Image (Nth_Arg (Data, 2)));
+                 (Kernel.Preferences, Param_Spec_Boolean (Param),
+                  Nth_Arg (Data, 2));
 
             elsif Fundamental (Typ) = GType_Enum then
                Set_Pref
                  (Kernel.Preferences,
-                  Pref,
+                  Param_Spec_Int (Param),
                   Get_Index
                     (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 2))));
             else
@@ -291,7 +283,7 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (View_Fixed_Font), -"General");
 
-      Default_Charset := Param_Spec_String (Gnew_String
+      Default_Charset := Gnew_Charset
         (Name    => "General-Charset",
          Nick    => -"Character set",
          Blurb   => -("Name of character set to use when reading or saving"
@@ -299,9 +291,9 @@ package body GPS.Kernel.Preferences is
                       & " convert the files from and to your system's"
                       & " own encoding. Use ""UTF-8"" if your system supports"
                       & " unicode"),
-         Default => "ISO-8859-1"));
+         Default => "ISO-8859-1");
       Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
+         (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
 
       Default_Widget_Width := Param_Spec_Int (Gnew_Int
         (Name    => "General-Default-Widget-Width",
@@ -1399,89 +1391,6 @@ package body GPS.Kernel.Preferences is
    end Save_Preferences;
 
    --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_String) return String is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Pref    : Param_Spec_Color) return String is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   function Get_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Gint is
-   begin
-      return Get_Pref (Kernel.Preferences, Pref);
-   end Get_Pref;
-
-   procedure Get_Pref
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Key;
-      Modifier : out Gdk_Modifier_Type;
-      Key      : out Gdk_Key_Type) is
-   begin
-      Get_Pref (Kernel.Preferences, Pref, Modifier, Key);
-   end Get_Pref;
-
-   function Get_Pref_Font
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description is
-   begin
-      return Get_Pref_Font (Kernel.Preferences, Pref);
-   end Get_Pref_Font;
-
-   function Get_Pref_Fg
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color is
-   begin
-      return Get_Pref_Fg (Kernel.Preferences, Pref);
-   end Get_Pref_Fg;
-
-   function Get_Pref_Bg
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color is
-   begin
-      return Get_Pref_Bg (Kernel.Preferences, Pref);
-   end Get_Pref_Bg;
-
-   --------------
    -- Set_Pref --
    --------------
 
@@ -1490,7 +1399,7 @@ package body GPS.Kernel.Preferences is
       Pref   : Param_Spec_Boolean;
       Value  : Boolean) is
    begin
-      Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
+      Set_Pref (Kernel.Preferences, Pref, Value);
    end Set_Pref;
 
    --------------
@@ -1502,7 +1411,7 @@ package body GPS.Kernel.Preferences is
       Pref   : Param_Spec_Int;
       Value  : Glib.Gint) is
    begin
-      Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
+      Set_Pref (Kernel.Preferences, Pref, Value);
    end Set_Pref;
 
    --------------
@@ -1511,7 +1420,7 @@ package body GPS.Kernel.Preferences is
 
    procedure Set_Pref
      (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : String;
+      Pref   : Param_Spec_String;
       Value  : String) is
    begin
       Set_Pref (Kernel.Preferences, Pref, Value);
@@ -1539,17 +1448,6 @@ package body GPS.Kernel.Preferences is
    begin
       Save_Preferences (Kernel.Preferences, Saved);
    end Save_Preferences;
-
-   -------------------------
-   -- Restore_Preferences --
-   -------------------------
-
-   procedure Restore_Preferences
-     (Kernel : access Kernel_Handle_Record'Class;
-      Saved  : Default_Preferences.Saved_Prefs_Data) is
-   begin
-      Restore_Preferences (Kernel.Preferences, Saved);
-   end Restore_Preferences;
 
    -------------------
    -- Register_Page --
