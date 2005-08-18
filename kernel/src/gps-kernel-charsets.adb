@@ -84,11 +84,19 @@ package body GPS.Kernel.Charsets is
 
    procedure Charset_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec) is
+      Data  : Manager_Param_Spec)
+   is
+      Value : constant String := Get_Text (Get_Entry (Gtk_Combo (Combo)));
    begin
-      Set_Pref (Data.Manager,
-                Param_Spec_String (Data.Param),
-                Get_Text (Get_Entry (Gtk_Combo (Combo))));
+      for C in Charsets'Range loop
+         if Charsets (C).Description.all = Value then
+            Set_Pref (Data.Manager, Param_Spec_String (Data.Param),
+                      Charsets (C).Name.all);
+            return;
+         end if;
+      end loop;
+
+      Set_Pref (Data.Manager, Param_Spec_String (Data.Param), Value);
    end Charset_Changed;
 
    --------------------
