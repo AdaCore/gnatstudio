@@ -29,11 +29,8 @@ with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with Default_Preferences;        use Default_Preferences;
-with Traces; use Traces;
 
 package body GPS.Kernel.Charsets is
-   Me : constant Debug_Handle := Create ("Charsets");
-
    function Edit_Charset
      (Manager            : access Preferences_Manager_Record;
       Preferences_Editor : access Gtk.Widget.Gtk_Widget_Record'Class;
