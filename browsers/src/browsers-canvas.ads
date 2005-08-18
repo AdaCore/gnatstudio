@@ -67,7 +67,8 @@ package Browsers.Canvas is
    --  bar to get access to the parents/ancestors of an item or its children.
 
    procedure Register_Actions
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  ??? Needs documentation
 
    function Get_Toolbar (Browser : access General_Browser_Record)
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
