@@ -936,7 +936,8 @@ package body Directory_Tree is
            (Button, "clicked", Add_Single_Directory_Cb'Access, Selector);
 
          Gtk_New (Button);
-         Gtk_New (Arrow, Arrow_Up, Shadow_In);
+         Gtk_New (Arrow,
+                  Arrow_Up, Shadow_In);
          Add (Button, Arrow);
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
@@ -948,6 +949,7 @@ package body Directory_Tree is
 
          Gtk_New (Selector.List_Model, Columns_Types);
          Gtk_New (Selector.List_Tree, Selector.List_Model);
+         Unref (Selector.List_Model);
          Set_Headers_Visible (Selector.List_Tree, False);
          Set_Column_Types (Selector.List_Tree);
          Add (Scrolled, Selector.List_Tree);
