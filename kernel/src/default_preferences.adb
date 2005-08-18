@@ -72,17 +72,31 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with GPS.Intl;                 use GPS.Intl;
 with Pango.Layout;             use Pango.Layout;
-with String_Hash;
 with Traces;                   use Traces;
 with Case_Handling;            use Case_Handling;
+with Ada.Unchecked_Conversion;
 
 package body Default_Preferences is
 
    Me : constant Debug_Handle := Create ("Default_Prefs");
 
+   use Param_Spec_List;
+
    Fallback_Font : constant String := "Sans 10";
    --  The name of a font that should always work on all systems. This is used
    --  in case the user-specified fonts can not be found.
+
+   Param_Spec_Editor_Data : constant String := "gps_editor";
+   --  Name of the property set in a param_spec to point to the function that
+   --  edits it
+
+   Pref_Description_Data : constant String := "pref_description";
+   --  Name of the property set in a param_spec to point to the description of
+   --  the preference.
+
+   ----------------------
+   -- Pref_Description --
+   ----------------------
 
    type Pref_Description is record
       Value : GNAT.OS_Lib.String_Access;
@@ -93,8 +107,37 @@ package body Default_Preferences is
       --  preferences file.
 
       Descr : Pango.Font.Pango_Font_Description;
-      Index : Natural;
    end record;
+   type Pref_Description_Access is access all Pref_Description;
+
+   function Get_Description  (P : Param_Spec) return Pref_Description_Access;
+   procedure Set_Description (P : Param_Spec; Descr : Pref_Description_Access);
+   --  Set or Get the description associated with Param.
+
+   procedure Free_Pref_Description (Data : Glib.C_Proxy);
+   pragma Convention (C, Free_Pref_Description);
+   --  Free the memory associated with the Pref_Description parameter. This is
+   --  called automatically when the associated Param_Spec is destroyed.
+
+   ------------------
+   -- Saved_Params --
+   ------------------
+
+   type Saved_Param_Spec is record
+      Param : Param_Spec;               --  Points to the original one (no ref)
+      Descr : Pref_Description_Access;  --  A clone of the original one
+   end record;
+   procedure Free (P : in out Saved_Param_Spec);
+   package Saved_Param_List is new Generic_List (Saved_Param_Spec, Free);
+   use Saved_Param_List;
+
+   type Saved_Prefs_Data_Record is record
+      Preferences : Saved_Param_List.List;
+   end record;
+
+   -------------------------
+   --  Preferences Editor --
+   -------------------------
 
    type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
    type Preferences_Editor is access all Preferences_Editor_Record'Class;
@@ -103,14 +146,6 @@ package body Default_Preferences is
    Preferences_Editor_Signals : constant chars_ptr_array :=
      (1 => New_String ("preferences_changed"));
 
-
-   use Pref_Hash.String_Hash_Table;
-
-   package Param_Handlers is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Pref_Description_Access);
-   package Return_Param_Handlers is new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Pref_Description_Access);
-
    generic
       type Param is private;
       P : Param_Spec;
@@ -118,10 +153,9 @@ package body Default_Preferences is
       Val_Type : GType;
       with function Convert (S : String) return Result;
       with function Default (P : Param) return Result is <>;
-   function Generic_Get_Pref
-     (Manager : access Preferences_Manager_Record'Class; Pref : Param)
-      return Result;
-   --  ???
+   function Generic_Get_Pref (Pref : Param) return Result;
+   --  Generic implementation for Get_Pref. This is used by most other
+   --  Get_Pref calls.
 
    function Clone
      (Info : Pref_Description_Access) return Pref_Description_Access;
@@ -134,42 +168,42 @@ package body Default_Preferences is
 
    procedure Enum_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access);
+      Data  : Manager_Param_Spec);
    --  Called when an enumeration preference has been changed.
 
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    --  Called when a Gint preference has been changed.
 
    procedure Update_Gint
      (Adj  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    --  Called when the preference Data has changed, to update Adj
 
    procedure Boolean_Changed
      (Toggle : access GObject_Record'Class;
-      Data   : Pref_Description_Access);
+      Data   : Manager_Param_Spec);
    --  Called when a boolean preference has been changed.
 
    procedure Update_Boolean
      (Toggle : access GObject_Record'Class;
-      Data   : Pref_Description_Access);
+      Data   : Manager_Param_Spec);
    --  Called when the preference Data has changed, to update Toggle
 
    procedure Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    --  Called when the text in an entry field has changed.
 
    procedure Update_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    --  Called when the preference Data has changed, to update Ent
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access) return Boolean;
+      Data : Manager_Param_Spec) return Boolean;
    --  Called when the entry for a font selection has changed.
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class);
@@ -177,39 +211,39 @@ package body Default_Preferences is
 
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access);
+      Data  : Manager_Param_Spec);
    --  Called when a color has changed.
 
    procedure Update_Font_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    procedure Update_Fg
      (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    procedure Update_Bg
      (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data : Manager_Param_Spec);
    --  Called when the preference Data has changed, to update Combo for the
    --  Font, foreground or background of the preference
 
    procedure Update_Color
      (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access);
+      Data   : Manager_Param_Spec);
    --  Update the contents of the combo based on the color found in Data
 
    procedure Bg_Color_Changed
-     (Combo : access GObject_Record'Class; Data  : Pref_Description_Access);
+     (Combo : access GObject_Record'Class; Data  : Manager_Param_Spec);
    --  Called when the background color of a style has changed.
 
    procedure Fg_Color_Changed
-     (Combo : access GObject_Record'Class; Data  : Pref_Description_Access);
+     (Combo : access GObject_Record'Class; Data  : Manager_Param_Spec);
    --  Called when the foreground color of a style has changed.
 
    function Value (S : String) return String;
    --  Return the string as is (used for instantiation of Generic_Get_Pref)
 
    procedure Select_Font
-     (Ent : access GObject_Record'Class; Data : Pref_Description_Access);
+     (Ent : access GObject_Record'Class; Data : Manager_Param_Spec);
    --  Open a dialog to select a new font
 
    procedure Key_Grab (Ent : access Gtk_Widget_Record'Class);
@@ -226,23 +260,121 @@ package body Default_Preferences is
 
    function Create_Box_For_Font
      (Manager      : access Preferences_Manager_Record;
-      N            : Pref_Description_Access;
+      Pref         : Param_Spec;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box;
    --  Create a box suitable for editing fonts
+
+   function Editor_Widget
+     (Manager : access Preferences_Manager_Record;
+      Param   : Param_Spec;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return a widget for graphical editing of Param. The exact type of widget
+   --  depends on the type of data in Param.
+   --  When the widget is modified, the corresponding preference is
+   --  automatically changed as well. However, nobody gets informed that the
+   --  preference has changed.
+
+   ----------------------
+   -- Param_Spec_Unref --
+   ----------------------
+
+   procedure Param_Spec_Unref (P : in out Glib.Param_Spec) is
+      pragma Unreferenced (P);
+   begin
+      null;
+      --  Unref (P);
+   end Param_Spec_Unref;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Data : in out Pref_Description_Access) is
+   procedure Free (P : in out Saved_Param_Spec) is
+      --  function Convert is new Ada.Unchecked_Conversion
+      --    (Pref_Description_Access, Glib.C_Proxy);
+      pragma Unreferenced (P);
+   begin
+      --  Free_Pref_Description (Convert (P.Descr));
+      null;
+   end Free;
+
+   ---------------------------
+   -- Get_Param_Spec_Editor --
+   ---------------------------
+
+   function Get_Param_Spec_Editor
+     (Param : Glib.Param_Spec) return Param_Spec_Editor
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (Glib.C_Proxy, Param_Spec_Editor);
+      Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
+   begin
+      return Convert (Get_Qdata (Param, Quark));
+   end Get_Param_Spec_Editor;
+
+   ---------------------------
+   -- Set_Param_Spec_Editor --
+   ---------------------------
+
+   procedure Set_Param_Spec_Editor
+     (Param : Glib.Param_Spec; Editor : Param_Spec_Editor)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (Param_Spec_Editor, Glib.C_Proxy);
+      Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
+   begin
+      Set_Qdata
+        (Param => Param,
+         Quark => Quark,
+         Data  => Convert (Editor));
+   end Set_Param_Spec_Editor;
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description  (P : Param_Spec) return Pref_Description_Access is
+      function Convert is new Ada.Unchecked_Conversion
+        (Glib.C_Proxy, Pref_Description_Access);
+      Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
+   begin
+      return Convert (Get_Qdata (P, Quark));
+   end Get_Description;
+
+   ---------------------
+   -- Set_Description --
+   ---------------------
+
+   procedure Set_Description (P : Param_Spec; Descr : Pref_Description_Access)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (Pref_Description_Access, Glib.C_Proxy);
+      Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
+   begin
+      Set_Qdata
+        (Param   => P,
+         Quark   => Quark,
+         Data    => Convert (Descr),
+         Destroy => Free_Pref_Description'Access);
+   end Set_Description;
+
+   ---------------------------
+   -- Free_Pref_Description --
+   ---------------------------
+
+   procedure Free_Pref_Description (Data : Glib.C_Proxy) is
+      function Convert is new Ada.Unchecked_Conversion
+        (Glib.C_Proxy, Pref_Description_Access);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Pref_Description, Pref_Description_Access);
+      Descr : Pref_Description_Access := Convert (Data);
    begin
-      GNAT.OS_Lib.Free (Data.Value);
-      Free (Data.Page);
-      Unchecked_Free (Data);
-   end Free;
+      GNAT.OS_Lib.Free (Descr.Value);
+      Free (Descr.Page);
+      Unchecked_Free (Descr);
+   end Free_Pref_Description;
 
    -----------
    -- Clone --
@@ -255,7 +387,6 @@ package body Default_Preferences is
         (Page  => new String'(Info.Page.all),
          Value => null,
          Param => Info.Param,
-         Index => Info.Index,
          Descr => null);
    begin
       if Info.Value /= null then
@@ -280,7 +411,7 @@ package body Default_Preferences is
 
    procedure Destroy (Manager : in out Preferences_Manager_Record) is
    begin
-      Reset (Manager.Preferences);
+      Free (Manager.Preferences);
    end Destroy;
 
    -------------
@@ -370,6 +501,39 @@ package body Default_Preferences is
       return P;
    end Gnew_Style;
 
+   ------------------------
+   -- Get_Pref_From_Name --
+   ------------------------
+
+   function Get_Pref_From_Name
+     (Manager : access Preferences_Manager_Record;
+      Name    : String;
+      Create_If_Necessary : Boolean) return Param_Spec
+   is
+      L : Param_Spec_List.List_Node := First (Manager.Preferences);
+      Param : Param_Spec;
+   begin
+      while L /= Param_Spec_List.Null_Node loop
+         if Pspec_Name (Data (L)) = Name then
+            return Data (L);
+         end if;
+         L := Next (L);
+      end loop;
+
+      if Create_If_Necessary then
+         Param := Gnew_String
+           (Name    => Name,
+            Nick    => Name,
+            Blurb   => "",
+            Default => "",
+            Flags   => Param_Readable);
+         Register_Property (Manager, Param, "General");
+         return Param;
+      else
+         return null;
+      end if;
+   end Get_Pref_From_Name;
+
    -----------------------
    -- Register_Property --
    -----------------------
@@ -379,56 +543,41 @@ package body Default_Preferences is
       Param   : Glib.Param_Spec;
       Page    : String)
    is
-      Info : Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param));
+      Info, Old_Info : Pref_Description_Access;
+      Value : String_Access;
+      L : Param_Spec_List.List_Node := First (Manager.Preferences);
    begin
-      if Info = null then
-         Info := new Pref_Description'
-           (Page  => new String'(Page),
-            Param => Param,
-            Descr => null,
-            Index => Manager.Current_Index,
-            Value => null);
-         Set (Manager.Preferences, Pspec_Name (Param), Info);
-      else
-         Free (Info.Page);
-         Info.Page := new String'(Page);
-         Info.Index := Manager.Current_Index;
-         Info.Param := Param;
-      end if;
+      while L /= Param_Spec_List.Null_Node loop
+         if Pspec_Name (Data (L)) = Pspec_Name (Param) then
+            Old_Info := Get_Description (Data (L));
+            if Old_Info.Value /= null then
+               Value := new String'(Old_Info.Value.all);
+            end if;
+            exit;
+         end if;
+         L := Next (L);
+      end loop;
 
-      Manager.Current_Index := Manager.Current_Index + 1;
+      Info := new Pref_Description'
+        (Page  => new String'(Page),
+         Param => Param,
+         Descr => null,
+         Value => Value);
+      Set_Description (Param, Info);
+
+      if L /= Param_Spec_List.Null_Node then
+         Set_Data (L, Param);
+      else
+         Append (Manager.Preferences, Param);
+      end if;
    end Register_Property;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (Manager : access Preferences_Manager_Record;
-      Name    : String)
-      return Param_Spec
-   is
-      Info : constant Pref_Description_Access :=
-               Get (Manager.Preferences, Name);
-   begin
-      if Info = null then
-         return null;
-      else
-         return Info.Param;
-      end if;
-   end Get;
 
    ----------------------
    -- Generic_Get_Pref --
    ----------------------
 
-   function Generic_Get_Pref
-     (Manager : access Preferences_Manager_Record'Class; Pref : Param)
-      return Result
-   is
-      N : constant Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (P));
+   function Generic_Get_Pref (Pref : Param) return Result is
+      N : constant Pref_Description_Access := Get_Description (P);
    begin
       if N /= null
         and then (Value_Type (P) = Val_Type
@@ -449,70 +598,55 @@ package body Default_Preferences is
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record; Pref : Param_Spec_Int)
-      return Gint
-   is
+   function Get_Pref (Pref : Param_Spec_Int) return Gint is
       function Internal is new Generic_Get_Pref
         (Param_Spec_Int, Param_Spec (Pref), Gint, GType_Int, Gint'Value);
    begin
-      return Internal (Manager, Pref);
+      return Internal (Pref);
    end Get_Pref;
 
    --------------
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record; Pref : Param_Spec_Boolean)
-      return Boolean
-   is
+   function Get_Pref (Pref : Param_Spec_Boolean) return Boolean is
       function Internal is new Generic_Get_Pref
         (Param_Spec_Boolean, Param_Spec (Pref), Boolean, GType_Boolean,
          Boolean'Value);
    begin
-      return Internal (Manager, Pref);
+      return Internal (Pref);
    end Get_Pref;
 
    --------------
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record; Pref : Param_Spec_Enum)
-      return Gint
-   is
+   function Get_Pref (Pref : Param_Spec_Enum) return Gint is
       function Internal is new Generic_Get_Pref
         (Param_Spec_Enum, Param_Spec (Pref), Gint, GType_Enum, Gint'Value);
    begin
-      return Internal (Manager, Pref);
+      return Internal (Pref);
    end Get_Pref;
 
    --------------
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record; Pref : Param_Spec_String)
-      return String
-   is
+   function Get_Pref (Pref : Param_Spec_String) return String is
       function Internal is new Generic_Get_Pref
         (Param_Spec_String, Param_Spec (Pref), String, GType_String, Value);
    begin
-      return Internal (Manager, Pref);
+      return Internal (Pref);
    end Get_Pref;
 
    --------------
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color
-   is
+   function Get_Pref (Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color is
       function Color_Get_Pref is new Generic_Get_Pref
         (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
-      S : constant String := Color_Get_Pref (Manager, Pref);
+      S : constant String := Color_Get_Pref (Pref);
       Color : Gdk_Color;
    begin
       Color := Parse (S);
@@ -529,14 +663,11 @@ package body Default_Preferences is
    -- Get_Pref --
    --------------
 
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Color) return String
-   is
+   function Get_Pref (Pref    : Param_Spec_Color) return String is
       function Color_Get_Pref is new Generic_Get_Pref
         (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
    begin
-      return Color_Get_Pref (Manager, Pref);
+      return Color_Get_Pref (Pref);
    end Get_Pref;
 
    --------------
@@ -544,13 +675,12 @@ package body Default_Preferences is
    --------------
 
    procedure Get_Pref
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Key;
+     (Pref     : Param_Spec_Key;
       Modifier : out Gdk_Modifier_Type;
       Key      : out Gdk_Key_Type)
    is
       Info : constant Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
+        Get_Description (Param_Spec (Pref));
    begin
       if Info /= null
         and then Info.Value /= null
@@ -566,11 +696,9 @@ package body Default_Preferences is
    -------------------
 
    function Get_Pref_Font
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Style) return Pango_Font_Description
+     (Pref    : Param_Spec_Style) return Pango_Font_Description
    is
-      Info : Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
+      Info : Pref_Description_Access := Get_Description (Param_Spec (Pref));
       Desc : Pango_Font_Description;
    begin
       if Info /= null and then Info.Value /= null then
@@ -617,11 +745,10 @@ package body Default_Preferences is
    -----------------
 
    function Get_Pref_Fg
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     (Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
    is
       Info : constant Pref_Description_Access  :=
-        Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
+        Get_Description (Param_Spec (Pref));
       Color : Gdk_Color;
    begin
       if Info = null or else Info.Value = null then
@@ -639,11 +766,10 @@ package body Default_Preferences is
    -----------------
 
    function Get_Pref_Bg
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     (Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
    is
       Info : constant Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
+        Get_Description (Param_Spec (Pref));
       Color : Gdk_Color;
    begin
       if Info = null or else Info.Value = null then
@@ -661,11 +787,10 @@ package body Default_Preferences is
    --------------
 
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
+     (Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
    is
       Info : Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
+        Get_Description (Param_Spec (Pref));
       Desc : Pango_Font_Description;
    begin
       if Info /= null
@@ -690,21 +815,14 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Param_Spec_String;
       Value   : String)
    is
-      Info : Pref_Description_Access := Get (Manager.Preferences, Name);
+      Info : Pref_Description_Access := Get_Description (Param_Spec (Pref));
    begin
       if Info = null then
-         --  Create a dummy entry
-         Info := new Pref_Description'
-           (Page  => new String'("General"),
-            Param => null,
-            Descr => null,
-            Index => Manager.Current_Index,
-            Value => null);
-         Manager.Current_Index := Manager.Current_Index + 1;
-         Set (Manager.Preferences, Name, Info);
+         Register_Property (Manager, Param_Spec (Pref), "General");
+         Info := Get_Description (Param_Spec (Pref));
       end if;
 
       Free (Info.Value);
@@ -722,10 +840,10 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Glib.Properties.Creation.Param_Spec_Int;
       Value   : Gint) is
    begin
-      Set_Pref (Manager, Name, Gint'Image (Value));
+      Set_Pref (Manager, Param_Spec_String (Pref), Gint'Image (Value));
    end Set_Pref;
 
    --------------
@@ -734,11 +852,11 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager  : access Preferences_Manager_Record;
-      Name     : String;
+      Pref     : Param_Spec_Key;
       Modifier : Gdk_Modifier_Type;
       Key      : Gdk_Key_Type) is
    begin
-      Set_Pref (Manager, Name, Image (Key, Modifier));
+      Set_Pref (Manager, Param_Spec_String (Pref), Image (Key, Modifier));
    end Set_Pref;
 
    --------------
@@ -747,10 +865,10 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager      : access Preferences_Manager_Record;
-      Name         : String;
+      Pref         : Param_Spec_Font;
       Font, Fg, Bg : String) is
    begin
-      Set_Pref (Manager, Name, To_String (Font, Fg, Bg));
+      Set_Pref (Manager, Param_Spec_String (Pref), To_String (Font, Fg, Bg));
    end Set_Pref;
 
    --------------
@@ -759,10 +877,10 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Param_Spec_Boolean;
       Value   : Boolean) is
    begin
-      Set_Pref (Manager, Name, Boolean'Image (Value));
+      Set_Pref (Manager, Param_Spec_String (Pref), Boolean'Image (Value));
    end Set_Pref;
 
    --------------
@@ -770,11 +888,9 @@ package body Default_Preferences is
    --------------
 
    function Get_Page
-     (Manager : access Preferences_Manager_Record;
-      Param   : Param_Spec) return String
+     (Param   : Param_Spec) return String
    is
-      Info : constant Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param));
+      Info : constant Pref_Description_Access := Get_Description (Param);
    begin
       if Info = null then
          return "";
@@ -803,9 +919,11 @@ package body Default_Preferences is
                --  e.g. ~/.gps/preferences.bak for downward compatibility
 
                while Node /= null loop
-                  Set_Pref (Manager => Manager,
-                            Name    => Node.Tag.all,
-                            Value   => Node.Value.all);
+                  Set_Pref
+                    (Manager => Manager,
+                     Pref    => Param_Spec_String
+                       (Get_Pref_From_Name (Manager, Node.Tag.all, True)),
+                     Value   => Node.Value.all);
                   Node := Node.Next;
                end loop;
             else
@@ -815,9 +933,11 @@ package body Default_Preferences is
                      declare
                         Name : constant String := Get_Attribute (Node, "name");
                      begin
-                        Set_Pref (Manager => Manager,
-                                  Name    => Name,
-                                  Value   => Node.Value.all);
+                        Set_Pref
+                          (Manager => Manager,
+                           Pref    => Param_Spec_String
+                             (Get_Pref_From_Name (Manager, Name, True)),
+                           Value   => Node.Value.all);
                      end;
                   end if;
                   Node := Node.Next;
@@ -845,25 +965,22 @@ package body Default_Preferences is
    procedure Save_Preferences
      (Manager : access Preferences_Manager_Record; File_Name : String)
    is
-      Iter : Iterator;
       File : File_Type;
       Info : Pref_Description_Access;
+      L    : Param_Spec_List.List_Node := First (Manager.Preferences);
    begin
       Create (File, Out_File, File_Name);
       Put_Line (File, "<?xml version=""1.0""?>");
       Put_Line (File, "<Prefs>");
 
-      Get_First (Manager.Preferences, Iter);
-      loop
-         Info := Get_Element (Iter);
-         exit when Info = null;
-
+      while L /= Param_Spec_List.Null_Node loop
+         Info := Get_Description (Data (L));
          if Info.Value /= null then
-            Put_Line (File, "   <pref name=""" & Get_Key (Iter)
+            Put_Line (File, "   <pref name=""" & Pspec_Name (Data (L))
                       & """ >" & Info.Value.all & "</pref>");
          end if;
 
-         Get_Next (Manager.Preferences, Iter);
+         L := Next (L);
       end loop;
 
       Put_Line (File, "</Prefs>");
@@ -889,12 +1006,13 @@ package body Default_Preferences is
 
    procedure Enum_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       C : constant Gtk_Combo := Gtk_Combo (Combo);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Data.Value);
-      Data.Value := new String'(Integer'Image (Get_Index_In_List (C)));
+      Free (Descr.Value);
+      Descr.Value := new String'(Integer'Image (Get_Index_In_List (C)));
    end Enum_Changed;
 
    ------------------
@@ -903,12 +1021,13 @@ package body Default_Preferences is
 
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+      Data : Manager_Param_Spec)
    is
       A : constant Gtk_Adjustment := Gtk_Adjustment (Adj);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Data.Value);
-      Data.Value := new String'(Gint'Image (Gint (Get_Value (A))));
+      Free (Descr.Value);
+      Descr.Value := new String'(Gint'Image (Gint (Get_Value (A))));
    end Gint_Changed;
 
    -----------------
@@ -917,11 +1036,11 @@ package body Default_Preferences is
 
    procedure Update_Gint
      (Adj  : access GObject_Record'Class;
-      Data : Pref_Description_Access) is
+      Data : Manager_Param_Spec) is
    begin
-      if Data.Value /= null then
-         Set_Value (Gtk_Adjustment (Adj), Gdouble'Value (Data.Value.all));
-      end if;
+      Set_Value
+        (Gtk_Adjustment (Adj),
+         Gdouble (Get_Pref (Param_Spec_Int (Data.Param))));
    end Update_Gint;
 
    ---------------------
@@ -930,12 +1049,13 @@ package body Default_Preferences is
 
    procedure Boolean_Changed
      (Toggle : access GObject_Record'Class;
-      Data   : Pref_Description_Access)
+      Data   : Manager_Param_Spec)
    is
       T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Data.Value);
-      Data.Value := new String'(Boolean'Image (Get_Active (T)));
+      Free (Descr.Value);
+      Descr.Value := new String'(Boolean'Image (Get_Active (T)));
    end Boolean_Changed;
 
    --------------------
@@ -944,12 +1064,10 @@ package body Default_Preferences is
 
    procedure Update_Boolean
      (Toggle : access GObject_Record'Class;
-      Data   : Pref_Description_Access) is
+      Data   : Manager_Param_Spec) is
    begin
-      if Data.Value /= null then
-         Set_Active
-           (Gtk_Toggle_Button (Toggle), Boolean'Value (Data.Value.all));
-      end if;
+      Set_Active (Gtk_Toggle_Button (Toggle),
+                  Get_Pref (Param_Spec_Boolean (Data.Param)));
    end Update_Boolean;
 
    -------------------
@@ -958,12 +1076,13 @@ package body Default_Preferences is
 
    procedure Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+      Data : Manager_Param_Spec)
    is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Data.Value);
-      Data.Value := new String'(Get_Text (E));
+      Free (Descr.Value);
+      Descr.Value := new String'(Get_Text (E));
    end Entry_Changed;
 
    ------------------
@@ -972,18 +1091,20 @@ package body Default_Preferences is
 
    procedure Update_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access) is
+      Data : Manager_Param_Spec)
+   is
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Data.Value /= null then
+      if Descr.Value /= null then
          if Fundamental (Value_Type (Param_Spec (Data.Param))) =
            GType_Enum
          then
             Set_Text
               (Gtk_Entry (Ent),
                Name (Get_Value (Enumeration (Param_Spec_Enum (Data.Param)),
-                                Gint'Value (Data.Value.all))));
+                                Gint'Value (Descr.Value.all))));
          else
-            Set_Text (Gtk_Entry (Ent), Data.Value.all);
+            Set_Text (Gtk_Entry (Ent), Descr.Value.all);
          end if;
       end if;
    exception
@@ -1031,31 +1152,28 @@ package body Default_Preferences is
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access) return Boolean
+      Data : Manager_Param_Spec) return Boolean
    is
       E     : constant Gtk_Entry := Gtk_Entry (Ent);
       Value : String_Access;
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Data.Descr := null;
-
-      --  Cannot free Data.Value yet, since it will be used in the
-      --  test below to know whether a previous value has been set.
+      Descr.Descr := null;
 
       if Value_Type (Data.Param) = Pango.Font.Get_Type then
-         Free (Data.Value);
-         Data.Value := new String'(Get_Text (E));
+         Free (Descr.Value);
+         Descr.Value := new String'(Get_Text (E));
 
-      elsif Data.Value /= null then
-         Value := Data.Value;
-         Data.Value := new String'
+      elsif Descr.Value /= null then
+         Value := Descr.Value;
+         Descr.Value := new String'
               (To_String (Font => Get_Text (E),
-                          Fg   => Style_Token (Data.Value.all, 2),
-                          Bg   => Style_Token (Data.Value.all, 3)));
+                          Fg   => Style_Token (Descr.Value.all, 2),
+                          Bg   => Style_Token (Descr.Value.all, 3)));
          Free (Value);
 
       else
-         Free (Data.Value);
-         Data.Value := new String'
+         Descr.Value := new String'
            (To_String (Font => Get_Text (E),
                        Fg   => Style_Token
                          (Default (Param_Spec_String (Data.Param)), 2),
@@ -1086,12 +1204,13 @@ package body Default_Preferences is
 
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Data.Value);
-      Data.Value := new String'(Get_Color (C));
+      Free (Descr.Value);
+      Descr.Value := new String'(Get_Color (C));
    end Color_Changed;
 
    ---------------
@@ -1100,12 +1219,13 @@ package body Default_Preferences is
 
    procedure Update_Fg
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       Color : Gdk_Color;
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Data.Value /= null then
-         Color := Parse (Style_Token (Data.Value.all, 2));
+      if Descr.Value /= null then
+         Color := Parse (Style_Token (Descr.Value.all, 2));
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Set_Color (Gtk_Color_Combo (Combo), Color);
       end if;
@@ -1117,12 +1237,13 @@ package body Default_Preferences is
 
    procedure Update_Bg
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       Color : Gdk_Color;
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Data.Value /= null then
-         Color := Parse (Style_Token (Data.Value.all, 3));
+      if Descr.Value /= null then
+         Color := Parse (Style_Token (Descr.Value.all, 3));
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Set_Color (Gtk_Color_Combo (Combo), Color);
       end if;
@@ -1134,10 +1255,14 @@ package body Default_Preferences is
 
    procedure Update_Font_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access) is
+      Data : Manager_Param_Spec) is
    begin
-      if Data.Value /= null then
-         Set_Text (Gtk_Entry (Ent), Style_Token (Data.Value.all, 1));
+      if Value_Type (Data.Param) = Pango.Font.Get_Type then
+         Set_Text (Gtk_Entry (Ent),
+                   To_String (Get_Pref (Param_Spec_Font (Data.Param))));
+      else
+         Set_Text (Gtk_Entry (Ent),
+                   To_String (Get_Pref_Font (Param_Spec_Style (Data.Param))));
       end if;
    end Update_Font_Entry;
 
@@ -1147,15 +1272,13 @@ package body Default_Preferences is
 
    procedure Update_Color
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       Color : Gdk_Color;
    begin
-      if Data.Value /= null then
-         Color := Parse (Data.Value.all);
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gtk_Color_Combo (Combo), Color);
-      end if;
+      Color := Parse (Get_Pref (Param_Spec_Color (Data.Param)));
+      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+      Set_Color (Gtk_Color_Combo (Combo), Color);
    end Update_Color;
 
    ----------------------
@@ -1164,15 +1287,16 @@ package body Default_Preferences is
 
    procedure Fg_Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Data.Value = null then
+      if Descr.Value = null then
          declare
             V : constant String := Default (Param_Spec_String (Data.Param));
          begin
-            Data.Value := new String'
+            Descr.Value := new String'
               (To_String (Font => Style_Token (V, 1),
                           Fg   => Get_Color (C),
                           Bg   => Style_Token (V, 3)));
@@ -1181,12 +1305,12 @@ package body Default_Preferences is
       else
          declare
             V : constant String := To_String
-              (Font => Style_Token (Data.Value.all, 1),
+              (Font => Style_Token (Descr.Value.all, 1),
                Fg   => Get_Color (C),
-               Bg   => Style_Token (Data.Value.all, 3));
+               Bg   => Style_Token (Descr.Value.all, 3));
          begin
-            Free (Data.Value);
-            Data.Value := new String'(V);
+            Free (Descr.Value);
+            Descr.Value := new String'(V);
          end;
       end if;
    end Fg_Color_Changed;
@@ -1197,15 +1321,16 @@ package body Default_Preferences is
 
    procedure Bg_Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Pref_Description_Access)
+      Data  : Manager_Param_Spec)
    is
       C : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Data.Value = null then
+      if Descr.Value = null then
          declare
             V : constant String := Default (Param_Spec_String (Data.Param));
          begin
-            Data.Value := new String'
+            Descr.Value := new String'
               (To_String (Font => Style_Token (V, 1),
                           Fg   => Style_Token (V, 2),
                           Bg   => Get_Color (C)));
@@ -1214,12 +1339,12 @@ package body Default_Preferences is
       else
          declare
             V : constant String := To_String
-              (Font => Style_Token (Data.Value.all, 1),
-               Fg   => Style_Token (Data.Value.all, 2),
+              (Font => Style_Token (Descr.Value.all, 1),
+               Fg   => Style_Token (Descr.Value.all, 2),
                Bg   => Get_Color (C));
          begin
-            Free (Data.Value);
-            Data.Value := new String'(V);
+            Free (Descr.Value);
+            Descr.Value := new String'(V);
          end;
       end if;
    end Bg_Color_Changed;
@@ -1266,7 +1391,7 @@ package body Default_Preferences is
 
    procedure Select_Font
      (Ent  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+      Data : Manager_Param_Spec)
    is
       E      : constant Gtk_Entry := Gtk_Entry (Ent);
       F      : Gtk_Font_Selection;
@@ -1274,6 +1399,8 @@ package body Default_Preferences is
       Result : Boolean;
       Tmp    : Gtk_Widget;
       pragma Unreferenced (Result, Tmp);
+      Descr  : constant Pref_Description_Access :=
+        Get_Description (Data.Param);
 
    begin
       Gtk_New (Dialog,
@@ -1293,26 +1420,26 @@ package body Default_Preferences is
       Result := Set_Font_Name (F, Get_Text (E));
 
       if Run (Dialog) = Gtk_Response_OK then
-         Data.Descr := null;
+         Descr.Descr := null;
          Set_Text (E, Get_Font_Name (F));
 
          if Value_Type (Data.Param) = Pango.Font.Get_Type then
-            Free (Data.Value);
-            Data.Value := new String'(Get_Text (E));
+            Free (Descr.Value);
+            Descr.Value := new String'(Get_Text (E));
          else
-            if Data.Value /= null then
+            if Descr.Value /= null then
                declare
                   V : constant String := To_String
                     (Font => Get_Text (E),
-                     Fg   => Style_Token (Data.Value.all, 2),
-                     Bg   => Style_Token (Data.Value.all, 3));
+                     Fg   => Style_Token (Descr.Value.all, 2),
+                     Bg   => Style_Token (Descr.Value.all, 3));
                begin
-                  Free (Data.Value);
-                  Data.Value := new String'(V);
+                  Free (Descr.Value);
+                  Descr.Value := new String'(V);
                end;
 
             else
-               Data.Value := new String'
+               Descr.Value := new String'
                  (To_String (Font => Get_Text (E),
                              Fg   => Style_Token
                                (Default (Param_Spec_String (Data.Param)), 2),
@@ -1332,7 +1459,7 @@ package body Default_Preferences is
 
    function Create_Box_For_Font
      (Manager      : access Preferences_Manager_Record;
-      N            : Pref_Description_Access;
+      Pref         : Param_Spec;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box
    is
@@ -1346,17 +1473,19 @@ package body Default_Preferences is
 
       Gtk_New (Button, Button_Label);
       Pack_Start (Box, Button, Expand => False, Fill => False);
-      Param_Handlers.Object_Connect
+      Param_Spec_Handlers.Object_Connect
         (Button, "clicked",
-         Param_Handlers.To_Marshaller (Select_Font'Access),
+         Param_Spec_Handlers.To_Marshaller (Select_Font'Access),
          Slot_Object => Ent,
-         User_Data => N);
+         User_Data => (Preferences_Manager (Manager), Pref));
 
-      Return_Param_Handlers.Connect
-        (Ent, "focus_out_event", Font_Entry_Changed'Access, User_Data => N);
-      Param_Handlers.Object_Connect
+      Return_Param_Spec_Handlers.Connect
+        (Ent, "focus_out_event", Font_Entry_Changed'Access,
+         User_Data => (Preferences_Manager (Manager), Pref));
+      Param_Spec_Handlers.Object_Connect
         (Manager.Pref_Editor, "preferences_changed",
-         Update_Font_Entry'Access, Ent, User_Data => N);
+         Update_Font_Entry'Access, Ent,
+         User_Data => (Preferences_Manager (Manager), Pref));
 
       Set_Style (Ent, Copy (Get_Style (Ent)));
       Set_Font_Description (Get_Style (Ent), Desc);
@@ -1375,17 +1504,21 @@ package body Default_Preferences is
       Tips    : Gtk_Tooltips) return Gtk.Widget.Gtk_Widget
    is
       Typ : constant GType := Value_Type (Param);
-      N   : constant Pref_Description_Access :=
-        Get (Manager.Preferences, Pspec_Name (Param));
+      Callback : constant Param_Spec_Editor :=
+        Get_Param_Spec_Editor (Param);
+
    begin
-      if Typ = GType_Int then
+      if Callback /= null then
+         return Callback (Manager, Manager.Pref_Editor, Param, Tips);
+
+      elsif Typ = GType_Int then
          declare
             Prop : constant Param_Spec_Int := Param_Spec_Int (Param);
             Spin : Gtk_Spin_Button;
             Adj  : Gtk_Adjustment;
          begin
             Gtk_New (Adj,
-                     Value => Gdouble (Get_Pref (Manager, Prop)),
+                     Value => Gdouble (Get_Pref (Prop)),
                      Lower => Gdouble (Minimum (Prop)),
                      Upper => Gdouble (Maximum (Prop)),
                      Step_Increment => 1.0,
@@ -1394,11 +1527,13 @@ package body Default_Preferences is
             Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
             Set_Editable (Spin, True);
 
-            Param_Handlers.Connect
-              (Adj, "value_changed", Gint_Changed'Access, User_Data => N);
-            Param_Handlers.Object_Connect
+            Param_Spec_Handlers.Connect
+              (Adj, "value_changed", Gint_Changed'Access,
+               User_Data => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
-               Update_Gint'Access, Adj, User_Data => N);
+               Update_Gint'Access, Adj,
+               User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Spin);
          end;
@@ -1412,14 +1547,15 @@ package body Default_Preferences is
             Widget_Callback.Connect
               (Toggle, "toggled", Toggled_Boolean'Access);
             Set_Active (Toggle, True); --  Forces a toggle
-            Set_Active (Toggle, Get_Pref (Manager, Prop));
+            Set_Active (Toggle, Get_Pref (Prop));
 
-            Param_Handlers.Connect
-              (Toggle, "toggled", Boolean_Changed'Access, User_Data => N);
-            Param_Handlers.Object_Connect
+            Param_Spec_Handlers.Connect
+              (Toggle, "toggled", Boolean_Changed'Access,
+               User_Data => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Boolean'Access,
-               Toggle, User_Data => N);
+               Toggle, User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Toggle);
          end;
@@ -1441,20 +1577,20 @@ package body Default_Preferences is
             Gtk_New (Button, -"Grab...");
             Pack_Start (Box, Button, Expand => False);
 
-            Get_Pref (Manager, Prop, Modif, Key);
+            Get_Pref (Prop, Modif, Key);
 
             Append_Text (Ent, Image (Key, Modif));
 
             Widget_Callback.Object_Connect
               (Button, "clicked", Key_Grab'Access, Slot_Object => Ent);
-            Param_Handlers.Connect
+            Param_Spec_Handlers.Connect
               (Ent, "insert_text", Entry_Changed'Access,
-               User_Data   => N,
+               User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
-            Param_Handlers.Object_Connect
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Entry'Access,
-               Ent, User_Data => N);
+               Ent, User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Box);
          end;
@@ -1465,22 +1601,22 @@ package body Default_Preferences is
             Ent  : Gtk_Entry;
          begin
             Gtk_New (Ent);
-            Set_Text (Ent, Get_Pref (Manager, Prop));
+            Set_Text (Ent, Get_Pref (Prop));
 
-            Param_Handlers.Connect
+            Param_Spec_Handlers.Connect
               (Ent, "insert_text",
                Entry_Changed'Access,
-               User_Data   => N,
+               User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
-            Param_Handlers.Connect
+            Param_Spec_Handlers.Connect
               (Ent, "delete_text",
                Entry_Changed'Access,
-               User_Data   => N,
+               User_Data   => (Preferences_Manager (Manager), Param),
                After       => True);
-            Param_Handlers.Object_Connect
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Entry'Access,
-               Ent, User_Data => N);
+               Ent, User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Ent);
          end;
@@ -1491,7 +1627,7 @@ package body Default_Preferences is
             Event : Gtk_Event_Box;
             Box   : Gtk_Box;
             F     : constant Gtk_Box := Create_Box_For_Font
-              (Manager, N, Get_Pref_Font (Manager, Prop), "...");
+              (Manager, Param, Get_Pref_Font (Prop), "...");
             Combo : Gtk_Color_Combo;
 
          begin
@@ -1507,30 +1643,30 @@ package body Default_Preferences is
             Add (Event, Combo);
             Set_Tip (Tips, Event, -"Foreground color");
             Pack_Start (Box, Event, Expand => False);
-            Set_Color (Combo, Get_Pref_Fg (Manager, Prop));
-            Param_Handlers.Connect
+            Set_Color (Combo, Get_Pref_Fg (Prop));
+            Param_Spec_Handlers.Connect
               (Combo, "color_changed",
                Fg_Color_Changed'Access,
-               User_Data   => N);
-            Param_Handlers.Object_Connect
+               User_Data   => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Fg'Access,
-               Combo, User_Data => N);
+               Combo, User_Data => (Preferences_Manager (Manager), Param));
 
             Gtk_New (Event);
             Gtk_New (Combo);
             Add (Event, Combo);
             Set_Tip (Tips, Event, -"Background color");
             Pack_Start (Box, Event, Expand => False);
-            Set_Color (Combo, Get_Pref_Bg (Manager, Prop));
-            Param_Handlers.Connect
+            Set_Color (Combo, Get_Pref_Bg (Prop));
+            Param_Spec_Handlers.Connect
               (Combo, "color_changed",
                Bg_Color_Changed'Access,
-               User_Data => N);
-            Param_Handlers.Object_Connect
+               User_Data => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Bg'Access,
-               Combo, User_Data => N);
+               Combo, User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Box);
          end;
@@ -1541,33 +1677,31 @@ package body Default_Preferences is
             Combo : Gtk_Color_Combo;
          begin
             Gtk_New (Combo);
-            Set_Color (Combo, Get_Pref (Manager, Prop));
+            Set_Color (Combo, Get_Pref (Prop));
 
-            Param_Handlers.Connect
+            Param_Spec_Handlers.Connect
               (Combo, "color_changed",
                Color_Changed'Access,
-               User_Data   => N);
-            Param_Handlers.Object_Connect
+               User_Data   => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Color'Access,
-               Combo, User_Data => N);
+               Combo, User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Combo);
          end;
 
+
       elsif Typ = Pango.Font.Get_Type then
-         declare
-            Prop : constant Param_Spec_Font := Param_Spec_Font (Param);
-         begin
-            return Gtk_Widget
-              (Create_Box_For_Font
-                 (Manager, N, Get_Pref (Manager, Prop), -"Browse"));
-         end;
+         return Gtk_Widget
+           (Create_Box_For_Font
+              (Manager, Param,
+               Get_Pref (Param_Spec_Font (Param)), -"Browse"));
 
       elsif Fundamental (Typ) = GType_Enum then
          declare
             Prop    : constant Param_Spec_Enum := Param_Spec_Enum (Param);
-            V       : constant Gint := Get_Pref (Manager, Prop);
+            V       : constant Gint := Get_Pref (Prop);
             Combo   : Gtk_Combo;
             E_Klass : constant Enum_Class := Enumeration (Prop);
             Val     : Enum_Value;
@@ -1595,15 +1729,16 @@ package body Default_Preferences is
                K := K + 1;
             end loop;
 
-            Param_Handlers.Object_Connect
+            Param_Spec_Handlers.Object_Connect
               (Get_List (Combo), "select_child",
                Enum_Changed'Access,
                Slot_Object => Combo,
-               User_Data   => N);
-            Param_Handlers.Object_Connect
+               User_Data   => (Preferences_Manager (Manager), Param));
+            Param_Spec_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Entry'Access,
-               Get_Entry (Combo), User_Data => N);
+               Get_Entry (Combo),
+               User_Data => (Preferences_Manager (Manager), Param));
 
             return Gtk_Widget (Combo);
          end;
@@ -1736,13 +1871,7 @@ package body Default_Preferences is
       pragma Unreferenced (Tmp, Num);
 
       Saved      : Saved_Prefs_Data;
-      Iter       : Iterator;
       Info       : Pref_Description_Access;
-
-      Sorted_Prefs : array (0 .. Manager.Current_Index - 1)
-        of Pref_Description_Access;
-      --  All the preferences sorted by order of registration. This is needed
-      --  so that the order in the preferences dialog is predictible.
 
       Had_Apply  : Boolean := False;
       Row        : Guint;
@@ -1751,17 +1880,9 @@ package body Default_Preferences is
       Event      : Gtk_Event_Box;
       Label      : Gtk_Label;
       Separator  : Gtk_Separator;
-
+      L          : Param_Spec_List.List_Node := First (Manager.Preferences);
    begin
       Save_Preferences (Manager, Saved);
-
-      Get_First (Manager.Preferences, Iter);
-      loop
-         Info := Get_Element (Iter);
-         exit when Info = null;
-         Sorted_Prefs (Info.Index) := Info;
-         Get_Next (Manager.Preferences, Iter);
-      end loop;
 
       Dialog := new Preferences_Editor_Record;
       Initialize
@@ -1828,8 +1949,8 @@ package body Default_Preferences is
 
       --  Then add all implicitely defined pages
 
-      for Index in Sorted_Prefs'Range loop
-         Info := Sorted_Prefs (Index);
+      while L /= Param_Spec_List.Null_Node loop
+         Info := Get_Description (Data (L));
 
          if Info /= null
            and then Info.Param /= null
@@ -1853,6 +1974,8 @@ package body Default_Preferences is
                Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
             end if;
          end if;
+
+         L := Next (L);
       end loop;
 
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -1904,7 +2027,7 @@ package body Default_Preferences is
 
                Manager.Pref_Editor := null;
                Destroy (Dialog);
-               Restore_Preferences (Manager, Saved);
+               Restore_Preferences (Saved);
 
                if Had_Apply and then On_Changed /= null then
                   On_Changed (Manager);
@@ -1931,15 +2054,18 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Saved   : out Default_Preferences.Saved_Prefs_Data)
    is
-      Iter        : Iterator;
-      Info        : Pref_Description_Access;
+      L     : Param_Spec_List.List_Node := First (Manager.Preferences);
+      Info  : Pref_Description_Access;
    begin
-      Get_First (Manager.Preferences, Iter);
-      loop
-         Info := Get_Element (Iter);
-         exit when Info = null;
-         Set (Saved.Preferences, Get_Key (Iter), Clone (Info));
-         Get_Next (Manager.Preferences, Iter);
+      Saved := new Saved_Prefs_Data_Record;
+
+      while L /= Param_Spec_List.Null_Node loop
+         Info := Get_Description (Data (L));
+         Append
+           (Saved.Preferences,
+            Saved_Param_Spec'(Param => Data (L),
+                              Descr => Clone (Info)));
+         L := Next (L);
       end loop;
    end Save_Preferences;
 
@@ -1947,21 +2073,25 @@ package body Default_Preferences is
    -- Restore_Preferences --
    -------------------------
 
-   procedure Restore_Preferences
-     (Manager : access Preferences_Manager_Record;
-      Saved   : Default_Preferences.Saved_Prefs_Data) is
+   procedure Restore_Preferences (Saved   : Saved_Prefs_Data) is
+      L : Saved_Param_List.List_Node := First (Saved.Preferences);
    begin
-      Reset (Manager.Preferences);
-      Manager.Preferences := Saved.Preferences;
+      while L /= Saved_Param_List.Null_Node loop
+         Set_Description (Data (L).Param, Clone (Data (L).Descr));
+         L := Next (L);
+      end loop;
    end Restore_Preferences;
 
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Data : in out Default_Preferences.Saved_Prefs_Data) is
+   procedure Destroy (Data : in out Saved_Prefs_Data) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Saved_Prefs_Data_Record, Saved_Prefs_Data);
    begin
-      Reset (Data.Preferences);
+      Free (Data.Preferences);
+      Unchecked_Free (Data);
    end Destroy;
 
    ----------

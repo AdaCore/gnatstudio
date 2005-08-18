@@ -26,18 +26,20 @@
 --  enumeration types with C types, thus allowing almost any type of
 --  preference.
 
-with Glib; use Glib;
-with Glib.Properties;
-with Glib.Properties.Creation;
+
+with Ada.Unchecked_Deallocation;
 with Gdk.Color;
 with Gdk.Types;
-with Pango.Font;
+with Generic_List;
+with Glib.Properties.Creation;
+with Glib.Properties;
+with Glib; use Glib;
+with Glib.Object;
+with Gtk.Handlers;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
-with String_Hash;
-with Ada.Unchecked_Deallocation;
-
+with Pango.Font;
 package Default_Preferences is
 
    type Preferences_Manager_Record is tagged private;
@@ -51,6 +53,60 @@ package Default_Preferences is
    procedure Destroy (Manager : in out Preferences_Manager);
    --  Free the memory used by Manager, including all the registered
    --  preferences. Get_Pref mustn't be used afterwards.
+
+   ------------------------------------
+   -- Creating new preferences types --
+   ------------------------------------
+   --  New preferences types can be defined by creating a new type derived from
+   --  Param_Spec. This type should be associated with any of the standard
+   --  GType types, depending on how you want to store the value internally.
+   --  It is recommended that you provide your own Get_Pref function, though,
+   --  to make it easier for modules that depend on the preference.
+   --  By default, GPS will know how to edit integers, strings,... in the
+   --  preferences dialog. However, you might want to create your own kind of
+   --  widget, and associate it with the Param_Spec you created through
+   --  Set_Param_Spec_Editor below.
+   --  See for instance GPS.Kernel.Charsets for more examples.
+
+   type Param_Spec_Editor is access function
+     (Manager            : access Preferences_Manager_Record;
+      Preferences_Editor : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Param              : Glib.Param_Spec;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the widget that should be used to edit the preference described
+   --  in Param.
+   --  This widget should connect to the "preferences_changed" signal on
+   --  Preferences_Editor, to refresh its contents based on the new value
+   --  stored in Param.
+   --  Likewise, if the value stored in the widget is changed, it should also
+   --  change the value stored in Param.
+   --  A pointer to this function should be stored in the Param_Spec itself,
+   --  since it cannot be stored in the associated GType unfortunately. It
+   --  is associated with the key
+
+   function Get_Param_Spec_Editor
+     (Param : Glib.Param_Spec) return Param_Spec_Editor;
+   --  Return the callback that should be used to create the editor for this
+   --  preference
+
+   procedure Set_Param_Spec_Editor
+     (Param : Glib.Param_Spec; Editor : Param_Spec_Editor);
+   --  Set the callback that should be used to create the editor for this
+   --  preference.
+
+   type Manager_Param_Spec is record
+      Manager : Preferences_Manager;
+      Param   : Param_Spec;
+   end record;
+   package Param_Spec_Handlers is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Manager_Param_Spec);
+   package Return_Param_Spec_Handlers is new Gtk.Handlers.User_Return_Callback
+     (Glib.Object.GObject_Record, Boolean, Manager_Param_Spec);
+
+   --------------------------------------
+   -- Create new preferences instances --
+   --------------------------------------
 
    type Param_Spec_Array is array (Natural range <>) of Glib.Param_Spec;
 
@@ -103,83 +159,83 @@ package Default_Preferences is
    --  Due to some limitations in glib, the name in Param must only use
    --  alphanumeric characters or '-'.
 
-   function Get
+   --------------------------------------
+   -- Getting the value of preferences --
+   --------------------------------------
+
+   function Get_Pref_From_Name
      (Manager : access Preferences_Manager_Record;
-      Name    : String)
-      return Param_Spec;
-   --  Return the Param_Spec with the given Name
+      Name    : String;
+      Create_If_Necessary : Boolean) return Param_Spec;
+   --  Find, or create, a preference with that name. If the preferences didn't
+   --  exist before, it is created as a string, but can be overriden by calling
+   --  Register_Property with the same name again.
 
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint;
+     (Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint;
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
+     (Pref    : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Glib.Properties.Creation.Param_Spec_String) return String;
+     (Pref    : Glib.Properties.Creation.Param_Spec_String) return String;
+   function Get_Pref (Pref : Param_Spec_Color) return Gdk.Color.Gdk_Color;
+   function Get_Pref (Pref : Param_Spec_Color) return String;
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Color) return Gdk.Color.Gdk_Color;
+     (Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
    function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Color) return String;
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
-   function Get_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
+     (Pref    : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
    procedure Get_Pref
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Key;
+     (Pref     : Param_Spec_Key;
       Modifier : out Gdk.Types.Gdk_Modifier_Type;
       Key      : out Gdk.Types.Gdk_Key_Type);
    function Get_Pref_Font
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description;
+     (Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description;
    function Get_Pref_Fg
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
+     (Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
    function Get_Pref_Bg
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
+     (Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overriden it.
    --  Colors have already been allocated when they are returned.
    --  The Font_Description must not be freed by the caller
    --  For enumeration, it returns the 'Pos of the enumeration value.
 
+   --------------------------------------
+   -- Setting the value of preferences --
+   --------------------------------------
+
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Glib.Properties.Creation.Param_Spec_Int;
       Value   : Glib.Gint);
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Glib.Properties.Creation.Param_Spec_Boolean;
       Value   : Boolean);
-   procedure Set_Pref  --   String, Font, Color
+   procedure Set_Pref  --   String, Color
      (Manager : access Preferences_Manager_Record;
-      Name    : String;
+      Pref    : Glib.Properties.Creation.Param_Spec_String;
       Value   : String);
    procedure Set_Pref
      (Manager  : access Preferences_Manager_Record;
-      Name     : String;
+      Pref     : Param_Spec_Key;
       Modifier : Gdk.Types.Gdk_Modifier_Type;
       Key      : Gdk.Types.Gdk_Key_Type);
    procedure Set_Pref
      (Manager      : access Preferences_Manager_Record;
-      Name         : String;
+      Pref         : Param_Spec_Font;
       Font, Fg, Bg : String);
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
    --  Checks are made to make sure the type of Name is valid.
 
    function Get_Page
-     (Manager : access Preferences_Manager_Record;
-      Param : Param_Spec) return String;
+     (Param : Param_Spec) return String;
    --  Return the name of the page for the Name preference.
    --  Constraint_Error is raised if the preference doesn't exist.
+
+   ---------------------------------------------
+   -- Loading and saving preferences to files --
+   ---------------------------------------------
 
    procedure Load_Preferences
      (Manager : access Preferences_Manager_Record; File_Name : String);
@@ -191,23 +247,12 @@ package Default_Preferences is
      (Manager : access Preferences_Manager_Record; File_Name : String);
    --  Save the default preferences to File_Name.
 
-   function Editor_Widget
-     (Manager : access Preferences_Manager_Record;
-      Param   : Param_Spec;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips)
-      return Gtk.Widget.Gtk_Widget;
-   --  Return a widget for graphical editing of Param. The exact type of widget
-   --  depends on the type of data in Param.
-   --  When the widget is modified, the corresponding preference is
-   --  automatically changed as well. However, nobody gets informed that the
-   --  preference has changed.
-
-   type Action_Callback is access procedure
-     (Manager : access Preferences_Manager_Record'Class);
-
    -------------------------
    -- Editing preferences --
    -------------------------
+   --  The following types can be used to add your own pages to the preferences
+   --  dialog. Most of the time, though, the pages will be created
+   --  automatically by GPS to show the registered preferences.
 
    type Preferences_Page_Record is abstract tagged null record;
    type Preferences_Page is access all Preferences_Page_Record'Class;
@@ -249,6 +294,9 @@ package Default_Preferences is
    --  This might be called even if Validate has not previously been called for
    --  this page.
 
+   type Action_Callback is access procedure
+     (Manager : access Preferences_Manager_Record'Class);
+
    procedure Edit_Preferences
      (Manager            : access Preferences_Manager_Record;
       Parent             : access Gtk.Window.Gtk_Window_Record'Class;
@@ -267,6 +315,9 @@ package Default_Preferences is
    --------------------------
    -- Saving and restoring --
    --------------------------
+   --  The following subprograms can be used to temporarily save the value of
+   --  the registered preferences. This is used mostly to implemented the
+   --  Apply/Cancel buttons.
 
    type Saved_Prefs_Data is private;
 
@@ -276,34 +327,26 @@ package Default_Preferences is
    --  Save the current value of the preferences
 
    procedure Restore_Preferences
-     (Manager : access Preferences_Manager_Record;
-      Saved   : Default_Preferences.Saved_Prefs_Data);
+     (Saved   : Default_Preferences.Saved_Prefs_Data);
    --  Restore the previous value of the preferences.
    --  Saved must not be destroyed afterwards
 
-   procedure Destroy (Data : in out Default_Preferences.Saved_Prefs_Data);
+   procedure Destroy (Data : in out Saved_Prefs_Data);
    --  Free the memory occupied by Data
 
 private
-   type Pref_Description;
-   type Pref_Description_Access is access Pref_Description;
-
-   procedure Free (Data : in out Pref_Description_Access);
-   --  Free the memory occupied by Data
-
-   package Pref_Hash is new String_Hash (Pref_Description_Access, Free, null);
+   procedure Param_Spec_Unref (P : in out Glib.Param_Spec);
+   package Param_Spec_List is new Generic_List
+     (Glib.Param_Spec, Param_Spec_Unref);
 
    type Preferences_Manager_Record is tagged record
-      Preferences   : Pref_Hash.String_Hash_Table.HTable;
-      Current_Index : Natural := 0;
-
+      Preferences   : Param_Spec_List.List;
       Pref_Editor   : Gtk.Widget.Gtk_Widget;
       --  The current preferences editor. This is set to null if there is no
       --  editor open currently
    end record;
 
-   type Saved_Prefs_Data is record
-      Preferences : Pref_Hash.String_Hash_Table.HTable;
-   end record;
+   type Saved_Prefs_Data_Record;
+   type Saved_Prefs_Data is access Saved_Prefs_Data_Record;
 
 end Default_Preferences;
