@@ -4524,7 +4524,7 @@ Recompute the cross-reference information for C and C++ source files.
 
 @end table
 
-The @code{Tools/Interrupt} menu can be used to interrupt the last compilation
+The @code{Tools->Interrupt} menu can be used to interrupt the last compilation
 or run command. Once you have interrupted that last operation, you can
 interrupt the previous one by selecting the same menu again.
 
@@ -7113,8 +7113,9 @@ working in a cross environment. For more details on the project capabilities,
 see @ref{Project Handling}.
 
 When using the project editor to modify the project's properties, two
-areas are particularly relevant to cross environments: @code{Tools} and
-@code{Cross environment}, part of the @code{General} page.
+areas are particularly relevant to cross environments:
+@code{Cross environment} part of the @code{General} page and
+@code{Tools}, part of the @code{Languages} page.
 
 In the @code{Tools} section, you will typically need to change the name of
 the compiler(s) and the debugger, as well as gnatls' name if you are
