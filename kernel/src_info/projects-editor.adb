@@ -3244,6 +3244,9 @@ package body Projects.Editor is
             Current := Current_Item_Node (Node, Tree);
             case Kind_Of (Current, Tree) is
                when N_Attribute_Declaration =>
+                  --  ??? Should avoid a hard-coded list of directory
+                  --  attributes. Ideally, we would take into account
+                  --  the attributes defined in the XML file
                   if Prj.Tree.Name_Of (Current, Tree) = Name_Source_Dirs
                     or else Prj.Tree.Name_Of (Current, Tree) = Name_Object_Dir
                     or else Prj.Tree.Name_Of (Current, Tree) = Name_Exec_Dir

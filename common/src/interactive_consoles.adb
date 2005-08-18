@@ -932,6 +932,8 @@ package body Interactive_Consoles is
             Insert (Console.Buffer, Last_Iter, Command.all);
 
             --  Execute only if Command ends with a Line Feed.
+            --  ??? Should take into account input that might already be in
+            --  the console
 
             if Console.Handler /= null
               and then Command (Command'Last) = ASCII.LF
