@@ -119,6 +119,7 @@ package body GVD_Module is
    --  to have the same history for the run command in GPS.
 
    Debugger_Started : constant String := "debugger_started";
+   Debugger_Terminated : constant String := "debugger_terminated";
 
    Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
@@ -2875,6 +2876,7 @@ package body GVD_Module is
          Debug_Terminate (Kernel, Current_Debugger);
       end loop;
 
+      Run_Hook (Kernel, Debugger_Terminated);
       Pop_State (Kernel);
    end Debug_Terminate;
 
@@ -3566,6 +3568,7 @@ package body GVD_Module is
       --  Hooks
 
       Register_Hook (Kernel, Debugger_Started);
+      Register_Hook (Kernel, Debugger_Terminated);
 
       Init_Graphics;
    end Register_Module;
