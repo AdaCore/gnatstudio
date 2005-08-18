@@ -18,7 +18,7 @@ from string import rstrip, lstrip, expandtabs
 
 class DocGenerator:
    def __init__ (self):
-      self.work_dir = "/tmp/pythondor"
+      self.work_dir = "/tmp/pythondoc"
 
    def special_entries (self, module_name):
       """Return a list of tuples (name, url, generator) for special entries
@@ -323,7 +323,7 @@ class GPSDocGenerator (DocGenerator):
 
     def get_documentation (self, object):
         Help_Wrapper.set_current_class (object)
-        return self.wrapper.getdoc_from_gps (object)
+        return self.wrapper.getdoc_from_gps (object, as_html=1)
 
     def filename_for_hooks (self, module_name):
         """Return the file name to use for the hooks description"""
@@ -444,7 +444,7 @@ class Help_Wrapper:
          Help_Wrapper.current_class = ""
    set_current_class = staticmethod (set_current_class)
 
-   def getdoc_from_gps (self, object): 
+   def getdoc_from_gps (self, object, as_html): 
       try:
 
          ## If we directly have a string, use it as the name to look up in the
@@ -488,25 +488,29 @@ class Help_Wrapper:
          else:
             name = module + Help_Wrapper.current_class + object.__name__
 
-         return self.doc.getdoc (name, 1)
+         return self.doc.getdoc (name, as_html)
       except:
          return __oldgetdoc__(object)
 
    def getdoc (self, object):
        """Same as getdoc_from_gps, but the result is encapsulated in a <table>"""
-       return "<table class='description'>" + self.getdoc_from_gps (object) + "</table>"
+       return "<table class='description'>" \
+         + self.getdoc_from_gps (object, as_html=1) + "</table>"
+
+   def getdoc_nohtml (self, object):
+       return self.getdoc_from_gps (object, as_html=0)
 
 def writedoc(thing, forceload=0):
    """Wrapper around pydoc.writedoc to limit the number of times an XML file
       is parsed"""
-   inspect.getdoc = Help_Wrapper().getdoc
+   inspect.getdoc = Help_Wrapper().getdoc_nohtml
    __oldwritedoc__ (thing, forceload)
    inspect.getdoc = __oldgetdoc__
 
 def help (request=None):
    """Wrapper around pydoc.help to limit the number of times an XML file
       is parsed"""
-   inspect.getdoc = Help_Wrapper().getdoc
+   inspect.getdoc = Help_Wrapper().getdoc_nohtml
    __oldhelp__(request)
    inspect.getdoc = __oldgetdoc__
 
