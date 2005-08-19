@@ -310,7 +310,7 @@ ac_includes_default="\
 
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE PYTHON_BASE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GPS_VERSION opsysfile ROOT TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW PYTHON_VERSION PYTHON_ADA_SOURCE PYTHON_DIR PYTHON_LIBS subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -4624,7 +4624,8 @@ echo $ECHO_N "checking for GtkAda - version >= $min_gtk_version... $ECHO_C" >&6
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
-    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/-I//'`
+    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
+    GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
     GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
     gtk_major_version=`$GTK_CONFIG --version | \
@@ -4732,12 +4733,14 @@ echo "${ECHO_T}no" >&6
      fi
      GTK_CFLAGS=""
      GTKADA_SRC=""
+     GTKADA_OBJ=""
      GTK_LIBS=""
      GTK_STATIC_LIBS=""
      { { echo "$as_me:$LINENO: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&5
 echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
    { (exit 1); exit 1; }; }
   fi
+
 
 
 
@@ -5481,6 +5484,7 @@ s,@GLIB_PREFIX@,$GLIB_PREFIX,;t t
 s,@ATK_PREFIX@,$ATK_PREFIX,;t t
 s,@PANGO_PREFIX@,$PANGO_PREFIX,;t t
 s,@GTKADA_SRC@,$GTKADA_SRC,;t t
+s,@GTKADA_OBJ@,$GTKADA_OBJ,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
