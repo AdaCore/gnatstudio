@@ -1743,8 +1743,9 @@ package body Src_Editor_Buffer.Line_Information is
       --  Here we test whether the buffer is in destruction. If it is the case
       --  we simply return since it is not worth taking care of unhighlighting
       --  lines. Furthermore this prevents GPS from crashing when we close a
-      --  source file used in a visual diff whereas the reference file is still
+      --  source file used in a visual diff while the reference file is still
       --  being displayed.
+
       if Buffer.In_Destruction then
          return;
       end if;
