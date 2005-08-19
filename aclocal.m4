@@ -168,7 +168,8 @@ dnl
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
-    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/-I//'`
+    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
+    GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
     GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
     gtk_major_version=`$GTK_CONFIG --version | \
@@ -245,6 +246,7 @@ main ()
      fi
      GTK_CFLAGS=""
      GTKADA_SRC=""
+     GTKADA_OBJ=""
      GTK_LIBS=""
      GTK_STATIC_LIBS=""
      ifelse([$3], , :, [$3])
@@ -254,6 +256,7 @@ main ()
   AC_SUBST(ATK_PREFIX)
   AC_SUBST(PANGO_PREFIX)
   AC_SUBST(GTKADA_SRC)
+  AC_SUBST(GTKADA_OBJ)
   AC_SUBST(GTK_CFLAGS)
   AC_SUBST(GTK_LIBS)
   AC_SUBST(GTK_STATIC_LIBS)
