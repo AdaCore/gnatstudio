@@ -275,9 +275,9 @@ package body Builder_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Run menu
 
-   procedure On_Stop_Build
+   procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Build->Stop Build menu
+   --  Tools->Interrupt menu
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
@@ -1392,17 +1392,22 @@ package body Builder_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Run;
 
-   -------------------
-   -- On_Stop_Build --
-   -------------------
+   ------------------------
+   -- On_Tools_Interrupt --
+   ------------------------
 
-   procedure On_Stop_Build
+   procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
    begin
       Interrupt_Latest_Task (Kernel);
-   end On_Stop_Build;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Tools_Interrupt;
 
    --------------------
    -- Add_Build_Menu --
@@ -1861,7 +1866,7 @@ package body Builder_Module is
       Set_Submenu (Mitem, Menu);
 
       Register_Menu
-        (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
+        (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
          null, GDK_C, Control_Mask + Shift_Mask);
 
       Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
