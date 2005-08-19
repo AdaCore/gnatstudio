@@ -1,6 +1,6 @@
 project Gtkada is
 
    for Source_Dirs use ("@GTKADA_SRC@");
-   for Object_Dir use "@GTKADA_SRC@";
+   for Object_Dir use "@GTKADA_OBJ@";
 
 end Gtkada;
