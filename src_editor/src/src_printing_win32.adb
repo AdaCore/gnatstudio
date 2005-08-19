@@ -20,11 +20,14 @@
 
 --  Win32 version of this file
 
-with System; use System;
-with Src_Editor_Buffer.Text_Handling;
 with VFS;
+with Ada.Characters.Latin_1;
+with Src_Editor_Buffer.Text_Handling;
 
+with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
+with Traces;              use Traces;
+with Ada.Exceptions;      use Ada.Exceptions;
 
 package body Src_Printing is
 
@@ -82,6 +85,17 @@ package body Src_Printing is
       Printer   : HDC);
    --  Print the file name at the top of the page with the font indicated.
 
+   procedure Print_Body
+     (This_Page      : INT;
+      Lines_Per_Page : INT;
+      Line_Height    : INT;
+      Chars_Per_Line : INT;
+      Total_Lines    : INT;
+      Offsets        : Margin_Offsets;
+      Buffer         : Source_Buffer;
+      Printer        : HDC);
+   --  Print the center section of the page between the header & footer
+
    procedure Print_Footer (This_Page : INT; Alt_Font : HFONT; Printer : HDC);
    --  Print the page number at the bottom of the page with the font indicated.
 
@@ -104,37 +118,36 @@ package body Src_Printing is
       Bold       : Boolean := False;
       Italicized : Boolean := False)
    is
-      PD          : PrintDlg;
-      Document    : DOCINFO;
-      Success     : Boolean;
-      Old_Mode    : INT;
-      Printer_TM  : TEXTMETRIC;
-      New_Font    : HFONT;
-      Old_Font    : HFONT;
-      Banner_Font : HFONT;
+      PD             : PrintDlg;
+      Document       : DOCINFO;
+      Success        : Boolean;
+      Old_Mode       : INT;
+      Printer_TM     : TEXTMETRIC;
+      New_Font       : HFONT;
+      Old_Font       : HFONT;
+      Banner_Font    : HFONT;
+      Line_Height    : INT;
+      Chars_Per_Line : INT;
+      Lines_Per_Page : INT;
+      Total_Pages    : INT;
+      Start_Page     : INT;
+      End_Page       : INT;
+      Actual_Width   : INT;
+      Actual_Height  : INT;
+      Result         : BOOL;
+      Status         : INT;
+      Offsets        : Margin_Offsets;
 
-      Line_Height           : INT;
-      Chars_Per_Line        : INT;
-      Lines_Per_Page        : INT;
-      Total_Pages           : INT;
-      Start_Page            : INT;
-      End_Page              : INT;
-      Paginated_Line_Number : INT;
-      Actual_Width          : INT;
-      Actual_Height         : INT;
-      Result                : BOOL;
-      Status                : INT;
-      Offsets               : Margin_Offsets;
+      Buffer         : constant Source_Buffer := Get_Buffer (Editor);
 
-      Buffer        : constant Source_Buffer := Get_Buffer (Editor);
-      File_Name     : constant String :=
+      File_Name      : constant String :=
         VFS.Full_Name (Get_Filename (Editor)).all;
-      Document_Name : constant String := File_Name & ASCII.NUL;
-      Total_Lines   : constant INT := INT (Get_Line_Count (Buffer));
+
+      Document_Name  : constant String := File_Name & ASCII.NUL;
+
+      Total_Lines    : constant INT := INT (Get_Line_Count (Buffer));
 
       pragma Unreferenced (Status, Result);
-
-      use Src_Editor_Buffer.Text_Handling;
 
    begin
       if Total_Lines = 0 then
@@ -219,32 +232,14 @@ package body Src_Printing is
 
                   Print_Header (File_Name, Banner_Font, PD.DC);
 
-                  --  Now we print the individual lines of a page
-                  --  ??? Should use Parse_Entities instead
-
-                  for Line_Num in 0 .. Lines_Per_Page - 1 loop
-                     Paginated_Line_Number :=
-                       Lines_Per_Page * This_Page + Line_Num;
-
-                     exit when Paginated_Line_Number > Total_Lines - 1;
-
-                     declare
-                        Content : constant String := Get_Chars
-                          (Buffer,
-                           Editable_Line_Type (Paginated_Line_Number) + 1);
-
-                     begin
-                        --  Note that we are truncating rather than wrapping,
-                        --  and always slicing off the trailing linefeed
-
-                        Result := TextOut
-                          (PD.DC,
-                           Offsets.Left,
-                           (Line_Height * Line_Num) + Offsets.Top,
-                           Content'Address,
-                           INT'Min (Content'Length - 1, Chars_Per_Line));
-                     end;
-                  end loop;
+                  Print_Body (This_Page,
+                              Lines_Per_Page,
+                              Line_Height,
+                              Chars_Per_Line,
+                              Total_Lines,
+                              Offsets,
+                              Buffer,
+                              PD.DC);
 
                   Print_Footer (This_Page + 1, Banner_Font, PD.DC);
 
@@ -272,10 +267,13 @@ package body Src_Printing is
       Result := DeleteDC (PD.DC);
 
    exception
-      when others =>
+      when Error : others =>
          Old_Font := SelectObject (PD.DC, Old_Font);
          Old_Mode := SetBkMode (PD.DC, Old_Mode);
          Result := DeleteDC (PD.DC);
+
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (Error));
    end Print;
 
    ------------------
@@ -336,6 +334,61 @@ package body Src_Printing is
 
       Prior_Font := SelectObject (Printer, Prior_Font);
    end Print_Footer;
+
+   ----------------
+   -- Print_Body --
+   ----------------
+
+   procedure Print_Body
+     (This_Page      : INT;
+      Lines_Per_Page : INT;
+      Line_Height    : INT;
+      Chars_Per_Line : INT;
+      Total_Lines    : INT;
+      Offsets        : Margin_Offsets;
+      Buffer         : Source_Buffer;
+      Printer        : HDC)
+   is
+      Paginated_Line_Number : INT;
+      Content_Length        : INT;
+      Result                : BOOL;
+      pragma Unreferenced (Result);
+
+      use Src_Editor_Buffer.Text_Handling;
+   begin
+      for Line_Num in 0 .. Lines_Per_Page - 1 loop
+         Paginated_Line_Number :=
+           Lines_Per_Page * This_Page + Line_Num;
+
+         exit when Paginated_Line_Number > Total_Lines - 1;
+
+         declare
+            Content : constant String := Get_Chars
+              (Buffer,
+               Editable_Line_Type (Paginated_Line_Number) + 1);
+
+            use Ada.Characters.Latin_1;
+         begin
+            --  Note that we are truncating rather than wrapping,
+            --  and slicing off the trailing linefeed that
+            --  appears on every line except the last.
+
+            if Content'Length > 0 and then
+              Content (Content'Last) = LF then
+               Content_Length := Content'Length - 1;
+            else
+               Content_Length := Content'Length;
+            end if;
+
+            Result := TextOut
+              (Printer,
+               Offsets.Left,
+               (Line_Height * Line_Num) + Offsets.Top,
+               Content'Address,
+               INT'Min (Content_Length, Chars_Per_Line));
+         end;
+      end loop;
+   end Print_Body;
 
    --------------
    -- Centered --
@@ -408,7 +461,6 @@ package body Src_Printing is
    begin
       Logical_Font.lfHeight := LONG
         (-MulDiv (INT (Font_Size), GetDeviceCaps (Printer, LOGPIXELSY), 72));
-
       --  The above formula is from the Microsoft Developers Network docs
 
       Logical_Font.lfWidth := 0;
