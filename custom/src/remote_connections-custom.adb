@@ -38,6 +38,7 @@ with Traces;             use Traces;
 with VFS;                use VFS;
 
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
 with Interactive_Consoles;   use Interactive_Consoles;
@@ -129,6 +130,22 @@ package body Remote_Connections.Custom is
       User_Data  : System.Address := System.Null_Address);
    --  Filter all input/output of the shell
 
+   ------------------------------------------------
+   -- Initialization functions from the xml file --
+   ------------------------------------------------
+
+   procedure Initialize_Regexp
+     (Kernel : access Kernel_Handle_Record'Class;
+      Regexp : out Regexp_Record;
+      Top    : Glib.Xml_Int.Node_Ptr);
+   --  initializes a new answer_record structure from xml node
+
+   procedure Initialize_Action
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Top        : Glib.Xml_Int.Node_Ptr;
+      Actions    : out Action_Access);
+   --  Initializes a command from xml node
+
    ----------------
    -- Get_String --
    ----------------
@@ -214,9 +231,12 @@ package body Remote_Connections.Custom is
       if Action = null then
          return (1 .. 0 => null);
       end if;
-      --  get the size of the structure
+
+      --  Get the size of the structure
+
       Expect := Action.Expects;
       Nb_Items := 0;
+
       while Expect /= null loop
          Nb_Items := Nb_Items + 1;
          Expect := Expect.Next;
@@ -226,10 +246,12 @@ package body Remote_Connections.Custom is
          Regexps : Compiled_Regexp_Array (1 .. Nb_Items);
       begin
          Expect := Action.Expects;
+
          for J in Regexps'Range loop
             Regexps (J) := Expect.Regexp;
             Expect := Expect.Next;
          end loop;
+
          return Regexps;
       end;
    end Get_Regexp_Array;
@@ -246,11 +268,11 @@ package body Remote_Connections.Custom is
    begin
       if not Connection.Is_Open then
          Trace (Me, "Ensure_Connection");
+
          if Clock - Connection.Last_Connection_Attempt >=
            Min_Delay_Between_Attempts
          then
             Connection.Last_Connection_Attempt := Clock;
-
             Result := Execute_Cmd (Connection,
                                    Connection.Commands (Open_Session_Cmd),
                                    Is_Mount => True);
@@ -264,17 +286,17 @@ package body Remote_Connections.Custom is
 
    procedure Execute_Action_Recursive
      (Connection      : access Custom_Connection'Class;
-      Action          : in     Action_Access;
-      Local_Full_Name : in     String := "";
-      WriteTmpFile    : in     String := "";
+      Action          : Action_Access;
+      Local_Full_Name : String := "";
+      WriteTmpFile    : String := "";
       ReadTmpBase     : in out Temp_File_Name;
-      Result          : in     String := "";
-      Pd              : in     Process_Descriptor_Access;
-      Ret_Value       :    out Return_Enum);
+      Result          : String := "";
+      Pd              : Process_Descriptor_Access;
+      Ret_Value       : out Return_Enum);
    --  executes the action recursively
 
    procedure Exit_Callback (Data : Process_Data; Status : Integer);
-   --  callback called when protocol's executable exits.
+   --  Callback called when the protocol's executable exits.
 
    type Callback_Data is new Callback_Data_Record with record
       Connection : Custom_Connection_Access;
@@ -289,8 +311,10 @@ package body Remote_Connections.Custom is
       D : Callback_Data renames Callback_Data (Data.Callback_Data.all);
    begin
       Trace (Me, "Callback Exit_Callback called");
-      --  no need to free the callback_data, it is automatically freed by the
+
+      --  No need to free the callback_data, it is automatically freed by the
       --  caller.
+
       if Data.Descriptor = Process_Descriptor_Access (D.Connection.Pd) then
          D.Connection.Is_Open := False;
       end if;
@@ -302,13 +326,13 @@ package body Remote_Connections.Custom is
 
    procedure Execute_Action_Recursive
      (Connection      : access Custom_Connection'Class;
-      Action          : in     Action_Access;
-      Local_Full_Name : in     String := "";
-      WriteTmpFile    : in     String := "";
+      Action          : Action_Access;
+      Local_Full_Name : String := "";
+      WriteTmpFile    : String := "";
       ReadTmpBase     : in out Temp_File_Name;
-      Result          : in     String := "";
-      Pd              : in     Process_Descriptor_Access;
-      Ret_Value       :    out Return_Enum)
+      Result          : String := "";
+      Pd              : Process_Descriptor_Access;
+      Ret_Value       : out Return_Enum)
    is
       Regexps    : constant Compiled_Regexp_Array :=
         Get_Regexp_Array (Action);
@@ -324,7 +348,7 @@ package body Remote_Connections.Custom is
       New_Pd     : Boolean;
 
       function Get_Tmp_File return String;
-      --  function used to determine if we need read or write tmp file
+      --  Function used to determine if we need read or write tmp file
 
       function Launch
         (Command : String;
@@ -357,16 +381,20 @@ package body Remote_Connections.Custom is
          Exec    : String_Access;
          Console : Interactive_Console;
          Success : Boolean;
+
       begin
          Exec := Locate_Exec_On_Path (Command);
+
          if Exec = null then
-            Insert (Connection.K, -"Could not locate executable on path: " &
-                    Command);
+            Insert
+              (Connection.Kernel,
+               -"Could not locate executable on path: " & Command);
             return False;
+
          else
-            Console := Create_Interactive_Console (Connection.K, Title);
+            Console := Create_Interactive_Console (Connection.Kernel, Title);
             Launch_Process
-              (Connection.K,
+              (Connection.Kernel,
                Command              => Exec.all,
                Arguments            => Args (Args'First .. Args'Last),
                Console              => Console,
@@ -376,16 +404,17 @@ package body Remote_Connections.Custom is
                Success              => Success,
                Show_In_Task_Manager => False,
                Fd                   => L_Pd);
+
             if Success then
                Add_Filter (L_Pd.all, Console_Filter_Output'Access, Output,
                            User_Data => Console.all'Address);
                Add_Filter (L_Pd.all, Console_Filter_Input'Access, Input,
                            User_Data => Console.all'Address);
             end if;
+
             Free (Exec);
             return Success;
          end if;
-
       end Launch;
 
    begin
@@ -397,7 +426,8 @@ package body Remote_Connections.Custom is
       L_Pd := Pd;
       New_Pd := False;
 
-      --  for each action, first execute it
+      --  For each action, first execute it
+
       case Action.Kind is
          when Null_Action =>
             null;
@@ -410,6 +440,7 @@ package body Remote_Connections.Custom is
                                 Connection,
                                 Get_Tmp_File);
                Success : Boolean;
+
             begin
                Trace (Me, "Action: Spawn " & The_Command);
                Args := Argument_String_To_List (The_Command);
@@ -419,10 +450,12 @@ package body Remote_Connections.Custom is
                                   Get_Host (Connection));
                if Success then
                   New_Pd := True;
+
                   if Active (Full_Me) then
                      Add_Filter (L_Pd.all, Trace_Filter_Output'Access, Output);
                      Add_Filter (L_Pd.all, Trace_Filter_Input'Access, Input);
                   end if;
+
                else
                   Ret_Value := NOK;
                end if;
@@ -445,16 +478,21 @@ package body Remote_Connections.Custom is
 
          when Input_Password =>
             Trace (Full_Me, "Action: InputPassword");
+
             if Connection.Password_Attempts <
-              Connection.Max_Password_Attempts then
+              Connection.Max_Password_Attempts
+            then
                Connection.Password_Attempts :=
                  Connection.Password_Attempts + 1;
+
                declare
                   Passwd : constant String := Query_Password
                     (Get_User (Connection) & "'s password on "
                      & Get_Host (Connection));
+
                begin
                   Set_Passwd (Connection, Passwd);
+
                   if Passwd = "" then
                      Trace (Me, "Interrupted password query");
                      Interrupt (L_Pd.all);
@@ -463,6 +501,7 @@ package body Remote_Connections.Custom is
                      Send (L_Pd.all, Passwd, Add_LF => True);
                   end if;
                end;
+
             else
                Ret_Value := NOK_InvalidPassword;
             end if;
@@ -474,6 +513,7 @@ package body Remote_Connections.Custom is
                                 Local_Full_Name,
                                 Connection,
                                 Get_Tmp_File);
+
             begin
                Trace (Full_Me, "Action: Send '" & The_Command & "'");
                Send (L_Pd.all, The_Command, Add_LF => True);
@@ -482,6 +522,7 @@ package body Remote_Connections.Custom is
          when Send_File =>
             Trace (Full_Me, "Action: Send_File");
             Tmp := Read_File (WriteTmpFile);
+
             if Tmp /= null then
                Send (L_Pd.all, Tmp.all,
                      Add_LF => True, Empty_Buffer => True);
@@ -514,17 +555,18 @@ package body Remote_Connections.Custom is
             Ensure_Connection
               (Connection => Connection,
                Result     => Ret_Value);
+
             if Ret_Value = OK then
                L_Pd := Connection.Pd;
-               Ret_Value := No_Statement; --  reconnected, go on
+               Ret_Value := No_Statement; --  Reconnected, go on
             end if;
 
          when List_Files =>
             Connection.File_List := Analyze_Ls (Result, Action.Param.all);
-
       end case;
 
-      --  once the action executed, wait for Expects (if any)
+      --  Once the action executed, wait for Expects (if any)
+
       if Regexps'Length > 0 then
          while Ret_Value = No_Statement loop
             Trace (Full_Me, "Execute_Action: expecting" &
@@ -539,11 +581,13 @@ package body Remote_Connections.Custom is
 
             if Exp_Result = Expect_Timeout then
                Trace (Full_Me, "Timeout !");
-               --  if no action is defined for timeout
+               --  If no action is defined for timeout
+
                if Action.Timeout.Actions = null then
                   Ret_Value := NOK_Timeout;
                else
                   L_Action := Action.Timeout.Actions;
+
                   while Ret_Value = No_Statement and L_Action /= null loop
                      Execute_Action_Recursive
                        (Connection,
@@ -561,7 +605,7 @@ package body Remote_Connections.Custom is
 
                Expect_Ptr := Action.Expects;
 
-               for I in 2 .. Exp_Result loop
+               for J in 2 .. Exp_Result loop
                   Expect_Ptr := Expect_Ptr.Next;
                end loop;
 
@@ -569,7 +613,9 @@ package body Remote_Connections.Custom is
                   Trace (Me, "** ERROR ! Regexp answered " &
                          Expect_Match'Image (Exp_Result) &
                          " which is unexpected");
-                  --  should never happend... (except bug in expect call)
+
+                  --  Should never happen... (except bug in expect call)
+
                   Ret_Value := NOK_Timeout;
                else
                   declare
@@ -577,6 +623,7 @@ package body Remote_Connections.Custom is
                   begin
                      Trace (Full_Me, "execute Expect's actions");
                      L_Action := Expect_Ptr.Actions;
+
                      while Ret_Value = No_Statement and L_Action /= null loop
                         Execute_Action_Recursive
                           (Connection,
@@ -594,7 +641,9 @@ package body Remote_Connections.Custom is
             end if;
          end loop;
       end if;
-      --  if we spawned a process and this process has not been set as seesion
+
+      --  If we spawned a process and this process has not been set as seesion
+
       if New_Pd and then Connection.Pd /= L_Pd then
          begin
             Interrupt (L_Pd.all);
@@ -619,11 +668,10 @@ package body Remote_Connections.Custom is
 
    function Execute_Cmd
      (Connection      : access Custom_Connection'Class;
-      Cmd             : in     Action_Access;
-      Local_Full_Name : in     String  := "";
-      WriteTmpFile    : in     String  := "";
-      Is_Mount        : in     Boolean := False)
-      return Return_Enum
+      Cmd             : Action_Access;
+      Local_Full_Name : String  := "";
+      WriteTmpFile    : String  := "";
+      Is_Mount        : Boolean := False) return Return_Enum
    is
       L_Action      : Action_Access;
       ReadTmpBase   : String (1 .. Temp_File_Len) := (others => ' ');
@@ -631,17 +679,20 @@ package body Remote_Connections.Custom is
       Response      : Message_Dialog_Buttons;
       Close_Cnx     : Boolean;
       pragma Unreferenced (Response);
+
    begin
       if not Is_Mount then
          Ensure_Connection
            (Connection => Connection,
             Result     => Ret_Value);
+
          if Ret_Value /= OK then
             return Ret_Value;
          end if;
       end if;
 
       L_Action := Cmd;
+
       while L_Action /= null loop
          Execute_Action_Recursive
            (Connection      => Connection,
@@ -698,6 +749,7 @@ package body Remote_Connections.Custom is
       end if;
 
       return Ret_Value;
+
    exception
       when Process_Died =>
          Connection.Is_Open := False;
@@ -708,8 +760,7 @@ package body Remote_Connections.Custom is
    -- Analyze_Timestamp --
    -----------------------
 
-   function Analyze_Timestamp (Str : in String) return Ada.Calendar.Time
-   is
+   function Analyze_Timestamp (Str : String) return Ada.Calendar.Time is
       function Safe_Value (S : String; Default : Integer := 1) return Integer;
       --  Same as 'Value but doesn't crash on invalid input
 
@@ -827,8 +878,8 @@ package body Remote_Connections.Custom is
    -- Analyze_Ls --
    ----------------
 
-   function Analyze_Ls (Str : in String; Regexp : in String)
-                        return GNAT.OS_Lib.String_List_Access
+   function Analyze_Ls
+     (Str : String; Regexp : String) return GNAT.OS_Lib.String_List_Access
    is
       Matched  : Match_Array (0 .. 1);
       First    : Natural := Str'First;
@@ -836,14 +887,18 @@ package body Remote_Connections.Custom is
       Nb_Files : Natural := 0;
       F_Array  : GNAT.OS_Lib.String_List_Access;
       Pattern  : constant Pattern_Matcher := Compile (Regexp, Multiple_Lines);
+
    begin
       loop
          Match (Pattern, Str, Matched,
                 Data_First => First,
                 Data_Last  => Last);
+
          exit when Matched (0) = No_Match;
+
          Nb_Files := Nb_Files + 1;
          First := Matched (0).Last + 1;
+
          exit when First > Last;
       end loop;
 
@@ -910,6 +965,7 @@ package body Remote_Connections.Custom is
         (System.Address, Interactive_Console);
       Console : Interactive_Console;
       use System;
+
    begin
       if User_Data /= System.Null_Address then
          Console := Convert (User_Data);
@@ -931,6 +987,7 @@ package body Remote_Connections.Custom is
         (System.Address, Interactive_Console);
       Console : Interactive_Console;
       use System;
+
    begin
       if User_Data /= System.Null_Address then
          Console := Convert (User_Data);
@@ -938,54 +995,43 @@ package body Remote_Connections.Custom is
       end if;
    end Console_Filter_Output;
 
-   ------------------------------------------------
-   -- Initialization functions from the xml file --
-   ------------------------------------------------
-
-   procedure Initialize_Regexp
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Regexp :    out Regexp_Record;
-      Top    : in     Glib.Xml_Int.Node_Ptr);
-   --  initializes a new answer_record structure from xml node
-
-   procedure Initialize_Action
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top        : in     Glib.Xml_Int.Node_Ptr;
-      Actions    :    out Action_Access);
-   --  Initializes a command from xml node
-
    -----------------------
    -- Initialize_Answer --
    -----------------------
 
    procedure Initialize_Regexp
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Regexp :    out Regexp_Record;
-      Top    : in     Glib.Xml_Int.Node_Ptr)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Regexp : out Regexp_Record;
+      Top    : Glib.Xml_Int.Node_Ptr)
    is
-      Id      : constant String := Get_Attribute (Top, "id");
+      Id : constant String := Get_Attribute (Top, "id");
    begin
       Trace (Full_Me, "Initialize regexp '" & Id & "'");
 
       --  Init id field
+
       Regexp := Null_Regexp_Record;
+
       if Id = "" then
-         GPS.Kernel.Console.Insert
-           (Kernel, "** XML Error : the regexp has no 'id' attribute",
+         Console.Insert
+           (Kernel, "XML Error: the regexp has no 'id' attribute",
             Add_LF => True, Mode => Error);
          return;
       end if;
+
       Regexp.Id := new String'(Id);
 
       --  Init Regexp field
+
       if Top.Value = null then
-         GPS.Kernel.Console.Insert
-           (Kernel, "** XML Error : Regexp " & Id & "has no value",
+         Console.Insert
+           (Kernel, "XML Error: Regexp " & Id & "has no value",
             Add_LF => True, Mode => Error);
          Glib.Free (Regexp.Id);
          Regexp := Null_Regexp_Record;
          return;
       end if;
+
       Trace (Full_Me, "Regexp is """ & Top.Value.all & """");
       Regexp.Regexp := +(Compile (Top.Value.all,
                                   Case_Insensitive or Multiple_Lines));
@@ -1003,14 +1049,17 @@ package body Remote_Connections.Custom is
       Node   : Node_Ptr;
    begin
       Node := Top.Child;
+
       while Node /= null loop
          if To_Lower (Node.Tag.all) = "regexp" then
             Initialize_Regexp (Kernel, Regexp, Node);
+
             if Regexp /= Null_Regexp_Record then
                Regexp.Next := Regexp_Root;
                Regexp_Root := new Regexp_Record'(Regexp);
             end if;
          end if;
+
          Node := Node.Next;
       end loop;
    end Initialize_Regexps;
@@ -1020,21 +1069,24 @@ package body Remote_Connections.Custom is
    ------------------------
 
    procedure Initialize_Action
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top        : in     Glib.Xml_Int.Node_Ptr;
-      Actions    :    out Action_Access)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Top     : Glib.Xml_Int.Node_Ptr;
+      Actions : out Action_Access)
    is
-      Node          : Node_Ptr;
-      Child_Node    : Node_Ptr;
-      Action        : Action_Access;
-      Action_Last   : Action_Access;
-      Is_Valid      : Boolean;
-      Action_Kind   : Action_Enum;
-      Regexp        : Regexp_Access;
-      Expect        : Expect_Record;
+      Node        : Node_Ptr;
+      Child_Node  : Node_Ptr;
+      Action      : Action_Access;
+      Action_Last : Action_Access;
+      Is_Valid    : Boolean;
+      Action_Kind : Action_Enum;
+      Regexp      : Regexp_Access;
+      Expect      : Expect_Record;
+
    begin
       Trace (Full_Me, "Initialize_Action");
+
       --  Initialize default values
+
       Action  := null;
       Actions := null;
       Action_Last := null;
@@ -1045,37 +1097,44 @@ package body Remote_Connections.Custom is
       end if;
 
       Node := Top.Child;
+
       while Node /= null loop
          if To_Lower (Node.Tag.all) = "action" then
             Is_Valid := True;
+
             declare
                Kind : constant String := Get_Attribute (Node, "kind");
             begin
                if Kind = "" then
-                  GPS.Kernel.Console.Insert
-                    (Kernel, "** XML Error : action items shall have a " &
+                  Console.Insert
+                    (Kernel, "XML Error: action items shall have a " &
                               "'kind' attribute",
                      Add_LF => True, Mode => Error);
                   Is_Valid := False;
+
                else
                   Action_Kind := Action_Enum'Value (Kind);
                   Trace (Full_Me, "Action Kind is '" & Kind & "'");
                end if;
+
             exception
                when Constraint_Error =>
-                  GPS.Kernel.Console.Insert
-                    (Kernel, "** XML Error : invalid attribute kind " & Kind,
+                  Console.Insert
+                    (Kernel, "XML Error: invalid attribute kind " & Kind,
                      Add_LF => True, Mode => Error);
                   Is_Valid := False;
             end;
+
             if Is_Valid then
-               --  first initialize the action itself
+               --  First initialize the action itself
+
                case Action_Kind is
                   when Spawn | Return_Value | Send | List_Files =>
                      declare
                         Param : constant String
                           := Get_Attribute (Node, "param");
                         The_Action : Action_Record (Action_Kind);
+
                      begin
                         The_Action.Param := new String'(Param);
                         Action := new Action_Record'(The_Action);
@@ -1083,64 +1142,76 @@ package body Remote_Connections.Custom is
 
                   when others =>
                      Action := new Action_Record (Action_Kind);
-
                end case;
             end if;
+
          else
             Is_Valid := False;
          end if;
+
          if Is_Valid then
-            --  retrieve the eventual Expects
+            --  Retrieve the available Expects
+
             Action.Expects := null;
             Action.Timeout := Default_Timeout_Record;
             Child_Node := Node.Child;
+
             while Child_Node /= null loop
                if To_Lower (Child_Node.Tag.all) = "expect" then
-                  --  try to get the regexp from its id first
+                  --  Try to get the regexp from its id first
+
                   declare
                      Id : constant String
                        := Get_Attribute (Child_Node, "regexp_id");
                      Regexp_Str : constant String
                        := Get_Attribute (Child_Node, "regexp");
+
                   begin
                      if Id /= "" then
                         Regexp := Regexp_Root;
+
                         while Regexp /= null loop
                            if Regexp.Id.all = Id then
                               Trace (Full_Me, "found regexp " & Id);
                               exit;
                            end if;
+
                            Regexp := Regexp.Next;
                         end loop;
+
                         if Regexp = null then
-                           GPS.Kernel.Console.Insert
+                           Console.Insert
                              (Kernel,
-                              "*** XML Error: no regexp exist with the " &
+                              "XML Error: no regexp exist with the " &
                               "id " & Id,
                               Add_LF => True, Mode => Error);
                            Is_Valid := False;
                         else
                            Expect.Regexp := Regexp.Regexp;
                         end if;
+
                      elsif Regexp_Str /= "" then
                         Expect.Regexp := +(Compile (Regexp_Str,
                             Case_Insensitive or Multiple_Lines));
                      else
-                        GPS.Kernel.Console.Insert
+                        Console.Insert
                           (Kernel,
-                           "** XML Error: Invalid expect tag: no regexp " &
+                           "XML Error: Invalid expect tag: no regexp " &
                            "or regexp_id attribute is defined",
                            Add_LF => True, Mode => Error);
                         Is_Valid := False;
                      end if;
 
                   end;
-                  --  init the other fields of the Expect
+
+                  --  Init the other fields of the Expect
+
                   if Is_Valid then
                      Initialize_Action (Kernel, Child_Node, Expect.Actions);
                      Expect.Next := Action.Expects;
                      Action.Expects := new Expect_Record'(Expect);
                   end if;
+
                elsif To_Lower (Child_Node.Tag.all) = "expect_timeout" then
                   declare
                      Value : constant String :=
@@ -1151,9 +1222,9 @@ package body Remote_Connections.Custom is
                                         Action.Timeout.Actions);
                   exception
                      when Constraint_Error =>
-                        GPS.Kernel.Console.Insert
+                        Console.Insert
                           (Kernel,
-                           "** XML Error: invalid expect_timeout tag",
+                           "XML Error: invalid expect_timeout tag",
                            Add_LF => True, Mode => Error);
                         Action.Timeout := Default_Timeout_Record;
                   end;
@@ -1162,10 +1233,13 @@ package body Remote_Connections.Custom is
                          "** Warning: unexpected field as child of action: " &
                          Child_Node.Tag.all);
                end if;
+
                Child_Node := Child_Node.Next;
             end loop;
          end if;
-         --  add the new action at the end of the list
+
+         --  Add the new action at the end of the list
+
          if Is_Valid then
             if Action_Last = null then
                Action.Next := null;
@@ -1177,6 +1251,7 @@ package body Remote_Connections.Custom is
                Action_Last := Action;
             end if;
          end if;
+
          Node := Node.Next;
       end loop;
    end Initialize_Action;
@@ -1190,19 +1265,19 @@ package body Remote_Connections.Custom is
       Connection : access Custom_Connection'Class;
       Top        : Glib.Xml_Int.Node_Ptr)
    is
-      Node        : Node_Ptr;
-      Parent      : Node_Ptr;
-      Tmp_Str     : String_Ptr;
-      Cmd         : Action_Access;
+      Node    : Node_Ptr;
+      Parent  : Node_Ptr;
+      Tmp_Str : String_Ptr;
+      Cmd     : Action_Access;
 
       function Get_String (S : String_Ptr) return String_Ptr;
       --  Return a deep copy of S, or null if S is null.
 
       procedure Parse_Natural
-        (Node    : in     Node_Ptr;
-         Name    : in     String;
-         Default : in     Natural;
-         Result  :    out Natural);
+        (Node    : Node_Ptr;
+         Name    : String;
+         Default : Natural;
+         Result  : out Natural);
       --  Parse a natural from field Name in a given Node.
       --  If the field cannot be found, set Result is set to Default
 
@@ -1224,10 +1299,10 @@ package body Remote_Connections.Custom is
       -------------------
 
       procedure Parse_Natural
-        (Node    : in     Node_Ptr;
-         Name    : in     String;
-         Default : in     Natural;
-         Result  :    out Natural)
+        (Node    : Node_Ptr;
+         Name    : String;
+         Default : Natural;
+         Result  : out Natural)
       is
          Field : String_Ptr;
       begin
@@ -1251,16 +1326,17 @@ package body Remote_Connections.Custom is
       Connection.Next := Custom_Root;
       Custom_Root     := Custom_Connection_Access (Connection);
 
-      Connection.K := GPS.Kernel.Kernel_Handle (Kernel);
+      Connection.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
 
       Connection.Name := new String'(Get_Attribute (Top, "name"));
       if Connection.Name.all = "" then
-         GPS.Kernel.Console.Insert
-           (Kernel, "** XML Error : remoteconnection items shall have a" &
+         Console.Insert
+           (Kernel, " XML Error: remote connection items shall have a" &
                      " name attribute",
             Add_LF => True, Mode => Error);
          return;
       end if;
+
       Trace (Me, "Initialize name = " & Connection.Name.all);
       Connection.Description :=
         Get_String (Get_Field (Top, "description"));
@@ -1273,6 +1349,7 @@ package body Remote_Connections.Custom is
          Result  => Connection.Max_Password_Attempts);
 
       --  If Parent is defined, first set Commands to parent's ones
+
       Tmp_Str := Get_Field (Top, "parent");
 
       if Tmp_Str /= null then
@@ -1294,10 +1371,10 @@ package body Remote_Connections.Custom is
       end if;
 
       --  Get Commands node
+
       Parent := Find_Tag (Top.Child, "commands");
 
       if Parent /= null then
-
          for C in Connection.Commands'Range loop
             Node := Find_Tag (Parent.Child, To_Lower (Cmd_Enum'Image (C)));
             Initialize_Action (Kernel, Node, Cmd);
@@ -1346,7 +1423,8 @@ package body Remote_Connections.Custom is
          Close
            (Remote_Connection_Record (Connection.all)'Access, GPS_Termination);
       end if;
-      --  else :
+
+      --  else:
       --  Do nothing, since we want to keep the connection open as long as
       --  possible
    end Close;
@@ -1362,25 +1440,28 @@ package body Remote_Connections.Custom is
       Result : Return_Enum;
    begin
       Trace (Me, "Is_Regular_File " & Local_Full_Name);
+
       if Connection.Commands (Is_Regular_File_Cmd) = null then
          declare
             Base : constant String := Base_Name (Local_Full_Name);
          begin
             if Base (Base'First .. Base'First + 1) = ".#" and then
-              Base (Base'Last) = '#' then
-               --  checking tmp file. assume none exist
+              Base (Base'Last) = '#'
+            then
+               --  Checking tmp file. Assume none exist
                return False;
+
             else
                --  Assume the file exists, we'll make sure when we try to
                --  fetch it
                return True;
             end if;
          end;
+
       else
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Is_Regular_File_Cmd),
                                 Local_Full_Name);
-
          return Result = OK;
       end if;
    end Is_Regular_File;
@@ -1418,6 +1499,7 @@ package body Remote_Connections.Custom is
       Result      : Return_Enum;
    begin
       Trace (Me, "Is_Writable " & Local_Full_Name);
+
       if Connection.Commands (Is_Writable_Cmd) = null then
          return Connection.Commands (Write_File_Cmd) /= null;
       else
@@ -1436,14 +1518,16 @@ package body Remote_Connections.Custom is
      (Connection      : access Custom_Connection;
       Local_Full_Name : Glib.UTF8_String) return Boolean
    is
-      Result      : Return_Enum;
+      Result : Return_Enum;
    begin
       Trace (Me, "Is_Directory " & Local_Full_Name);
+
       if Connection.Commands (Is_Directory_Cmd) = null then
          --  Assume it is a directory only if it ends with a directory
          --  separator
          return Local_Full_Name (Local_Full_Name'Last) = '/'
            or else Local_Full_Name (Local_Full_Name'Last) = '\';
+
       else
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Is_Directory_Cmd),
@@ -1458,13 +1542,13 @@ package body Remote_Connections.Custom is
 
    function File_Time_Stamp
      (Connection      : access Custom_Connection;
-      Local_Full_Name : Glib.UTF8_String)
-      return Ada.Calendar.Time
+      Local_Full_Name : Glib.UTF8_String) return Ada.Calendar.Time
    is
-      Result      : Return_Enum;
+      Result : Return_Enum;
       pragma Unreferenced (Result);
    begin
       Trace (Me, "File_Time_Stamp " & Local_Full_Name);
+
       if Connection.Commands (Timestamp_Cmd) = null then
          return VFS.No_Time;
       else
@@ -1484,7 +1568,7 @@ package body Remote_Connections.Custom is
       Local_Full_Name : Glib.UTF8_String)
       return GNAT.OS_Lib.String_Access
    is
-      Result      : Return_Enum;
+      Result : Return_Enum;
    begin
       Trace (Me, "Read_File " & Local_Full_Name);
 
@@ -1494,6 +1578,7 @@ package body Remote_Connections.Custom is
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Read_File_Cmd),
                                 Local_Full_Name);
+
          if Result = OK then
             return Connection.Buffer;
          else
@@ -1515,6 +1600,7 @@ package body Remote_Connections.Custom is
       pragma Unreferenced (Result);
    begin
       Trace (Me, "Write " & Local_Full_Name & " - " & Temporary_File);
+
       if Connection.Commands (Write_File_Cmd) = null then
          return;
       else
@@ -1540,6 +1626,7 @@ package body Remote_Connections.Custom is
       Trace (Me,
              "Set_Writable " & Local_Full_Name &
              " " & Boolean'Image (Writable));
+
       if Connection.Commands (Set_Writable_Cmd) = null then
          --  Nothing to do
          null;
@@ -1571,6 +1658,7 @@ package body Remote_Connections.Custom is
    begin
       Trace (Me, "Set_Readable " & Local_Full_Name &
             " (" & Boolean'Image (Readable) & ")");
+
       if Connection.Commands (Set_Readable_Cmd) = null then
          --  Nothing to do
          null;
@@ -1600,6 +1688,7 @@ package body Remote_Connections.Custom is
       Result : Return_Enum;
    begin
       Trace (Me, "Make_Dir " & Local_Dir_Name);
+
       if Connection.Commands (Make_Dir_Cmd) = null then
          --  Nothing to do
          return False;
@@ -1625,19 +1714,24 @@ package body Remote_Connections.Custom is
       Result : Return_Enum;
    begin
       Trace (Me, "Remove_Dir " & Local_Dir_Name);
+
       if Connection.Commands (Remove_Dir_Recursive_Cmd) /= null
-        and Recursive then
+        and then Recursive
+      then
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Remove_Dir_Recursive_Cmd),
                                 Local_Dir_Name);
          return Result = OK;
+
       elsif Connection.Commands (Remove_Dir_Cmd) /= null
-        and not Recursive then
+        and then not Recursive
+      then
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Remove_Dir_Cmd),
                                 Local_Dir_Name);
          return Result = OK;
       end if;
+
       return False;
    end Remove_Dir;
 
@@ -1652,14 +1746,17 @@ package body Remote_Connections.Custom is
       Result : Return_Enum;
       procedure Free is new Ada.Unchecked_Deallocation
         (GNAT.OS_Lib.String_List, GNAT.OS_Lib.String_List_Access);
-      --  do not use GNAT.OS_Lib.Free procedure as it also frees the string
+      --  Do not use GNAT.OS_Lib.Free procedure as it also frees the string
       --  items of the list, which we do not want.
+
    begin
       Trace (Me, "Read_Dir " & Local_Dir_Name);
+
       if Connection.Commands (Ls_Dir_Cmd) /= null then
          Result := Execute_Cmd (Connection,
                                 Connection.Commands (Ls_Dir_Cmd),
                                 Local_Dir_Name);
+
          if Result = OK and then Connection.File_List /= null then
             declare
                List : constant GNAT.OS_Lib.String_List
@@ -1670,6 +1767,7 @@ package body Remote_Connections.Custom is
             end;
          end if;
       end if;
+
       return (1 .. 0 => null);
    end Read_Dir;
 

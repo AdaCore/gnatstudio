@@ -267,7 +267,7 @@ private
    type TTY_Process_Descriptor_Access is access all TTY_Process_Descriptor;
 
    type Custom_Connection is new Remote_Connection_Record with record
-      K           : GPS.Kernel.Kernel_Handle;
+      Kernel      : GPS.Kernel.Kernel_Handle;
       --  Handle on GPS kernel
 
       Description : String_Ptr;
