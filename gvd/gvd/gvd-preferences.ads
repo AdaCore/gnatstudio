@@ -24,8 +24,6 @@ with Default_Preferences;      use Default_Preferences;
 
 package GVD.Preferences is
 
-   GVD_Prefs : Preferences_Manager;
-
    procedure Register_Default_Preferences
      (Prefs : access Preferences_Manager_Record'Class);
    --  Register all the preferences relative to GVD, and their default
