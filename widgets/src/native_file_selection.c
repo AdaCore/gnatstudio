@@ -36,7 +36,11 @@
  *
  * return the selected file
  * user shall free the result
- */
+*/
+
+#define OPEN_FILE 1
+#define SAVE_FILE 2
+#define PATTERN_SEP ';'
 
 static int
 FileSelectionHook
@@ -121,18 +125,60 @@ NativeWin32FileSelection
         break ;
     }
 
-  if (patternname != 0)
-    {
-      strcpy (l_Filter, patternname);
-      l_index += strlen (patternname) + 1;
-    }
+  {
+    int pi = 0, fi = 0;
+    int name_found;
+    int start;
 
-  if (filepattern != 0)
-    {
-      strcpy (l_Filter + l_index, filepattern);
-      l_index += strlen (filepattern) + 1;
-      l_Filter [l_index] = '\0';
-    }
+    while (filepattern [fi] != '\0')
+      {
+	/* Copy one pattern name */
+
+	name_found = 0;
+
+	while (patternname [pi] != '\0' && patternname [pi] != PATTERN_SEP)
+	  {
+	    name_found = 1;
+	    l_Filter [l_index++] = patternname [pi++];
+	  }
+
+	if (name_found)
+	  l_Filter [l_index++] = '\0';
+
+	/* Copy the corresponding file pattern */
+
+	start = l_index;
+
+	while (filepattern [fi] != '\0' && filepattern [fi] != PATTERN_SEP)
+	  {
+	    if (filepattern [fi] == ',')
+	      l_Filter [l_index++] = ';';
+	    else if (filepattern [fi] != '{' && filepattern [fi] != '}')
+	      l_Filter [l_index++] = filepattern [fi];
+	    fi++;
+	  }
+	l_Filter [l_index++] = '\0';
+
+	/* Copy again the file pattern if name was not found */
+
+	if (!name_found)
+	  {
+	    int k, stop;
+
+	    stop = l_index;
+
+	    for (k=start; k<stop; k++)
+	      l_Filter  [l_index++] = l_Filter [k];
+	  }
+
+	if (patternname [pi] == PATTERN_SEP) pi++;
+	if (filepattern [fi] == PATTERN_SEP) fi++;
+      }
+
+    /* Then append the final \0 */
+
+    l_Filter [l_index++] = '\0';
+  }
 
   if (defaultname)
     strcpy (l_Result, defaultname);
@@ -153,8 +199,9 @@ NativeWin32FileSelection
   ofn.lpstrInitialDir   = basedir;
   ofn.lpstrTitle        = title;
 
-  if (kind == 1)
-    ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | style_flag;
+  if (kind == OPEN_FILE)
+    ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER |
+                OFN_FILEMUSTEXIST | style_flag;
   else
     /* ??? Would be nice to take advantage of READONLY and CREATEPROMPT */
     ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | style_flag;
