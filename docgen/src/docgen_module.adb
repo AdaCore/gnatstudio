@@ -493,7 +493,9 @@ package body Docgen_Module is
           (Title             => -"Generate Documentation For",
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Unspecified,
+           Kind              => Open_File,
+           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
            History           => Get_History (Kernel));
    begin
       if File /= VFS.No_File then
