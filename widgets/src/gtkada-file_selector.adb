@@ -265,7 +265,17 @@ package body Gtkada.File_Selector is
       Filter : constant Regexp_Filter := new Regexp_Filter_Record;
    begin
       if Name = "" then
-         Filter.Label := new String'(Pattern);
+         --  Removes the { } in the pattern if any
+
+         if Pattern (Pattern'First) = '{'
+           and then Pattern (Pattern'Last) = '}'
+         then
+            Filter.Label :=
+              new String'(Pattern (Pattern'First + 1 .. Pattern'Last - 1));
+         else
+            Filter.Label := new String'(Pattern);
+         end if;
+
       else
          Filter.Label := new String'(Name);
       end if;
@@ -462,9 +472,57 @@ package body Gtkada.File_Selector is
         (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
 
       if File_Pattern /= "" then
-         Register_Filter
-           (File_Selector,
-            Regexp_File_Filter (File_Pattern, Pattern_Name));
+         declare
+            Fl     : Natural := File_Pattern'First; -- Last indexes
+            Nl     : Natural := Pattern_Name'First;
+            Ff, Nf : Natural;                       -- First indexes
+            Fo, No : Natural := 0;                  -- Indexes offset
+         begin
+            while Fl < File_Pattern'Last loop
+               Ff := Fl;
+               Nf := Nl;
+
+               while Fl < File_Pattern'Last
+                 and then File_Pattern (Fl) /= ';'
+               loop
+                  Fl := Fl + 1;
+               end loop;
+
+               while Nl < Pattern_Name'Last
+                 and then Pattern_Name (Nl) /= ';'
+               loop
+                  Nl := Nl + 1;
+               end loop;
+
+               if File_Pattern (Fl) = ';' then
+                  Fo := 1;
+               else
+                  Fo := 0;
+               end if;
+
+               if Nl < Pattern_Name'Last and then Pattern_Name (Nl) = ';' then
+                  No := 1;
+               else
+                  No := 0;
+               end if;
+
+               if Nf > Pattern_Name'Last then
+                  Register_Filter
+                    (File_Selector,
+                     Regexp_File_Filter
+                       (File_Pattern (Ff .. Fl - Fo), ""));
+               else
+                  Register_Filter
+                    (File_Selector,
+                     Regexp_File_Filter
+                       (File_Pattern (Ff .. Fl - Fo),
+                        Pattern_Name (Nf .. Nl - No)));
+               end if;
+
+               Fl := Fl + 1;
+               Nl := Nl + 1;
+            end loop;
+         end;
       end if;
 
       Set_Busy (Parent, False);
@@ -753,12 +811,12 @@ package body Gtkada.File_Selector is
    ---------------------
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_All;
-      Win       : access File_Selector_Window_Record'Class;
-      File      : Virtual_File;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out String_Access)
+     (Filter : access Filter_Show_All;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out String_Access)
    is
       pragma Unreferenced (File, Win, Filter);
    begin
@@ -772,9 +830,9 @@ package body Gtkada.File_Selector is
    -------------------
 
    procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
-      Dir     : constant Virtual_File := Win.Current_Directory;
-      Filter  : File_Filter := null;
-      Iter    : Gtk_Tree_Iter;
+      Dir    : constant Virtual_File := Win.Current_Directory;
+      Filter : File_Filter := null;
+      Iter   : Gtk_Tree_Iter;
 
    begin
       if Get_Window (Win) = null
