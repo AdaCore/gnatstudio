@@ -934,8 +934,10 @@ package body Browsers.Dependency_Items is
              Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
+           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
            History           => Get_History (Get_Kernel (Context)));
-      --  ??? Should set up filters to only open file from the current project.
+      --  ??? Should set up filters to only open file from the current project
 
    begin
       if File /= VFS.No_File then
