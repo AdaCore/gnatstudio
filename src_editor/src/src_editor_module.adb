@@ -1323,6 +1323,8 @@ package body Src_Editor_Module is
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
+              File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+              Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
               History           => Get_History (Kernel));
 
       begin
@@ -1589,6 +1591,9 @@ package body Src_Editor_Module is
                  Default_Name      => Base_Name (Old_Name),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Save_File,
+                 File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+                 Pattern_Name      =>
+                   -"All files;GNAT Ada default;C/C++ files",
                  History           => Get_History (Kernel));
 
          begin
@@ -1843,6 +1848,9 @@ package body Src_Editor_Module is
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
+                 File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+                 Pattern_Name      =>
+                   -"All files;GNAT Ada default;C/C++ files",
                  History           => Get_History (Kernel));
             Buffer : GNAT.OS_Lib.String_Access;
             Line   : Editable_Line_Type;
@@ -3148,7 +3156,7 @@ package body Src_Editor_Module is
               (Get_Registry (Kernel).all, Full_Name (File).all, True, False));
       end if;
 
-      Iter  := First_Child (Get_MDI (Kernel));
+      Iter := First_Child (Get_MDI (Kernel));
 
       loop
          Child := Get (Iter);
