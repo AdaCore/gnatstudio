@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1060,7 +1060,7 @@ package body Src_Editor_Box is
       Event  : constant Gdk_Event := Get_Current_Event;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Editor : constant Source_Editor_Box  :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
    begin
       return Event /= null
@@ -1081,6 +1081,8 @@ package body Src_Editor_Box is
    is
       Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
       V             : constant Source_View := Editor.Source_View;
+      Filename      : constant VFS.Virtual_File :=
+                        Get_Filename (Editor.Source_Buffer);
       Line          : Gint := 0;
       Column        : Gint := 0;
       Entity_Column : Gint;
@@ -1090,8 +1092,6 @@ package body Src_Editor_Box is
       Entity_Start  : Gtk_Text_Iter;
       Entity_End    : Gtk_Text_Iter;
       Context       : File_Selection_Context_Access;
-      Filename      : constant VFS.Virtual_File :=
-        Get_Filename (Editor.Source_Buffer);
       Has_Selection : Boolean;
       Out_Of_Bounds : Boolean := False;
       Start_Line, End_Line : Integer;
@@ -1229,8 +1229,8 @@ package body Src_Editor_Box is
    ---------------
 
    function Get_Label
-     (Creator   : access Goto_Body_Menu_Label;
-      Context   : access Selection_Context'Class) return String
+     (Creator : access Goto_Body_Menu_Label;
+      Context : access Selection_Context'Class) return String
    is
       pragma Unreferenced (Creator);
       Entity : Entity_Information;
@@ -1283,9 +1283,9 @@ package body Src_Editor_Box is
       Context : access GPS.Kernel.Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
-      C      : Entity_Selection_Context_Access;
-      Entity : Entity_Information;
-      Location : Entities.File_Location;
+      C                : Entity_Selection_Context_Access;
+      Entity           : Entity_Information;
+      Location         : Entities.File_Location;
       Current_Location : Entities.File_Location;
    begin
       if Context.all in Entity_Selection_Context'Class then
@@ -1413,10 +1413,10 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
+                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Box    : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       Goto_Declaration_Or_Body
         (Kernel,
@@ -1436,10 +1436,10 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
+                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Box    : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       Goto_Declaration_Or_Body
         (Kernel,
@@ -1459,10 +1459,10 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context.Context);
+                 Entity_Selection_Context_Access (Context.Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Editor    : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Editor : constant Source_Editor_Box :=
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Entity : Entity_Information := Get_Entity (C);
    begin
       if Entity = null then
@@ -1500,7 +1500,7 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Params);
       Kernel : constant Kernel_Handle :=
-        Get_Kernel (Source_Editor_Box (Widget));
+                 Get_Kernel (Source_Editor_Box (Widget));
    begin
       --  We cannot delete the last remaining view if the buffer has to be
       --  saved and the user cancelled the action.
@@ -1661,14 +1661,14 @@ package body Src_Editor_Box is
       Filename : VFS.Virtual_File := VFS.No_File;
       Success  : out Boolean)
    is
-      File       : constant VFS.Virtual_File :=
-        Get_Filename (Editor.Source_Buffer);
-      Constructs : Construct_List;
-      Info       : Construct_Access;
+      File          : constant VFS.Virtual_File :=
+                        Get_Filename (Editor.Source_Buffer);
+      Constructs    : Construct_List;
+      Info          : Construct_Access;
       New_Base_Name : GNAT.OS_Lib.String_Access;
-      Part       : Projects.Unit_Part;
+      Part          : Projects.Unit_Part;
 
-      Buffer     : GNAT.OS_Lib.String_Access;
+      Buffer        : GNAT.OS_Lib.String_Access;
       use type Basic_Types.String_Access;
    begin
       --  Do not authorize saving a read-only file, unless we save it to
@@ -1736,6 +1736,9 @@ package body Src_Editor_Box is
                     Use_Native_Dialog =>
                       Get_Pref (Use_Native_Dialogs),
                     Kind              => Save_File,
+                    File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+                    Pattern_Name      =>
+                      -"All files;GNAT Ada default;C/C++ files",
                     History           => Get_History (Editor.Kernel));
 
             begin
@@ -1816,8 +1819,8 @@ package body Src_Editor_Box is
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
 
-      Response : Gtk_Response_Type;
-      Success : Boolean;
+      Response     : Gtk_Response_Type;
+      Success      : Boolean;
       Line, Column : Integer;
    begin
       if Get_Filename (Editor.Source_Buffer) /= VFS.No_File then
@@ -1988,9 +1991,9 @@ package body Src_Editor_Box is
    ------------------------------------
 
    procedure Create_Line_Information_Column
-     (Editor         : access Source_Editor_Box_Record;
-      Identifier     : String;
-      Every_Line     : Boolean) is
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String;
+      Every_Line : Boolean) is
    begin
       Create_Line_Information_Column
         (Editor.Source_Buffer, Identifier, Every_Line);
@@ -2001,8 +2004,8 @@ package body Src_Editor_Box is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (Editor         : access Source_Editor_Box_Record;
-      Identifier     : String) is
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String) is
    begin
       Remove_Line_Information_Column (Editor.Source_Buffer, Identifier);
    end Remove_Line_Information_Column;

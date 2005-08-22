@@ -1074,6 +1074,8 @@ package body GVD_Module is
               Parent            => Gtk_Window (Top),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
+              File_Pattern      => "*.*",
+              Pattern_Name      => -"All files",
               History           => Get_History (Kernel));
       begin
          if S = VFS.No_File then
@@ -2116,12 +2118,12 @@ package body GVD_Module is
       pragma Unreferenced (Widget);
 
       Top         : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
+                      GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
-        Get_Current_Process (Top);
+                      Get_Current_Process (Top);
       Exec        : GNAT.OS_Lib.String_Access;
       Ptr         : GNAT.OS_Lib.String_Access :=
-        GNAT.OS_Lib.Get_Executable_Suffix;
+                      GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
 
       use Debugger, GNAT.OS_Lib;
