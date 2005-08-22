@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2005                    --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -204,7 +204,9 @@ package body Vdiff_Module is
           (Title             => -"Select First File",
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-           Kind              => Unspecified,
+           Kind              => Open_File,
+           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
            History           => Get_History (Kernel));
       File2 : Virtual_File;
       Child  : MDI_Child;
@@ -219,7 +221,9 @@ package body Vdiff_Module is
         (Title             => -"Select Second File",
          Parent            => Get_Current_Window (Kernel),
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-         Kind              => Unspecified,
+         Kind              => Open_File,
+         File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+         Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
          History           => Get_History (Kernel));
 
       if File2 = VFS.No_File then
@@ -347,10 +351,10 @@ package body Vdiff_Module is
    begin
       Vdiff_Module_ID := new Vdiff_Module_Record;
       Register_Module
-        (Module                  => Vdiff_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Vdiff_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Vdiff_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Vdiff_Module_Name,
+         Priority    => Default_Priority);
       Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);

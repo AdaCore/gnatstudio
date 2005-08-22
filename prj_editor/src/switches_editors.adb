@@ -1141,12 +1141,15 @@ package body Switches_Editors is
    procedure Browse_File
      (Field : access GObject_Record'Class)
    is
-      F   : constant Gtk_Entry := Gtk_Entry (Field);
-      VF : constant Virtual_File := Create (Get_Text (F));
+      F    : constant Gtk_Entry := Gtk_Entry (Field);
+      VF   : constant Virtual_File := Create (Get_Text (F));
       File : constant Virtual_File := Select_File
         (Base_Directory    => Dir (VF),
          Default_Name      => Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
+         Kind              => Open_File,
+         File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
+         Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
    begin
       if File /= VFS.No_File then
