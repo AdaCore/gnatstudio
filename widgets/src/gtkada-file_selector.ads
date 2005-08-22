@@ -106,13 +106,16 @@ package Gtkada.File_Selector is
    --  directory is invalid, then the dialog will point to the current
    --  directory.
    --  Parent is the parent window, used for setting the transient attribute.
-   --  File_Pattern is a globbing pattern, as described in GNAT.Regexp
-   --  (e.g. "*.htm"), or null for no filter.
+   --  File_Pattern is a globbing pattern, as described in GNAT.Regexp (e.g.
+   --  "*.htm"), or null for no filter. It is possible to pass multiple
+   --  patterns by separating them with a semicolon.
    --  If Pattern_Name is not null, use this parameter instead of File_Pattern
-   --  as the filter name.
-   --  Default_Name is a default value entered in the text entry.
+   --  as the filter name. As for File_Pattern it is possible to pass multiple
+   --  names (corresponding to each pattern) by separating them with a
+   --  semicolon.
+   --  Default_Name is default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
-   --  selection widget instead of a GtkAda based one.
+   --  selection widget instead of GtkAda based one.
 
    function Select_Directory
      (Title             : String  := "Select a directory";
@@ -193,7 +196,7 @@ package Gtkada.File_Selector is
       Label : String_Access;
    end record;
    type File_Filter is access all File_Filter_Record'Class;
-   --  The basic type for file filters.
+   --  The basic type for file filters
 
    procedure Destroy (Filter : access File_Filter_Record);
    --  Free memory associated with Filter.
@@ -201,12 +204,12 @@ package Gtkada.File_Selector is
    --  procedure.
 
    procedure Use_File_Filter
-     (Filter    : access File_Filter_Record;
-      Win       : access File_Selector_Window_Record'Class;
-      File      : VFS.Virtual_File;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out String_Access) is abstract;
+     (Filter : access File_Filter_Record;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : VFS.Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out String_Access) is abstract;
    --  This is the function that is called every time that a file could
    --  be shown in the file explorer.
    --  File is the considered file.
@@ -278,12 +281,12 @@ private
    use Dir_Stack;
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_All;
-      Win       : access File_Selector_Window_Record'Class;
-      File      : VFS.Virtual_File;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out String_Access);
+     (Filter : access Filter_Show_All;
+      Win    : access File_Selector_Window_Record'Class;
+      File   : VFS.Virtual_File;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out String_Access);
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
 
