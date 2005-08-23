@@ -200,9 +200,9 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Bookmark_View_Access := Bookmark_View_Access
+      View        : constant Bookmark_View_Access := Bookmark_View_Access
         (Get_Widget (Open_View (Get_Kernel (Context.Context))));
-      Data  : Bookmark_Data_Access;
+      Data        : Bookmark_Data_Access;
       Node, Prev  : List_Node;
    begin
       if Context.Event /= null then
@@ -376,6 +376,7 @@ package body Bookmark_Views is
       pragma Unreferenced (Result);
    begin
       if Get_Button (Event) = 1 then
+         --  ??? why the above call is needed
          Coordinates_For_Event (View.Tree, Model, Event, Iter, Col);
          Marker := Get_Selected_From_Event (View, Event);
 
