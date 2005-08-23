@@ -1,10 +1,16 @@
 Known Problems fixed in GPS 3.1.0
 
+- E822-004 Bad indentation of arrows in case of nested parentheses
+  Problem:    When using the "align association on arrows" preference and
+              indenting a complex expression with multiple parentheses, GPS
+              will sometimes wrongly align the arrows.
+  Workaround: Disable the "align association on arrows" preference
+
 - E727-022 Right-click in single-line selection cancels it
   Problem:    If you have selected part of a line, and right-click in it to
               display the contextual menu, the selection is cancelled. As a
               result, the action can no longer rely on the selection (for
-              instance if you have put Copy/Paste/Cut in the contexual menu)
+              instance if you have put Copy/Paste/Cut in the contexual menu).
 
 - E708-005 International characters converted to local character set when saving
   Problem:    When saving files, GPS ignores the preference in Character Set
@@ -15,7 +21,7 @@ Known Problems fixed in GPS 3.1.0
 - E708-004 Find Referemces... dialog returning unexpected references
   Problem:    The Find References... contextual menu opens a contextual menu
               where you can choose what kind of references should be returned.
-              However, it happens that GPS returns other kinds in addition
+              However, it happens that GPS returns other kinds in addition.
   Workaround: Ignore the other types (since the kind is listed in the Locations
               window)
 
@@ -28,7 +34,7 @@ Known Problems fixed in GPS 3.1.0
 - E617-006 Casing problem in the executable name when editing projects
   Problem:    If you use file names with upper cases in your project, GPS will
               convert these names to lower case in the project file when you
-              specify an executable name for this main unit
+              specify an executable name for this main unit.
   Workaround: manually edit your project file, or edit projects.xml to specify
               that the index is case sensitive for "executable"
 
