@@ -2366,6 +2366,7 @@ package body Ada_Analyzer is
             Align_Arrow  : Natural := Top (Indents).Align_Arrow;
             Non_Blank    : Natural;
             Offset_Align : Natural;
+            J            : Natural;
             First_Paren  : Natural;
 
          begin
@@ -2399,15 +2400,29 @@ package body Ada_Analyzer is
             --  Foo (X => 1,    <--
             --       Foo => 2);
 
-            First_Paren := Non_Blank;
+            First_Paren := 0;
+            J := Non_Blank;
 
-            while First_Paren < P - 1
-              and then Buffer (First_Paren) /= '('
-            loop
-               First_Paren := First_Paren + 1;
+            while J < P - 1 loop
+               if Buffer (J) = '('
+                 and then (Buffer (J - 1) /= '''
+                           or else Buffer (J + 1) /= ''')
+                 and then First_Paren = 0
+               then
+                  First_Paren := J;
+               end if;
+
+               if Buffer (J) = ')'
+                 and then (Buffer (J - 1) /= '''
+                           or else Buffer (J + 1) /= ''')
+               then
+                  First_Paren := 0;
+               end if;
+
+               J := J + 1;
             end loop;
 
-            if Buffer (First_Paren) = '(' then
+            if First_Paren /= 0 and then Buffer (First_Paren) = '(' then
                Align_Arrow := Align_Arrow + First_Paren - Non_Blank + 1;
             end if;
 
