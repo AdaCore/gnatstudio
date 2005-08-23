@@ -278,10 +278,10 @@ package GPS.Kernel.Modules is
    --  menu.
 
    procedure Register_Module
-     (Module                  : access Module_ID_Record;
-      Kernel                  : access Kernel_Handle_Record'Class;
-      Module_Name             : String;
-      Priority                : Module_Priority := Default_Priority);
+     (Module      : access Module_ID_Record;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Module_Name : String;
+      Priority    : Module_Priority := Default_Priority);
    --  Register a new module into GPS.
    --  If Module is null, a new module_id is created. Otherwise, the internal
    --  information stored in Module is changed. This allows you to store user

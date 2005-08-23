@@ -284,7 +284,7 @@ package Src_Editor_Box is
         Src_Editor_Buffer.Editable_Line_Type'Last)
       return Entities.Entity_Information;
    --  Same as above, but returns a pointer to the declaration of the
-   --  subprogram
+   --  subprogram.
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
    --  Check whether the file in Editor is writable, and update the read-only
@@ -378,9 +378,9 @@ package Src_Editor_Box is
    --  See GPS.Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
-     (Editor        : access Source_Editor_Box_Record;
-      Identifier    : String;
-      Every_Line    : Boolean);
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String;
+      Every_Line : Boolean);
    --  See GPS.Kernel.Modules for more information.
 
    procedure Remove_Line_Information_Column
