@@ -46,8 +46,6 @@ package VCS_Activities_View_API is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Complete Menu with the commands related to the VCS Activities,
    --  according to the information in Context.
-   --  If Show_Everything is True, add insensitive menus for items that do not
-   --  correspond to the context.
 
    procedure On_Menu_Add_To_Activity
      (Widget  : access GObject_Record'Class;
