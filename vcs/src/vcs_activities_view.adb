@@ -1085,9 +1085,9 @@ package body VCS_Activities_View is
 
       Gtk_New (Explorer.File_Column);
       Set_Title (Explorer.File_Column, -"Activity / File");
-      Pack_Start (Explorer.File_Column, Text_Rend, True);
+      Pack_Start (Explorer.File_Column, Edit_Rend, True);
       Add_Attribute
-        (Explorer.File_Column, Text_Rend, "text", Base_Name_Column);
+        (Explorer.File_Column, Edit_Rend, "text", Base_Name_Column);
       Set_Clickable (Explorer.File_Column, True);
       Set_Sort_Column_Id (Explorer.File_Column, Base_Name_Column);
       Set_Resizable (Explorer.File_Column, True);
