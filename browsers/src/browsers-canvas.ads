@@ -68,7 +68,10 @@ package Browsers.Canvas is
 
    procedure Register_Actions
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  ??? Needs documentation
+   --  Register some actions in the GPS kernel. Since there is no module
+   --  associated with the current package, this subprogram is intended to be
+   --  called by a module while it registers itself in the kernel
+   --  (Browsers.Call_Graph for now).
 
    function Get_Toolbar (Browser : access General_Browser_Record)
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
