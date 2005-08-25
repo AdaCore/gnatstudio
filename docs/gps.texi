@@ -6406,8 +6406,9 @@ The way to bring up the VCS Activities view is through the
 The VCS Activities view contains the following columns:
 
 @table @b
-@item Activity
-The name of the activity. This column can be sorted by clicking on the header.
+@item Activity / File
+The name of the activity or files belonging to an activity. This
+column can be sorted by clicking on the header.
 
 @item Status
 Shows the status of the file. This column can be sorted by clicking on
@@ -6415,10 +6416,6 @@ the header. See @ref{The VCS Explorer} for a full description.
 
 @item Log
 This column indicates whether a revision log exists for this file.
-
-@item File name
-The name of the file. This column can be sorted by clicking on the
-header.
 
 @item Working rev.
 Indicates the version of the local file.
