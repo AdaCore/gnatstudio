@@ -136,8 +136,7 @@ package body VCS_Activities_View is
    Status_Description_Column : constant := 4;
    Status_Pixbuf_Column      : constant := 5;
    Has_Log_Column            : constant := 6;
-   Activity_Column           : constant := 7;
-   Activity_Id_Column        : constant := 8;
+   Activity_Id_Column        : constant := 7;
 
    -------------------
    -- Columns_Types --
@@ -153,7 +152,6 @@ package body VCS_Activities_View is
          Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
          Has_Log_Column            => GType_Boolean,
-         Activity_Column           => GType_String,
          Activity_Id_Column        => GType_String);
    end Columns_Types;
 
@@ -527,7 +525,7 @@ package body VCS_Activities_View is
 
       Append (Explorer.Model, Iter, Null_Iter);
 
-      Set (Explorer.Model, Iter, Activity_Column, Get_Name (Activity));
+      Set (Explorer.Model, Iter, Base_Name_Column, Get_Name (Activity));
       Set (Explorer.Model, Iter, Activity_Id_Column, Image (Activity));
       Set (Explorer.Model, Iter, Has_Log_Column, False);
 
@@ -660,7 +658,8 @@ package body VCS_Activities_View is
                Append (Explorer.Model, A_Iter, Null_Iter);
             end if;
 
-            Set (Explorer.Model, A_Iter, Activity_Column, Get_Name (Activity));
+            Set (Explorer.Model, A_Iter,
+                 Base_Name_Column, Get_Name (Activity));
             Set (Explorer.Model, A_Iter, Activity_Id_Column, Image (Activity));
             Set (Explorer.Model, A_Iter,
                  Has_Log_Column, Has_Log (Kernel, Activity));
@@ -1082,15 +1081,17 @@ package body VCS_Activities_View is
 
       Tree_Model_Callback.Object_Connect
         (Edit_Rend, "edited", Edited_Callback'Access,
-         Slot_Object => Explorer.Kernel, User_Data => Activity_Column);
+         Slot_Object => Explorer.Kernel, User_Data => Base_Name_Column);
 
-      Gtk_New (Explorer.Activity_Column);
-      Set_Title (Explorer.Activity_Column, -"Activity");
-      Pack_Start (Explorer.Activity_Column, Edit_Rend, True);
+      Gtk_New (Explorer.File_Column);
+      Set_Title (Explorer.File_Column, -"Activity / File");
+      Pack_Start (Explorer.File_Column, Text_Rend, True);
       Add_Attribute
-        (Explorer.Activity_Column, Edit_Rend, "text", Activity_Column);
-      Set_Sort_Column_Id (Explorer.Activity_Column, Activity_Column);
-      Dummy := Append_Column (Explorer.Tree, Explorer.Activity_Column);
+        (Explorer.File_Column, Text_Rend, "text", Base_Name_Column);
+      Set_Clickable (Explorer.File_Column, True);
+      Set_Sort_Column_Id (Explorer.File_Column, Base_Name_Column);
+      Set_Resizable (Explorer.File_Column, True);
+      Dummy := Append_Column (Explorer.Tree, Explorer.File_Column);
 
       Gtk_New (Explorer.Status_Column);
       Set_Title (Explorer.Status_Column, -"Status");
@@ -1108,16 +1109,6 @@ package body VCS_Activities_View is
         (Explorer.Log_Column, Toggle_Rend, "active", Has_Log_Column);
       Set_Clickable (Explorer.Log_Column, False);
       Dummy := Append_Column (Explorer.Tree, Explorer.Log_Column);
-
-      Gtk_New (Explorer.File_Column);
-      Set_Title (Explorer.File_Column, -"File name");
-      Pack_Start (Explorer.File_Column, Text_Rend, True);
-      Add_Attribute
-        (Explorer.File_Column, Text_Rend, "text", Base_Name_Column);
-      Set_Clickable (Explorer.File_Column, True);
-      Set_Sort_Column_Id (Explorer.File_Column, Base_Name_Column);
-      Set_Resizable (Explorer.File_Column, True);
-      Dummy := Append_Column (Explorer.Tree, Explorer.File_Column);
 
       Gtk_New (Col);
       Set_Title (Col, -"Working rev.");
