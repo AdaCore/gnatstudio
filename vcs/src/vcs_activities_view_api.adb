@@ -65,6 +65,14 @@ package body VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Query_Status_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Diff_Activity
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -233,6 +241,69 @@ package body VCS_Activities_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove_From_Activity;
+
+   -----------------------------------
+   -- On_Menu_Query_Status_Activity --
+   -----------------------------------
+
+   procedure On_Menu_Query_Status_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      A_Context      : constant Activity_Context_Access :=
+                         Activity_Context_Access (Context);
+      Activity       : constant Activity_Id :=
+                         Value (Activity_Information (A_Context));
+      Files          : String_List.List;
+   begin
+      Files := Get_Files_In_Activity (Activity);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         return;
+      end if;
+
+      Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Query_Status_Activity;
+
+   -----------------------------
+   -- On_Menu_Update_Activity --
+   -----------------------------
+
+   procedure On_Menu_Update_Activity
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      A_Context      : constant Activity_Context_Access :=
+                         Activity_Context_Access (Context);
+      Activity       : constant Activity_Id :=
+                         Value (Activity_Information (A_Context));
+      Files          : String_List.List;
+   begin
+      Files := Get_Files_In_Activity (Activity);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
+         return;
+      end if;
+
+      Update (Get_VCS_For_Activity (Kernel, Activity), Files);
+      Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Update_Activity;
 
    -----------------------------
    -- On_Menu_Commit_Activity --
@@ -565,10 +636,25 @@ package body VCS_Activities_View_API is
            (Item, "activate", On_Menu_Delete_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
+         Gtk_New (Item);
+         Append (Menu, Item);
+
          Gtk_New (Item, Label => -"Commit activity");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Commit_Activity'Access, Context);
+         Set_Sensitive (Item, True);
+
+         Gtk_New (Item, Label => -"Query status");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Query_Status_Activity'Access, Context);
+         Set_Sensitive (Item, True);
+
+         Gtk_New (Item, Label => -"Update");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Update_Activity'Access, Context);
          Set_Sensitive (Item, True);
 
          Gtk_New (Item, Label => -"Compare against head revision");
