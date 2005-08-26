@@ -24,7 +24,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;           use GNAT;
 with GNAT.Dynamic_Tables;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
-with GNAT.OS_Lib;
 
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
@@ -313,7 +312,12 @@ package body VCS_Activities is
    procedure Delete_Activity
      (Kernel : access Kernel_Handle_Record'Class; Activity : Activity_Id)
    is
-      K : constant Natural := Natural (Activity);
+      Logs_Dir  : constant String := Get_Home_Dir (Kernel) & "log_files";
+      File_Name : constant String :=
+                    Logs_Dir & OS_Lib.Directory_Separator &
+                    Set.Table (Natural (Activity)).Id.all & "$log";
+      K         : constant Natural := Natural (Activity);
+      Success   : Boolean;
    begin
       declare
          Item : Activity_Record := Set.Table (K);
@@ -330,6 +334,8 @@ package body VCS_Activities is
       Set_Last (Set, Last (Set) - 1);
 
       Save_Activities (Kernel);
+
+      OS_Lib.Delete_File (File_Name, Success);
    end Delete_Activity;
 
    ----------------------------
@@ -514,9 +520,12 @@ package body VCS_Activities is
    begin
       --  ??? check that File is not yet present
 
-      if Item.VCS /= null and then VCS /= Item.VCS then
+      if (Item.VCS /= null and then VCS /= Item.VCS)
+        or else Get_File_Activity (File) /= No_Activity
+      then
          --  ??? dialog saying that it is not possible (2 diff VCS)
-         null;
+         --  ??? or file already part of an activity.
+         return;
       end if;
 
       Set.Table (Natural (Activity)).VCS := VCS;
