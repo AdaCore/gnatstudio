@@ -81,7 +81,7 @@ package GPS.Kernel.Timeout is
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True;
+      Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False);
    --  Launch a given command with arguments.
    --  Arguments must be freed by the user.
@@ -138,7 +138,7 @@ package GPS.Kernel.Timeout is
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True;
+      Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access);
    --  Same as above, and returns the created Process_Descriptor.
