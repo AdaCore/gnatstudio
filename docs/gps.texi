@@ -8760,7 +8760,7 @@ displayed if the output is hidden. The default is to show the command along
 with its output.
 This attribute can be overridden for each command.
 
-@item show-task-manager (optional, default true)
+@item show-task-manager (optional, default false)
 This attribute indicates whether an entry should be created in the task
 manager to show this command. Associated with this entry is the progress
 bar indicator, so if you hide the entry, no progress will be shown. On the
@@ -8862,6 +8862,11 @@ This tag accepts the following attributes:
    other hand, several progress bars might be displayed for your action if you
    show the progress bar here, which might be an issue depending on the
    context.
+
+   If you have set a value for @code{progress-regexp}, this will automatically
+   be set to true by default so that the progress bar is indeed displayed in
+   the task manager. You can still override it explicitly for that
+   @code{<external>} element to force hidding the progress bar.
 
    @end table
 
