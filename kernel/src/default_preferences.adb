@@ -281,10 +281,8 @@ package body Default_Preferences is
    ----------------------
 
    procedure Param_Spec_Unref (P : in out Glib.Param_Spec) is
-      pragma Unreferenced (P);
    begin
-      null;
-      --  Unref (P);
+      Unref (P);
    end Param_Spec_Unref;
 
    ----------
@@ -292,12 +290,10 @@ package body Default_Preferences is
    ----------
 
    procedure Free (P : in out Saved_Param_Spec) is
-      --  function Convert is new Ada.Unchecked_Conversion
-      --    (Pref_Description_Access, Glib.C_Proxy);
-      pragma Unreferenced (P);
+      function Convert is new Ada.Unchecked_Conversion
+        (Pref_Description_Access, Glib.C_Proxy);
    begin
-      --  Free_Pref_Description (Convert (P.Descr));
-      null;
+      Free_Pref_Description (Convert (P.Descr));
    end Free;
 
    ---------------------------
@@ -1690,7 +1686,6 @@ package body Default_Preferences is
 
             return Gtk_Widget (Combo);
          end;
-
 
       elsif Typ = Pango.Font.Get_Type then
          return Gtk_Widget
