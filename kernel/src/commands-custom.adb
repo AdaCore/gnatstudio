@@ -601,7 +601,8 @@ package body Commands.Custom is
 
    begin
       if Show_Task_Manager = "" then
-         Show_TM := Default_Show_In_Task_Manager;
+         Show_TM := Default_Show_In_Task_Manager
+           or Progress_Regexp /= "";
       end if;
 
       if Show_Command = "" then
@@ -1125,8 +1126,7 @@ package body Commands.Custom is
                Show_Output   => Output_Location.all /= No_Output,
                Callback_Data => new Custom_Callback_Data'
                  (Command => Custom_Command_Access (Command)),
-               Show_In_Task_Manager => Component.Show_In_Task_Manager
-                 or Command.Execution.Progress_Matcher /= null,
+               Show_In_Task_Manager => Component.Show_In_Task_Manager,
                Line_By_Line  => False,
                Directory     => To_String (Context.Dir));
             Free (Args);
