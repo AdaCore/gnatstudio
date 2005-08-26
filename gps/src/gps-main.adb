@@ -18,6 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Exceptions;            use Ada.Exceptions;
+
+with GNAT.Command_Line;         use GNAT.Command_Line;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
@@ -32,13 +40,12 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Rc;
+with Gtkada.Intl;               use Gtkada.Intl;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Menu;
 with GPS.Main_Window;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with File_Utils;
-with String_Utils;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -51,27 +58,20 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Gtkada.Intl;               use Gtkada.Intl;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Config;                    use Config;
+with File_Utils;
+with String_Utils;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
 with Src_Editor_Box;            use Src_Editor_Box;
-with GNAT.Command_Line;         use GNAT.Command_Line;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Text_IO;               use Ada.Text_IO;
 with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Welcome;                   use Welcome;
 with Welcome_Page;              use Welcome_Page;
 with DDE;
 with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
-
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 --  Modules registered by GPS
 with Ada_Module;
@@ -116,6 +116,7 @@ with Socket_Module;
 with Scenario_Views;
 with Clipboard_Views;
 with Bookmark_Views;
+with Buffer_Views;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -926,7 +927,7 @@ procedure GPS.Main is
 
    function Finish_Setup (Data : Process_Data) return Boolean is
       Key               : constant String :=
-        Get_Home_Dir (GPS_Main.Kernel) & "custom_key";
+                            Get_Home_Dir (GPS_Main.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Idle_Id           : Idle_Handler_Id;
@@ -1346,6 +1347,8 @@ procedure GPS.Main is
       --  modules
 
       Bookmark_Views.Register_Module (GPS_Main.Kernel);
+
+      Buffer_Views.Register_Module (GPS_Main.Kernel);
 
       --  Load system files
 
