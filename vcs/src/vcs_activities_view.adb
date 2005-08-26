@@ -56,6 +56,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with VCS;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
@@ -542,17 +543,36 @@ package body VCS_Activities_View is
    procedure On_Delete_Activity
      (Kernel : Kernel_Handle; Activity : Activity_Id)
    is
-      Explorer : constant VCS_Activities_View_Access :=
-                   Get_Activities_Explorer (Kernel, False, False);
-      Iter     : Gtk_Tree_Iter;
+      Explorer   : constant VCS_Activities_View_Access :=
+                     Get_Activities_Explorer (Kernel, False, False);
+      Log_File   : constant Virtual_File :=
+                     Get_Log_File (Kernel, Activity);
+      File_Count : constant Natural :=
+                     String_List.Length (Get_Files_In_Activity (Activity));
+      Iter       : Gtk_Tree_Iter;
+      Button     : Message_Dialog_Buttons := Button_OK;
    begin
-      Delete_Activity (Kernel, Activity);
+      if File_Count > 0 then
+         Button := Message_Dialog
+           (Msg     =>
+              (-"Activity") & ''' & Get_Name (Activity) & ''' & ASCII.LF &
+               (-"will be deleted") & ASCII.LF,
+            Dialog_Type => Warning,
+            Title       => -"Delete Activity",
+            Buttons     => Button_OK + Button_Cancel);
+      end if;
 
-      Iter := Get_Iter_From_Activity (Explorer, Activity);
+      if Button = Button_OK then
+         Close_File_Editors (Kernel, Log_File);
 
-      Remove (Explorer.Model, Iter);
+         Delete_Activity (Kernel, Activity);
 
-      Refresh (Get_Explorer (Kernel, False, False));
+         Iter := Get_Iter_From_Activity (Explorer, Activity);
+
+         Remove (Explorer.Model, Iter);
+
+         Refresh (Get_Explorer (Kernel, False, False));
+      end if;
    end On_Delete_Activity;
 
    -----------------------------
