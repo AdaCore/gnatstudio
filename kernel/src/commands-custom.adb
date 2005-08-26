@@ -589,7 +589,7 @@ package body Commands.Custom is
       Show_C          : Boolean := Show_Command = "true";
       Show_Task_Manager : constant String :=
         Get_Attribute (Command, "show-task-manager");
-      Show_TM         : Boolean := Show_Task_Manager = "true";
+      Show_TM         : Boolean := Show_Task_Manager = "false";
       Progress_Regexp : constant String :=
         Get_Attribute (Command, "progress-regexp", "");
       Progress_Current : constant Integer :=
@@ -1125,7 +1125,8 @@ package body Commands.Custom is
                Show_Output   => Output_Location.all /= No_Output,
                Callback_Data => new Custom_Callback_Data'
                  (Command => Custom_Command_Access (Command)),
-               Show_In_Task_Manager => Component.Show_In_Task_Manager,
+               Show_In_Task_Manager => Component.Show_In_Task_Manager
+                 or Command.Execution.Progress_Matcher /= null,
                Line_By_Line  => False,
                Directory     => To_String (Context.Dir));
             Free (Args);

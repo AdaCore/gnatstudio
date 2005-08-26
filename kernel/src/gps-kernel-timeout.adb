@@ -352,7 +352,7 @@ package body GPS.Kernel.Timeout is
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True;
+      Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access)
    is
@@ -554,7 +554,7 @@ package body GPS.Kernel.Timeout is
       Directory            : String := "";
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
-      Show_In_Task_Manager : Boolean := True;
+      Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False)
    is
       Fd : Process_Descriptor_Access;
