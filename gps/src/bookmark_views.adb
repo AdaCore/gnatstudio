@@ -706,7 +706,7 @@ package body Bookmark_Views is
       Filename    : constant String := Get_Home_Dir (Kernel) & "bookmarks.xml";
       File, Child : Node_Ptr;
       List        : Bookmark_List.List_Node :=
-        First (Bookmark_Views_Module.List);
+                      First (Bookmark_Views_Module.List);
    begin
       Trace (Me, "Saving " & Filename);
       File := new Node;

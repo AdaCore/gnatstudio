@@ -168,8 +168,8 @@ package GPS.Kernel.Standard_Hooks is
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True;
-      Position          : Gtkada.MDI.Child_Position
-        := Gtkada.MDI.Position_Default;
+      Position          : Gtkada.MDI.Child_Position :=
+                            Gtkada.MDI.Position_Default;
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left

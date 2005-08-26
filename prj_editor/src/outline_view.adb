@@ -801,9 +801,9 @@ package body Outline_View is
          Outline := Outline_View_Access (Get_Widget (Child));
 
          if Module /= null
-            and then (Get_Name (Module) = "Source_Editor"
-                      or else Get_Name (Module) = Outline_View_Module_Name)
-            and then D.Context.all in File_Selection_Context'Class
+           and then (Get_Name (Module) = "Source_Editor"
+                     or else Get_Name (Module) = Outline_View_Module_Name)
+           and then D.Context.all in File_Selection_Context'Class
            and then Has_File_Information
              (File_Selection_Context_Access (D.Context))
          then
@@ -813,6 +813,7 @@ package body Outline_View is
                Outline.File := File;
                Refresh (Outline);
             end if;
+
          else
             Outline.File := VFS.No_File;
             Refresh (Outline);
@@ -893,7 +894,6 @@ package body Outline_View is
             Nick    => -"Show file name"));
       Register_Property
         (Kernel, Param_Spec (Outline_View_Show_File_Node), -"Outline");
-
    end Register_Module;
 
 end Outline_View;
