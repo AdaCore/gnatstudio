@@ -40,6 +40,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -62,6 +63,7 @@ package body Buffer_Views is
    type Buffer_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree   : Gtk_Tree_View;
       Kernel : Kernel_Handle;
+      File   : Virtual_File; -- current selected file (cache)
    end record;
    type Buffer_View_Access is access all Buffer_View_Record'Class;
 
@@ -103,6 +105,11 @@ package body Buffer_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_closed" signal
+
+   procedure Context_Changed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "context_changed" signal
 
    function Get_Iter_From_File
      (View : Buffer_View_Access;
@@ -373,6 +380,44 @@ package body Buffer_Views is
    end File_Closed_Cb;
 
    ------------------------
+   -- Context_Changed_Cb --
+   ------------------------
+
+   procedure Context_Changed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D      : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      Module : constant Module_ID := Module_ID (Get_Creator (D.Context));
+      M      : constant Buffer_View_Module_Access := Buffer_View_Module;
+      Child  : constant MDI_Child :=
+                 Find_MDI_Child_By_Tag
+                   (Get_MDI (Kernel), Buffer_View_Record'Tag);
+      File   : Virtual_File;
+      Iter   : Gtk_Tree_Iter;
+   begin
+      if Child /= null then
+         if Module /= null
+           and then (Get_Name (Module) = "Source_Editor")
+           and then D.Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+             (File_Selection_Context_Access (D.Context))
+         then
+            File := File_Information
+              (File_Selection_Context_Access (D.Context));
+            if File /= M.View.File then
+               M.View.File := File;
+
+               --  Select the corresponding file
+               Iter := Get_Iter_From_File (M.View, File);
+               Unselect_All (Get_Selection (M.View.Tree));
+               Select_Iter (Get_Selection (M.View.Tree), Iter);
+            end if;
+         end if;
+      end if;
+   end Context_Changed_Cb;
+
+   ------------------------
    -- Get_Iter_From_File --
    ------------------------
 
@@ -476,17 +521,20 @@ package body Buffer_Views is
         (Column_Types       => (Icon_Column => Gdk.Pixbuf.Get_Type,
                                 Name_Column => GType_String,
                                 Data_Column => GType_String),
-         Column_Names       => (1 => new String'("Name"),
-                                2 => new String'("")),
-         Show_Column_Titles => True,
+         Column_Names       => (1 => null, 2 => null),
+         Show_Column_Titles => False,
          Selection_Mode     => Selection_Multiple,
          Sortable_Columns   => True,
-         Initial_Sort_On    => 1,
+         Initial_Sort_On    => 2,
          Hide_Expander      => True);
       Add (Scrolled, View.Tree);
 
-      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
-      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
+      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access,
+                Watch => GObject (View));
+      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access,
+               Watch => GObject (View));
+      Add_Hook (Kernel, Context_Changed_Hook, Context_Changed_Cb'Access,
+                Watch => GObject (View));
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View.Tree,
