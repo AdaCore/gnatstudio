@@ -23,14 +23,11 @@ with System;                    use System;
 with System.Address_Image;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with VFS;                       use VFS;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;

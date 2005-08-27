@@ -768,7 +768,7 @@ package body External_Editor_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Data      : access Hooks_Data'Class) return Boolean
    is
-      D : Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
+      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
    begin
       if External_Editor_Module_Id.Client /= Auto
         and then Get_Pref (Always_Use_External_Editor)

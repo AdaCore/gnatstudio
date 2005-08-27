@@ -27,19 +27,22 @@
 -----------------------------------------------------------------------
 
 with System;
-with Gdk;             use Gdk;
+
 with Gdk.Color;       use Gdk.Color;
 with Gdk.Drawable;    use Gdk.Drawable;
 with Gdk.GC;          use Gdk.GC;
 with Gdk.Rectangle;   use Gdk.Rectangle;
+with Gdk;             use Gdk;
+
+with Glib.Object;     use Glib.Object;
 with Glib.Values;     use Glib.Values;
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Glib;            use Glib;
+
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Style;       use Gtk.Style;
-with Gtk.Tree_Model;  use Gtk.Tree_Model;
 with Gtk.Widget;      use Gtk.Widget;
-with Glib;            use Glib;
-with Glib.Object;     use Glib.Object;
+
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 package body Gtkada.Tree_View is
 

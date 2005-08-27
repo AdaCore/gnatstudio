@@ -18,12 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Debugger;             use Debugger;
-with GVD.Types;            use GVD.Types;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
+with Debugger;           use Debugger;
 with GPS.Intl;           use GPS.Intl;
-with Process_Proxies;      use Process_Proxies;
-with VFS;                  use VFS;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GVD.Types;          use GVD.Types;
+with Process_Proxies;    use Process_Proxies;
 
 package body Commands.Debugger is
 

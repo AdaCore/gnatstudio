@@ -18,12 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-
 with Gdk.Color;                         use Gdk.Color;
 
 with Basic_Types;
-with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with String_Utils;                      use String_Utils;

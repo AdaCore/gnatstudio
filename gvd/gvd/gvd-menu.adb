@@ -18,16 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;             use GPS.Intl;
-with GVD;                  use GVD;
-with GVD.Process;          use GVD.Process;
-with GPS.Main_Window;      use GPS.Main_Window;
-with Std_Dialogs;          use Std_Dialogs;
-with Histories;            use Histories;
 with Debugger;             use Debugger;
-with Process_Proxies;      use Process_Proxies;
+with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Main_Window;      use GPS.Main_Window;
+with GVD.Process;          use GVD.Process;
+with GVD;                  use GVD;
+with Histories;            use Histories;
+with Process_Proxies;      use Process_Proxies;
+with Std_Dialogs;          use Std_Dialogs;
 
 package body GVD.Menu is
 

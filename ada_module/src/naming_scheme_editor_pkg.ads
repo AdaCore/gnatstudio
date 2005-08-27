@@ -23,7 +23,6 @@ with Gtk.Box;             use Gtk.Box;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Tree_View;
 with Gtk.Tree_Store;

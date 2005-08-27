@@ -38,9 +38,8 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GPS.Kernel;            use GPS.Kernel;
-with VFS;
 with Docgen.Backend;
+with VFS;
 
 package Docgen.Work_On_Source is
 

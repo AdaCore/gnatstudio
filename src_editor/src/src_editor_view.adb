@@ -18,59 +18,57 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Maps.Constants;  use Ada.Strings.Maps;
-with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 
-with Gdk;                         use Gdk;
-with Gdk.Drawable;                use Gdk.Drawable;
-with Gdk.Color;                   use Gdk.Color;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.GC;                      use Gdk.GC;
-with Gdk.Rectangle;               use Gdk.Rectangle;
-with Gdk.Window;                  use Gdk.Window;
-with Gdk.Pixmap;                  use Gdk.Pixmap;
-with Gdk.Rectangle;               use Gdk.Rectangle;
-with Gdk.Types;                   use Gdk.Types;
-with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
-with Glib.Properties;             use Glib.Properties;
-with Glib.Values;                 use Glib.Values;
-with Gtk;                         use Gtk;
-with Gtk.Adjustment;              use Gtk.Adjustment;
-with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
-with Gtk.Enums;                   use Gtk.Enums;
+with Gdk;                        use Gdk;
+with Gdk.Drawable;               use Gdk.Drawable;
+with Gdk.Color;                  use Gdk.Color;
+with Gdk.Event;                  use Gdk.Event;
+with Gdk.GC;                     use Gdk.GC;
+with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.Window;                 use Gdk.Window;
+with Gdk.Pixmap;                 use Gdk.Pixmap;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+
+with Glib.Object;                use Glib.Object;
+with Glib.Properties;            use Glib.Properties;
+with Glib.Values;                use Glib.Values;
+
+with Gtk;                        use Gtk;
+with Gtk.Adjustment;             use Gtk.Adjustment;
+with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Main;                    use Gtk.Main;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
-with Gtk.Text_Iter;               use Gtk.Text_Iter;
-with Gtk.Text_Mark;               use Gtk.Text_Mark;
-with Gtk.Text_View;               use Gtk.Text_View;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Window;                  use Gtk.Window;
-with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Text_Buffer;          use Gtkada.Text_Buffer;
-with Gtkada.Text_View;            use Gtkada.Text_View;
-with Pango.Font;                  use Pango.Font;
-with Pango.Layout;                use Pango.Layout;
+with Gtk.Main;                   use Gtk.Main;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Window;                 use Gtk.Window;
 
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
-with Src_Editor_Buffer.Hooks;     use Src_Editor_Buffer.Hooks;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
-with Config;                      use Config;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with Language;                    use Language;
+with Pango.Font;                 use Pango.Font;
+with Pango.Layout;               use Pango.Layout;
+
+with Src_Editor_Buffer;          use Src_Editor_Buffer;
+with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
+
+with Config;                     use Config;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
-with Traces;                      use Traces;
-with VFS;                         use VFS;
+                                 use Src_Editor_Buffer.Line_Information;
+with Traces;                     use Traces;
+with VFS;                        use VFS;
 
 package body Src_Editor_View is
 
@@ -1236,7 +1234,6 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
       Hook        : Preferences_Hook;
       F_Hook      : File_Hook;
-      use Config;
 
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized

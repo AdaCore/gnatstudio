@@ -18,20 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Exceptions;        use Ada.Exceptions;
 
-with Glib;                        use Glib;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Enums;                   use Gtk.Enums;
-use Gtk.Enums.String_List;
+with Glib;                  use Glib;
 
-with Codefix;                     use Codefix;
-with Codefix.Formal_Errors;       use Codefix.Formal_Errors;
+with Codefix;               use Codefix;
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
-with Codefix.Graphics; use Codefix.Graphics;
+with Codefix.Graphics;      use Codefix.Graphics;
 
-with Traces;                      use Traces;
+with Traces;                use Traces;
 
 package body Codefix_Window_Pkg.Callbacks is
 

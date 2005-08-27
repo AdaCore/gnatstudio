@@ -18,23 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
-with File_Utils;                use File_Utils;
-with GPS.Intl;                  use GPS.Intl;
+with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Prj.Com;                   use Prj.Com;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.Part;                  use Prj.Part;
-with Prj.Tree;                  use Prj.Tree;
 with Prj.Util;                  use Prj.Util;
-with Prj;                       use Prj;
+with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Projects.Graphs;           use Projects.Graphs;
 with Projects.Registry;         use Projects.Registry;
-with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Snames;                    use Snames;
 with Traces;                    use Traces;
 with Types;                     use Types;

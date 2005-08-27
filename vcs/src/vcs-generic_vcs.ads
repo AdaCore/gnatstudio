@@ -23,8 +23,7 @@
 --  See package VCS for a complete spec of this package.
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;               use GNAT.Regpat;
-with Basic_Types;               use Basic_Types;
+with GNAT.Regpat; use GNAT.Regpat;
 
 package VCS.Generic_VCS is
 

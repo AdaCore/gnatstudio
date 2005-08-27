@@ -19,13 +19,11 @@
 -----------------------------------------------------------------------
 --  Provide all callback for menu
 
-with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with Commands.Interactive; use Commands, Commands.Interactive;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
 
 package Vdiff2_Module.Callback is
 

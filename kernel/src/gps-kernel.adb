@@ -18,16 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with XML_Parsers;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with System;                    use System;
+
+with Gdk;                       use Gdk;
+with Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Window;                use Gdk.Window;
+
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Gdk;                       use Gdk;
-with Gdk.Window;                use Gdk.Window;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -36,10 +45,10 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -47,22 +56,20 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
-with Gtk.Tooltips;              use Gtk.Tooltips;
+
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-with System;                    use System;
-with Prj.Attr;                  use Prj.Attr;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Namet;                     use Namet;
 
+with Basic_Mapper;              use Basic_Mapper;
+with Default_Preferences;       use Default_Preferences;
+with Entities.Queries;          use Entities.Queries;
+with Entities;                  use Entities;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Main_Window;           use GPS.Main_Window;
-with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -71,30 +78,20 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
-with Basic_Mapper;              use Basic_Mapper;
-with Histories;                 use Histories;
-with VFS;                       use VFS;
-
-with Projects.Registry;         use Projects, Projects.Registry;
-
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-
-with Language_Handlers;         use Language_Handlers;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Main_Window;
+with GUI_Utils;                 use GUI_Utils;
+with Histories;                 use Histories;
 with Language_Handlers.GPS;     use Language_Handlers.GPS;
-
+with Language_Handlers;         use Language_Handlers;
+with Namet;                     use Namet;
+with Prj.Attr;                  use Prj.Attr;
+with Projects.Registry;         use Projects, Projects.Registry;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-
-with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with System;                    use System;
-with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
+with VFS;                       use VFS;
+with XML_Parsers;
 
 package body GPS.Kernel is
 

@@ -20,51 +20,52 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Exceptions;         use Ada.Exceptions;
+
+
+
+
+
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Regpat;               use GNAT.Regpat;
 with System;
 
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Gtkada.Handlers;        use Gtkada.Handlers;
-with Gdk.Pixbuf;             use Gdk.Pixbuf;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
-with Glib.Object;              use Glib.Object;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Glib.Object;               use Glib.Object;
 
-with Traces;                 use Traces;
-with Basic_Types;            use Basic_Types;
-with Projects;               use Projects;
-with Projects.Registry;      use Projects.Registry;
+with Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
 
-with Codefix;                use Codefix;
-with Codefix.Graphics;       use Codefix.Graphics;
-with Codefix.GPS_Io;         use Codefix.GPS_Io;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
-with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Basic_Types;               use Basic_Types;
+with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
+with Codefix.Formal_Errors;     use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
-with VFS;                    use VFS;
-
-with Commands;               use Commands;
-with Commands.Codefix;       use Commands.Codefix;
+with Codefix.GPS_Io;            use Codefix.GPS_Io;
+with Codefix.Graphics;          use Codefix.Graphics;
+with Codefix.Text_Manager;      use Codefix.Text_Manager;
+with Commands.Codefix;          use Commands.Codefix;
+with Commands;                  use Commands;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Codefix_Module is
 

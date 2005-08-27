@@ -21,8 +21,6 @@
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with System;                     use System;
-
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -30,24 +28,26 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with System;                     use System;
 
-with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;
+
 with Gtk.Main;                   use Gtk.Main;
+
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Console;         use GPS.Kernel.Console;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with Commands;                   use Commands;
+with Config;                     use Config;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Kernel;                 use GPS.Kernel;
+with Interactive_Consoles;       use Interactive_Consoles;
 with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
-with Interactive_Consoles;       use Interactive_Consoles;
-with Config;                     use Config;
-with Commands;                   use Commands;
 
 package body GPS.Kernel.Timeout is
 

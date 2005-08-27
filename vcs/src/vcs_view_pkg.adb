@@ -20,11 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
 
 with Gdk;
 with Gdk.Color;                 use Gdk.Color;
@@ -36,52 +32,48 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+
 with Gtk;                       use Gtk;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with VCS;
-with VCS_Activities;            use VCS_Activities;
-with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
-with VCS_View_API;              use VCS_View_API;
-with VCS_Module;                use VCS_Module;
-with VCS_Utils;                 use VCS_Utils;
-
-with Log_Utils;                 use Log_Utils;
-
+with Basic_Types;               use Basic_Types;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
-with VFS;                       use VFS;
-with Tooltips;
-
-with Basic_Types;               use Basic_Types;
-with Traces;                    use Traces;
-
 with GUI_Utils;                 use GUI_Utils;
-with File_Utils;                use File_Utils;
 with Histories;                 use Histories;
+with Log_Utils;                 use Log_Utils;
+with Tooltips;
+with Traces;                    use Traces;
+with VCS;
+with VCS_Activities;            use VCS_Activities;
+with VCS_Module;                use VCS_Module;
+with VCS_Utils;                 use VCS_Utils;
+with VCS_View_API;              use VCS_View_API;
+with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 
 package body VCS_View_Pkg is
 

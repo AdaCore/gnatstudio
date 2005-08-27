@@ -19,17 +19,14 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;                    use Ada.Exceptions;
-
 with GNAT.Regpat;                       use GNAT.Regpat;
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with String_Utils;                      use String_Utils;
-with Language;                          use Language;
-with GPS.Kernel;                      use GPS.Kernel;
 
-with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
-with VFS;                               use VFS;
+with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
+with GPS.Kernel;                        use GPS.Kernel;
+with String_Utils;                      use String_Utils;
 with Traces;                            use Traces;
+with VFS;                               use VFS;
 
 package body Codefix.Formal_Errors is
 

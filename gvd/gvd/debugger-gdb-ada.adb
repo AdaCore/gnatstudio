@@ -18,23 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Language.Debugger; use Language.Debugger;
-with Language.Ada;  use Language.Ada;
-with String_Utils;  use String_Utils;
-with Items;         use Items;
-with Items.Simples; use Items.Simples;
+with Ada.Strings; use Ada.Strings;
+
 with Items.Arrays;  use Items.Arrays;
-with Items.Records; use Items.Records;
 with Items.Classes; use Items.Classes;
+with Items.Records; use Items.Records;
+with Items.Simples; use Items.Simples;
+with Items;         use Items;
+with Language.Ada;  use Language.Ada;
+with Language.Debugger; use Language.Debugger;
+with String_Utils;  use String_Utils;
 with Traces;        use Traces;
 
 package body Debugger.Gdb.Ada is
 
    Me : constant Debug_Handle := Create ("Debug.Gdb.Ada", Off);
-
-   use Language;
 
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part

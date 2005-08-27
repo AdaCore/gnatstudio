@@ -18,19 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Exceptions;            use Ada.Exceptions;
-
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
+
 with Gtk;                       use Gtk;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Arguments;             use Gtk.Arguments;
@@ -38,85 +39,88 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
-with Gtk.Window;                use Gtk.Window;
 with Gtk.Rc;
-with Gtkada.Intl;               use Gtkada.Intl;
+with Gtk.Window;                use Gtk.Window;
+
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with GPS.Menu;
-with GPS.Main_Window;
+with Config;                    use Config;
+with DDE;
+with File_Utils;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with Config;                    use Config;
-with File_Utils;
-with String_Utils;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Main_Window;
+with GPS.Menu;
+with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
+with Remote_Connections;
 with Src_Editor_Box;            use Src_Editor_Box;
+with String_Utils;
 with Traces;                    use Traces;
 with Welcome;                   use Welcome;
 with Welcome_Page;              use Welcome_Page;
-with DDE;
-with GUI_Utils;                 use GUI_Utils;
-with Remote_Connections;
 
 --  Modules registered by GPS
+
+with Action_Editor;
 with Ada_Module;
 with Aliases_Module;
 with Aunit_Module;
-with Browsers.Dependency_Items;
-with Browsers.Projects;
+with Bookmark_Views;
 with Browsers.Call_Graph;
+with Browsers.Dependency_Items;
 with Browsers.Entities;
-with Casing_Exceptions;
-with Cpp_Module;
-with External_Editor_Module;
-with GVD_Module;
-with Project_Explorers;
-with Project_Explorers_Files;
-with Project_Viewers;
-with Project_Properties;
-with Shell_Script;
-with Src_Editor_Module;
-with VCS_Module;
-with VCS.ClearCase;
-with VFS_Module;
-with Vdiff_Module;
-with Vdiff2_Module;
+with Browsers.Projects;
+with Buffer_Views;
 with Builder_Module;
+with Casing_Exceptions;
+with Clipboard_Views;
+with Codefix_Module;
+with Cpp_Module;
+with Custom_Module;
+with Docgen_Module;
+with External_Editor_Module;
 with GPS.Kernel.Console;
 with GPS.Location_View;
-with Navigation_Module;
-with Custom_Module;
-with Vsearch_Ext;
-with Help_Module;
-with Codefix_Module;
-with Python_Module;
-with KeyManager_Module;
-with Theme_Manager_Module;
-with Docgen_Module;
+with GVD_Module;
 with HTTP_Protocol;
-with Refactoring_Module;
-with Action_Editor;
+with Help_Module;
+with KeyManager_Module;
+with Navigation_Module;
 with Outline_View;
-with Socket_Module;
+with Project_Explorers;
+with Project_Explorers_Files;
+with Project_Properties;
+with Project_Viewers;
+with Python_Module;
+with Refactoring_Module;
 with Scenario_Views;
-with Clipboard_Views;
-with Bookmark_Views;
-with Buffer_Views;
+with Shell_Script;
+with Socket_Module;
+with Src_Editor_Module;
+with Theme_Manager_Module;
+with VCS.ClearCase;
+with VCS_Module;
+with VFS_Module;
+with Vdiff2_Module;
+with Vdiff_Module;
+with Vsearch_Ext;
 
 procedure GPS.Main is
    use GPS.Main_Window;

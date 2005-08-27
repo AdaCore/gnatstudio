@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
-with GPS.Kernel.Console;  use GPS.Kernel.Console;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with String_Utils;          use String_Utils;
-with Basic_Types;           use Basic_Types;
-with Traces;                use Traces;
-with VFS;                   use VFS;
-with GNAT.Regpat;           use GNAT.Regpat;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regpat;        use GNAT.Regpat;
+
+with Basic_Types;        use Basic_Types;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with String_Utils;       use String_Utils;
+with Traces;             use Traces;
+with VFS;                use VFS;
 
 package body Codefix.GPS_Io is
 

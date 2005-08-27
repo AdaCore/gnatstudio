@@ -18,17 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with VFS;                        use VFS;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with System;                     use System;
-with Gdk.Pixbuf;                 use Gdk.Pixbuf;
-with Commands;                   use Commands;
-with Traces;                     use Traces;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with System;            use System;
+
+with Gdk.Pixbuf;        use Gdk.Pixbuf;
+
+with Commands;          use Commands;
+with GPS.Kernel.Scripts;
+with GPS.Kernel;        use GPS.Kernel;
+with Traces;            use Traces;
+with VFS;
 
 package body GPS.Kernel.Standard_Hooks is
 

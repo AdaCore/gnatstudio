@@ -26,26 +26,27 @@ with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
 with GNAT.IO;                use GNAT.IO;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
-with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
+
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtk.Widget;             use Gtk.Widget;
 
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.MDI;             use Gtkada.MDI;
+
+with Basic_Types;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with Histories;              use Histories;
-with Gtk.Widget;             use Gtk.Widget;
 with VFS;                    use VFS;
-with Basic_Types;
 
 package body GPS.Kernel.Console is
 

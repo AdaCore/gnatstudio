@@ -26,14 +26,18 @@ with Gdk.Event;
 with Gdk.GC;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
+
 with Glib.Object;
+
 with Gtk.Box;
 with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
 with Gtk.Widget;
+
 with Gtkada.Canvas;
+
 with Pango.Layout;
 
 with GPS.Kernel;

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
@@ -25,32 +26,29 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GUI_Utils;                use GUI_Utils;
+with System.Assertions;
+
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
+
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with XML_Parsers;
-with Glib;                     use Glib;
-with Glib.Unicode;             use Glib.Unicode;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel;               use GPS.Kernel;
+
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Frame;                use Gtk.Frame;
-with Gtk.Label;                use Gtk.Label;
 with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
@@ -65,28 +63,35 @@ with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
+
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
+
+with Basic_Types;
+with Commands.Interactive;     use Commands, Commands.Interactive;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel;               use GPS.Kernel;
+with GUI_Utils;
+with GUI_Utils;                use GUI_Utils;
+with Histories;                use Histories;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
-with System.Assertions;
-with Glib.Object;              use Glib.Object;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
-with GPS.Intl;                 use GPS.Intl;
-with GUI_Utils;                use GUI_Utils;
-with Histories;                use Histories;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with Basic_Types;
-
 with VFS;                      use VFS;
+with XML_Parsers;
 
 package body Aliases_Module is
 

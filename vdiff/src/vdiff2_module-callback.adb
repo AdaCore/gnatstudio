@@ -19,29 +19,26 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;                    use Ada.Exceptions;
-
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Gtk.Window;                        use Gtk.Window;
+
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
+with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                          use GPS.Intl;
-
-with Commands;                          use Commands;
-with Diff_Utils2;                       use Diff_Utils2;
-with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
-with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
-with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with OS_Utils;                          use OS_Utils;
 with Traces;                            use Traces;
 with VFS;                               use VFS;
+with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 
 package body Vdiff2_Module.Callback is
 
@@ -352,7 +349,7 @@ package body Vdiff2_Module.Callback is
       return Boolean
    is
       pragma Unreferenced (Kernel);
-      D : Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
+      D : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
    begin
       if D.Orig_File = VFS.No_File then

@@ -18,34 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Exceptions;       use Ada.Exceptions;
 
-with Glib;                   use Glib;
-with Gtk.GEntry;             use Gtk.GEntry;
-with Gtk.Combo;              use Gtk.Combo;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Notebook;           use Gtk.Notebook;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Clist;              use Gtk.Clist;
-with Gtkada.Dialogs;         use Gtkada.Dialogs;
+with Gtk.Clist;            use Gtk.Clist;
+with Gtk.Combo;            use Gtk.Combo;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Notebook;         use Gtk.Notebook;
 
-with GPS.Kernel.Console;   use GPS.Kernel.Console;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+
+with Codefix.Merge_Utils;  use Codefix.Merge_Utils;
+with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix_Module;       use Codefix_Module;
+with Diff_Utils;           use Diff_Utils;
 with GPS.Intl;             use GPS.Intl;
-
-with Diff_Utils;             use Diff_Utils;
-with Vdiff_Pkg;              use Vdiff_Pkg;
-with Vdiff_Utils;            use Vdiff_Utils;
-with VFS;                    use VFS;
-
-with Traces;                 use Traces;
-
-with Codefix;                use Codefix;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Merge_Utils;    use Codefix.Merge_Utils;
-with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-with Codefix_Module;         use Codefix_Module;
-use Codefix.Formal_Errors.Command_List;
+with GPS.Kernel.Console;   use GPS.Kernel.Console;
+with Traces;               use Traces;
+with VFS;                  use VFS;
+with Vdiff_Utils;          use Vdiff_Utils;
 
 package body Codefix.Graphics is
 

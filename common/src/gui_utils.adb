@@ -18,6 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Text_IO;              use Ada.Text_IO;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Cursor;               use Gdk.Cursor;
 with Gdk.Drawable;             use Gdk.Drawable;
@@ -27,20 +31,19 @@ with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Pixmap;               use Gdk.Pixmap;
-with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Types;                use Gdk.Types;
 with Gdk.Window;               use Gdk.Window;
+
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
-with Glib;                     use Glib;
-with Gtk.Accel_Group;          use Gtk.Accel_Group;
+
 with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
@@ -56,34 +59,34 @@ with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Widget;               use Gtk.Widget;
+
 with Gtkada.Handlers;          use Gtkada.Handlers;
+
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
+
+with Config;                   use Config;
+with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with System;                   use System;
-with String_List_Utils;        use String_List_Utils;
-with Ada.Text_IO;              use Ada.Text_IO;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Config;                   use Config;
 
 package body GUI_Utils is
 

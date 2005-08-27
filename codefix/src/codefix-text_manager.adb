@@ -18,20 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with GNAT.Case_Util; use GNAT.Case_Util;
+with GNAT.Regpat;    use GNAT.Regpat;
 
-with GNAT.Regpat;           use GNAT.Regpat;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GNAT.Case_Util;        use GNAT.Case_Util;
-
-with Ada_Analyzer;          use Ada_Analyzer;
-with Basic_Types;           use Basic_Types;
-with String_Utils;          use String_Utils;
-with Language;              use Language;
-with VFS;                   use VFS;
-
-with Codefix.Merge_Utils;   use Codefix.Merge_Utils;
+with Ada_Analyzer;   use Ada_Analyzer;
+with String_Utils;   use String_Utils;
+with VFS;            use VFS;
 
 package body Codefix.Text_Manager is
 

@@ -18,12 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Diff_Utils2;                       use Diff_Utils2;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
-with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module.Utils.Shell_Command;
 use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 
 package body Vdiff2_Command_Line is
 

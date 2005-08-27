@@ -21,44 +21,42 @@
 with Ada.Strings;         use Ada.Strings;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 with Ada.Tags;            use Ada.Tags;
-with GNAT.Regpat;         use GNAT.Regpat;
-with GNAT.Expect;         use GNAT.Expect;
 
+with GNAT.Expect;         use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
 pragma Warnings (On);
-
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Regpat;         use GNAT.Regpat;
 
 with Gtk.Window;          use Gtk.Window;
 
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Main_Window;     use GPS.Main_Window;
-with OS_Utils;            use OS_Utils;
-with GPS.Intl;            use GPS.Intl;
-with Language;            use Language;
-with Language.Debugger;   use Language.Debugger;
+with Basic_Types;         use Basic_Types;
+with Config;              use Config;
 with Debugger.Gdb.Ada;    use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;      use Debugger.Gdb.C;
 with Debugger.Gdb.Cpp;    use Debugger.Gdb.Cpp;
-with Process_Proxies;     use Process_Proxies;
 with Default_Preferences; use Default_Preferences;
+with File_Utils;          use File_Utils;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Main_Window;     use GPS.Main_Window;
+with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
-with File_Utils;          use File_Utils;
-with String_Utils;        use String_Utils;
-with GVD.Dialogs;         use GVD.Dialogs;
-with GVD.Types;           use GVD.Types;
 with GVD.Trace;           use GVD.Trace;
-with Basic_Types;         use Basic_Types;
-with Items;               use Items;
-with Items.Simples;       use Items.Simples;
+with GVD.Types;           use GVD.Types;
 with Items.Arrays;        use Items.Arrays;
-with Items.Records;       use Items.Records;
 with Items.Classes;       use Items.Classes;
+with Items.Records;       use Items.Records;
+with Items.Simples;       use Items.Simples;
+with Items;               use Items;
+with Language.Debugger;   use Language.Debugger;
+with Language;            use Language;
+with OS_Utils;            use OS_Utils;
+with Process_Proxies;     use Process_Proxies;
+with String_Utils;        use String_Utils;
 with VFS;                 use VFS;
-with Config;              use Config;
-with GPS.Main_Window;     use GPS.Main_Window;
 
 with Ada.Unchecked_Deallocation;
 

@@ -29,8 +29,6 @@ with Items.Records; use Items.Records;
 
 package body Debugger.Gdb.C is
 
-   use Language;
-
    --------------------
    -- Is_Simple_Type --
    --------------------

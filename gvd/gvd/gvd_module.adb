@@ -18,96 +18,93 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations;      use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with Glib;                           use Glib;
-with Glib.Object;                    use Glib.Object;
-with Gdk.Color;                      use Gdk.Color;
-with Gdk.Pixbuf;                     use Gdk.Pixbuf;
-with Gdk.Types;                      use Gdk.Types;
-with Gdk.Types.Keysyms;              use Gdk.Types.Keysyms;
-with Gdk.Window;                     use Gdk.Window;
-with Gtk.Accel_Group;                use Gtk.Accel_Group;
-with Gtk.Box;                        use Gtk.Box;
-with Gtk.Container;                  use Gtk.Container;
-with Gtk.Dialog;                     use Gtk.Dialog;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.GEntry;                     use Gtk.GEntry;
-with Gtk.Handlers;                   use Gtk.Handlers;
-with Gtk.Image;                      use Gtk.Image;
-with Gtk.Label;                      use Gtk.Label;
-with Gtk.Menu;                       use Gtk.Menu;
-with Gtk.Menu_Item;                  use Gtk.Menu_Item;
-with Gtk.Scrolled_Window;            use Gtk.Scrolled_Window;
-with Gtk.Stock;                      use Gtk.Stock;
-with Gtk.Table;                      use Gtk.Table;
-with Gtk.Toolbar;                    use Gtk.Toolbar;
-with Gtk.Widget;                     use Gtk.Widget;
-with Gtk.Window;                     use Gtk.Window;
-with Gtkada.Canvas;                  use Gtkada.Canvas;
-with Gtkada.Dialogs;                 use Gtkada.Dialogs;
-with Gtkada.File_Selector;           use Gtkada.File_Selector;
-with Gtkada.Handlers;                use Gtkada.Handlers;
-with Gtkada.MDI;                     use Gtkada.MDI;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Window;                use Gdk.Window;
 
-with Basic_Types;                    use Basic_Types;
-with Histories;                      use Histories;
-with Display_Items;                  use Display_Items;
-with Breakpoints_Editor;             use Breakpoints_Editor;
-with Debugger;                       use Debugger;
-with GVD.Call_Stack;                 use GVD.Call_Stack;
-with GVD.Canvas;                     use GVD.Canvas;
-with GVD.Code_Editors;               use GVD.Code_Editors;
-with GVD.Dialogs;                    use GVD.Dialogs;
-with GPS.Main_Window;                use GPS.Main_Window;
-with GPS.Main_Window.Debug;          use GPS.Main_Window.Debug;
-with GVD.Memory_View;                use GVD.Memory_View;
-with GVD.Menu;                       use GVD.Menu;
-with GVD.Proc_Utils;                 use GVD.Proc_Utils;
-with GVD.Preferences;                use GVD.Preferences;
-with GVD.Assembly_View;              use GVD.Assembly_View;
-with GVD.Types;                      use GVD.Types;
-with GVD.Process;                    use GVD.Process;
-with GVD.Source_Editor;              use GVD.Source_Editor;
-with GVD.Source_Editor.GPS;          use GVD.Source_Editor.GPS;
-with List_Select_Pkg;                use List_Select_Pkg;
-with Language;                       use Language;
-with Language_Handlers;              use Language_Handlers;
-with Process_Proxies;                use Process_Proxies;
-with Projects;                       use Projects;
-with Std_Dialogs;                    use Std_Dialogs;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
 
-with GPS.Main_Window;                use GPS.Main_Window;
-with GPS.Kernel;                     use GPS.Kernel;
-with GPS.Kernel.Console;             use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Container;             use Gtk.Container;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Table;                 use Gtk.Table;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+
+with Gtkada.Canvas;             use Gtkada.Canvas;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Basic_Types;               use Basic_Types;
+with Breakpoints_Editor;        use Breakpoints_Editor;
+with Commands.Debugger;         use Commands.Debugger;
+with Commands.Interactive;      use Commands.Interactive;
+with Commands;                  use Commands;
+with Debugger;                  use Debugger;
+with Debugger_Pixmaps;          use Debugger_Pixmaps;
+with Display_Items;             use Display_Items;
+with Entities;                  use Entities;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                       use GPS.Intl;
-with Pixmaps_IDE;                    use Pixmaps_IDE;
-with Traces;                         use Traces;
-with GUI_Utils;                      use GUI_Utils;
-with VFS;                            use VFS;
-with Projects.Registry;              use Projects.Registry;
-with Projects.Editor;                use Projects.Editor;
-with Entities;                       use Entities;
-
-with Ada.Exceptions;                 use Ada.Exceptions;
-with Ada.Strings.Fixed;              use Ada.Strings.Fixed;
-
-with Debugger_Pixmaps;               use Debugger_Pixmaps;
-
-with Commands;                       use Commands;
-with Commands.Interactive;           use Commands.Interactive;
-with Commands.Debugger;              use Commands.Debugger;
-
-with Interactive_Consoles;           use Interactive_Consoles;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GUI_Utils;                 use GUI_Utils;
+with GVD.Assembly_View;         use GVD.Assembly_View;
+with GVD.Call_Stack;            use GVD.Call_Stack;
+with GVD.Canvas;                use GVD.Canvas;
+with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Dialogs;               use GVD.Dialogs;
+with GVD.Memory_View;           use GVD.Memory_View;
+with GVD.Menu;                  use GVD.Menu;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Proc_Utils;            use GVD.Proc_Utils;
+with GVD.Process;               use GVD.Process;
+with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
+with GVD.Source_Editor;         use GVD.Source_Editor;
+with GVD.Types;                 use GVD.Types;
+with Histories;                 use Histories;
+with Interactive_Consoles;      use Interactive_Consoles;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with List_Select_Pkg;           use List_Select_Pkg;
+with Pixmaps_IDE;               use Pixmaps_IDE;
+with Process_Proxies;           use Process_Proxies;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
+with Std_Dialogs;               use Std_Dialogs;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body GVD_Module is
 
@@ -1064,7 +1061,6 @@ package body GVD_Module is
         GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
-      use Debugger;
 
    begin
       declare
@@ -2049,8 +2045,6 @@ package body GVD_Module is
       Button       : Gtk_Widget;
       pragma Unreferenced (Widget, Button);
 
-      use Debugger;
-
    begin
       Gtk_New
         (Dialog,
@@ -2126,7 +2120,7 @@ package body GVD_Module is
                       GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
 
-      use Debugger, GNAT.OS_Lib;
+      use GNAT.OS_Lib;
 
    begin
       Free (Ptr);
@@ -2197,7 +2191,6 @@ package body GVD_Module is
         GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Get_Current_Process (Top);
-      use Debugger;
 
    begin
       declare
@@ -2593,7 +2586,6 @@ package body GVD_Module is
       Success        : Boolean;
       First_Debugger : Boolean;
 
-      use Debugger;
       use type GNAT.OS_Lib.String_Access;
 
    begin

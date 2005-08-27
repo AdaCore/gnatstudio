@@ -18,59 +18,51 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Glib.Convert;
-with Glib.Values;              use Glib.Values;
-with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
+with GNAT.OS_Lib;
+with GNAT.Regpat;              use GNAT.Regpat;
+with System;
 
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Event;                use Gdk.Event;
 
+with Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Values;              use Glib.Values;
+with Glib.Xml_Int;             use Glib.Xml_Int;
+with Glib;                     use Glib;
+
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
+with Gtk.Enums;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Enums;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Widget;               use Gtk.Widget;
-
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Box;                  use Gtk.Box;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Widget;               use Gtk.Widget;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 
-with GNAT.OS_Lib;
-with GNAT.Regpat;              use GNAT.Regpat;
-
-with String_Utils;             use String_Utils;
-with String_List_Utils;        use String_List_Utils;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with Pixmaps_IDE;              use Pixmaps_IDE;
-with GPS.Intl;               use GPS.Intl;
-with VFS;                      use VFS;
 with Commands.Interactive;     use Commands.Interactive;
-
-with Traces;                   use Traces;
 with Commands;                 use Commands;
-with Basic_Types;              use Basic_Types;
-with System;
-
-with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with Pixmaps_IDE;              use Pixmaps_IDE;
+with String_List_Utils;        use String_List_Utils;
+with String_Utils;             use String_Utils;
+with Traces;                   use Traces;
+with VFS;                      use VFS;
 
 package body GPS.Location_View is
 
@@ -1930,7 +1922,7 @@ package body GPS.Location_View is
    is
       View : constant Location_View := Get_Or_Create_Location_View
         (Kernel, False);
-      D : Location_Hooks_Args := Location_Hooks_Args (Data.all);
+      D : constant Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
         (View, D.Identifier, D.Category, null, D.File,

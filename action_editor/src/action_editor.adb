@@ -18,56 +18,58 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with System;               use System;
+with System;                   use System;
 with GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Actions; use GPS.Kernel.Actions;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Custom;  use GPS.Kernel.Custom;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with Glib.Object;          use Glib.Object;
-with GPS.Intl;           use GPS.Intl;
-with Traces;               use Traces;
-with GUI_Utils;            use GUI_Utils;
-with GNAT.Strings;         use GNAT.Strings;
-with Commands.Interactive; use Commands.Interactive;
-with XML_Parsers;          use XML_Parsers;
-with VFS;                  use VFS;
+with Gdk.Event;                use Gdk.Event;
 
-with Glib;                 use Glib;
-with Glib.Xml_Int;         use Glib.Xml_Int;
-with Gdk.Event;            use Gdk.Event;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Check_Button;     use Gtk.Check_Button;
-with Gtk.Frame;            use Gtk.Frame;
-with Gtk.Combo;            use Gtk.Combo;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Event_Box;        use Gtk.Event_Box;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Tooltips;         use Gtk.Tooltips;
-with Gtk.Paned;            use Gtk.Paned;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Traces;                    use Traces;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Xml_Int;             use Glib.Xml_Int;
+
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Event_Box;            use Gtk.Event_Box;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+
+with Gtkada.Handlers;          use Gtkada.Handlers;
+
+with Commands.Interactive;     use Commands.Interactive;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel;               use GPS.Kernel;
+with GUI_Utils;                use GUI_Utils;
+with Traces;                   use Traces;
+with VFS;                      use VFS;
+with XML_Parsers;              use XML_Parsers;
 
 package body Action_Editor is
 

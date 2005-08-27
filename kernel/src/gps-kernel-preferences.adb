@@ -18,29 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Exceptions;           use Ada.Exceptions;
-with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Interfaces.C.Strings;    use Interfaces.C, Interfaces.C.Strings;
 
-with Gdk.Color;                use Gdk.Color;
-with Pango.Font;               use Pango.Font;
-with Glib;                     use Glib;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Gdk.Color;                use Gdk.Color;
-with Pango.Font;               use Pango.Font;
-with GPS.Intl;                 use GPS.Intl;
-with Language;                 use Language;
-with GPS.Kernel.Charsets;      use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with Default_Preferences;      use Default_Preferences;
-with Case_Handling;            use Case_Handling;
-with Traces;                   use Traces;
+with Gdk.Color;               use Gdk.Color;
+with Gdk.Types;               use Gdk.Types;
+
+with Glib.Generic_Properties; use Glib.Generic_Properties;
+with Glib.Properties;         use Glib.Properties;
+with Glib.Xml_Int;            use Glib.Xml_Int;
+
+with Pango.Font;              use Pango.Font;
+
+with Case_Handling;           use Case_Handling;
 with Config;
+with Default_Preferences;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Charsets;      use GPS.Kernel.Charsets;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with Language;                use Language;
+with Traces;                  use Traces;
 
 package body GPS.Kernel.Preferences is
 

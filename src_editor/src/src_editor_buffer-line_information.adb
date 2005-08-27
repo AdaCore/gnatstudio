@@ -20,32 +20,27 @@
 
 with System;
 
-with Gdk;                         use Gdk;
-with Gdk.Drawable;                use Gdk.Drawable;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-with Gdk.Pixmap;                  use Gdk.Pixmap;
-with Gdk.Color;                   use Gdk.Color;
-with Glib;                        use Glib;
-with Glib.Object;                 use Glib.Object;
-with Gtk;                         use Gtk;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Text_Iter;               use Gtk.Text_Iter;
-with Gtk.Text_Tag;                use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;          use Gtk.Text_Tag_Table;
-with Gtk.Text_View;               use Gtk.Text_View;
-with Gtk.Widget;                  use Gtk.Widget;
-with Pango.Enums;                 use Pango.Enums;
-with Pango.Layout;                use Pango.Layout;
+with Gdk;                      use Gdk;
+with Gdk.Color;                use Gdk.Color;
+with Gdk.Drawable;             use Gdk.Drawable;
+with Gdk.Pixmap;               use Gdk.Pixmap;
 
-with Commands;                    use Commands;
-with Commands.Editor;             use Commands.Editor;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with Src_Editor_Module;           use Src_Editor_Module;
-with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
-with Traces;                      use Traces;
+with Glib.Object;              use Glib.Object;
+
+with Gtk;                      use Gtk;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
+with Pango.Enums;              use Pango.Enums;
+
+with Commands.Editor;          use Commands.Editor;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel;               use GPS.Kernel;
+with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer;        use Src_Editor_Buffer;
+with Src_Editor_Module;        use Src_Editor_Module;
+with Traces;                   use Traces;
 
 package body Src_Editor_Buffer.Line_Information is
 

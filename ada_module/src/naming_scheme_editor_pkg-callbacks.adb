@@ -18,18 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gdk.Event; use Gdk.Event;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Combo;  use Gtk.Combo;
-with Gtk.List;   use Gtk.List;
 with Ada_Naming_Editors; use Ada_Naming_Editors;
-with Gtk.Tree_Model; use Gtk.Tree_Model;
-with Gtk.Tree_Store; use Gtk.Tree_Store;
+
+with Gdk.Event;          use Gdk.Event;
+with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
+with Gdk.Types;          use Gdk.Types;
+
+with Glib;               use Glib;
+
+with Gtk.List;           use Gtk.List;
+with Gtk.Tree_Model;     use Gtk.Tree_Model;
 with Gtk.Tree_Selection; use Gtk.Tree_Selection;
-with Gtk.Tree_View; use Gtk.Tree_View;
+with Gtk.Tree_Store;     use Gtk.Tree_Store;
+with Gtk.Tree_View;      use Gtk.Tree_View;
 
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 

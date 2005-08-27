@@ -857,9 +857,10 @@ package body Builder_Module is
 
          declare
             Tmp_Dir      : constant String := Get_Tmp_Dir;
-            Temp_Project : Virtual_File := Create (Tmp_Dir & "ext.gpr");
-            Temp_File    : Virtual_File := Create
-              (Get_Tmp_Dir & Base_Name (File));
+            Temp_Project : constant Virtual_File :=
+                             Create (Tmp_Dir & "ext.gpr");
+            Temp_File    : constant Virtual_File :=
+                             Create (Get_Tmp_Dir & Base_Name (File));
             Writable     : Writable_File;
          begin
             --  Do nothing if one of the files already exists.

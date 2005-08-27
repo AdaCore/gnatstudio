@@ -239,7 +239,7 @@ package body XML_Viewer is
       --  to 5.03a1, which didn't output correct XML.
 
       declare
-         V : Virtual_File := Create (File);
+         V : constant Virtual_File := Create (File);
          S : GNAT.OS_Lib.String_Access := Read_File (V);
          W : Writable_File;
 

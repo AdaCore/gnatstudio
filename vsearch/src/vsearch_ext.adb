@@ -1582,7 +1582,6 @@ package body Vsearch_Ext is
       Label  : String) return Search_Module_Data
    is
       pragma Unreferenced (Kernel);
-      use Search_Modules_List;
 
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
@@ -1605,7 +1604,6 @@ package body Vsearch_Ext is
      (Id : access Abstract_Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
    is
-      use Search_Modules_List;
       List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
       while List /= Null_Node loop

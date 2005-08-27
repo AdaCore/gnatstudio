@@ -18,17 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with Entities.Queries;          use Entities.Queries;
 with File_Utils;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Language;                  use Language;
 with OS_Utils;                  use OS_Utils;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Templates_Parser;          use Templates_Parser;
-
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Docgen.Backend.Text is
 

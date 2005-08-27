@@ -23,13 +23,11 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
-with Language.Debugger;
-with Items;
 with Items.Arrays;
+with Language; use Language;
+with Language.Debugger;
 
 package Debugger.Gdb.Ada is
-
-   use Language;
 
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with private;

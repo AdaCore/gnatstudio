@@ -22,32 +22,34 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Regpat;             use GNAT.Regpat;
 
-with Glib;                    use Glib;
+with Gdk.Bitmap;              use Gdk.Bitmap;
 with Gdk.Color;               use Gdk.Color;
 with Gdk.Event;               use Gdk.Event;
 with Gdk.Font;                use Gdk.Font;
+with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Rectangle;           use Gdk.Rectangle;
 with Gdk.Window;              use Gdk.Window;
+
+with Glib;                    use Glib;
+
 with Gtk.Box;
-with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Container;           use Gtk.Container;
-with Gtk.Pixmap;              use Gtk.Pixmap;
+with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Layout;              use Gtk.Layout;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Pixmap;              use Gtk.Pixmap;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Mark;           use Gtk.Text_Mark;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
 with Gtk.Text_View;           use Gtk.Text_View;
-with Gdk.Pixmap;              use Gdk.Pixmap;
-with Gdk.Bitmap;              use Gdk.Bitmap;
-with Gdk.Font;                use Gdk.Font;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Widget;              use Gtk.Widget;
+
 with Pango.Font;              use Pango.Font;
 
 with Basic_Types;             use Basic_Types;
@@ -55,8 +57,8 @@ with Config;                  use Config;
 with Debugger;                use Debugger;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GVD.Process;             use GVD.Process;
 with GVD.Preferences;         use GVD.Preferences;
+with GVD.Process;             use GVD.Process;
 with GVD.Types;               use GVD.Types;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;

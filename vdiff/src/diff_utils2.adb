@@ -24,12 +24,11 @@
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Text_IO;            use Ada.Text_IO;
 
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNAT.Expect;            use GNAT.Expect;
-with GNAT.Regpat;            use GNAT.Regpat;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.Regpat;            use GNAT.Regpat;
 
 with Basic_Types;
 with Generic_List;
@@ -38,7 +37,6 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
-with VFS;                    use VFS;
 
 package body Diff_Utils2 is
 

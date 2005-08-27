@@ -20,27 +20,27 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
+with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View;       use VCS_Activities_View;
 with VCS_Module;                use VCS_Module;
 with VCS_View_Pkg;
-with Traces;                    use Traces;
 with VFS;                       use VFS;
-with Log_Utils;                 use Log_Utils;
 
 package body VCS_Activities_View_API is
 

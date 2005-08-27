@@ -18,16 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                       use Glib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
 with Glib.Object;                use Glib.Object;
 with Glib.Properties.Creation;   use Glib.Properties.Creation;
+
 with Gtk.Combo;                  use Gtk.Combo;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
 with Default_Preferences;        use Default_Preferences;
 
 package body GPS.Kernel.Charsets is

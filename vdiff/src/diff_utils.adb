@@ -18,24 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Text_IO;            use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect;              use GNAT.Expect;
 
+with GNAT.Expect;            use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.Regpat;            use GNAT.Regpat;
 
-with GNAT.Regpat;              use GNAT.Regpat;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with String_Utils;             use String_Utils;
-with Traces;                   use Traces;
-with Generic_List;
-with VFS;                      use VFS;
 with Basic_Types;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Generic_List;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;

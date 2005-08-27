@@ -19,34 +19,28 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;               use Ada.Text_IO;
-
-with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
+with GNAT.OS_Lib;
 
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
-with String_Utils;              use String_Utils;
-with String_List_Utils;         use String_List_Utils;
-
-with VCS_View_Pkg;              use VCS_View_Pkg;
-with VCS_Module;                use VCS_Module;
-with OS_Utils;                  use OS_Utils;
-
-with Commands;                  use Commands;
-with Commands.External;         use Commands.External;
 with Commands.Console;          use Commands.Console;
+with Commands.External;         use Commands.External;
 with Commands.Locations;        use Commands.Locations;
+with Commands;                  use Commands;
 with File_Utils;                use File_Utils;
-with Basic_Types;               use Basic_Types;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with OS_Utils;                  use OS_Utils;
+with String_Utils;              use String_Utils;
+with VCS_Module;                use VCS_Module;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 with VFS;                       use VFS;
 
 package body VCS.ClearCase is
@@ -164,8 +158,6 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      use String_List;
-
       L_Temp       : List_Node := First (List);
       Length       : constant Natural := String_List.Length (List);
       Current_File : constant Virtual_File :=
@@ -215,8 +207,6 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      use String_List;
-
       L_Temp  : List_Node := First (List);
 
       Current_File : constant String := String_List.Head (Head);
@@ -268,8 +258,6 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      use String_List;
-
       L_Temp  : List_Node := First (List);
 
       Current_File : constant Virtual_File :=
@@ -1805,8 +1793,6 @@ package body VCS.ClearCase is
      (Rep  : access ClearCase_Record;
       File : Virtual_File)
    is
-      use String_List;
-
       C            : External_Command_Access;
       Command_Head : List;
       Args         : List;

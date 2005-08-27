@@ -26,10 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
-with Gtk.Text_View;      use Gtk.Text_View;
-
-with Gtkada.Text_Buffer; use Gtkada.Text_Buffer;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_View;   use Gtk.Text_View;
 
 package body Gtkada.Text_View is
 

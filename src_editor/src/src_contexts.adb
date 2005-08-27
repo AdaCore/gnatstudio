@@ -18,18 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Regexp;               use GNAT.Regexp;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
+
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -37,30 +38,29 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
+
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with File_Utils;                use File_Utils;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
-with Find_Utils;                use Find_Utils;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Kernel;                use GPS.Kernel;
 with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
+with Osint;                     use Osint;
 with Projects;                  use Projects;
 with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
-with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
+with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Traces;                    use Traces;
 with VFS;                       use VFS;

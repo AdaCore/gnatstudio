@@ -18,30 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;
-with Ada.Calendar;       use Ada.Calendar;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Exceptions;     use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Calendar;      use GNAT.Calendar;
+with System;
 
-with Gtk.Enums;          use Gtk.Enums;
-with Gtkada.Dialogs;     use Gtkada.Dialogs;
+with Gtk.Enums;                 use Gtk.Enums;
 
-with GUI_Utils;          use GUI_Utils;
-with OS_Utils;           use OS_Utils;
-with String_Utils;       use String_Utils;
-with Traces;             use Traces;
-with VFS;                use VFS;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
-with Interactive_Consoles;   use Interactive_Consoles;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel, GPS.Kernel.Console;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GUI_Utils;                 use GUI_Utils;
+with Interactive_Consoles;      use Interactive_Consoles;
+with OS_Utils;                  use OS_Utils;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
 
 package body Remote_Connections.Custom is
 

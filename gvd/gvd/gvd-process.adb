@@ -20,21 +20,18 @@
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
-with System;                     use System;
-
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
-
-with GNAT.Regpat;                use GNAT.Regpat;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with System;                     use System;
 
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
-with Glib; use Glib;
+
 with Glib.Object;                use Glib.Object;
-with Gtk;                        use Gtk;
+with Glib; use Glib;
+
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -43,14 +40,15 @@ with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
-with Gtkada.Canvas;              use Gtkada.Canvas;
+with Gtk;                        use Gtk;
+
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Types;               use Gtkada.Types;
+
 with Pango.Enums;                use Pango.Enums;
 with Pango.Font;                 use Pango.Font;
 
@@ -59,26 +57,25 @@ with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Display_Items;              use Display_Items;
-with Histories;                  use Histories;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Kernel;
 with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
+with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
-with GVD_Module;                 use GVD_Module;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
+with GVD_Module;                 use GVD_Module;
+with Histories;                  use Histories;
 with Items.Simples;              use Items.Simples;
 with Pixmaps_IDE;                use Pixmaps_IDE;
-with Process_Proxies;            use Process_Proxies;
 with String_List_Utils;          use String_List_Utils;
 with String_Utils;               use String_Utils;
 with VFS;                        use VFS;
@@ -434,8 +431,6 @@ package body GVD.Process is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Object);
 
-      use Gtk.Main;
-
    begin
       if Process.Exiting then
          Process.Debuggee_Console := null;
@@ -460,8 +455,6 @@ package body GVD.Process is
      (Object : access GObject_Record'Class)
    is
       Debugger : constant Visual_Debugger := Visual_Debugger (Object);
-
-      use String_History;
    begin
       Switch_Debugger (Debugger.Window, GObject (Object));
       Wind (Debugger.Command_History, Forward);
@@ -1610,8 +1603,6 @@ package body GVD.Process is
    procedure Close_Debugger (Debugger : Visual_Debugger) is
       Top  : constant GPS_Window := Debugger.Window;
       List : Debugger_List_Link;
-      use String_History;
-
    begin
       if Debugger.Exiting then
          return;
@@ -1679,7 +1670,6 @@ package body GVD.Process is
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
       Data            : History_Data;
-      use String_History;
 
       procedure Pre_User_Command;
       --  Handle all the set up for a user command (logs, history, ...)

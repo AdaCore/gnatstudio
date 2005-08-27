@@ -384,7 +384,7 @@ package body VCS_Activities is
       File_Name : constant String :=
                     Logs_Dir & OS_Lib.Directory_Separator &
                     Set.Table (Natural (Activity)).Id.all & "$log";
-      File      : Virtual_File := Create (File_Name);
+      File      : constant Virtual_File := Create (File_Name);
       F         : OS_Lib.File_Descriptor;
    begin
       if not Is_Regular_File (File) then
@@ -406,7 +406,7 @@ package body VCS_Activities is
       Activity : Activity_Id) return String
    is
       use type OS_Lib.String_Access;
-      File : Virtual_File := Get_Log_File (Kernel, Activity);
+      File : constant Virtual_File := Get_Log_File (Kernel, Activity);
       R    : OS_Lib.String_Access;
    begin
       R := Read_File (File);

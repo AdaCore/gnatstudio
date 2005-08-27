@@ -18,47 +18,50 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;                 use Basic_Types;
-with Basic_Types;                 use Basic_Types;
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Entities.Queries;            use Entities.Queries;
-with Entities;                    use Entities;
-with Entities;                    use Entities;
-with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                  use GPS.Kernel;
-with GUI_Utils;                   use GUI_Utils;
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
-with Glib.Object;                 use Glib.Object;
-with Glib.Properties.Creation;    use Glib.Properties.Creation;
-with Glib.Xml_Int;                use Glib.Xml_Int;
-with Glib;                        use Glib;
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
-with Gtk.Tree_Store;              use Gtk.Tree_Store;
-with Gtk.Tree_View;               use Gtk.Tree_View;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Language;                    use Language;
-with Language_Handlers.GPS;       use Language_Handlers.GPS;
-with Pixmaps_IDE;                 use Pixmaps_IDE;
-with Project_Explorers_Common;    use Project_Explorers_Common;
-with Projects;                    use Projects;
-with String_Utils;                use String_Utils;
-with VFS;                         use VFS;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Basic_Types;               use Basic_Types;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Entities.Queries;          use Entities.Queries;
+with Entities;                  use Entities;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GUI_Utils;                 use GUI_Utils;
+with Language;                  use Language;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Pixmaps_IDE;               use Pixmaps_IDE;
+with Project_Explorers_Common;  use Project_Explorers_Common;
+with Projects;                  use Projects;
+with String_Utils;              use String_Utils;
+with VFS;                       use VFS;
 
 package body Outline_View is
 

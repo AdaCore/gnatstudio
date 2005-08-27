@@ -60,29 +60,29 @@
 --
 --  </description>
 
+
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.Window;          use Gtk.Window;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Label;           use Gtk.Label;
-with Gtk.Combo;           use Gtk.Combo;
-with Gtk.GEntry;          use Gtk.GEntry;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.GEntry;          use Gtk.GEntry;
+
 with Gtk.Button;          use Gtk.Button;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Image;           use Gtk.Image;
+with Gtk.Label;           use Gtk.Label;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
+with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Widget;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Window;          use Gtk.Window;
 
-with Directory_Tree; use Directory_Tree;
-with Generic_Stack;
+with Directory_Tree;      use Directory_Tree;
 with Generic_List;
-
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-
+with Generic_Stack;
 with Histories;
 with VFS;
 

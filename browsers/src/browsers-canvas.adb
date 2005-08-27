@@ -22,13 +22,6 @@ with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;           use GNAT.Strings;
 
-with Glib;                   use Glib;
-with Glib.Convert;           use Glib.Convert;
-with Glib.Error;             use Glib.Error;
-with Glib.Graphs;            use Glib.Graphs;
-with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
-
 with Gdk.Color;              use Gdk.Color;
 with Gdk.GC;                 use Gdk.GC;
 with Gdk.Drawable;           use Gdk.Drawable;
@@ -38,6 +31,13 @@ with Gdk.Pixmap;             use Gdk.Pixmap;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Window;             use Gdk.Window;
+
+with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
+with Glib.Error;             use Glib.Error;
+with Glib.Graphs;            use Glib.Graphs;
+with Glib.Object;            use Glib.Object;
+with Glib.Xml_Int;           use Glib.Xml_Int;
 
 with Gtk.Accel_Group;        use Gtk.Accel_Group;
 with Gtk.Adjustment;         use Gtk.Adjustment;

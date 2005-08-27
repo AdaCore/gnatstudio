@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 
 package body Codefix.Merge_Utils is

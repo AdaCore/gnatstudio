@@ -18,21 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Expect;               use GNAT.Expect;
-with System;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.Expect;        use GNAT.Expect;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNAT.Regpat;        use GNAT.Regpat;
+with System;
 
-with Gtk.Main;                  use Gtk.Main;
-with GPS.Intl;                use GPS.Intl;
-with Custom_Module;             use Custom_Module;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
-with Traces;                    use Traces;
+with Gtk.Main;           use Gtk.Main;
+
+with Custom_Module;      use Custom_Module;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
+with Traces;             use Traces;
 
 package body Expect_Interface is
 

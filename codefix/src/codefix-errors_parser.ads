@@ -122,17 +122,14 @@
 --  changes.
 
 with Ada.Unchecked_Deallocation;
-
 with GNAT.Regpat;            use GNAT.Regpat;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with Generic_List;
 
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
-with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 use Codefix.Formal_Errors.Cursor_Lists;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Generic_List;
 
 package Codefix.Errors_Parser is
 

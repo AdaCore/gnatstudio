@@ -18,35 +18,35 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
-with Interfaces.C.Strings;
 with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings;
+
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
-with Gdk.Color;                 use Gdk.Color;
-with Pango.Font;                use Pango.Font;
+
 with Gtk.Adjustment;            use Gtk.Adjustment;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Menu;
 with Gtk.Style;                 use Gtk.Style;
-with Vdiff_Pkg;                 use Vdiff_Pkg;
-with Vdiff_Module;              use Vdiff_Module;
-with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
+
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with Basic_Types;               use Basic_Types;
-with VFS;                       use VFS;
+with Pango.Font;                use Pango.Font;
 
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Menu;
-with Gdk.Event;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel;              use GPS.Kernel;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
+with Vdiff_Module;              use Vdiff_Module;
+with Vdiff_Pkg;                 use Vdiff_Pkg;
 
 package body Vdiff_Utils is
 

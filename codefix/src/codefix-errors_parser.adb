@@ -18,12 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Regpat; use GNAT.Regpat;
-with Language;    use Language;
 with GPS.Kernel; use GPS.Kernel;
-
-with Traces; use Traces;
+with Language;   use Language;
+with Traces;     use Traces;
 
 package body Codefix.Errors_Parser is
    Me : constant Debug_Handle := Create ("Codefix");

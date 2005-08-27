@@ -21,14 +21,13 @@
 --  This package handles the customizable information in the buffer,
 --  such as information added to the sides of lines, or VCS information.
 
-with Pango.Layout; use Pango.Layout;
-
-with Glib; use Glib;
-
+with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gdk.Pixmap;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-with Gtk.Widget; use Gtk.Widget;
 with Gtk.Text_View; use Gtk.Text_View;
+with Gtk.Widget;    use Gtk.Widget;
+
+with Pango.Layout;  use Pango.Layout;
+
 with GPS.Kernel.Standard_Hooks;
 
 package Src_Editor_Buffer.Line_Information is

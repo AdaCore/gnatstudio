@@ -18,30 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with Language_Handlers.GPS;  use Language_Handlers.GPS;
-with Language.C;               use Language.C;
-with Language.Cpp;             use Language.Cpp;
-with Entities;                 use Entities;
-with CPP_Parser;               use CPP_Parser;
-with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GPS.Intl;               use GPS.Intl;
-with Projects;                 use Projects;
-with Projects.Registry;        use Projects.Registry;
-with Ada.Exceptions;           use Ada.Exceptions;
+
 with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Language;                 use Language;
-with Project_Viewers;          use Project_Viewers;
-with Naming_Editors;           use Naming_Editors;
-with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
+
+with CPP_Parser;               use CPP_Parser;
 with Case_Handling;            use Case_Handling;
+with Entities;                 use Entities;
+with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel;               use GPS.Kernel;
+with Language.C;               use Language.C;
+with Language.Cpp;             use Language.Cpp;
+with Language;                 use Language;
+with Language_Handlers.GPS;    use Language_Handlers.GPS;
+with Naming_Editors;           use Naming_Editors;
+with Project_Viewers;          use Project_Viewers;
+with Projects.Registry;        use Projects.Registry;
+with Projects;                 use Projects;
+with Traces;                   use Traces;
 
 package body Cpp_Module is
 

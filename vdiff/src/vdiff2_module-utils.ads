@@ -21,11 +21,11 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with Diff_Utils2; use Diff_Utils2;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 with GPS.Kernel;
-with VFS;         use VFS;
 with Traces;      use Traces;
+with VFS;         use VFS;
 
 package Vdiff2_Module.Utils is
 

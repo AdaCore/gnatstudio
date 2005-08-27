@@ -18,19 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Text_IO;             use Ada.Text_IO;
 
-with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Main;                use Gtk.Main;
-with File_Utils;              use File_Utils;
-with String_Utils;            use String_Utils;
-with Case_Handling;           use Case_Handling;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
+with Case_Handling;           use Case_Handling;
+with File_Utils;              use File_Utils;
+with String_Utils;            use String_Utils;
+
 
 package body Make_Test_Window_Pkg.Callbacks is
    --  Handle callbacks from "AUnit_Make_Test" main window.  Template

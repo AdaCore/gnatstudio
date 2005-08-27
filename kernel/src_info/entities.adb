@@ -19,23 +19,24 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with VFS;                     use VFS;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Projects;                use Projects;
-with Traces;                  use Traces;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with GNAT.Heap_Sort_G;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
+with Entities.Debug;          use Entities.Debug;
+with File_Utils;              use File_Utils;
+with GPS.Intl;                use GPS.Intl;
+with Language;                use Language;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Utils;          use Language_Utils;
 with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
-with File_Utils;              use File_Utils;
+with Projects;                use Projects;
 with String_Utils;            use String_Utils;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GPS.Intl;                use GPS.Intl;
-with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
-with Language;                use Language;
-with Language_Utils;          use Language_Utils;
-with Entities.Debug;          use Entities.Debug;
+with Traces;                  use Traces;
+with VFS;                     use VFS;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -2291,7 +2292,6 @@ package body Entities is
       Result    : out Language.Construct_List)
    is
       pragma Unreferenced (Handler);
-      use Language;
 
       Lang : constant Language.Language_Access :=
         Get_Language_From_File (GPS_Language_Handler (Languages), File_Name);

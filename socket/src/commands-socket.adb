@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-
 package body Commands.Socket is
 
    ------------

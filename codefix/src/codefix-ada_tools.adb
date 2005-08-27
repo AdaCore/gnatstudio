@@ -18,11 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils; use String_Utils;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 
 with Language;     use Language;
+with String_Utils; use String_Utils;
 
 package body Codefix.Ada_Tools is
 

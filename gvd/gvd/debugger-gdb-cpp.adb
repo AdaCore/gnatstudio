@@ -35,8 +35,6 @@ with Debugger.Gdb.C; use Debugger.Gdb.C;
 
 package body Debugger.Gdb.Cpp is
 
-   use Language;
-
    procedure Parse_Class_Type
      (Lang      : access Gdb_Cpp_Language;
       Type_Str  : String;

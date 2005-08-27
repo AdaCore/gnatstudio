@@ -21,15 +21,14 @@
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
+
 with Gtk.Enums;                         use Gtk.Enums;
+
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
 with Commands;                          use Commands;
-with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
@@ -37,12 +36,11 @@ with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;                 use GPS.Location_View;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 with String_Utils;                      use String_Utils;
-with Traces;                            use Traces;
-with Vdiff2_Module;                     use Vdiff2_Module;
-with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
-with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
+with Vdiff2_Module;                     use Vdiff2_Module;
 
 package body Vdiff2_Module.Utils is
 

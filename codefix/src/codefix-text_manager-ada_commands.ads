@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with VFS;
 
 package Codefix.Text_Manager.Ada_Commands is

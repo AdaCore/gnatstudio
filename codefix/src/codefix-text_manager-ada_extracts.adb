@@ -19,11 +19,10 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with String_Utils; use String_Utils;
+with String_Utils;            use String_Utils;
 
-with Codefix.Ada_Tools; use Codefix.Ada_Tools;
+with Codefix.Ada_Tools;       use Codefix.Ada_Tools;
 
 package body Codefix.Text_Manager.Ada_Extracts is
 

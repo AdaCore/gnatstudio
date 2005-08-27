@@ -18,21 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Clist;           use Gtk.Clist;
+with Gtk;                 use Gtk;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
-with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Gtkada.Handlers;     use Gtkada.Handlers;
-with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with GPS.Intl;          use GPS.Intl;
+
 with Aunit_Utils;         use Aunit_Utils;
+with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
+with GPS.Intl;            use GPS.Intl;
 
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 

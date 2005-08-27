@@ -22,9 +22,7 @@
 --  from the abstract backend object (see docgen.ads). It's responsible
 --  for all textual documentation.
 
-with VFS;        use VFS;
-with Entities;   use Entities;
-with GPS.Kernel; use GPS.Kernel;
+with VFS; use VFS;
 
 package Docgen.Backend.Text is
 

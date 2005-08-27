@@ -20,12 +20,11 @@
 
 with Unchecked_Deallocation;
 
-with GPS.Kernel;              use GPS.Kernel;
+with Commands.VCS;            use Commands.VCS;
+with Commands;                use Commands;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Generic_List;
-with Commands;                use Commands;
-with Commands.VCS;            use Commands.VCS;
 
 package body VCS is
 

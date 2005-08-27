@@ -24,40 +24,34 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Enums;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with Basic_Types;               use Basic_Types;
+with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
+with Log_Utils;                 use Log_Utils;
+with Projects.Registry;         use Projects.Registry;
 with String_List_Utils;         use String_List_Utils;
-
-with VCS;                       use VCS;
-with VCS_Activities;            use VCS_Activities;
-with VCS_Activities_View_API;   use VCS_Activities_View_API;
-with VCS_Activities_View;       use VCS_Activities_View;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Activities;            use VCS_Activities;
+with VCS_Activities_View;       use VCS_Activities_View;
+with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
-with Log_Utils;                 use Log_Utils;
-
-with Basic_Types;               use Basic_Types;
-
-with Projects.Registry;         use Projects, Projects.Registry;
-
-with Traces;                    use Traces;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 with VFS;                       use VFS;
-with File_Utils;                use File_Utils;
-with String_Utils;              use String_Utils;
 
 package body VCS_View_API is
 

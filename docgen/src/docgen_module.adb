@@ -488,7 +488,7 @@ package body Docgen_Module is
     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File : aliased Virtual_File :=
+      File : aliased constant Virtual_File :=
         Select_File
           (Title             => -"Generate Documentation For",
            Parent            => Get_Current_Window (Kernel),
@@ -854,9 +854,7 @@ package body Docgen_Module is
      (Kernel   : Kernel_Handle;
       List     : in out Type_Source_File_Table.HTable;
       Nb_Files : Natural;
-      Backend  : access Docgen.Backend.Backend'Class)
-   is
-      use Docgen.Backend;
+      Backend  : access Docgen.Backend.Backend'Class) is
    begin
       Push_State (Kernel, Busy);
 

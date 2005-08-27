@@ -18,53 +18,59 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Values;
-with Pango.Font;                use Pango.Font;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
 with Gdk.Dnd;                   use Gdk.Dnd;
-with Glib.Error;                use Glib.Error;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+
 with Glib;                      use Glib;
+with Glib.Error;                use Glib.Error;
+with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Object;
-with Gtk.Box;                   use Gtk.Box;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Values;
+with Glib.Values;               use Glib.Values;
+
+with Gtk.Box;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Image;                 use Gtk.Image;
+with Gtk.Frame;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Image;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
+with Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Progress_Bar;          use Gtk.Progress_Bar;
 with Gtk.Rc;                    use Gtk.Rc;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Label;                 use Gtk.Label;
 with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;
+
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Traces;                    use Traces;
-with Projects;                  use Projects;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Glib.Values;               use Glib.Values;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Glib.Generic_Properties;   use Glib.Generic_Properties;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Gtkada.MDI;
 with Gtkada.Types;
+
+with Pango.Font;                use Pango.Font;
+
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with Projects;                  use Projects;
+with Traces;                    use Traces;
 
 package body GPS.Main_Window is
 
@@ -342,7 +348,6 @@ package body GPS.Main_Window is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      use Glib;
       Win    : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Pos    : Gtk_Position_Type;
       Policy : Show_Tabs_Policy_Enum;
@@ -1070,8 +1075,6 @@ package body GPS.Main_Window is
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
       Win : constant GPS_Window := GPS_Window (Main_Window);
-
-      use Glib;
    begin
       if Win.Animation /= null then
          Unref (Win.Animation);

@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;
 with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
+with Gdk.Event;              use Gdk.Event;
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
-with Gdk.Event;              use Gdk.Event;
+
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
@@ -31,13 +33,17 @@ with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
+
 with Gtkada.Canvas;          use Gtkada.Canvas;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
-with Pango.Layout;           use Pango.Layout;
 
 with Browsers.Canvas;        use Browsers.Canvas;
+with Commands.Interactive;   use Commands, Commands.Interactive;
+with Entities.Queries;       use Entities.Queries;
+with Entities;               use Entities;
+with Fname;                  use Fname;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -45,20 +51,15 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel;             use GPS.Kernel;
-with Entities.Queries;       use Entities.Queries;
-with Entities;               use Entities;
-with Traces;                 use Traces;
-with Projects;               use Projects;
-with Projects.Registry;      use Projects.Registry;
-with Fname;                  use Fname;
-with Namet;                  use Namet;
-with Histories;              use Histories;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with Histories;              use Histories;
+with Namet;                  use Namet;
+with Pango.Layout;           use Pango.Layout;
+with Projects.Registry;      use Projects.Registry;
+with Projects;               use Projects;
+with Traces;                 use Traces;
 with VFS;                    use VFS;
-with Commands.Interactive;   use Commands, Commands.Interactive;
-
-with Ada.Exceptions;         use Ada.Exceptions;
 
 package body Browsers.Dependency_Items is
 

@@ -18,52 +18,46 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
-with Gtk.Image;                 use Gtk.Image;
-with Gtk.Accel_Label;           use Gtk.Accel_Label;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with System.Assertions;         use System.Assertions;
 
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Intl;                  use GPS.Intl;
-with Projects;                  use Projects;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib;                      use Glib;
 
-with File_Utils;                use File_Utils;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Gtk.Accel_Label;           use Gtk.Accel_Label;
+with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Widget;                use Gtk.Widget;
 
-with Language;                  use Language;
-with Language.Custom;           use Language.Custom;
-with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Remote_Connections.Custom; use Remote_Connections.Custom;
-
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
-
-with VFS;                       use VFS;
-
+with Commands.Interactive;      use Commands.Interactive;
+with Commands;                  use Commands;
 with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
 with Expect_Interface;          use Expect_Interface;
-with XML_Viewer;
-
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Language.Custom;           use Language.Custom;
+with Language;                  use Language;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Language_Handlers;         use Language_Handlers;
+with Projects;                  use Projects;
+with Remote_Connections.Custom; use Remote_Connections.Custom;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
+with XML_Viewer;
 
 package body Custom_Module is
 

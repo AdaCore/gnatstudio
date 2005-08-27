@@ -29,8 +29,8 @@ with Gdk.GC;                        use Gdk.GC;
 with Gdk.Event;                     use Gdk.Event;
 
 with Glib;                          use Glib;
-with Glib.Xml_Int;                  use Glib.Xml_Int;
 with Glib.Object;                   use Glib.Object;
+with Glib.Xml_Int;                  use Glib.Xml_Int;
 
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Button;                    use Gtk.Button;
@@ -53,13 +53,11 @@ with Pango.Layout;                  use Pango.Layout;
 
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Generic_Asynchronous; use Commands;
-with Commands.Interactive;          use Commands, Commands.Interactive;
-with Entities;                      use Entities;
+with Commands.Interactive;          use Commands.Interactive;
 with Entities.Debug;                use Entities.Debug;
 with Entities.Queries;              use Entities.Queries;
-with Histories;                     use Histories;
+with Entities;                      use Entities;
 with GPS.Intl;                      use GPS.Intl;
-with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Kernel.Console;            use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
@@ -69,7 +67,9 @@ with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
+with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Location_View;             use GPS.Location_View;
+with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
 with VFS;                           use VFS;

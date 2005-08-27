@@ -20,44 +20,39 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib;                      use Glib;
+
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with Basic_Types;               use Basic_Types;
+with Commands.VCS;              use Commands.VCS;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Intl;                  use GPS.Intl;
-
+with Log_Utils;
+with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
+with String_List_Utils;
 with Traces;                    use Traces;
-
+with VCS.Generic_VCS;           use VCS.Generic_VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS;                       use VCS;
-with VCS_View_API;              use VCS_View_API;
-with VCS_View_Pkg;              use VCS_View_Pkg;
+with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Utils;                 use VCS_Utils;
-with Basic_Types;               use Basic_Types;
-with Commands.VCS;              use Commands.VCS;
-
-with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS.Generic_VCS;           use VCS.Generic_VCS;
-with VCS_Activities;            use VCS_Activities;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
+with VCS_View_API;              use VCS_View_API;
 with VFS;                       use VFS;
-
-with String_List_Utils;
-with Log_Utils;
 
 package body VCS_Module is
 

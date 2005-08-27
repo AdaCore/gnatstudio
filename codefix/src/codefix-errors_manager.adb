@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with VFS;                   use VFS;
 
 package body Codefix.Errors_Manager is

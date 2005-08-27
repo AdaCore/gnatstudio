@@ -18,8 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -32,7 +39,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.List;                  use Gtk.List;
 with Gtk.List_Item;             use Gtk.List_Item;
-with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Spin_Button;           use Gtk.Spin_Button;
@@ -40,38 +46,31 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
+
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
-
-with Prj;
-with Projects.Editor;           use Projects, Projects.Editor;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Intl;                  use GPS.Intl;
-with Language_Handlers;         use Language_Handlers;
-with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
-with Scenario_Selectors;        use Scenario_Selectors;
-with Projects;                  use Projects;
-with Project_Viewers;           use Project_Viewers;
-with VFS;                       use VFS;
 with Commands.Interactive;      use Commands, Commands.Interactive;
-
-with Types;                     use Types;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel;                use GPS.Kernel;
+with Language_Handlers;         use Language_Handlers;
+with Prj;
+with Project_Viewers;           use Project_Viewers;
+with Projects.Editor;           use Projects.Editor;
+with Projects;                  use Projects;
+with Scenario_Selectors;        use Scenario_Selectors;
 with Snames;                    use Snames;
+with String_Utils;              use String_Utils;
 with Switch.M;                  use Switch.M;
-
-with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
+with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body Switches_Editors is
 

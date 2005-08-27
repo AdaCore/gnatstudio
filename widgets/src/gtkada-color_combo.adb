@@ -18,28 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
-with Gtk.Extra.Combo_Box;  use Gtk.Extra.Combo_Box;
-with Gdk.Color;            use Gdk.Color;
-with Gtk.Handlers;         use Gtk.Handlers;
-pragma Elaborate_All (Gtk.Handlers);
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtk.Color_Selection;  use Gtk.Color_Selection;
-with Gtk.Widget;           use Gtk.Widget;
-with Gdk.Drawable;         use Gdk.Drawable;
-with Gtk.Pixmap;           use Gtk.Pixmap;
-with Gtk.Widget;           use Gtk.Widget;
-with Gdk.GC;               use Gdk.GC;
-with Gdk.Rectangle;        use Gdk.Rectangle;
-with Gdk.Pixmap;           use Gdk.Pixmap;
-with Gdk.Bitmap;           use Gdk.Bitmap;
-with Pixmaps_IDE;          use Pixmaps_IDE;
-with Gtk.Frame;            use Gtk.Frame;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Object;           use Gtk.Object;
 with Ada.Integer_Text_IO;  use Ada.Integer_Text_IO;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
+
+with Gdk.Bitmap;           use Gdk.Bitmap;
+with Gdk.Color;            use Gdk.Color;
+with Gdk.Drawable;         use Gdk.Drawable;
+with Gdk.GC;               use Gdk.GC;
+with Gdk.Pixmap;           use Gdk.Pixmap;
+with Gdk.Rectangle;        use Gdk.Rectangle;
 with Gdk.Window;           use Gdk.Window;
+
+with Glib;                 use Glib;
+
+with Gtk.Button;           use Gtk.Button;
+with Gtk.Color_Selection;  use Gtk.Color_Selection;
+with Gtk.Frame;            use Gtk.Frame;
+with Gtk.Handlers;         use Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
+with Gtk.Object;           use Gtk.Object;
+with Gtk.Pixmap;           use Gtk.Pixmap;
+with Gtk.Widget;           use Gtk.Widget;
+
+with Gtkada.Handlers;      use Gtkada.Handlers;
+
+with Pixmaps_IDE;          use Pixmaps_IDE;
 
 package body Gtkada.Color_Combo is
 

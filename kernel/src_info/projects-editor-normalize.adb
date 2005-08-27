@@ -19,20 +19,17 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;    use Ada.Exceptions;
-with Projects.Editor;   use Projects, Projects.Editor;
-with Projects.Registry; use Projects.Registry;
-with Traces;            use Traces;
-with String_Utils;      use String_Utils;
-with GPS.Intl;        use GPS.Intl;
+with Unchecked_Deallocation;
 with GNAT.Case_Util;    use GNAT.Case_Util;
 
-with Prj;      use Prj;
-with Prj.Ext;  use Prj.Ext;
-with Prj.Tree; use Prj.Tree;
-with Types;    use Types;
-with Namet;    use Namet;
-
-with Unchecked_Deallocation;
+with GPS.Intl;          use GPS.Intl;
+with Namet;             use Namet;
+with Prj.Ext;           use Prj.Ext;
+with Projects.Editor;   use Projects, Projects.Editor;
+with Projects.Registry; use Projects.Registry;
+with String_Utils;      use String_Utils;
+with Traces;            use Traces;
+with Types;             use Types;
 
 package body Projects.Editor.Normalize is
 
@@ -467,7 +464,7 @@ package body Projects.Editor.Normalize is
          end loop;
       end Process_Declarative_List;
 
-      Registry : Project_Registry := Project_Registry
+      Registry : constant Project_Registry := Project_Registry
         (Get_Registry (Root_Project));
    begin
       --  This is null when the default project is loaded at startup time.o

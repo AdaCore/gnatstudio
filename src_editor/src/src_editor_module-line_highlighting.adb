@@ -18,14 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Src_Editor_Box;          use Src_Editor_Box;
-with Src_Editor_Buffer;       use Src_Editor_Buffer;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with Src_Editor_Box;     use Src_Editor_Box;
+with Src_Editor_Buffer;  use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with VFS;                     use VFS;
 
 package body Src_Editor_Module.Line_Highlighting is
 

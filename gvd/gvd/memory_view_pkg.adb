@@ -18,19 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk;             use Gtk;
-with Gtk.Adjustment;  use Gtk.Adjustment;
-with Gtk.Arrow;       use Gtk.Arrow;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Separator;   use Gtk.Separator;
-with Gtk.Spin_Button; use Gtk.Spin_Button;
-with Gtk.Stock;       use Gtk.Stock;
-with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtk;                       use Gtk;
+with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Arrow;                 use Gtk.Arrow;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GPS.Intl;                  use GPS.Intl;
 with GVD.Callbacks;             use GVD.Callbacks;

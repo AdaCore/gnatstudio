@@ -21,15 +21,15 @@
 with Ada.Exceptions;    use Ada.Exceptions;
 
 with Gdk.Event;         use Gdk.Event;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Types;         use Gdk.Types;
+
 with Glib;              use Glib;
+
 with Gtk.Arguments;     use Gtk.Arguments;
-with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Widget;        use Gtk.Widget;
 
 with Basic_Types;       use Basic_Types;
 with GVD.Memory_View;   use GVD.Memory_View;

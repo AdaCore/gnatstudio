@@ -18,39 +18,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with System;
-
-with GNAT.Regpat;               use GNAT.Regpat;
+with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Regpat;               use GNAT.Regpat;
+with System;
 
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Tooltips;              use Gtk.Tooltips;
+
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Label;                 use Gtk.Label;
+with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Spin_Button;           use Gtk.Spin_Button;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Widget;                use Gtk.Widget;
 
-with GPS.Kernel;                use GPS.Kernel;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
-with String_Utils;              use String_Utils;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Interactive_Consoles;      use Interactive_Consoles;
-
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 package body Commands.Custom is

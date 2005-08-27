@@ -18,14 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_List;
 with GNAT.OS_Lib;
-with Language; use Language;
-with VFS;
+with GNAT.Regpat;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
-with GNAT.Regpat;
 with GPS.Kernel;
+with Generic_List;
+with Language;             use Language;
+with VFS;
 
 package Codefix.Formal_Errors is
 

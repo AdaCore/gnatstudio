@@ -18,12 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Glib.Values;     use Glib.Values;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Handlers;    use Gtk.Handlers;
-with Traces;          use Traces;
-with Ada.Exceptions;  use Ada.Exceptions;
+with Ada.Exceptions; use Ada.Exceptions;
+
+with Glib;           use Glib;
+with Glib.Values;    use Glib.Values;
+
+with Gtk.Widget;     use Gtk.Widget;
+
+with Traces;         use Traces;
 
 package body Commands.Controls is
 

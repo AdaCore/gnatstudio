@@ -18,34 +18,35 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                         use Glib;
-with Glib.Object;                  use Glib.Object;
-with Gdk.Types;                    use Gdk.Types;
-with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
-with Gtk.Stock;                    use Gtk.Stock;
-with Gtk.Window;                   use Gtk.Window;
-with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtk.Menu_Item;                use Gtk.Menu_Item;
-with Gtk.Widget;                   use Gtk.Widget;
+with Ada.Exceptions;         use Ada.Exceptions;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
-with GPS.Intl;                     use GPS.Intl;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
+with Gdk.Types;              use Gdk.Types;
 
-with GPS.Kernel;                   use GPS.Kernel;
-with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
-with GPS.Kernel.Clipboard;         use GPS.Kernel.Clipboard;
-with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;           use GPS.Kernel.Project;
-with Histories;                    use Histories;
-with Projects;                     use Projects;
-with Commands.Interactive;         use Commands, Commands.Interactive;
+with Glib.Object;            use Glib.Object;
+with Glib;                   use Glib;
 
-with GNAT.OS_Lib;                  use GNAT.OS_Lib;
-with Ada.Exceptions;               use Ada.Exceptions;
-with Traces;                       use Traces;
-with VFS;                          use VFS;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
+
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+
+with Commands.Interactive;   use Commands, Commands.Interactive;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with Histories;              use Histories;
+with Projects;               use Projects;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
 
 package body GPS.Menu is
 

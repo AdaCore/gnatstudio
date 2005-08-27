@@ -31,13 +31,14 @@ with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System;
 with System.Address_Image;
 
-with Glib;                                use Glib;
+with Gdk.Color;                           use Gdk.Color;
+
 with Glib.Convert;                        use Glib.Convert;
 with Glib.Object;                         use Glib.Object;
 with Glib.Properties;                     use Glib.Properties;
 with Glib.Unicode;                        use Glib.Unicode;
 with Glib.Values;                         use Glib.Values;
-with Gdk.Color;                           use Gdk.Color;
+
 with Gtk;                                 use Gtk;
 with Gtk.Enums;                           use Gtk.Enums;
 with Gtk.Handlers;                        use Gtk.Handlers;
@@ -47,9 +48,10 @@ with Gtk.Text_Mark;                       use Gtk.Text_Mark;
 with Gtk.Text_Tag;                        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
 with Gtk.Widget;                          use Gtk.Widget;
+
 with Gtkada.Dialogs;                      use Gtkada.Dialogs;
-with Gtkada.Text_Buffer;                  use Gtkada.Text_Buffer;
 with Gtkada.Types;                        use Gtkada.Types;
+
 with Pango.Font;                          use Pango.Font;
 
 with Basic_Types;                         use Basic_Types;
@@ -68,7 +70,6 @@ with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
-with GPS.Kernel.Styles;                   use GPS.Kernel.Styles;
 with Language;                            use Language;
 with Language_Handlers;                   use Language_Handlers;
 with Language_Handlers.GPS;               use Language_Handlers.GPS;

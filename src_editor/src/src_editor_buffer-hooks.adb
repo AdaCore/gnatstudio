@@ -18,13 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with Entities;                  use Entities;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with Entities;                    use Entities;
-with Src_Editor_Box;              use Src_Editor_Box;
-with Src_Editor_Module;           use Src_Editor_Module;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel;                use GPS.Kernel;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Module;         use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Hooks is
 

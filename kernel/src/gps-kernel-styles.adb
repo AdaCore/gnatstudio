@@ -18,26 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk;            use Gdk;
-with Gdk.GC;         use Gdk.GC;
-with Gtk.Window;     use Gtk.Window;
-with Gtk.Widget;     use Gtk.Widget;
-
-with Glib.Xml_Int;   use Glib.Xml_Int;
-with XML_Parsers;
-
+with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Text_IO;            use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
-with Ada.Unchecked_Deallocation;
-with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Text_IO;    use Ada.Text_IO;
+with Gdk;                    use Gdk;
+with Gdk.GC;
+with Glib.Xml_Int;           use Glib.Xml_Int;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
 
-with Traces;         use Traces;
-
-with GPS.Intl;          use GPS.Intl;
-with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
-
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Traces;                 use Traces;
+with XML_Parsers;
 
 package body GPS.Kernel.Styles is
 

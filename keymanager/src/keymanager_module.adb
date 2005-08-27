@@ -18,65 +18,70 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;              use GPS.Kernel;
+with Ada.Calendar;            use Ada.Calendar;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
+with System.Assertions;       use System.Assertions;
+
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Types;               use Gdk.Types;
+
+with Glib.Convert;            use Glib.Convert;
+with Glib.Object;             use Glib.Object;
+with Glib.Xml_Int;            use Glib.Xml_Int;
+with Glib;                    use Glib;
+
+with Gtk.Accel_Map;           use Gtk.Accel_Map;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Button;              use Gtk.Button;
+with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
+with Gtk.Dialog;              use Gtk.Dialog;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Event_Box;           use Gtk.Event_Box;
+with Gtk.Frame;               use Gtk.Frame;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Main;                use Gtk.Main;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Paned;               use Gtk.Paned;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
+with Gtk.Separator;           use Gtk.Separator;
+with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Tree_Model;          use Gtk.Tree_Model;
+with Gtk.Tree_Selection;      use Gtk.Tree_Selection;
+with Gtk.Tree_Store;          use Gtk.Tree_Store;
+with Gtk.Tree_View;           use Gtk.Tree_View;
+with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
+with Gtk.Vbutton_Box;         use Gtk.Vbutton_Box;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
+
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.Macro;            use Gtkada.Macro;
+
+with Commands.Interactive;    use Commands, Commands.Interactive;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with XML_Parsers;
-with Glib.Convert;              use Glib.Convert;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with HTables;                   use HTables;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GUI_Utils;                 use GUI_Utils;
-with System;                    use System;
-with System.Assertions;         use System.Assertions;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Box;                   use Gtk.Box;
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
-with GPS.Intl;                use GPS.Intl;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Enums;                 use Gtk.Enums;
-with System;                    use System;
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtkada.Macro;              use Gtkada.Macro;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Traces;                    use Traces;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with VFS;                       use VFS;
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Unchecked_Deallocation;
-with Ada.Unchecked_Conversion;
+with GPS.Kernel;              use GPS.Kernel;
+with GUI_Utils;               use GUI_Utils;
+with HTables;                 use HTables;
+with Traces;                  use Traces;
+with VFS;                     use VFS;
+with XML_Parsers;
 
 package body KeyManager_Module is
 

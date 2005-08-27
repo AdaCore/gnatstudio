@@ -18,11 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Config;                   use Config;
-with Default_Preferences;      use Default_Preferences;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with GPS.Intl;                 use GPS.Intl;
+with Config;   use Config;
+with GPS.Intl; use GPS.Intl;
 
 package body GVD.Preferences is
 

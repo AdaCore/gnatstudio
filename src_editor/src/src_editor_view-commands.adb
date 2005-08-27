@@ -18,9 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;              use Glib;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Gtk.Text_Mark;     use Gtk.Text_Mark;
 
 with Commands;          use Commands;
 with GPS.Kernel;        use GPS.Kernel;

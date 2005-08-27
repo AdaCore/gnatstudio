@@ -18,24 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
+
+with Ada.Exceptions;  use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+
+with Gdk.Drawable;    use Gdk.Drawable;
 with Gdk.Event;       use Gdk.Event;
 with Gdk.Pixmap;      use Gdk.Pixmap;
-with Gdk.Drawable;    use Gdk.Drawable;
 with Gdk.Rectangle;   use Gdk.Rectangle;
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Window;      use Gdk.Window;
-with Glib;            use Glib;
+
 with Glib.Properties; use Glib.Properties;
+with Glib;            use Glib;
+
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Main;        use Gtk.Main;
 with Gtk.Pixmap;      use Gtk.Pixmap;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Window;      use Gtk.Window;
-with Ada.Unchecked_Deallocation;
 
-with Traces;            use Traces;
-with Ada.Exceptions;    use Ada.Exceptions;
+with Traces;          use Traces;
 
 package body Tooltips is
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback

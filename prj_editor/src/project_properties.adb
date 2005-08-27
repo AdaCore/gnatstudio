@@ -18,33 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Gdk.Event;                 use Gdk.Event;
+
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gdk.Event;                 use Gdk.Event;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Button;                use Gtk.Button;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -55,38 +52,46 @@ with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
+
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+
+with Basic_Types;               use Basic_Types;
+with Creation_Wizard;           use Creation_Wizard;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GUI_Utils;                 use GUI_Utils;
+with Language_Handlers;         use Language_Handlers;
 with Prj.Attr;                  use Prj, Prj.Attr;
+with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with File_Utils;                use File_Utils;
-with Basic_Types;               use Basic_Types;
-with Language_Handlers;         use Language_Handlers;
-with Types;
-with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Scenario_Selectors;        use Scenario_Selectors;
-with Traces;                    use Traces;
-with Project_Viewers;           use Project_Viewers;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with VFS;                       use VFS;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 with String_Utils;              use String_Utils;
-with GUI_Utils;                 use GUI_Utils;
-with Creation_Wizard;           use Creation_Wizard;
+with Traces;                    use Traces;
+with Types;
+with VFS;                       use VFS;
 with Wizards;                   use Wizards;
 
 package body Project_Properties is

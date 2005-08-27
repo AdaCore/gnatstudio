@@ -18,15 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Main_Window;      use GPS.Main_Window;
-with GVD.Types;            use GVD.Types;
-with Process_Proxies;      use Process_Proxies;
-with Debugger;             use Debugger;
-with System;
 with Ada.Unchecked_Conversion;
-with Traces;               use Traces;
-with GPS.Kernel;         use GPS.Kernel;
+with System;
+
+with Debugger;             use Debugger;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Main_Window;      use GPS.Main_Window;
+with Process_Proxies;      use Process_Proxies;
+with Traces;               use Traces;
 
 package body GVD.Trace is
 

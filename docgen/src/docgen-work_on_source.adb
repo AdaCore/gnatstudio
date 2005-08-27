@@ -20,7 +20,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Basic_Types;
 with Doc_Utils;                 use Doc_Utils;
@@ -2491,8 +2490,6 @@ package body Docgen.Work_On_Source is
       Clean_Text : out GNAT.OS_Lib.String_Access;
       Line_Count : out Natural)
    is
-      use Ada.Strings.Unbounded;
-
       Result            : Unbounded_String := Null_Unbounded_String;
       J                 : Natural := Text'First;
       Indent            : Natural := 0;

@@ -18,29 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with System;                   use System;
+
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Gtk.Widget;               use Gtk.Widget;
+
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.List;                 use Gtk.List;
 with Gtk.Size_Group;           use Gtk.Size_Group;
-with Casing;                   use Casing;
-with Prj;
-with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
-with GUI_Utils;                use GUI_Utils;
-with GPS.Intl;               use GPS.Intl;
-with Projects;                 use Projects;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Projects.Editor;          use Projects, Projects.Editor;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+
+with Casing;                   use Casing;
+with GPS.Intl;                 use GPS.Intl;
+with GUI_Utils;                use GUI_Utils;
+with Prj;
+with Projects;                 use Projects;
+with Projects.Editor;          use Projects.Editor;
+
 with String_Hash;
-with System;                   use System;
 
 package body Ada_Naming_Editors is
 

@@ -20,19 +20,21 @@
 
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with XML_Parsers;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Font;                 use Gdk.Font;
 with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Types;                use Gdk.Types;
+
+with Glib.Object;              use Glib.Object;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Xml_Int;             use Glib.Xml_Int;
+
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -56,25 +58,27 @@ with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Table;                use Gtk.Table;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
-with Gtkada.Handlers;          use Gtkada.Handlers;
+
 with Gtkada.Color_Combo;       use Gtkada.Color_Combo;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+
 with Pango.Font;               use Pango.Font;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GUI_Utils;                use GUI_Utils;
-with GPS.Intl;                 use GPS.Intl;
 with Pango.Layout;             use Pango.Layout;
-with Traces;                   use Traces;
+
 with Case_Handling;            use Case_Handling;
-with Ada.Unchecked_Conversion;
+with GPS.Intl;                 use GPS.Intl;
+with GUI_Utils;                use GUI_Utils;
+with Traces;                   use Traces;
+with XML_Parsers;
 
 package body Default_Preferences is
 

@@ -112,7 +112,6 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep);
 
-      use String_List;
       Current_Filename : List_Node := First (Filenames);
       Result           : File_Status_List.List;
       Blank_Status     : File_Status_Record;

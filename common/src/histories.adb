@@ -20,26 +20,26 @@
 
 with Ada.Text_IO;         use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
+with Glib.Xml_Int;        use Glib.Xml_Int;
 with Glib;                use Glib;
+
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.GEntry;          use Gtk.GEntry;
-with Glib.Xml_Int;        use Glib.Xml_Int;
-with XML_Parsers;
+with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.List;            use Gtk.List;
 with Gtk.List_Item;       use Gtk.List_Item;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Menu;            use Gtk.Menu;
-with GUI_Utils;           use GUI_Utils;
-with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
-with Traces;              use Traces;
+with Gtk.Widget;          use Gtk.Widget;
+
 with GUI_Utils;           use GUI_Utils;
 with String_Utils;        use String_Utils;
+with Traces;              use Traces;
+with XML_Parsers;
 
 package body Histories is
 

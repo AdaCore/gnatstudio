@@ -18,24 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk.Clist;             use Gtk.Clist;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-
-with GPS.Intl;              use GPS.Intl;
-with GVD.Process;           use GVD.Process;
-with Debugger;              use Debugger;
-with GPS.Main_Window;       use GPS.Main_Window;
-with GVD.Types;             use GVD.Types;
-with GVD_Module;            use GVD_Module;
+with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;           use GNAT.Regpat;
-with Ada.Exceptions;        use Ada.Exceptions;
-with Traces;                use Traces;
+
+with Glib;                  use Glib;
+
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Handlers;          use Gtk.Handlers;
+
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+
 with Config;                use Config;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Main_Window;       use GPS.Main_Window;
+with GVD.Process;           use GVD.Process;
+with GVD.Types;             use GVD.Types;
+with GVD_Module;            use GVD_Module;
+with Traces;                use Traces;
 
 package body GVD.Dialogs.Callbacks is
 

@@ -18,73 +18,65 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with Gdk;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
-with Gdk;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Event;                 use Gdk.Event;
-with Gtk.Enums;
-with Gdk.Pixmap;                use Gdk.Pixmap;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Window;                use Gdk.Window;
-
 with Gtk;                       use Gtk;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with VCS;
-with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
-with VCS_View_Pkg;              use VCS_View_Pkg;
-with VCS_Activities_View_API;   use VCS_Activities_View_API;
-with VCS_Module;                use VCS_Module;
-with VCS_Utils;                 use VCS_Utils;
-
-with Log_Utils;                 use Log_Utils;
-
+with Basic_Types;               use Basic_Types;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
-with VFS;                       use VFS;
-with Tooltips;
-with Projects;                  use Projects;
-with Projects.Registry;         use Projects.Registry;
-
-with Basic_Types;               use Basic_Types;
-with Traces;                    use Traces;
-
 with GUI_Utils;                 use GUI_Utils;
-with File_Utils;                use File_Utils;
+with Log_Utils;                 use Log_Utils;
+with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
+with Tooltips;
+with Traces;                    use Traces;
+with VCS;
+with VCS_Activities_View_API;   use VCS_Activities_View_API;
+with VCS_Module;                use VCS_Module;
+with VCS_Utils;                 use VCS_Utils;
+with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 
 package body VCS_Activities_View is
 

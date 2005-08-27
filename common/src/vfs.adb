@@ -22,25 +22,28 @@
 --  It gives access to local and remote files, abstract file system specific
 --  features (case sensitivity),...
 
-with Glib;                       use Glib;
-with Glib.Convert;               use Glib.Convert;
-with Glib.Values;                use Glib.Values;
-with Glib.Unicode;               use Glib.Unicode;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with Ada.Unchecked_Deallocation;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with Ada.Exceptions;             use Ada.Exceptions;
-with Ada.Calendar;               use Ada.Calendar;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with File_Utils;                 use File_Utils;
-with String_Utils;               use String_Utils;
-with OS_Utils;                   use OS_Utils;
-with GNAT.Case_Util;             use GNAT.Case_Util;
-with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
-with Interfaces.C.Strings;       use Interfaces.C.Strings;
-with Remote_Connections;         use Remote_Connections;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
+with Glib.Convert;              use Glib.Convert;
+with Glib.Unicode;              use Glib.Unicode;
+with Glib.Values;               use Glib.Values;
+
+with File_Utils;                use File_Utils;
+with OS_Utils;                  use OS_Utils;
+with Remote_Connections;        use Remote_Connections;
+with String_Utils;              use String_Utils;
 with System;
-with Traces;                     use Traces;
+with Traces;                    use Traces;
 
 package body VFS is
 

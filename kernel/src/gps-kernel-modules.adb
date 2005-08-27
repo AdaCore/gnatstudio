@@ -18,56 +18,60 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  So that this type is correctly converted from C to Ada
-with Gtk.Image_Menu_Item;
-pragma Warnings (Off, Gtk.Image_Menu_Item);
-
-with GUI_Utils;         use GUI_Utils;
-with Gdk.Dnd;           use Gdk.Dnd;
-with Gdk.Event;         use Gdk.Event;
-with Gdk.Types;         use Gdk.Types;
-with Glib;              use Glib;
-with Glib.Convert;      use Glib.Convert;
-with Glib.Module;       use Glib.Module;
-with Glib.Object;       use Glib.Object;
-with Glib.Values;       use Glib.Values;
-with GPS.Main_Window; use GPS.Main_Window;
-with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
-with Gtk.Accel_Map;     use Gtk.Accel_Map;
-with Gtk.Button;        use Gtk.Button;
-with Gtk.Dnd;           use Gtk.Dnd;
-with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Handlers;      use Gtk.Handlers;
-with Gtk.Image;         use Gtk.Image;
-with Gtk.Menu;          use Gtk.Menu;
-with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
-with Gtk.Menu_Item;     use Gtk.Menu_Item;
-with Gtk.Object;        use Gtk.Object;
-with Gtk.Selection;     use Gtk.Selection;
-with Gtk.Toolbar;       use Gtk.Toolbar;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtkada.MDI;        use Gtkada.MDI;
-with Projects;          use Projects;
-with String_Utils;      use String_Utils;
-with Traces;            use Traces;
-with GPS.Intl;        use GPS.Intl;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.Macros;   use GPS.Kernel.Macros;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with VFS;               use VFS;
-with File_Utils;        use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with System;            use System;
-with Commands.Interactive; use Commands.Interactive;
+
+with Gdk.Dnd;                   use Gdk.Dnd;
+with Gdk.Event;
+with Gdk.Types;                 use Gdk.Types;
+
+with Glib.Convert;              use Glib.Convert;
+with Glib.Module;               use Glib.Module;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
+
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Dnd;                   use Gtk.Dnd;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Image;                 use Gtk.Image;
+
+--  So that this type is correctly converted from C to Ada
+with Gtk.Image_Menu_Item;       use Gtk.Image_Menu_Item;
+pragma Warnings (Off, Gtk.Image_Menu_Item);
+
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Object;                use Gtk.Object;
+with Gtk.Selection;             use Gtk.Selection;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Widget;                use Gtk.Widget;
+
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Commands.Interactive;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
+with Projects;                  use Projects;
+with String_Utils;              use String_Utils;
+with System;                    use System;
+with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body GPS.Kernel.Modules is
 

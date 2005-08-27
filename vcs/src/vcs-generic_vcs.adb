@@ -19,41 +19,33 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-
-with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
-
+with Commands.Interactive;      use Commands.Interactive;
+with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-
+with Generic_List;
+with Traces;                    use Traces;
+with VCS_Activities;            use VCS_Activities;
+with VCS_Activities_View;       use VCS_Activities_View;
 with VCS_Module;                use VCS_Module;
 with VCS_View_Pkg;              use VCS_View_Pkg;
-with VCS_Activities_View;       use VCS_Activities_View;
-with VCS_Activities;            use VCS_Activities;
-
-with Traces;                    use Traces;
 with VFS;                       use VFS;
-with Basic_Types;               use Basic_Types;
-with Generic_List;
 
 package body VCS.Generic_VCS is
 
@@ -670,7 +662,6 @@ package body VCS.Generic_VCS is
    is
       pragma Unreferenced (Rep);
 
-      use String_List;
       Current_Filename : List_Node := First (Filenames);
       Result           : File_Status_List.List;
       Blank_Status     : File_Status_Record;

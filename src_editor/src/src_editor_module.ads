@@ -20,29 +20,29 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Glib.Object;
-with Glib;               use Glib;
-with Glib.Xml_Int;       use Glib.Xml_Int;
 with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
+
+with Glib.Object;
+with Glib.Xml_Int;       use Glib.Xml_Int;
+with Glib;               use Glib;
+
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
 with Gtk.Widget;         use Gtk.Widget;
+
 with Gtkada.MDI;         use Gtkada.MDI;
 
 with Basic_Types;
 with Commands.Controls;  use Commands.Controls;
-with Generic_List;
-with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Styles;  use GPS.Kernel.Styles;
+with GPS.Kernel;         use GPS.Kernel;
+with Generic_List;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
-
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VFS;                use VFS;
 
 package Src_Editor_Module is

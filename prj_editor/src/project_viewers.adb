@@ -18,12 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;      use Ada.Characters.Handling;
+with Ada.Exceptions;               use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
+with GNAT.Case_Util;               use GNAT.Case_Util;
+with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
+
 with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
+
 with Gtk.Arguments;                use Gtk.Arguments;
 with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
@@ -45,51 +54,43 @@ with Gtk.Tree_View;                use Gtk.Tree_View;
 with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
 with Gtk.Widget;                   use Gtk.Widget;
 with Gtk.Window;                   use Gtk.Window;
+
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with System;
-
-with Basic_Types;              use Basic_Types;
-with File_Utils;               use File_Utils;
-with Prj;
-with Projects.Editor;          use Projects, Projects.Editor;
-with Projects.Registry;        use Projects.Registry;
-with Creation_Wizard.Selector; use Creation_Wizard.Selector;
+with Basic_Types;                  use Basic_Types;
+with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Location_View;        use GPS.Location_View;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;               use GPS.Intl;
-with Switches_Editors;         use Switches_Editors;
-with Naming_Editors;           use Naming_Editors;
-with Language_Handlers;        use Language_Handlers;
-with Language_Handlers.GPS;  use Language_Handlers.GPS;
-with Switches_Editors;         use Switches_Editors;
-with Traces;                   use Traces;
-with Variable_Editors;         use Variable_Editors;
-with Project_Properties;       use Project_Properties;
-with GUI_Utils;                use GUI_Utils;
-with String_Utils;             use String_Utils;
-with VFS;                      use VFS;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-
-with Types;         use Types;
+with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
+with File_Utils;                   use File_Utils;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Console;           use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Location_View;            use GPS.Location_View;
+with GUI_Utils;                    use GUI_Utils;
+with Language_Handlers.GPS;        use Language_Handlers.GPS;
+with Language_Handlers;            use Language_Handlers;
+with Naming_Editors;               use Naming_Editors;
+with Prj;
+with Project_Properties;           use Project_Properties;
+with Projects.Editor;              use Projects, Projects.Editor;
+with Projects.Registry;            use Projects.Registry;
+with String_Utils;                 use String_Utils;
+with Switches_Editors;             use Switches_Editors;
+with System;
+with Traces;                       use Traces;
+with Types;                        use Types;
+with VFS;                          use VFS;
+with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
 

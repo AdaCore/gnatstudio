@@ -19,18 +19,19 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+
 with Gtk;                       use Gtk;
-with Gtk.Clist;                 use Gtk.Clist;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
-with GVD.Callbacks;             use GVD.Callbacks;
-with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;
+
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
+
+with GVD.Callbacks;             use GVD.Callbacks;
+with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
 
 package body List_Select_Pkg is
 

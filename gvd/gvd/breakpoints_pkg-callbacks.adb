@@ -18,25 +18,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;               use Glib;
+with Ada.Exceptions;     use Ada.Exceptions;
+
+with Gdk.Event;          use Gdk.Event;
+with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
+
 with Glib.Object;        use Glib.Object;
-with GVD.Types;          use GVD.Types;
-with Gtk.Arguments;      use Gtk.Arguments;
+
+with Breakpoints_Editor; use Breakpoints_Editor;
 with Debugger;           use Debugger;
-with GPS.Intl;         use GPS.Intl;
-with Gtk.Combo;          use Gtk.Combo;
+with GPS.Intl;           use GPS.Intl;
 with GUI_Utils;          use GUI_Utils;
 with GVD.Code_Editors;   use GVD.Code_Editors;
 with GVD.Process;        use GVD.Process;
-with Gdk.Event;          use Gdk.Event;
-with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
-with Breakpoints_Editor; use Breakpoints_Editor;
-with Ada.Exceptions;          use Ada.Exceptions;
-with Traces;                  use Traces;
+with GVD.Types;          use GVD.Types;
+with Traces;             use Traces;
 
 package body Breakpoints_Pkg.Callbacks is
-
-   use Gtk.Arguments;
 
    ---------------------------------
    -- On_Breakpoints_Delete_Event --

@@ -18,25 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Radio_Button;       use Gtk.Radio_Button;
-with Glib.Object;            use Glib.Object;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtk.Box;                use Gtk.Box;
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Separator;          use Gtk.Separator;
-
 with Ada.Exceptions;         use Ada.Exceptions;
-with GPS.Intl;               use GPS.Intl;
-with Creation_Wizard.Full;   use Creation_Wizard.Full;
+
+with Glib.Object;            use Glib.Object;
+with Glib;                   use Glib;
+
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Radio_Button;       use Gtk.Radio_Button;
+with Gtk.Separator;          use Gtk.Separator;
+with Gtk.Widget;             use Gtk.Widget;
+
 with Creation_Wizard.Adp;    use Creation_Wizard.Adp;
+with Creation_Wizard.Full;   use Creation_Wizard.Full;
 with Creation_Wizard.Simple; use Creation_Wizard.Simple;
-with GPS.Kernel;             use GPS.Kernel;
+with Creation_Wizard;        use Creation_Wizard;
+with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;             use GPS.Kernel;
 with Traces;                 use Traces;
 with Wizards;                use Wizards;
-with Creation_Wizard;        use Creation_Wizard;
 
 package body Creation_Wizard.Selector is
 

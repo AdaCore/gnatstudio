@@ -20,16 +20,13 @@
 
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
-with GNAT.OS_Lib;                   use GNAT.OS_Lib;
 
 with Commands;                      use Commands;
 with Commands.Generic_Asynchronous;
 with Docgen.Backend;                use Docgen.Backend;
 with Docgen.Work_On_Source;         use Docgen.Work_On_Source;
-with Entities;                      use Entities;
 with Entities.Queries;              use Entities.Queries;
 with GPS.Intl;                      use GPS.Intl;
-with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with OS_Utils;                      use OS_Utils;

@@ -18,19 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with String_Utils;            use String_Utils;
-with Case_Handling;           use Case_Handling;
+
 with Case_Handling.IO;        use Case_Handling.IO;
-with VFS;                     use VFS;
+with Case_Handling;
 with Commands.Interactive;    use Commands, Commands.Interactive;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
+with String_Utils;            use String_Utils;
+with VFS;                     use VFS;
 
 package body Casing_Exceptions is
 

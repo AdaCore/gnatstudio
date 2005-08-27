@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with DB_API; use DB_API;
-
 package body SN.Find_Fns is
 
    Null_Position   : constant String := "000000.000";

@@ -18,33 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
+with Ada.Exceptions;         use Ada.Exceptions;
 
-with Gdk.Event;                use Gdk.Event;
+with Gdk.Event;              use Gdk.Event;
 
-with Gtk.Handlers;             use Gtk.Handlers;
-with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Glib.Object;            use Glib.Object;
+with Glib.Values;            use Glib.Values;
+with Glib;                   use Glib;
 
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Handlers;           use Gtk.Handlers;
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 
+with Gtkada.Handlers;        use Gtkada.Handlers;
+
+with Basic_Types;            use Basic_Types;
+with Config;                 use Config;
 with GPS.Intl;               use GPS.Intl;
-with GVD.Types;                use GVD.Types;
-with Process_Proxies;          use Process_Proxies;
-with Basic_Types;              use Basic_Types;
-with String_Utils;             use String_Utils;
-
-with Traces;                   use Traces;
-with Config;                   use Config;
-with Ada.Exceptions;           use Ada.Exceptions;
+with GVD.Types;              use GVD.Types;
+with Process_Proxies;        use Process_Proxies;
+with String_Utils;           use String_Utils;
+with Traces;                 use Traces;
 
 package body GVD.Call_Stack is
 

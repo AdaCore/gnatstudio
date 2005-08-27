@@ -23,12 +23,12 @@
 --
 --  See language.ads and language-debugger.ads for a complete spec.
 
-with Language.Debugger;
 with Items.Arrays;
+with Language; use Language;
+with Language.Debugger;
 
 package Debugger.Gdb.Cpp is
 
-   use Language;
 
    type Gdb_Cpp_Language is new
      Language.Debugger.Language_Debugger with private;

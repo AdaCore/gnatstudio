@@ -19,36 +19,36 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Text_IO;              use Ada.Text_IO;
-with Ada.Strings.Maps;         use Ada.Strings.Maps;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Maps;         use Ada.Strings.Maps;
+with Ada.Text_IO;              use Ada.Text_IO;
 
-with Gdk.Color;                use Gdk.Color;
-with Gdk.Window;               use Gdk.Window;
 with Glib;                     use Glib;
+with Gdk.Color;                use Gdk.Color;
 with Glib.Properties;          use Glib.Properties;
+
 with Gtk;                      use Gtk;
 with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
-with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
+
 with Gtkada.Canvas;            use Gtkada.Canvas;
+
 with Pango.Font;               use Pango.Font;
 
 with Debugger;                 use Debugger;
-with Memory_View_Pkg;          use Memory_View_Pkg;
-with String_Utils;             use String_Utils;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GUI_Utils;                use GUI_Utils;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with String_Utils;             use String_Utils;
 
 package body GVD.Memory_View is
 

@@ -19,15 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
-
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 
 with Case_Handling;                     use Case_Handling;
-with String_Utils;                      use String_Utils;
-
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
+with String_Utils;                      use String_Utils;
 with VFS;                               use VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
@@ -146,7 +142,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Start_Instruction : File_Cursor := File_Cursor
+      Start_Instruction : constant File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Begin_Mark.all));
       Instruction       : Ada_Instruction;
    begin
@@ -200,7 +196,8 @@ package body Codefix.Text_Manager.Ada_Commands is
          while Current_Extract /= Ada_Lists.Null_Node loop
             declare
                Extract_Temp : Ada_List;
-               Test_Cursor  : File_Cursor := File_Cursor (Current_Cursor);
+               Test_Cursor  : constant File_Cursor :=
+                                File_Cursor (Current_Cursor);
             begin
                if Test_Cursor >=
                  Get_Start (Data (Current_Extract))

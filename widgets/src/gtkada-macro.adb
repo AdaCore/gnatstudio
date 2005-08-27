@@ -41,7 +41,6 @@ with Gtk.Label;         use Gtk.Label;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
-with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;

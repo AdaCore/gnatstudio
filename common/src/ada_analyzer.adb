@@ -18,12 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_Stack;
-with String_Utils;            use String_Utils;
-with Case_Handling;           use Case_Handling;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with Glib.Unicode;            use Glib.Unicode;
+
+with Generic_Stack;
 with Indent_Stack;
+with String_Utils;            use String_Utils;
 
 package body Ada_Analyzer is
 

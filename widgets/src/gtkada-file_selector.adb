@@ -26,49 +26,46 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Regexp;               use GNAT.Regexp;
+with Interfaces.C.Strings;
+with System;
+
+with Gdk;                       use Gdk;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
+
 with Gtk;                       use Gtk;
-with Gdk;                       use Gdk;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Arguments;             use Gtk.Arguments;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Main;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Ctree;                 use Gtk.Ctree;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Main;
 with Gtk.Paned;                 use Gtk.Paned;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with GUI_Utils;                 use GUI_Utils;
 
-with Gtkada.Types;              use Gtkada.Types;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
-with Interfaces.C.Strings;
+with Gtkada.Types;              use Gtkada.Types;
 
 with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
-with Traces;                    use Traces;
-with VFS;                       use VFS;
-
-with GNAT.Regexp;               use GNAT.Regexp;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Unchecked_Deallocation;
-
 with Histories;                 use Histories;
-with System;
+with Traces;                    use Traces;
+with Unchecked_Deallocation;
+with VFS;                       use VFS;
 
 package body Gtkada.File_Selector is
 
@@ -850,10 +847,8 @@ package body Gtkada.File_Selector is
       --  Find out which filter to use.
 
       declare
-         use Filter_List;
-
          S : constant String :=
-           Locale_From_UTF8 (Get_Text (Win.Filter_Combo_Entry));
+               Locale_From_UTF8 (Get_Text (Win.Filter_Combo_Entry));
          C : Filter_List.List_Node := First (Win.Filters);
 
       begin

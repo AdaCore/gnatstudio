@@ -18,19 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Gtk.Main;                  use Gtk.Main;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Traces;                    use Traces;
-with Custom_Module;             use Custom_Module;
-
-with System;
+with Ada.Exceptions;     use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;            use Ada.Exceptions;
+with System;
+
+with Glib;               use Glib;
+
+with Gtk.Main;           use Gtk.Main;
+
+with Custom_Module;      use Custom_Module;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with Traces;             use Traces;
 
 package body Custom_Timeout is
 

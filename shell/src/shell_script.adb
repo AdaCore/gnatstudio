@@ -2080,7 +2080,7 @@ package body Shell_Script is
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class) return Boolean
    is
-      D    : Shell_Callback_Data := Shell_Callback_Data (Args);
+      D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
       A    : constant Action_Record_Access := Lookup_Action
         (Get_Kernel (Args), Subprogram.Action_Name.all);

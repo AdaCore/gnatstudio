@@ -18,30 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk;                   use Gtk;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtkada.Types;          use Gtkada.Types;
-with GVD;                   use GVD;
-with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
-with GVD.Callbacks;         use GVD.Callbacks;
-with GVD_Module;            use GVD_Module;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
-with Basic_Types;           use Basic_Types;
-with GVD.Call_Stack;        use GVD.Call_Stack;
-with GVD.Process;           use GVD.Process;
-with GPS.Intl;              use GPS.Intl;
-pragma Elaborate_All (GPS.Intl);
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.Label;             use Gtk.Label;
+with Interfaces.C;          use Interfaces.C;
+
+with Glib;                  use Glib;
+
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Label;             use Gtk.Label;
 with Gtk.Stock;             use Gtk.Stock;
-with Process_Proxies;       use Process_Proxies;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk;                   use Gtk;
+
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.Types;          use Gtkada.Types;
+
+with Basic_Types;           use Basic_Types;
 with Config;                use Config;
+with GPS.Intl;              use GPS.Intl;
+pragma Elaborate_All (GPS.Intl);
+with GVD.Call_Stack;        use GVD.Call_Stack;
+with GVD.Callbacks;         use GVD.Callbacks;
+with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
+with GVD.Process;           use GVD.Process;
+with GVD;                   use GVD;
+with GVD_Module;            use GVD_Module;
+with Process_Proxies;       use Process_Proxies;
 
 package body GVD.Dialogs is
 

@@ -18,11 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Generic_List;
-with VFS;                use VFS;
-with GPS.Kernel.Project; use GPS.Kernel, GPS.Kernel.Project;
 with Projects.Registry;  use Projects, Projects.Registry;
+with VFS;                use VFS;
 
 package body Docgen is
 

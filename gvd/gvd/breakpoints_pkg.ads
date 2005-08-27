@@ -18,25 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Notebook; use Gtk.Notebook;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.Radio_Button; use Gtk.Radio_Button;
-with Gtk.Alignment; use Gtk.Alignment;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Combo; use Gtk.Combo;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Spin_Button; use Gtk.Spin_Button;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Separator; use Gtk.Separator;
-with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
-with Gtk.Button; use Gtk.Button;
-with Gtk.GEntry; use Gtk.GEntry;
+
+with Glib;                use Glib;
+
+with Gtk.Alignment;       use Gtk.Alignment;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Combo;           use Gtk.Combo;
+with Gtk.Frame;           use Gtk.Frame;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Radio_Button;    use Gtk.Radio_Button;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Tree_View; use Gtk.Tree_View;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Separator;       use Gtk.Separator;
+with Gtk.Spin_Button;     use Gtk.Spin_Button;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
+with Gtk.Window;          use Gtk.Window;
+
 package Breakpoints_Pkg is
 
    --  Breakpoint lists columns

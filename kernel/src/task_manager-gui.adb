@@ -18,42 +18,40 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Exceptions;           use Ada.Exceptions;
+
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Drawable;             use Gdk.Drawable;
-with Gdk.Pixmap;               use Gdk.Pixmap;
-with Gdk.GC;                   use Gdk.GC;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
+
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Image;                use Gtk.Image;
-with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Image;                use Gtk.Image;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Enums;                use Gtk.Enums;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with GPS.Intl;                 use GPS.Intl;
 
+with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
-with Commands;                 use Commands;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
+
 package body Task_Manager.GUI is
 
    ---------------------
