@@ -26,6 +26,7 @@ with "../theme_manager/theme_manager";
 with "../refactoring/refactoring";
 with "../action_editor/action_editor";
 with "../socket/socket";
+with "../views/views";
 
 project GPS is
 
