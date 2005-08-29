@@ -231,16 +231,15 @@ package body Src_Printing is
                   New_Font := SelectObject (PD.DC, New_Font);
 
                   Print_Header (File_Name, Banner_Font, PD.DC);
-
-                  Print_Body (This_Page,
-                              Lines_Per_Page,
-                              Line_Height,
-                              Chars_Per_Line,
-                              Total_Lines,
-                              Offsets,
-                              Buffer,
-                              PD.DC);
-
+                  Print_Body
+                    (This_Page,
+                     Lines_Per_Page,
+                     Line_Height,
+                     Chars_Per_Line,
+                     Total_Lines,
+                     Offsets,
+                     Buffer,
+                     PD.DC);
                   Print_Footer (This_Page + 1, Banner_Font, PD.DC);
 
                   if EndPage (PD.DC) < 0 then
@@ -373,8 +372,9 @@ package body Src_Printing is
             --  and slicing off the trailing linefeed that
             --  appears on every line except the last.
 
-            if Content'Length > 0 and then
-              Content (Content'Last) = LF then
+            if Content'Length > 0
+              and then Content (Content'Last) = LF
+            then
                Content_Length := Content'Length - 1;
             else
                Content_Length := Content'Length;
