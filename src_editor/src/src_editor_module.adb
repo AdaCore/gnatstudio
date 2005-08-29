@@ -18,14 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
