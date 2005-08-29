@@ -599,8 +599,7 @@ package body Commands.Custom is
 
    begin
       if Show_Task_Manager = "" then
-         Show_TM := Default_Show_In_Task_Manager
-           or Progress_Regexp /= "";
+         Show_TM := Default_Show_In_Task_Manager or else Progress_Regexp /= "";
       end if;
 
       if Show_Command = "" then
