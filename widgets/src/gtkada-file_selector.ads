@@ -113,9 +113,9 @@ package Gtkada.File_Selector is
    --  as the filter name. As for File_Pattern it is possible to pass multiple
    --  names (corresponding to each pattern) by separating them with a
    --  semicolon.
-   --  Default_Name is default value entered in the text entry.
+   --  Default_Name is the default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
-   --  selection widget instead of GtkAda based one.
+   --  selection widget instead of one based on GtkAda.
 
    function Select_Directory
      (Title             : String  := "Select a directory";
