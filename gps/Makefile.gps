@@ -67,6 +67,8 @@ BASE_DIR=$(GPS_BASE_DIR)/../refactoring
 include $(BASE_DIR)/Makefile.refactoring
 BASE_DIR=$(GPS_BASE_DIR)/../action_editor
 include $(BASE_DIR)/Makefile.action_editor
+BASE_DIR=$(GPS_BASE_DIR)/../views
+include $(BASE_DIR)/Makefile.views
 
 GPS_SRC_DIRS = $(GPS_BASE_DIR)/src
 SRC_DIRS += $(GPS_SRC_DIRS)
