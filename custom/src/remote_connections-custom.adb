@@ -1317,7 +1317,7 @@ package body Remote_Connections.Custom is
       end Parse_Natural;
 
    begin
-      Trace (Me, "Initialize");
+      Trace (Full_Me, "Initialize");
 
       --  Insert connection in custom connections list
       Connection.Next := Custom_Root;
@@ -1334,7 +1334,7 @@ package body Remote_Connections.Custom is
          return;
       end if;
 
-      Trace (Me, "Initialize name = " & Connection.Name.all);
+      Trace (Full_Me, "Initialize name = " & Connection.Name.all);
       Connection.Description :=
         Get_String (Get_Field (Top, "description"));
 
@@ -1354,7 +1354,7 @@ package body Remote_Connections.Custom is
             Tmp_Connect : Custom_Connection_Access := Custom_Root.Next;
             The_Name    : constant String := To_Lower (Tmp_Str.all);
          begin
-            Trace (Me, "Initialize parent = " & Tmp_Str.all);
+            Trace (Full_Me, "Initialize parent = " & Tmp_Str.all);
 
             while Tmp_Connect /= null loop
                if To_Lower (Get_Protocol (Tmp_Connect)) = The_Name then
@@ -1377,7 +1377,7 @@ package body Remote_Connections.Custom is
             Initialize_Action (Kernel, Node, Cmd);
 
             if Cmd /= null then
-               Trace (Me, "Initialize : " & To_Lower (Cmd_Enum'Image (C)));
+               Trace (Full_Me, "Initialize: " & To_Lower (Cmd_Enum'Image (C)));
                Connection.Commands (C) := Cmd;
             end if;
          end loop;
