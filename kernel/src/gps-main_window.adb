@@ -770,6 +770,16 @@ package body GPS.Main_Window is
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "hide",
+         Class         => MDI_Class,
+         Static_Method => True,
+         HanDler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel, "show",
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
    end Register_Keys;
 
    ------------------------------------
@@ -1030,6 +1040,38 @@ package body GPS.Main_Window is
             end if;
 
             Destroy (Dialog);
+         end;
+      elsif Command = "hide" then
+         declare
+            Iterator : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Child    : MDI_Child;
+         begin
+            loop
+               Child := Get (Iterator);
+
+               exit when Child = null;
+
+               Hide (Get_Toplevel (Get_Widget (Child)));
+               Next (Iterator);
+            end loop;
+
+            Hide (Gtk_Widget (Get_Main_Window (Kernel)));
+         end;
+      elsif Command = "show" then
+         declare
+            Iterator : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Child    : MDI_Child;
+         begin
+            loop
+               Child := Get (Iterator);
+
+               exit when Child = null;
+
+               Show (Get_Toplevel (Get_Widget (Child)));
+               Next (Iterator);
+            end loop;
+
+            Show (Gtk_Widget (Get_Main_Window (Kernel)));
          end;
       end if;
    end Default_Command_Handler;
