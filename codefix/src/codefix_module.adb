@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,11 +19,6 @@
 -----------------------------------------------------------------------
 
 --  This package defines the module for code fixing.
-
-
-
-
-
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
