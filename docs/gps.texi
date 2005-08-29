@@ -6460,6 +6460,12 @@ content is the catenation of the activity file's log plus the activity
 log. If group commit is not activated then the log content for each
 activity file is the file log catenated with the activity log.
 
+@item Query status
+Query the status for all the source files contained in the activity.
+
+@item Update
+Update all the source files contained in the activity.
+
 @item Compare against head revision
 Show a visual comparison between the local activity files and the most recent
 version of those files in the repository.
