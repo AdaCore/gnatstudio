@@ -14428,7 +14428,7 @@ sources to reproduce it if possible/needed, and/or a scenario describing the
 actions performed to reproduce the problem, as well as the tools (e.g
 @i{debugger}, @i{compiler}, @i{call graph}) involved.
 
-The files @file{$HOME/.gps/log} and @file{$HOME/.gps/debugger.log} may also
+The files @file{$HOME/.gps/log} may also
 bring some useful information when reporting a bug.
 
 In case GPS generates a bug box, the log file will be kept under a separate
