@@ -1070,7 +1070,7 @@ package body GVD_Module is
               Parent            => Gtk_Window (Top),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
-              File_Pattern      => "*.*",
+              File_Pattern      => "*",
               Pattern_Name      => -"All files",
               History           => Get_History (Kernel));
       begin
@@ -2129,8 +2129,8 @@ package body GVD_Module is
          S : Virtual_File :=
            Select_File
              (Title             => -"Select File to Debug",
-              File_Pattern      => "*" & Exec_Suffix,
-              Pattern_Name      => -"Executable files",
+              File_Pattern      => "*" & Exec_Suffix & ";*",
+              Pattern_Name      => -"Executable files;All files",
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
@@ -2197,8 +2197,8 @@ package body GVD_Module is
          S : constant Virtual_File :=
            Select_File
              (Title             => -"Select Core File",
-              File_Pattern      => "core*",
-              Pattern_Name      => -"Core files",
+              File_Pattern      => "core*;*",
+              Pattern_Name      => -"Core files;All files",
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
