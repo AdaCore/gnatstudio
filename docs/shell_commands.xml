@@ -3466,6 +3466,9 @@ If file is not specified, the current editor is returned, ie the last one that h
       <description>Return the current location of the cursor in this view</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorView.close_all">
+      <description>This static command closes all the editor views</description>
+  </shell_doc>
 
   <!--#################################################################
     ####   Menu class
