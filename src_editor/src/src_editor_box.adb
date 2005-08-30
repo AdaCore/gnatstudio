@@ -1737,9 +1737,8 @@ package body Src_Editor_Box is
                     Use_Native_Dialog =>
                       Get_Pref (Use_Native_Dialogs),
                     Kind              => Save_File,
-                    File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-                    Pattern_Name      =>
-                      -"All files;GNAT Ada default;C/C++ files",
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
                     History           => Get_History (Editor.Kernel));
 
             begin
