@@ -2607,6 +2607,15 @@ This function adds a widget inside the MDI of GPS. The resulting window can then
       <see_also name="GPS.MDI"/>
   </shell_doc>
 
+  <shell_doc name="GPS.MDI.hide">
+      <description>Hides the graphical interface of GPS.</description>
+  </shell_doc>
+  
+  <shell_doc name="GPS.MDI.show">
+      <description>Shows the graphical interface of GPS.</description>
+  </shell_doc>
+
+  
   <!--#################################################################
     ####   MDIWindow class
     ###################################################################-->
