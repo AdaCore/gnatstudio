@@ -270,6 +270,11 @@ It isn't recommended to do any direct graphical action before this hook has been
      <description>Hook called when a new debugger has been started</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ debugger_terminated">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when the debugger session has been terminated</description>
+  </shell_doc>  
+
   <shell_doc name="@hook@ marker_added_to_history">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when a new marker is added to the history list of previous locations, where the user can navigate back and forward</description>
