@@ -1147,8 +1147,8 @@ package body Switches_Editors is
          Default_Name      => Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Kind              => Open_File,
-         File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-         Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+         File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+         Pattern_Name      => -"All files;Ada files;C/C++ files",
          Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
    begin
       if File /= VFS.No_File then
