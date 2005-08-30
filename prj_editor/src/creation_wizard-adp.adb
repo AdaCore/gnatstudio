@@ -171,6 +171,7 @@ package body Creation_Wizard.Adp is
       Name : constant VFS.Virtual_File := Select_File
         (Use_Native_Dialog  => Get_Pref (Use_Native_Dialogs),
          File_Pattern       => "*.adp",
+         Pattern_Name       => -"Glide project files",
          Parent             => Gtk_Window (Get_Toplevel (Widget)),
          Kind               => Open_File);
    begin
