@@ -70,8 +70,8 @@ package body Vdiff2_Module.Callback is
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
-           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
@@ -89,8 +89,8 @@ package body Vdiff2_Module.Callback is
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
-              File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-              Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
@@ -108,9 +108,8 @@ package body Vdiff2_Module.Callback is
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
-                 File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-                 Pattern_Name      =>
-                   -"All files;GNAT Ada default;C/C++ files",
+                 File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                 Pattern_Name      => -"All files;Ada files;C/C++ files",
                  History           => Get_History (Kernel));
          begin
             if File3 = VFS.No_File then
@@ -141,8 +140,8 @@ package body Vdiff2_Module.Callback is
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
-           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
@@ -160,8 +159,8 @@ package body Vdiff2_Module.Callback is
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
-              File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-              Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
 
       begin
@@ -193,8 +192,8 @@ package body Vdiff2_Module.Callback is
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
-           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
@@ -212,8 +211,8 @@ package body Vdiff2_Module.Callback is
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
-              File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-              Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
 
       begin
@@ -229,9 +228,8 @@ package body Vdiff2_Module.Callback is
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
-                 File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-                 Pattern_Name      =>
-                   -"All files;GNAT Ada default;C/C++ files",
+                 File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                 Pattern_Name      => -"All files;Ada files;C/C++ files",
                  History           => Get_History (Kernel));
 
          begin
@@ -250,9 +248,8 @@ package body Vdiff2_Module.Callback is
                     Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                     Kind              => Open_File,
-                    File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-                    Pattern_Name      =>
-                      -"All files;GNAT Ada default;C/C++ files",
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
                     History           => Get_History (Kernel));
 
             begin
@@ -283,8 +280,8 @@ package body Vdiff2_Module.Callback is
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
            Kind              => Open_File,
-           File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-           Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
@@ -302,8 +299,8 @@ package body Vdiff2_Module.Callback is
               Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
               Kind              => Open_File,
-              File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-              Pattern_Name      => -"All files;GNAT Ada default;C/C++ files",
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
               History           => Get_History (Kernel));
 
       begin
@@ -321,9 +318,8 @@ package body Vdiff2_Module.Callback is
                  Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
                  Kind              => Open_File,
-                 File_Pattern      => "*.*;{*.ads,*.adb};{*.c,*.h,*.cpp}",
-                 Pattern_Name      =>
-                   -"All files;GNAT Ada default;C/C++ files",
+                 File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                 Pattern_Name      => -"All files;Ada files;C/C++ files",
                  History           => Get_History (Kernel));
 
          begin
