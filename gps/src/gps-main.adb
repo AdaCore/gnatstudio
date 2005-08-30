@@ -1207,6 +1207,11 @@ procedure GPS.Main is
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
 
+      --  ??? Temporary added this statement, see E830-020
+      if Active (Python_Trace) then
+         Python_Module.Initialize_IO;
+      end if;
+
       GPS.Location_View.Register_Commands (GPS_Main.Kernel);
 
       --  We then must register the keymanager, so that other modules can
