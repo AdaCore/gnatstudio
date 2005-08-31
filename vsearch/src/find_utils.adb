@@ -151,6 +151,7 @@ package body Find_Utils is
          End_Pos   : Integer) return String;
       --  Return a version of the string that highlights the pattern between
       --  Start_Pos and End_Pos, using pango markup language.
+      --  Start_Pos and End_Pos should be valid indexes in Line.
 
       procedure Re_Search;
       --  Handle the search for a regular expression
@@ -167,12 +168,11 @@ package body Find_Utils is
          Start_Pos : Integer;
          End_Pos   : Integer) return String is
       begin
-         return Escape_Text (Line (Line'First .. Line'First + Start_Pos - 2))
+         return Escape_Text (Line (Line'First .. Start_Pos - 1))
            & "<span foreground=""red"">" &
-         Escape_Text (Line (Line'First + Start_Pos - 1
-                            .. Line'First + End_Pos - 2))
+         Escape_Text (Line (Start_Pos .. End_Pos - 1))
            & "</span>" &
-         Escape_Text (Line (Line'First + End_Pos - 1 .. Line'Last));
+         Escape_Text (Line (End_Pos .. Line'Last));
       end Pretty_Print_Line;
 
       ---------------
@@ -215,8 +215,7 @@ package body Find_Utils is
                Line    : constant String :=
                  Pretty_Print_Line
                    (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
-                    Pos - Last_Line_Start + 1,
-                    Pos - Last_Line_Start + 1 + End_Col - Ref_Column);
+                    Pos, Pos + End_Col - Ref_Column);
             begin
                if not Callback (Match_Result'
                  (Length     => Line'Length,
@@ -274,9 +273,9 @@ package body Find_Utils is
                declare
                   Line : constant String :=
                     Pretty_Print_Line
-                      (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
-                       Pos - Last_Line_Start + 1,
-                       Pos - Last_Line_Start + 1 + Context.Look_For'Length);
+                      (Buffer (Last_Line_Start .. End_Of_Line
+                           (Buffer, Pos + Context.Look_For'Length)),
+                       Pos, Pos + Context.Look_For'Length);
                begin
                   if not Callback (Match_Result'
                     (Length     => Line'Length,
