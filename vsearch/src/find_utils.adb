@@ -150,7 +150,7 @@ package body Find_Utils is
          Start_Pos : Integer;
          End_Pos   : Integer) return String;
       --  Return a version of the string that highlights the pattern between
-      --  Start_Pos and End_Pos, using pango markup language.
+      --  Start_Pos and End_Pos, using the pango markup language.
       --  Start_Pos and End_Pos should be valid indexes in Line.
 
       procedure Re_Search;
