@@ -165,6 +165,7 @@ package body Buffer_Views is
    procedure Destroy (Module : in out Buffer_View_Module_Record) is
    begin
       Module.View := null;
+      Buffer_View_Module := null;
    end Destroy;
 
    ------------------------
@@ -362,7 +363,7 @@ package body Buffer_Views is
                 Find_MDI_Child_By_Tag
                   (Get_MDI (Kernel), Buffer_View_Record'Tag);
    begin
-      if Child /= null and then M.View /= null then
+      if Child /= null and then M /= null and then M.View /= null then
          declare
             Model : constant Gtk_Tree_Store :=
                       Gtk_Tree_Store (Get_Model (M.View.Tree));
