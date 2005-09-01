@@ -811,6 +811,15 @@ package body ALI_Parser is
       if Kind /= Instantiation_Reference then
          Current_Sfile := Xref.Table (Current_Ref).File_Num;
 
+         --  Check to avoid the constraint error (index check failed)
+         --  reported under E829-005 that is triggered when GPS
+         --  earlier than 3.1.0w is used with a GNAT wavefront that
+         --  includes implentation for E708-001.
+
+         if Current_Sfile not in Sfiles'Range then
+            return;
+         end if;
+
          Location := (File   => Sfiles (Current_Sfile).File,
                       Line   => Integer (Xref.Table (Current_Ref).Line),
                       Column => Column_Type (Xref.Table (Current_Ref).Col));
@@ -872,6 +881,11 @@ package body ALI_Parser is
             Add_Reference (Entity, Location, Kind, Inst);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected error while parsing "
+                & Full_Name (Get_LI_Filename (LI)).all & ": "
+                & Exception_Information (E));
    end Process_Entity_Ref;
 
    ------------------------
