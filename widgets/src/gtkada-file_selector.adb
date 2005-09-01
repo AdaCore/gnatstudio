@@ -629,7 +629,6 @@ package body Gtkada.File_Selector is
       File_Selector.Selected_File := Selected_File'Unchecked_Access;
 
       Gtk.Main.Main;
-      Destroy (File_Selector);
 
       return Selected_File;
    end Select_Directory;
