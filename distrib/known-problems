@@ -52,6 +52,13 @@ Known Problems fixed in GPS 3.1.0
               line.
   Workaround: Use the menu Edit->Paste or its associated key binding
 
+- E523-021 Bad block highlighting on accept statement
+  Problem:    GPS will incorrectly display the current block for an accept
+              statement, starting at the 'do' keyword instead of starting
+              at the 'accept' keyword
+  Workaround: This is only a visual glitch that can be ignored. Indentation
+              will not be affected.
+
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
               an error message is displayed in the debugger console such as:
