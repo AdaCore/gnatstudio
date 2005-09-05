@@ -26,6 +26,7 @@ package Indent_Stack is
       Level       : Integer;
       Align_Arrow : Natural;
       --  The column on which to align arrow delimiters
+      Line        : Natural;
    end record;
 
    package Stack is new Generic_Stack (Indent_Type);

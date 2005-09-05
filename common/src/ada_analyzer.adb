@@ -2763,14 +2763,22 @@ package body Ada_Analyzer is
                              and then Num_Parens = 1
                              and then Find_Multi_Line_Paren (P + 1) = 0)
                   then
-                     Push (Indents, (P - Start_Of_Line + Padding + 1, Align));
+                     Push
+                       (Indents,
+                        (P - Start_Of_Line + Padding + 1, Align, Line_Count));
                   else
                      if Top (Indents).Level = None then
-                        Push (Indents, (Num_Spaces + Adjust, Align));
-                     elsif Prev_Prev_Token = Tok_Left_Paren then
-                        Push (Indents, (Top (Indents).Level, Align));
+                        Push
+                          (Indents, (Num_Spaces + Adjust, Align, Line_Count));
+                     elsif Prev_Prev_Token = Tok_Left_Paren
+                       or else Top (Indents).Line = Line_Count
+                     then
+                        Push
+                          (Indents, (Top (Indents).Level, Align, Line_Count));
                      else
-                        Push (Indents, (Top (Indents).Level + Adjust, Align));
+                        Push
+                          (Indents,
+                           (Top (Indents).Level + Adjust, Align, Line_Count));
                      end if;
                   end if;
 
@@ -3203,7 +3211,7 @@ package body Ada_Analyzer is
       Push (Tokens, Default_Extended);
 
       --  Push a dummy indentation so that stack will never be empty.
-      Push (Indents, (None, 0));
+      Push (Indents, (None, 0, 0));
 
       Next_Word (Prec, Terminated);
 
