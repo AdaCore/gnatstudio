@@ -723,8 +723,8 @@ package body Src_Editor_Module.Shell is
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), Current_File (Context)),
-               Match.Line,
-               Match.Column));
+               Match.Begin_Line,
+               Match.Begin_Column));
          return True;
       end Callback;
 
@@ -802,8 +802,8 @@ package body Src_Editor_Module.Shell is
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), File),
-               Match.Line,
-               Match.Column));
+               Match.Begin_Line,
+               Match.Begin_Column));
          return True;
       end Callback;
 
