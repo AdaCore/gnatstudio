@@ -149,7 +149,8 @@ package Find_Utils is
    --  for constant strings.
 
    type Match_Result (Length : Natural) is record
-      Index, Line, Column, End_Column : Natural;
+      Index, Begin_Line, Begin_Column, End_Line, End_Column : Natural;
+      Pattern_Length : Natural;
       Text : String (1 .. Length);
    end record;
    --  The result of a match. This is a discriminated type so that we don't
@@ -340,7 +341,7 @@ private
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
-   No_Result : constant Match_Result := (0, 0, 0, 0, 0, "");
+   No_Result : constant Match_Result := (0, 0, 0, 0, 0, 0, 0, "");
 
    No_Search : constant Search_Module_Data :=
      (Length            => 0,
