@@ -2752,13 +2752,17 @@ package body Ada_Analyzer is
                   end if;
 
                   --  Indent on the left parenthesis for subprogram & type
-                  --  declarations, and for constructs that have no nested
-                  --  parenthesis except on the same line.
+                  --  declarations, for constructs that have no nested
+                  --  parenthesis except on the same line and for arrows+paren
+                  --  as in:
+                  --     X := (Foo => (Y,
+                  --                   Z));
                   --  In other cases (complex subprogram call or expressions),
                   --  indent as for continuation lines.
 
                   if Subprogram_Decl
                     or else Top_Token.Token = Tok_Type
+                    or else Prev_Prev_Token = Tok_Arrow
                     or else (Format
                              and then Num_Parens = 1
                              and then Find_Multi_Line_Paren (P + 1) = 0)
