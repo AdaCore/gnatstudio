@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E831-001 Replace does not work on multiple-line searches
+  Problem:    When using Search/Replace on a multiple-line search pattern, the
+              "Replace" button does not cause the selected match to be
+              overwritten.
+  Workaround: Replace manually, using copy-paste for example.
+
 - E822-004 Bad indentation of arrows in case of nested parentheses
   Problem:    When using the "align association on arrows" preference and
               indenting a complex expression with multiple parentheses, GPS
@@ -16,7 +22,7 @@ Known Problems fixed in GPS 3.1.0
   Problem:    When saving files, GPS ignores the preference in Character Set
               and saves to the local character set.
   Workaround: Set the environment variable CHARSET to your preferred character
-              set (for example UTF-8) 
+              set (for example UTF-8)
 
 - E708-004 Find Referemces... dialog returning unexpected references
   Problem:    The Find References... contextual menu opens a contextual menu
