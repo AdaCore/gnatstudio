@@ -36,6 +36,7 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -570,8 +571,8 @@ package body Src_Contexts is
          Open_File_Editor
            (Kernel,
             File_Name,
-            To_Positive (Match.Line), To_Positive (Match.Column),
-            To_Positive (Match.End_Column),
+            To_Positive (Match.Begin_Line), To_Positive (Match.Begin_Column),
+            To_Positive (Match.Begin_Column) + Match.Pattern_Length,
             Focus => Give_Focus);
          Push_Current_Editor_Location_In_History (Kernel);
 
@@ -581,9 +582,9 @@ package body Src_Contexts is
             Category  => -"Search for: " & Look_For,
             File      => File_Name,
             Text      => Match.Text,
-            Line      => To_Positive (Match.Line),
-            Column    => To_Positive (Match.Column),
-            Length    => Match.End_Column - Match.Column,
+            Line      => To_Positive (Match.Begin_Line),
+            Column    => To_Positive (Match.Begin_Column),
+            Length    => Match.Pattern_Length,
             Highlight => True,
             Highlight_Category => Search_Results_Style,
             Has_Markups        => True);
@@ -638,8 +639,8 @@ package body Src_Contexts is
          --  current position, we can stop there. Else, if we have passed the
          --  current position but don't have any match yet, we have to return
          --  the last match.
-         if Match.Line > Integer (Current_Line)
-           or else (Match.Line = Integer (Current_Line)
+         if Match.Begin_Line > Integer (Current_Line)
+           or else (Match.Begin_Line = Integer (Current_Line)
                     and then Match.End_Column >= Current_Column)
          then
             if not Continue_Till_End
@@ -1164,12 +1165,32 @@ package body Src_Contexts is
       Column : Natural;
       Line   : Editable_Line_Type;
 
+      Selection_Start : Gtk_Text_Iter;
+      Selection_End   : Gtk_Text_Iter;
+      Dummy           : Boolean;
+
    begin
       Assert (Me, not Context.All_Occurrences,
               "All occurences not supported for current_file_context");
 
       Lang := Get_Language_From_File (Handler, Get_Filename (Editor));
-      Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
+
+      Get_Selection_Bounds
+        (Get_Buffer (Editor), Selection_Start, Selection_End, Dummy);
+
+      if Search_Backward then
+         Get_Iter_Position (Get_Buffer (Editor), Selection_End, Line, Column);
+      else
+         Get_Iter_Position
+           (Get_Buffer (Editor), Selection_Start, Line, Column);
+
+         if not Equal (Selection_Start, Selection_End) then
+            Forward_Char (Selection_Start, Dummy);
+
+            Get_Iter_Position
+              (Get_Buffer (Editor), Selection_Start, Line, Column);
+         end if;
+      end if;
 
       --  If we had a previous selection, and it had a null length, move the
       --  cursor forward, otherwise we would keep hitting the same match. Of
@@ -1202,9 +1223,10 @@ package body Src_Contexts is
          Result         => Match);
 
       if Match /= null then
-         Context.Begin_Line   := Editable_Line_Type (Match.Line);
-         Context.Begin_Column := Match.Column;
-         Context.End_Line     := Editable_Line_Type (Match.Line);
+         Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+         Context.Begin_Column := Match.Begin_Column;
+
+         Context.End_Line     := Editable_Line_Type (Match.End_Line);
          Context.End_Column   := Match.End_Column;
 
          Unchecked_Free (Match);
@@ -1414,9 +1436,9 @@ package body Src_Contexts is
                Force_Read    => Kernel = null);
 
             if Match /= null then
-               Context.Begin_Line   := Editable_Line_Type (Match.Line);
-               Context.Begin_Column := Match.Column;
-               Context.End_Line     := Editable_Line_Type (Match.Line);
+               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+               Context.Begin_Column := Match.Begin_Column;
+               Context.End_Line     := Editable_Line_Type (Match.End_Line);
                Context.End_Column   := Match.End_Column;
                Tmp := Callback (Match.all);
                Unchecked_Free (Match);
@@ -1457,9 +1479,9 @@ package body Src_Contexts is
                Force_Read    => Kernel = null);
 
             if Match /= null then
-               Context.Begin_Line   := Editable_Line_Type (Match.Line);
-               Context.Begin_Column := Match.Column;
-               Context.End_Line     := Editable_Line_Type (Match.Line);
+               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+               Context.Begin_Column := Match.Begin_Column;
+               Context.End_Line     := Editable_Line_Type (Match.End_Line);
                Context.End_Column   := Match.End_Column;
                Tmp := Callback (Match.all);
                Unchecked_Free (Match);
@@ -1640,9 +1662,9 @@ package body Src_Contexts is
                for M in reverse Matches'Range loop
                   Replace_Slice
                     (Editor,
-                     Matches (M).Line,
-                     Matches (M).Column,
-                     Matches (M).Line,
+                     Matches (M).Begin_Line,
+                     Matches (M).Begin_Column,
+                     Matches (M).End_Line,
                      Matches (M).End_Column,
                      Replace_String);
                end loop;
@@ -1673,8 +1695,7 @@ package body Src_Contexts is
 
                      for M in Matches'First + 1 .. Matches'Last loop
                         Len := Matches (M - 1).Index
-                          + Matches (M - 1).End_Column
-                          - Matches (M - 1).Column;
+                          + Matches (M - 1).Pattern_Length;
                         Len := Write
                           (FD, Buffer (Len)'Address, Matches (M).Index - Len);
                         Len := Write (FD, Replace_String'Address,
@@ -1682,8 +1703,7 @@ package body Src_Contexts is
                      end loop;
 
                      Len := Matches (Matches'Last).Index
-                       + Matches (Matches'Last).End_Column
-                       - Matches (Matches'Last).Column;
+                       + Matches (Matches'Last).Pattern_Length;
                      Len := Write
                        (FD, Buffer (Len)'Address, Buffer'Last - Len + 1);
                      Close (FD);
