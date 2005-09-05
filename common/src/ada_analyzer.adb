@@ -1523,7 +1523,7 @@ package body Ada_Analyzer is
                      Constructs.Current.Category := Cat_Case_Statement;
                   when Tok_Select =>
                      Constructs.Current.Category := Cat_Select_Statement;
-                  when Tok_Do =>
+                  when Tok_Accept | Tok_Do =>
                      Constructs.Current.Category := Cat_Accept_Statement;
                   when Tok_Declare =>
                      Constructs.Current.Category := Cat_Declare_Block;
@@ -1660,7 +1660,8 @@ package body Ada_Analyzer is
          elsif Prev_Token /= Tok_End and then
            (Reserved = Tok_If
              or else Reserved = Tok_For
-             or else Reserved = Tok_While)
+             or else Reserved = Tok_While
+             or else Reserved = Tok_Accept)
          then
             Push (Tokens, Temp);
 
@@ -1925,9 +1926,11 @@ package body Ada_Analyzer is
             --  begin    <--
             --     ...
 
-            if Reserved = Tok_Select
-              or else Reserved = Tok_Do
-            then
+            if Reserved = Tok_Do and then Top_Token.Token = Tok_Accept then
+               Top_Token.Token := Tok_Do;
+            end if;
+
+            if Reserved = Tok_Select then
                Push (Tokens, Temp);
 
             elsif Top_Token.Token = Tok_If
@@ -3055,6 +3058,7 @@ package body Ada_Analyzer is
                           or else Top_Token.Token = Tok_Use
                           or else Top_Token.Token = Tok_Identifier
                           or else Top_Token.Token = Tok_Type
+                          or else Top_Token.Token = Tok_Accept
                         then
                            Pop (Tokens);
                         end if;
