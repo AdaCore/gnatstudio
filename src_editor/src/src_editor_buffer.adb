@@ -2247,7 +2247,7 @@ package body Src_Editor_Buffer is
             or else Lang_Context.New_Line_Comment_Start_Regexp /= null),
          "Is_In_Comment not supported for multi-line comments");
 
-      Get_Cursor_Position (Buffer, Iter, Line, Column);
+      Get_Iter_Position (Buffer, Iter, Line, Column);
 
       declare
          S_Line : constant String :=
@@ -3110,7 +3110,7 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Iter);
    end Get_Cursor_Position;
 
-   procedure Get_Cursor_Position
+   procedure Get_Iter_Position
      (Buffer : Source_Buffer;
       Iter   : Gtk_Text_Iter;
       Line   : out Editable_Line_Type;
@@ -3126,7 +3126,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Column := Positive (Get_Line_Offset (Iter) + 1);
-   end Get_Cursor_Position;
+   end Get_Iter_Position;
 
    -------------------------
    -- Get_Cursor_Position --
@@ -3151,7 +3151,7 @@ package body Src_Editor_Buffer is
       Iter : Gtk_Text_Iter;
    begin
       Get_Cursor_Position (Buffer, Iter);
-      Get_Cursor_Position (Source_Buffer (Buffer), Iter, Line, Column);
+      Get_Iter_Position (Source_Buffer (Buffer), Iter, Line, Column);
    end Get_Cursor_Position;
 
    -------------------------
