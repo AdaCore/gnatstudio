@@ -338,7 +338,7 @@ package body Src_Editor_Buffer.Text_Handling is
          end if;
       end if;
 
-      Get_Cursor_Position (Source_Buffer (Buffer), W_End, Line, Column);
+      Get_Iter_Position (Source_Buffer (Buffer), W_End, Line, Column);
 
       Copy (W_End, W_Start);
 
