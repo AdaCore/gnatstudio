@@ -179,6 +179,13 @@ package Src_Editor_Buffer is
    --  Return the cursor position corresponding to Iter, after expanding all
    --  the tabs.
 
+   procedure Get_Iter_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Editable_Line_Type;
+      Column : out Positive);
+   --  Return the current editable cursor position for Iter
+
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;
       Line   : out Gint;
@@ -689,13 +696,6 @@ package Src_Editor_Buffer is
    --  Return the command queue associated to Buffer.
 
 private
-
-   procedure Get_Cursor_Position
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Line   : out Editable_Line_Type;
-      Column : out Positive);
-   --  Return the current editable cursor position for Iter
 
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
