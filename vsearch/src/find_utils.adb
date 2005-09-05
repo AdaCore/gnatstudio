@@ -168,6 +168,14 @@ package body Find_Utils is
          Start_Pos : Integer;
          End_Pos   : Integer) return String is
       begin
+         if Line = "" then
+            return "";
+         end if;
+
+         if End_Pos < Start_Pos then
+            return Escape_Text (Line);
+         end if;
+
          return Escape_Text (Line (Line'First .. Start_Pos - 1))
            & "<span foreground=""red"">" &
          Escape_Text (Line (Start_Pos .. End_Pos - 1))
@@ -211,19 +219,45 @@ package body Find_Utils is
                End_Col : constant Natural := Ref_Column +
                     Integer (UTF8_Strlen
                       (Buffer (Context.Sub_Matches (0).First ..
-                                 Context.Sub_Matches (0).Last)));
+                          Context.Sub_Matches (0).Last)));
+
+               Line_End : constant Natural := End_Of_Line (Buffer, Pos);
+
                Line    : constant String :=
                  Pretty_Print_Line
-                   (Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)),
-                    Pos, Pos + End_Col - Ref_Column);
+                   (Buffer (Last_Line_Start .. Line_End),
+                    Pos, Natural'Min (Pos + End_Col - Ref_Column, Line_End));
+
+               End_Line   : Natural := 0;
+               End_Column : Natural := 0;
+               Dummy      : Natural := 0;
             begin
+               To_Line_Column
+                 (Buffer (Ref_Index .. Buffer'Last),
+                  Pos + End_Col - Ref_Column,
+                  End_Line, End_Column, Dummy);
+
+               --  For efficiency reasons, we calculate the line/column of the
+               --  end position from the start position. The lines below
+               --  perform the adjustment to find the real position.
+
+               if End_Line = 0 then
+                  End_Line := Ref_Line;
+                  End_Column := Ref_Column + End_Column;
+               else
+                  End_Line := End_Line + Ref_Line;
+               end if;
+
                if not Callback (Match_Result'
-                 (Length     => Line'Length,
-                  Index      => Pos,
-                  Line       => Ref_Line,
-                  Column     => Ref_Column,
-                  End_Column => End_Col,
-                  Text       => Line))
+                   (Length         => Line'Length,
+                    Pattern_Length => End_Of_Line (Buffer, Pos) + 1 -
+                      Last_Line_Start,
+                    Index          => Pos,
+                    Begin_Line     => Ref_Line,
+                    End_Line       => End_Line,
+                    Begin_Column   => Ref_Column,
+                    End_Column     => End_Column,
+                    Text           => Line))
                then
                   Was_Partial := True;
                   return;
@@ -271,19 +305,43 @@ package body Find_Utils is
                Ref_Index := Pos;
 
                declare
+                  Line_End_Pos : constant Natural := End_Of_Line
+                    (Buffer, Pos + Context.Look_For'Length);
+
                   Line : constant String :=
                     Pretty_Print_Line
-                      (Buffer (Last_Line_Start .. End_Of_Line
-                           (Buffer, Pos + Context.Look_For'Length)),
+                      (Buffer (Last_Line_Start .. Line_End_Pos),
                        Pos, Pos + Context.Look_For'Length);
+
+                  End_Line   : Natural := 0;
+                  End_Column : Natural := 0;
+                  Dummy      : Natural := 0;
                begin
+                  To_Line_Column
+                    (Buffer (Ref_Index .. Buffer'Last),
+                     Pos + Context.Look_For'Length,
+                     End_Line, End_Column, Dummy);
+
+                  --  For efficiency reasons, we calculate the line/column of
+                  --  the end position from the start position. The lines
+                  --  below perform the adjustment to find the real position.
+
+                  if End_Line = 0 then
+                     End_Line := Ref_Line;
+                     End_Column := Ref_Column + End_Column;
+                  else
+                     End_Line := End_Line + Ref_Line;
+                  end if;
+
                   if not Callback (Match_Result'
-                    (Length     => Line'Length,
-                     Index      => Pos,
-                     Line       => Ref_Line,
-                     Column     => Ref_Column,
-                     End_Column => Ref_Column + Context.Look_For'Length,
-                     Text       => Line))
+                      (Length         => Line'Length,
+                       Pattern_Length => Context.Look_For'Length,
+                       Index          => Pos,
+                       Begin_Line     => Ref_Line,
+                       End_Line       => End_Line,
+                       Begin_Column   => Ref_Column,
+                       End_Column     => End_Column,
+                       Text           => Line))
                   then
                      Was_Partial := True;
                      return;
@@ -567,15 +625,15 @@ package body Find_Utils is
 
       function Callback (Match : Match_Result) return Boolean is
          Line_Diff : constant Integer :=
-           abs (Match.Line - Line) - abs (Best_Line - Line);
+           abs (Match.Begin_Line - Line) - abs (Best_Line - Line);
          Col_Diff : constant Integer :=
-           abs (Match.Column - Column) - abs (Best_Column - Column);
+           abs (Match.Begin_Column - Column) - abs (Best_Column - Column);
       begin
          if Line_Diff < 0
            or else (Line_Diff = 0 and then Col_Diff < 0)
          then
-            Best_Line := Match.Line;
-            Best_Column := Match.Column;
+            Best_Line := Match.Begin_Line;
+            Best_Column := Match.Begin_Column;
          end if;
 
          return True;
