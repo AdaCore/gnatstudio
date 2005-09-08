@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,7 @@ package Line_Sweep is
    function Intersections_Count
      (X1, Y1, X2, Y2 : Integer_Array) return Integer;
    --  Return the number of intersections between edges.
-   --  The four parameters must have the same. Edges go from (X1, Y1) to
+   --  The four parameters must have the same range. Edges go from (X1, Y1) to
    --  (X2, Y2) for any given index.
 
 end Line_Sweep;
