@@ -633,12 +633,16 @@ package body VFS is
    -- Write_File --
    ----------------
 
-   function Write_File (File : Virtual_File) return Writable_File is
+   function Write_File
+     (File   : Virtual_File;
+      Append : Boolean := False) return Writable_File
+   is
       Tmp : GNAT.OS_Lib.String_Access;
       Fd  : File_Descriptor;
    begin
       if File.Value = null then
          return Invalid_File;
+
       elsif File.Value.Connection /= null then
          declare
             Current_Dir : constant String := Get_Current_Dir;
@@ -651,7 +655,12 @@ package body VFS is
             Change_Dir (Current_Dir);
          end;
       else
-         Fd := Create_File (Locale_Full_Name (File), Binary);
+         if Append and then Is_Regular_File (Locale_Full_Name (File)) then
+            Fd := Open_Read_Write (Locale_Full_Name (File), Binary);
+            Lseek (Fd, 0, Seek_End);
+         else
+            Fd := Create_File (Locale_Full_Name (File), Binary);
+         end if;
       end if;
 
       if Fd = Invalid_FD then

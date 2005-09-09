@@ -230,10 +230,13 @@ package VFS is
    Invalid_File : constant Writable_File;
    --  Used when a file couldn't be open.
 
-   function Write_File (File : Virtual_File) return Writable_File;
+   function Write_File
+     (File   : Virtual_File;
+      Append : Boolean := False) return Writable_File;
    --  Open File for writing. The returned handler can be used for writting.
    --  You must close it, otherwise the file will not actually be written in
-   --  some cases
+   --  some cases. If Append is True then writting will be done at the end of
+   --  the file if the file exists otherwise the file is created.
    --  Return Invalid_File is the file couldn't be open for writing
 
    procedure Write
