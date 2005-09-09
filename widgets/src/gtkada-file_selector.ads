@@ -60,7 +60,6 @@
 --
 --  </description>
 
-
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Gdk.Color;           use Gdk.Color;
@@ -142,7 +141,7 @@ package Gtkada.File_Selector is
    type File_Selector_Window_Record is new Gtk_Dialog_Record with private;
    type File_Selector_Window_Access is
      access all File_Selector_Window_Record'Class;
-   --  A file selector window.
+   --  A file selector window
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
@@ -261,7 +260,7 @@ package Gtkada.File_Selector is
       Dialog_Title         : String;
       Show_Files           : Boolean := True;
       History              : Histories.History);
-   --  Internal initialization function.
+   --  Internal initialization function
 
 private
 

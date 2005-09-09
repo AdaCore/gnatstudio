@@ -78,7 +78,6 @@
 --     __run_hook__general
 --  function, exported by Ada.
 
-
 with GPS.Kernel.Scripts;
 with Glib.Object;
 
@@ -198,9 +197,9 @@ package GPS.Kernel.Hooks is
    --  run is the first argument of the Callback_Data.
 
    procedure Register_Hook
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name        : String;
-      Type_Name   : String := "");
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Type_Name : String := "");
    --  Register a new hook in the kernel.
    --  Type_Name described the type of parameters for that hook. This should be
    --  the same value as given to Create_Hook_Type. The default value indicates
@@ -348,6 +347,6 @@ package GPS.Kernel.Hooks is
       Name     : String;
       Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
-   --  Same as above except stops as soon as a function returns False.
+   --  Same as above except stops as soon as a function returns False
 
 end GPS.Kernel.Hooks;
