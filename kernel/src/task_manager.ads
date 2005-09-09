@@ -95,7 +95,7 @@ private
    procedure Run
      (Manager : Task_Manager_Access;
       Active  : Boolean);
-   --  Runs the task manager, if it is not already running.
+   --  Runs the task manager, if it is not already running
 
    type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
 
@@ -105,10 +105,10 @@ private
       Queue    : Command_Queues.List;
 
       Total    : Integer := 0;
-      --  The total number of items inserted so far in Queue.
+      --  The total number of items inserted so far in Queue
 
       Done     : Integer := 0;
-      --  The number of items done in queue.
+      --  The number of items done in queue
 
       Id       : String_Access;
 
@@ -140,10 +140,10 @@ private
       Queues               : Task_Queue_Array_Access;
 
       Passive_Index        : Integer := 0;
-      --  Index of the first passive queue in Queues.
+      --  Index of the first passive queue in Queues
 
       Running_Active       : Boolean := False;
-      --  Whether the active loop is running.
+      --  Whether the active loop is running
 
       Running_Passive      : Boolean := False;
 
@@ -152,7 +152,7 @@ private
 
       Need_Global_Refresh  : Boolean := True;
 
-      --  Graphical elements.
+      --  Graphical elements
 
       GUI                  : Gtk_Widget       := null;
       Progress_Area        : Gtk.Box.Gtk_Hbox := null;
@@ -162,7 +162,7 @@ private
       --  or the menu not created.
 
       Push_Command, Pop_Command : Command_Access;
-      --  Commands used to push/pop the "busy" state.
+      --  Commands used to push/pop the "busy" state
    end record;
 
 end Task_Manager;

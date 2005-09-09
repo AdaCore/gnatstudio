@@ -247,7 +247,7 @@ package body Creation_Wizard is
       Page   : Project_Wizard_Page)
    is
       P : constant Name_And_Location_Page_Access :=
-        Name_And_Location_Page_Access (Page);
+            Name_And_Location_Page_Access (Page);
       Name : constant VFS.Virtual_File := Select_Directory
         (Title          => -"Select project file location",
          Parent         => Gtk_Window (Get_Toplevel (Widget)),

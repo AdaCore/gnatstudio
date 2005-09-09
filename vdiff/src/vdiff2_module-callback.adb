@@ -345,7 +345,7 @@ package body Vdiff2_Module.Callback is
       return Boolean
    is
       pragma Unreferenced (Kernel);
-      D : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
+      D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
    begin
       if D.Orig_File = VFS.No_File then

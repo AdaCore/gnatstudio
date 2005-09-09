@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ generic
    type Data_Type (<>) is private;
 
    with procedure Free (Data : in out Data_Type) is <>;
-   --  Free memory allocated to Data.
+   --  Free memory allocated to Data
 
 package Commands.Generic_Asynchronous is
 
@@ -50,15 +50,15 @@ package Commands.Generic_Asynchronous is
       Iterate     : Iteration_Procedure);
 
    procedure Free (D : in out Generic_Asynchronous_Command);
-   --  Free memory associated to D.
+   --  Free memory associated to D
 
    function Execute
      (Command : access Generic_Asynchronous_Command)
       return Command_Return_Type;
-   --  Execute Command. Will fail if Command has not been created using Create.
+   --  Execute Command. Will fail if Command has not been created using Create
 
    function Name (Command : access Generic_Asynchronous_Command) return String;
-   --  Return the name of the command.
+   --  Return the name of the command
 
 private
 

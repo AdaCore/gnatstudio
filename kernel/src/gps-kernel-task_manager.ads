@@ -53,7 +53,7 @@ package GPS.Kernel.Task_Manager is
    --  Do nothing if there is no such queue.
 
    procedure Interrupt_Latest_Task
-     (Kernel  : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Interrupt the last command that was started in the task manager
 
    procedure Register_Module
