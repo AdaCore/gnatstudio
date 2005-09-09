@@ -18,14 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
+
 with Gtk.Window;           use Gtk.Window;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Clist;            use Gtk.Clist;
 with Gtk.Button;           use Gtk.Button;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 with GPS.Kernel;
-with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 package Make_Suite_Window_Pkg is
 
