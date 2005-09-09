@@ -261,7 +261,7 @@ package body VCS.ClearCase is
       L_Temp  : List_Node := First (List);
 
       Current_File : constant Virtual_File :=
-        Create (Full_Filename => String_List.Head (Head));
+                       Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
         (Full_Filename =>
            Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
@@ -1711,6 +1711,23 @@ package body VCS.ClearCase is
          ClearCase_Identifier);
    end Diff;
 
+   ----------------
+   -- Diff_Patch --
+   ----------------
+
+   procedure Diff_Patch
+     (Rep    : access ClearCase_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File)
+   is
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      pragma Unreferenced (Rep, File, Output);
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Diff_Patch;
+
    --------------------
    -- Diff_Base_Head --
    --------------------
@@ -1876,6 +1893,7 @@ package body VCS.ClearCase is
          History_Revision   => null,
          Annotate           => new String'(-"Annotate"),
          Diff_Head          => new String'(-"Diff against head rev."),
+         Diff_Patch         => null,
          Diff_Working       => null,
          Diff_Base_Head     => null,
          Diff               => new String'(-"Diff against specific rev."),
