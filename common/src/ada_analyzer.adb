@@ -1821,7 +1821,12 @@ package body Ada_Analyzer is
          then
             Indent_Function_Return (Prec);
 
-         elsif Reserved = Tok_End or else Reserved = Tok_Elsif then
+         elsif Reserved = Tok_End
+           or else Reserved = Tok_Elsif
+           or else (Reserved = Tok_Null
+                    and then Prev_Token = Tok_Is
+                    and then Top_Token.Token = Tok_Procedure)
+         then
             --  unindent after end of elsif, e.g:
             --
             --  if xxx then
