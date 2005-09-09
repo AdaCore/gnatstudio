@@ -18,7 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Enums;
@@ -32,6 +36,9 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
@@ -89,9 +96,38 @@ package body VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
-   ----------------------------
+   procedure On_Menu_Build_Patch_File
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   --  Action to open a file
+
+   type Edit_Action_Command_Type is new Root_Command with record
+      Kernel : Kernel_Handle;
+      File   : Virtual_File;
+   end record;
+   type Edit_Action_Command_Access is access Edit_Action_Command_Type;
+
+   function Execute
+     (Command : access Edit_Action_Command_Type) return Command_Return_Type;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Edit_Action_Command_Type) return Command_Return_Type
+   is
+      Filename : aliased String := Full_Name (Command.File).all;
+   begin
+      Execute_GPS_Shell_Command
+        (Command.Kernel, "Editor.edit", (1 => Filename'Unchecked_Access));
+      return Success;
+   end Execute;
+
+   ---------------------------------
    -- On_Menu_Toggle_Group_Commit --
-   ----------------------------
+   ---------------------------------
 
    procedure On_Menu_Toggle_Group_Commit
      (Widget  : access GObject_Record'Class;
@@ -251,12 +287,12 @@ package body VCS_Activities_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context      : constant Activity_Context_Access :=
-                         Activity_Context_Access (Context);
-      Activity       : constant Activity_Id :=
-                         Value (Activity_Information (A_Context));
-      Files          : String_List.List;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      A_Context : constant Activity_Context_Access :=
+                    Activity_Context_Access (Context);
+      Activity  : constant Activity_Id :=
+                    Value (Activity_Information (A_Context));
+      Files     : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
 
@@ -282,12 +318,12 @@ package body VCS_Activities_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
-      A_Context      : constant Activity_Context_Access :=
-                         Activity_Context_Access (Context);
-      Activity       : constant Activity_Id :=
-                         Value (Activity_Information (A_Context));
-      Files          : String_List.List;
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      A_Context : constant Activity_Context_Access :=
+                    Activity_Context_Access (Context);
+      Activity  : constant Activity_Id :=
+                    Value (Activity_Information (A_Context));
+      Files     : String_List.List;
    begin
       Files := Get_Files_In_Activity (Activity);
 
@@ -483,6 +519,121 @@ package body VCS_Activities_View_API is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
 
+   ------------------------------
+   -- On_Menu_Build_Patch_File --
+   ------------------------------
+
+   procedure On_Menu_Build_Patch_File
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      procedure Append_Indent (Str : String);
+      --  Append Str into the patch file content, add Tab before each new line
+
+      Tab       : constant String := "        ";
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      A_Context : constant Activity_Context_Access :=
+                    Activity_Context_Access (Context);
+      Activity  : constant Activity_Id :=
+                    Value (Activity_Information (A_Context));
+      VCS       : constant VCS_Access :=
+                    Get_VCS_For_Activity (Kernel, Activity);
+      Files     : constant String_List.List :=
+                    Get_Files_In_Activity (Activity);
+      Filename  : constant String := Image (Activity) & ".dif";
+      File      : Virtual_File;
+      W_File    : Writable_File;
+      Content   : Unbounded_String;
+      Iter      : String_List.List_Node;
+
+      Edit_File : Edit_Action_Command_Access;
+
+      ------------
+      -- Indent --
+      ------------
+
+      procedure Append_Indent (Str : String) is
+      begin
+         if Str'Length = 0 then
+            return;
+         end if;
+
+         if Str (Str'First) /= ASCII.LF then
+            Append (Content, Tab);
+         end if;
+
+         for K in Str'Range loop
+            Append (Content, Str (K));
+
+            if Str (K) = ASCII.LF then
+               Append (Content, Tab);
+            end if;
+         end loop;
+         Append (Content, ASCII.LF);
+      end Append_Indent;
+
+   begin
+      File := Create (Filename);
+      W_File := Write_File (File);
+
+      --  Add activity name and log
+
+      Append (Content, ASCII.LF);
+      Append (Content,
+              "This is a patch file for a GPS activity." & ASCII.LF);
+      Append (Content,
+              "It has been generated on " & Image (Clock, ISO_Date) &
+              '.' & ASCII.LF & ASCII.LF);
+      Append (Content,
+              "Activity : " & Get_Name (Activity) & ASCII.LF & ASCII.LF);
+
+      Append_Indent (Get_Log (Kernel, Activity));
+
+      --  Add file logs
+
+      Iter := String_List.First (Files);
+
+      for K in 1 .. String_List.Length (Files) loop
+         declare
+            use type String_List.List_Node;
+            File : constant Virtual_File := Create (String_List.Data (Iter));
+         begin
+            Append (Content, Tab & "* " & Base_Name (File) & ASCII.LF);
+            Append_Indent (Get_Log (Kernel, File));
+            Append (Content, ASCII.LF);
+            Iter := String_List.Next (Iter);
+         end;
+      end loop;
+
+      Write (W_File, To_String (Content));
+      Close (W_File);
+
+      --  For each file we get the diff
+
+      Iter := String_List.First (Files);
+
+      for K in 1 .. String_List.Length (Files) loop
+         Diff_Patch (VCS, Create (String_List.Data (Iter)), File);
+         Iter := String_List.Next (Iter);
+      end loop;
+
+      --  Add the last command that will open the file containing the patch
+
+      Edit_File := new Edit_Action_Command_Type;
+      Edit_File.Kernel := Kernel;
+      Edit_File.File := File;
+
+      Launch_Background_Command
+        (Kernel, Edit_File, True, True, Name (VCS));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Build_Patch_File;
+
    -------------------
    -- Open_Explorer --
    -------------------
@@ -661,6 +812,12 @@ package body VCS_Activities_View_API is
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate", On_Menu_Diff_Activity'Access, Context);
+         Set_Sensitive (Item, True);
+
+         Gtk_New (Item, Label => -"Build patch file");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, "activate", On_Menu_Build_Patch_File'Access, Context);
          Set_Sensitive (Item, True);
       end if;
 
