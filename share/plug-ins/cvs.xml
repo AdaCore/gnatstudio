@@ -154,6 +154,15 @@
 
    <!-- CVS diff -->
 
+   <action name="generic_cvs_diff_patch" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for $1 ..."</shell>
+      <external>cvs -f diff -c -rHEAD "$2"</external>
+
+      <on-failure>
+        <shell>dump_file "%1" "$1" FALSE</shell>
+      </on-failure>
+   </action>
+
    <action name="generic_cvs_diff_head" show-command="true" output="none">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external>cvs -f diff -rHEAD "$1"</external>
@@ -272,6 +281,7 @@
       <add_no_commit      action="generic_cvs_add_no_commit"  label="Add/No commit"/>
       <remove             action="generic_cvs_remove"         label="Remove"/>
       <revert             action="generic_cvs_revert"         label="Revert"/>
+      <diff_patch         action="generic_cvs_diff_patch"     label="Compare against head revision for building a patch file"/>
       <diff_head          action="generic_cvs_diff_head"      label="Compare against head revision"/>
       <diff_base_head     action="generic_cvs_diff_base_head" label="Compare base against head"/>
       <diff               action="generic_cvs_diff"           label="Compare against other revision"/>
