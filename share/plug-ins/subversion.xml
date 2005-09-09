@@ -163,6 +163,12 @@
 
    <!-- SVN diff -->
 
+   <action name="generic_svn_diff_patch" show-command="true" output="none">
+      <shell output="">echo "Getting comparison for $1 ..."</shell>
+      <external>svn --non-interactive diff --diff-cmd diff -x -c -rHEAD "$2"</external>
+      <shell>dump_file "%1" "$1" FALSE</shell>
+   </action>
+
    <action name="generic_svn_diff_head" show-command="true" output="none">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
       <external>svn --non-interactive diff --diff-cmd diff -x --normal -rHEAD "$1"</external>
@@ -251,6 +257,7 @@
       <add_no_commit      action="generic_svn_add_no_commit"  label="Add/No commit"/>
       <remove             action="generic_svn_remove"         label="Remove"/>
       <revert             action="generic_svn_revert"         label="Revert"/>
+      <diff_patch         action="generic_svn_diff_patch"     label="Compare against head revision for building a patch file"/>
       <diff_head          action="generic_svn_diff_head"      label="Compare against head revision"/>
       <diff_base_head     action="generic_svn_diff_base_head" label="Compare base against head"/>
       <diff               action="generic_svn_diff"           label="Compare against other revision"/>

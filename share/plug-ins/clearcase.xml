@@ -79,6 +79,14 @@
 
    <!-- ClearCase diff -->
 
+   <action name="clearcase_diff_patch" show-command="true" output="none">
+      <external>cleartool diff -diff_format  "${1}@@/main/LATEST" "$2"</external>
+
+      <on-failure>
+        <shell>dump_file "%1" "$1" FALSE</shell>
+      </on-failure>
+   </action>
+
    <action name="clearcase_diff_head" show-command="true" output="none">
       <external>cleartool diff -diff_format  "${1}@@/main/LATEST" "$1"</external>
 
@@ -181,6 +189,7 @@
       <add_no_commit    action="clearcase_add_no_commit"  label="Add/No commit"/>
       <remove           action="clearcase_remove"         label="Remove"/>
       <revert           action="clearcase_uncheckout"     label="Cancel checkout"/>
+      <diff_patch       action="clearcase_diff_patch"     label="Compare against head revision for building a patch file"/>
       <diff_head        action="clearcase_diff_head"      label="Compare against latest"/>
       <diff             action="clearcase_diff"           label="Compare against other rev."/>
 
