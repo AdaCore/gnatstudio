@@ -25,11 +25,13 @@ with GNAT.OS_Lib;           use GNAT;
 with GNAT.Dynamic_Tables;
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 
+with Glib.Xml_Int;          use Glib.Xml_Int;
+
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
 with Projects.Registry;     use Projects.Registry;
 with Traces;                use Traces;
-with Glib.Xml_Int;          use Glib.Xml_Int;
+with VCS.Unknown_VCS;       use VCS.Unknown_VCS;
 with XML_Parsers;
 
 package body VCS_Activities is
@@ -269,7 +271,7 @@ package body VCS_Activities is
       VCS   : VCS_Access := Set.Table (Natural (Activity)).VCS;
       Files : String_List.List;
    begin
-      if VCS = null then
+      if VCS = null or else VCS.all in Unknown_VCS_Record then
          --  It is possible that the VCS is not yet known. This happen just
          --  after loading the activities XML registry. Compute it now, we know
          --  that all current files are using the same VCS otherwise they won't
@@ -286,9 +288,11 @@ package body VCS_Activities is
                              (Get_Registry (Kernel).all, File);
 
             begin
-               VCS := Get_VCS_From_Id
-                 (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
-               Set.Table (Natural (Activity)).VCS := VCS;
+               if Project /= No_Project then
+                  VCS := Get_VCS_From_Id
+                    (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
+                  Set.Table (Natural (Activity)).VCS := VCS;
+               end if;
             end;
          end if;
       end if;
