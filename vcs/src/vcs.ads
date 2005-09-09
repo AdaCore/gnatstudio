@@ -60,6 +60,7 @@ package VCS is
       History,            --  Get the entire revision history for one file
       History_Revision,   --  Get the revision history for specified revision
       Annotate,           --  Get the annotations for one file
+      Diff_Patch,         --  Diff current gainst head for building patch file
       Diff_Head,          --  Diff current against head revision
       Diff_Working,       --  Diff current against working revision
       Diff_Base_Head,     --  Diff base against head revision
@@ -201,7 +202,7 @@ package VCS is
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
-   --  Same as above, but work on directories instead of files.
+   --  Same as above, but work on directories instead of files
 
    function Local_Get_Status
      (Rep       : access VCS_Record;
@@ -293,15 +294,20 @@ package VCS is
    --  This procedure should call GPS.Kernel.Modules.Display_Differences
    --  in order to display a GPS visual diff.
 
+   procedure Diff_Patch
+     (Rep    : access VCS_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File) is abstract;
+
    procedure Diff_Working
      (Rep  : access VCS_Record;
       File : VFS.Virtual_File) is abstract;
-   --  Compare local against working revison of File.
+   --  Compare local against working revison of File
 
    procedure Diff_Base_Head
      (Rep  : access VCS_Record;
       File : VFS.Virtual_File) is abstract;
-   --  Compare base against head revision of File.
+   --  Compare base against head revision of File
 
    procedure Log
      (Rep  : access VCS_Record;
@@ -333,7 +339,7 @@ package VCS is
      (Rep     : access VCS_Record;
       Message : String;
       Add_LF  : Boolean := True);
-   --  Display message in the console.
+   --  Display message in the console
 
    --  ??? missing:
    --  init
@@ -354,7 +360,7 @@ package VCS is
      (Rep  : access VCS_Record;
       File : VFS.Virtual_File;
       Text : String);
-   --  Parse the annotations and fill the editor if needed.
+   --  Parse the annotations and fill the editor if needed
 
    function Get_Identified_Actions
      (Rep : access VCS_Record) return Action_Array;
