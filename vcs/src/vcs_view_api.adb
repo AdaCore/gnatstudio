@@ -112,7 +112,7 @@ package body VCS_View_API is
    function Get_Dirs_In_Project
      (Project   : Project_Type;
       Recursive : Boolean := False) return String_List.List;
-   --  Return the source directories contained in Project.
+   --  Return the source directories contained in Project
 
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
@@ -126,17 +126,17 @@ package body VCS_View_API is
       Recursive  : Boolean;
       Update     : Boolean;
       Get_Status : Boolean);
-   --  Perform VCS operations on directories contained in Context.
+   --  Perform VCS operations on directories contained in Context
 
    procedure On_Log_Action
      (Context : Selection_Context_Access;
       Action  : VCS_Action);
-   --  Generic callback for an action that requires associated logs.
+   --  Generic callback for an action that requires associated logs
 
    procedure Comparison
      (Context : Selection_Context_Access;
       One_Rev : Boolean);
-   --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2.
+   --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2
 
    ---------------------
    -- Get_Current_Ref --
@@ -144,7 +144,7 @@ package body VCS_View_API is
 
    function Get_Current_Ref (Project : Project_Type) return VCS_Access is
    begin
-      --  ??? maybe we could cache this information.
+      --  ??? maybe we could cache this information
       return Get_VCS_From_Id
         (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
    end Get_Current_Ref;
@@ -925,9 +925,9 @@ package body VCS_View_API is
       while not String_List.Is_Empty (List) loop
          declare
             File           : constant Virtual_File :=
-              Create (String_List.Head (List));
+                               Create (String_List.Head (List));
             ChangeLog_File : constant Virtual_File :=
-              Get_ChangeLog_From_File (Kernel, File);
+                               Get_ChangeLog_From_File (Kernel, File);
             Already_Open   : Boolean;
             Line, Column   : Natural;
          begin
@@ -2101,7 +2101,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Files    : String_List.List;
+      Files : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
 
