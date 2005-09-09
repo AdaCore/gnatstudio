@@ -211,6 +211,23 @@ package body VFS_Module is
             Close (Writable);
             Set_Return_Value (Data, Temp_File);
          end;
+
+      elsif Command = "dump_file" then
+         declare
+            Filename : constant String := Nth_Arg (Data, 2);
+            Writable : Writable_File;
+         begin
+            Writable := Write_File (Create (Filename), Append => True);
+
+            if Nth_Arg (Data, 3, Default => False) then
+               Write (Writable, Nth_Arg (Data, 1) & ASCII.LF);
+            else
+               Write (Writable, Nth_Arg (Data, 1));
+            end if;
+
+            Close (Writable);
+            Set_Return_Value (Data, Filename);
+         end;
       end if;
    end VFS_Command_Handler;
 
@@ -305,6 +322,11 @@ package body VFS_Module is
         (Kernel, "dump",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Handler      => VFS_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dump_file",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
          Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
