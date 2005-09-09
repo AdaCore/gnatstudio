@@ -52,14 +52,14 @@ package body VCS.Generic_VCS is
    Me : constant Debug_Handle := Create ("Generic_VCS");
 
    Max_Matches : constant := 64;
-   --  The number of matches in each parsing loop.
+   --  The number of matches in each parsing loop
 
    ----------------------------
    -- Local type definitions --
    ----------------------------
 
    procedure Free (X : in out Generic_VCS_Access);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    package VCS_Info_List is new Generic_List (Generic_VCS_Access);
 
@@ -84,15 +84,15 @@ package body VCS.Generic_VCS is
    use String_List_Utils.String_List;
 
    function Identify_VCS (S : String) return VCS_Access;
-   --  Utility function to identify the Generic VCS from a given string.
+   --  Utility function to identify the Generic VCS from a given string
 
    function Get_Info (Id : String) return Generic_VCS_Access;
-   --  Return the information corresponding to Id.
+   --  Return the information corresponding to Id
 
    function Create_File_Context
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Selection_Context_Access;
-   --  Create a file context corresponding to File.
+   --  Create a file context corresponding to File
 
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
@@ -113,19 +113,19 @@ package body VCS.Generic_VCS is
       First_Args : GNAT.OS_Lib.String_List_Access;
       Dir_Action : VCS_Action;
       Show_Bar   : Boolean := True);
-   --  Same as above, but work on dirs.
+   --  Same as above, but work on dirs
 
    procedure Generic_Command
      (Ref        : access Generic_VCS_Record;
       File       : VFS.Virtual_File;
       First_Args : GNAT.OS_Lib.String_List_Access;
       Action     : VCS_Action);
-   --  Launch a generic command corresponding to Action.
+   --  Launch a generic command corresponding to Action
 
    function Lookup_Action
      (Kernel : Kernel_Handle;
       Action : String_Access) return Action_Record_Access;
-   --  Wrapper for Lookup_Action.
+   --  Wrapper for Lookup_Action
 
    procedure Generic_Parse_Status
      (Rep            : access Generic_VCS_Record;
@@ -140,7 +140,7 @@ package body VCS.Generic_VCS is
    function Describe_Action
      (Ref    : access Generic_VCS_Record;
       Action : VCS_Action) return String;
-   --  Return a description of Action.
+   --  Return a description of Action
 
    -- Parser command --
 
@@ -856,6 +856,24 @@ package body VCS.Generic_VCS is
       end if;
    end Diff;
 
+   ----------------
+   -- Diff_Patch --
+   ----------------
+
+   procedure Diff_Patch
+     (Rep    : access Generic_VCS_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File)
+   is
+      Args : GNAT.OS_Lib.String_List_Access;
+   begin
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Full_Name (Output).all);
+
+      Generic_Command (Rep, File, Args, Diff_Patch);
+      GNAT.Strings.Free (Args);
+   end Diff_Patch;
+
    --------------------
    -- Diff_Base_Head --
    --------------------
@@ -1391,9 +1409,9 @@ package body VCS.Generic_VCS is
    -----------------------
 
    procedure Parse_Annotations
-     (Rep   : access Generic_VCS_Record;
-      File  : VFS.Virtual_File;
-      Text  : String)
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String)
    is
       Kernel  : Kernel_Handle renames Rep.Kernel;
 

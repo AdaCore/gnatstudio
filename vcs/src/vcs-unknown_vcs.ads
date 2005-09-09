@@ -100,13 +100,18 @@ package VCS.Unknown_VCS is
       Version_1 : String := "";
       Version_2 : String := "");
 
+   procedure Diff_Patch
+     (Rep    : access Unknown_VCS_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File);
+
    procedure Diff_Base_Head
-     (Rep       : access Unknown_VCS_Record;
-      File      : VFS.Virtual_File);
+     (Rep  : access Unknown_VCS_Record;
+      File : VFS.Virtual_File);
 
    procedure Diff_Working
-     (Rep       : access Unknown_VCS_Record;
-      File      : VFS.Virtual_File);
+     (Rep  : access Unknown_VCS_Record;
+      File : VFS.Virtual_File);
    procedure Log
      (Rep  : access Unknown_VCS_Record;
       File : VFS.Virtual_File;

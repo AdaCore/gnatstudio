@@ -31,10 +31,10 @@ package body VCS.Unknown_VCS is
    use String_List;
 
    function Identify_VCS (S : String) return VCS_Access;
-   --  Utility function to identify the Unknown VCS from a given string.
+   --  Utility function to identify the Unknown VCS from a given string
 
    procedure Error (File : String);
-   --  Convenience function to display an error message in the console.
+   --  Convenience function to display an error message in the console
 
    -----------
    -- Error --
@@ -87,10 +87,10 @@ package body VCS.Unknown_VCS is
    ----------------
 
    procedure Get_Status
-     (Rep         : access Unknown_VCS_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False)
+     (Rep        : access Unknown_VCS_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False)
    is
       pragma Unreferenced (Rep, Clear_Logs);
    begin
@@ -285,13 +285,27 @@ package body VCS.Unknown_VCS is
       null;
    end Diff;
 
+   ----------------
+   -- Diff_Patch --
+   ----------------
+
+   procedure Diff_Patch
+     (Rep    : access Unknown_VCS_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File)
+   is
+      pragma Unreferenced (Rep, File, Output);
+   begin
+      null;
+   end Diff_Patch;
+
    --------------------
    -- Diff_Base_Head --
    --------------------
 
    procedure Diff_Base_Head
-     (Rep       : access Unknown_VCS_Record;
-      File      : VFS.Virtual_File)
+     (Rep  : access Unknown_VCS_Record;
+      File : VFS.Virtual_File)
    is
       pragma Unreferenced (Rep, File);
    begin
@@ -303,9 +317,9 @@ package body VCS.Unknown_VCS is
    ------------------
 
    procedure Diff_Working
-     (Rep       : access Unknown_VCS_Record;
-      File      : VFS.Virtual_File) is
-
+     (Rep  : access Unknown_VCS_Record;
+      File : VFS.Virtual_File)
+   is
       pragma Unreferenced (Rep, File);
    begin
       null;
