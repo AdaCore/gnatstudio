@@ -18,27 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Object;               use Glib.Object;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtkada.MDI;                use Gtkada.MDI;
 
-with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Main_Window;           use GPS.Main_Window;
 with Task_Manager;              use Task_Manager;
 with Task_Manager.GUI;          use Task_Manager.GUI;
-
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib.Object;               use Glib.Object;
-with Gtkada.MDI;                use Gtkada.MDI;
 with Traces;                    use Traces;
-with Ada.Exceptions;            use Ada.Exceptions;
-with GPS.Intl;                  use GPS.Intl;
 with Commands.Custom;           use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is
@@ -107,12 +107,12 @@ package body GPS.Kernel.Task_Manager is
    is
       pragma Unreferenced (Data);
 
-      Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
-      Dialog    : Gtk_Dialog;
-      Label     : Gtk_Label;
-      Iface     : Task_Manager_Interface;
-      Button    : Gtk_Widget;
-      Response  : Gtk_Response_Type;
+      Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Dialog   : Gtk_Dialog;
+      Label    : Gtk_Label;
+      Iface    : Task_Manager_Interface;
+      Button   : Gtk_Widget;
+      Response : Gtk_Response_Type;
 
       Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
    begin
@@ -344,7 +344,7 @@ package body GPS.Kernel.Task_Manager is
    ---------------------------
 
    procedure Interrupt_Latest_Task
-     (Kernel  : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Interrupt_Latest_Task (Get_Task_Manager (Kernel));
    end Interrupt_Latest_Task;
@@ -369,7 +369,7 @@ package body GPS.Kernel.Task_Manager is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Tools : constant String := "/" & (-"Tools");
+      Tools                     : constant String := "/" & (-"Tools");
       Push_Command, Pop_Command : Custom_Command_Access;
       Script                    : Scripting_Language;
    begin
