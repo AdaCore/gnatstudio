@@ -100,6 +100,11 @@ package VCS.Generic_VCS is
       Version_1 : String := "";
       Version_2 : String := "");
 
+   procedure Diff_Patch
+     (Rep    : access Generic_VCS_Record;
+      File   : VFS.Virtual_File;
+      Output : VFS.Virtual_File);
+
    procedure Diff_Base_Head
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File);
