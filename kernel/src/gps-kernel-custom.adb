@@ -18,23 +18,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with XML_Parsers;
-with Traces;                    use Traces;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
+with System.Assertions;         use System.Assertions;
+
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Traces;                    use Traces;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
 with VFS;                       use VFS;
+with XML_Parsers;
 
 package body GPS.Kernel.Custom is
 
    Me                       : constant Debug_Handle :=
-     Create ("Kernel.Custom");
+                                Create ("Kernel.Custom");
    XML_Extension            : constant String := ".xml";
    GPS_Custom_Path_External : constant String := "GPS_CUSTOM_PATH";
 
@@ -43,6 +45,18 @@ package body GPS.Kernel.Custom is
       Directory : String;
       Level     : Customization_Level);
    --  Parse and process all the XML files in the directory
+
+   ---------------------
+   -- Get_Custom_Path --
+   ---------------------
+
+   function Get_Custom_Path return String is
+      Env_Path : String_Access := Getenv (GPS_Custom_Path_External);
+      Env      : constant String := Env_Path.all;
+   begin
+      Free (Env_Path);
+      return Env;
+   end Get_Custom_Path;
 
    ----------------------------------
    -- Execute_Customization_String --
@@ -57,8 +71,8 @@ package body GPS.Kernel.Custom is
       use type Module_List.List_Node;
       List    : constant Module_List.List := List_Of_Modules (Kernel);
       Current : Module_List.List_Node;
-      Tmp  : Node_Ptr := Node;
-      Tmp2 : Node_Ptr;
+      Tmp     : Node_Ptr := Node;
+      Tmp2    : Node_Ptr;
 
    begin
       --  Parse the nodes in the XML file one after the other, and for each
@@ -155,16 +169,16 @@ package body GPS.Kernel.Custom is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       System_Directory : constant String :=
-        Get_System_Dir (Kernel) & "share/gps/plug-ins/";
+                           Get_System_Dir (Kernel) & "share/gps/plug-ins/";
       User_Directory   : constant String :=
-        Get_Home_Dir (Kernel) & "plug-ins/";
+                           Get_Home_Dir (Kernel) & "plug-ins/";
       Old_User_Dir     : constant String :=
-        Get_Home_Dir (Kernel) & "customize/";
+                           Get_Home_Dir (Kernel) & "customize/";
       Old_System_Dir   : constant String :=
-        Get_System_Dir (Kernel) & "share/gps/customize/";
-      Env_Path     : String_Access := Getenv (GPS_Custom_Path_External);
-      Path         : Path_Iterator;
-      N            : Node_Ptr;
+                           Get_System_Dir (Kernel) & "share/gps/customize/";
+      Env_Path         : String_Access := Getenv (GPS_Custom_Path_External);
+      Path             : Path_Iterator;
+      N                : Node_Ptr;
 
    begin
       Kernel.Custom_Files_Loaded := True;
@@ -225,7 +239,7 @@ package body GPS.Kernel.Custom is
       Start_Line    : Positive := 1) return String
    is
       --  Add a valid prefix and toplevel node, since the string won't
-      --  contain any
+      --  contain any.
 
       Node : Node_Ptr;
       N    : Node_Ptr;
@@ -311,4 +325,3 @@ package body GPS.Kernel.Custom is
    end Add_Customization_String;
 
 end GPS.Kernel.Custom;
-
