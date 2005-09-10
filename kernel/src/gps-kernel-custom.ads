@@ -90,4 +90,7 @@ package GPS.Kernel.Custom is
    --  Send a signal to all registered modules to indicate a new customization
    --  string.
 
+   function Get_Custom_Path return String;
+   --  Returns the custom path as set by GPS_CUSTOM_PATH
+
 end GPS.Kernel.Custom;
