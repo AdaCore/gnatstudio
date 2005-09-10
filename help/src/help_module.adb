@@ -40,6 +40,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
 with OS_Utils;                   use OS_Utils;
 with Ada.Exceptions;             use Ada.Exceptions;
@@ -60,22 +61,25 @@ package body Help_Module is
 
    Me : constant Debug_Handle := Create ("GPS.Kernel.Help");
 
-   Template_Index : constant String := "help_index.html";
-   Index_File     : constant String := "gps_index.xml";
+   Template_Index   : constant String := "help_index.html";
+   Index_File       : constant String := "gps_index.xml";
 
    Help_History_Key : constant History_Key := "help-recent-files";
 
-   Url_Cst    : aliased constant String := "URL";
-   Anchor_Cst : aliased constant String := "anchor";
-   Dir_Cst    : aliased constant String := "directory";
-   Name_Cst   : aliased constant String := "name";
-   Navigation_Cst : aliased constant String := "navigation";
-   Browse_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Url_Cst'Access, 2 => Anchor_Cst'Access, 3 => Navigation_Cst'Access);
+   Url_Cst          : aliased constant String := "URL";
+   Anchor_Cst       : aliased constant String := "anchor";
+   Dir_Cst          : aliased constant String := "directory";
+   Name_Cst         : aliased constant String := "name";
+   Navigation_Cst   : aliased constant String := "navigation";
+
+   Browse_Cmd_Parameters  : constant Cst_Argument_List :=
+                              (1 => Url_Cst'Access,
+                               2 => Anchor_Cst'Access,
+                               3 => Navigation_Cst'Access);
    Add_Doc_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Dir_Cst'Access);
-   Getdoc_Parameters : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
+                              (1 => Dir_Cst'Access);
+   Getdoc_Parameters      : constant Cst_Argument_List :=
+                              (1 => Name_Cst'Access);
 
    type Help_File_Record is record
       File       : VFS.Virtual_File;
@@ -921,11 +925,11 @@ package body Help_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
+      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Name, Descr, Menu, Cat : Node_Ptr;
-      Shell, Shell_Lang : GNAT.OS_Lib.String_Access;
-      Field : Node_Ptr;
-      HTML_File : Virtual_File;
+      Shell, Shell_Lang      : GNAT.OS_Lib.String_Access;
+      Field                  : Node_Ptr;
+      HTML_File              : Virtual_File;
    begin
       if Node.Tag.all = "documentation_file" then
          Name  := null;
@@ -1141,21 +1145,21 @@ package body Help_Module is
    begin
       Help_Module_ID := new Help_Module_ID_Record;
       Register_Module
-        (Module                  => Module_ID (Help_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => Help_Module_Name,
-         Priority                => GPS.Kernel.Modules.Default_Priority - 20);
+        (Module       => Module_ID (Help_Module_ID),
+         Kernel       => Kernel,
+         Module_Name  => Help_Module_Name,
+         Priority     => GPS.Kernel.Modules.Default_Priority - 20);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
 
-      if Path_From_Env = null or else Path_From_Env.all = "" then
+      if Path_From_Env.all = "" then
          Help_Module_ID.Doc_Path := new String'
            (Get_System_Dir (Kernel) & "/doc/gps/html/");
       else
          Help_Module_ID.Doc_Path := new String'
-           (Path_From_Env.all & Path_Separator
-            & Get_System_Dir (Kernel) & "/doc/gps/html/");
+           (Path_From_Env.all & Path_Separator &
+            Get_System_Dir (Kernel) & "/doc/gps/html/");
       end if;
 
       Free (Path_From_Env);
@@ -1233,6 +1237,19 @@ package body Help_Module is
 
       Register_Menu
         (Kernel, Help, -"A_bout", "", On_About'Access);
+
+      if Path_From_Env.all = "" then
+         --  We add the custom path here to make sure that the node parsed by
+         --  the custom module will be able to find the documentation. We have
+         --  not added this path before as we don't wan't to parse the
+         --  documentation node twice.
+
+         Free (Help_Module_ID.Doc_Path);
+
+         Help_Module_ID.Doc_Path := new String'
+           (Get_Custom_Path & Path_Separator &
+            Get_System_Dir (Kernel) & "/doc/gps/html/");
+      end if;
    end Register_Module;
 
 end Help_Module;
