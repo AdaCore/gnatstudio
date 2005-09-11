@@ -492,7 +492,7 @@ package body VCS_Module is
 
       Register_Menu
         (Kernel, "/_" & VCS_Root,
-         Ref_Item => -"Navigate",
+         Ref_Item   => -"Navigate",
          Add_Before => False);
 
       Gtk_New_With_Mnemonic (Mitem, -"_Explorer");
