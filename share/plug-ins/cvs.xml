@@ -155,7 +155,7 @@
    <!-- CVS diff -->
 
    <action name="generic_cvs_diff_patch" show-command="true" output="none">
-      <shell output="">echo "Getting comparison for $1 ..."</shell>
+      <shell output="">echo "Getting comparison for $2 ..."</shell>
       <external>cvs -f diff -c -rHEAD "$2"</external>
 
       <on-failure>
