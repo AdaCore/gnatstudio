@@ -6470,6 +6470,10 @@ Update all the source files contained in the activity.
 Show a visual comparison between the local activity files and the most recent
 version of those files in the repository.
 
+@item Build patch file
+Create a path file (in text format) for the activity. The patch file
+contains the activity log, file's logs and the diff of each file.
+
 @item Edit revision log
 Edit the current revision log for activity. This log is shared with
 all the activity files.
@@ -6619,12 +6623,17 @@ one. The file is committed in the repository.
 @item Add/No commit
 Add a file to the repository, using the current revision log for this
 file. If no revision log exists, activating this menu will create
-one. The file is not commited in the repository.
+one. The file is not committed in the repository.
 
 @item Remove
 Remove a file from the repository, using the current revision log for
 this file. If no revision log exists, activating this menu will create
-one.
+one. The modification is committed in the repository.
+
+@item Remove/No commit
+Remove a file from the repository, using the current revision log for
+this file. If no revision log exists, activating this menu will create
+one. The modification is not committed in the repository.
 
 @item Revert
 Revert a locale file to the repository revision, discarding all local
@@ -13998,12 +14007,27 @@ parameters:
   @end table
   Remove file/dir from the repository, with the provided revision log.
 
+@item remove_no_commit
+  @table @code
+    @item $1 = log
+    @item $2 = file or dir
+  @end table
+  Remove file/dir from the repository, with the provided revision log.
+  The removed files/dirs are not commited.
+
 @item revert
   @table @code
     @item $* = files
   @end table
   Revert the local file to repository revision, cancelling all local
   changes, and close the file for editing if it was open.
+
+@item diff_patch
+  @table @code
+    @item $1 = file
+  @end table
+  Create a textual diff for the given file. This command is used to
+  build the activity patch file.
 
 @item diff_head
   @table @code
