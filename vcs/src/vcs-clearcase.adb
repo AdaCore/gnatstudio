@@ -1114,8 +1114,11 @@ package body VCS.ClearCase is
    procedure Add
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
+      pragma Unreferenced (Commit);
+
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
@@ -1288,126 +1291,6 @@ package body VCS.ClearCase is
       end loop;
    end Add;
 
-   -------------------
-   -- Add_No_Commit --
-   -------------------
-
-   procedure Add_No_Commit
-     (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
-      Log       : String)
-   is
-      Kernel : Kernel_Handle
-        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
-
-      File_Node : List_Node := First (Filenames);
-
-   begin
-      while File_Node /= Null_Node loop
-         declare
-            Args : List;
-            Head : List;
-            File : constant String := Data (File_Node);
-            Dir  : constant String := Dir_Name (Data (File_Node));
-
-            Checkout_Dir_Command : External_Command_Access;
-            Make_Element_Command : External_Command_Access;
-
-            Fail_Message    : Console_Command_Access;
-            Success_Message : Console_Command_Access;
-
-         begin
-            Insert (Kernel,
-                    -"ClearCase: Adding element: "
-                      & File & " ...", Mode => Info);
-
-            --  Create the end of the message
-
-            Create (Fail_Message,
-                    Kernel,
-                    -("ClearCase error: Adding of ") & File & (-" failed."),
-                    False,
-                    True,
-                    Info);
-
-            Create (Success_Message,
-                    Kernel,
-                    ("ClearCase: Adding of ") & File & (-" done."),
-                    False,
-                    True,
-                    Info);
-
-            --  Check out the directory
-
-            Append (Args, "co");
-            Append (Args, "-c");
-            Append (Args, -"Adding " & File);
-            Append (Args, Dir);
-
-            Append (Head, -"ClearCase error: could not checkout " & Dir);
-
-            Create (Checkout_Dir_Command,
-                    Kernel,
-                    Get_Pref (ClearCase_Command),
-                    "",
-                    Args,
-                    Head,
-                    Checkout_Handler'Access,
-                    -"ClearCase: Checking out");
-
-            Free (Args);
-            Free (Head);
-
-            --  Add the file
-
-            Append (Args, "mkelem");
-            Append (Args, "-c");
-            Append (Args, Log);
-            Append (Args, File);
-
-            Append
-              (Head,
-               -"ClearCase error: could not create the repository element "
-                 & File);
-
-            Create (Make_Element_Command,
-                    Kernel,
-                    Get_Pref (ClearCase_Command),
-                    "",
-                    Args,
-                    Head,
-                    Checkout_Handler'Access,
-                    -"ClearCase: Making element");
-
-            Free (Args);
-            Free (Head);
-
-            --  If the directory checkout was successful, create the element
-
-            Add_Consequence_Action
-              (Checkout_Dir_Command,
-               Make_Element_Command);
-
-            Add_Alternate_Action
-              (Checkout_Dir_Command,
-               Fail_Message);
-
-            Add_Consequence_Action
-              (Make_Element_Command,
-               Success_Message);
-
-            Launch_Background_Command
-              (Rep.Kernel,
-               Command_Access (Checkout_Dir_Command),
-               False,
-               True,
-               ClearCase_Identifier);
-         end;
-
-         File_Node := Next (File_Node);
-      end loop;
-   end Add_No_Commit;
-
    ------------
    -- Remove --
    ------------
@@ -1415,8 +1298,11 @@ package body VCS.ClearCase is
    procedure Remove
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
+      pragma Unreferenced (Commit);
+
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
@@ -1899,8 +1785,9 @@ package body VCS.ClearCase is
          Diff               => new String'(-"Diff against specific rev."),
          Diff2              => new String'(-"Diff between two revisions"),
          Add                => new String'(-"Add to repository"),
-         Add_No_Commit      => new String'(-"Add to repository (no commit)"),
+         Add_No_Commit      => null,
          Remove             => new String'(-"Remove from repository"),
+         Remove_No_Commit   => null,
          Revert             => new String'(-"Revert to repository revision"));
    end Register_Module;
 
