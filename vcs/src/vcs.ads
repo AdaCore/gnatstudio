@@ -68,7 +68,8 @@ package VCS is
       Diff2,              --  Diff between two specified revisions
       Add,                --  Add and commit one file or dir to the repository
       Add_No_Commit,      --  Add one file or dir to the repository
-      Remove,             --  Remove one file or dir from repository
+      Remove,             --  Remove and commit one file or dir from repository
+      Remove_No_Commit,   --  Remove one file or dir from repository
       Revert);            --  Revert files or dirs to repository revision
 
    type Action_Array is array (VCS_Action) of String_Access;
@@ -256,22 +257,18 @@ package VCS is
    procedure Add
      (Rep       : access VCS_Record;
       Filenames : String_List.List;
-      Log       : String) is abstract;
-   --  Add and Commit files to the specified VCS repository
-   --  The user must free Filenames.
-
-   procedure Add_No_Commit
-     (Rep       : access VCS_Record;
-      Filenames : String_List.List;
-      Log       : String) is abstract;
-   --  Add files to the specified VCS repository
+      Log       : String;
+      Commit    : Boolean := True) is abstract;
+   --  Add files to the specified VCS repository, commit if Commit is True.
    --  The user must free Filenames.
 
    procedure Remove
      (Rep       : access VCS_Record;
       Filenames : String_List.List;
-      Log       : String) is abstract;
+      Log       : String;
+      Commit    : Boolean := True) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
+   --  Commit the change if Commit is True.
    --  The user must free Filenames.
 
    procedure Revert
