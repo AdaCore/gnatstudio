@@ -659,6 +659,13 @@ package body VCS_Module is
          On_Menu_Remove'Access);
 
       Register_Action_Menu
+        ("Remove no commit",
+         -"Remove the current file from repository, do not commit",
+         -"Remove/No commit",
+         File_Filter,
+         On_Menu_Remove_No_Commit'Access);
+
+      Register_Action_Menu
         ("Revert",
          -"Revert the current file to repository revision",
          -"Revert",
