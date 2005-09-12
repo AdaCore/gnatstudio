@@ -1187,43 +1187,43 @@ package body Help_Module is
 
       Register_Command
         (Kernel,
-         Command      => Constructor_Method,
+         Command => Constructor_Method,
+         Class   => Help_Module_ID.Help_Class,
+         Handler => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "getdoc",
          Class        => Help_Module_ID.Help_Class,
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Handler      => Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command       => "getdoc",
-         Class         => Help_Module_ID.Help_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
-         Handler       => Command_Handler'Access);
+         Command => "reset",
+         Class   => Help_Module_ID.Help_Class,
+         Handler => Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command       => "reset",
-         Class         => Help_Module_ID.Help_Class,
-         Handler       => Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command       => "file",
-         Class         => Help_Module_ID.Help_Class,
-         Handler       => Command_Handler'Access);
+         Command => "file",
+         Class   => Help_Module_ID.Help_Class,
+         Handler => Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "browse",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Help_Module_ID.Html_Class,
+         Command       => "browse",
+         Minimum_Args  => 1,
+         Maximum_Args  => 3,
+         Class         => Help_Module_ID.Html_Class,
          Static_Method => True,
-         Handler      => Command_Handler'Access);
+         Handler       => Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "add_doc_directory",
-         Minimum_Args => Add_Doc_Cmd_Parameters'Length,
-         Maximum_Args => Add_Doc_Cmd_Parameters'Length,
-         Class        => Help_Module_ID.Html_Class,
+         Command       => "add_doc_directory",
+         Minimum_Args  => Add_Doc_Cmd_Parameters'Length,
+         Maximum_Args  => Add_Doc_Cmd_Parameters'Length,
+         Class         => Help_Module_ID.Html_Class,
          Static_Method => True,
-         Handler      => Command_Handler'Access);
+         Handler       => Command_Handler'Access);
 
       Register_Menu
         (Kernel,
