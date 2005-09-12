@@ -53,6 +53,10 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Remove_No_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Revert
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
