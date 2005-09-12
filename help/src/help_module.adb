@@ -1162,8 +1162,6 @@ package body Help_Module is
             Get_System_Dir (Kernel) & "/doc/gps/html/");
       end if;
 
-      Free (Path_From_Env);
-
       --  Add help menus
 
       Register_Menu
@@ -1250,6 +1248,8 @@ package body Help_Module is
            (Get_Custom_Path & Path_Separator &
             Get_System_Dir (Kernel) & "/doc/gps/html/");
       end if;
+
+      Free (Path_From_Env);
    end Register_Module;
 
 end Help_Module;
