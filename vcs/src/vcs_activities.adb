@@ -327,6 +327,7 @@ package body VCS_Activities is
          Item : Activity_Record := Set.Table (K);
       begin
          String_List.Free (Item.Files);
+         Free (Item.Project);
          Free (Item.Name);
          Free (Item.Id);
       end;
