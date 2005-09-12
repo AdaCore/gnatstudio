@@ -30,7 +30,7 @@ package VCS.Unknown_VCS is
    type Unknown_VCS_Access is access all Unknown_VCS_Record'Class;
 
    Unknown_VCS_Reference : VCS_Access;
-   --  ??? Could this global variable be in some module specific information.
+   --  ??? Could this global variable be in some module specific information
 
    function Name (Ref : access Unknown_VCS_Record) return String;
 
@@ -78,17 +78,14 @@ package VCS.Unknown_VCS is
    procedure Add
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
-      Log       : String);
-
-   procedure Add_No_Commit
-     (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
-      Log       : String);
+      Log       : String;
+      Commit    : Boolean := True);
 
    procedure Remove
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
-      Log       : String);
+      Log       : String;
+      Commit    : Boolean := True);
 
    procedure Revert
      (Rep       : access Unknown_VCS_Record;
