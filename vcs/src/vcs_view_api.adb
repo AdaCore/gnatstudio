@@ -295,7 +295,7 @@ package body VCS_View_API is
             if File_S'Length > 5
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
-               --  By default, the log is a "commit" log.
+               --  By default, the log is a "commit" log
                Log_Action := Commit;
 
                declare
@@ -361,6 +361,11 @@ package body VCS_View_API is
                      when Remove =>
                         Context_Callback.Connect
                           (Item, "activate", On_Menu_Remove'Access,
+                           Selection_Context_Access (File_Name));
+
+                     when Remove_No_Commit =>
+                        Context_Callback.Connect
+                          (Item, "activate", On_Menu_Remove_No_Commit'Access,
                            Selection_Context_Access (File_Name));
 
                      when others =>
@@ -436,6 +441,9 @@ package body VCS_View_API is
             Add_Action
               (Add_No_Commit, On_Menu_Add_No_Commit'Access, not Log_Exists);
             Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
+            Add_Action
+              (Remove_No_Commit, On_Menu_Remove_No_Commit'Access,
+               not Log_Exists);
             Add_Action (Revert, On_Menu_Revert'Access);
             Add_Action (Resolved, On_Menu_Resolved'Access);
          end if;
@@ -1371,6 +1379,24 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove;
+
+   ------------------------------
+   -- On_Menu_Remove_No_Commit --
+   ------------------------------
+
+   procedure On_Menu_Remove_No_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      On_Log_Action (Context, Remove_No_Commit);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Remove_No_Commit;
 
    ----------------------
    -- On_Menu_Annotate --
