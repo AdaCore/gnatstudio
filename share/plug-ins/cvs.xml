@@ -112,6 +112,18 @@
       <shell>delete "%2"</shell>
    </action>
 
+   <!-- CVS remove (no commit) -->
+
+   <action name="generic_cvs_remove_no_commit" show-command="true" output="none">
+      <shell output="">echo "removing file(s) $2-"</shell>
+      <shell>delete "$2-"</shell>
+      <external>cvs remove "$2-"</external>
+      <on-failure>
+         <shell output="">echo "CVS error:"</shell>
+         <shell output="">echo "%2"</shell>
+      </on-failure>
+   </action>
+
    <!-- CVS history -->
 
    <action name="generic_cvs_history" show-command="true" output="none">
@@ -268,24 +280,25 @@
    <!-- CVS -->
 
    <vcs name="CVS" absolute_names="FALSE">
-      <status_files       action="generic_cvs_status"         label="Query status"/>
-      <status_dir         action="generic_cvs_status_dir"     label="Query status for directory"/>
-      <local_status_files action="generic_cvs_local_status"   label="Local status"/>
-      <open               action="generic_cvs_open"           label="Open"/>
-      <update             action="generic_cvs_update"         label="Update"/>
-      <commit             action="generic_cvs_commit"         label="Commit"/>
-      <history            action="generic_cvs_history"        label="View entire revision history"/>
-      <history_revision   action="generic_cvs_history_rev"    label="View specific revision history"/>
-      <annotate           action="generic_cvs_annotate"       label="Annotations"/>
-      <add                action="generic_cvs_add"            label="Add"/>
-      <add_no_commit      action="generic_cvs_add_no_commit"  label="Add/No commit"/>
-      <remove             action="generic_cvs_remove"         label="Remove"/>
-      <revert             action="generic_cvs_revert"         label="Revert"/>
-      <diff_patch         action="generic_cvs_diff_patch"     label="Compare against head revision for building a patch file"/>
-      <diff_head          action="generic_cvs_diff_head"      label="Compare against head revision"/>
-      <diff_base_head     action="generic_cvs_diff_base_head" label="Compare base against head"/>
-      <diff               action="generic_cvs_diff"           label="Compare against other revision"/>
-      <diff2              action="generic_cvs_diff2"          label="Compare between two revisions"/>
+      <status_files       action="generic_cvs_status"           label="Query status"/>
+      <status_dir         action="generic_cvs_status_dir"       label="Query status for directory"/>
+      <local_status_files action="generic_cvs_local_status"     label="Local status"/>
+      <open               action="generic_cvs_open"             label="Open"/>
+      <update             action="generic_cvs_update"           label="Update"/>
+      <commit             action="generic_cvs_commit"           label="Commit"/>
+      <history            action="generic_cvs_history"          label="View entire revision history"/>
+      <history_revision   action="generic_cvs_history_rev"      label="View specific revision history"/>
+      <annotate           action="generic_cvs_annotate"         label="Annotations"/>
+      <add                action="generic_cvs_add"              label="Add"/>
+      <add_no_commit      action="generic_cvs_add_no_commit"    label="Add/No commit"/>
+      <remove             action="generic_cvs_remove"           label="Remove"/>
+      <remove_no_commit   action="generic_cvs_remove_no_commit" label="Remove/No commit"/>
+      <revert             action="generic_cvs_revert"           label="Revert"/>
+      <diff_patch         action="generic_cvs_diff_patch"       label="Compare against head revision for building a patch file"/>
+      <diff_head          action="generic_cvs_diff_head"        label="Compare against head revision"/>
+      <diff_base_head     action="generic_cvs_diff_base_head"   label="Compare base against head"/>
+      <diff               action="generic_cvs_diff"             label="Compare against other revision"/>
+      <diff2              action="generic_cvs_diff2"            label="Compare between two revisions"/>
 
       <status label="Up to date" stock="gps-vcs-up-to-date" />
       <status label="Locally modified" stock="gps-vcs-modified" />

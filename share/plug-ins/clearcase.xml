@@ -174,24 +174,35 @@
       <shell>delete "%5"</shell>
    </action>
 
+   <!-- ClearCase Remove (no commit) -->
+
+   <action name="clearcase_remove_no_commit" show-command="true" output="">
+      <shell>dump "$1" TRUE</shell>
+      <external>cleartool co -cfile "%1" .</external>
+      <external>cleartool rm -cfile "%2" "$2"</external>
+      <external>cleartool ci -cfile "%4" .</external>
+      <shell>delete "%4"</shell>
+   </action>
+
    <!-- ClearCase -->
 
    <vcs name="ClearCase Native" absolute_names="FALSE">
-      <status_files     action="clearcase_describe"       label="Describe"/>
-      <local_status_files action="clearcase_local_status" label="ls"/>
-      <open             action="clearcase_checkout"       label="Check out"/>
-      <update           action="clearcase_update"         label="Update"/>
-      <commit           action="clearcase_checkin"        label="Check in"/>
-      <history          action="clearcase_history"        label="View entire revision history"/>
-      <history_revision action="clearcase_history_rev"    label="View specific revision history"/>
-      <annotate         action="clearcase_annotate"       label="Annotations"/>
-      <add              action="clearcase_add"            label="Add"/>
-      <add_no_commit    action="clearcase_add_no_commit"  label="Add/No commit"/>
-      <remove           action="clearcase_remove"         label="Remove"/>
-      <revert           action="clearcase_uncheckout"     label="Cancel checkout"/>
-      <diff_patch       action="clearcase_diff_patch"     label="Compare against head revision for building a patch file"/>
-      <diff_head        action="clearcase_diff_head"      label="Compare against latest"/>
-      <diff             action="clearcase_diff"           label="Compare against other rev."/>
+      <status_files     action="clearcase_describe"         label="Describe"/>
+      <local_status_files action="clearcase_local_status"   label="ls"/>
+      <open             action="clearcase_checkout"         label="Check out"/>
+      <update           action="clearcase_update"           label="Update"/>
+      <commit           action="clearcase_checkin"          label="Check in"/>
+      <history          action="clearcase_history"          label="View entire revision history"/>
+      <history_revision action="clearcase_history_rev"      label="View specific revision history"/>
+      <annotate         action="clearcase_annotate"         label="Annotations"/>
+      <add              action="clearcase_add"              label="Add"/>
+      <add_no_commit    action="clearcase_add_no_commit"    label="Add/No commit"/>
+      <remove           action="clearcase_remove"           label="Remove"/>
+      <remove_no_commit action="clearcase_remove_no_commit" label="Remove/No commit"/>
+      <revert           action="clearcase_uncheckout"       label="Cancel checkout"/>
+      <diff_patch       action="clearcase_diff_patch"       label="Compare against head revision for building a patch file"/>
+      <diff_head        action="clearcase_diff_head"        label="Compare against latest"/>
+      <diff             action="clearcase_diff"             label="Compare against other rev."/>
 
       <status label="Not checked out" stock="gps-vcs-up-to-date" />
       <status label="Checked Out (Reserved)" stock="gps-vcs-modified" />
