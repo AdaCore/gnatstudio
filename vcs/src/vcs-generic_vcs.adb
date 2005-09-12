@@ -755,7 +755,8 @@ package body VCS.Generic_VCS is
    procedure Add
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
       Args : GNAT.OS_Lib.String_List_Access;
 
@@ -763,30 +764,14 @@ package body VCS.Generic_VCS is
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
-      Generic_Command (Rep, Filenames, Args, Add);
+      if Commit then
+         Generic_Command (Rep, Filenames, Args, Add);
+      else
+         Generic_Command (Rep, Filenames, Args, Add_No_Commit);
+      end if;
 
       GNAT.Strings.Free (Args);
    end Add;
-
-   -------------------
-   -- Add_No_Commit --
-   -------------------
-
-   procedure Add_No_Commit
-     (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
-      Log       : String)
-   is
-      Args : GNAT.OS_Lib.String_List_Access;
-
-   begin
-      Args := new GNAT.OS_Lib.String_List (1 .. 1);
-      Args (1) := new String'(Log);
-
-      Generic_Command (Rep, Filenames, Args, Add_No_Commit);
-
-      GNAT.Strings.Free (Args);
-   end Add_No_Commit;
 
    ------------
    -- Remove --
@@ -795,7 +780,8 @@ package body VCS.Generic_VCS is
    procedure Remove
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
       Args : GNAT.OS_Lib.String_List_Access;
 
@@ -803,7 +789,11 @@ package body VCS.Generic_VCS is
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Log);
 
-      Generic_Command (Rep, Filenames, Args, Remove);
+      if Commit then
+         Generic_Command (Rep, Filenames, Args, Remove);
+      else
+         Generic_Command (Rep, Filenames, Args, Remove_No_Commit);
+      end if;
 
       GNAT.Strings.Free (Args);
    end Remove;

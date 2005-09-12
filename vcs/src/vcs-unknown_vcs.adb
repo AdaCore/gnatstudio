@@ -212,30 +212,15 @@ package body VCS.Unknown_VCS is
    procedure Add
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
-      pragma Unreferenced (Rep, Log);
+      pragma Unreferenced (Rep, Log, Commit);
    begin
       if Filenames /= Null_List then
          Error (Head (Filenames));
       end if;
    end Add;
-
-   -------------------
-   -- Add_No_Commit --
-   -------------------
-
-   procedure Add_No_Commit
-     (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
-      Log       : String)
-   is
-      pragma Unreferenced (Rep, Log);
-   begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
-      end if;
-   end Add_No_Commit;
 
    ------------
    -- Remove --
@@ -244,9 +229,10 @@ package body VCS.Unknown_VCS is
    procedure Remove
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
-      Log       : String)
+      Log       : String;
+      Commit    : Boolean := True)
    is
-      pragma Unreferenced (Rep, Log);
+      pragma Unreferenced (Rep, Log, Commit);
    begin
       if Filenames /= Null_List then
          Error (Head (Filenames));
