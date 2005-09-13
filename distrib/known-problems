@@ -5,6 +5,14 @@ Known Problems fixed in GPS 3.1.0
               GPS will incorrectly add an extra level of indentation
   Workaround: Fix the indentation by hand, or avoid this construct
 
+- E908-004 Mouse button unresponsive on "File changed on disk" dialog
+  Problem:    Under some circumstances, when files are changed on the disk,
+              when switching editors by clicking on their notebook tabs, the
+              buttons on the "File changed on disk" dialog do not respond to
+              mouse click.
+  Workaround: Use the keyboard to activate the buttons (Tab to select, Enter
+              to activate).
+
 - E831-001 Replace does not work on multiple-line searches
   Problem:    When using Search/Replace on a multiple-line search pattern, the
               "Replace" button does not cause the selected match to be
