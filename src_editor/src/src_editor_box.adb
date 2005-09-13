@@ -25,6 +25,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
+with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Object;               use Glib.Object;
@@ -962,6 +963,16 @@ package body Src_Editor_Box is
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
+      --  If we are currently holding down the mouse button, then we do not
+      --  want to offer to reload the file, since the pop-up dialog will
+      --  not be able to get the mouse input. Therefore we do nothing in
+      --  this idle callback, but keep it registered so that the timestamp
+      --  is checked after the button release.
+
+      if Pointer_Is_Grabbed then
+         return True;
+      end if;
+
       B.Check_Timestamp_Registered := False;
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
