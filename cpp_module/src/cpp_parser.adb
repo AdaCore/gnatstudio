@@ -3079,19 +3079,26 @@ package body CPP_Parser is
       if Success then
          Success := False;
          Set_Cursor_At (Table, Filename => Full_Name (File_Name).all);
+
          loop
             Get_Pair (Table, Next_By_Key, Result => F_Pair);
-            exit when F_Pair = No_Pair;
-            Parse_Pair (F_Pair, F_Data);
 
+            exit when F_Pair = No_Pair;
+
+            Parse_Pair (F_Pair, F_Data);
             Dur := Duration'Value
               (F_Data.Data
                  (F_Data.Timestamp.First .. F_Data.Timestamp.Last));
+
+            DB_API.Close (Table, Success);
+            Release_Cursor (Table);
             return Base_Time + Dur;
          end loop;
 
          Release_Cursor (Table);
       end if;
+
+      DB_API.Close (Table, Success);
       return VFS.No_Time;
    end Time_Stamp_From_DB;
 
