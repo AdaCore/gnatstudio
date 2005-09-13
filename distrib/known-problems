@@ -10,6 +10,11 @@ Known Problems fixed in GPS 3.0.2
               unstable when closing the other views.
   Workaround: Always close the new views before closing the original view.
 
+- E606-010 GPS is unable to read files from disk after a long period
+  Problem:    In a project that contains a lot of C/C++ files, or when working
+              extensively with C/C++ files, GPS is unable to open new files.
+  Workaround: Close GPS and restart.
+
 Known Problems fixed in GPS 3.0.1
 
 - E607-006 Cannot select all styles for some fonts under Windows
