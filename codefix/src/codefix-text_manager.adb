@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2003-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -116,7 +116,6 @@ package body Codefix.Text_Manager is
          when others => return False;
       end case;
    end Is_Separator;
-
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -2493,8 +2492,7 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
-      Last_File_Name  : VFS.Virtual_File :=
-        Get_File (Current_Extract.Cursor);
+      Last_File_Name  : VFS.Virtual_File := VFS.No_File;
       Offset_Line     : Integer := 0;
    begin
       while Current_Extract /= null loop
