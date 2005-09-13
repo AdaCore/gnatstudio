@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -610,7 +610,9 @@ package body VFS is
    function "<" (File1, File2 : Virtual_File) return Boolean is
       C1, C2 : Character;
    begin
-      if File1.Value = null then
+      if File1 = File2 then
+         return False;
+      elsif File1.Value = null then
          return True;
       elsif File2.Value = null then
          return False;
