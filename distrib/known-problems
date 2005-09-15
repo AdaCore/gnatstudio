@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.0.2
 
+- E915-005 Version Control -> compare between two revisions doesn't work
+  Problem:    The Version Control action to query a difference between two
+              revisions of a file always returns "no differences found",
+              without prompting a dialog to input the two revisions.
+  Workaround: Query the differences using the command-line.
+
 - E911-003 gps - exception raised in codefix under windows
   Problem:    Under windows, applying a codefix leads to a constraint error.
   Workaround: Apply the fix manually.
