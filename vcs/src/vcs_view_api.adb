@@ -2554,7 +2554,7 @@ package body VCS_View_API is
          Str := new String'
            (Execute_GPS_Shell_Command
               (Kernel,
-               "MDI."
+               "MDI.input_dialog"
                & " ""Compare between two revisions:"""
                & " ""Revision 1=" & Revision_1.all & """"
                & " ""Revision 2=" & Revision_2.all & """"));
