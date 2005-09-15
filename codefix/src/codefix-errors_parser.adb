@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -332,7 +332,7 @@ package body Codefix.Errors_Parser is
         (new Pattern_Matcher'
            (Compile ("""([^""]+)"" should be ""([^""]+)""")),
          new Pattern_Matcher'
-           (Compile ("([^\w\s][^\s]*) should be ([^\w\s][^\s]*)")),
+           (Compile ("([^\w\s][^\s][^,]*) should be ([^\w\s][^\s]*)")),
          new Pattern_Matcher'
            (Compile ("""([^""])+"" illegal here, replaced by ""([^""])+""")));
    end Initialize;
@@ -423,7 +423,6 @@ package body Codefix.Errors_Parser is
    begin
       Solutions := Should_Be (Current_Text, Message, "or", "\|");
    end Fix;
-
 
    -------------------
    -- Bad_End_Block --
@@ -683,7 +682,6 @@ package body Codefix.Errors_Parser is
       Free (This.Col_Matcher);
       Free (Error_Parser (This));
    end Free;
-
 
    procedure Initialize (This : in out Missing_All) is
    begin
@@ -1065,7 +1063,6 @@ package body Codefix.Errors_Parser is
          new Pattern_Matcher'
            (Compile ("(space) not allowed")));
    end Initialize;
-
 
    procedure Fix
      (This         : Sep_Not_Allowed;
