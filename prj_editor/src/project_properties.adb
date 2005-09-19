@@ -1822,11 +1822,13 @@ package body Project_Properties is
                         then
                            Append (Ed.Model, New_Iter, Null_Iter);
                            Set (Ed.Model, New_Iter, 0, Index_Value);
-                           Set (Ed.Model, New_Iter, 1,
-                                Get_Current_Value
-                                  (Project => Project,
-                                   Attr    => Att,
-                                   Index   => Index_Value));
+                           Set
+                             (Ed.Model, New_Iter, 1,
+                              Get_Current_Value
+                                (Project       => Project,
+                                 Attr          => Att,
+                                 Index         => Index_Value,
+                                 Ignore_Editor => True));
                            Set (Ed.Model, New_Iter, 2,
                                 Is_Any_String (Att, Index_Value));
 
