@@ -926,7 +926,6 @@ package body Src_Editor_Module is
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
 
-         Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Set_Focus_Child (Child);
 
          --  Find the first free view number
@@ -949,6 +948,10 @@ package body Src_Editor_Module is
 
          File_Callback.Connect
            (Child, "destroy", On_Editor_Destroy'Access, User_Data => Title);
+
+         --  Emit a "status_changed" signal on the editor, to initialize the
+         --  MDI icon and status.
+         Status_Changed (Get_Buffer (Editor));
       end;
 
       return Editor;
