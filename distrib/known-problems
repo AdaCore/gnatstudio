@@ -1,4 +1,9 @@
 Known Problems fixed in GPS 3.1.0
+- E915-005 Version Control -> compare between two revisions doesn't work
+  Problem:    The Version Control action to query a difference between two
+              revisions of a file always returns "no differences found",
+              without prompting a dialog to input the two revisions.
+  Workaround: Query the differences using the command-line.
 
 - E911-003 gps - exception raised in codefix under windows
   Problem:    Under windows, applying a codefix leads to a constraint error.
@@ -60,6 +65,11 @@ Known Problems fixed in GPS 3.1.0
               specify an executable name for this main unit.
   Workaround: manually edit your project file, or edit projects.xml to specify
               that the index is case sensitive for "executable"
+
+- E606-010 GPS is unable to read files from disk after a long period
+  Problem:    In a project that contains a lot of C/C++ files, or when working
+              extensively with C/C++ files, GPS is unable to open new files.
+  Workaround: Close GPS and restart.
 
 - E606-009 Local_Pragma_File project property always saved as a base file name
   Problem:    When you edit the project properties, the location of the pragma
