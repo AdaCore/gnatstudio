@@ -1,5 +1,9 @@
 Known Problems fixed in GPS 3.1.0
 
+- E911-003 gps - exception raised in codefix under windows
+  Problem:    Under windows, applying a codefix leads to a constraint error.
+  Workaround: Apply the fix manually.
+
 - E908-013 Bad indentation of "procedure xxx is null" construct
   Problem:    When parsing the Ada 2005 construct "procedure xxx is null;"
               GPS will incorrectly add an extra level of indentation
