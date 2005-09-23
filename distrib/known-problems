@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- E920-001 GPS installation conflicts with GtkAda installation
+  Problem:    Both these tools install libgtkada.so on Unix platforms. If their
+              version do not match, there might be conflicts either when
+              running GPS or when compiling GtkAda applications
+  Workaround: Install GPS in a separate directory
+
 - E915-005 Version Control -> compare between two revisions doesn't work
   Problem:    The Version Control action to query a difference between two
               revisions of a file always returns "no differences found",
