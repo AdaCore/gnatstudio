@@ -3075,7 +3075,7 @@ the same line/column even if new lines are added in the buffer. This location is
      <return>An instance of GPS.EditorMark</return>
      <description>Create a mark at that location in the buffer. The mark will stay permanently at that location, and follows if the buffer is modified. If the name is specified, this creates a named mark, which can be retrieved through a call to GPS.EditorBuffer.get_mark. If a mark with the same name already exists, it is moved to the new location, and then returned</description>
      <example lang="python">
-         buffer = GPS.EditorBuffer (GPS.File ("a.adb"))
+         buffer = GPS.EditorBuffer.get (GPS.File ("a.adb"))
          loc = GPS.EditorLocation (buffer, 3, 4)
          mark = loc.create_mark ()
          buffer.insert (loc, "text")
@@ -3205,10 +3205,10 @@ the same line/column even if new lines are added in the buffer. This location is
       <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared will all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user).
 If file is not specified, the current editor is returned, ie the last one that had the keyboard focus.</description>
       <example lang="python">
-          ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+          ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
           ed.data = "whatever"
           # ... Whatever, including modifying ed
-          ed = GPS.EditorBuffer (GPS.File ("a.adb"))
+          ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
           data = ed.data   # "whatever"
       </example>
   </shell_doc>
