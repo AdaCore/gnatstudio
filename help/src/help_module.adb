@@ -124,6 +124,11 @@ package body Help_Module is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  See inherited documentation
 
+   procedure Add_Doc_Directory
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Directory : String);
+   --  Add a new directory to the documentation path
+
    Help_Module_ID   : Help_Module_ID_Access;
    Help_Module_Name : constant String := "Help_Viewer";
 
@@ -527,20 +532,28 @@ package body Help_Module is
          end;
 
       elsif Command = "add_doc_directory" then
-         declare
-            Old : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
-         begin
-            Help_Module_ID.Doc_Path := new String'
-              (Nth_Arg (Data, 1) & Path_Separator & Old.all);
-            Free (Old);
-
-            Parse_Index_File
-              (Kernel,
-               Directory => Nth_Arg (Data, 1));
-         end;
-
+         Add_Doc_Directory (Get_Kernel (Data), Nth_Arg (Data, 1));
       end if;
    end Command_Handler;
+
+   -----------------------
+   -- Add_Doc_Directory --
+   -----------------------
+
+   procedure Add_Doc_Directory
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Directory : String)
+   is
+      Old : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
+      Dir : constant String := Normalize_Pathname
+        (Directory, Get_System_Dir (Kernel));
+   begin
+      Trace (Me, "Adding " & Dir & " to GPS_DOC_PATH");
+      Help_Module_ID.Doc_Path := new String'(Dir & Path_Separator & Old.all);
+      Free (Old);
+
+      Parse_Index_File (Kernel, Directory => Dir);
+   end Add_Doc_Directory;
 
    --------------
    -- Activate --
@@ -931,7 +944,10 @@ package body Help_Module is
       Field                  : Node_Ptr;
       HTML_File              : Virtual_File;
    begin
-      if Node.Tag.all = "documentation_file" then
+      if Node.Tag.all = "doc_path" then
+         Add_Doc_Directory (Kernel, Node.Value.all);
+
+      elsif Node.Tag.all = "documentation_file" then
          Name  := null;
          Descr := null;
          Menu  := null;
