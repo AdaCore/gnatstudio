@@ -85,7 +85,7 @@ local (writable) area, and start GPS from the @file{tutorial} directory, so
 that GPS will load the right context.
 
 By default, the tutorial sources can be found under
-@code{<prefix>/doc/gps/examples/tutorial}, where @code{<prefix>} is the
+@code{<prefix>/share/doc/gps/examples/tutorial}, where @code{<prefix>} is the
 prefix directory of the GPS installation.
 
 Alternatively, if you have already started GPS in another directory, you
