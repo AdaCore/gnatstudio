@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -73,7 +73,11 @@ package body SN.Find_Fns is
      (DB             : DB_File;
       Filename       : String) is
    begin
-      Set_Cursor (DB, By_Key, Filename, Exact_Match => True);
+      if Filename = "" then
+         Set_Cursor (DB, By_Key, Filename, Exact_Match => False);
+      else
+         Set_Cursor (DB, By_Key, Filename, Exact_Match => True);
+      end if;
    end Set_Cursor_At;
 
    -------------------
