@@ -1,5 +1,5 @@
 prefix = @prefix@
-docdir = $(prefix)/doc/gps
+docdir = $(prefix)/share/doc/gps
 sharedir = $(prefix)/share/gps
 
 MAKEINFO= @MAKEINFO@
