@@ -1185,7 +1185,7 @@ GPS will search for the help files in the list of directories set in
 the environment variable @code{GPS_DOC_PATH} (a colon-separated list
 of directories on Unix systems, or semicolon-separated list of
 directories on Windows systems). In addition, the
-default directory @code{<prefix>/doc/gps/html} is also searched. If the
+default directory @code{<prefix>/share/doc/gps/html} is also searched. If the
 file cannot be found in any of these directories, the corresponding
 menu item will be disabled.
 
@@ -14419,17 +14419,17 @@ The directory containing global configuration files for GPS.
    @item @i{prefix}/lib
 This directory contains the shared libraries used by GPS.
 
-   @item @i{prefix}/doc/gps/html
+   @item @i{prefix}/share/doc/gps/html
 GPS will look for all the documentation files under this directory.
 
-   @item @i{prefix}/doc/gps/examples
+   @item @i{prefix}/share/doc/gps/examples
 This directory contains source code examples.
 
-   @item @i{prefix}/doc/gps/examples/language
+   @item @i{prefix}/share/doc/gps/examples/language
 This directory contains sources showing how to provide a shared library to
 dynamically define a new language. See @ref{Adding support for new languages}.
 
-   @item @i{prefix}/doc/gps/examples/tutorial
+   @item @i{prefix}/share/doc/gps/examples/tutorial
 This directory contains the sources used by the GPS tutorial.
 @ifhtml
 @cindex url
