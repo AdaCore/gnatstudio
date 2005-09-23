@@ -32,7 +32,8 @@ install-common:
 	$(MAKE) -C docs install
 
 install: install-common
-	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
+	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
