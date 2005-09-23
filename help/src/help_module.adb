@@ -1068,6 +1068,7 @@ package body Help_Module is
       Buffer   : GNAT.OS_Lib.String_Access := Read_File (File);
       Index    : Natural;
       Str      : Unbounded_String;
+      In_Category : Unbounded_String;
       Cat      : Help_Category_List.List_Node;
       F        : Help_File_List.List_Node;
       Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
@@ -1093,26 +1094,27 @@ package body Help_Module is
                  & "cellpadding=""6"">");
 
          while Cat /= Help_Category_List.Null_Node loop
-            Append (Str,
-                    "<tr><td bgcolor=""#006db6"">"
-                    & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
-                    & Data (Cat).Name.all
-                    & "</font></td> </tr>" & ASCII.LF);
+            In_Category := Null_Unbounded_String;
 
             F := First (Data (Cat).Files);
             while F /= Help_File_List.Null_Node loop
-               Append (Str, "<tr><td><a href=""");
-               if Data (F).File = VFS.No_File then
-                  Append (Str, "%" & Data (F).Shell_Lang.all & ":"
-                          & Glib.Xml_Int.Protect (Data (F).Shell_Cmd.all));
-               else
-                  Append (Str, Full_Name (Data (F).File).all);
-               end if;
-
-                  Append (Str, """>" & Data (F).Descr.all
+               if Data (F).File /= VFS.No_File then
+                  Append (In_Category, "<tr><td><a href=""");
+                  Append (In_Category, Full_Name (Data (F).File).all);
+                  Append (In_Category, """>" & Data (F).Descr.all
                           & "</a></td></tr>");
+               end if;
                F := Next (F);
             end loop;
+
+            if In_Category /= Null_Unbounded_String then
+               Append (Str,
+                       "<tr><td bgcolor=""#006db6"">"
+                       & "<font face=""tahoma"" size=""+2"" color=""#FFFFFF"">"
+                       & Data (Cat).Name.all
+                       & "</font></td> </tr>" & ASCII.LF);
+               Append (Str, In_Category);
+            end if;
 
             Cat := Next (Cat);
          end loop;
