@@ -1,13 +1,14 @@
 Known Problems fixed in GPS 3.1.0
+
 - E915-005 Version Control -> compare between two revisions doesn't work
   Problem:    The Version Control action to query a difference between two
               revisions of a file always returns "no differences found",
               without prompting a dialog to input the two revisions.
-  Workaround: Query the differences using the command-line.
+  Workaround: Query the differences using the command-line
 
 - E911-003 gps - exception raised in codefix under windows
   Problem:    Under windows, applying a codefix leads to a constraint error.
-  Workaround: Apply the fix manually.
+  Workaround: Apply the fix manually
 
 - E908-013 Bad indentation of "procedure xxx is null" construct
   Problem:    When parsing the Ada 2005 construct "procedure xxx is null;"
@@ -20,13 +21,13 @@ Known Problems fixed in GPS 3.1.0
               buttons on the "File changed on disk" dialog do not respond to
               mouse click.
   Workaround: Use the keyboard to activate the buttons (Tab to select, Enter
-              to activate).
+              to activate)
 
 - E831-001 Replace does not work on multiple-line searches
   Problem:    When using Search/Replace on a multiple-line search pattern, the
               "Replace" button does not cause the selected match to be
               overwritten.
-  Workaround: Replace manually, using copy-paste for example.
+  Workaround: Replace manually, using copy-paste for example
 
 - E822-004 Bad indentation of arrows in case of nested parentheses
   Problem:    When using the "align association on arrows" preference and
@@ -90,7 +91,7 @@ Known Problems fixed in GPS 3.1.0
               statement, starting at the 'do' keyword instead of starting
               at the 'accept' keyword
   Workaround: This is only a visual glitch that can be ignored. Indentation
-              will not be affected.
+              will not be affected
 
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
