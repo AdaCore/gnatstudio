@@ -11118,21 +11118,6 @@ clicked by the user
 The first word after '%' is the name of the language, and the command to
 execute is found after the ':' character.
 
-The @code{<documentation_file>} tag accepts two attributes.
-
-@table @b
-@item before (optional, default="")
-
-The name of the menu before which the new entry should be inserted. If the
-new menu is inserted in some submenus, this tag controls the deeper nesting.
-Parent menus are created as needed, but if you wish to control their specific
-order, you should create them first with a @code{<menu>} tag.
-
-@item after (optional, default="")
-
-The name of the menu after which the new entry should be inserted.
-@end table
-
 
 The @code{<documentation_file>} accepts a number of child nodes:
 
@@ -11172,6 +11157,22 @@ first character of this path must be @code{"/"}. The last part of the
 path is the name of the new menu item. If not set, no menu is
 displayed for this file, although it will still appear in the
 @code{Help->Contents} menu
+
+The @code{<menu>} child tag accepts two attributes.
+
+@table @b
+@item before (optional, default="")
+
+The name of the menu before which the new entry should be inserted. If the
+new menu is inserted in some submenus, this tag controls the deeper nesting.
+Parent menus are created as needed, but if you wish to control their specific
+order, you should create them first with a @code{<menu>} tag.
+
+@item after (optional, default="")
+
+The name of the menu after which the new entry should be inserted.
+@end table
+
 
 @end table
 
