@@ -8727,6 +8727,8 @@ described in later sections. It includes:
   (@pxref{Adding casing exceptions})
 @item <documentation_file>
   (@pxref{Adding documentation})
+@item <doc_path>
+  (@pxref{Adding documentation})
 @item <stock>
   (@pxref{Adding stock icons})
 @item <project_attribute>
@@ -11189,6 +11191,30 @@ menu, that will display @file{file.html}. The latter is searched in the
    </documentation_file>
 </index>
 @end smallexample
+
+@cindex <doc_path>
+As mentioned above, HTML files are looked for through the @code{GPS_DOC_PATH}
+environment variable. However, you can also use the @code{<doc_path>} XML
+node to defined additional directories to be searched.
+
+Such a directory is relative to the installation directory of GPS.
+
+@smallexample
+<?xml version="1.0"?>
+<GPS>
+   <doc_path>doc/application/</doc_path>
+</GPS>
+@end smallexample
+
+will add the directory @file{<prefix>/doc/application} to the search path
+for the documentation.
+
+Such a directory can also be added through Python, as in:
+
+@smallexample
+GPS.HTML.add_doc_directory ('doc/application')
+@end smallexample
+
 
 @c --------------------------------------------------------------------------
 @node Adding stock icons
