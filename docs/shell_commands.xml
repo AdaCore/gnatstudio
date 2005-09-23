@@ -297,7 +297,7 @@ It isn't recommended to do any direct graphical action before this hook has been
      <description>Return the installation directory for GPS.
 This directory always ends with a directory separator</description>
      <example lang="python">
-        html = GPS.get_system_dir() + "doc/gps/html/gps.html"
+        html = GPS.get_system_dir() + "share/doc/gps/html/gps.html"
         will compute the location of GPS's documentation
      </example>
      <see_also name="GPS.get_home_dir()" />
