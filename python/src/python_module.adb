@@ -18,39 +18,43 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;              use Glib.Object;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Gtkada.Types;             use Gtkada.Types;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with GPS.Kernel.Console;       use GPS.Kernel.Console;
-with Histories;                use Histories;
-with Python.GUI;               use Python, Python.GUI;
-with Python.Ada;               use Python.Ada;
-with GPS.Intl;                 use GPS.Intl;
-with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
-with Interactive_Consoles;     use Interactive_Consoles;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;           use Ada.Exceptions;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with System;                   use System;
-with Traces;                   use Traces;
-with String_Utils;             use String_Utils;
-with String_List_Utils;        use String_List_Utils;
-with Projects;                 use Projects;
-with Entities;                 use Entities;
-with VFS;                      use VFS;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Interfaces.C.Strings;       use Interfaces.C, Interfaces.C.Strings;
+with System;                     use System;
+with System.Address_Image;
+
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+
+with Glib.Object;                use Glib.Object;
+with Glib.Xml_Int;               use Glib.Xml_Int;
+with Gtk.Text_View;              use Gtk.Text_View;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Types;               use Gtkada.Types;
+
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with Histories;                  use Histories;
+with Python.GUI;                 use Python, Python.GUI;
+with Python.Ada;                 use Python.Ada;
+with Interactive_Consoles;       use Interactive_Consoles;
+with Traces;                     use Traces;
+with String_Utils;               use String_Utils;
+with String_List_Utils;          use String_List_Utils;
+with Projects;                   use Projects;
+with Entities;                   use Entities;
+with VFS;                        use VFS;
+with File_Utils;                 use File_Utils;
 with Interactive_Consoles;
 with HTables;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with System.Address_Image;
 
 package body Python_Module is
 
@@ -916,16 +920,19 @@ package body Python_Module is
    procedure Load_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Sys    : constant String :=
-        Format_Pathname (Get_System_Dir (Kernel), UNIX)
-        & "share/gps/python/";
+      Sys       : constant String :=
+                 Format_Pathname (Get_System_Dir (Kernel), UNIX)
+                   & "share/gps/python/";
       Local_Dir : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins";
+                    Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins";
       Old_Local_Dir : constant String :=
-        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "python_startup";
-      System_Dir : constant String :=
-        Format_Pathname (Get_System_Dir (Kernel), UNIX)
-        & "share/gps/plug-ins/";
+                        Format_Pathname
+                          (Get_Home_Dir (Kernel), UNIX) & "python_startup";
+      System_Dir    : constant String :=
+                        Format_Pathname (Get_System_Dir (Kernel), UNIX)
+                          & "share/gps/plug-ins/";
+      Env_Path      : String_Access := Getenv ("GPS_CUSTOM_PATH");
+      Path          : Path_Iterator;
       Errors : aliased Boolean;
 
       procedure Load_Dir (Dir : String);
@@ -1013,6 +1020,16 @@ package body Python_Module is
       Load_Dir (Old_Local_Dir);
 
       Load_Dir (Local_Dir);
+
+      Path := Start (Env_Path.all);
+      while not At_End (Env_Path.all, Path) loop
+         if Current (Env_Path.all, Path) /= "" then
+            Load_Dir (Current (Env_Path.all, Path));
+         end if;
+         Path := Next (Env_Path.all, Path);
+      end loop;
+
+      Free (Env_Path);
    end Load_Python_Startup_Files;
 
    ---------------------------------
