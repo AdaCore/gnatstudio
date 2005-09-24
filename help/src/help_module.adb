@@ -1173,11 +1173,11 @@ package body Help_Module is
 
       if Path_From_Env.all = "" then
          Help_Module_ID.Doc_Path := new String'
-           (Get_System_Dir (Kernel) & "/doc/gps/html/");
+           (Get_System_Dir (Kernel) & "doc/gps/html/");
       else
          Help_Module_ID.Doc_Path := new String'
            (Path_From_Env.all & Path_Separator &
-            Get_System_Dir (Kernel) & "/doc/gps/html/");
+            Get_System_Dir (Kernel) & "doc/gps/html/");
       end if;
 
       --  Add help menus
@@ -1264,7 +1264,7 @@ package body Help_Module is
 
          Help_Module_ID.Doc_Path := new String'
            (Get_Custom_Path & Path_Separator &
-            Get_System_Dir (Kernel) & "/doc/gps/html/");
+            Get_System_Dir (Kernel) & "doc/gps/html/");
       end if;
 
       Free (Path_From_Env);
