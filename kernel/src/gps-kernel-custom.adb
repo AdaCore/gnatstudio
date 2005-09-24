@@ -123,7 +123,7 @@ package body GPS.Kernel.Custom is
             exit when Last = 0;
 
             declare
-               F : constant String := Norm_Dir & File (1 .. Last);
+               F     : constant String := Norm_Dir & File (1 .. Last);
                Error : String_Access;
             begin
                if File_Extension (F) = XML_Extension

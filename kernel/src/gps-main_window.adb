@@ -607,12 +607,12 @@ package body GPS.Main_Window is
    -------------------
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class) is
-      Command : MDI_Child_Selection_Command_Access;
-      Command2 : MDI_Window_Actions_Command_Access;
-      MDI_Class : constant Class_Type := New_Class
+      MDI_Class        : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDI");
       MDI_Window_Class : constant Class_Type := New_Class
         (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
+      Command          : MDI_Child_Selection_Command_Access;
+      Command2         : MDI_Window_Actions_Command_Access;
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
