@@ -204,7 +204,11 @@ package body GVD.Source_Editor.GPS is
          return;
       end if;
 
-      File := Create_From_Base (Full_Name (File_Name).all, Kernel);
+      if Is_Regular_File (File_Name) then
+         File := File_Name;
+      else
+         File := Create_From_Base (Full_Name (File_Name).all, Kernel);
+      end if;
 
       if Editor.Current_File /= File then
          Editor.Current_File := File;
