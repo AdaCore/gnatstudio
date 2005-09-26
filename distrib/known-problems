@@ -35,6 +35,12 @@ Known Problems fixed in GPS 3.1.0
               overwritten.
   Workaround: Replace manually, using copy-paste for example
 
+- E826-002 Unwanted resizing when closing the search dialog on Windows
+  Problem:    If the search dialog is floating, closing it will resize other
+              windows in GPS
+  Workaround: Unfloat the dock. It is conveniently put above the project view
+              for instance, so that it is always visible
+
 - E822-004 Bad indentation of arrows in case of nested parentheses
   Problem:    When using the "align association on arrows" preference and
               indenting a complex expression with multiple parentheses, GPS
