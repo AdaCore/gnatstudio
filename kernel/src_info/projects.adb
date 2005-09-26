@@ -174,6 +174,15 @@ package body Projects is
    --  Return access to the various tables that contain information about the
    --  project
 
+   function Get_Filename_From_Unit
+     (Project                  : Project_Type;
+      Unit_Name                : String;
+      Part                     : Unit_Part;
+      Check_Predefined_Library : Boolean := False;
+      File_Must_Exist          : Boolean := True;
+      Language                 : Name_Id) return String;
+   --  Internal version of Get_Filename_From_Unit.
+
    ---------------------
    -- String_Elements --
    ---------------------
@@ -915,7 +924,26 @@ package body Projects is
       Unit_Name                : String;
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
-      File_Must_Exist          : Boolean := True) return String
+      File_Must_Exist          : Boolean := True;
+      Language                 : String) return String
+   is
+   begin
+      return Get_Filename_From_Unit
+        (Project, Unit_Name, Part, Check_Predefined_Library,
+         File_Must_Exist, Get_String (To_Lower (Language)));
+   end Get_Filename_From_Unit;
+
+   ----------------------------
+   -- Get_Filename_From_Unit --
+   ----------------------------
+
+   function Get_Filename_From_Unit
+     (Project                  : Project_Type;
+      Unit_Name                : String;
+      Part                     : Unit_Part;
+      Check_Predefined_Library : Boolean := False;
+      File_Must_Exist          : Boolean := True;
+      Language                 : Name_Id) return String
    is
       Arr   : Array_Element_Id := No_Array_Element;
       Unit  : Name_Id;
@@ -942,7 +970,7 @@ package body Projects is
       --  ??? This isn't language independent, what if other languages have
       --  similar requirements
 
-      if Check_Predefined_Library then
+      if Check_Predefined_Library and then Language = Name_Ada then
          case Part is
             when Unit_Body =>
                return Substitute_Dot (Unit_Name, "-") & ".adb";
@@ -1015,14 +1043,15 @@ package body Projects is
          begin
             --  Handle properly special naming such as a.b -> a~b
 
-            if Unit_Name'Length > 2
+            if Language = Name_Ada
+              and then Unit_Name'Length > 2
               and then Has_Predefined_Prefix (Unit_Name)
             then
                Uname (Uname'First + 1) := '~';
             end if;
 
             while Arr /= No_Array_Element loop
-               if Array_Elements (Project)(Arr).Index = Name_Ada then
+               if Array_Elements (Project)(Arr).Index = Language then
                   declare
                      N : constant String := Uname
                       & Get_String (Array_Elements (Project)(Arr).Value.Value);
@@ -1109,8 +1138,8 @@ package body Projects is
       Get_Name_String (Name);
       declare
          Unit : constant String := Name_Buffer (1 .. Name_Len);
-         N    : constant String :=
-           Get_Filename_From_Unit (Project, Unit, Part);
+         N    : constant String := Get_Filename_From_Unit
+           (Project, Unit, Part, Language => Lang);
       begin
          if N /= "" then
             return N;
@@ -1119,7 +1148,8 @@ package body Projects is
             --  Default to the GNAT naming scheme (for runtime files)
             declare
                N2 : constant String := Get_Filename_From_Unit
-                 (Project, Unit, Part, Check_Predefined_Library => True);
+                 (Project, Unit, Part, Check_Predefined_Library => True,
+                  Language => Lang);
             begin
                if N2 /= "" then
                   return N2;
