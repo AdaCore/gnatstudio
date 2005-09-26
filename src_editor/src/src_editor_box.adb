@@ -1734,7 +1734,8 @@ package body Src_Editor_Box is
                     (Project         => Get_Project (Editor.Kernel),
                      Unit_Name       => To_Lower (Info.Name.all),
                      Part            => Part,
-                     File_Must_Exist => False));
+                     File_Must_Exist => False,
+                     Language        => Ada_String));
             end if;
 
             Free (Constructs);
