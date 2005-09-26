@@ -243,7 +243,8 @@ package Projects is
       Unit_Name                : String;
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
-      File_Must_Exist          : Boolean := True) return String;
+      File_Must_Exist          : Boolean := True;
+      Language                 : String) return String;
    --  Return the base name for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
