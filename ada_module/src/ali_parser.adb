@@ -529,7 +529,8 @@ package body ALI_Parser is
             N : constant String := Get_Filename_From_Unit
               (Imported_Projects (P),
                Unit_Name (1 .. Unit_Name'Last - 2),
-               Part);
+               Part,
+               Language => Ada_String);
          begin
             if N /= "" then
                return Get_String (N);
@@ -545,7 +546,8 @@ package body ALI_Parser is
            (Imported_Projects (Imported_Projects'First),
             Unit_Name (1 .. Unit_Name'Last - 2),
             Part,
-            Check_Predefined_Library => True));
+            Check_Predefined_Library => True,
+            Language => Ada_String));
    end Filename_From_Unit;
 
    ----------------------------
@@ -1505,7 +1507,8 @@ package body ALI_Parser is
                     (Handler,
                      Get_ALI_Filename
                        (Get_Filename_From_Unit
-                          (Project, Unit (Unit'First .. Last - 1), Unit_Body)),
+                          (Project, Unit (Unit'First .. Last - 1), Unit_Body,
+                           Language => Ada_String)),
                      Source_Filename,
                      Project);
                else
