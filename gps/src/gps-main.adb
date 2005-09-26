@@ -568,6 +568,10 @@ procedure GPS.Main is
         (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
+      Trace (Me, "Linked with GtkAda compiled with gtk+ "
+             & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
+             & String_Utils.Image (Integer (Gtk.Minor_Version))
+             & '.' & String_Utils.Image (Integer (Gtk.Micro_Version)));
 
       Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
