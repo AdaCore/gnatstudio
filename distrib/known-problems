@@ -76,7 +76,7 @@ Known Problems fixed in GPS 3.1.0
 - E606-010 GPS is unable to read files from disk after a long period
   Problem:    In a project that contains a lot of C/C++ files, or when working
               extensively with C/C++ files, GPS is unable to open new files.
-  Workaround: Close GPS and restart.
+  Workaround: Close GPS and restart
 
 - E606-009 Local_Pragma_File project property always saved as a base file name
   Problem:    When you edit the project properties, the location of the pragma
