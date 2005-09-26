@@ -2653,43 +2653,85 @@ package body CPP_Parser is
       Source_Filename       : VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
    is
-      Project : Project_Type;
-      Source  : Source_File;
+      function Load_File
+        (File : VFS.Virtual_File; File_Project : Project_Type := No_Project)
+         return Source_File;
+      --  Load the information for one specific file in memory
+
+      ---------------
+      -- Load_File --
+      ---------------
+
+      function Load_File
+        (File : VFS.Virtual_File; File_Project : Project_Type := No_Project)
+         return Source_File
+      is
+         Project : Project_Type;
+         Source : Source_File;
+      begin
+         Source := Get_Or_Create
+           (Db   => Handler.Db,
+            File => File,
+            Handler => LI_Handler (Handler),
+            LI   => null);
+         if Source = null then
+            if File_Has_No_LI_Report /= null then
+               Entities.Error
+                 (File_Has_No_LI_Report.all, Source);
+            end if;
+
+            Trace (Me, "Couldn't create Source_File for "
+                   & Full_Name (File).all);
+            return null;
+         end if;
+
+         --  If the database has changed on disk, update the in-memory
+         --  contents. Likewise if the object directory itself has changed when
+         --  the project view has changed.
+         if File_Project = No_Project then
+            Project := Get_Project_From_File (Handler.Registry, File);
+         else
+            Project := File_Project;
+         end if;
+
+         if Get_Time_Stamp (Source) = VFS.No_Time
+           or else Get_LI (Source) = null
+           or else Database_Timestamp (Project) /=
+             Get_Timestamp (Get_LI (Source))
+           or else Name_As_Directory
+             (Object_Path (Get_Project (Get_LI (Source)), Recursive => False))
+             /= Dir_Name (Get_LI_Filename (Get_LI (Source))).all
+         then
+            Parse_File (Handler, Project, Source);
+         end if;
+
+         return Source;
+      end Load_File;
+
+      Other_File_Name     : VFS.Virtual_File;
+      Source, Other_File  : Source_File;
+      Project             : Project_Type;
+      pragma Unreferenced (Other_File);
    begin
       --  Do nothing if the database doesn't exist or hasn't been parsed
       if not Is_Open (Handler.SN_Table (FIL)) then
          Open_DB_Files (Handler);
       end if;
 
-      Source := Get_Or_Create
-        (Db   => Handler.Db,
-         File => Source_Filename,
-         Handler => LI_Handler (Handler),
-         LI   => null);
-      if Source = null then
-         if File_Has_No_LI_Report /= null then
-            Entities.Error
-              (File_Has_No_LI_Report.all, Source);
-         end if;
+      Trace (Me, "Get_Source_Info " & Full_Name (Source_Filename).all);
 
-         Trace (Me, "Couldn't create Source_File for "
-                & Full_Name (Source_Filename).all);
-         return null;
-      end if;
-
-      --  If the database has changed on disk, update the in-memory contents.
-      --  Likewise if the object directory itself has changed when the project
-      --  view has changed.
       Project := Get_Project_From_File (Handler.Registry, Source_Filename);
+      Source := Load_File (Source_Filename, Project);
 
-      if Get_Time_Stamp (Source) = VFS.No_Time
-        or else Get_LI (Source) = null
-        or else Database_Timestamp (Project) /= Get_Timestamp (Get_LI (Source))
-        or else Name_As_Directory (Object_Path
-          (Get_Project (Get_LI (Source)), Recursive => False)) /=
-        Dir_Name (Get_LI_Filename (Get_LI (Source))).all
-      then
-         Parse_File (Handler, Project, Source);
+      if Source /= null then
+         Other_File_Name := Create
+           (Other_File_Base_Name (Project, Source_Filename),
+            Handler.Registry);
+         Trace (Me, "Get_Source_Info " & Full_Name (Other_File_Name).all);
+
+         if Other_File_Name /= Source_Filename then
+            Other_File := Load_File (Other_File_Name);
+         end if;
       end if;
 
       return Source;
