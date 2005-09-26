@@ -623,8 +623,7 @@ package body Python_Module is
       Set_Default_Console
         (Script.Interpreter, Console, Display_Prompt => True);
 
-      --  ??? Temporary commented, see E830-020.
-      --  Initialize_IO;
+      Initialize_IO;
 
       Set_Command_Handler
         (Console, Python_Console_Command_Handler'Access, System.Null_Address);
