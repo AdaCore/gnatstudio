@@ -105,6 +105,13 @@ Known Problems fixed in GPS 3.1.0
   Workaround: This is only a visual glitch that can be ignored. Indentation
               will not be affected
 
+- E503-024 Missing xref in C++
+  Problem:    Some cross-reference contextual menus are missing when clicking
+              on an entity in the spec file. When clicking on the same entity
+              in the .c file, and then in the spec file, provides more menus,
+              like the body.
+  Workaround: Click in the .c file whenever possible instead of the .h file
+
 - E308-016 Cannot initialize debugger under Tru64
   Problem:    In some cases, when initializing the debugger under Tru64,
               an error message is displayed in the debugger console such as:
