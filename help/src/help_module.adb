@@ -547,7 +547,15 @@ package body Help_Module is
       Old : GNAT.OS_Lib.String_Access := Help_Module_ID.Doc_Path;
       Dir : constant String := Normalize_Pathname
         (Directory, Get_System_Dir (Kernel));
+      Iter : Path_Iterator := Start (Old.all);
    begin
+      while not At_End (Old.all, Iter) loop
+         if Current (Old.all, Iter) = Dir then
+            return;
+         end if;
+         Iter := Next (Old.all, Iter);
+      end loop;
+
       Trace (Me, "Adding " & Dir & " to GPS_DOC_PATH");
       Help_Module_ID.Doc_Path := new String'(Dir & Path_Separator & Old.all);
       Free (Old);
