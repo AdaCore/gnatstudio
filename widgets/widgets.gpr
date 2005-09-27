@@ -11,4 +11,13 @@ project Widgets is
    package Compiler renames Shared.Compiler;
    package IDE renames Shared.IDE;
 
+   package Naming is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Implementation ("gtk_utils") use "gtk_utils_win32.adb";
+         when "unix" =>
+            for Implementation ("gtk_utils") use "gtk_utils_default.adb";
+      end case;
+   end Naming;
+
 end Widgets;
