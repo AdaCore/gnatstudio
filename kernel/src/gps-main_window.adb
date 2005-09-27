@@ -1052,7 +1052,7 @@ package body GPS.Main_Window is
 
                exit when Child = null;
 
-               Hide (Get_Widget (Child));
+               Hide (Child);
                Next (Iterator);
             end loop;
 
@@ -1069,7 +1069,7 @@ package body GPS.Main_Window is
 
                exit when Child = null;
 
-               Show (Get_Widget (Child));
+               Show (Child);
                Next (Iterator);
             end loop;
 
