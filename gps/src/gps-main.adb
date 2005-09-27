@@ -359,6 +359,13 @@ procedure GPS.Main is
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
+      Gtk_Major_Version : Integer;
+      pragma Import (Dll, Gtk_Major_Version, "gtk_major_version");
+      Gtk_Minor_Version : Integer;
+      pragma Import (Dll, Gtk_Minor_Version, "gtk_minor_version");
+      Gtk_Micro_Version : Integer;
+      pragma Import (Dll, Gtk_Micro_Version, "gtk_micro_version");
+
    begin
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
@@ -568,10 +575,14 @@ procedure GPS.Main is
         (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
-      Trace (Me, "Linked with GtkAda compiled with gtk+ "
+      Trace (Me, "Gtk+ static version: "
              & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
-             & String_Utils.Image (Integer (Gtk.Minor_Version))
-             & '.' & String_Utils.Image (Integer (Gtk.Micro_Version)));
+             & String_Utils.Image (Integer (Gtk.Minor_Version)) & '.'
+             & String_Utils.Image (Integer (Gtk.Micro_Version)));
+      Trace (Me, "Gtk+ dynamic version: "
+             & String_Utils.Image (Gtk_Major_Version) & '.'
+             & String_Utils.Image (Gtk_Minor_Version) & '.'
+             & String_Utils.Image (Gtk_Micro_Version));
 
       Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
