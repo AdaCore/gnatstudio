@@ -1746,6 +1746,22 @@ package body Src_Editor_Module.Shell is
            (Data, Create_Editor_Buffer
               (Get_Script (Data), Get_Buffer (Box)));
 
+      elsif Command = "list" then
+         declare
+            Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
+         begin
+            Set_Return_Value_As_List (Data);
+            while Get (Iter) /= null loop
+               if Is_Source_Box (Get (Iter)) then
+                  Box := Get_Source_Box_From_MDI (Get (Iter));
+                  Set_Return_Value
+                    (Data, Create_Editor_Buffer
+                       (Get_Script (Data), Get_Buffer (Box)));
+               end if;
+               Next (Iter);
+            end loop;
+         end;
+
       elsif Command = "file" then
          Get_Buffer (Buffer, Data, 1);
          if Buffer /= null then
@@ -2768,6 +2784,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "get", 0, 1, Buffer_Cmds'Access, EditorBuffer, True);
+      Register_Command
+        (Kernel, "list", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
         (Kernel, "create_overlay",  0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
