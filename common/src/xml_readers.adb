@@ -166,6 +166,25 @@ package body XML_Readers is
       end if;
    end Characters;
 
+   --------------------------
+   -- Ignorable_Whitespace --
+   --------------------------
+
+   procedure Ignorable_Whitespace
+     (Handler : in out Gtk_Reader;
+      Ch      : Unicode.CES.Byte_Sequence)
+   is
+   begin
+      --  Consider that whitespace is significant in some of the nodes.
+      --  Ideally, this should be done from the grammar for the XML files, but
+      --  we currently do not use it.
+      if Handler.Current_Node /= null
+        and then Handler.Current_Node.Tag.all = "clipboard"
+      then
+         Characters (Handler, Ch);
+      end if;
+   end Ignorable_Whitespace;
+
    --------------
    -- Get_Tree --
    --------------

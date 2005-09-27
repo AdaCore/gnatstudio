@@ -110,6 +110,9 @@ private
    procedure Characters
      (Handler : in out Gtk_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
+   procedure Ignorable_Whitespace
+     (Handler : in out Gtk_Reader;
+      Ch      : Unicode.CES.Byte_Sequence);
    procedure Error
      (Handler : in out Gtk_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
