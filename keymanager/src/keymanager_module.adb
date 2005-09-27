@@ -236,14 +236,6 @@ package body KeyManager_Module is
    --  Free the memoru occupied by the key manager
 
    procedure Bind_Default_Key_Internal
-     (Table       : in out Key_Htable.HTable;
-      Action      : String;
-      Default_Key : Gdk.Types.Gdk_Key_Type;
-      Default_Mod : Gdk.Types.Gdk_Modifier_Type;
-      Changed     : Boolean := False);
-   --  Internal version that allows setting the Changed attribute.
-
-   procedure Bind_Default_Key_Internal
      (Handler     : access Key_Manager_Record;
       Action      : String;
       Default_Key : String;
@@ -588,11 +580,15 @@ package body KeyManager_Module is
       Binding : out Key_Description_List)
    is
       procedure Process_Table
-        (Table : in out Key_Htable.HTable; Found : out Boolean);
+        (Table : in out Key_Htable.HTable;
+         Map   : Keymap_Access;
+         Found : out Boolean);
       --  Process a keymap..
 
       procedure Process_Table
-        (Table : in out Key_Htable.HTable; Found : out Boolean)
+        (Table : in out Key_Htable.HTable;
+         Map   : Keymap_Access;
+         Found : out Boolean)
       is
          Iter : Key_Htable.Iterator;
          Bind : Key_Description_List;
@@ -608,13 +604,15 @@ package body KeyManager_Module is
                      Key     := Get_Key (Iter);
                      Binding := Bind;
                      Found   := True;
+                     Keymap  := Map;
                      return;
                   end if;
                else
-                  Process_Table (Get_Keymap (Bind).Table, Found);
-                  if Found then
-                     return;
-                  end if;
+                  Process_Table (Get_Keymap (Bind).Table,
+                                 Get_Keymap (Bind),
+                                 Found);
+                  --  Cannot process Bind.Next, which is a keymap
+                  return;
                end if;
                Bind := Next (Bind);
             end loop;
@@ -629,7 +627,7 @@ package body KeyManager_Module is
       --  We do not use the most efficient method, since we simply
       --  traverse a list, but there aren't hundreds of keybindings...
 
-      Process_Table (Handler.Table, Found);
+      Process_Table (Handler.Table, null, Found);
 
       if not Found then
          Keymap  := null;
@@ -656,44 +654,68 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Table       : in out Key_Htable.HTable;
-      Action      : String;
-      Default_Key : Gdk.Types.Gdk_Key_Type;
-      Default_Mod : Gdk.Types.Gdk_Modifier_Type;
-      Changed     : Boolean := False)
-   is
-      Binding, Binding2 : Key_Description_List;
-   begin
-      Binding2 := new Key_Description'
-        (Action         => new String'(Action),
-         Changed        => Changed,
-         Next           => null);
-      Binding := Get (Table, Key_Binding'(Default_Key, Default_Mod));
-
-      if Binding /= null then
-         Binding2.Next := Binding.Next;
-         Binding.Next  := Binding2;
-      else
-         Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
-      end if;
-   end Bind_Default_Key_Internal;
-
-   -------------------------------
-   -- Bind_Default_Key_Internal --
-   -------------------------------
-
-   procedure Bind_Default_Key_Internal
      (Handler     : access Key_Manager_Record;
       Action      : String;
       Default_Key : String;
       Changed     : Boolean := False)
    is
+      Binding : Key_Description_List;
+      Bind    : Key_Binding;
+
+      procedure Bind_Default_Key_Internal
+        (Table       : in out Key_Htable.HTable;
+         Action      : String;
+         Default_Key : Gdk.Types.Gdk_Key_Type;
+         Default_Mod : Gdk.Types.Gdk_Modifier_Type;
+         Changed     : Boolean := False);
+      --  Internal version that allows setting the Changed attribute.
+
+      -------------------------------
+      -- Bind_Default_Key_Internal --
+      -------------------------------
+
+      procedure Bind_Default_Key_Internal
+        (Table       : in out Key_Htable.HTable;
+         Action      : String;
+         Default_Key : Gdk.Types.Gdk_Key_Type;
+         Default_Mod : Gdk.Types.Gdk_Modifier_Type;
+         Changed     : Boolean := False)
+      is
+         Binding3, Binding2 : Key_Description_List;
+      begin
+         --  We do not need to remove the previous entry, since the table was
+         --  reset before saving the keybindings
+         Binding2 := new Key_Description'
+           (Action         => new String'(Action),
+            Changed        => Changed,
+            Next           => null);
+         Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+
+         if Binding3 /= null then
+            Binding2.Next := Binding3.Next;
+            Binding3.Next := Binding2;
+
+            if Binding3.Action = null then
+               --  Since Binding3 is a secondary keymap, we need to insert the
+               --  new key before it
+               declare
+                  Tmp : constant Key_Description := Binding2.all;
+               begin
+                  Binding2.Action  := Binding3.Action;
+                  Binding2.Changed := Binding3.Changed;
+                  Binding3.Action  := Tmp.Action;
+                  Binding3.Changed := Tmp.Changed;
+               end;
+            end if;
+         else
+            Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
+         end if;
+      end Bind_Default_Key_Internal;
+
       Key   : Gdk_Key_Type;
       Modif : Gdk_Modifier_Type;
       First, Last : Integer;
       Keymap  : Keymap_Access;
-      Binding : Key_Description_List;
-      Bind    : Key_Binding;
    begin
       Lookup_Command_By_Name (Handler, Action, Keymap, Bind, Binding);
       if Binding /= null then
