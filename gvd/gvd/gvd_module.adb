@@ -307,6 +307,18 @@ package body GVD_Module is
    --  Used e.g. for implementing menu Debug->Data->Assembly
    --  Widget parameter is ignored.
 
+   procedure Start_Program
+     (Process : Visual_Debugger; Start_Cmd : Boolean := False);
+   --  Start the execution of the main program.
+   --  A dialog is pop up for setting the argument list to give to the program
+   --  being debugged when it is started. If Start_Cmd is True then the
+   --  debugger must stop at the beginning of the main procedure. Otherwise,
+   --  the dialog will include a checkbox so that the user will be able to
+   --  select whether he/she wants to stop at the beginning of the program.
+   --  For VxWorks systems, the entry point to be executed must also be
+   --  specified together with the arguments; in addition, the multi-task-mode
+   --  can be set as desired.
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -1848,6 +1860,103 @@ package body GVD_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Data_Refresh;
 
+   -------------------
+   -- Start_Program --
+   -------------------
+
+   procedure Start_Program
+     (Process : Visual_Debugger; Start_Cmd : Boolean := False)
+   is
+      Is_Multitask : aliased Boolean := False;
+      Is_Start     : aliased Boolean := False;
+      Arg_Msg      : aliased String := -"Run arguments:";
+      Entry_Msg    : aliased String := -"Entry point and arguments:";
+      Start_Msg    : aliased String := -"Stop at beginning of main subprogram";
+      Multi_Msg    : aliased String := -"Enable VxWorks multi-tasks mode";
+      Start_Key    : aliased String := "stop_beginning_debugger";
+      Multi_Key    : aliased String := "multitask_mode_debugger";
+      No_Msg       : aliased String := "";
+      Button1      : Boolean_Access := null;
+      Button2      : Boolean_Access := null;
+      Cmd_Msg      : Basic_Types.String_Access := Arg_Msg'Unchecked_Access;
+      Msg1         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      Msg2         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      Key1         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      Key2         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      WTX_Version  : Natural;
+   begin
+      --  If the user has already requested to stop at the beginning (Start
+      --  command) do not ask the same question again. Otherwise, we enable
+      --  a checkbox so that the user can select whether he/she wants to
+      --  stop at the beginning of the main program.
+
+      if Start_Cmd then
+         Is_Start := True;
+      else
+         Button1 := Is_Start'Unchecked_Access;
+         Msg1    := Start_Msg'Unchecked_Access;
+         Key1    := Start_Key'Unchecked_Access;
+      end if;
+
+      --  If we are debugging against VxWorks we as for the entry point to be
+      --  executed, and we enable the multi-tasks-mode checkbox.
+
+      Info_WTX (Process.Debugger, WTX_Version);
+
+      if WTX_Version = 2 then
+         --  Change the message in the dialog window indicating that the entry
+         --  point needs to be specified together with the arguments.
+
+         Cmd_Msg := Entry_Msg'Unchecked_Access;
+
+         Button2 := Is_Multitask'Unchecked_Access;
+         Msg2    := Multi_Msg'Unchecked_Access;
+         Key2    := Multi_Key'Unchecked_Access;
+      end if;
+
+      declare
+         Arguments : constant String := Display_Entry_Dialog
+           (Parent         => Process.Window,
+            Title          => -"Run/Start",
+            Message        => Cmd_Msg.all,
+            Key            => Cst_Run_Arguments_History,
+            History        => Get_History (GPS_Window (Process.Window).Kernel),
+            Check_Msg      => Msg1.all,
+            Check_Msg2     => Msg2.all,
+            Button_Active  => Button1,
+            Button2_Active => Button2,
+            Key_Check      => History_Key (Key1.all),
+            Key_Check2     => History_Key (Key2.all));
+      begin
+         if Arguments = ""
+           or else Arguments (Arguments'First) /= ASCII.NUL
+         then
+            --  For VxWorks we need to set the desired multi-tasks-mode mode
+
+            if WTX_Version = 2 then
+               if Is_Multitask then
+                  Send
+                    (Process.Debugger,
+                     "set multi-tasks-mode on",
+                     Mode => GVD.Types.Hidden);
+               else
+                  Send
+                    (Process.Debugger,
+                     "set multi-tasks-mode off",
+                     Mode => GVD.Types.Hidden);
+               end if;
+            end if;
+
+            if Is_Start then
+               Start (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
+            else
+               Run (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
+            end if;
+         end if;
+      end;
+
+   end Start_Program;
+
    --------------
    -- On_Start --
    --------------
@@ -1857,19 +1966,10 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top         : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
-      Process     : constant Visual_Debugger := Get_Current_Process (Top);
-      Button      : Message_Dialog_Buttons;
+      Process : constant Visual_Debugger :=
+        Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
+      Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
-
-      Button2     : Boolean_Access := null;
-      Multitasks  : aliased Boolean := False;
-      Multi_Msg   : aliased String := -"Enable VxWorks multi-tasks mode";
-      No_Msg      : aliased String := "";
-      Msg         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
-      WTX_Version : Natural;
-
    begin
       if Process = null or else Process.Debugger = null then
          return;
@@ -1885,55 +1985,9 @@ package body GVD_Module is
          return;
       end if;
 
-      --  If we are debugging against VxWorks enable the multi-tasks
-      --  mode checkbox
+      --  Launch the dialog for starting the application
 
-      Info_WTX (Process.Debugger, WTX_Version);
-
-      if WTX_Version = 2 then
-         Button2 := Multitasks'Unchecked_Access;
-         Msg := Multi_Msg'Unchecked_Access;
-      end if;
-
-      declare
-         Is_Start  : aliased Boolean;
-         Arguments : constant String := Display_Entry_Dialog
-           (Parent         => Process.Window,
-            Title          => -"Run/Start",
-            Message        => -"Run arguments:",
-            Key            => Cst_Run_Arguments_History,
-            History        => Get_History (GPS_Window (Process.Window).Kernel),
-            Check_Msg      => -"Stop at beginning of main subprogram",
-            Check_Msg2     => Msg.all,
-            Button_Active  => Is_Start'Access,
-            Button2_Active => Button2,
-            Key_Check      => "stop_beginning_debugger",
-            Key_Check2     => "multitask_mode_debugger");
-      begin
-         if Arguments = ""
-           or else Arguments (Arguments'First) /= ASCII.NUL
-         then
-            if Button2 /= null then
-               if Multitasks then
-                  Process_User_Command
-                    (Process,
-                     "set multi-tasks-mode on",
-                     Output_Command => False);
-               else
-                  Process_User_Command
-                    (Process,
-                     "set multi-tasks-mode off",
-                     Output_Command => False);
-               end if;
-            end if;
-
-            if Is_Start then
-               Start (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
-            else
-               Run (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
-            end if;
-         end if;
-      end;
+      Start_Program (Process);
 
    exception
       when E : others =>
@@ -2973,7 +3027,9 @@ package body GVD_Module is
          if Is_Started (Tab.Debugger) then
             Continue (Tab.Debugger, Mode => GVD.Types.Visible);
          else
-            Start (Tab.Debugger, Mode => GVD.Types.Visible);
+            --  Launch the dialog for starting the application
+
+            Start_Program (Tab, Start_Cmd => True);
          end if;
       end if;
 
