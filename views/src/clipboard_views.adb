@@ -412,6 +412,10 @@ package body Clipboard_Views is
             Set (Model, Iter, 2, Gint (S));
          end if;
       end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Refresh;
 
    -------------
