@@ -183,11 +183,11 @@ package body Std_Dialogs is
       Title          : String;
       Message        : String;
       Position       : Gtk_Window_Position := Win_Pos_Mouse;
-      Check_Msg      : String;
+      Check_Msg      : String := "";
       History        : Histories.History;
       Key            : History_Key := "";
-      Button_Active  : access Boolean;
-      Key_Check      : Histories.History_Key;
+      Button_Active  : Boolean_Access := null;
+      Key_Check      : Histories.History_Key := "";
       Check_Msg2     : String := "";
       Button2_Active : Boolean_Access := null;
       Key_Check2     : Histories.History_Key := "") return String
@@ -196,8 +196,11 @@ package body Std_Dialogs is
    begin
       Dialog := new Display_Dialog_Record;
       Initialize (Dialog);
-      Gtk_New (Dialog.Check, Check_Msg);
-      Associate (History.all, Key_Check, Dialog.Check);
+
+      if Check_Msg /= "" then
+         Gtk_New (Dialog.Check, Check_Msg);
+         Associate (History.all, Key_Check, Dialog.Check);
+      end if;
 
       if Check_Msg2 /= "" then
          Gtk_New (Dialog.Check2, Check_Msg2);
@@ -208,10 +211,10 @@ package body Std_Dialogs is
          S : constant String := Internal_Simple_Entry_Dialog
            (Dialog, Parent, Dialog.Check, Dialog.Check2,
             Title, Message, Position, History, Key);
-         R : Boolean;
       begin
-         R := Get_Active (Dialog.Check);
-         Button_Active.all := R;
+         if Dialog.Check /= null then
+            Button_Active.all := Get_Active (Dialog.Check);
+         end if;
 
          if Dialog.Check2 /= null then
             Button2_Active.all := Get_Active (Dialog.Check2);
