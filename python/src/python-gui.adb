@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -486,7 +486,6 @@ package body Python.GUI is
             PyErr_Clear;
          end if;
 
-
          if Interpreter.Use_Secondary_Prompt then
             Tmp := Interpreter.Buffer;
             Interpreter.Buffer := new String'
@@ -556,6 +555,7 @@ package body Python.GUI is
    begin
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+        and then Is_Editable (Interpreter.Console)
       then
          if Interpreter.Use_Secondary_Prompt then
             Ps := PySys_GetObject ("ps2");
