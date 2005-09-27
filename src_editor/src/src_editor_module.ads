@@ -101,6 +101,9 @@ package Src_Editor_Module is
    --  Return the source editor contained in a MDI_Child. Constraint_Error if
    --  Child doesn't contain an editor. null is returned Child is null.
 
+   function Is_Source_Box (Child : Gtkada.MDI.MDI_Child) return Boolean;
+   --  Return True if Child contains an editor
+
    function Find_Child
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Editor : access Src_Editor_Box.Source_Editor_Box_Record'Class)

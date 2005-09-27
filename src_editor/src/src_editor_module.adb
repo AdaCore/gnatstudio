@@ -863,6 +863,15 @@ package body Src_Editor_Module is
       end if;
    end Get_Source_Box_From_MDI;
 
+   -------------------
+   -- Is_Source_Box --
+   -------------------
+
+   function Is_Source_Box (Child : Gtkada.MDI.MDI_Child) return Boolean is
+   begin
+      return Get_Widget (Child).all in Source_Editor_Box_Record'Class;
+   end Is_Source_Box;
+
    -------------------------
    -- Find_Current_Editor --
    -------------------------
