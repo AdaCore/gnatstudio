@@ -3213,6 +3213,15 @@ If file is not specified, the current editor is returned, ie the last one that h
       </example>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.list">
+       <return>A list of instances of GPS.EditorBuffer</return>
+       <description>This function returns the list of all editors that are currently open in GPS.</description>
+       <example lang="python">
+It is possible to close all editors at once using a command like
+      for ed in GPS.EditorBuffer.list(): ed.close()
+       </example>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorBuffer.file">
        <param name="self">An instance of GPS.EditorBuffer</param>
        <return>An instance of GPS.File</return>
