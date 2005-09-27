@@ -46,12 +46,12 @@ package Std_Dialogs is
       Title          : String;
       Message        : String;
       Position       : Gtk_Window_Position := Win_Pos_Mouse;
-      Check_Msg      : String;
+      Check_Msg      : String := "";
       History        : Histories.History;
       Key            : History_Key := "";
 
-      Button_Active  : access Boolean;
-      Key_Check      : History_Key;
+      Button_Active  : Boolean_Access := null;
+      Key_Check      : History_Key := "";
 
       Check_Msg2     : String := "";
       Button2_Active : Boolean_Access := null;
