@@ -31,4 +31,8 @@ package Gtk_Utils is
    function Gtk_Micro_Version return Integer;
    --  Return the Gtk+ run-time micro version
 
+private
+   pragma Inline (Gtk_Major_Version);
+   pragma Inline (Gtk_Minor_Version);
+   pragma Inline (Gtk_Micro_Version);
 end Gtk_Utils;
