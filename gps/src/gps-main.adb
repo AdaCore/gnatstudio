@@ -42,6 +42,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
 
+with Gtk_Utils;                 use Gtk_Utils;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -358,13 +359,6 @@ procedure GPS.Main is
       Tmp         : String_Access;
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
-
-      Gtk_Major_Version : Integer;
-      pragma Import (Dll, Gtk_Major_Version, "gtk_major_version");
-      Gtk_Minor_Version : Integer;
-      pragma Import (Dll, Gtk_Minor_Version, "gtk_minor_version");
-      Gtk_Micro_Version : Integer;
-      pragma Import (Dll, Gtk_Micro_Version, "gtk_micro_version");
 
    begin
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
