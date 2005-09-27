@@ -1749,17 +1749,43 @@ package body Src_Editor_Module.Shell is
       elsif Command = "list" then
          declare
             Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Child_Count : Natural := 0;
          begin
-            Set_Return_Value_As_List (Data);
             while Get (Iter) /= null loop
-               if Is_Source_Box (Get (Iter)) then
-                  Box := Get_Source_Box_From_MDI (Get (Iter));
-                  Set_Return_Value
-                    (Data, Create_Editor_Buffer
-                       (Get_Script (Data), Get_Buffer (Box)));
-               end if;
+               Child_Count := Child_Count + 1;
                Next (Iter);
             end loop;
+
+            declare
+               Buffers : array (1 .. Child_Count) of Source_Buffer;
+               Index   : Integer := Buffers'First - 1;
+               Found   : Boolean;
+            begin
+               Iter := First_Child (Get_MDI (Kernel));
+               Set_Return_Value_As_List (Data);
+               while Get (Iter) /= null loop
+                  if Is_Source_Box (Get (Iter)) then
+                     Buffer := Get_Buffer
+                       (Get_Source_Box_From_MDI (Get (Iter)));
+                     Found := False;
+                     for J in Buffers'First .. Index loop
+                        if Buffers (J) = Buffer then
+                           Found := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Index := Index + 1;
+                        Buffers (Index) := Buffer;
+                        Set_Return_Value
+                          (Data, Create_Editor_Buffer
+                             (Get_Script (Data), Buffer));
+                     end if;
+                  end if;
+                  Next (Iter);
+               end loop;
+            end;
          end;
 
       elsif Command = "file" then
