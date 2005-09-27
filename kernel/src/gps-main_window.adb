@@ -1041,6 +1041,7 @@ package body GPS.Main_Window is
 
             Destroy (Dialog);
          end;
+
       elsif Command = "hide" then
          declare
             Iterator : Child_Iterator := First_Child (Get_MDI (Kernel));
@@ -1051,12 +1052,13 @@ package body GPS.Main_Window is
 
                exit when Child = null;
 
-               Hide (Get_Toplevel (Get_Widget (Child)));
+               Hide (Get_Widget (Child));
                Next (Iterator);
             end loop;
 
             Hide (Gtk_Widget (Get_Main_Window (Kernel)));
          end;
+
       elsif Command = "show" then
          declare
             Iterator : Child_Iterator := First_Child (Get_MDI (Kernel));
@@ -1067,7 +1069,7 @@ package body GPS.Main_Window is
 
                exit when Child = null;
 
-               Show (Get_Toplevel (Get_Widget (Child)));
+               Show (Get_Widget (Child));
                Next (Iterator);
             end loop;
 
