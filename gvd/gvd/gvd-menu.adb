@@ -53,7 +53,7 @@ package body GVD.Menu is
             Check_Msg => -"Expression is a subprogram call",
             History   => Get_History (GPS_Window (Debugger.Window).Kernel),
             Key_Check => "expression_subprogram_debugger",
-            Button_Active => Is_Func'Access);
+            Button_Active => Is_Func'Unchecked_Access);
 
       begin
          if Expression /= ""
