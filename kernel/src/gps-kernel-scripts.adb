@@ -87,7 +87,6 @@ package body GPS.Kernel.Scripts is
       Inst   : Class_Instance);
    --  Set the instance for a specific language
 
-
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
       Scripting_Languages  : Scripting_Language_List :=
         new Scripting_Language_Array'(1 .. 0 => null);
@@ -1536,6 +1535,7 @@ package body GPS.Kernel.Scripts is
                Create_If_Not_Exist => Title /= "Python"
                  and then Title /= "Shell",
                Force_Create        => Force);
+            Enable_Prompt_Display (Console, Enable => Title = "Python");
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
