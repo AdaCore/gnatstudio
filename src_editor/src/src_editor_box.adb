@@ -1107,6 +1107,32 @@ package body Src_Editor_Box is
       Has_Selection : Boolean;
       Out_Of_Bounds : Boolean := False;
       Start_Line, End_Line : Integer;
+      Selection_Is_Single_Entity : Boolean;
+
+      function In_Selection
+        (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean;
+      --  Return True if (L,C) is between (First, Last)
+
+      ------------------
+      -- In_Selection --
+      ------------------
+
+      function In_Selection
+        (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean
+      is
+         L_Start : constant Gint := Get_Line (First);
+         C_Start : constant Gint := Get_Line_Offset (First);
+         L_End   : constant Gint := Get_Line (Last);
+         C_End   : constant Gint := Get_Line_Offset (Last);
+      begin
+         --  ??? We should use Gtk.Text_Iter.In_Range, but that requires an
+         --  iter in parameter, which we do not have currently.
+         return (L > L_Start
+                 or else (L = L_Start and then C >= C_Start))
+           and then
+             (L < L_End
+              or else (L = L_End and then C <= C_End));
+      end In_Selection;
 
    begin
       --  Click in the line numbers area ?
@@ -1156,17 +1182,18 @@ package body Src_Editor_Box is
             Get_Selection_Bounds
               (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
 
+            Selection_Is_Single_Entity :=
+              Has_Selection
+              and then Equal (Entity_Start, Start_Iter)
+              and then Equal (Entity_End, End_Iter);
+
             --  If we click in the current selection, use this as the context.
             --  However, if the selection is a single entity, we should create
             --  a context such that cross-references menus also appear
 
             if Has_Selection
-              and then (not Equal (Entity_Start, Start_Iter)
-                        or else not Equal (Entity_End, End_Iter))
-              and then Line >= Get_Line (Start_Iter)
-              and then Line <= Get_Line (End_Iter)
-              and then Column >= Get_Line_Offset (Start_Iter)
-              and then Column <= Get_Line_Offset (End_Iter)
+              and then not Selection_Is_Single_Entity
+              and then In_Selection (Line, Column, Start_Iter, End_Iter)
             then
                Context := new File_Area_Context;
 
@@ -1207,7 +1234,9 @@ package body Src_Editor_Box is
                   Get_Text (Entity_Start, Entity_End),
                   To_Box_Column (Entity_Column));
 
-               if Menu /= null then
+               if Menu /= null
+                 and then not Selection_Is_Single_Entity
+               then
                   --  Move the cursor at the correct location. The cursor is
                   --  grabbed automatically by the kernel when displaying the
                   --  menu, and this would result in unwanted scrolling
