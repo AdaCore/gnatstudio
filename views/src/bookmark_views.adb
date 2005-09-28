@@ -29,8 +29,13 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Values;               use Glib.Values;
+with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
@@ -59,6 +64,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
 with XML_Parsers;               use XML_Parsers;
 with Traces;                    use Traces;
+with Tooltips;
 
 package body Bookmark_Views is
    Me : constant Debug_Handle := Create ("Bookmarks");
@@ -190,6 +196,89 @@ package body Bookmark_Views is
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Bookmark_View_Tooltips is new Tooltips.Pixmap_Tooltips with record
+      Bookmark_View : Bookmark_View_Access;
+   end record;
+   type Bookmark_View_Tooltips_Access is
+     access all Bookmark_View_Tooltips'Class;
+   procedure Draw
+     (Tooltip : access Bookmark_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   ----------
+   -- Draw --
+   ----------
+
+   procedure Draw
+     (Tooltip : access Bookmark_View_Tooltips;
+      Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
+      Area    : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Window     : Gdk.Window.Gdk_Window;
+      New_Window : Gdk.Window.Gdk_Window;
+      Mask       : Gdk_Modifier_Type;
+
+      Model      : constant Gtk_Tree_Model :=
+                     Get_Model (Tooltip.Bookmark_View.Tree);
+
+      X, Y       : Gint;
+      Path       : Gtk_Tree_Path;
+      Column     : Gtk_Tree_View_Column;
+      Cell_X,
+      Cell_Y     : Gint;
+      Row_Found  : Boolean := False;
+      Iter       : Gtk_Tree_Iter;
+      Selected   : Integer;
+      pragma Unreferenced (Selected);
+
+      Text       : GNAT.OS_Lib.String_Access;
+      Data       : Bookmark_Data_Access;
+   begin
+      Pixmap := null;
+      Area   := (0, 0, 0, 0);
+
+      Window := Get_Bin_Window (Tooltip.Bookmark_View.Tree);
+      Get_Pointer (Window, X, Y, Mask, New_Window);
+
+      Get_Path_At_Pos
+        (Tooltip.Bookmark_View.Tree, X, Y, Path,
+         Column, Cell_X, Cell_Y, Row_Found);
+
+      if not Row_Found then
+         return;
+      end if;
+
+      Get_Cell_Area (Tooltip.Bookmark_View.Tree, Path, Column, Area);
+      Iter := Get_Iter (Model, Path);
+      Path_Free (Path);
+      Selected := Integer (Get_Int (Model, Iter, 1));
+
+      Data := Convert (Get_Address (Model, Iter, Data_Column));
+
+      declare
+         Location : constant String := To_String (Data.Marker);
+      begin
+         if Location = Data.Name.all then
+            Text := new String'(Location);
+         else
+            Text := new String'(Data.Name.all & ASCII.LF & Location);
+         end if;
+      end;
+
+      Create_Pixmap_From_Text
+        (Text.all,
+         Get_Pref (Default_Font),
+         White (Get_Default_Colormap),
+         Tooltip.Bookmark_View.Tree,
+         Pixmap);
+      Free (Text);
+   end Draw;
 
    -------------
    -- Execute --
@@ -510,6 +599,7 @@ package body Bookmark_Views is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
+      Tooltip  : Bookmark_View_Tooltips_Access;
    begin
       View := new Bookmark_View_Record;
       View.Kernel := Kernel_Handle (Kernel);
@@ -555,6 +645,12 @@ package body Bookmark_Views is
                 On_Preferences_Changed'Access,
                 Watch => GObject (View));
       Refresh (View);
+
+      --  Initialize tooltips
+
+      Tooltip := new Bookmark_View_Tooltips;
+      Tooltip.Bookmark_View := View;
+      Set_Tooltip (Tooltip, View.Tree, 250);
    end Gtk_New;
 
    ------------------
