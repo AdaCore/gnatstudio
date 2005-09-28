@@ -473,8 +473,7 @@ package body Src_Editor_Module.Markers is
                    (Find_Editor (Marker.Kernel, Marker.File));
       begin
          if Box /= null then
-            return " (" & Get_Subprogram_Name
-              (Box, Editable_Line_Type (Marker.Line)) & ')';
+            return Get_Subprogram_Name (Box, Editable_Line_Type (Marker.Line));
          else
             return "";
          end if;
@@ -482,10 +481,19 @@ package body Src_Editor_Module.Markers is
 
    begin
       Update_Marker_Location (Marker);
-      return Base_Name (Marker.File)
-        & ":"  & Image (Marker.Line)
-        & ":"  & Image (Marker.Column)
-        & Get_Subprogram_Name;
+
+      declare
+         Location : constant String := Base_Name (Marker.File)
+           & ":"  & Image (Marker.Line)
+           & ":"  & Image (Marker.Column);
+         Name     : constant String := Get_Subprogram_Name;
+      begin
+         if Name = "" then
+            return Location;
+         else
+            return Name & " (" & Location & ")";
+         end if;
+      end;
    end To_String;
 
    ----------
