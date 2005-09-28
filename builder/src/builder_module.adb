@@ -129,6 +129,9 @@ package body Builder_Module is
      (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Return True if W is a Dynamic menu item
 
+   --------------------------------
+   -- Computing cross-references --
+   --------------------------------
    type Compute_Xref_Data is record
       Kernel : Kernel_Handle;
       Iter   : LI_Handler_Iterator_Access_Access;
@@ -154,6 +157,36 @@ package body Builder_Module is
    package Xref_Commands is new Commands.Generic_Asynchronous
      (Data_Type => Compute_Xref_Data_Access,
       Free      => Deep_Free);
+
+   ------------------------------
+   -- Loading cross-references --
+   ------------------------------
+
+   type Load_Xref_Data is record
+      Kernel           : Kernel_Handle;
+      LI               : Natural;
+      Project          : Imported_Project_Iterator;
+      Current_Progress : Natural;
+      Max_Projects     : Natural;
+   end record;
+   type Load_Xref_Data_Access is access Load_Xref_Data;
+
+   procedure Free (D : in out Load_Xref_Data_Access);
+   --  Free memory associated to D;
+
+   procedure Load_Xref_Iterate
+     (Xref_Data : in out Load_Xref_Data_Access;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type);
+   --  Load all the Xref information in memory
+
+   package Load_Xref_Commands is new Commands.Generic_Asynchronous
+     (Data_Type => Load_Xref_Data_Access,
+      Free      => Free);
+
+   ----------
+   -- Misc --
+   ----------
 
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
@@ -270,6 +303,10 @@ package body Builder_Module is
    procedure On_Compute_Xref
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Compute Xref information menu
+
+   procedure Load_Xref_In_Memory
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Load Xref info
 
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
@@ -1229,6 +1266,94 @@ package body Builder_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Compute_Xref;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Load_Xref_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Load_Xref_Data, Load_Xref_Data_Access);
+   begin
+      Unchecked_Free (D);
+   end Free;
+
+   -----------------------
+   -- Load_Xref_Iterate --
+   -----------------------
+
+   procedure Load_Xref_Iterate
+     (Xref_Data : in out Load_Xref_Data_Access;
+      Command   : Command_Access;
+      Result    : out Command_Return_Type)
+   is
+      D            : Load_Xref_Data_Access renames Xref_Data;
+      Handler      : constant GPS_Language_Handler :=
+        GPS_Language_Handler (Get_Language_Handler (D.Kernel));
+      Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
+      LI           : LI_Handler;
+      Count : Integer;
+      pragma Unreferenced (Count);
+
+   begin
+      D.LI := D.LI + 1;
+      if D.LI > Num_Handlers then
+         Next (D.Project);
+         if Current (D.Project) = No_Project then
+            Result := Success;
+            return;
+         end if;
+         D.LI := 1;
+      end if;
+
+      LI := Get_Nth_Handler (Handler, D.LI);
+      if LI /= null then
+         Count := Parse_All_LI_Information
+           (LI, Current (D.Project), Recursive => False);
+      end if;
+
+      D.Current_Progress := D.Current_Progress + 1;
+      Set_Progress
+        (Command,
+         (Running, D.Current_Progress, D.Max_Projects *  Num_Handlers));
+      Result := Execute_Again;
+   end Load_Xref_Iterate;
+
+   -------------------------
+   -- Load_Xref_In_Memory --
+   -------------------------
+
+   procedure Load_Xref_In_Memory
+     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+      C              : Load_Xref_Commands.Generic_Asynchronous_Command_Access;
+      Projects_Count : Natural := 0;
+      Iter         : Imported_Project_Iterator := Start (Get_Project (Kernel));
+
+   begin
+      while Current (Iter) /= No_Project loop
+         Projects_Count := Projects_Count + 1;
+         Next (Iter);
+      end loop;
+
+      Load_Xref_Commands.Create
+        (C, -"Load xref info",
+         new Load_Xref_Data'
+           (Kernel,
+            LI           => 0,
+            Project      => Start (Root_Project => Get_Project (Kernel)),
+            Current_Progress => 0,
+            Max_Projects => Projects_Count),
+         Load_Xref_Iterate'Access);
+      Launch_Background_Command
+        (Kernel, Command_Access (C), False, True, "");
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Load_Xref_In_Memory;
+
    ------------
    -- On_Run --
    ------------
@@ -1855,6 +1980,9 @@ package body Builder_Module is
       Register_Menu
         (Kernel, Build, -"Recompute C/C++ _Xref info", "",
          On_Compute_Xref'Access);
+      Register_Menu
+        (Kernel, Build, -"Load Xref info in memory", "",
+         Load_Xref_In_Memory'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
