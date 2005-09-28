@@ -310,6 +310,7 @@ package body Default_Preferences is
       function Convert is new Ada.Unchecked_Conversion
         (Glib.C_Proxy, Param_Spec_Editor);
       Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
+
    begin
       return Convert (Get_Qdata (Param, Quark));
    end Get_Param_Spec_Editor;
@@ -324,6 +325,7 @@ package body Default_Preferences is
       function Convert is new Ada.Unchecked_Conversion
         (Param_Spec_Editor, Glib.C_Proxy);
       Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
+
    begin
       Set_Qdata
         (Param => Param,
@@ -339,6 +341,7 @@ package body Default_Preferences is
       function Convert is new Ada.Unchecked_Conversion
         (Glib.C_Proxy, Pref_Description_Access);
       Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
+
    begin
       return Convert (Get_Qdata (P, Quark));
    end Get_Description;
@@ -347,11 +350,13 @@ package body Default_Preferences is
    -- Set_Description --
    ---------------------
 
-   procedure Set_Description (P : Param_Spec; Descr : Pref_Description_Access)
+   procedure Set_Description
+     (P : Param_Spec; Descr : Pref_Description_Access)
    is
       function Convert is new Ada.Unchecked_Conversion
         (Pref_Description_Access, Glib.C_Proxy);
       Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
+
    begin
       Set_Qdata
         (Param   => P,
@@ -367,9 +372,12 @@ package body Default_Preferences is
    procedure Free_Pref_Description (Data : Glib.C_Proxy) is
       function Convert is new Ada.Unchecked_Conversion
         (Glib.C_Proxy, Pref_Description_Access);
+
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Pref_Description, Pref_Description_Access);
+
       Descr : Pref_Description_Access := Convert (Data);
+
    begin
       GNAT.OS_Lib.Free (Descr.Value);
       Free (Descr.Page);
@@ -388,6 +396,7 @@ package body Default_Preferences is
          Value => null,
          Param => Info.Param,
          Descr => null);
+
    begin
       if Info.Value /= null then
          Clone.Value := new String'(Info.Value.all);
@@ -510,7 +519,7 @@ package body Default_Preferences is
       Name    : String;
       Create_If_Necessary : Boolean) return Param_Spec
    is
-      L : Param_Spec_List.List_Node := First (Manager.Preferences);
+      L     : Param_Spec_List.List_Node := First (Manager.Preferences);
       Param : Param_Spec;
    begin
       while L /= Param_Spec_List.Null_Node loop
@@ -544,17 +553,22 @@ package body Default_Preferences is
       Page    : String)
    is
       Info, Old_Info : Pref_Description_Access;
-      Value : String_Access;
-      L : Param_Spec_List.List_Node := First (Manager.Preferences);
+      Value          : String_Access;
+      L              : Param_Spec_List.List_Node :=
+                         First (Manager.Preferences);
+
    begin
       while L /= Param_Spec_List.Null_Node loop
          if Pspec_Name (Data (L)) = Pspec_Name (Param) then
             Old_Info := Get_Description (Data (L));
+
             if Old_Info.Value /= null then
                Value := new String'(Old_Info.Value.all);
             end if;
+
             exit;
          end if;
+
          L := Next (L);
       end loop;
 
@@ -613,6 +627,7 @@ package body Default_Preferences is
       function Internal is new Generic_Get_Pref
         (Param_Spec_Boolean, Param_Spec (Pref), Boolean, GType_Boolean,
          Boolean'Value);
+
    begin
       return Internal (Pref);
    end Get_Pref;
@@ -646,8 +661,10 @@ package body Default_Preferences is
    function Get_Pref (Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color is
       function Color_Get_Pref is new Generic_Get_Pref
         (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
-      S : constant String := Color_Get_Pref (Pref);
+
+      S     : constant String := Color_Get_Pref (Pref);
       Color : Gdk_Color;
+
    begin
       Color := Parse (S);
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
@@ -696,7 +713,7 @@ package body Default_Preferences is
    -------------------
 
    function Get_Pref_Font
-     (Pref    : Param_Spec_Style) return Pango_Font_Description
+     (Pref : Param_Spec_Style) return Pango_Font_Description
    is
       Info : Pref_Description_Access := Get_Description (Param_Spec (Pref));
       Desc : Pango_Font_Description;
