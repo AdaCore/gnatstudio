@@ -201,7 +201,7 @@ package GPS.Kernel.Standard_Hooks is
       Focus             : Boolean := True;
       Position          : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Default);
-   --  Calls Open_File_Action_Hook
+   --  Call Open_File_Action_Hook
 
    procedure Clear_Highlighting
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;

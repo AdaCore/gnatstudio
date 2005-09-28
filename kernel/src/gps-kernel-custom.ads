@@ -91,6 +91,6 @@ package GPS.Kernel.Custom is
    --  string.
 
    function Get_Custom_Path return String;
-   --  Returns the custom path as set by GPS_CUSTOM_PATH
+   --  Return the custom path as set by GPS_CUSTOM_PATH
 
 end GPS.Kernel.Custom;
