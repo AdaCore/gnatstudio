@@ -2779,6 +2779,39 @@ won't be detected.
 
 @end table
 
+@subsection Loading xref info in memory
+@cindex Load xref info in memory
+
+The cross-reference information, as mentioned above, is generated either
+by the compiler when you recompile your sources, or explicitly when you
+select the menu @code{Build->Recompute C/C++ Xref info}.
+
+This information will be loaded in memory automatically by GPS when it
+needs it, and as little as possible, to limit the memory footprint. However,
+this means that some operations, for instance searching for all the references
+to a global entity, will need to parse most, if not all, of the cross-reference
+information. This will slow done the search the first time (and then the
+information is in memory and the search is fast, unless the cross-reference
+information has been regenerated on the disk).
+
+You can select the menu @code{Build->Load xref info in memory} to force GPS to
+load all the available information immediately in memory. This will speed up
+future queries.
+
+This menu can also be used in some cases for C and C++. Since these languages
+have no notion of package, the declaration of a subprogram and its actual
+implementation can be in two different files with vastly different names.
+GPS in such case will not be able to display a @code{Goto body} contextual
+menu unless it has already parsed both files. A way to get fully accurate
+cross-reference information is thus to load all information into memory
+before attempting any navigation operation.
+
+A special case has been put in place so that both @file{file.h} and
+@file{file.cpp} are loaded together in memory. This means that in the general
+case where an entity is defined in @file{foo.h} and implemented in
+@file{foo.cpp}, nothing special needs to be done. The specific file extensions
+depend on the naming scheme specified in your project.
+
 @c --------------------------------------------------------------------
 @node The Navigate Menu
 @section The Navigate Menu
@@ -4491,6 +4524,12 @@ Tree.
 @cindex C++
 Recompute the cross-reference information for C and C++ source files.
 @xref{Support for Cross-References}.
+
+@item Load xref info in meomry
+@cindex C
+@cindex C++
+Load all the cross-reference information in memory. This menu is generally
+not needed, @xref{Support for Cross-References}.
 
 @item Run
    @table @i
