@@ -2661,7 +2661,7 @@ package body Ada_Analyzer is
                   Prev_Token := Tok_Pound;
 
                   if (P = Buffer'First
-                      or else Buffer (P - 1) not in '0' .. '9')
+                      or else not Is_Alphanumeric (Buffer (P - 1)))
                     and then Is_Letter (Buffer (P + 1))
                   then
                      Preprocessor_Directive;
@@ -2884,7 +2884,9 @@ package body Ada_Analyzer is
                           and then
                             (P <= Buffer'First + 1
                              or else To_Upper (Buffer (P - 1)) /= 'E'
-                             or else Buffer (P - 2) not in '0' .. '9')
+                             or else
+                               (Buffer (P - 2) /= '#'
+                                and then Buffer (P - 2) not in '0' .. '9'))
                           and then
                             (P = Buffer'Last
                              or else (Buffer (P + 1) /= '"'
