@@ -1120,7 +1120,11 @@ package body Commands.Custom is
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
                Show_Command  => Component.Show_Command,
-               Show_Output   => Output_Location.all /= No_Output,
+
+               --  Showing the output is already handled by the callback
+               --  Store_Command_Output
+               Show_Output   => False,
+
                Callback_Data => new Custom_Callback_Data'
                  (Command => Custom_Command_Access (Command)),
                Show_In_Task_Manager => Component.Show_In_Task_Manager,
