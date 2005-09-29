@@ -2,8 +2,13 @@
 
 use strict;
 
+## If set to 1, all translations are set as empty. Otherwise, the translation
+## is the same as the message itself
+my ($empty_translation) = 1;
+
 my (%strings);
 my (@modules);
+my ($msg);
 
 # Find the list of modules
 opendir (DIR, "..");
@@ -36,11 +41,10 @@ sub process_modules() {
            # Multi-line strings: we need to concatenate
            @matches = ($contents =~ /-\("([^)]+)/gso);
            foreach $str (@matches) {
-              $str =~ s/(ASCII\.)?LF/"\\n"/g;
+              $str =~ s/(ASCII\.)?LF/"\\n\"\n  \""/g;
               $str =~ s/"\s*&\s*"//g;
               $str =~ s/"\s*$//g;
               ${$strings{$str}}{$file}++; #  .= "$file ";
-              # $strings{$str} .= "$file ";
            } 
            close (FILE); 
         }
@@ -53,8 +57,34 @@ sub process_modules() {
 
 &process_modules;
 
-my ($msg);
+my ($date) = `date +'%Y-%m-%d'`;
+chomp ($date);
+
+print <<EOF
+# Translation file for the GNAT Programming Studio
+# Copyright (C) 2005 AdaCore
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GPS 3.1.0\\n"
+"Report-Msgid-Bugs-To: report\@adacore.com\\n"
+"POT-Creation-Date: $date\\n"
+"PO-Revision-Date: \\n"
+"Last-Translator: AdaCore\\n"
+"Language-Team: \\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=ISO-8859-1\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+EOF
+  ;
+
 foreach $msg (sort {uc($a) cmp uc($b)} keys %strings) {
-   print "# From ", join ("", keys %{$strings{$msg}}), "\n";
-   print "msgid  \"$msg\"\nmsgstr \"$msg\"\n\n";
+   print "#: ", join (" ", keys %{$strings{$msg}}), "\n";
+   print "msgid \"$msg\"\n";
+   if ($empty_translation) {
+      print "msgstr \"\"\n\n";
+   } else {
+      print "msgstr \"$msg\"\n\n";
+   }
 }
