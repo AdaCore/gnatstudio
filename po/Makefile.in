@@ -14,8 +14,9 @@ static:
 ## Refresh all translations by extracting the strings from the current sources
 refresh:
 	./build_skeleton.pl > gps.pot
-	if [ -f fr_FR.po ]; then true; else ${CP} gps.pot fr_FR.po; fi
-	msgmerge --no-wrap --update fr_FR.po gps.pot
+	${foreach lang,${LANGS}, \
+	if [ -f ${lang}.po ]; then true; else ${CP} gps.pot ${lang}.po; fi; \
+	msgmerge --no-wrap --update ${lang}.po gps.pot}
 
 ## Install the translation files
 $(LANGS): 
