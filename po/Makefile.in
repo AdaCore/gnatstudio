@@ -1,5 +1,7 @@
 LANGS = fr
 MKDIR = mkdir -p
+CP=cp
+MV=mv
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -9,8 +11,15 @@ localedir     = $(prefix)/share/locale
 all:
 static:
 
-$(LANGS):
-	-msgfmt -o $@.gmo $@.po
+## Refresh all translations by extracting the strings from the current sources
+refresh:
+	./build_skeleton.pl > gps.pot
+	if [ -f fr_FR.po ]; then true; else ${CP} gps.pot fr_FR.po; fi
+	msgmerge --no-wrap --update fr_FR.po gps.pot
+
+## Install the translation files
+$(LANGS): 
+	-msgfmt -o $@.gmo $@.po --statistics --check-header --check-format --check-domain
 	$(MKDIR) $(localedir)/$@/LC_MESSAGES
 	-$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/gps.mo
 
