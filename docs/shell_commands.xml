@@ -2843,6 +2843,13 @@ highlight_category, style_category and warning_category reference the colors to 
      <param name="self">The instance of GPS.Contextual</param>
      <param name="name">A string</param>
      <description>Initializes a new instance of GPS.Contextual. The name is the name that was given to the contextual menu when it was created, and is a static string independent of the actual label used when the menu is displayed (and which is dynamic, depending on the context). You can get the list of valid names by checking the list of names returned by GPS.Contextual.list</description>
+     <example lang="python">
+You could for instance decide to always hide the "Goto declaration" contextual
+menu with the following call:
+    GPS.Contextual ('Goto declaration of entity').hide()
+
+After this, the menu will never be displayed again.
+     </example>
      <see_also name="GPS.Contextual.list()" />
   </shell_doc>
 
