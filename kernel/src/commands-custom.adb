@@ -1498,7 +1498,7 @@ package body Commands.Custom is
                -("Name of the window in which the output of the command should"
                  & " be displayed. A new window will be created if necessary."
                  & " This value can be inherited from the action's own setup"
-                 & " by specifying """ & Output_Use_Default & """"));
+                 & " by specifying") & '"' & Output_Use_Default & '"');
 
       if Component.Output = null then
          Set_Text (Custom.Output, Output_Use_Default);
