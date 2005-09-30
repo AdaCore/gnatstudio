@@ -1310,7 +1310,7 @@ package body GPS.Kernel.Preferences is
                Insert
                  (Kernel,
                   -("Invalid attribute value for <preference>, ignoring"
-                    & " preference " & Name),
+                    & " preference ") & Name,
                   Mode => Error);
          end;
       end if;

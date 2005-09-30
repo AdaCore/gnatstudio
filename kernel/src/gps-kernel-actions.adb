@@ -103,9 +103,10 @@ package body GPS.Kernel.Actions is
 
       if Old /= null then
          Insert (Kernel,
-                 -("Action """ & Name & """ is defined several times. Future"
-                   & " references to this action will execute the last"
-                   & " definition encountered"),
+                 '"' & Name & """: "
+                 & (-("Action is defined several times. Future"
+                     & " references to this action will execute the last"
+                     & " definition encountered")),
                  Mode => Error);
          Overriden := True;
       end if;

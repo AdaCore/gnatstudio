@@ -1430,9 +1430,9 @@ package body Project_Properties is
          if Attr.Pkg.all = "" then
             Insert
               (Kernel,
-               -("Project attributes " & Attr.Name.all
-                 & " cannot be added at the top level of project files,"
-                 & " only in packages"),
+               Attr.Name.all & ": "
+               & (-("Project attributes cannot be added at the top level of"
+                    & " project files, only in packages")),
                Mode => Error);
          else
             if Active (Me) then
@@ -1456,16 +1456,16 @@ package body Project_Properties is
             if Attr.Pkg.all = "" then
                Insert
                  (Kernel,
-                  -("Project attribute "
-                    & Attr.Name.all & " was already defined, but with a"
-                    & " different type"),
+                  Attr.Name.all & ": "
+                  & (-("Project attributes was already defined but with a"
+                    & " different type")),
                   Mode => Error);
             else
                Insert
                  (Kernel,
-                  -("Project attribute " & Attr.Pkg.all & "'"
-                    & Attr.Name.all & " was already defined, but with a"
-                    & " different type"),
+                  Attr.Pkg.all & "'" & Attr.Name.all & ": "
+                  & (-("Project attributes was already defined but with a"
+                    & " different type")),
                   Mode => Error);
             end if;
          end if;
@@ -1516,7 +1516,7 @@ package body Project_Properties is
                if Value = "" and then A.Index_Types (T).Index_Value = null then
                   Insert (Kernel,
                           -("General indexed type already defined for"
-                            & " attribute " & A.Name.all),
+                            & " attribute ") & A.Name.all,
                           Mode => Error);
                   Found := True;
                   exit;
@@ -1526,9 +1526,8 @@ package body Project_Properties is
                  and then A.Index_Types (T).Index_Value.all = Value
                then
                   Insert (Kernel,
-                          -("Attribute type already defined for"
-                            & " attribute " & A.Name.all & " indexed by """
-                            & Value & """"),
+                          -"Attribute type already defined for attribute"
+                          & A.Name.all & (-" indexed by") & '"' & Value & '"',
                           Mode => Error);
                   Found := True;
                   exit;

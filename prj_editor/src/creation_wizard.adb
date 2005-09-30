@@ -354,9 +354,7 @@ package body Creation_Wizard is
 
             if Error /= Success then
                Result := Message_Dialog
-                 (Msg => -("You have created a child project of "
-                           & Name (Name'First .. J - 1) & ASCII.LF
-                           & "However, the parent project couldn't be found,"
+                 (Msg => -("The parent project couldn't be found,"
                            & ASCII.LF
                            & "and a dependency to it couldn't be added."
                            & ASCII.LF
