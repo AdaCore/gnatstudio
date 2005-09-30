@@ -2870,6 +2870,12 @@ After this, the menu will never be displayed again.
      <see_also name="GPS.Contextual.show" />
   </shell_doc>
 
+  <shell_doc name="GPS.Contextual.set_sensitive">
+     <param name="self">The instance of GPS.Contextual</param>
+     <param name="Sensitivity">Boolean value</param>
+     <description>Control whether the contextual menu is grayed-out: False if it should be grayed-out, True otherwise.</description>
+  </shell_doc>
+  
   <!--#################################################################
    ##### Socket class
    ####################################################################-->
