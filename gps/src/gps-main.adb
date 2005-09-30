@@ -44,7 +44,8 @@ with Gtk.Window;                use Gtk.Window;
 
 with Gtk_Utils;                 use Gtk_Utils;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.Intl;               use Gtkada.Intl;
+with Gtkada.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Config;                    use Config;
@@ -488,8 +489,10 @@ procedure GPS.Main is
 
       Free (Tmp);
 
-      Bind_Text_Domain
+      Gtkada.Intl.Setlocale;
+      Gtkada.Intl.Bind_Text_Domain
         ("gps", Format_Pathname (Prefix.all & "/share/locale"));
+      Gtkada.Intl.Text_Domain ("gps");
 
       --  Redirect all default Gtk+ logs to our own trace mechanism
 
