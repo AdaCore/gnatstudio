@@ -112,7 +112,7 @@ install_binaries() {
   # We also explicitly work on specific directories to avoid
   # copying junk files
 
-  (cd $current_dir; tar cf - bin lib doc share) | tar xf -
+  (cd $current_dir; tar cf - bin lib share) | tar xf -
 }
 
 ##
