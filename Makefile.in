@@ -35,13 +35,21 @@ install-common:
 	(cd examples; tar c --exclude CVS -f - . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
+ifeq ($(OS),Windows_NT)
+	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
+else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
+endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
+ifeq ($(OS),Windows_NT)
+	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)
+else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
+endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
 
 test: force
