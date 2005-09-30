@@ -1,4 +1,4 @@
-LANGS = fr
+LANGS = fr_FR
 MKDIR = mkdir -p
 CP=cp
 MV=mv
