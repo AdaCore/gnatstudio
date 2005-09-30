@@ -10214,7 +10214,7 @@ language-related items describing a language.
 
 You will find the required specification for the C and Ada languages
 to implement the following functions in the directory
-@file{<prefix>/share/gps/doc/examples/language} of your GPS installation.
+@file{<prefix>/share/examples/gps/language} of your GPS installation.
 @file{language_custom.ads} is the Ada spec file; @file{language_custom.h} is
 the C spec file; @file{gpr_custom.ad?} are example files showing a possible Ada
 implementation of the function @code{Comment_Line}
@@ -14468,14 +14468,14 @@ This directory contains the shared libraries used by GPS.
    @item @i{prefix}/share/doc/gps/html
 GPS will look for all the documentation files under this directory.
 
-   @item @i{prefix}/share/doc/gps/examples
+   @item @i{prefix}/share/examples/gps
 This directory contains source code examples.
 
-   @item @i{prefix}/share/doc/gps/examples/language
+   @item @i{prefix}/share/examples/gps/language
 This directory contains sources showing how to provide a shared library to
 dynamically define a new language. See @ref{Adding support for new languages}.
 
-   @item @i{prefix}/share/doc/gps/examples/tutorial
+   @item @i{prefix}/share/examples/gps/tutorial
 This directory contains the sources used by the GPS tutorial.
 @ifhtml
 @cindex url
