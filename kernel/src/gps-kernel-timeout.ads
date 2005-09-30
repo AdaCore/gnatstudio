@@ -82,7 +82,8 @@ package GPS.Kernel.Timeout is
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := False;
-      Synchronous          : Boolean := False);
+      Synchronous          : Boolean := False;
+      Show_Exit_Status     : Boolean := False);
    --  Launch a given command with arguments.
    --  Arguments must be freed by the user.
    --
@@ -121,6 +122,9 @@ package GPS.Kernel.Timeout is
    --  whether Launch_Process should return immediately or wait for the process
    --  to complete.
    --
+   --  If Show_Exit_Status is true, the exit status of the process will be
+   --  displayed in the Console.
+   --
    --  Callback_Data is freed automatically when the process terminates.
 
    procedure Launch_Process
@@ -140,6 +144,7 @@ package GPS.Kernel.Timeout is
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False;
+      Show_Exit_Status     : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access);
    --  Same as above, and returns the created Process_Descriptor.
    --  Fd is allocated by this procedure, and will be cleaned automatically,

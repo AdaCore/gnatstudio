@@ -52,21 +52,22 @@ with Traces;                     use Traces;
 package body GPS.Kernel.Timeout is
 
    type Console_Process_Data is new GObject_Record with record
-      Console       : Interactive_Console;
-      Delete_Id     : Gtk.Handlers.Handler_Id;
-      Show_Output   : Boolean;
-      Show_Command  : Boolean;
+      Console          : Interactive_Console;
+      Delete_Id        : Gtk.Handlers.Handler_Id;
+      Show_Output      : Boolean;
+      Show_Command     : Boolean;
+      Show_Exit_Status : Boolean;
 
-      Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
+      Expect_Regexp    : GNAT.Expect.Pattern_Matcher_Access;
 
-      D             : Process_Data;
-      Died          : Boolean := False;
+      D                : Process_Data;
+      Died             : Boolean := False;
       --  Indicates that the process has died.
 
-      Interrupted   : Boolean := False;
+      Interrupted      : Boolean := False;
       --  Whether the process was interrupted by the user
 
-      Id            : Timeout_Handler_Id;
+      Id               : Timeout_Handler_Id;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
@@ -173,38 +174,37 @@ package body GPS.Kernel.Timeout is
       Status : Integer;
       Console : Interactive_Console := Data.Console;
    begin
-      if Data.D.Descriptor /= null then
-         Close (Data.D.Descriptor.all, Status);
+      if Data.D.Descriptor = null then
+         return;
+      end if;
 
-         if Data.Console = null then
-            Console := Get_Console (Data.D.Kernel);
+      Close (Data.D.Descriptor.all, Status);
+
+      if Data.Console = null then
+         Console := Get_Console (Data.D.Kernel);
+      end if;
+
+      if Data.Interrupted then
+         Insert (Console, -"<^C> process interrupted");
+      --  ??? elsif Data.Show_Output or else Data.Show_Command then
+      elsif Data.Show_Exit_Status then
+         if Status = 0 then
+            Insert (Console, -"process terminated successfully");
+         else
+            Insert (Console, -"process exited with status " & Image (Status));
          end if;
+      end if;
 
-         if Data.Interrupted then
-            Insert
-              (Console, ASCII.LF & (-"<^C> process interrupted"));
-         elsif Data.Show_Output or Data.Show_Command then
-            if Status = 0 then
-               Insert
-                 (Console, ASCII.LF & (-"process terminated successfully"));
-            else
-               Insert
-                 (Console, ASCII.LF & (-"process exited with status ") &
-                  Image (Status));
-            end if;
-         end if;
+      if Data.D.Exit_Cb /= null then
+         Data.D.Exit_Cb (Data.D, Status);
+      end if;
 
-         if Data.D.Exit_Cb /= null then
-            Data.D.Exit_Cb (Data.D, Status);
-         end if;
+      Free (Data.D.Descriptor);
+      Pop_State (Data.D.Kernel);
 
-         Free (Data.D.Descriptor);
-         Pop_State (Data.D.Kernel);
-
-         if Data.D.Callback_Data /= null then
-            Destroy (Data.D.Callback_Data.all);
-            Unchecked_Free (Data.D.Callback_Data);
-         end if;
+      if Data.D.Callback_Data /= null then
+         Destroy (Data.D.Callback_Data.all);
+         Unchecked_Free (Data.D.Callback_Data);
       end if;
    end Cleanup;
 
@@ -354,6 +354,7 @@ package body GPS.Kernel.Timeout is
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := False;
       Synchronous          : Boolean := False;
+      Show_Exit_Status     : Boolean := False;
       Fd                   : out GNAT.Expect.Process_Descriptor_Access)
    is
       Timeout : constant Guint32 := 50;
@@ -486,6 +487,7 @@ package body GPS.Kernel.Timeout is
       Data.Console := Console;
       Data.Show_Output := Show_Output;
       Data.Show_Command := Show_Command;
+      Data.Show_Exit_Status := Show_Exit_Status;
 
       Spawn (Command, Arguments, Success, Remote_Host, Remote_Protocol);
 
@@ -555,7 +557,8 @@ package body GPS.Kernel.Timeout is
       Remote_Host          : String := "";
       Remote_Protocol      : String := "";
       Show_In_Task_Manager : Boolean := False;
-      Synchronous          : Boolean := False)
+      Synchronous          : Boolean := False;
+      Show_Exit_Status     : Boolean := False)
    is
       Fd : Process_Descriptor_Access;
    begin
@@ -563,7 +566,7 @@ package body GPS.Kernel.Timeout is
         (Kernel, Command, Arguments, Console, Callback, Exit_Cb, Success,
          Show_Command, Show_Output, Callback_Data, Line_By_Line, Directory,
          Remote_Host, Remote_Protocol, Show_In_Task_Manager,
-         Synchronous, Fd);
+         Synchronous, Show_Exit_Status, Fd);
    end Launch_Process;
 
    --------------------
