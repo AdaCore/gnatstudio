@@ -7,6 +7,7 @@ INSTALL_DATA    = @INSTALL_DATA@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
+examplesdir     = $(prefix)/share/examples/gps
 
 export TP_TASKING = No_Tasking
 
@@ -21,6 +22,7 @@ clean:
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
+	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gps
 	$(MKDIR) $(sharedir)/gps/docgen
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
@@ -30,6 +32,7 @@ install-common:
 	(cd docgen/templates; tar cf - html/) \
 		| (cd $(sharedir)/gps/docgen; tar xf -)
 	$(MAKE) -C docs install
+	(cd examples; tar c --exclude CVS -f - . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
@@ -37,7 +40,8 @@ install: install-common
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
-	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)
+	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
+	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
 
 test: force
