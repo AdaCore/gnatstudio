@@ -685,20 +685,22 @@ package body Builder_Module is
 
       Launch_Process
         (Kernel,
-         Remote_Protocol  => Get_Pref (Remote_Protocol),
-         Remote_Host      => Get_Attribute_Value (Prj, Remote_Host_Attribute),
-         Command          => Cmd.all,
-         Arguments        => Args.all,
-         Fd               => Fd,
-         Console          => Get_Console (Kernel),
-         Show_Command     => True,
-         Show_Output      => False,
-         Success          => Success,
-         Line_By_Line     => False,
-         Callback         => Parse_Compiler_Output'Access,
-         Exit_Cb          => Free_Temporary_Files'Access,
+         Remote_Protocol      => Get_Pref (Remote_Protocol),
+         Remote_Host          =>
+           Get_Attribute_Value (Prj, Remote_Host_Attribute),
+         Command              => Cmd.all,
+         Arguments            => Args.all,
+         Fd                   => Fd,
+         Console              => Get_Console (Kernel),
+         Show_Command         => True,
+         Show_Output          => False,
+         Success              => Success,
+         Line_By_Line         => False,
+         Callback             => Parse_Compiler_Output'Access,
+         Exit_Cb              => Free_Temporary_Files'Access,
          Show_In_Task_Manager => True,
-         Synchronous          => Synchronous);
+         Synchronous          => Synchronous,
+         Show_Exit_Status     => True);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
@@ -953,23 +955,24 @@ package body Builder_Module is
 
             Launch_Process
               (Kernel,
-               Remote_Protocol  => Get_Pref (Remote_Protocol),
-               Remote_Host      =>
+               Remote_Protocol      => Get_Pref (Remote_Protocol),
+               Remote_Host          =>
                  Get_Attribute_Value (Prj, Remote_Host_Attribute),
-               Command          => Cmd.all,
-               Arguments        => Default_Builder_Switches
-                 & Common_Args.all & (1 => Local_File),
-               Fd               => Fd,
-               Console          => Get_Console (Kernel),
-               Show_Command     => not Quiet,
-               Show_Output      => False,
-               Success          => Success,
-               Callback_Data    => Callback_Data_Access (Cb_Data),
-               Line_By_Line     => False,
-               Exit_Cb          => Free_Temporary_Files'Access,
-               Callback         => Parse_Compiler_Output'Access,
+               Command              => Cmd.all,
+               Arguments            => Default_Builder_Switches
+               & Common_Args.all & (1 => Local_File),
+               Fd                   => Fd,
+               Console              => Get_Console (Kernel),
+               Show_Command         => not Quiet,
+               Show_Output          => False,
+               Success              => Success,
+               Callback_Data        => Callback_Data_Access (Cb_Data),
+               Line_By_Line         => False,
+               Exit_Cb              => Free_Temporary_Files'Access,
+               Callback             => Parse_Compiler_Output'Access,
                Show_In_Task_Manager => True,
-               Synchronous          => Synchronous);
+               Synchronous          => Synchronous,
+               Show_Exit_Status     => True);
             Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
             Free (Default_Builder_Switches);
          end;
@@ -983,20 +986,22 @@ package body Builder_Module is
             Compile_Only => True);
          Launch_Process
            (Kernel,
-            Remote_Protocol => Get_Pref (Remote_Protocol),
-            Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
-            Command        => Cmd.all,
-            Arguments      => Common_Args.all & Args.all,
-            Fd             => Fd,
-            Console        => Get_Console (Kernel),
-            Show_Command   => not Quiet,
-            Show_Output    => False,
-            Success        => Success,
-            Line_By_Line   => False,
-            Callback       => Parse_Compiler_Output'Access,
-            Exit_Cb        => Free_Temporary_Files'Access,
+            Remote_Protocol      => Get_Pref (Remote_Protocol),
+            Remote_Host          =>
+              Get_Attribute_Value (Prj, Remote_Host_Attribute),
+            Command              => Cmd.all,
+            Arguments            => Common_Args.all & Args.all,
+            Fd                   => Fd,
+            Console              => Get_Console (Kernel),
+            Show_Command         => not Quiet,
+            Show_Output          => False,
+            Success              => Success,
+            Line_By_Line         => False,
+            Callback             => Parse_Compiler_Output'Access,
+            Exit_Cb              => Free_Temporary_Files'Access,
             Show_In_Task_Manager => True,
-            Synchronous          => Synchronous);
+            Synchronous          => Synchronous,
+            Show_Exit_Status     => True);
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Free (Args);
       end if;
@@ -1171,7 +1176,8 @@ package body Builder_Module is
             Callback             => Parse_Compiler_Output'Access,
             Exit_Cb              => Free_Temporary_Files'Access,
             Show_In_Task_Manager => True,
-            Synchronous          => False);
+            Synchronous          => False,
+            Show_Exit_Status     => True);
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Free (Args);
       end;
@@ -1407,6 +1413,7 @@ package body Builder_Module is
                   Console              => Console,
                   Success              => Success,
                   Show_In_Task_Manager => True,
+                  Show_Exit_Status     => True,
                   Fd                   => Fd);
             end if;
 
@@ -1431,6 +1438,7 @@ package body Builder_Module is
                   Console              => Console,
                   Success              => Success,
                   Show_In_Task_Manager => True,
+                  Show_Exit_Status     => True,
                   Fd                   => Fd);
 
                Free (Last_Arg);
