@@ -24,7 +24,8 @@ package body GPS.Intl is
 
    function "-" (Msg : String) return String is
    begin
-      return Dgettext ("GPS", Msg);
+      --  The default domain name is already "gps", no need to look it up again
+      return Gettext (Msg);
    end "-";
 
 end GPS.Intl;
