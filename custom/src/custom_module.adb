@@ -1008,6 +1008,14 @@ package body Custom_Module is
            (Kernel, String'(Get_Data (Inst, Contextual_Class)), False);
          Free (Inst);
 
+      elsif Command = "set_sensitive" then
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+         Set_Contextual_Menu_Sensitivity
+           (Kernel,
+            String'(Get_Data (Inst, Contextual_Class)),
+            Nth_Arg (Data, 2));
+         Free (Inst);
+
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
          declare
@@ -1092,6 +1100,12 @@ package body Custom_Module is
          Handler => Contextual_Handler'Access);
       Register_Command
         (Kernel, "hide",
+         Class => Contextual_Class,
+         Handler => Contextual_Handler'Access);
+      Register_Command
+        (Kernel, "set_sensitive",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
       Register_Command

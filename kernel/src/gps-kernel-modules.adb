@@ -110,6 +110,8 @@ package body GPS.Kernel.Modules is
 
       Visible    : Boolean := True;
 
+      Sensitive : Boolean := True;
+
       Filter_Matched : Boolean;
       --  Only valid while computing a contextual menu
    end record;
@@ -835,6 +837,9 @@ package body GPS.Kernel.Modules is
                Slot_Object => User.Kernel);
          else
             Item := null;
+         end if;
+         if Item /= null then
+            Set_Sensitive (Item, C.Sensitive);
          end if;
       end Create_Item;
 
@@ -1731,6 +1736,7 @@ package body GPS.Kernel.Modules is
             Visible     => True,
             Is_Submenu  => False,
             Submenu     => null,
+            Sensitive   => True,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
@@ -1769,6 +1775,7 @@ package body GPS.Kernel.Modules is
             Visible     => True,
             Is_Submenu  => False,
             Submenu     => null,
+            Sensitive   => True,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
@@ -1808,6 +1815,7 @@ package body GPS.Kernel.Modules is
             Visible     => True,
             Filter_Matched => False,
             Is_Submenu  => False,
+            Sensitive   => True,
             Submenu     => null,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
@@ -1856,6 +1864,7 @@ package body GPS.Kernel.Modules is
             Visible     => True,
             Is_Submenu  => False,
             Submenu     => null,
+            Sensitive   => True,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
@@ -1885,6 +1894,30 @@ package body GPS.Kernel.Modules is
       end if;
       C.Visible := Visible;
    end Set_Contextual_Menu_Visible;
+
+   -------------------------------------
+   -- Set_Contextual_Menu_Sensitivity --
+   -------------------------------------
+
+   procedure Set_Contextual_Menu_Sensitivity
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Name      : String;
+      Sensitive : Boolean)
+   is
+      C : Contextual_Menu_Access := Find_Contextual_Menu_By_Name
+        (Kernel, Name);
+   begin
+      if C = null then
+         Register_Contextual_Menu
+           (Kernel        => Kernel,
+            Name          => Name,
+            Action        => null,
+            Filter        => null,
+            Label         => "");
+         C := Find_Contextual_Menu_By_Name (Kernel, Name);
+      end if;
+      C.Sensitive := Sensitive;
+   end Set_Contextual_Menu_Sensitivity;
 
    -------------------------------------
    -- Get_Registered_Contextual_Menus --
@@ -1952,6 +1985,7 @@ package body GPS.Kernel.Modules is
             Ref_Item    => null,
             Visible     => True,
             Filter_Matched => False,
+            Sensitive   => True,
             Submenu     => Submenu,
             Is_Submenu  => True,
             Label       => Contextual_Menu_Label_Creator (T)),

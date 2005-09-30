@@ -509,6 +509,12 @@ package GPS.Kernel.Modules is
    --  This procedure can be used to toggle the visibility of contextual menus.
    --  When a contextual menu was set as invisible, it will no longer appear
 
+   procedure Set_Contextual_Menu_Sensitivity
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Name      : String;
+      Sensitive : Boolean);
+   --  Control whether the contextual menu entry is sensitive (ie "grayed-out")
+
    function Get_Registered_Contextual_Menus
      (Kernel  : access Kernel_Handle_Record'Class)
       return GNAT.OS_Lib.String_List_Access;
