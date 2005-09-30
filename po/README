@@ -27,3 +27,5 @@ Adding translations for GPS
 
 Translation should also include XML files which have user-visible strings,
 although we haven't fully defined yet how to handle that automatically
+
+Translation should include the strings from GtkAda
