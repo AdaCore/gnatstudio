@@ -698,6 +698,42 @@ package body Python_Module is
       end if;
    end Initialize_IO;
 
+   -------------------------
+   -- Override_Default_IO --
+   -------------------------
+
+   procedure Override_Default_IO
+     (Console : Interactive_Consoles.Interactive_Console)
+   is
+      Real_Console : Interactive_Console := Console;
+      Inst : Class_Instance;
+   begin
+      if Python_Module_Id = null then
+         return;
+      end if;
+
+      if Real_Console = null then
+         Real_Console := Get_Console (Python_Module_Id.Script.Kernel);
+      end if;
+
+      Inst := Get_Instance (Python_Module_Id.Script, Real_Console);
+      if Inst = null then
+         Inst := New_Instance
+           (Python_Module_Id.Script,
+            New_Class (Python_Module_Id.Script.Kernel, "Console"));
+         Set_Data (Inst, Widget => GObject (Real_Console));
+      end if;
+
+      PyDict_SetItemString
+        (PyModule_GetDict (PyImport_ImportModule ("sys")),
+         "stdout", Python_Class_Instance (Inst).Data);
+      PyDict_SetItemString
+        (PyModule_GetDict (PyImport_ImportModule ("sys")),
+         "stderr", Python_Class_Instance (Inst).Data);
+
+      Free (Inst);
+   end Override_Default_IO;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -726,11 +762,6 @@ package body Python_Module is
 
       Python_Module_Id.Script.Interpreter := new Python_Interpreter_Record;
       Initialize (Python_Module_Id.Script.Interpreter);
-
-      Set_Default_Console
-        (Python_Module_Id.Script.Interpreter,
-         Get_Console (Kernel),
-         Display_Prompt => False);
 
       --  Create the GPS module, in which all functions and classes are
       --  registered
@@ -767,6 +798,11 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unchecked_Access);
+
+      Set_Default_Console
+        (Python_Module_Id.Script.Interpreter,
+         Get_Console (Kernel),
+         Display_Prompt => False);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;
+with Interactive_Consoles;
 
 package Python_Module is
 
@@ -28,6 +29,10 @@ package Python_Module is
 
    procedure Initialize_IO;
    --  Initialize the redirection of stdin, stdout and stderr.
+
+   procedure Override_Default_IO
+     (Console : Interactive_Consoles.Interactive_Console);
+   --  Override the console to which Python should write through "print"
 
    procedure Load_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
