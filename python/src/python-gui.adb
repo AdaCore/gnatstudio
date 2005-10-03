@@ -27,6 +27,8 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gdk.Window;        use Gdk.Window;
 with Interactive_Consoles; use Interactive_Consoles;
 
+with Python_Module;
+
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
 with Python.Ada;      use Python.Ada;
@@ -213,7 +215,10 @@ package body Python.GUI is
    procedure Set_Default_Console
      (Interpreter : access Python_Interpreter_Record'Class;
       Console        : Interactive_Consoles.Interactive_Console;
-      Display_Prompt : Boolean := False) is
+      Display_Prompt : Boolean := False)
+   is
+      Ignored : Boolean;
+      pragma Unreferenced (Ignored);
    begin
       if Console = Interpreter.Console then
          return;
@@ -227,6 +232,8 @@ package body Python.GUI is
       end if;
 
       Interpreter.Console := Console;
+
+      Python_Module.Override_Default_IO (Interpreter.Console);
 
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
@@ -411,13 +418,32 @@ package body Python.GUI is
          end if;
 
          if Obj = null then
-            if not Interpreter.Hide_Output then
+            declare
+               EType, Occurrence, Traceback : PyObject;
+            begin
+               if Hide_Output then
+                  --  We need to preserve the current exception before
+                  --  executing the next command
+                  PyErr_Fetch (EType, Occurrence, Traceback);
+                  Trace (Me_Out, "Running command __gps_restore_output()");
+                  Ignored := PyRun_SimpleString ("__gps_restore_output()");
+                  Interpreter.Hide_Output := False;
+                  PyErr_Restore (EType, Occurrence, Traceback);
+               end if;
+
+               --  Always display exceptions in the python console, since it
+               --  is likely they are unexpected and should be fixed.
                PyErr_Print;
-            else
-               PyErr_Clear;
-            end if;
-            Trace (Me, "Got a null result, this is an error");
-            Errors.all := True;
+
+               if Hide_Output then
+                  Trace (Me_Out, "Running command __gps_hide_output()");
+                  Ignored := PyRun_SimpleString ("__gps_hide_output()");
+                  Interpreter.Hide_Output := True;
+               end if;
+
+               Trace (Me, "Got a null result, this is an error");
+               Errors.all := True;
+            end;
          else
             --  No other python command between this one and the previous
             --  call to PyEval_EvalCode
