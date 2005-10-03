@@ -330,7 +330,7 @@ package body GPS.Kernel.Modules is
    begin
       if C = null
         or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
-        or else not Has_Focus_Is_Set (Get_Widget (C))
+      --   or else not Has_Focus_Is_Set (Get_Widget (C))
       then
          return null;
       end if;
