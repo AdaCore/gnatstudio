@@ -31,6 +31,7 @@ with Gdk.Types;                 use Gdk.Types;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
@@ -50,6 +51,7 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Selection;             use Gtk.Selection;
 with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -327,10 +329,17 @@ package body GPS.Kernel.Modules is
      (Kernel : access Kernel_Handle_Record'Class) return Module_ID
    is
       C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Focus : Gtk_Widget;
    begin
       if C = null
         or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
-        or else not Has_Focus_Is_Set (Get_MDI (Kernel))
+      then
+         return null;
+      end if;
+
+      Focus := Get_Toplevel (Get_Widget (C));
+      if Focus = null
+         or else not Get_Property (Focus, Has_Toplevel_Focus_Property)
       then
          return null;
       end if;
