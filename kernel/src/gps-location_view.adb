@@ -235,7 +235,8 @@ package body GPS.Location_View is
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
-      Enable_Counter     : Boolean);
+      Enable_Counter     : Boolean;
+      Sort_In_File       : Boolean);
    --  Add a file locaton in Category (the name of the node in the location
    --  window).
    --  File is an absolute file name. If File is not currently open, do not
@@ -249,7 +250,10 @@ package body GPS.Location_View is
    --  If Model is set, append the items to Model, otherwise append them
    --  to View.Tree.Model.
    --  If Highlight is true, then the matching line in the source editor will
-   --  be highlighted in the color specified by Highlight_Category
+   --  be highlighted in the color specified by Highlight_Category.
+   --  If Sort_In_File is True, then all entries for each file will be sorted
+   --  by (line, column). This is slightly slower, and should be set to False
+   --  if you know that you are inserting them sorted already.
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -1067,16 +1071,18 @@ package body GPS.Location_View is
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
-      Enable_Counter     : Boolean)
+      Enable_Counter     : Boolean;
+      Sort_In_File       : Boolean)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
-      Iter             : Gtk_Tree_Iter;
+      Iter, Iter2      : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Dummy            : Boolean;
       pragma Unreferenced (Dummy);
 
       Path               : Gtk_Tree_Path;
+      Added : Boolean := False;
    begin
       if not Is_Absolute_Path (File) then
          return;
@@ -1108,7 +1114,25 @@ package body GPS.Location_View is
          end if;
       end if;
 
-      Append (Model, Iter, File_Iter);
+      if Sort_In_File then
+         Iter2 := Children (Model, File_Iter);
+         while Iter2 /= Null_Iter loop
+            if Get_Int (Model, Iter2, Line_Column) > Gint (Line)
+              or else (Get_Int (Model, Iter2, Line_Column) = Gint (Line)
+                       and then Get_Int (Model, Iter2, Column_Column) >
+                         Gint (Column))
+            then
+               Insert_Before (Model, Iter, File_Iter, Iter2);
+               Added := True;
+               exit;
+            end if;
+            Next (Model, Iter2);
+         end loop;
+      end if;
+
+      if not Added then
+         Append (Model, Iter, File_Iter);
+      end if;
 
       if Enable_Counter then
          Set (Model, File_Iter, Number_Of_Items_Column,
@@ -1541,7 +1565,8 @@ package body GPS.Location_View is
       Quiet              : Boolean := False;
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True;
-      Has_Markups        : Boolean := False)
+      Has_Markups        : Boolean := False;
+      Sort_In_File       : Boolean := False)
    is
       View : constant Location_View := Get_Or_Create_Location_View (Kernel);
    begin
@@ -1554,7 +1579,8 @@ package body GPS.Location_View is
                Highlight, Text, Highlight_Category,
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
-               Enable_Counter    => Enable_Counter);
+               Enable_Counter    => Enable_Counter,
+               Sort_In_File      => Sort_In_File);
          else
             Add_Location
               (View, View.Tree.Model,
@@ -1563,7 +1589,8 @@ package body GPS.Location_View is
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
                Quiet             => Quiet,
                Remove_Duplicates => Remove_Duplicates,
-               Enable_Counter    => Enable_Counter);
+               Enable_Counter    => Enable_Counter,
+               Sort_In_File      => Sort_In_File);
          end if;
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
@@ -1970,7 +1997,8 @@ package body GPS.Location_View is
               (Kernel_Handle (Kernel), Loc.Highlight_Category.all, False),
             Quiet              => True,
             Remove_Duplicates  => False,
-            Enable_Counter     => True);
+            Enable_Counter     => True,
+            Sort_In_File       => False);
          Node := Next (Node);
       end loop;
 
@@ -2466,7 +2494,8 @@ package body GPS.Location_View is
                Highlight_Category => C,
                Quiet              => Expand,
                Remove_Duplicates  => False,
-               Enable_Counter     => False);
+               Enable_Counter     => False,
+               Sort_In_File       => False);
 
             Expand := False;
          end if;
