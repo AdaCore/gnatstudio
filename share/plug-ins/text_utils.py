@@ -192,9 +192,12 @@ def end_of_buffer():
 
 def goto_beginning_of_line():
    """  Goto the beginning of line. """
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   GPS.Editor.cursor_set_position (file, line, 1)
+   try:
+      file = GPS.current_context().file().name()
+      line = GPS.current_context().location().line()
+      GPS.Editor.cursor_set_position (file, line, 1)
+   except:
+      pass
 
 def end_of_line(file, line):
    """   Goto to the end of the line in file. """
@@ -211,9 +214,12 @@ def end_of_line(file, line):
 
 def goto_end_of_line():
    """   Goto the end of line. """
-   file = GPS.current_context().file().name()
-   line = GPS.current_context().location().line()
-   end_of_line (file, line);
+   try:
+      file = GPS.current_context().file().name()
+      line = GPS.current_context().location().line()
+      end_of_line (file, line);
+   except:
+      pass
 
 def transpose_chars():
    """Interchange characters around cursor, moving forward one character. """
