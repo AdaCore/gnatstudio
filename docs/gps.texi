@@ -3000,11 +3000,10 @@ check box, you will see the list of all related primitive operations.
 
 @cindex imported entities
 This dialog also allows you to find out which entities are imported from
-a given file. Click on any entity from that file (for instance on the
-@code{with} line for Ada core), then select the @code{All entities imported
+a given file/unit. Click on any entity from that file (for instance on the
+@code{with} line for Ada code), then select the @code{All entities imported
 from same file} toggle button. This will display in the location window the
-list of all entities imported from the same file as the entity you clicked
-on.
+list of all entities imported from the same file as the entity selected.
 
 In addition, if you have selected the @code{Show context} option, you will
 get a list of all the exact references to these entities within the file.
@@ -8941,7 +8940,7 @@ This tag accepts the following attributes:
    If you have set a value for @code{progress-regexp}, this will automatically
    be set to true by default so that the progress bar is indeed displayed in
    the task manager. You can still override it explicitly for that
-   @code{<external>} element to force hidding the progress bar.
+   @code{<external>} element to force hiding the progress bar.
 
    @end table
 
