@@ -336,9 +336,7 @@ package body VFS is
    ---------------
 
    function Base_Name
-     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String
-   is
-      Last  : Natural;
+     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String is
    begin
       if File.Value = null
         or else File.Value.Full_Name = null
@@ -349,23 +347,43 @@ package body VFS is
 
       if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
         File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
-         Last := File.Value.Full_Name'Last - 1;
 
-         if Last < File.Value.Start_Of_Path then
-            --  returns '/' directory
-            return File.Value.Full_Name
-              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last);
-         end if;
-      else
-         Last := File.Value.Full_Name'Last;
+         return "";
       end if;
 
       --  Since we can't ensure that Prefix will be the same in two
       --  successive calls, we have to reallocate the string every time.
 
       return Base_Name
-        (File.Value.Full_Name (File.Value.Start_Of_Path .. Last), Suffix);
+        (File.Value.Full_Name
+           (File.Value.Start_Of_Path .. File.Value.Full_Name'Last), Suffix);
    end Base_Name;
+
+   -------------------
+   -- Base_Dir_Name --
+   -------------------
+
+   function Base_Dir_Name
+     (File : Virtual_File) return Glib.UTF8_String is
+   begin
+      if File.Value = null
+        or else File.Value.Full_Name = null
+        or else File.Value.Full_Name.all = ""
+      then
+         return "";
+      end if;
+
+      if File.Value.Full_Name (File.Value.Full_Name'Last) = '/' or
+        File.Value.Full_Name (File.Value.Full_Name'Last) = '\' then
+         return Base_Name
+           (File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last - 1));
+      else
+         return Base_Name
+           (File.Value.Full_Name
+              (File.Value.Start_Of_Path .. File.Value.Full_Name'Last));
+      end if;
+   end Base_Dir_Name;
 
    ---------------
    -- Full_Name --
