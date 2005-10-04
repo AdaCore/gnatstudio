@@ -907,7 +907,7 @@ package body Gtkada.File_Selector is
         and then Win.Current_Directory /= Dir
         and then Is_Directory (Dir)
       then
-         if Base_Name (Dir) = -"Drives" then
+         if Base_Dir_Name (Dir) = -"Drives" then
             Win.Current_Directory := Create_From_Base ("");
          else
             Ensure_Directory (Dir);
@@ -1513,8 +1513,8 @@ package body Gtkada.File_Selector is
             elsif Is_Directory (VFS.Dir (Sub_File)) then
                File := Sub_File;
                Change_Directory (Win, VFS.Dir (File));
-               Set_Text (Win.Selection_Entry, Base_Name (File));
-               Set_Position (Win.Selection_Entry, Base_Name (File)'Length);
+               Set_Text (Win.Selection_Entry, Base_Dir_Name (File));
+               Set_Position (Win.Selection_Entry, Base_Dir_Name (File)'Length);
             else
                --  Dir is a non-existing directory: exit now
 
@@ -1539,7 +1539,7 @@ package body Gtkada.File_Selector is
 
                while Iter /= Null_Iter loop
                   Matcher
-                    (VFS.Base_Name (File),
+                    (VFS.Base_Dir_Name (File),
                      Locale_From_UTF8
                        (Get_String (Win.File_Model, Iter, Base_Name_Column)),
                      Iter);
@@ -1551,7 +1551,7 @@ package body Gtkada.File_Selector is
                Files : File_Array_Access := Read_Dir (Win.Current_Directory);
             begin
                for F in Files'Range loop
-                  Matcher (Base_Name (S), Base_Name (Files (F)));
+                  Matcher (Base_Name (S), Base_Dir_Name (Files (F)));
                end loop;
                Unchecked_Free (Files);
             end;
