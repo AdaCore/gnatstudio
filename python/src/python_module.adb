@@ -1009,18 +1009,6 @@ package body Python_Module is
                   "import " & Base_Name (File (1 .. Last), ".py"),
                   Hide_Output => True,
                   Errors => Errors);
-
-               --  The python console is not created yet, so we only want to
-               --  redirect error message to the Messages window.
-               if Errors then
-                  Execute_Command
-                    (Python_Module_Id.Script,
-                     "import " & Base_Name (File (1 .. Last), ".py")
-                     & "; reload (" & Base_Name (File (1 .. Last), ".py")
-                     & ")",
-                     Hide_Output => False,
-                     Errors => Errors);
-               end if;
             end if;
          end loop;
 
