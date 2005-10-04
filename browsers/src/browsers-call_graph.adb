@@ -106,8 +106,15 @@ package body Browsers.Call_Graph is
    type References_Filter_Dialog is access all
      References_Filter_Dialog_Record'Class;
 
-   function All_Refs_Category (Entity : Entity_Information) return String;
+   function All_Refs_Category
+     (Entity             : Entity_Information;
+      Local_Only         : Boolean;
+      Local_File         : VFS.Virtual_File;
+      All_From_Same_File : Boolean) return String;
    --  Return the category title when doing a find all refs on a given entity.
+   --  If All_From_Same_File is true, we will in fact list all entities
+   --  imported form the same file as Entity.
+   --  If Local_Only is true, then the references are only in the current file
 
    ------------------------
    -- Call graph browser --
@@ -349,13 +356,18 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
 
    procedure Parse_All_Refs
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Information;
-      Locals_Only : Boolean;
-      Show_Caller : Boolean;
-      Filter      : Reference_Kind_Filter;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Entity             : Entity_Information;
+      Locals_Only        : Boolean;
+      Local_File         : VFS.Virtual_File;
+      All_From_Same_File : Boolean;
+      Show_Caller        : Boolean;
+      Filter             : Reference_Kind_Filter;
       Include_Overriding : Boolean := False);
-   --  Internal implementation of find_all_references
+   --  Internal implementation of find_all_references.
+   --  If All_From_Same_File is True, then all entities imported from the same
+   --  file as Entity and referenced in Local_File, as Entity are
+   --  displayed.
 
    procedure Find_All_References_Internal
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -459,12 +471,31 @@ package body Browsers.Call_Graph is
    -- All_Refs_Category --
    -----------------------
 
-   function All_Refs_Category (Entity : Entity_Information) return String is
+   function All_Refs_Category
+     (Entity             : Entity_Information;
+      Local_Only         : Boolean;
+      Local_File         : VFS.Virtual_File;
+      All_From_Same_File : Boolean) return String
+   is
       Decl  : constant File_Location := Get_Declaration_Of (Entity);
    begin
-      return -"References for " & Get_Name (Entity).all
-        & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
-        & ":" & Image (Decl.Line) & ")";
+      if All_From_Same_File then
+         return -"Entities imported from "
+           & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & (-" into ")
+           & Krunch (Base_Name (Local_File));
+
+      elsif Local_Only then
+         return -"Local references for " & Get_Name (Entity).all
+           & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & ":" & Image (Decl.Line) & ") " & (-"in ")
+           & Krunch (Base_Name (Local_File));
+
+      else
+         return -"References for " & Get_Name (Entity).all
+           & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & ":" & Image (Decl.Line) & ")";
+      end if;
    end All_Refs_Category;
 
    -------------
@@ -1538,7 +1569,11 @@ package body Browsers.Call_Graph is
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title   => All_Refs_Category (Entity),
+            Category_Title   => All_Refs_Category
+              (Entity             => Entity,
+               Local_Only         => False,
+               Local_File         => VFS.No_File,
+               All_From_Same_File => False),
             Filter           => Read_Reference_Filter
                or Write_Reference_Filter,
             Show_Caller      => False);
@@ -1636,7 +1671,11 @@ package body Browsers.Call_Graph is
          Filter (Implicit) := Nth_Arg (Data, 2, False);
          Find_All_References_Internal
            (Kernel, Entity,
-            Category_Title   => All_Refs_Category (Entity),
+            Category_Title   => All_Refs_Category
+              (Entity             => Entity,
+               Local_Only         => False,
+               Local_File         => VFS.No_File,
+               All_From_Same_File => False),
             Show_Caller      => False,
             Filter           => Filter);
 
@@ -1854,59 +1893,120 @@ package body Browsers.Call_Graph is
    --------------------
 
    procedure Parse_All_Refs
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Entity            : Entity_Information;
-      Locals_Only       : Boolean;
-      Show_Caller       : Boolean;
-      Filter            : Reference_Kind_Filter;
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Entity             : Entity_Information;
+      Locals_Only        : Boolean;
+      Local_File         : Virtual_File;
+      All_From_Same_File : Boolean;
+      Show_Caller        : Boolean;
+      Filter             : Reference_Kind_Filter;
       Include_Overriding : Boolean := False)
    is
       Iter     : Entity_Reference_Iterator;
-      File     : constant Virtual_File := File_Information
-        (File_Selection_Context_Access (Get_Current_Context (Kernel)));
+      Iter2    : Entity_Iterator;
+      Entity2  : Entity_Information;
+      Local : constant Source_File :=
+        Get_Or_Create (Get_Database (Kernel), Local_File);
+      Title : constant String := All_Refs_Category
+        (Entity             => Entity,
+         Local_Only         => Locals_Only,
+         Local_File         => Local_File,
+         All_From_Same_File => All_From_Same_File);
+      Entity_Decl : constant Source_File :=
+        Get_File (Get_Declaration_Of (Entity));
    begin
-      if Locals_Only then
-         Push_State (Kernel_Handle (Kernel), Busy);
-         declare
-            Title : constant String := All_Refs_Category (Entity);
-         begin
-            --  Print the declaration of the entity, but only if it is in the
-            --  current file, as expected by users.
+      Push_State (Kernel_Handle (Kernel), Busy);
 
-            Remove_Location_Category (Kernel, Title);
-            Find_All_References
-              (Iter    => Iter,
-               Entity  => Entity,
-               Filter  => Filter,
-               In_File => Get_Or_Create (Get_Database (Kernel), File),
-               Include_Overriding => Include_Overriding);
+      if All_From_Same_File then
+         Remove_Location_Category (Kernel, Title);
 
-            while not At_End (Iter) loop
-               if Get (Iter) /= No_Entity_Reference then
-                  Print_Ref (Kernel,
-                             Get (Iter),
-                             Get_Name (Entity).all,
-                             Title,
-                             Show_Caller => Show_Caller);
+         Find_All_Entities_In_File (Iter => Iter2, File => Local);
+         while not At_End (Iter2) loop
+            Entity2 := Get (Iter2);
+
+            if Get_File (Get_Declaration_Of (Entity2)) = Entity_Decl then
+               if Show_Caller then
+                  Find_All_References
+                    (Iter               => Iter,
+                     Entity             => Entity2,
+                     Filter             => Filter,
+                     In_File            => Local,
+                     Include_Overriding => Include_Overriding);
+
+                  while not At_End (Iter) loop
+                     if Get (Iter) /= No_Entity_Reference
+                       and then Get_File (Get_Location (Get (Iter))) = Local
+                     then
+                        Print_Ref (Kernel,
+                                   Get (Iter),
+                                   Get_Name (Entity2).all,
+                                   Title,
+                                   Show_Caller => Show_Caller);
+                     end if;
+                     Next (Iter);
+                  end loop;
+                  Destroy (Iter);
+
+               else
+                  Insert_Location
+                    (Kernel,
+                     Category     => Title,
+                     File         => Get_Filename
+                       (Get_File (Get_Declaration_Of (Entity2))),
+                     Text         => Get_Name (Entity2).all,
+                     Line         => Get_Line (Get_Declaration_Of (Entity2)),
+                     Column       => Get_Column (Get_Declaration_Of (Entity2)),
+                     Length       => Get_Name (Entity2)'Length,
+                     Highlight    => True,
+                     Highlight_Category => Search_Results_Style,
+                     Remove_Duplicates  => False,
+                     Enable_Counter     => True);
                end if;
-               Next (Iter);
-            end loop;
+            end if;
 
-            Recount_Category (Kernel, Title);
-            Destroy (Iter);
-         end;
+            Next (Iter2);
+         end loop;
 
-         Pop_State (Kernel_Handle (Kernel));
+         Destroy (Iter2);
+         Recount_Category (Kernel, Title);
+
+      elsif Locals_Only then
+         --  Print the declaration of the entity, but only if it is in the
+         --  current file, as expected by users.
+
+         Remove_Location_Category (Kernel, Title);
+         Find_All_References
+           (Iter          => Iter,
+            Entity        => Entity,
+            Filter        => Filter,
+            In_File       => Get_Or_Create (Get_Database (Kernel), Local_File),
+            Include_Overriding => Include_Overriding);
+
+         while not At_End (Iter) loop
+            if Get (Iter) /= No_Entity_Reference then
+               Print_Ref (Kernel,
+                          Get (Iter),
+                          Get_Name (Entity).all,
+                          Title,
+                          Show_Caller => Show_Caller);
+            end if;
+            Next (Iter);
+         end loop;
+
+         Recount_Category (Kernel, Title);
+         Destroy (Iter);
 
       else
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title   => All_Refs_Category (Entity),
-            Show_Caller      => Show_Caller,
-            Filter           => Filter,
+            Category_Title     => Title,
+            Show_Caller        => Show_Caller,
+            Filter             => Filter,
             Include_Overriding => Include_Overriding);
       end if;
+
+      Pop_State (Kernel_Handle (Kernel));
    end Parse_All_Refs;
 
    -------------
@@ -1921,6 +2021,8 @@ package body Browsers.Call_Graph is
       Entity   : constant Entity_Information := Get_Entity
         (Entity_Selection_Context_Access (Context.Context));
       Filter   : Reference_Kind_Filter := (others => False);
+      File     : constant Virtual_File := File_Information
+        (File_Selection_Context_Access (Context.Context));
    begin
       if Command.Reads_Only then
          Filter := Read_Reference_Filter;
@@ -1934,6 +2036,8 @@ package body Browsers.Call_Graph is
         (Kernel            => Kernel,
          Entity            => Entity,
          Locals_Only       => Command.Locals_Only,
+         Local_File        => File,
+         All_From_Same_File => False,
          Filter            => Filter,
          Show_Caller       => False);
       return Commands.Success;
@@ -1986,10 +2090,16 @@ package body Browsers.Call_Graph is
       Project_And_Recursive,
       File_Only : Gtk_Radio_Button;
       Show_Caller : Gtk_Check_Button;
+      From_Same_File : Gtk_Radio_Button;
       Include_Overriding : Gtk_Check_Button;
       Filter    : Reference_Kind_Filter := (others => False);
       Frame     : Gtk_Frame;
       Widget    : Gtk_Widget;
+      Entity    : constant Entity_Information :=
+        Get_Entity
+          (Entity_Selection_Context_Access (Context.Context));
+      Current_File     : constant Virtual_File := File_Information
+        (File_Selection_Context_Access (Context.Context));
       Button    : Gtk_Button;
       pragma Unreferenced (Command, Widget);
 
@@ -2021,6 +2131,15 @@ package body Browsers.Call_Graph is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_File_Only", False);
       Associate (Get_History (Kernel).all, "Find_Prefs_File_Only", File_Only);
+
+      Gtk_New
+        (From_Same_File, Get_Group (Project_And_Recursive),
+         -"All entities imported from same file");
+      Pack_Start (Box, From_Same_File);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "Find_Prefs_From_Same_File", False);
+      Associate (Get_History (Kernel).all, "Find_Prefs_From_Same_File",
+                 From_Same_File);
 
       --  Filter choice
 
@@ -2102,12 +2221,13 @@ package body Browsers.Call_Graph is
          end loop;
 
          Parse_All_Refs
-           (Kernel            => Kernel,
-            Entity            => Get_Entity
-              (Entity_Selection_Context_Access (Context.Context)),
-            Locals_Only       => Get_Active (File_Only),
-            Filter            => Filter,
-            Show_Caller       => Get_Active (Show_Caller),
+           (Kernel             => Kernel,
+            Entity             => Entity,
+            Locals_Only        => Get_Active (File_Only),
+            Local_File         => Current_File,
+            All_From_Same_File => Get_Active (From_Same_File),
+            Filter             => Filter,
+            Show_Caller        => Get_Active (Show_Caller),
             Include_Overriding => Get_Active (Include_Overriding));
 
          Destroy (Dialog);
