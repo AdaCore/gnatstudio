@@ -2998,6 +2998,19 @@ modify the profile of a primitive operation, since you can then see what
 other entities will also be impacted. If you select only the @code{declaration}
 check box, you will see the list of all related primitive operations.
 
+@cindex imported entities
+This dialog also allows you to find out which entities are imported from
+a given file. Click on any entity from that file (for instance on the
+@code{with} line for Ada core), then select the @code{All entities imported
+from same file} toggle button. This will display in the location window the
+list of all entities imported from the same file as the entity you clicked
+on.
+
+In addition, if you have selected the @code{Show context} option, you will
+get a list of all the exact references to these entities within the file.
+Otherwise, you just get a pointer to the declaration of the imported
+entities.
+
 @item Find all local references to @i{entity}
 @cindex find all local references
 Find all references to @i{entity} in the current file (or in the current
