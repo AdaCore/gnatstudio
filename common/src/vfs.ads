@@ -90,6 +90,10 @@ package VFS is
      (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
    --  Return the base name of the file
 
+   function Base_Dir_Name
+     (File : Virtual_File) return Glib.UTF8_String;
+   --  Return the base name of the directory or the file
+
    function Full_Name
      (File : Virtual_File; Normalize : Boolean := False)
       return Cst_UTF8_String_Access;
