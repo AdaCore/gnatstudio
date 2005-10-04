@@ -12,8 +12,9 @@ Known Problems fixed in GPS 3.1.0
               without prompting a dialog to input the two revisions.
   Workaround: Query the differences using the command-line
 
-- E911-003 gps - exception raised in codefix under windows
-  Problem:    Under windows, applying a codefix leads to a constraint error.
+- E911-003 Exception raised in codefix (missing constant) under Windows
+  Problem:    Under Windows, applying a codefix concerning missing constant
+              keyword leads to a constraint error.
   Workaround: Apply the fix manually
 
 - E908-013 Bad indentation of "procedure xxx is null" construct
