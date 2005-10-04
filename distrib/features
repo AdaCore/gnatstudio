@@ -3,23 +3,17 @@ For more details, please see the documentation.
 
 New features in GPS 3.1.0
 
-- E903-003 Searching for all entities imported from a given file
+- E903-003 New check box in the "Find references..." contextual menu to find
+  all entities imported from a given file
 
 - E718-005 New shell command GPS.Project.dependencies
 
-- Then Open From Project widget clearly states when no completion is found.
+- Open From Project dialog now states explicitely when no completion is found
 
 - E614-022 When documentation is generated for an Ada body, links are created
-  from entities to their declarations.
+  from entities to their declarations
 
 - E723-001 Build->Run commands can now be interrupted
-
-- E202-013 Support for bookmarks
-
-- E303-018 Improved assembly view. The source line the debugger is
-  stopped at as well as the program counter are materialized by special
-  highlightings. Furthermore, the assembly view is now implemented with a new
-  widget which should be more stable.
 
 - E708-001 New check box in the "Find references..." contextual menu to include
   references to overriding or overriden methods
@@ -40,16 +34,16 @@ New features in GPS 3.1.0
 
 - Improved documentation for Python Extensions
 
-- E510-024 Editing specific list of source files for projects
-
 - E525-008 Improved support for remote files
   If the user name on the remote machine wasn't specified, GPS will now let the
   underlying tool decide for itself. In particular, this adds support for ssh's
   config file.
 
 - E516-025 New preference: Tooltip timeout
-  This preferenced is used to specify the time before a tooltip is displayed
+  This preference is used to specify the time before a tooltip is displayed
   in source editors.
+
+- E510-024 Editing specific list of source files for projects
 
 - E414-009 Enhancements in the Locations View.
    - Reorganize the layout to improve use of the screen space
@@ -60,15 +54,22 @@ New features in GPS 3.1.0
   does a search, or jumps to a location through the Outline View or Locations
   Window. This way, it is easier to navigate back to the previous position
 
+- E303-018 Improved assembly view
+  The source line (set of assembly lines) where the program is stopped, as
+  well as the program counter are materialized by special highlightings.
+  It is also possible to scroll the assembly view horizontally.
+
+- E202-013 Support for bookmarks
+
 - DC03-011 New switch: --readonly
   This switch instructs GPS to open all files in read-only mode by default.
   This is particularly useful when used with --debug.
 
 - DC03-006 Improved indentation of multiple-line Ada constructs
 
-- D122-006 Support for VCS Activities. A way to handle multiple files
-  and do atomic commit if the external VCS supports it. It has also
-  support for shared log.
+- D122-006 Support for VCS Activities
+  A way to handle multiple files and do atomic commit and commit with a shared
+  log if the external VCS supports it.
 
 - D825-010 Call graph can now be displayed in the Locations window
 
@@ -77,15 +78,16 @@ New features in GPS 3.1.0
   find out what instantiation of the generic is involved.
 
 - Improved identifier completion
-  Completion is now case insensitive when the language itself is
-  case insensitive.
+  Completion is now case insensitive when the language itself is case
+  insensitive.
   Possible completions are looked for in all open editors.
 
 - Improved handling of tooltips in editors
   Tooltip now remains displayed while the mouse cursor stays on the hotspot
-  word. Using the mousewheel to scroll now hides the tooltip.
-  The list of parameters for subprograms is now displayed in the tooltip.
-  Tooltips now show information about generics instantiations.
-  They also show the proper casing of Ada entities, instead of lower cases only
+  word. Using the mousewheel to scroll hides the tooltip.
+  The list of parameters for subprograms is displayed in the tooltip.
+  Tooltips also show information about generics instantiations, as well as
+  the proper casing of Ada entities.
 
 - Improved MDI, better at reloading your desktop
+
