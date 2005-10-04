@@ -436,17 +436,20 @@ package body Browsers.Call_Graph is
    --  Support functions for the MDI
 
    procedure Print_Ref
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Ref         : Entity_Reference;
-      Name        : String;
-      Category    : String;
-      Show_Caller : Boolean);
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Ref          : Entity_Reference;
+      Name         : String;
+      Category     : String;
+      Show_Caller  : Boolean;
+      Sort_In_File : Boolean);
    --  Display a reference in the locations tree, after looking for the
    --  directory containing File.
    --  Category corresponds to the purpose of the print. All references
    --  corresponding to the same category will be printed as a group.
    --  If Show_Caller is true, the full name of the caller will also be
    --  displayed.
+   --  If Sort_In_File is true, then the new entry is inserted before the first
+   --  entry with a higher line number
 
    procedure Call_Graph_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -1295,11 +1298,12 @@ package body Browsers.Call_Graph is
    ---------------
 
    procedure Print_Ref
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Ref         : Entity_Reference;
-      Name        : String;
-      Category    : String;
-      Show_Caller : Boolean)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Ref          : Entity_Reference;
+      Name         : String;
+      Category     : String;
+      Show_Caller  : Boolean;
+      Sort_In_File : Boolean)
    is
       Col  : Integer := Get_Column (Get_Location (Ref));
       Line : constant Integer      := Get_Line (Get_Location (Ref));
@@ -1315,30 +1319,35 @@ package body Browsers.Call_Graph is
            (Kernel,
             Category  => Category,
             File      => File,
-            Text      => Name & " ["
+            Text      => "<b>" & Name & "</b> ["
                & Kind_To_String (Get_Kind (Ref)) & "] in: "
                & Get_Full_Name (Get_Caller (Ref)),
             Line      => Line,
             Column    => Col,
             Length    => Name'Length,
             Highlight => True,
+            Has_Markups => True,
             Highlight_Category => Search_Results_Style,
             Remove_Duplicates => False,
-            Enable_Counter    => False);
+            Enable_Counter    => False,
+            Sort_In_File      => Sort_In_File);
 
       else
          Insert_Location
            (Kernel,
             Category  => Category,
             File      => File,
-            Text      => Name & " [" & Kind_To_String (Get_Kind (Ref)) & "]",
+            Text      => "<b>" & Name
+            & "</b> [" & Kind_To_String (Get_Kind (Ref)) & "]",
             Line      => Line,
             Column    => Col,
             Length    => Name'Length,
             Highlight => True,
             Highlight_Category => Search_Results_Style,
+            Has_Markups => True,
             Remove_Duplicates => False,
-            Enable_Counter    => False);
+            Enable_Counter    => False,
+            Sort_In_File      => Sort_In_File);
       end if;
    end Print_Ref;
 
@@ -1388,7 +1397,8 @@ package body Browsers.Call_Graph is
                Get (Data.Iter.all),
                Get_Name (Data.Entity).all,
                Data.Category.all,
-               Show_Caller => Data.Show_Caller);
+               Show_Caller => Data.Show_Caller,
+               Sort_In_File => False);
 
             Count := Count + 1;
          end if;
@@ -1941,7 +1951,8 @@ package body Browsers.Call_Graph is
                                    Get (Iter),
                                    Get_Name (Entity2).all,
                                    Title,
-                                   Show_Caller => Show_Caller);
+                                   Show_Caller => Show_Caller,
+                                   Sort_In_File => True);
                      end if;
                      Next (Iter);
                   end loop;
@@ -1988,7 +1999,8 @@ package body Browsers.Call_Graph is
                           Get (Iter),
                           Get_Name (Entity).all,
                           Title,
-                          Show_Caller => Show_Caller);
+                          Show_Caller => Show_Caller,
+                          Sort_In_File => True);
             end if;
             Next (Iter);
          end loop;
