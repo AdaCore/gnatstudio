@@ -509,7 +509,7 @@ package body Directory_Tree is
          Set_File (Value, Dir);
          Set_Value (Selector.List_Model, Row, File_Column, Value);
          Set (Selector.List_Model, Row, Base_Name_Column,
-              Base_Name (Dir));
+              Base_Dir_Name (Dir));
       end if;
 
       if Recursive then
@@ -972,7 +972,7 @@ package body Directory_Tree is
                Set_Value (Selector.List_Model, Iter, File_Column, Value);
             end;
             Set (Selector.List_Model, Iter, Base_Name_Column,
-                 Base_Name (Dir));
+                 Base_Dir_Name (Dir));
          end loop;
 
       else
@@ -1102,10 +1102,10 @@ package body Directory_Tree is
          end;
          if D.Depth = 1 and then Get_Host (D.Norm_Dir) /= "" then
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Get_Host (D.Norm_Dir) & ":" & Base_Name (D.Norm_Dir));
+                 Get_Host (D.Norm_Dir) & ":" & Base_Dir_Name (D.Norm_Dir));
          else
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Base_Name (D.Norm_Dir));
+                 Base_Dir_Name (D.Norm_Dir));
          end if;
 
          if D.Physical_Read then
@@ -1176,7 +1176,7 @@ package body Directory_Tree is
             Set_File (Value, Dir);
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Base_Name (Dir));
+                 Base_Dir_Name (Dir));
 
             if D.Depth = 0 then
                exit;
