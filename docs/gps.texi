@@ -14211,13 +14211,13 @@ be closed.
 This command will register the current session with a given string.
 This string can then be used within GPS itself (for example via a
 .xml or python plug-in) to display extra information to the client via
-the socket, using the command GPS.Socket.send.
+the socket, using the command GPS.Socket().send.
 @end itemize
 
 For example, let suppose that we start gps with the @code{--server=1234}
 command: this will bring up GPS as usual.
 
-Now, on a separate terminal, create a simple server by typing the following:
+Now, on a separate terminal, create a simple client by typing the following:
 
 @smallexample
 telnet localhost 1234
