@@ -225,12 +225,13 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Ref_File, New_File : VFS.Virtual_File)
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Ref_File, New_File : VFS.Virtual_File)
       return Diff_List
    is
       Diff_Command : constant String := Get_Pref (Diff_Cmd);
    begin
-      return Diff (Diff_Command, Ref_File, New_File);
+      return Diff (Kernel, Diff_Command, Ref_File, New_File);
    end Diff;
 
    ----------
@@ -238,7 +239,8 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Diff_Command       : String;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff_Command       : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
       Descriptor : TTY_Process_Descriptor;
@@ -256,6 +258,16 @@ package body Diff_Utils2 is
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+
+      if Cmd = null or else Cmd.all = "" then
+         Console.Insert
+           (Kernel, "command not found: " & Diff_Command &
+            ". You should modify the ""Visual Diff"" preferences",
+            Mode => Error);
+         Free (Cmd);
+         Free (Cmd_Args);
+         return Ret;
+      end if;
       Args (1) := new String'(Locale_Full_Name (Ref_File));
       Args (2) := new String'(Locale_Full_Name (New_File));
 
@@ -322,7 +334,9 @@ package body Diff_Utils2 is
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
-           (Kernel, "command not found: " & Patch_Command, Mode => Error);
+           (Kernel, "command not found: " & Patch_Command &
+            ". You should modify the ""Visual Diff"" preferences",
+            Mode => Error);
          Free (Cmd);
          Free (Cmd_Args);
          return Ret;
@@ -392,15 +406,16 @@ package body Diff_Utils2 is
    -- Diff3 --
    -----------
 
-   procedure Diff3 (Item   : in out Diff_Head) is
+   procedure Diff3 (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+                    Item   : in out Diff_Head) is
    begin
       Free_List (Item.List);
 
       if Item.File1 /= VFS.No_File and Item.File2 /= VFS.No_File then
          if Item.File3 /= VFS.No_File then
-            Item.List := Diff3 (Item.File1, Item.File2, Item.File3);
+            Item.List := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
          else
-            Item.List := Diff (Item.File1, Item.File2);
+            Item.List := Diff (Kernel, Item.File1, Item.File2);
          end if;
       end if;
    end Diff3;
@@ -410,11 +425,12 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List
    is
       Diff3_Command  : constant String := Get_Pref (Diff3_Cmd);
    begin
-      return Diff3 (Diff3_Command, My_Change, Old_File, Your_Change);
+      return Diff3 (Kernel, Diff3_Command, My_Change, Old_File, Your_Change);
    end Diff3;
 
    -----------
@@ -422,7 +438,8 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Diff3_Command : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff3_Command : String;
       My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List
    is
@@ -448,6 +465,16 @@ package body Diff_Utils2 is
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+
+      if Cmd = null or else Cmd.all = "" then
+         Console.Insert
+           (Kernel, "command not found: " & Diff3_Command &
+            ". You should modify the ""Visual Diff"" preferences",
+            Mode => Error);
+         Free (Cmd);
+         Free (Cmd_Args);
+         return Ret;
+      end if;
 
       Args (1) := new String'(Locale_Full_Name (My_Change));
       Args (2) := new String'(Locale_Full_Name (Old_File));
@@ -592,7 +619,10 @@ package body Diff_Utils2 is
    -- Horizontal_Diff --
    ---------------------
 
-   function Horizontal_Diff (Line1, Line2 : String) return Diff_List is
+   function Horizontal_Diff
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line1, Line2 : String) return Diff_List
+   is
       V_Fich1,
       V_Fich2     : Virtual_File;
       Fich1,
@@ -634,7 +664,7 @@ package body Diff_Utils2 is
       Close (FD1);
       Close (FD2);
 
-      Diff1 := Diff (V_Fich1, V_Fich2);
+      Diff1 := Diff (Kernel, V_Fich1, V_Fich2);
 
       Delete_File (Fich1.all, Success);
       Delete_File (Fich2.all, Success);
