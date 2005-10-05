@@ -93,7 +93,8 @@ package Diff_Utils2 is
    procedure Free_All (Link : in out Diff_Head);
    --  Free all content of Head of the list.
 
-   procedure Diff3 (Item : in out Diff_Head);
+   procedure Diff3 (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+                    Item   : in out Diff_Head);
    --  Execute diff on Item
 
    Null_Head : constant Diff_Head :=
@@ -111,7 +112,8 @@ package Diff_Utils2 is
    --  Free all content of node of the list. overide the standard Free
 
    function Diff
-     (Ref_File, New_File : VFS.Virtual_File) return Diff_List;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Ref_File, New_File : VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences.
 
    function Diff
@@ -125,7 +127,8 @@ package Diff_Utils2 is
    --  If Revert is True, create Orig_File from New_File and Diff_File.
 
    function Diff3
-     (My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      My_Change, Old_File, Your_Change : VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1,File2 and File3 and return a list of differences.
 
    function Simplify
@@ -133,7 +136,8 @@ package Diff_Utils2 is
    --  calculate the displayable version of Diff with reference file Ref_File
 
    function Horizontal_Diff
-     (Line1, Line2 : String) return Diff_List;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line1, Line2 : String) return Diff_List;
    --  Do a fine diff between two lines.
    --  The only fields set in the resulting list is Range1 and Next, other
    --  fields should be ignored.
@@ -141,13 +145,15 @@ package Diff_Utils2 is
 private
 
    function Diff3
-     (Diff3_Command : String;
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff3_Command : String;
       My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List;
    --  Execute diff3 on File1, File2, File3 and return list of Chunk
 
    function Diff
-     (Diff_Command : String;
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff_Command : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List;
    --  Execute diff on File1 and File2 and return a list of differences.
 
