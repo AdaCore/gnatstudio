@@ -183,7 +183,7 @@ package body Vdiff2_Module.Utils is
       Line              : Natural)
    is
       Hor_List     : constant Diff_List := Horizontal_Diff
-        (Current_Line_Dest, Current_Line_Source);
+        (Kernel, Current_Line_Dest, Current_Line_Source);
       Curr_Node    : Diff_Chunk_List.List_Node := First (Hor_List);
       Diff         : Diff_Chunk;
       First        : Natural := 0;
@@ -1111,9 +1111,9 @@ package body Vdiff2_Module.Utils is
 
    begin
       if File3 /= VFS.No_File then
-         Result := Diff3 (File1, File2, File3);
+         Result := Diff3 (Kernel, File1, File2, File3);
       else
-         Result := Diff (File1, File2);
+         Result := Diff (Kernel, File1, File2);
       end if;
 
       if Result = Diff_Chunk_List.Null_List then
