@@ -279,25 +279,47 @@ package body GPS.Kernel.Clipboard is
       pragma Unreferenced (Result);
       Iter : Gtk_Text_Iter;
    begin
+      Clipboard.Last_Is_From_System := False;
+
       if Index_In_List /= 0
         and then Index_In_List in Clipboard.List'Range
       then
          Clipboard.Last_Paste := Index_In_List;
          Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+
+         if Clipboard.Last_Paste not in Clipboard.List'Range
+           or else Clipboard.List (Clipboard.Last_Paste) = null
+         then
+            Clipboard.Last_Paste := Clipboard.List'First;
+            Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+         end if;
       end if;
 
-      if Clipboard.Last_Paste not in Clipboard.List'Range
-        or else Clipboard.List (Clipboard.Last_Paste) = null
+      --  Should we paste the system clipboard instead of ours ?
+      if Index_In_List = 0
+        and then Wait_Is_Text_Available (Gtk.Clipboard.Get)
       then
-         Clipboard.Last_Paste := Clipboard.List'First;
-         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
-      end if;
+         Clipboard.Last_Widget := Gtk_Widget (Widget);
+         Clipboard.Last_Is_From_System := True;
 
-      if Clipboard.List (Clipboard.Last_Paste) /= null then
+         --  The following call is not really efficient, since Wait_For_Text
+         --  really should be asynchronous. However, it works well almost
+         --  always, since the clipboard is local on the machine and not huge
+         --  in any case.
+         Clipboard.Last_Length :=
+           Wait_For_Text (Gtk.Clipboard.Get)'Length;
+
+      elsif Clipboard.List (Clipboard.Last_Paste) /= null then
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-         Clipboard.Last_Widget   := Gtk_Widget (Widget);
+         Clipboard.Last_Widget := Gtk_Widget (Widget);
+         Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
+      else
+         Clipboard.Last_Widget := null;
+      end if;
+
+      if Clipboard.Last_Widget /= null then
          if Widget.all in Gtk_Editable_Record'Class then
             Paste_Clipboard (Gtk_Editable (Widget));
             Clipboard.Last_Position :=
@@ -315,17 +337,18 @@ package body GPS.Kernel.Clipboard is
                Result := Delete_Selection (Buffer, False, False);
             end if;
 
+            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+            Clipboard.Last_Position := Integer (Get_Offset (Iter))
+              + Clipboard.Last_Length;
+
+            --  The following call is asynchronous, which is why we had to
+            --  compute the last position first
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
                Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
-
-            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-            Clipboard.Last_Position := Integer (Get_Offset (Iter));
          else
             Clipboard.Last_Widget := null;
          end if;
-      else
-         Clipboard.Last_Widget := null;
       end if;
    end Paste_Clipboard;
 
@@ -370,45 +393,53 @@ package body GPS.Kernel.Clipboard is
       end if;
 
       --  Remove the previous insert
+
       if Widget.all in Gtk_Editable_Record'Class then
          Delete_Text
            (Gtk_Editable (Widget),
             Start_Pos => Gint (Clipboard.Last_Position
-              - Clipboard.List (Clipboard.Last_Paste)'Length - 1),
+              - Clipboard.Last_Length - 1),
             End_Pos   => Gint (Clipboard.Last_Position));
       else
          Copy (Source => Iter, Dest => Iter2);
-         Forward_Chars
-           (Iter,
-            -Gint (Clipboard.List (Clipboard.Last_Paste)'Length),
-            Result);
+         Forward_Chars (Iter, -Gint (Clipboard.Last_Length), Result);
          Delete (Buffer, Iter, Iter2);
       end if;
 
-      --  Prepare the next paste
-      Clipboard.Last_Paste := Clipboard.Last_Paste + 1;
+      --  Prepare the next paste.
+      --  If we have just pasted the system's clipboard, do not move the
+      --  current position
+
+      if not Clipboard.Last_Is_From_System then
+         Clipboard.Last_Paste := Clipboard.Last_Paste + 1;
+      end if;
+
       if Clipboard.Last_Paste > Clipboard.List'Last
+        or else Clipboard.Last_Paste < Clipboard.List'First
         or else Clipboard.List (Clipboard.Last_Paste) = null
       then
          Clipboard.Last_Paste := Clipboard.List'First;
       end if;
 
+      Clipboard.Last_Is_From_System := False;
+
       if Clipboard.List (Clipboard.Last_Paste) /= null then
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-      end if;
+         Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
-      --  Paste the new contents
-      if Widget.all in Gtk_Editable_Record'Class then
-         Paste_Clipboard (Gtk_Editable (Widget));
-         Clipboard.Last_Position :=
-           Integer (Get_Position (Gtk_Editable (Widget)));
-      else
-         Paste_Clipboard
-           (Buffer, Gtk.Clipboard.Get,
-            Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
-         Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-         Clipboard.Last_Position := Integer (Get_Offset (Iter));
+         --  Paste the new contents
+         if Widget.all in Gtk_Editable_Record'Class then
+            Paste_Clipboard (Gtk_Editable (Widget));
+            Clipboard.Last_Position :=
+              Integer (Get_Position (Gtk_Editable (Widget)));
+         else
+            Paste_Clipboard
+              (Buffer, Gtk.Clipboard.Get,
+               Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
+            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+            Clipboard.Last_Position := Integer (Get_Offset (Iter));
+         end if;
       end if;
 
       Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);

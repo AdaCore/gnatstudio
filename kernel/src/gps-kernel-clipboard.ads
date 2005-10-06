@@ -98,9 +98,12 @@ private
    type Clipboard_Record is record
       Kernel        : Kernel_Handle;
       List          : Selection_List_Access;
-      Last_Paste    : Integer;               --  Index in List
+      Last_Paste    : Integer := Integer'Last; --  Index in List
       Last_Widget   : Gtk.Widget.Gtk_Widget; --  Where the last paste occurred
       Last_Position : Integer;               --  Where the last paste occurred
+      Last_Length   : Integer;               --  Length of last insert
+      Last_Is_From_System : Boolean := False;
+      --  True if the last paste was from the system clipboard
    end record;
 
 end GPS.Kernel.Clipboard;
