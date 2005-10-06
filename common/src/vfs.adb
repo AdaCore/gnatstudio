@@ -447,10 +447,15 @@ package body VFS is
 
    function Dir (File : Virtual_File) return Virtual_File is
       The_Dir : Virtual_File;
+      Dir_Name : String := Dir_Name (File).all;
    begin
-      The_Dir := Create (Dir_Name (File).all);
-      The_Dir.Value.Kind := Directory;
-      return The_Dir;
+      if Dir_Name = "" then
+         return VFS.No_File;
+      else
+         The_Dir := Dir_Name (File);
+         The_Dir.Value.Kind := Directory;
+         return The_Dir;
+      end if;
    end Dir;
 
    ------------
@@ -844,6 +849,10 @@ package body VFS is
          Sep := GNAT.Directory_Operations.Dir_Separator;
       else
          Sep := '/';
+      end if;
+
+      if Dir.Value.Full_Name = null then
+         return;
       end if;
 
       if Dir.Value.Full_Name (Dir.Value.Full_Name'Last) /= '/'
