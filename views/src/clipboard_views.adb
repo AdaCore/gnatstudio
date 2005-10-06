@@ -32,6 +32,7 @@ with Gdk.Window;                use Gdk.Window;
 with Gdk.Types;                 use Gdk.Types;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Unicode;              use Glib.Unicode;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -348,6 +349,9 @@ package body Clipboard_Views is
       Start_Truncated : Boolean;
       End_Truncated   : Boolean;
       Result          : Unbounded_String;
+      Ellipsis      : String (1 .. 6);
+      Ellipsis_Last : Integer;
+
    begin
       Clear (Model);
 
@@ -397,12 +401,16 @@ package body Clipboard_Views is
 
             Result := To_Unbounded_String (Selection (S) (First .. Index - 1));
 
+            if Start_Truncated or End_Truncated then
+               Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
+            end if;
+
             if Start_Truncated then
-               Result := "[...] " & Result;
+               Result := Ellipsis (Ellipsis'First .. Ellipsis_Last) & Result;
             end if;
 
             if End_Truncated then
-               Result := Result & " [...]";
+               Result := Result & Ellipsis (Ellipsis'First .. Ellipsis_Last);
             end if;
 
             --  There is a pathological case here: if only ASCII.LF was
