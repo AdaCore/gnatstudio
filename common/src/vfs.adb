@@ -446,13 +446,13 @@ package body VFS is
    ---------
 
    function Dir (File : Virtual_File) return Virtual_File is
-      The_Dir : Virtual_File;
-      Dir_Name : String := Dir_Name (File).all;
+      The_Dir      : Virtual_File;
+      The_Dir_Name : constant String := Dir_Name (File).all;
    begin
-      if Dir_Name = "" then
+      if The_Dir_Name = "" then
          return VFS.No_File;
       else
-         The_Dir := Dir_Name (File);
+         The_Dir := Create (The_Dir_Name);
          The_Dir.Value.Kind := Directory;
          return The_Dir;
       end if;
