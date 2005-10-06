@@ -30,18 +30,16 @@ you first need to call
 
 RUNNING GPS ON LINUX X86_64
 
-GPS on x86_64 Linux systems requires two 32-bit compatibility libraries to be
-installed in system locations: libjpeg and libpng. These libraries are
-supplied by Red Hat Enterprise Linux and SuSE Linux Enterprise Server
-distributions with the following RPM package names (a '*' wildcard is used
-where the minor version number is negligible).
+The GPS binary is a 32 bit application and needs two 32 bit libraries
+installed if not already present on the 64 bit system. These two libraries
+are libjpeg and libpng.
 
-For Red Hat Enterprise Linux (release 4 for 64-bit AMD64/Intel EM64T),
-available via RHN or on the OS install media:
+On Red Hat Enterprise Linux (release 4 for 64-bit AMD64/Intel EM64T),
+the packages can be found as:
   libjpeg-6b-*.i386.rpm
   libpng-1.2.*.i386.rpm
 
-For SuSE Linux Enterprise Server (version 9 service pack 1), available on the
-OS install media:
+For SuSE Linux Enterprise Server (version 9 service pack 1), the packages
+can be found as:
   libjpeg-32bit-9-200407011229.x86_64.rpm (on Release CD #1)
   libpng-32bit-9-200408140621.x86_64.rpm (on SP 1 CD #1)
