@@ -470,6 +470,11 @@ package body Browsers.Call_Graph is
    procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class);
    --  Select or unselect all filters in "Find references..."
 
+   function Call_Graph_Category_Name
+     (Entity : Entity_Information; Link_From_Item : Boolean) return String;
+   --  The name of the category to use in the locations window when displaying
+   --  the call graph
+
    -----------------------
    -- All_Refs_Category --
    -----------------------
@@ -840,6 +845,9 @@ package body Browsers.Call_Graph is
          Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
          Redraw_Title_Bar (Cb.Item);
+      else
+         Recount_Category
+           (Kernel, Call_Graph_Category_Name (Entity, True));
       end if;
 
       Unref (Cb.Entity);
@@ -918,6 +926,10 @@ package body Browsers.Call_Graph is
          Result := Success;
       elsif At_End (Data.Iter.all) then
          Result := Success;
+         if Data.Callback.Browser = null then
+            Recount_Category
+              (Kernel, Call_Graph_Category_Name (Data.Callback.Entity, False));
+         end if;
       else
          Ref := Get (Data.Iter.all);
 
@@ -1022,6 +1034,20 @@ package body Browsers.Call_Graph is
    end Examine_Ancestors_Call_Graph_Iterator;
 
    ------------------------------
+   -- Call_Graph_Category_Name --
+   ------------------------------
+
+   function Call_Graph_Category_Name
+     (Entity : Entity_Information; Link_From_Item : Boolean) return String is
+   begin
+      if Link_From_Item then
+         return Get_Name (Cb.Entity).all & " calls";
+      else
+         return Get_Name (Cb.Entity).all & " called by";
+      end if;
+   end Call_Graph_Category_Name;
+
+   ------------------------------
    -- Insert_In_Locations_View --
    ------------------------------
 
@@ -1032,22 +1058,14 @@ package body Browsers.Call_Graph is
       Is_Renaming : Boolean)
    is
       type Access_Cst_String is access constant String;
-      Name : constant GNAT.OS_Lib.String_Access := Get_Name (Cb.Entity);
       Loc  : constant File_Location := Get_Location (Ref);
-      Category1 : aliased constant String := Name.all & " calls";
-      Category2 : aliased constant String := Name.all & " called by";
-      Category  : Access_Cst_String;
+      Category  : constant String := Call_Graph_Category_Name
+        (Cb.Entity, Cb.Link_From_Item);
    begin
-      if Cb.Link_From_Item then
-         Category := Category1'Unchecked_Access;
-      else
-         Category := Category2'Unchecked_Access;
-      end if;
-
       if Is_Renaming then
          Insert_Location
            (Cb.Kernel,
-            Category  => Category.all,
+            Category  => Category,
             File      => Get_Filename (Get_File (Loc)),
             Line      => Get_Line (Loc),
             Column    => Get_Column (Loc),
@@ -1057,7 +1075,7 @@ package body Browsers.Call_Graph is
       else
          Insert_Location
            (Cb.Kernel,
-            Category  => Category.all,
+            Category  => Category,
             File      => Get_Filename (Get_File (Loc)),
             Line      => Get_Line (Loc),
             Column    => Get_Column (Loc),
