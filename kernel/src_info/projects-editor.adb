@@ -3496,7 +3496,7 @@ package body Projects.Editor is
       Values      : Argument_List (1 .. 1);
 
    begin
-      Project := Create_Project (Registry, Name, Path);
+      Project := Create_Project (Registry, Name, Name_As_Directory (Path));
 
       Values (1) := new String'(".");
       Update_Attribute_Value_In_Scenario
@@ -3554,6 +3554,7 @@ package body Projects.Editor is
           Canonical_Path => Project_Name,
           Node           => Project,
           Extended       => False));
+      Reset_Project_Name_Hash (Registry, Prj.Tree.Name_Of (Project, Tree));
 
       P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Project, Tree));
       Set_Project_Modified (P, True);
