@@ -928,7 +928,8 @@ package body Browsers.Call_Graph is
          Result := Success;
          if Data.Callback.Browser = null then
             Recount_Category
-              (Kernel, Call_Graph_Category_Name (Data.Callback.Entity, False));
+              (Data.Kernel,
+               Call_Graph_Category_Name (Data.Callback.Entity, False));
          end if;
       else
          Ref := Get (Data.Iter.all);
@@ -1041,9 +1042,9 @@ package body Browsers.Call_Graph is
      (Entity : Entity_Information; Link_From_Item : Boolean) return String is
    begin
       if Link_From_Item then
-         return Get_Name (Cb.Entity).all & " calls";
+         return Get_Name (Entity).all & " calls";
       else
-         return Get_Name (Cb.Entity).all & " called by";
+         return Get_Name (Entity).all & " called by";
       end if;
    end Call_Graph_Category_Name;
 
@@ -1057,8 +1058,8 @@ package body Browsers.Call_Graph is
       Ref         : Entity_Reference;
       Is_Renaming : Boolean)
    is
-      type Access_Cst_String is access constant String;
       Loc  : constant File_Location := Get_Location (Ref);
+      Name : constant String_Access := Get_Name (Cb.Entity);
       Category  : constant String := Call_Graph_Category_Name
         (Cb.Entity, Cb.Link_From_Item);
    begin
