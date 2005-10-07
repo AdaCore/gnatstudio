@@ -205,6 +205,9 @@ package body Src_Contexts is
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success
 
+   function Locations_Category_Name (Look_For : String) return String;
+   --  Return the name of the category to use in the Locations window
+
    -----------------
    -- Scan_Buffer --
    -----------------
@@ -538,6 +541,15 @@ package body Src_Contexts is
          Free (Buffer);
    end Scan_File;
 
+   -----------------------------
+   -- Locations_Category_Name --
+   -----------------------------
+
+   function Locations_Category_Name (Look_For : String) return String is
+   begin
+      return -"Search for: " & Look_For;
+   end Locations_Category_Name;
+
    ----------------------
    -- Highlight_Result --
    ----------------------
@@ -579,7 +591,7 @@ package body Src_Contexts is
       else
          Insert_Location
            (Kernel,
-            Category  => -"Search for: " & Look_For,
+            Category  => Locations_Category_Name (Look_For),
             File      => File_Name,
             Text      => Match.Text,
             Line      => To_Positive (Match.Begin_Line),
@@ -1513,6 +1525,18 @@ package body Src_Contexts is
          end if;
       end if;
    end Search;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset
+     (Context : access Abstract_Files_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Remove_Location_Category
+        (Kernel, Locations_Category_Name (Context_Look_For (Context)));
+   end Reset;
 
    ------------
    -- Search --
