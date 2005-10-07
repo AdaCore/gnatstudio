@@ -1412,6 +1412,20 @@ package body Projects.Registry is
       return Registry.Data.Root;
    end Get_Root_Project;
 
+   -----------------------------
+   -- Reset_Project_Name_Hash --
+   -----------------------------
+
+   procedure Reset_Project_Name_Hash
+     (Registry : Project_Registry;
+      Name     : Types.Name_Id) is
+   begin
+      if Registry.Data /= null then
+         Get_Name_String (Name);
+         Remove (Registry.Data.Projects, Name_Buffer (1 .. Name_Len));
+      end if;
+   end Reset_Project_Name_Hash;
+
    ---------------------------
    -- Get_Project_From_Name --
    ---------------------------
@@ -1440,6 +1454,7 @@ package body Projects.Registry is
                       & Get_String (Name) & " wasn't found");
 
             else
+               Trace (Me, "Get_Project_From_Name: Creating new Project_Type");
                Create_From_Node
                  (P, Registry, Registry.Data.Tree,
                   Registry.Data.View_Tree, Node);

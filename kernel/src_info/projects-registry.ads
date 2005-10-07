@@ -197,6 +197,14 @@ package Projects.Registry is
    --  In all cases, if no project matching the criterion is found, No_Project
    --  is returned.
 
+   procedure Reset_Project_Name_Hash
+     (Registry : Project_Registry;
+      Name     : Types.Name_Id);
+   --  Reset the project that would be returned by calling
+   --  Get_Project_From_Name. The next time that function is called, it will
+   --  return a new Project_Type. This should really only be used by
+   --  Projects.Editor
+
    function Get_Project_From_Name
      (Registry : Project_Registry; Name : Types.Name_Id) return Project_Type;
    --  Select a project by name
