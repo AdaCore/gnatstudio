@@ -301,6 +301,11 @@ private
    type Abstract_Files_Context_Access is access all
      Abstract_Files_Context'Class;
 
+   procedure Reset
+     (Context : access Abstract_Files_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  See inherited documentation
+
    procedure Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
