@@ -19,6 +19,21 @@
 -----------------------------------------------------------------------
 
 --  This package provides file-specific properties, optionaly persistent
+--
+--  Example of use:
+--     declare
+--        Int   : Integer_Property;
+--        Found : Boolean;
+--        Prop  : Property_Access;
+--     begin
+--        Get_File_Property (Int, File, "dummy", Found);
+--        if Found then
+--           Put_Line (Int.Value'Img);
+--        end if;
+--
+--        Prop := new Integer_Property'(Value => 232);
+--        Set_File_Property (File, "dummy", Prop, Persistent => True);
+--     end;
 
 with Glib.Xml_Int;
 
