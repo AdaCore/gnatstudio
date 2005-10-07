@@ -583,18 +583,23 @@ package body String_Utils is
      (S                 : String;
       Max_String_Length : Positive := 20) return String
    is
-      Krunch_Pattern : constant String := "[...]";
-      Half           : constant Natural :=
-        (Max_String_Length - Krunch_Pattern'Length + 1) / 2;
+      Half          : Integer;
+      Ellipsis      : String (1 .. 6);
+      Ellipsis_Last : Integer;
 
    begin
       if S'Length <= Max_String_Length then
          return S;
-      elsif Max_String_Length <= Krunch_Pattern'Length then
+      end if;
+
+      Unichar_To_UTF8 (8230, Ellipsis, Ellipsis_Last);
+      Half := (Max_String_Length - Ellipsis_Last + 1) / 2;
+
+      if Max_String_Length <= Ellipsis_Last then
          return S (S'First .. S'First + Max_String_Length - 1);
       else
          return S (S'First .. S'First + Half - 1) &
-           Krunch_Pattern & S (S'Last - Half + 1 .. S'Last);
+           Ellipsis (1 .. Ellipsis_Last) & S (S'Last - Half + 1 .. S'Last);
       end if;
    end Krunch;
 
