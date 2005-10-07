@@ -28,15 +28,15 @@ package GPS.Kernel.Properties is
    -- Properties --
    ----------------
 
-   type Property_Record is tagged null record;
+   type Property_Record is abstract tagged null record;
    type Property_Access is access all Property_Record'Class;
    --  A general property that can be associated with a file.
    --  Such properties can be marked as persistent, that is they will exist
    --  from one session of GPS to the next, transparently.
-   --  By default, it uses streams to dump the property
 
    function Save
-     (Property : access Property_Record) return Glib.Xml_Int.Node_Ptr;
+     (Property : access Property_Record) return Glib.Xml_Int.Node_Ptr
+     is abstract;
    --  Save the property to an XML node. This is the child node of the node
    --  associated with the property.
    --  Null should be returned if the property cannot be saved.
@@ -48,7 +48,8 @@ package GPS.Kernel.Properties is
    --  where "save1" and "save2" are results of Save.
 
    procedure Load
-     (Property : in out Property_Record; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out Property_Record; From : Glib.Xml_Int.Node_Ptr)
+     is abstract;
    --  Load a property from an XML node.
    --  From has been found automatically by GPS based on the property node. If
    --  it doesn't match the type expected by Property, it is likely because two
