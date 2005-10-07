@@ -1475,6 +1475,10 @@ package body Src_Editor_Module is
                         Get_Text (Get_Entry (Open_File_Entry));
             Full    : Virtual_File;
          begin
+            --  Close the dialog first, so that the current context becomes the
+            --  one of the editor while running hooks
+            Destroy (Open_File_Dialog);
+
             if Complet /= 0 then
                if Complet > List1'Length then
                   Full := List2 (List2'First + Complet - List1'Length - 1);
@@ -1505,9 +1509,9 @@ package body Src_Editor_Module is
                   Mode => Error);
             end if;
          end;
+      else
+         Destroy (Open_File_Dialog);
       end if;
-
-      Destroy (Open_File_Dialog);
 
       Unchecked_Free (List1);
       Unchecked_Free (List2);
