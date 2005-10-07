@@ -321,6 +321,33 @@ package body GPS.Kernel.Modules is
       Unchecked_Free (Module);
    end Free;
 
+   ----------------------
+   -- Get_Focus_Widget --
+   ----------------------
+
+   function Get_Focus_Widget return Gtk_Widget;
+
+   function Get_Focus_Widget return Gtk_Widget is
+      use Widget_List;
+      List : Widget_List.Glist := List_Toplevels;
+      L    : Widget_List.Glist;
+      W    : Gtk_Widget;
+   begin
+      L := First (List);
+      while L /= Null_List loop
+         W := Get_Data (L);
+         if Get_Property (W, Has_Toplevel_Focus_Property) then
+            Free (List);
+            return Get_Focus (Gtk_Window (W));
+         end if;
+
+         L := Next (L);
+      end loop;
+
+      Free (List);
+      return null;
+   end Get_Focus_Widget;
+
    ------------------------
    -- Get_Current_Module --
    ------------------------
@@ -328,23 +355,46 @@ package body GPS.Kernel.Modules is
    function Get_Current_Module
      (Kernel : access Kernel_Handle_Record'Class) return Module_ID
    is
-      C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      Focus : Gtk_Widget;
+      C : MDI_Child;
+      W : Gtk_Widget;
    begin
+      if Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel)) then
+         return null;
+      end if;
+
+      W := Get_Focus_Widget;
+
+      if W = null
+        or else Gtk.Object.In_Destruction_Is_Set (W)
+      then
+         --  No valid window has the focus ? It is probably because we had a
+         --  dialog like the Open From Project dialog, which is being closed.
+         --  The focus is moved asynchronously, but we know it will go back to
+         --  the MDI at this point, and thus the current MDI child is the focus
+         --  one
+         C := Get_Focus_Child (Get_MDI (Kernel));
+
+      else
+         --  We have an explicit widget with the keyboard focus. Check whether
+         --  it belongs to an MDI child. If not, it is probably part of some
+         --  popup dialog, and therefore there is no module
+
+         while W /= null loop
+            if W.all in MDI_Child_Record'Class then
+               C := MDI_Child (W);
+               exit;
+            end if;
+            W := Get_Parent (W);
+         end loop;
+      end if;
+
       if C = null
-        or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
+        or else C /= Get_Focus_Child (Get_MDI (Kernel))
       then
          return null;
+      else
+         return Get_Module_From_Child (C);
       end if;
-
-      Focus := Get_Toplevel (Get_Widget (C));
-      if Focus = null
-         or else not Get_Property (Focus, Has_Toplevel_Focus_Property)
-      then
-         return null;
-      end if;
-
-      return Get_Module_From_Child (C);
    end Get_Current_Module;
 
    ----------------
