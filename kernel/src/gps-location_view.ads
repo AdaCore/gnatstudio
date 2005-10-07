@@ -26,6 +26,7 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Main;                  use Gtk.Main;
+with Glib;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -71,7 +72,7 @@ package GPS.Location_View is
 
    procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : String;
+      Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Text               : String;
       Line               : Positive;
@@ -137,7 +138,7 @@ package GPS.Location_View is
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;
       Text                    : String;
-      Category                : String;
+      Category                : Glib.UTF8_String;
       Highlight               : Boolean := False;
       Highlight_Category      : Style_Access := null;
       Style_Category          : Style_Access := null;

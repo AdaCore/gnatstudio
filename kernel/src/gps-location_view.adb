@@ -190,7 +190,7 @@ package body GPS.Location_View is
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
-      Category      : String;
+      Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
@@ -225,7 +225,7 @@ package body GPS.Location_View is
    procedure Add_Location
      (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
-      Category           : String;
+      Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
       Column             : Positive;
@@ -994,7 +994,7 @@ package body GPS.Location_View is
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
-      Category      : String;
+      Category      : Glib.UTF8_String;
       H_Category    : Style_Access;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
@@ -1002,15 +1002,13 @@ package body GPS.Location_View is
       New_Category  : out Boolean;
       Create        : Boolean := True)
    is
-      Category_UTF8 : constant String :=
-        Glib.Convert.Locale_To_UTF8 (Category);
    begin
       File_Iter := Null_Iter;
       Category_Iter := Get_Iter_First (Model);
       New_Category := False;
 
       while Category_Iter /= Null_Iter
-        and then Get_Category_Name (Model, Category_Iter) /= Category_UTF8
+        and then Get_Category_Name (Model, Category_Iter) /= Category
       loop
          Next (Model, Category_Iter);
       end loop;
@@ -1019,7 +1017,7 @@ package body GPS.Location_View is
          if Create then
             Append (Model, Category_Iter, Null_Iter);
             Fill_Iter
-              (View, Model, Category_Iter, Category_UTF8, VFS.No_File,
+              (View, Model, Category_Iter, Category, VFS.No_File,
                "", -1, 0, 0, 0, False,
                H_Category, View.Category_Pixbuf);
             New_Category := True;
@@ -1061,7 +1059,7 @@ package body GPS.Location_View is
    procedure Add_Location
      (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
-      Category           : String;
+      Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Line               : Positive;
       Column             : Positive;
@@ -1554,7 +1552,7 @@ package body GPS.Location_View is
 
    procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : String;
+      Category           : Glib.UTF8_String;
       File               : VFS.Virtual_File;
       Text               : String;
       Line               : Positive;
