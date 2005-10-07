@@ -502,11 +502,11 @@ package body String_Utils is
    -----------------------
 
    procedure Skip_Simple_Value
-     (Type_Str             : in String;
+     (Type_Str             : String;
       Index                : in out Natural;
-      Array_Item_Separator : in Character := ',';
-      End_Of_Array         : in Character := ')';
-      Repeat_Item_Start    : in Character := '<') is
+      Array_Item_Separator : Character := ',';
+      End_Of_Array         : Character := ')';
+      Repeat_Item_Start    : Character := '<') is
    begin
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= Array_Item_Separator
@@ -729,7 +729,7 @@ package body String_Utils is
    -- Strip_Quotes --
    ------------------
 
-   function Strip_Quotes (S : in String) return String is
+   function Strip_Quotes (S : String) return String is
       S_First : Integer := S'First;
       S_Last  : Integer := S'Last;
 

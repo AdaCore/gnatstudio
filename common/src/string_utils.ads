@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                                AdaCore                            --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -136,11 +136,11 @@ package String_Utils is
    --  Index is set to the number of characters parsed in the string.
 
    procedure Skip_Simple_Value
-     (Type_Str             : in String;
+     (Type_Str             : String;
       Index                : in out Natural;
-      Array_Item_Separator : in Character := ',';
-      End_Of_Array         : in Character := ')';
-      Repeat_Item_Start    : in Character := '<');
+      Array_Item_Separator : Character := ',';
+      End_Of_Array         : Character := ')';
+      Repeat_Item_Start    : Character := '<');
    --  Skip the value of a simple value ("65 'A'" for instance).
    --  This stops at the first special character.
    --
@@ -180,7 +180,7 @@ package String_Utils is
    --  depending on the value of Tab_Size.
    --  This function works correctly with multiple-line strings.
 
-   function Strip_Quotes (S : in String) return String;
+   function Strip_Quotes (S : String) return String;
    --  Remove the quotes and the spaces at the beginning and end of S.
 
    function Image (N : Integer) return String;
