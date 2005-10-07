@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.1.0
 
+- EA06-002 Duplicate entries in Locations view after a search
+  Problem:    If you do a Search for all occurrences twice for the same pattern,
+              duplicate references are inserted into the Locations view
+  Workaround: Clear the locations view before starting the search
+
 - E920-001 GPS installation conflicts with GtkAda installation
   Problem:    Both these tools install libgtkada.so on Unix platforms. If their
               version do not match, there might be conflicts either when
