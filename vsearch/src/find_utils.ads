@@ -229,6 +229,13 @@ package Find_Utils is
    --  Return the total progress level in Context (ex: the total number of
    --  files being searched). By default, return 1.
 
+   procedure Reset
+     (Context : access Search_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Called whenever a new search will start (as opposed to continuing the
+   --  current one through the Next button).
+   --  By default, this does nothing
+
    procedure Search
      (Context         : access Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;

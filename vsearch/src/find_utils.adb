@@ -669,4 +669,17 @@ package body Find_Utils is
       Column := Best_Column;
    end Find_Closest_Match;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset
+     (Context : access Search_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Context, Kernel);
+   begin
+      null;
+   end Reset;
+
 end Find_Utils;
