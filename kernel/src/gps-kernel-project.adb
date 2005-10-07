@@ -34,6 +34,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
@@ -126,6 +127,8 @@ package body GPS.Kernel.Project is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
+      Save_Persistent_Properties (Kernel);
+
       Entities.Reset (Get_Database (Kernel));
 
       Load_Default_Project
@@ -166,6 +169,8 @@ package body GPS.Kernel.Project is
 
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
+
+      Restore_Persistent_Properties (Kernel);
 
       --  Reload the default desktop
 
@@ -236,6 +241,11 @@ package body GPS.Kernel.Project is
 
       if Is_Regular_File (Project) then
          Push_State (Kernel_Handle (Kernel), Busy);
+
+         if not Same_Project then
+            Save_Persistent_Properties (Kernel);
+         end if;
+
          Change_Dir (Dir_Name (Project));
 
          --  When loading a new project, we need to reset the cache containing
@@ -268,6 +278,10 @@ package body GPS.Kernel.Project is
          --  already
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
+         end if;
+
+         if not Same_Project then
+            Restore_Persistent_Properties (Kernel);
          end if;
 
          Pop_State (Kernel_Handle (Kernel));

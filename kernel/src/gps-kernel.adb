@@ -75,6 +75,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
@@ -1290,6 +1291,8 @@ package body GPS.Kernel is
       Save_Styles
         (Kernel_Handle (Handle),
          Create (Handle.Home_Dir.all & "styles.xml"));
+
+      Save_Persistent_Properties (Handle);
 
       Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
