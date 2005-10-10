@@ -26,16 +26,17 @@
 --        Found : Boolean;
 --        Prop  : Property_Access;
 --     begin
---        Get_File_Property (Int, File, "dummy", Found);
+--        Get_Property (Int, File, "dummy", Found);
 --        if Found then
 --           Put_Line (Int.Value'Img);
 --        end if;
 --
 --        Prop := new Integer_Property'(Value => 232);
---        Set_File_Property (File, "dummy", Prop, Persistent => True);
+--        Set_Property (File, "dummy", Prop, Persistent => True);
 --     end;
 
 with Glib.Xml_Int;
+with Projects;
 
 package GPS.Kernel.Properties is
 
@@ -79,7 +80,7 @@ package GPS.Kernel.Properties is
    -- Associating properties with files --
    ---------------------------------------
 
-   procedure Set_File_Property
+   procedure Set_Property
      (File       : VFS.Virtual_File;
       Name       : String;
       Property   : access Property_Record'Class;
@@ -90,7 +91,7 @@ package GPS.Kernel.Properties is
    --  of GPS to the next.
    --  Property names are case sensitive.
 
-   procedure Get_File_Property
+   procedure Get_Property
      (Property : out Property_Record'Class;
       File     : VFS.Virtual_File;
       Name     : String;
@@ -98,6 +99,40 @@ package GPS.Kernel.Properties is
    --  Return the given named property associated with File.
    --  Found is set to False if there is no such property.
    --  Property names are case sensitive.
+
+   procedure Remove_Property
+     (File     : VFS.Virtual_File;
+      Name     : String);
+   --  Remove the named property (persistent or not) from the file.
+
+   ------------------------------------------
+   -- Associating properties with projects --
+   ------------------------------------------
+
+   procedure Set_Property
+     (Project    : Projects.Project_Type;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False);
+   --  Associate a given property with File, so that it can be queries later
+   --  through Get_File_Property.
+   --  If Persistent is True, the property will be preserved from one session
+   --  of GPS to the next.
+   --  Property names are case sensitive.
+
+   procedure Get_Property
+     (Property : out Property_Record'Class;
+      Project  : Projects.Project_Type;
+      Name     : String;
+      Found    : out Boolean);
+   --  Return the given named property associated with File.
+   --  Found is set to False if there is no such property.
+   --  Property names are case sensitive.
+
+   procedure Remove_Property
+     (Project  : Projects.Project_Type;
+      Name     : String);
+   --  Remove the named property (persistent or not) from the file.
 
    -----------------------------
    -- Specific property types --
@@ -134,6 +169,14 @@ package GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Restore persistent properties for the files in the current project.
    --  This subprogram should only be called by the kernel itself.
+
+   -------------
+   -- Scripts --
+   -------------
+
+   procedure Register_Script_Commands
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the script commands associated with this module
 
 private
    procedure Destroy (Property : in out String_Property);

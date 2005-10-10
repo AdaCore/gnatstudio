@@ -21,7 +21,9 @@
 with Ada.Unchecked_Deallocation;
 with File_Utils;                 use File_Utils;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Projects;                   use Projects;
 with String_Hash;
@@ -72,8 +74,8 @@ package body GPS.Kernel.Properties is
    --  ??? It would be nicer to store this in the kernel but:
    --    - it really doesn't provide anything in addition (no more task safe
    --      in any case)
-   --    - It would require an extra Kernel parameter to Set_File_Property
-   --      and Get_File_Property, thus making the API harder to use.
+   --    - It would require an extra Kernel parameter to Set_Property
+   --      and Get_Property, thus making the API harder to use.
    --  For now, we'll leave with this global variable.
 
    function Get_Properties_Filename
@@ -88,6 +90,28 @@ package body GPS.Kernel.Properties is
       Property      : Property_Description);
    --  Set property for any kind of resource. This is the internal
    --  implementation of Set_*_Property
+
+   procedure Get_Resource_Property
+     (Property      : out Property_Record'Class;
+      Resource_Key  : String;
+      Resource_Kind : String;
+      Name          : String;
+      Found         : out Boolean);
+   --  Get property for any kind of resource
+
+   procedure Remove_Resource_Property
+     (Resource_Key  : String;
+      Resource_Kind : String;
+      Name          : String);
+   --  Remove property for any kind of resource
+
+   procedure File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles script commands for properties
+
+   procedure Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles script commands for properties
 
    ----------
    -- Free --
@@ -257,38 +281,23 @@ package body GPS.Kernel.Properties is
       Set (Hash.all, Name, Property);
    end Set_Resource_Property;
 
-   -----------------------
-   -- Set_File_Property --
-   -----------------------
+   ---------------------------
+   -- Get_Resource_Property --
+   ---------------------------
 
-   procedure Set_File_Property
-     (File       : VFS.Virtual_File;
-      Name       : String;
-      Property   : access Property_Record'Class;
-      Persistent : Boolean := False) is
-   begin
-      Set_Resource_Property
-        (Full_Name (File).all, "file", Name,
-         Property_Description'(Value      => Property_Access (Property),
-                               Unparsed   => null,
-                               Persistent => Persistent));
-   end Set_File_Property;
-
-   -----------------------
-   -- Get_File_Property --
-   -----------------------
-
-   procedure Get_File_Property
-     (Property : out Property_Record'Class;
-      File     : VFS.Virtual_File;
-      Name     : String;
-      Found    : out Boolean)
+   procedure Get_Resource_Property
+     (Property      : out Property_Record'Class;
+      Resource_Key  : String;
+      Resource_Kind : String;
+      Name          : String;
+      Found         : out Boolean)
    is
+      pragma Unreferenced (Resource_Kind);
       Hash : Properties_Description_HTable;
       Descr : Property_Description;
    begin
       Found := False;
-      Hash := Get (All_Properties, Full_Name (File).all);
+      Hash := Get (All_Properties, Resource_Key);
       if Hash /= null then
          Descr := Get (Hash.all, Name);
          if Descr /= No_Description then
@@ -305,7 +314,109 @@ package body GPS.Kernel.Properties is
    exception
       when others =>
          Found := False;
-   end Get_File_Property;
+   end Get_Resource_Property;
+
+   ------------------------------
+   -- Remove_Resource_Property --
+   ------------------------------
+
+   procedure Remove_Resource_Property
+     (Resource_Key  : String;
+      Resource_Kind : String;
+      Name          : String)
+   is
+      pragma Unreferenced (Resource_Kind);
+      Hash : Properties_Description_HTable;
+   begin
+      Hash := Get (All_Properties, Resource_Key);
+      if Hash /= null then
+         Remove (Hash.all, Name);
+      end if;
+   end Remove_Resource_Property;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (File       : VFS.Virtual_File;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False) is
+   begin
+      Set_Resource_Property
+        (Full_Name (File).all, "file", Name,
+         Property_Description'(Value      => Property_Access (Property),
+                               Unparsed   => null,
+                               Persistent => Persistent));
+   end Set_Property;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (Project    : Projects.Project_Type;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False) is
+   begin
+      Set_Resource_Property
+        (Project_Path (Project), "project", Name,
+         Property_Description'(Value      => Property_Access (Property),
+                               Unparsed   => null,
+                               Persistent => Persistent));
+   end Set_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   procedure Get_Property
+     (Property : out Property_Record'Class;
+      File     : VFS.Virtual_File;
+      Name     : String;
+      Found    : out Boolean) is
+   begin
+      Get_Resource_Property
+        (Property, Full_Name (File).all, "file", Name, Found);
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   procedure Get_Property
+     (Property : out Property_Record'Class;
+      Project  : Projects.Project_Type;
+      Name     : String;
+      Found    : out Boolean) is
+   begin
+      Get_Resource_Property
+        (Property, Project_Path (Project), "project", Name, Found);
+   end Get_Property;
+
+   ---------------------
+   -- Remove_Property --
+   ---------------------
+
+   procedure Remove_Property
+     (File     : VFS.Virtual_File;
+      Name     : String) is
+   begin
+      Remove_Resource_Property (Full_Name (File).all, "file", Name);
+   end Remove_Property;
+
+   ---------------------
+   -- Remove_Property --
+   ---------------------
+
+   procedure Remove_Property
+     (Project  : Projects.Project_Type;
+      Name     : String) is
+   begin
+      Remove_Resource_Property (Project_Path (Project), "project", Name);
+   end Remove_Property;
 
    -----------------------------
    -- Get_Properties_Filename --
@@ -360,7 +471,6 @@ package body GPS.Kernel.Properties is
             Child      => null,
             Next       => null,
             Specific_Data => 1);
-         Add_Child (Root, File);
 
          Get_First (Hash.all, Iter2);
          loop
@@ -387,6 +497,12 @@ package body GPS.Kernel.Properties is
 
             Get_Next (Hash.all, Iter2);
          end loop;
+
+         if File.Child /= null then
+            Add_Child (Root, File);
+         else
+            Free (File);
+         end if;
 
          Get_Next (All_Properties, Iter);
       end loop;
@@ -428,5 +544,157 @@ package body GPS.Kernel.Properties is
          Free (Root);
       end if;
    end Restore_Persistent_Properties;
+
+   --------------------------
+   -- File_Command_Handler --
+   --------------------------
+
+   procedure File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      File_Class : constant Class_Type := New_Class (Kernel, "File");
+      Inst       : constant Class_Instance := Nth_Arg (Data, 1, File_Class);
+      File       : constant Virtual_File := Get_File (Get_Data (Inst));
+
+      Name       : aliased constant String := "name";
+      Value      : aliased constant String := "value";
+      Persistent : aliased constant String := "persistent";
+
+      Found      : Boolean;
+      Prop       : String_Property_Access;
+      Prop2      : aliased String_Property;
+   begin
+      if Command = "set_property" then
+         Name_Parameters (Data, (2 => Name'Unchecked_Access,
+                                 3 => Value'Unchecked_Access,
+                                 4 => Persistent'Unchecked_Access));
+         Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
+         Set_Property
+           (File,
+            Name       => Nth_Arg (Data, 2),
+            Property   => Prop,
+            Persistent => Nth_Arg (Data, 4, False));
+      elsif Command = "get_property" then
+         Name_Parameters (Data, (2 => Name'Unchecked_Access));
+         Get_Property
+           (Property => Prop2,
+            File     => File,
+            Name     => Nth_Arg (Data, 2),
+            Found    => Found);
+         if not Found then
+            Set_Error_Msg (Data, -"Property not found");
+         elsif Prop2.Value = null then
+            Set_Return_Value (Data, "");
+         else
+            Set_Return_Value (Data, Prop2.Value.all);
+         end if;
+
+      else
+         Name_Parameters (Data, (2 => Name'Unchecked_Access));
+         Remove_Property
+           (File     => File,
+            Name     => Nth_Arg (Data, 2));
+      end if;
+   end File_Command_Handler;
+
+   -----------------------------
+   -- Project_Command_Handler --
+   -----------------------------
+
+   procedure Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Project    : constant Project_Type  := Get_Data (Data, 1);
+
+      Name       : aliased constant String := "name";
+      Value      : aliased constant String := "value";
+      Persistent : aliased constant String := "persistent";
+
+      Found      : Boolean;
+      Prop       : String_Property_Access;
+      Prop2      : aliased String_Property;
+   begin
+      if Command = "set_property" then
+         Name_Parameters (Data, (2 => Name'Unchecked_Access,
+                                 3 => Value'Unchecked_Access,
+                                 4 => Persistent'Unchecked_Access));
+         Prop := new String_Property'(Value => new String'(Nth_Arg (Data, 3)));
+         Set_Property
+           (Project,
+            Name       => Nth_Arg (Data, 2),
+            Property   => Prop,
+            Persistent => Nth_Arg (Data, 4, False));
+      elsif Command = "get_property" then
+         Name_Parameters (Data, (2 => Name'Unchecked_Access));
+         Get_Property
+           (Property => Prop2,
+            Project     => Project,
+            Name     => Nth_Arg (Data, 2),
+            Found    => Found);
+         if not Found then
+            Set_Error_Msg (Data, -"Property not found");
+         elsif Prop2.Value = null then
+            Set_Return_Value (Data, "");
+         else
+            Set_Return_Value (Data, Prop2.Value.all);
+         end if;
+
+      else
+         Name_Parameters (Data, (2 => Name'Unchecked_Access));
+         Remove_Property
+           (Project  => Project,
+            Name     => Nth_Arg (Data, 2));
+      end if;
+   end Project_Command_Handler;
+
+   ------------------------------
+   -- Register_Script_Commands --
+   ------------------------------
+
+   procedure Register_Script_Commands
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      File_Class : constant Class_Type := New_Class (Kernel, "File");
+      Project_Class : constant Class_Type := New_Class (Kernel, "Project");
+   begin
+      Register_Command
+        (Kernel, "set_property",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Class        => File_Class,
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_property",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => File_Class,
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel, "remove_property",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => File_Class,
+         Handler      => File_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "set_property",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Class        => Project_Class,
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_property",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Project_Class,
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "remove_property",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Project_Class,
+         Handler      => Project_Command_Handler'Access);
+   end Register_Script_Commands;
 
 end GPS.Kernel.Properties;

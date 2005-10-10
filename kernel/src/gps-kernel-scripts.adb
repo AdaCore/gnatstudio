@@ -20,35 +20,36 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Glib.Object;          use Glib.Object;
-with Gtk.Widget;           use Gtk.Widget;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Actions; use GPS.Kernel.Actions;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Custom;  use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Histories;            use Histories;
-with Interactive_Consoles; use Interactive_Consoles;
-with Entities.Queries;     use Entities, Entities.Queries;
-with String_Hash;
-with Commands.Interactive; use Commands, Commands.Interactive;
-with System;               use System;
-with String_Utils;         use String_Utils;
 with Basic_Types;
-with Projects;             use Projects;
-with Projects.Registry;    use Projects.Registry;
-with Projects.Editor;      use Projects.Editor;
-with Types;                use Types;
-with Traces;               use Traces;
-with VFS;                  use VFS;
-with Basic_Types;          use Basic_Types;
-with Language_Handlers;    use Language_Handlers;
-with Prj.Ext;              use Prj.Ext;
+with Basic_Types;             use Basic_Types;
+with Commands.Interactive;    use Commands, Commands.Interactive;
+with Entities.Queries;        use Entities, Entities.Queries;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with Glib.Object;             use Glib.Object;
+with Gtk.Widget;              use Gtk.Widget;
+with Histories;               use Histories;
+with Interactive_Consoles;    use Interactive_Consoles;
+with Language_Handlers;       use Language_Handlers;
+with Prj.Ext;                 use Prj.Ext;
+with Projects.Editor;         use Projects.Editor;
+with Projects.Registry;       use Projects.Registry;
+with Projects;                use Projects;
+with String_Hash;
+with String_Utils;            use String_Utils;
+with System;                  use System;
+with Traces;                  use Traces;
+with Types;                   use Types;
+with VFS;                     use VFS;
 
 package body GPS.Kernel.Scripts is
 
@@ -1895,6 +1896,8 @@ package body GPS.Kernel.Scripts is
         (Kernel, "show",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
+
+      GPS.Kernel.Properties.Register_Script_Commands (Kernel);
    end Register_Default_Script_Commands;
 
    ----------------------
