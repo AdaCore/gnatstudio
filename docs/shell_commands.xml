@@ -739,6 +739,32 @@ GPS.parse_xml ("""
       <description>Return the next match for pattern in the file. Default values are False for case_sensitive and regexp. Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description>
   </shell_doc>
 
+  <shell_doc name="GPS.File.set_property">
+     <param name="self">The instance of GPS.File</param>
+     <param name="name">A string</param>
+     <param name="value">A string</param>
+     <param name="persistent" default="False">A boolean</param>
+     <description>Associates a string property with the file. This property is retrievable during the whole GPS session, or across GPS sessions if persistent is set to True.
+This is different than setting instance properties through Python's standard mechanism in that there is no garantee that the same instance of GPS.File will be created for each physical file on the disk, and therefore you would not be able to associate a property with the physical file itself</description>
+     <see_also name="GPS.File.get_property" />
+     <see_also name="GPS.Project.set_property" />
+  </shell_doc>
+
+  <shell_doc name="GPS.File.get_property">
+     <param name="self">The instance of GPS.File</param>
+     <param name="name">A string</param>
+     <return>A string</return>
+     <description>Return the value of the property associated with the file. This property might have been set in a previous GPS session if it is persistent. An exception is raised if no such property already exists for the file</description>
+     <see_also name="GPS.File.set_property" />
+  </shell_doc>
+
+  <shell_doc name="GPS.File.remove_property">
+     <param name="self">The instance of GPS.File</param>
+     <param name="name">A string</param>
+     <description>Removes a property associated with a file</description>
+     <see_also name="GPS.File.set_property" />
+  </shell_doc>
+
   <!--#################################################################
     ####   Entity class
     ###################################################################-->
@@ -1312,6 +1338,33 @@ The new paths are added in front, so that they have priorities over previously d
       <param name="recursive" default="True">A boolean</param>
       <return>A list of GPS.FileLocation instances</return>
       <description>Return the list of matches for pattern in all the files belonging to the project (and its imported projects if recursive is true (default). Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.set_property">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="name">A string</param>
+     <param name="value">A string</param>
+     <param name="persistent" default="False">A boolean</param>
+     <description>Associates a string property with the project. This property is retrievable during the whole GPS session, or across GPS sessions if persistent is set to True.
+This is different than setting instance properties through Python's standard mechanism in that there is no garantee that the same instance of GPS.Project will be created for each physical project on the disk, and therefore you would not be able to associate a property with the physical project itself</description>
+     <see_also name="GPS.Project.get_property" />
+     <see_also name="GPS.Project.remove_property" />
+     <see_also name="GPS.File.set_property" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.get_property">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="name">A string</param>
+     <return>A string</return>
+     <description>Return the value of the property associated with the project. This property might have been set in a previous GPS session if it is persistent. An exception is raised if no such property already exists for the project</description>
+     <see_also name="GPS.Project.set_property" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.remove_property">
+     <param name="self">The instance of GPS.Project</param>
+     <param name="name">A string</param>
+     <description>Removes a property associated with a project</description>
+     <see_also name="GPS.Project.set_property" />
   </shell_doc>
 
   <!--#################################################################
