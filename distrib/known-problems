@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- EA06-005 Saving new file incorrectly sets the language
+  Problem:    If you create a new file and save it, then start typing, the
+              text is incorrectly highlighted because the language of the file
+              has not been detected correctly.
+  Workaround: Reload the project through Project->Recent
+
 - EA06-002 Duplicate entries in Locations view after a search
   Problem:    If you do a Search for all occurrences twice for the same pattern,
               duplicate references are inserted into the Locations view
