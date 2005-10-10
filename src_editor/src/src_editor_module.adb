@@ -1293,6 +1293,9 @@ package body Src_Editor_Module is
       declare
          Old_Name : constant Virtual_File := Get_Filename (Source);
       begin
+         --  This call will recompute the project if needed, and update the
+         --  editor's associated language automatically
+
          Save_To_File (Source, Name, Success);
 
          declare
@@ -1303,7 +1306,6 @@ package body Src_Editor_Module is
             if Old_Name /= New_Name then
                Set_Title
                  (Child, Full_Name (New_Name).all, Base_Name (New_Name));
-               Recompute_View (Kernel);
             end if;
          end;
       end;
