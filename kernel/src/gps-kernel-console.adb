@@ -30,7 +30,6 @@ with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
 
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -485,7 +484,6 @@ package body GPS.Kernel.Console is
    is
       File     : constant String := '/' & (-"File");
       Console  : constant String := File & '/' & (-"_Messages");
-      Mitem    : Gtk_Menu_Item;
    begin
       Console_Module_Id := new Console_Module_Id_Record;
       Register_Module
@@ -501,15 +499,14 @@ package body GPS.Kernel.Console is
 
       Initialize_Console (Kernel);
 
-      Register_Menu (Kernel, Console);
+      Register_Menu (Kernel, Console,
+                     Ref_Item => "Change Directory...", Add_Before => False);
       Register_Menu
         (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem);
    end Register_Module;
 
 end GPS.Kernel.Console;
