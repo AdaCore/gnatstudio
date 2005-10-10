@@ -2520,50 +2520,6 @@ package body Src_Editor_Module.Shell is
             Set_Return_Value
               (Data, Create_Editor_Location (Get_Script (Data), Iter));
          end if;
-      elsif Command = "close_all" then
-         declare
-            Iterator   : Child_Iterator := First_Child (Get_MDI (Kernel));
-            Child      : MDI_Child;
-            Nb_Editors : Integer := 0;
-         begin
-            loop
-               Child := Get (Iterator);
-               Next (Iterator);
-
-               exit when Child = null;
-
-               if Get_Widget (Child).all in Source_Editor_Box_Record then
-                  Nb_Editors := Nb_Editors + 1;
-               end if;
-            end loop;
-
-            --  ??? if we close the editors during the iteration, then the
-            --  last one remains open (except if it's the only one). That's
-            --  why we have to use an temporary array here. To be
-            --  investigated.
-            declare
-               Editors     : array (1 .. Nb_Editors) of MDI_Child;
-               Ind_Editor  : Integer := 1;
-            begin
-               Iterator := First_Child (Get_MDI (Kernel));
-
-               loop
-                  Child := Get (Iterator);
-                  Next (Iterator);
-
-                  exit when Child = null;
-
-                  if Get_Widget (Child).all in Source_Editor_Box_Record then
-                     Editors (Ind_Editor) := Child;
-                     Ind_Editor := Ind_Editor + 1;
-                  end if;
-               end loop;
-
-               for J in Editors'Range loop
-                  Close_Child (Editors (J));
-               end loop;
-            end;
-         end;
       end if;
    end View_Cmds;
 
@@ -2896,8 +2852,6 @@ package body Src_Editor_Module.Shell is
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "goto", 1, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
-      Register_Command
-        (Kernel, "close_all", 0, 0, View_Cmds'Access, EditorView, True);
 
       --  Searching
 
