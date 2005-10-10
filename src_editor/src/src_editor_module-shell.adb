@@ -2447,7 +2447,6 @@ package body Src_Editor_Module.Shell is
       Box        : Source_Editor_Box;
       Buffer     : Source_Buffer;
       Iter       : Gtk_Text_Iter;
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Buffer_Cst'Access));
