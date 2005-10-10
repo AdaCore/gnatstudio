@@ -38,11 +38,13 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with Projects;               use Projects;
 with Traces;                 use Traces;
@@ -74,6 +76,126 @@ package body GPS.Menu is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Perform the various actions associated with the clipboard
+
+   procedure On_Save_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save Desktop menu
+
+   procedure On_Save_Default_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save Default Desktop menu
+
+   procedure On_Change_Dir
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Change Directory... menu
+
+   procedure On_Save_All
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Save All menu
+
+   procedure On_Exit
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Exit menu
+
+   -------------
+   -- On_Exit --
+   -------------
+
+   procedure On_Exit
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Exit;
+
+   -------------------
+   -- On_Change_Dir --
+   -------------------
+
+   procedure On_Change_Dir
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Dir    : Virtual_File;
+
+   begin
+      Dir :=  Select_Directory
+        (-"Select a directory",
+         History => Get_History (Kernel),
+         Parent  => Gtk_Window (Get_Current_Window (Kernel)));
+
+      if Dir /= No_File then
+         Change_Dir (Dir);
+      end if;
+
+   exception
+      when VFS_Directory_Error =>
+         GPS.Kernel.Console.Insert
+           (Kernel,
+            "Cannot change to directory: " &
+            Full_Name (Dir).all,
+            Mode => Error);
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Change_Dir;
+
+   -----------------
+   -- On_Save_All --
+   -----------------
+
+   procedure On_Save_All
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Ignore : Boolean;
+      pragma Unreferenced (Widget, Ignore);
+
+   begin
+      Ignore := Save_MDI_Children (Kernel, Force => False);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Save_All;
+
+   ---------------------
+   -- On_Save_Desktop --
+   ---------------------
+
+   procedure On_Save_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Save_Desktop (Kernel, As_Default_Desktop => False);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Desktop;
+
+   -----------------------------
+   -- On_Save_Default_Desktop --
+   -----------------------------
+
+   procedure On_Save_Default_Desktop
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Save_Desktop (Kernel, As_Default_Desktop => True);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Default_Desktop;
 
    -------------
    -- Execute --
@@ -221,8 +343,10 @@ package body GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      File        : constant String := '/' & (-"File") & '/';
       Edit        : constant String := "/_" & (-"Edit")     & '/';
       Project     : constant String := "/_" & (-"Project")  & '/';
+      Save        : constant String := File & (-"Save M_ore") & '/';
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
@@ -248,6 +372,21 @@ package body GPS.Menu is
       Register_Menu
         (Kernel, Project, -"R_ecompute Project", "",
          On_Project_Recompute'Access);
+
+      Register_Menu
+        (Kernel, Save, -"_All", "",
+         On_Save_All'Access,
+         Ref_Item => -"Messages");
+      Register_Menu (Kernel, Save, -"_Desktop", "", On_Save_Desktop'Access);
+      Register_Menu
+        (Kernel, Save, -"D_efault Desktop", "",
+         On_Save_Default_Desktop'Access);
+
+      Register_Menu
+        (Kernel, File, -"Change _Directory...", "",
+         On_Change_Dir'Access, Ref_Item => -"Messages");
+
+      Register_Menu (Kernel, File, -"_Exit", "", On_Exit'Access);
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
