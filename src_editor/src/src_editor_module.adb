@@ -76,7 +76,6 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
-with GPS.Main_Window;                   use GPS.Main_Window;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -207,26 +206,6 @@ package body Src_Editor_Module is
    procedure On_Save_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save As... menu
-
-   procedure On_Save_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save All menu
-
-   procedure On_Save_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save Desktop menu
-
-   procedure On_Save_Default_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Save Default Desktop menu
-
-   procedure On_Change_Dir
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Change Directory... menu
-
-   procedure On_Exit
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  File->Exit menu
 
    procedure On_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1616,89 +1595,6 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Save_As;
 
-   -----------------
-   -- On_Save_All --
-   -----------------
-
-   procedure On_Save_All
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Ignore : Boolean;
-      pragma Unreferenced (Widget, Ignore);
-
-   begin
-      Ignore := Save_MDI_Children (Kernel, Force => False);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Save_All;
-
-   -------------------
-   -- On_Change_Dir --
-   -------------------
-
-   procedure On_Change_Dir
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Dir    : Virtual_File;
-
-   begin
-      Dir :=  Select_Directory
-        (-"Select a directory",
-         History => Get_History (Kernel),
-         Parent  => Gtk_Window (Get_Current_Window (Kernel)));
-
-      if Dir /= No_File then
-         Change_Dir (Dir);
-      end if;
-
-   exception
-      when VFS_Directory_Error =>
-         GPS.Kernel.Console.Insert
-           (Kernel,
-            "Cannot change to directory: " &
-            Full_Name (Dir).all,
-            Mode => Error);
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Change_Dir;
-
-   ---------------------
-   -- On_Save_Desktop --
-   ---------------------
-
-   procedure On_Save_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Save_Desktop (Kernel, As_Default_Desktop => False);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Save_Desktop;
-
-   -----------------------------
-   -- On_Save_Default_Desktop --
-   -----------------------------
-
-   procedure On_Save_Default_Desktop
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Save_Desktop (Kernel, As_Default_Desktop => True);
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Save_Default_Desktop;
-
    -------------
    -- Execute --
    -------------
@@ -1727,23 +1623,6 @@ package body Src_Editor_Module is
 
       return Commands.Success;
    end Execute;
-
-   -------------
-   -- On_Exit --
-   -------------
-
-   procedure On_Exit
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      GPS.Main_Window.Quit (GPS_Window (Get_Main_Window (Kernel)));
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Exit;
 
    --------------
    -- On_Print --
@@ -2413,7 +2292,6 @@ package body Src_Editor_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File               : constant String := '/' & (-"File") & '/';
-      Save               : constant String := File & (-"Save M_ore") & '/';
       Edit               : constant String := '/' & (-"Edit") & '/';
       Navigate           : constant String := '/' & (-"Navigate") & '/';
       Mitem              : Gtk_Menu_Item;
@@ -2641,22 +2519,22 @@ package body Src_Editor_Module is
 
       Register_Menu
         (Kernel, File, -"_New", Stock_New, On_New_File'Access,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"New _View", "", On_New_View'Access,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"_Open...",  Stock_Open,
          On_Open_File'Access, null, GDK_F3,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"Open _From Project...",  Stock_Open,
          On_Open_From_Path'Access, null,
          GDK_F3, Shift_Mask,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
 
       Recent_Menu_Item := Register_Menu
-        (Kernel, File, -"_Recent", "", null, Ref_Item => -"Messages");
+        (Kernel, File, -"_Recent", "", null, Ref_Item => -"Save More");
       Associate (Get_History (Kernel).all,
                  Hist_Key,
                  Recent_Menu_Item,
@@ -2667,30 +2545,14 @@ package body Src_Editor_Module is
         (Kernel, File, -"_Save", Stock_Save,
          On_Save'Access, null,
          GDK_S, Control_Mask,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
       Register_Menu
         (Kernel, File, -"Save _As...", Stock_Save_As,
          On_Save_As'Access,
-         Ref_Item => -"Messages");
+         Ref_Item => -"Save More");
 
-      Register_Menu
-        (Kernel, Save, -"_All", "",
-         On_Save_All'Access,
-         Ref_Item => -"Messages");
-      Register_Menu (Kernel, Save, -"_Desktop", "", On_Save_Desktop'Access);
-      Register_Menu
-        (Kernel, Save, -"D_efault Desktop", "",
-         On_Save_Default_Desktop'Access);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Messages");
-
-      Register_Menu
-        (Kernel, File, -"Change _Directory...", "",
-         On_Change_Dir'Access, Ref_Item => -"Messages");
-
-      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access);
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem);
+      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access,
+                     Ref_Item => "Exit");
 
       Command := new Close_Command;
       Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -2703,6 +2565,7 @@ package body Src_Editor_Module is
         (Kernel,
          Parent_Path => File,
          Text        => -"_Close",
+         Ref_Item    => -"Exit",
          Stock_Image => Stock_Close,
          Callback    => null,
          Command     => Command,
@@ -2720,15 +2583,22 @@ package body Src_Editor_Module is
         (Kernel,
          Parent_Path => File,
          Text        => -"Close _All",
+         Ref_Item    => -"Close",
          Callback    => null,
          Command     => Command,
-         Ref_Item    => -"Close",
          Add_Before  => False);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, File, Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Exit");
 
-      Register_Menu (Kernel, File, -"_Exit", "", On_Exit'Access);
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Print");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Change Directory...");
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
