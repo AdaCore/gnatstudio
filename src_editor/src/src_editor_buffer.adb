@@ -2860,20 +2860,6 @@ package body Src_Editor_Buffer is
 
             Buffer.Filename := Filename;
          end if;
-
-         if Name_Changed then
-            Set_Language
-              (Buffer,
-               Get_Language_From_File
-                 (GPS_Language_Handler
-                    (Get_Language_Handler (Buffer.Kernel)),
-                  Buffer.Filename));
-
-            --  ??? The following is expensive, it would be nice to have a
-            --  simpler way to report a possible change in the list of sources
-            --  of a project.
-            Recompute_View (Buffer.Kernel);
-         end if;
       end if;
 
       Internal_Save_To_File
@@ -2885,6 +2871,22 @@ package body Src_Editor_Buffer is
          end if;
 
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
+
+         if Name_Changed then
+            --  ??? The following is expensive, it would be nice to have a
+            --  simpler way to report a possible change in the list of sources
+            --  of a project.
+            Recompute_View (Buffer.Kernel);
+
+            --  Change the language when we have reparsed the project, so that
+            --  the naming scheme is correctly taken into account
+            Set_Language
+              (Buffer,
+               Get_Language_From_File
+                 (GPS_Language_Handler
+                    (Get_Language_Handler (Buffer.Kernel)),
+                  Buffer.Filename));
+         end if;
 
          if Buffer.Filename /= VFS.No_File then
             Delete (Autosaved_File (Buffer.Filename), Result);
