@@ -23,7 +23,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Glib.Unicode;            use Glib.Unicode;
 
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers;   use Language_Handlers;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
 with Traces;                  use Traces;
@@ -1124,7 +1124,7 @@ package body Entities.Queries is
                   File_Has_No_LI_Report => File_Has_No_LI_Report,
                   Single_Source_File    => Single_Source_File,
                   Handler               => Get_LI_Handler_From_File
-                    (GPS_Language_Handler (File.Db.Lang),
+                    (Language_Handler (File.Db.Lang),
                      Get_Filename (File)),
                   Total_Progress        => 1,
                   Current_Progress      => 0,
