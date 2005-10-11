@@ -1216,10 +1216,16 @@ package body Entities is
             S.File.Timestamp := Timestamp;
          end if;
 
-         if LI /= null and then S.File.LI = null then
+         if LI /= null and then S.File.LI /= LI then
+            if S.File.LI /= null then
+               Remove (S.File.LI.Files, S.File);
+            end if;
+
             S.File.LI := LI;
             Append (LI.Files, S.File);
          end if;
+
+         S.File.Handler := LI_Handler (Handler);
       end if;
 
       if S = null then

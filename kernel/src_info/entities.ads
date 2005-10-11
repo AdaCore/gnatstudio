@@ -374,6 +374,8 @@ package Entities is
    --  The cross-references for this file are not updated. You need to call
    --  Update_Xref if needed.
    --  The file is automatically added to the list of files for that LI.
+   --  If the file already exists but its LI file its different, it is
+   --  overriden by the new value.
 
    function Get_Or_Create
      (Db            : Entities_Database;
