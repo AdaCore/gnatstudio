@@ -37,6 +37,7 @@ with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
 with Gtk.Button;                        use Gtk.Button;
+with Gtk.Combo;                         use Gtk.Combo;
 with Gtk.Dialog;                        use Gtk.Dialog;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.GEntry;                        use Gtk.GEntry;
@@ -45,6 +46,7 @@ with Gtk.Label;                         use Gtk.Label;
 with Gtk.Main;                          use Gtk.Main;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Rc;                            use Gtk.Rc;
+with Gtk.Size_Group;                    use Gtk.Size_Group;
 with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
@@ -60,6 +62,7 @@ with Pango.Layout;                      use Pango.Layout;
 
 with Aliases_Module;                    use Aliases_Module;
 with Basic_Types;                       use Basic_Types;
+with Case_Handling;                     use Case_Handling;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
@@ -76,6 +79,7 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;                use GPS.Kernel.Timeout;
+with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Language;                          use Language;
 with Language_Handlers;                 use Language_Handlers;
@@ -148,6 +152,11 @@ package body Src_Editor_Module is
       Success : out Boolean);
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
+
+   function Create_Language_Combo
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) return Gtk_Combo;
+   --  Create a combo box to select the language for File.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -271,6 +280,13 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
    --  Edit a file (from a contextual menu)
+
+   type Editor_Properties_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Editor_Properties_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc for inherited subprogram
+   --  Edit the properties of a file (from a contextual menu)
 
    type Close_Command is new Interactive_Command with record
       Kernel    : Kernel_Handle;
@@ -2177,6 +2193,129 @@ package body Src_Editor_Module is
       return Success;
    end Execute;
 
+   ---------------------------
+   -- Create_Language_Combo --
+   ---------------------------
+
+   function Create_Language_Combo
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) return Gtk_Combo
+   is
+      Combo     : Gtk_Combo;
+      Lang      : constant Language_Handler := Get_Language_Handler (Kernel);
+      Languages : Argument_List := Known_Languages (Lang, Sorted => True);
+      Project_Lang : String :=
+        Get_Language_From_File (Lang, File, From_Project_Only => True);
+   begin
+      Gtk_New (Combo);
+      Set_Editable (Get_Entry (Combo), False);
+
+      Mixed_Case (Project_Lang);
+
+      Add_Unique_Combo_Entry (Combo, -"From project: " & Project_Lang);
+
+      for L in Languages'Range loop
+         Add_Unique_Combo_Entry (Combo, Languages (L).all);
+      end loop;
+
+      Free (Languages);
+
+      if Language_Is_Overriden (Lang, File) then
+         Set_Text (Get_Entry (Combo), Get_Language_From_File (Lang, File));
+      else
+         Set_Text (Get_Entry (Combo), -"From project: " & Project_Lang);
+      end if;
+
+      return Combo;
+   end Create_Language_Combo;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Editor_Properties_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      File_C : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      File   : constant VFS.Virtual_File := File_Information (File_C);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Label  : Gtk_Label;
+      Lang   : Gtk_Combo;
+      Box    : Gtk_Box;
+      Size   : Gtk_Size_Group;
+      Buffer : Source_Buffer;
+      pragma Unreferenced (Button);
+
+   begin
+      Gtk_New (Dialog,
+               Title  => -"Properties for " & Full_Name (File).all,
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Destroy_With_Parent);
+      Set_Default_Size (Dialog, 400, 300);
+
+      Gtk_New (Size);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+      Gtk_New (Label, "Language: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+
+      Lang := Create_Language_Combo (Kernel, File);
+      Pack_Start (Box, Lang, Expand => False);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+--        Gtk_New (Label, "Charset: ");
+--        Set_Alignment (Label, 0.0, 0.5);
+--        Add_Widget (Size, Label);
+--        Pack_Start (Box, Label, Expand => False);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+      Show_All (Dialog);
+
+      declare
+         Current_Lang : constant String := Get_Text (Get_Entry (Lang));
+      begin
+         if Run (Dialog) = Gtk_Response_OK then
+            if Get_Text (Get_Entry (Lang)) /= Current_Lang then
+               if Get_Index_In_List (Lang) <= 0 then
+                  Set_Language_From_File
+                    (Get_Language_Handler (Kernel), File, "");
+               else
+                  Set_Language_From_File
+                    (Get_Language_Handler (Kernel), File,
+                     Get_Text (Get_Entry (Lang)));
+               end if;
+
+               --  Refresh the language associated with the buffer. This also
+               --  changes the xref engine used
+               Buffer := Get_Buffer
+                 (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
+               if Buffer /= null then
+                  Set_Language
+                    (Buffer,
+                     Get_Language_From_File
+                       (Get_Language_Handler (Kernel), File));
+               end if;
+            end if;
+         end if;
+      end;
+
+      Destroy (Dialog);
+      return Success;
+   end Execute;
+
    ---------------------
    -- Default_Factory --
    ---------------------
@@ -2487,7 +2626,15 @@ package body Src_Editor_Module is
          Label  => "Edit %f",
          Action => Command,
          Filter => Action_Filter (Lookup_Filter (Kernel, "File")
-            and not Create (Module => Src_Editor_Module_Name)));
+           and not Create (Module => Src_Editor_Module_Name)));
+
+      Command := new Editor_Properties_Command;
+      Register_Contextual_Menu
+        (Kernel,
+         Name   => "Editor properties",
+         Label  => "Properties...",
+         Action => Command,
+         Filter => Create (Module => Src_Editor_Module_Name));
 
       Command := new Control_Command;
       Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
