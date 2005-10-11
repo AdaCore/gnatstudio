@@ -99,4 +99,22 @@ package body Glib.Unicode is
         or else Char in Character'Pos ('a') .. Character'Pos ('z');
    end Is_Alnum;
 
+   ---------------------
+   -- Unichar_To_UTF8 --
+   ---------------------
+
+   procedure Unichar_To_UTF8 (Char : Gunichar;
+                              Str  : in out String;
+                              Last : out Natural)
+   is
+   begin
+      if Char <= 255 then
+         Str (Str'First) := Character'Val (Integer (Char));
+         Last := Str'First;
+      else
+         Str (Str'First) := '?';
+         Last := Str'First;
+      end if;
+   end Unichar_To_UTF8;
+
 end Glib.Unicode;
