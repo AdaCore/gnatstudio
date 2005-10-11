@@ -20,7 +20,6 @@
 
 with Language;                  use Language;
 with Language.Unknown;          use Language.Unknown;
-with Basic_Types;               use Basic_Types;
 with Entities;                  use Entities;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -33,12 +32,12 @@ with VFS;                       use VFS;
 with Case_Handling;             use Case_Handling;
 with GNAT.Bubble_Sort_G;
 
-package body Language_Handlers.GPS is
+package body Language_Handlers is
 
    Me : constant Debug_Handle := Create ("Language_Handlers");
 
    function Get_Index_From_Language
-     (Handler       : access GPS_Language_Handler_Record'Class;
+     (Handler       : access Language_Handler_Record'Class;
       Language_Name : String) return Natural;
    --  Return the index of Language in Handler.Languages, or 0 if no such
    --  language is known.
@@ -48,19 +47,14 @@ package body Language_Handlers.GPS is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Handler_Info_Array, Handler_Info_Access);
 
-   function Get_LI_Handler_By_Name
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String) return Natural;
-   --  Return the index of the LI handler Name, or 0 if not found.
-
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Handler : out GPS_Language_Handler) is
+   procedure Gtk_New (Handler : out Language_Handler) is
    begin
       --  ??? Never freed, but the handler is never destroyed.
-      Handler := new GPS_Language_Handler_Record;
+      Handler := new Language_Handler_Record;
    end Gtk_New;
 
    ------------------
@@ -68,7 +62,7 @@ package body Language_Handlers.GPS is
    ------------------
 
    procedure Set_Registry
-     (Handler  : access GPS_Language_Handler_Record;
+     (Handler  : access Language_Handler_Record;
       Registry : access Projects.Abstract_Registry'Class) is
    begin
       Handler.Registry := Abstract_Registry_Access (Registry);
@@ -79,15 +73,15 @@ package body Language_Handlers.GPS is
    -----------------------------
 
    function Get_Index_From_Language
-     (Handler       : access GPS_Language_Handler_Record'Class;
-      Language_Name : String) return Natural is
+     (Handler       : access Language_Handler_Record'Class;
+      Language_Name : String) return Natural
+   is
+      Lang : constant String := To_Lower (Language_Name);
    begin
       Assert (Me, Handler.Languages /= null, "No registered language");
 
       for Index in Handler.Languages'Range loop
-         if To_Lower (Language_Name) =
-           Handler.Languages (Index).Language_Name.all
-         then
+         if To_Lower (Get_Name (Handler.Languages (Index).Lang)) = Lang then
             return Index;
          end if;
       end loop;
@@ -99,7 +93,7 @@ package body Language_Handlers.GPS is
    ----------------------------
 
    function Get_Language_From_File
-     (Handler         : access GPS_Language_Handler_Record;
+     (Handler         : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access
    is
       Index : Natural;
@@ -114,11 +108,15 @@ package body Language_Handlers.GPS is
       return Unknown_Lang;
    end Get_Language_From_File;
 
+   ----------------------------
+   -- Get_Language_From_File --
+   ----------------------------
+
    function Get_Language_From_File
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String
    is
-      Lang : constant Name_Id := Get_Language_From_File
+      Lang : constant Name_Id := Get_Language_From_File_From_Project
         (Project_Registry'Class (Handler.Registry.all),
          Source_Filename);
    begin
@@ -134,7 +132,7 @@ package body Language_Handlers.GPS is
    --------------------------
 
    function Get_Language_By_Name
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Name    : String) return Language.Language_Access
    is
       Index : constant Natural := Get_Index_From_Language (Handler, Name);
@@ -146,129 +144,83 @@ package body Language_Handlers.GPS is
       end if;
    end Get_Language_By_Name;
 
-   -------------------------
-   -- Register_LI_Handler --
-   -------------------------
-
-   procedure Register_LI_Handler
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String;
-      LI      : LI_Handler)
-   is
-      Tmp   : Handler_Info_Access;
-      Index : Natural;
-   begin
-      if Handler.Handlers /= null then
-         Index := Get_LI_Handler_By_Name (Handler, Name);
-         if Index /= 0 then
-            Handler.Handlers (Index).Handler := LI;
-            return;
-         end if;
-
-         Tmp := new Handler_Info_Array
-           (Handler.Handlers'First .. Handler.Handlers'Last + 1);
-         Tmp (Handler.Handlers'Range) := Handler.Handlers.all;
-         Unchecked_Free (Handler.Handlers);
-         Handler.Handlers := Tmp;
-
-      else
-         Handler.Handlers := new Handler_Info_Array (1 .. 1);
-      end if;
-
-      Handler.Handlers (Handler.Handlers'Last) :=
-        (Name    => new String'(Name),
-         Handler => LI);
-   end Register_LI_Handler;
-
    ----------------------------
    -- Get_LI_Handler_By_Name --
    ----------------------------
 
    function Get_LI_Handler_By_Name
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String) return Natural is
-   begin
-      if Handler.Handlers /= null then
-         for J in Handler.Handlers'Range loop
-            if Handler.Handlers (J).Name.all = Name then
-               return J;
-            end if;
-         end loop;
-      end if;
-
-      return 0;
-   end Get_LI_Handler_By_Name;
-
-   ----------------------------
-   -- Get_LI_Handler_By_Name --
-   ----------------------------
-
-   function Get_LI_Handler_By_Name
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Name    : String) return LI_Handler
    is
-      Index : constant Natural := Get_LI_Handler_By_Name
-        (Handler, Name);
+      Index : constant Natural := Get_Index_From_Language (Handler, Name);
    begin
       if Index = 0 then
          return null;
       else
-         return Handler.Handlers (Index).Handler;
+         return Handler.Languages (Index).Handler;
       end if;
    end Get_LI_Handler_By_Name;
-
-   -----------------
-   -- Get_LI_Name --
-   -----------------
-
-   function Get_LI_Name
-     (Handler : access GPS_Language_Handler_Record;
-      Nth     : Natural) return String is
-   begin
-      if Handler.Handlers /= null
-        and then Nth <= Handler.Handlers'Length
-      then
-         return Handler.Handlers (Handler.Handlers'First + Nth - 1).Name.all;
-      end if;
-
-      return "";
-   end Get_LI_Name;
 
    -----------------------
    -- Register_Language --
    -----------------------
 
    procedure Register_Language
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String;
-      Lang    : Language.Language_Access)
+     (Handler : access Language_Handler_Record;
+      Lang    : access Language.Language_Root'Class;
+      LI      : LI_Handler)
    is
-      N     : constant String := To_Lower (Name);
+      N     : constant String := To_Lower (Get_Name (Lang));
       Tmp   : Language_Info_Access;
+      Tmp2  : Handler_Info_Access;
       Index : Natural;
    begin
       if Handler.Languages /= null then
          Index := Get_Index_From_Language (Handler, N);
-
-         if Index /= 0 then
-            Handler.Languages (Index).Lang := Lang;
-            return;
+         if Index = 0 then
+            Tmp := new Language_Info_Array
+              (Handler.Languages'First .. Handler.Languages'Last + 1);
+            Tmp (Handler.Languages'Range) := Handler.Languages.all;
+            Unchecked_Free (Handler.Languages);
+            Handler.Languages := Tmp;
+            Index := Handler.Languages'Last;
          end if;
-
-         Tmp := new Language_Info_Array
-           (Handler.Languages'First .. Handler.Languages'Last + 1);
-         Tmp (Handler.Languages'Range) := Handler.Languages.all;
-         Unchecked_Free (Handler.Languages);
-         Handler.Languages := Tmp;
-
       else
          Handler.Languages := new Language_Info_Array (1 .. 1);
+         Index := Handler.Languages'Last;
       end if;
 
-      Handler.Languages (Handler.Languages'Last) :=
-        (Language_Name => new String'(N),
-         Handler       => null,
-         Lang          => Lang);
+      Handler.Languages (Index) :=
+        (Handler => LI,
+         Lang    => Language_Access (Lang));
+
+      --  If the name is "", this is a dummy LI handler and we do not need to
+      --  register it explicitly
+      if LI /= null and then Get_Name (LI) /= "" then
+         if Handler.Handlers /= null then
+            Index := 0;
+            for H in Handler.Handlers'Range loop
+               if Handler.Handlers (H) = LI then
+                  Index := H;
+                  exit;
+               end if;
+            end loop;
+
+            if Index = 0 then
+               Tmp2 := new Handler_Info_Array
+                 (Handler.Handlers'First .. Handler.Handlers'Last + 1);
+               Tmp2 (Handler.Handlers'Range) := Handler.Handlers.all;
+               Unchecked_Free (Handler.Handlers);
+               Handler.Handlers := Tmp2;
+               Index := Handler.Handlers'Last;
+            end if;
+         else
+            Handler.Handlers := new Handler_Info_Array (1 .. 1);
+            Index := Handler.Handlers'Last;
+         end if;
+
+         Handler.Handlers (Index) := LI;
+      end if;
    end Register_Language;
 
    ---------------------
@@ -276,7 +228,7 @@ package body Language_Handlers.GPS is
    ---------------------
 
    function Known_Languages
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List is
    begin
       if Handler.Languages /= null then
@@ -308,8 +260,8 @@ package body Language_Handlers.GPS is
          begin
             for Index in Result'Range loop
                Result (Index) := new String'
-                 (Handler.Languages
-                    (Index - 1 + Handler.Languages'First).Language_Name.all);
+                 (Get_Name (Handler.Languages
+                  (Index - 1 + Handler.Languages'First).Lang));
                Mixed_Case (Result (Index).all);
             end loop;
 
@@ -328,29 +280,12 @@ package body Language_Handlers.GPS is
       end if;
    end Known_Languages;
 
-   --------------------------
-   -- Set_Language_Handler --
-   --------------------------
-
-   procedure Set_Language_Handler
-     (Handler       : access GPS_Language_Handler_Record;
-      Language_Name : String;
-      LI            : LI_Handler)
-   is
-      Index : constant Natural :=
-        Get_Index_From_Language (Handler, Language_Name);
-   begin
-      if Index /= 0 then
-         Handler.Languages (Index).Handler := LI;
-      end if;
-   end Set_Language_Handler;
-
    ------------------------------
    -- Get_LI_Handler_From_File --
    ------------------------------
 
    function Get_LI_Handler_From_File
-     (Handler         : access GPS_Language_Handler_Record;
+     (Handler         : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
       return LI_Handler
    is
@@ -377,7 +312,7 @@ package body Language_Handlers.GPS is
    -- Languages_Count --
    ---------------------
 
-   function Languages_Count (Handler : access GPS_Language_Handler_Record)
+   function Languages_Count (Handler : access Language_Handler_Record)
       return Natural is
    begin
       if Handler.Languages = null then
@@ -391,7 +326,7 @@ package body Language_Handlers.GPS is
    -- LI_Handlers_Count --
    -----------------------
 
-   function LI_Handlers_Count (Handler : access GPS_Language_Handler_Record)
+   function LI_Handlers_Count (Handler : access Language_Handler_Record)
       return Natural is
    begin
       if Handler.Handlers = null then
@@ -406,7 +341,7 @@ package body Language_Handlers.GPS is
    ---------------------
 
    function Get_Nth_Handler
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Num     : Positive) return LI_Handler is
    begin
       if Handler.Handlers = null
@@ -414,7 +349,7 @@ package body Language_Handlers.GPS is
       then
          return null;
       else
-         return Handler.Handlers (Handler.Handlers'First + Num - 1).Handler;
+         return Handler.Handlers (Handler.Handlers'First + Num - 1);
       end if;
    end Get_Nth_Handler;
 
@@ -423,7 +358,7 @@ package body Language_Handlers.GPS is
    ----------------------
 
    function Get_Nth_Language
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Num     : Positive) return String is
    begin
       if Handler.Languages = null
@@ -431,8 +366,8 @@ package body Language_Handlers.GPS is
       then
          return "";
       else
-         return Handler.Languages
-           (Handler.Languages'First + Num - 1).Language_Name.all;
+         return Get_Name (Handler.Languages
+           (Handler.Languages'First + Num - 1).Lang);
       end if;
    end Get_Nth_Language;
 
@@ -440,13 +375,12 @@ package body Language_Handlers.GPS is
    -- Destroy --
    -------------
 
-   procedure Destroy (Handler : in out GPS_Language_Handler) is
+   procedure Destroy (Handler : in out Language_Handler) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GPS_Language_Handler_Record'Class, GPS_Language_Handler);
+        (Language_Handler_Record'Class, Language_Handler);
    begin
       if Handler.Languages /= null then
          for L in Handler.Languages'Range loop
-            Free (Handler.Languages (L).Language_Name);
             Free (Handler.Languages (L).Lang);
          end loop;
 
@@ -455,11 +389,7 @@ package body Language_Handlers.GPS is
 
       if Handler.Handlers /= null then
          for H in Handler.Handlers'Range loop
-            if Handler.Handlers (H).Handler /= null then
-               Destroy (Handler.Handlers (H).Handler);
-            end if;
-
-            Free (Handler.Handlers (H).Name);
+            Destroy (Handler.Handlers (H));
          end loop;
 
          Unchecked_Free (Handler.Handlers);
@@ -468,4 +398,4 @@ package body Language_Handlers.GPS is
       Unchecked_Free (Handler);
    end Destroy;
 
-end Language_Handlers.GPS;
+end Language_Handlers;

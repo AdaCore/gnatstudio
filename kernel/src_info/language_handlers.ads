@@ -18,43 +18,40 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  See documentation in parent package Language_Handlers.
+--  This package provides the registry for all supported languages in GPS.
 --
 --  When adding new languages, the following needs to be done:
---    - Register a LI handler (for generating the xref database for this
---      language). Since such handlers can be shared by multiple languages,
---      this registration is optional when it has already been done.
---
 --    - Register the new language with Register_Language. This is associated
 --      with basic syntactic information for highlighting in the source editor
---      and manipulation through the debugger.
+--      and manipulation through the debugger. It is also associated with the
+--      LI handler that is responsible for generating the xref information for
+--      that language
 --
---    - Register extra information for the language with
---      Add_Language_Info. This registers default extensions for this language,
---      and provide a mapping from this language to the matching LI handler.
+--  The naming scheme for a language is defined through either the project
+--  itself, or through a default naming scheme registered for custom languages
+--  in Projects.Registry.Register_Default_Language_Extension.
 
 with Language;
-with Basic_Types;
 with Entities;
 with Projects;
 with GNAT.OS_Lib;
+with VFS;
 
-package Language_Handlers.GPS is
+package Language_Handlers is
 
-   type GPS_Language_Handler_Record is new Language_Handler_Record
-     with private;
-   type GPS_Language_Handler is access all
-     GPS_Language_Handler_Record'Class;
+   type Language_Handler_Record
+     is new Entities.Abstract_Language_Handler_Record with private;
+   type Language_Handler is access all Language_Handler_Record'Class;
 
-   procedure Gtk_New (Handler : out GPS_Language_Handler);
+   procedure Gtk_New (Handler : out Language_Handler);
    --  Create a new language handler
 
-   procedure Destroy (Handler : in out GPS_Language_Handler);
+   procedure Destroy (Handler : in out Language_Handler);
    --  Free the memory occupied by Handler, and removes all the registered LI
    --  handlers. They are destroyed individually.
 
    procedure Set_Registry
-     (Handler  : access GPS_Language_Handler_Record;
+     (Handler  : access Language_Handler_Record;
       Registry : access Projects.Abstract_Registry'Class);
    --  Set the top-level project for Handler.
 
@@ -65,28 +62,15 @@ package Language_Handlers.GPS is
    --  the supported language. It is possible that a given handler is
    --  associated with multiple languages.
 
-   procedure Register_LI_Handler
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String;
-      LI      : Entities.LI_Handler);
-   --  Register a new LI handler that can generate xref.
-   --  The Name is used both for retrieval of the handler by
-   --  Get_LI_Handler_By_Name, and to print in the console when recomputing the
-   --  xref database.
-
    function Get_LI_Handler_By_Name
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Name    : String) return Entities.LI_Handler;
    --  Return the LI handler which name is Name.
+   --  The name of a LI_Handler is the one returned by Get_Name.
    --  Name is case-sensitive.
 
-   function Get_LI_Name
-     (Handler : access GPS_Language_Handler_Record;
-      Nth     : Natural) return String;
-   --  Return the name of LI.
-
    function Get_LI_Handler_From_File
-     (Handler         : access GPS_Language_Handler_Record;
+     (Handler         : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
       return Entities.LI_Handler;
    --  Return the LI handler to use for a specific file name.
@@ -95,13 +79,13 @@ package Language_Handlers.GPS is
    --  it is unknown.
 
    function LI_Handlers_Count
-     (Handler : access GPS_Language_Handler_Record) return Natural;
+     (Handler : access Language_Handler_Record) return Natural;
    --  Return the number of LI handlers known. This count will generally be
    --  different from the number of supported languages, since some LI handlers
    --  will handle multiple languages.
 
    function Get_Nth_Handler
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Num     : Positive) return Entities.LI_Handler;
    --  Return the handler for the Num-th language.
    --  The first handler is number 1.
@@ -111,51 +95,53 @@ package Language_Handlers.GPS is
    ---------------
 
    function Get_Language_From_File
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access;
    --  Find the language of a given file.
+   --  This language is found first according to the project's naming scheme.
+   --  If the file does not belong to the project, the properties associated
+   --  with that file are checked to see whether a specific language was chosen
+   --  by the language. We do this in this order to encourage users to properly
+   --  set the naming schemes, since this also impacts the builds.
    --  Return Unknown_Lang if no other language could be found.
 
    function Get_Language_From_File
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String;
    --  Return "" if the language is unknown.
 
    function Get_Language_By_Name
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Name    : String) return Language.Language_Access;
 
    procedure Register_Language
-     (Handler : access GPS_Language_Handler_Record;
-      Name    : String;
-      Lang    : Language.Language_Access);
-
-   function Known_Languages
-     (Handler : access GPS_Language_Handler_Record;
-      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
-
-   procedure Set_Language_Handler
-     (Handler       : access GPS_Language_Handler_Record;
-      Language_Name : String;
-      LI            : Entities.LI_Handler);
-   --  Register some extra information for a specific language.
-   --  Nothing is done if Language_Name hasn't been registered first.
+     (Handler : access Language_Handler_Record;
+      Lang    : access Language.Language_Root'Class;
+      LI      : Entities.LI_Handler);
+   --  Register a language and additional information about it.
+   --  LI is the parser that should be used for cross references for this
+   --  language, and can be left to null if no cross-reference is available. It
+   --  can also be shared among languages.
    --  See also Projects.Registry.Register_Default_Language_Extension and
    --  Projects.Registry.Add_Language_Extension.
 
-   function Languages_Count (Handler : access GPS_Language_Handler_Record)
+   function Known_Languages
+     (Handler : access Language_Handler_Record;
+      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
+   --  Return the (sorted) list of all known languages
+
+   function Languages_Count (Handler : access Language_Handler_Record)
       return Natural;
    --  Return the number of languages declared in Handler
 
    function Get_Nth_Language
-     (Handler : access GPS_Language_Handler_Record;
+     (Handler : access Language_Handler_Record;
       Num     : Positive) return String;
    --  Return the name of the Num-th language.
    --  The first handler is number 1.
 
 private
    type Language_Info is record
-      Language_Name : Basic_Types.String_Access;
       Lang          : Language.Language_Access;
       Handler       : Entities.LI_Handler;
    end record;
@@ -163,19 +149,15 @@ private
    type Language_Info_Array is array (Positive range <>) of Language_Info;
    type Language_Info_Access is access Language_Info_Array;
 
-   type Handler_Info is record
-      Name    : Basic_Types.String_Access;
-      Handler : Entities.LI_Handler;
-   end record;
-
-   type Handler_Info_Array is array (Positive range <>) of Handler_Info;
+   type Handler_Info_Array is array (Positive range <>) of Entities.LI_Handler;
    type Handler_Info_Access is access Handler_Info_Array;
 
-   type GPS_Language_Handler_Record is new Language_Handler_Record
+   type Language_Handler_Record
+     is new Entities.Abstract_Language_Handler_Record
    with record
       Languages : Language_Info_Access;
       Handlers  : Handler_Info_Access;
       Registry  : Projects.Abstract_Registry_Access;
    end record;
 
-end Language_Handlers.GPS;
+end Language_Handlers;
