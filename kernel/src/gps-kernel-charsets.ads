@@ -21,6 +21,7 @@
 --  This package handles the charsets supported by GPS
 
 with Glib;
+with Gtk.Combo;
 
 package GPS.Kernel.Charsets is
 
@@ -39,5 +40,27 @@ package GPS.Kernel.Charsets is
 
    function Get_Pref (Pref : Param_Spec_Charset) return String;
    --  Return the currently selected charset
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the charset-related preferences
+
+   ------------
+   -- Widget --
+   ------------
+
+   function Create_Charset_Combo
+     (File : VFS.Virtual_File) return Gtk.Combo.Gtk_Combo;
+   --  Return a combo box that can be used to edit the charset associated with
+   --  a file.
+
+   function Get_File_Charset (File : VFS.Virtual_File) return String;
+   --  Return the charset that should be used to edit File
+
+   procedure Set_File_Charset
+     (File : VFS.Virtual_File; Charset : String := "");
+   --  Set the charset that should be used to edit File.
+   --  If Charset is left to the empty string, the default charset specified in
+   --  the preferences will be used
 
 end GPS.Kernel.Charsets;

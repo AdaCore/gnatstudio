@@ -25,14 +25,22 @@ with Glib.Properties.Creation;   use Glib.Properties.Creation;
 
 with Gtk.Combo;                  use Gtk.Combo;
 with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Item;                   use Gtk.Item;
 with Gtk.List;                   use Gtk.List;
 with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Default_Preferences;        use Default_Preferences;
+with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
+with GPS.Intl;                   use GPS.Intl;
+with VFS;                        use VFS;
 
 package body GPS.Kernel.Charsets is
+
+   Default_Charset : GPS.Kernel.Charsets.Param_Spec_Charset;
+   --  Preference that defines the default charset to use when opening files
+
    function Edit_Charset
      (Manager            : access Preferences_Manager_Record;
       Preferences_Editor : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -112,6 +120,42 @@ package body GPS.Kernel.Charsets is
       Set_Text (Get_Entry (Gtk_Combo (Combo)),
                 Get_Pref (Param_Spec_Charset (Data.Param)));
    end Update_Charset;
+
+   --------------------------
+   -- Create_Charset_Combo --
+   --------------------------
+
+   function Create_Charset_Combo
+     (File : VFS.Virtual_File) return Gtk.Combo.Gtk_Combo
+   is
+      Combo : Gtk_Combo;
+      Found : Boolean := False;
+      Prop  : String_Property;
+      Item    : Gtk_List_Item;
+   begin
+      Gtk_New (Combo);
+      Set_Value_In_List (Combo, False, Ok_If_Empty => False);
+      Set_Editable (Get_Entry (Combo), True);
+
+      for C in Charsets'Range loop
+         Gtk_New (Item, Charsets (C).Description.all);
+         Set_Item_String (Combo, Gtk_Item (Item), Charsets (C).Name.all);
+         Add (Get_List (Combo), Item);
+         Show_All (Item);
+      end loop;
+
+      if File /= VFS.No_File then
+         Get_Property (Prop, File, "charset", Found);
+      end if;
+
+      if Found then
+         Set_Text (Get_Entry (Combo), Prop.Value.all);
+      else
+         Set_Text (Get_Entry (Combo), Get_Pref (Default_Charset));
+      end if;
+
+      return Combo;
+   end Create_Charset_Combo;
 
    ------------------
    -- Edit_Charset --
@@ -197,5 +241,58 @@ package body GPS.Kernel.Charsets is
    begin
       return Get_Pref (Param_Spec_String (Pref));
    end Get_Pref;
+
+   --------------------------
+   -- Register_Preferences --
+   --------------------------
+
+   procedure Register_Preferences
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Default_Charset := Gnew_Charset
+        (Name    => "General-Charset",
+         Nick    => -"Character set",
+         Blurb   => -("Name of character set to use when reading or saving"
+                      & " files. GPS uses unicode internally, but need to"
+                      & " convert the files from and to your system's"
+                      & " own encoding. Use ""UTF-8"" if your system supports"
+                      & " unicode"),
+         Default => "ISO-8859-1");
+      Register_Property
+         (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
+   end Register_Preferences;
+
+   ----------------------
+   -- Get_File_Charset --
+   ----------------------
+
+   function Get_File_Charset (File : VFS.Virtual_File) return String is
+      Found : Boolean;
+      Prop  : String_Property;
+   begin
+      Get_Property (Prop, File, "charset", Found);
+      if Found then
+         return Prop.Value.all;
+      else
+         return Get_Pref (Default_Charset);
+      end if;
+   end Get_File_Charset;
+
+   ----------------------
+   -- Set_File_Charset --
+   ----------------------
+
+   procedure Set_File_Charset
+     (File : VFS.Virtual_File; Charset : String := "")
+   is
+      Prop : String_Property_Access;
+   begin
+      if Charset = "" then
+         Remove_Property (File, "charset");
+      else
+         Prop := new String_Property'(Value => new String'(Charset));
+         Set_Property (File, "charset", Prop, Persistent => True);
+      end if;
+   end Set_File_Charset;
 
 end GPS.Kernel.Charsets;
