@@ -27,7 +27,7 @@ with Docgen.Backend;            use Docgen.Backend;
 with Entities.Queries;          use Entities.Queries;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with OS_Utils;                  use OS_Utils;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
