@@ -37,14 +37,12 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
-with Snames;                    use Snames;
 with SN;                        use SN;
 with SN.Browse;                 use SN.Browse;
 with SN.DB_Structures;          use SN.DB_Structures;
 with SN.Find_Fns;               use SN.Find_Fns;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Types;                     use Types;
 with VFS;                       use VFS;
 
 package body CPP_Parser is
@@ -148,6 +146,7 @@ package body CPP_Parser is
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
 
+   function Get_Name (LI : access CPP_Handler_Record) return String;
    function Get_Source_Info
      (Handler               : access CPP_Handler_Record;
       Source_Filename       : VFS.Virtual_File;
@@ -160,11 +159,12 @@ package body CPP_Parser is
       Recursive       : Boolean := False) return Integer;
    function Generate_LI_For_Project
      (Handler       : access CPP_Handler_Record;
+      Lang_Handler  : access Abstract_Language_Handler_Record'Class;
       Project       : Projects.Project_Type;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
    procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
-      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      Languages    : access Abstract_Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  See doc for inherited subprograms
@@ -185,6 +185,7 @@ package body CPP_Parser is
       List_Filename   : String_Access;
       Current_Files   : VFS.File_Array_Access;
       Current_File    : Natural;
+      Lang_Handler    : Language_Handler;
 
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       --  The name of a temporary file created by dbimp, which needs to be
@@ -196,7 +197,8 @@ package body CPP_Parser is
    --  See doc for inherited subprograms
 
    procedure Browse_Project
-     (Project : Project_Type; Iterator : in out CPP_Handler_Iterator'Class);
+     (Project      : Project_Type;
+      Iterator     : in out CPP_Handler_Iterator'Class);
    --  Runs cbrowser for all source files of Project.
 
    procedure Parse_File
@@ -2856,8 +2858,8 @@ package body CPP_Parser is
    --------------------
 
    procedure Browse_Project
-     (Project    : Project_Type;
-      Iterator   : in out CPP_Handler_Iterator'Class)
+     (Project      : Project_Type;
+      Iterator     : in out CPP_Handler_Iterator'Class)
    is
       DB_Dir           : constant String := Get_DB_Dir (Project);
       Num_C_Files      : Natural := 0;
@@ -2896,12 +2898,12 @@ package body CPP_Parser is
       for F in Iterator.Current_Files'Range loop
          declare
             File   : constant Virtual_File := Iterator.Current_Files (F);
-            Lang   : constant Name_Id := Get_Language_From_File
-              (Project_Registry (Get_Registry (Project)), File);
+            Lang   : constant String := Get_Language_From_File
+              (Iterator.Lang_Handler, File);
             Xref_File_Name : constant String :=
               DB_Dir & Base_Name (File) & Xref_Suffix;
          begin
-            if Lang = Name_C or else Lang = Name_C_Plus_Plus then
+            if Lang = C_String or else Lang = Cpp_String then
 
                if File_Time_Stamp (Xref_File_Name) /=
                  File_Time_Stamp (File)
@@ -2957,6 +2959,7 @@ package body CPP_Parser is
 
    function Generate_LI_For_Project
      (Handler       : access CPP_Handler_Record;
+      Lang_Handler  : access Abstract_Language_Handler_Record'Class;
       Project       : Projects.Project_Type;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class
    is
@@ -2965,6 +2968,7 @@ package body CPP_Parser is
       Iter.Handler      := CPP_Handler (Handler);
       Iter.Project      := Project;
       Iter.Prj_Iterator := Start (Project, Recursive);
+      Iter.Lang_Handler := Language_Handler (Lang_Handler);
 
       if Current (Iter.Prj_Iterator) /= No_Project then
          Browse_Project (Current (Iter.Prj_Iterator), Iter);
@@ -3162,11 +3166,10 @@ package body CPP_Parser is
 
    procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
-      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      Languages    : access Abstract_Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List)
    is
-      pragma Unreferenced (Languages);
       Project         : constant Project_Type :=
         Get_Project_From_File (Handler.Registry, File_Name);
       Constructs      : Language.Construct_List;
@@ -3195,8 +3198,9 @@ package body CPP_Parser is
          declare
             Iter : LI_Handler_Iterator'Class := Generate_LI_For_Project
               (Handler,
-               Project   => Project,
-               Recursive => False);
+               Lang_Handler => Languages,
+               Project      => Project,
+               Recursive    => False);
          begin
             --  In C/C++, it is the same cost to do it for one file or the
             --  whole project
@@ -3349,5 +3353,15 @@ package body CPP_Parser is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Parse_File_Constructs;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (LI : access CPP_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return "C/C++";
+   end Get_Name;
 
 end CPP_Parser;
