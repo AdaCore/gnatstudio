@@ -26,6 +26,7 @@ package body Dummy_Parser is
 
    type Dummy_LI_Handler_Record is new LI_Handler_Record with null record;
 
+   function Get_Name (LI : access Dummy_LI_Handler_Record) return String;
    function Case_Insensitive_Identifiers
      (Handler : access Dummy_LI_Handler_Record) return Boolean;
    function Get_Source_Info
@@ -39,6 +40,7 @@ package body Dummy_Parser is
       Recursive : Boolean := False) return Integer;
    function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class;
@@ -119,11 +121,12 @@ package body Dummy_Parser is
 
    function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False)
       return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler, Project, Recursive);
+      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler);
       Iter : Dummy_LI_Handler_Iterator;
    begin
       return Iter;
@@ -137,5 +140,15 @@ package body Dummy_Parser is
    begin
       return new Dummy_LI_Handler_Record;
    end Create_Dummy_LI_Handler;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (LI : access Dummy_LI_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return "";
+   end Get_Name;
 
 end Dummy_Parser;
