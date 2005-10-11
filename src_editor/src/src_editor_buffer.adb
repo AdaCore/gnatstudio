@@ -2882,8 +2882,7 @@ package body Src_Editor_Buffer is
             Set_Language
               (Buffer,
                Get_Language_From_File
-                 (Language_Handler
-                    (Get_Language_Handler (Buffer.Kernel)),
+                 (Get_Language_Handler (Buffer.Kernel),
                   Buffer.Filename));
          end if;
 
