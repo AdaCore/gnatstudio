@@ -98,12 +98,19 @@ package Language_Handlers is
      (Handler : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access;
    --  Find the language of a given file.
-   --  This language is found first according to the project's naming scheme.
-   --  If the file does not belong to the project, the properties associated
-   --  with that file are checked to see whether a specific language was chosen
-   --  by the language. We do this in this order to encourage users to properly
-   --  set the naming schemes, since this also impacts the builds.
+   --  The language is guessed either from a specific setup the user has done
+   --  for instance through the properties dialog for source editors, or from
+   --  the project.
    --  Return Unknown_Lang if no other language could be found.
+
+   procedure Set_Language_From_File
+     (Handler  : access Language_Handler_Record;
+      Filename : VFS.Virtual_File;
+      Language : String := "");
+   --  Override the language to be used for the specific filename. This doesn't
+   --  change the project itself, just the properties associated with the file.
+   --  If Language is set to "", then the language will be guessed from the
+   --  project.
 
    function Get_Language_From_File
      (Handler : access Language_Handler_Record;

@@ -31,6 +31,7 @@ with Traces;                    use Traces;
 with VFS;                       use VFS;
 with Case_Handling;             use Case_Handling;
 with GNAT.Bubble_Sort_G;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 
 package body Language_Handlers is
 
@@ -116,16 +117,44 @@ package body Language_Handlers is
      (Handler : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String
    is
-      Lang : constant Name_Id := Get_Language_From_File_From_Project
-        (Project_Registry'Class (Handler.Registry.all),
-         Source_Filename);
+      Lang  : Name_Id;
+      Prop  : String_Property;
+      Found : Boolean;
    begin
-      if Lang = No_Name then
-         return "";
+      Get_Property (Prop, Source_Filename, "language", Found);
+      if Found then
+         return Prop.Value.all;
       else
-         return Get_String (Lang);
+         Lang := Get_Language_From_File_From_Project
+           (Project_Registry'Class (Handler.Registry.all),
+            Source_Filename);
+         if Lang = No_Name then
+            return "";
+         else
+            return Get_String (Lang);
+         end if;
       end if;
    end Get_Language_From_File;
+
+   ----------------------------
+   -- Set_Language_From_File --
+   ----------------------------
+
+   procedure Set_Language_From_File
+     (Handler  : access Language_Handler_Record;
+      Filename : VFS.Virtual_File;
+      Language : String := "")
+   is
+      pragma Unreferenced (Handler);
+      Prop : String_Property_Access;
+   begin
+      if Language = "" then
+         Remove_Property (Filename, "language");
+      else
+         Prop := new String_Property'(Value => new String'(Language));
+         Set_Property (Filename, "language", Prop, Persistent => True);
+      end if;
+   end Set_Language_From_File;
 
    --------------------------
    -- Get_Language_By_Name --
@@ -150,15 +179,16 @@ package body Language_Handlers is
 
    function Get_LI_Handler_By_Name
      (Handler : access Language_Handler_Record;
-      Name    : String) return LI_Handler
-   is
-      Index : constant Natural := Get_Index_From_Language (Handler, Name);
+      Name    : String) return LI_Handler is
    begin
-      if Index = 0 then
-         return null;
-      else
-         return Handler.Languages (Index).Handler;
+      if Handler.Handlers /= null then
+         for H in Handler.Handlers'Range loop
+            if Get_Name (Handler.Handlers (H)) = Name then
+               return Handler.Handlers (H);
+            end if;
+         end loop;
       end if;
+      return null;
    end Get_LI_Handler_By_Name;
 
    -----------------------
