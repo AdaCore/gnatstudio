@@ -1501,11 +1501,11 @@ package body Projects.Registry is
       return P;
    end Get_Project_From_File;
 
-   ----------------------------
-   -- Get_Language_From_File --
-   ----------------------------
+   -----------------------------------------
+   -- Get_Language_From_File_From_Project --
+   -----------------------------------------
 
-   function Get_Language_From_File
+   function Get_Language_From_File_From_Project
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Types.Name_Id
    is
@@ -1550,7 +1550,7 @@ package body Projects.Registry is
       else
          return S.Lang;
       end if;
-   end Get_Language_From_File;
+   end Get_Language_From_File_From_Project;
 
    -----------------------------------------
    -- Register_Default_Language_Extension --
@@ -1629,31 +1629,6 @@ package body Projects.Registry is
          return Args;
       end;
    end Get_Registered_Extensions;
-
-   ----------------------
-   -- Language_Matches --
-   ----------------------
-
-   function Language_Matches
-     (Registry        : Project_Registry;
-      Source_Filename : Virtual_File;
-      Filter          : Projects.Name_Id_Array) return Boolean
-   is
-      Lang : Name_Id;
-   begin
-      if Filter'Length = 0 then
-         return True;
-      end if;
-
-      Lang := Get_Language_From_File (Registry, Source_Filename);
-      for L in Filter'Range loop
-         if Filter (L) = Lang then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Language_Matches;
 
    -------------
    -- Destroy --

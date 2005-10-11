@@ -275,10 +275,13 @@ package Projects.Registry is
    --
    --  Name_Len is set to 0 if the file wasn't found on the search path
 
-   function Get_Language_From_File
+   function Get_Language_From_File_From_Project
      (Registry : Project_Registry; Source_Filename : VFS.Virtual_File)
       return Types.Name_Id;
-   --  Return the language for a file
+   --  Return the language for a file, according to the project's naming
+   --  scheme. You shouldn't call this function directly, but use the one
+   --  defined in language_handlers.ads, which correctly takes into account
+   --  cases where the user has overriden the language.
 
    procedure Add_Language_Extension
      (Registry      : Project_Registry;
@@ -305,12 +308,6 @@ package Projects.Registry is
    --  Return the list of registered extensions for Language_Name.
    --  The returned value must be freed by the user. Language_Name is
    --  case-insensitive.
-
-   function Language_Matches
-     (Registry        : Project_Registry;
-      Source_Filename : VFS.Virtual_File;
-      Filter          : Projects.Name_Id_Array) return Boolean;
-   --  Return True if Source_Filename's language is in Filter
 
    --------------
    -- Internal --
