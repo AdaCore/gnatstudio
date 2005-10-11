@@ -165,12 +165,12 @@ package body GPS.Kernel.Project is
 
       Set_Project_Modified (Get_Project (Kernel), False);
 
+      Restore_Persistent_Properties (Kernel);
+
       --  Compute the project
 
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
-
-      Restore_Persistent_Properties (Kernel);
 
       --  Reload the default desktop
 
@@ -274,14 +274,18 @@ package body GPS.Kernel.Project is
          Run_Hook (Kernel, Project_Changed_Hook);
          Recompute_View (Kernel);
 
+         --  Load the properties before running any hook, so that users
+         --  connected to the hooks can take advantage of the properties too.
+         --  However, it needs to be run after Recompute_View because otherwise
+         --  the object path is not known.
+         if not Same_Project then
+            Restore_Persistent_Properties (Kernel);
+         end if;
+
          --  Reload the desktop, in case there is a project-specific setup
          --  already
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
-         end if;
-
-         if not Same_Project then
-            Restore_Persistent_Properties (Kernel);
          end if;
 
          Pop_State (Kernel_Handle (Kernel));
