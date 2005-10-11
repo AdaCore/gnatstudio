@@ -51,6 +51,7 @@ with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Window;                        use Gtk.Window;
 
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.Entry_Completion;           use Gtkada.Entry_Completion;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
@@ -62,7 +63,6 @@ with Pango.Layout;                      use Pango.Layout;
 
 with Aliases_Module;                    use Aliases_Module;
 with Basic_Types;                       use Basic_Types;
-with Case_Handling;                     use Case_Handling;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
@@ -72,6 +72,7 @@ with Find_Utils;                        use Find_Utils;
 with Generic_List;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
+with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -152,11 +153,6 @@ package body Src_Editor_Module is
       Success : out Boolean);
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
-
-   function Create_Language_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtk_Combo;
-   --  Create a combo box to select the language for File.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -2199,42 +2195,6 @@ package body Src_Editor_Module is
       return Success;
    end Execute;
 
-   ---------------------------
-   -- Create_Language_Combo --
-   ---------------------------
-
-   function Create_Language_Combo
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return Gtk_Combo
-   is
-      Combo     : Gtk_Combo;
-      Lang      : constant Language_Handler := Get_Language_Handler (Kernel);
-      Languages : Argument_List := Known_Languages (Lang, Sorted => True);
-      Project_Lang : String :=
-        Get_Language_From_File (Lang, File, From_Project_Only => True);
-   begin
-      Gtk_New (Combo);
-      Set_Editable (Get_Entry (Combo), False);
-
-      Mixed_Case (Project_Lang);
-
-      Add_Unique_Combo_Entry (Combo, -"From project: " & Project_Lang);
-
-      for L in Languages'Range loop
-         Add_Unique_Combo_Entry (Combo, Languages (L).all);
-      end loop;
-
-      Free (Languages);
-
-      if Language_Is_Overriden (Lang, File) then
-         Set_Text (Get_Entry (Combo), Get_Language_From_File (Lang, File));
-      else
-         Set_Text (Get_Entry (Combo), -"From project: " & Project_Lang);
-      end if;
-
-      return Combo;
-   end Create_Language_Combo;
-
    -------------
    -- Execute --
    -------------
@@ -2252,6 +2212,7 @@ package body Src_Editor_Module is
       Button : Gtk_Widget;
       Label  : Gtk_Label;
       Lang   : Gtk_Combo;
+      Charset : Gtk_Combo;
       Box    : Gtk_Box;
       Size   : Gtk_Size_Group;
       Buffer : Source_Buffer;
@@ -2262,28 +2223,59 @@ package body Src_Editor_Module is
                Title  => -"Properties for " & Full_Name (File).all,
                Parent => Get_Main_Window (Kernel),
                Flags  => Destroy_With_Parent);
-      Set_Default_Size (Dialog, 400, 300);
+      Set_Default_Size (Dialog, 400, 200);
 
       Gtk_New (Size);
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      --  Base name
 
-      Gtk_New (Label, "Language: ");
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Gtk_New (Label, -"File:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Label, Base_Name (File));
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+
+      --  Directory
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+      Gtk_New (Label, -"Directory:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Label, Dir_Name (File).all);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+
+      --  Language
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
+
+      Gtk_New (Label, -"Language: ");
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
 
-      Lang := Create_Language_Combo (Kernel, File);
-      Pack_Start (Box, Lang, Expand => False);
+      Lang := Create_Language_Combo (Get_Language_Handler (Kernel), File);
+      Pack_Start (Box, Lang, Expand => True, Fill => True);
+
+      --  Charset
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Expand => True);
 
---        Gtk_New (Label, "Charset: ");
---        Set_Alignment (Label, 0.0, 0.5);
---        Add_Widget (Size, Label);
---        Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Label, -"Character set: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+
+      Charset := Create_Charset_Combo (File);
+      Pack_Start (Box, Charset, Expand => True, Fill => True);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Grab_Default (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
@@ -2291,7 +2283,11 @@ package body Src_Editor_Module is
       Show_All (Dialog);
 
       declare
-         Current_Lang : constant String := Get_Text (Get_Entry (Lang));
+         Current_Lang    : constant String := Get_Text (Get_Entry (Lang));
+         Current_Charset : constant String := Get_Text (Get_Entry (Charset));
+         Buttons         : Message_Dialog_Buttons;
+         Success         : Boolean;
+         pragma Unreferenced (Buttons);
       begin
          if Run (Dialog) = Gtk_Response_OK then
             if Get_Text (Get_Entry (Lang)) /= Current_Lang then
@@ -2313,6 +2309,34 @@ package body Src_Editor_Module is
                     (Buffer,
                      Get_Language_From_File
                        (Get_Language_Handler (Kernel), File));
+               end if;
+            end if;
+
+            if Get_Text (Get_Entry (Charset)) /= Current_Charset then
+               Set_File_Charset (File, Get_Text (Get_Entry (Charset)));
+
+               if Buffer = null then
+                  Buffer := Get_Buffer
+                    (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
+               end if;
+
+               if Buffer /= null then
+                  if Get_Status (Buffer) = Modified then
+                     Buttons := Message_Dialog
+                       (Msg => -("The character set has been modified."
+                        & ASCII.LF
+                        & "Since the file is currently modified, the new"
+                        & ASCII.LF
+                        & "character set will only apply when the file is"
+                        & ASCII.LF
+                        & " saved"),
+                        Dialog_Type => Warning,
+                        Buttons     => Button_OK,
+                        Title       => -"Warning: charset modified",
+                        Parent      => Get_Main_Window (Kernel));
+                  else
+                     Load_File (Buffer, File, Success => Success);
+                  end if;
                end if;
             end if;
          end if;
