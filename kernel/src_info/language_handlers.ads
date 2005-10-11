@@ -95,13 +95,30 @@ package Language_Handlers is
    ---------------
 
    function Get_Language_From_File
-     (Handler : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Language.Language_Access;
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return Language.Language_Access;
    --  Find the language of a given file.
    --  The language is guessed either from a specific setup the user has done
    --  for instance through the properties dialog for source editors, or from
-   --  the project.
+   --  the project. If From_Project_Only is True, then only the project
+   --  setting is returned.
    --  Return Unknown_Lang if no other language could be found.
+
+   function Get_Language_From_File
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return String;
+   --  Return "" if the language is unknown.
+   --  The language is guessed either from a specific setup the user has done
+   --  for instance through the properties dialog for source editors, or from
+   --  the project.
+
+   function Language_Is_Overriden
+     (Handler  : access Language_Handler_Record;
+      Filename : VFS.Virtual_File) return Boolean;
+   --  Return True if the language for Filename doesn't come from the project,
+   --  but from a user setting.
 
    procedure Set_Language_From_File
      (Handler  : access Language_Handler_Record;
@@ -111,11 +128,6 @@ package Language_Handlers is
    --  change the project itself, just the properties associated with the file.
    --  If Language is set to "", then the language will be guessed from the
    --  project.
-
-   function Get_Language_From_File
-     (Handler : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return String;
-   --  Return "" if the language is unknown.
 
    function Get_Language_By_Name
      (Handler : access Language_Handler_Record;
@@ -135,7 +147,8 @@ package Language_Handlers is
    function Known_Languages
      (Handler : access Language_Handler_Record;
       Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
-   --  Return the (sorted) list of all known languages
+   --  Return the (sorted) list of all known languages.
+   --  Return value must be freed by the caller.
 
    function Languages_Count (Handler : access Language_Handler_Record)
       return Natural;

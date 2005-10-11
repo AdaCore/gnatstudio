@@ -89,19 +89,36 @@ package body Language_Handlers is
       return 0;
    end Get_Index_From_Language;
 
+   ---------------------------
+   -- Language_Is_Overriden --
+   ---------------------------
+
+   function Language_Is_Overriden
+     (Handler  : access Language_Handler_Record;
+      Filename : VFS.Virtual_File) return Boolean
+   is
+      pragma Unreferenced (Handler);
+      Prop  : String_Property;
+      Found : Boolean := False;
+   begin
+      Get_Property (Prop, Filename, "language", Found);
+      return Found;
+   end Language_Is_Overriden;
+
    ----------------------------
    -- Get_Language_From_File --
    ----------------------------
 
    function Get_Language_From_File
-     (Handler         : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Language.Language_Access
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return Language.Language_Access
    is
       Index : Natural;
    begin
       Index := Get_Index_From_Language
         (Handler,
-         Get_Language_From_File (Handler, Source_Filename));
+         Get_Language_From_File (Handler, Source_Filename, From_Project_Only));
       if Index /= 0 then
          return Handler.Languages (Index).Lang;
       end if;
@@ -114,14 +131,18 @@ package body Language_Handlers is
    ----------------------------
 
    function Get_Language_From_File
-     (Handler : access Language_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return String
+     (Handler           : access Language_Handler_Record;
+      Source_Filename   : VFS.Virtual_File;
+      From_Project_Only : Boolean := False) return String
    is
       Lang  : Name_Id;
       Prop  : String_Property;
-      Found : Boolean;
+      Found : Boolean := False;
    begin
-      Get_Property (Prop, Source_Filename, "language", Found);
+      if not From_Project_Only then
+         Get_Property (Prop, Source_Filename, "language", Found);
+      end if;
+
       if Found then
          return Prop.Value.all;
       else
