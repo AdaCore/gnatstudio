@@ -23,6 +23,9 @@ with Projects.Registry;
 
 package CPP_Parser is
 
+   CPP_LI_Handler_Name : constant String := "c/c++";
+   --  The name the source navigator is registered under.
+
    function Create_CPP_Handler
      (Db       : Entities.Entities_Database;
       Registry : Projects.Registry.Project_Registry)

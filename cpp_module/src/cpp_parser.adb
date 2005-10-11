@@ -3361,7 +3361,7 @@ package body CPP_Parser is
    function Get_Name (LI : access CPP_Handler_Record) return String is
       pragma Unreferenced (LI);
    begin
-      return "C/C++";
+      return CPP_LI_Handler_Name;
    end Get_Name;
 
 end CPP_Parser;

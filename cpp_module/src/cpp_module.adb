@@ -45,9 +45,6 @@ with Traces;                   use Traces;
 
 package body Cpp_Module is
 
-   CPP_LI_Handler_Name : constant String := "c/c++";
-   --  The name the source navigator is registered under.
-
    C_Automatic_Indentation   : Param_Spec_Enum;
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
@@ -163,18 +160,6 @@ package body Cpp_Module is
         Set_Executables (Get_System_Dir (Kernel), LI);
 
    begin
-      if Msg /= "" then
-         --  No parser will be available. However, we still want the
-         --  highlighting for C and C++ files
-
-         Insert (Kernel, Msg, Mode => Error);
-         Unchecked_Free (LI);
-      else
-         Add_Hook
-           (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
-         On_Project_View_Changed (LI);
-      end if;
-
       Register_Language (Handler, C_Lang, LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
@@ -188,6 +173,18 @@ package body Cpp_Module is
          Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
+
+      if Msg /= "" then
+         --  No parser will be available. However, we still want the
+         --  highlighting for C and C++ files
+
+         Insert (Kernel, Msg, Mode => Error);
+         Unchecked_Free (LI);
+      else
+         Add_Hook
+           (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
+         On_Project_View_Changed (LI);
+      end if;
 
       C_Automatic_Indentation := Param_Spec_Enum
         (Indentation_Properties.Gnew_Enum
