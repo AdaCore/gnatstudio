@@ -28,6 +28,79 @@
 
 package body Glib.Unicode is
 
+   procedure UTF8_Compute
+     (Char : Guint8;
+      Mask : out Guint32;
+      Len  : out Integer);
+   --  Compute Mask and Len needed to compute a given UTF8 character
+
+   function UTF8_Get
+     (Str  : UTF8_String;
+      Mask : Guint32) return Gunichar;
+   --  Return a unichar given a UTF8 string
+
+   ------------------
+   -- UTF8_Compute --
+   ------------------
+
+   procedure UTF8_Compute
+     (Char : Guint8;
+      Mask : out Guint32;
+      Len  : out Integer) is
+   begin
+      if Char < 128 then
+         Len := 1;
+         Mask := 16#7F#;
+
+      elsif (Char and 16#E0#) = 16#C0# then
+         Len := 2;
+         Mask := 16#1F#;
+
+      elsif (Char and 16#F0#) = 16#E0# then
+         Len := 3;
+         Mask := 16#0F#;
+
+      elsif (Char and 16#F8#) = 16#F0# then
+         Len := 4;
+         Mask := 16#07#;
+
+      elsif (Char and 16#FC#) = 16#F8# then
+         Len := 5;
+         Mask := 16#03#;
+
+      elsif (Char and 16#FE#) = 16#FC# then
+         Len := 6;
+         Mask := 16#01#;
+
+      else
+         Len := -1;
+      end if;
+   end UTF8_Compute;
+
+   --------------
+   -- UTF8_Get --
+   --------------
+
+   function UTF8_Get
+     (Str  : UTF8_String;
+      Mask : Guint32) return Gunichar
+   is
+      Result : Gunichar;
+   begin
+      Result := Character'Pos (Str (Str'First)) and Gunichar (Mask);
+
+      for J in Str'First + 1 .. Str'Last loop
+         if (Guint8'(Character'Pos (Str (J))) and 16#C0#) /= 16#80# then
+            return -1;
+         end if;
+
+         Result := Result * (2 ** 6);
+         Result := Result or (Character'Pos (Str (J)) and 16#3F#);
+      end loop;
+
+      return Result;
+   end UTF8_Get;
+
    --------------------
    -- UTF8_Next_Char --
    --------------------
@@ -66,7 +139,13 @@ package body Glib.Unicode is
    function UTF8_Find_Prev_Char
      (Str : UTF8_String; Index : Natural) return Natural is
    begin
-      return Index - 1;
+      for P in Index - 1 .. Str'First loop
+         if (Guint8'(Character'Pos (Str (P))) and 16#C0#) /= 16#80# then
+            return P;
+         end if;
+      end loop;
+
+      return Str'First - 1;
    end UTF8_Find_Prev_Char;
 
    -------------------
@@ -74,8 +153,16 @@ package body Glib.Unicode is
    -------------------
 
    function UTF8_Get_Char (Str : UTF8_String) return Gunichar is
+      Mask : Guint32 := 0;
+      Len  : Integer;
    begin
-      return Character'Pos (Str (Str'First));
+      UTF8_Compute (Character'Pos (Str (Str'First)), Mask, Len);
+
+      if Len = -1 then
+         return -1;
+      end if;
+
+      return UTF8_Get (Str (Str'First .. Str'First + Len - 1), Mask);
    end UTF8_Get_Char;
 
    --------------
