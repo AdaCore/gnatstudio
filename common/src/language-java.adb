@@ -129,4 +129,14 @@ package body Language.Java is
       return (1 .. 0 => No_Project_Field);
    end Get_Project_Fields;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Java_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "Java";
+   end Get_Name;
+
 end Language.Java;

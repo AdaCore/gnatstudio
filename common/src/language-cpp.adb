@@ -166,4 +166,14 @@ package body Language.Cpp is
       return Cpp_Project_Fields;
    end Get_Project_Fields;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Cpp_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "c++";
+   end Get_Name;
+
 end Language.Cpp;

@@ -103,6 +103,7 @@ package Language.Ada is
 private
    type Ada_Language is new Language_Root with null record;
 
+   function Get_Name (Lang : access Ada_Language) return String;
    function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;

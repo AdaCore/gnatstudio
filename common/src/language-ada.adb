@@ -548,6 +548,16 @@ package body Language.Ada is
       return Ada_Project_Fields;
    end Get_Project_Fields;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Ada_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "Ada";
+   end Get_Name;
+
 begin
    Compile (Keywords_List,
             "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"

@@ -67,5 +67,8 @@ package Language.Unknown is
 private
    type Unknown_Language is new Language_Root with null record;
 
+   function Get_Name (Lang : access Unknown_Language) return String;
+   --  See inherited documentation
+
    Unknown_Lang : constant Language_Access := new Unknown_Language;
 end Language.Unknown;

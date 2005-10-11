@@ -66,5 +66,7 @@ package Language.Cpp is
 private
    type Cpp_Language is new Language.C.C_Language with null record;
 
+   function Get_Name (Lang : access Cpp_Language) return String;
+
    Cpp_Lang : constant Language_Access := new Cpp_Language;
 end Language.Cpp;

@@ -422,4 +422,14 @@ package body Language.C is
       return C_Project_Fields;
    end Get_Project_Fields;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access C_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "c";
+   end Get_Name;
+
 end Language.C;

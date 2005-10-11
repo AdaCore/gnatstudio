@@ -161,4 +161,14 @@ package body Language.Unknown is
       null;
    end Parse_Entities;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Unknown_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "Unknown";
+   end Get_Name;
+
 end Language.Unknown;

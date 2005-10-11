@@ -112,6 +112,7 @@ package Language.C is
 private
    type C_Language is new Language_Root with null record;
 
+   function Get_Name (Lang : access C_Language) return String;
    function Comment_Line
      (Lang    : access C_Language;
       Line    : String;

@@ -34,6 +34,9 @@ package Language is
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null
 
+   function Get_Name (Lang : access Language_Root) return String is abstract;
+   --  Return the name of the language
+
    ------------------------
    -- Types manipulation --
    ------------------------

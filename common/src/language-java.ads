@@ -58,5 +58,8 @@ package Language.Java is
 private
    type Java_Language is new Language_Root with null record;
 
+   function Get_Name (Lang : access Java_Language) return String;
+   --  See inherited documentation
+
    Java_Lang : constant Language_Access := new Java_Language;
 end Language.Java;
