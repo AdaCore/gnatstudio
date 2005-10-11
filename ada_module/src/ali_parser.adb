@@ -50,6 +50,7 @@ package body ALI_Parser is
    end record;
    type ALI_Handler is access all ALI_Handler_Record'Class;
 
+   function Get_Name (LI : access ALI_Handler_Record) return String;
    function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
       Source_Filename       : VFS.Virtual_File;
@@ -61,9 +62,10 @@ package body ALI_Parser is
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer;
    function Generate_LI_For_Project
-     (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return LI_Handler_Iterator'Class;
+     (Handler      : access ALI_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Projects.Project_Type;
+      Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
@@ -1740,11 +1742,12 @@ package body ALI_Parser is
    -----------------------------
 
    function Generate_LI_For_Project
-     (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return LI_Handler_Iterator'Class
+     (Handler      : access ALI_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Projects.Project_Type;
+      Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler, Project, Recursive);
+      pragma Unreferenced (Handler, Project, Recursive, Lang_Handler);
       Iterator : ALI_Handler_Iterator;
    begin
       return Iterator;
@@ -1786,5 +1789,15 @@ package body ALI_Parser is
    begin
       null;
    end Destroy;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (LI : access ALI_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return "Ada";
+   end Get_Name;
 
 end ALI_Parser;
