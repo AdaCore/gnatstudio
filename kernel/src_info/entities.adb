@@ -29,7 +29,7 @@ with Entities.Debug;          use Entities.Debug;
 with File_Utils;              use File_Utils;
 with GPS.Intl;                use GPS.Intl;
 with Language;                use Language;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers;   use Language_Handlers;
 with Language_Utils;          use Language_Utils;
 with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
@@ -944,9 +944,9 @@ package body Entities is
 
    procedure Register_Language_Handler
      (Db   : Entities_Database;
-      Lang : access Language_Handlers.Language_Handler_Record'Class) is
+      Lang : access Abstract_Language_Handler_Record'Class) is
    begin
-      Db.Lang := Language_Handlers.Language_Handler (Lang);
+      Db.Lang := Abstract_Language_Handler (Lang);
    end Register_Language_Handler;
 
    ----------
@@ -1861,7 +1861,7 @@ package body Entities is
       Source_Filename : VFS.Virtual_File) return LI_Handler is
    begin
       return Get_LI_Handler_From_File
-        (GPS_Language_Handler (Db.Lang), Source_Filename);
+        (Language_Handler (Db.Lang), Source_Filename);
    end Get_LI_Handler;
 
    -------------------
@@ -2287,14 +2287,14 @@ package body Entities is
 
    procedure Parse_File_Constructs
      (Handler   : access LI_Handler_Record;
-      Languages : access Language_Handlers.Language_Handler_Record'Class;
+      Languages : access Abstract_Language_Handler_Record'Class;
       File_Name : VFS.Virtual_File;
       Result    : out Language.Construct_List)
    is
       pragma Unreferenced (Handler);
 
       Lang : constant Language.Language_Access :=
-        Get_Language_From_File (GPS_Language_Handler (Languages), File_Name);
+        Get_Language_From_File (Language_Handler (Languages), File_Name);
 
    begin
       --  Call the language specific syntax analyzer

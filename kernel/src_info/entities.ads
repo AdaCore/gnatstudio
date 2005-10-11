@@ -24,7 +24,6 @@ with HTables;
 with VFS;
 with Dynamic_Arrays;
 with Projects.Registry;
-with Language_Handlers;
 with Language;
 
 --  This package contains the list of all files and entities used in the
@@ -46,6 +45,12 @@ package Entities is
    --  General type to handle and generate Library Information data (for
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported.
+
+   type Abstract_Language_Handler_Record is abstract tagged private;
+   type Abstract_Language_Handler
+     is access all Abstract_Language_Handler_Record'Class;
+   --  Type overriden in language_handlers.ads, which provide the necessary
+   --  primitive operations to query the language associated with a file.
 
    type File_Error_Reporter_Record is abstract tagged null record;
    type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
@@ -76,7 +81,7 @@ package Entities is
 
    procedure Register_Language_Handler
      (Db   : Entities_Database;
-      Lang : access Language_Handlers.Language_Handler_Record'Class);
+      Lang : access Abstract_Language_Handler_Record'Class);
    --  Register a new language handler
 
    procedure Reset (Db : Entities_Database);
@@ -742,27 +747,35 @@ package Entities is
    --  Return the number of files parsed.
 
    function Generate_LI_For_Project
-     (Handler   : access LI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False)
+     (Handler      : access LI_Handler_Record;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Projects.Project_Type;
+      Recursive    : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
    --  its imported projects if Recursive is True).
-   --  This function should do as few work as possible, and the iterator will
-   --  be called until all the files are processed.
+   --  This function should do as little work as possible, and the iterator
+   --  will be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Get_Source_Info.
 
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
-      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      Languages    : access Abstract_Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser.
    --  Result should be freed.
 
+   function Get_Name (LI : access LI_Handler_Record) return String is abstract;
+   --  Return a displayable name for the handler.
+   --  This name is used to print messages in the console when computing the
+   --  xref database
+
 private
+
+   type Abstract_Language_Handler_Record is abstract tagged null record;
 
    ----------------
    -- Scope_Tree --
@@ -1170,7 +1183,7 @@ private
       LIs      : LI_HTable.HTable;
 
       Predefined_File : Source_File;
-      Lang     : Language_Handlers.Language_Handler;
+      Lang     : Abstract_Language_Handler;
       Registry : Projects.Registry.Project_Registry_Access;
    end record;
    type Entities_Database is access Entities_Database_Record;
