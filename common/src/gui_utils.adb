@@ -289,27 +289,6 @@ package body GUI_Utils is
       return -1;
    end Get_Index_In_List;
 
-   ----------------------------
-   -- Propagate_Expose_Event --
-   ----------------------------
-
-   procedure Propagate_Expose_Event
-     (Container : access Gtk.Container.Gtk_Container_Record'Class;
-      Event     : Gdk.Event.Gdk_Event_Expose)
-   is
-      use Widget_List;
-      Children, Tmp : Widget_List.Glist;
-   begin
-      Children := Get_Children (Container);
-      Tmp := Children;
-      while Tmp /= Null_List loop
-         Propagate_Expose (Container, Get_Data (Tmp), Event);
-         Tmp := Next (Tmp);
-      end loop;
-
-      Free (Children);
-   end Propagate_Expose_Event;
-
    -----------------------------
    -- Find_First_Row_Matching --
    -----------------------------

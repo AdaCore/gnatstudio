@@ -111,13 +111,6 @@ package GUI_Utils is
    --  If Force_Refresh is True, then all X11 events are processed so that the
    --  new cursor is immediately visible for the user.
 
-   procedure Propagate_Expose_Event
-     (Container : access Gtk.Container.Gtk_Container_Record'Class;
-      Event     : Gdk.Event.Gdk_Event_Expose);
-   --  Propagate the expose event Event to all the NO_WINDOW children of
-   --  Container. You must call this when Container has a specific expose
-   --  callback.
-
    function Find_First_Row_Matching
      (Clist  : access Gtk.Clist.Gtk_Clist_Record'Class;
       Column : Glib.Gint;
