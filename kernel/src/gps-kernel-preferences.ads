@@ -25,7 +25,6 @@ with Gdk.Types;
 with Pango.Font;
 with Language;
 with Glib.Generic_Properties;
-with GPS.Kernel.Charsets;
 
 package GPS.Kernel.Preferences is
 
@@ -156,7 +155,6 @@ package GPS.Kernel.Preferences is
    View_Fixed_Font       : Param_Spec_Font;
    Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
-   Default_Charset       : GPS.Kernel.Charsets.Param_Spec_Charset;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Splash_Screen         : Param_Spec_Boolean;
