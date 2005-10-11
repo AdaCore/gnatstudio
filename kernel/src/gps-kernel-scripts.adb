@@ -39,7 +39,7 @@ with Glib.Object;             use Glib.Object;
 with Gtk.Widget;              use Gtk.Widget;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
-with Language_Handlers;       use Language_Handlers;
+with Language_Handlers;   use Language_Handlers;
 with Prj.Ext;                 use Prj.Ext;
 with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
@@ -1065,8 +1065,8 @@ package body GPS.Kernel.Scripts is
       elsif Command = "language" then
          Info := Get_Data (Data, 1);
          Set_Return_Value
-           (Data, Get_String (Get_Language_From_File
-                                (Get_Registry (Kernel).all, Info.File)));
+           (Data, Get_Language_From_File
+              (Get_Language_Handler (Kernel), Info.File));
 
       elsif Command = "other_file" then
          declare
