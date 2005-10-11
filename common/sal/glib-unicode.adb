@@ -103,10 +103,10 @@ package body Glib.Unicode is
    -- Unichar_To_UTF8 --
    ---------------------
 
-   procedure Unichar_To_UTF8 (Char : Gunichar;
-                              Str  : in out String;
-                              Last : out Natural)
-   is
+   procedure Unichar_To_UTF8
+     (Char : Gunichar;
+      Str  : out UTF8_String;
+      Last : out Natural) is
    begin
       if Char <= 127 then
          Str (Str'First) := Character'Val (Integer (Char));

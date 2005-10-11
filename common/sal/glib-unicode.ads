@@ -75,9 +75,11 @@ package Glib.Unicode is
    --  If Str doesn't point to a valid UTF8 encoded character, the result is
    --  undefined.
 
-   procedure Unichar_To_UTF8 (Char : Gunichar;
-                              Str  : in out String;
-                              Last : out Natural);
-   --  See doc in glib-unicode.ads
+   procedure Unichar_To_UTF8
+     (Char : Gunichar;
+      Str  : out String;
+      Last : out Natural);
+   --  Encode Char into Buffer. Buffer must have at least 6 bytes free.
+   --  Return the index of the last byte written in Buffer.
 
 end Glib.Unicode;
