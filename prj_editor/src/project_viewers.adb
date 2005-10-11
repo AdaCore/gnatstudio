@@ -77,7 +77,6 @@ with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Location_View;            use GPS.Location_View;
 with GUI_Utils;                    use GUI_Utils;
-with Language_Handlers.GPS;        use Language_Handlers.GPS;
 with Language_Handlers;            use Language_Handlers;
 with Naming_Editors;               use Naming_Editors;
 with Prj;
@@ -498,7 +497,7 @@ package body Project_Viewers is
       Is_Default : Boolean;
       Language   : constant Name_Id := Get_String
         (Get_Language_From_File
-         (GPS_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+         (Language_Handler (Get_Language_Handler (Viewer.Kernel)),
           File_Name));
    begin
       Get_Switches

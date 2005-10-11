@@ -76,7 +76,7 @@ with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Intl;                use GPS.Intl;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers;   use Language_Handlers;
 with Traces;                    use Traces;
 with Find_Utils;                use Find_Utils;
 with File_Utils;                use File_Utils;
@@ -2414,8 +2414,8 @@ package body Project_Explorers is
 
       function Check_Entities (File : VFS.Virtual_File) return Boolean is
          use type Entities.LI_Handler;
-         Languages  : constant GPS_Language_Handler :=
-           GPS_Language_Handler (Get_Language_Handler (Kernel));
+         Languages  : constant Language_Handler :=
+           Language_Handler (Get_Language_Handler (Kernel));
          Handler    : constant Entities.LI_Handler := Get_LI_Handler_From_File
            (Languages, File);
          Constructs : Construct_List;

@@ -26,7 +26,7 @@ with Find_Utils;            use Find_Utils;
 with Traces;                use Traces;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with VFS;                   use VFS;
-with Language_Handlers.GPS; use Language_Handlers.GPS;
+with Language_Handlers; use Language_Handlers;
 
 package body Doc_Utils is
    Me : constant Debug_Handle := Create ("Doc_Utils");
@@ -120,7 +120,7 @@ package body Doc_Utils is
       Declaration_File   : constant Virtual_File :=
         Get_Filename (Get_Declaration_Of (Entity).File);
       Lang               : constant Language_Access := Get_Language_From_File
-        (GPS_Language_Handler (Lang_Handler),
+        (Language_Handler (Lang_Handler),
          Declaration_File);
       Current, Beginning : Natural;
       Context            : Language_Context_Access;

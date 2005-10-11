@@ -61,7 +61,6 @@ with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
@@ -1198,8 +1197,8 @@ package body Builder_Module is
       Result    : out Command_Return_Type)
    is
       D            : Compute_Xref_Data_Access renames Xref_Data;
-      Handler      : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (D.Kernel));
+      Handler      : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Not_Finished : Boolean;
       LI           : LI_Handler;
@@ -1230,6 +1229,7 @@ package body Builder_Module is
             D.Iter.all := new LI_Handler_Iterator'Class'
               (Generate_LI_For_Project
                  (Handler      => LI,
+                  Lang_Handler => Get_Language_Handler (D.Kernel),
                   Project      => Get_Project (D.Kernel),
                   Recursive    => True));
             Continue (D.Iter.all.all, Not_Finished);
@@ -1238,7 +1238,7 @@ package body Builder_Module is
 
       if New_Handler then
          Insert (D.Kernel, -"Parsing source files for "
-                 & Get_LI_Name (Handler, D.LI));
+                 & Get_Name (Get_Nth_Handler (Handler, D.LI)));
       end if;
 
       Set_Progress (Command, (Running, D.LI, Num_Handlers));
@@ -1293,8 +1293,8 @@ package body Builder_Module is
       Result    : out Command_Return_Type)
    is
       D            : Load_Xref_Data_Access renames Xref_Data;
-      Handler      : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (D.Kernel));
+      Handler      : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       LI           : LI_Handler;
       Count : Integer;

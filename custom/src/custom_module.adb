@@ -51,7 +51,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
 with Remote_Connections.Custom; use Remote_Connections.Custom;
@@ -118,7 +117,7 @@ package body Custom_Module is
       pragma Unreferenced (Level);
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Module.all);
-      Handler : constant GPS_Language_Handler := GPS_Language_Handler
+      Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
 
       procedure Add_Child

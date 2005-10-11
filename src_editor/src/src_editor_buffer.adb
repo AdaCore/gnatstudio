@@ -72,7 +72,6 @@ with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with Language;                            use Language;
 with Language_Handlers;                   use Language_Handlers;
-with Language_Handlers.GPS;               use Language_Handlers.GPS;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
@@ -2883,7 +2882,7 @@ package body Src_Editor_Buffer is
             Set_Language
               (Buffer,
                Get_Language_From_File
-                 (GPS_Language_Handler
+                 (Language_Handler
                     (Get_Language_Handler (Buffer.Kernel)),
                   Buffer.Filename));
          end if;

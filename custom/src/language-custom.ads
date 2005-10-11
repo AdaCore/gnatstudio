@@ -24,7 +24,7 @@
 with System;
 with Interfaces.C.Strings;
 with Glib.Xml_Int;
-with Language_Handlers.GPS;
+with Language_Handlers;
 with GPS.Kernel;
 
 package Language.Custom is
@@ -35,7 +35,7 @@ package Language.Custom is
    procedure Initialize
      (Lang     : access Custom_Language'Class;
       Handler  : access
-        Language_Handlers.GPS.GPS_Language_Handler_Record'Class;
+        Language_Handlers.Language_Handler_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr);
    --  Initialize Lang based on the contents of an XML node.

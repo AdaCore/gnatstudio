@@ -59,7 +59,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with Prj;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects.Editor;

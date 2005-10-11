@@ -32,7 +32,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Language_Handlers;     use Language_Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -133,7 +133,7 @@ package body Project_Explorers_Common is
       Set (Model, Iter, Up_To_Date_Column, False);
 
       Lang := Get_Language_From_File
-        (GPS_Language_Handler (Get_Language_Handler (Kernel)), File);
+        (Language_Handler (Get_Language_Handler (Kernel)), File);
 
       if Lang /= Unknown_Lang then
          Append_Dummy_Iter (Model, Iter);
@@ -284,8 +284,8 @@ package body Project_Explorers_Common is
       type Gtk_Tree_Iter_Array is array (Language_Category'Range)
         of Gtk_Tree_Iter;
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
-      Languages  : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (Kernel));
+      Languages  : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (Kernel));
       Handler    : LI_Handler;
 
    begin

@@ -56,7 +56,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Language_Handlers;     use Language_Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Projects;                  use Projects;
@@ -628,8 +628,8 @@ package body Outline_View is
       Iter, Root : Gtk_Tree_Iter := Null_Iter;
       Lang       : Language_Access;
       Handler    : LI_Handler;
-      Languages  : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (Outline.Kernel));
+      Languages  : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (Outline.Kernel));
       Constructs : Construct_List;
       Show_Profiles : constant Boolean :=
         Get_Pref (Outline_View_Profiles);

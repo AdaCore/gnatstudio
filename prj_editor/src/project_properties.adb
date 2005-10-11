@@ -82,7 +82,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;

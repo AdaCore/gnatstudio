@@ -84,7 +84,6 @@ with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Language_Handlers;         use Language_Handlers;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
@@ -176,7 +175,7 @@ package body GPS.Kernel is
       Home_Dir         : String;
       Prefix_Directory : String)
    is
-      Handler : GPS_Language_Handler;
+      Handler : Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
@@ -188,13 +187,13 @@ package body GPS.Kernel is
       --  Create the language handler.
 
       Gtk_New (Handler);
-      Handle.Lang_Handler := Language_Handler (Handler);
+      Handle.Lang_Handler := Handler;
 
       Handle.Registry := new Project_Registry;
       Load_Default_Project (Handle.Registry.all, Get_Current_Dir);
 
       Set_Registry
-        (GPS_Language_Handler (Handle.Lang_Handler), Handle.Registry);
+        (Language_Handler (Handle.Lang_Handler), Handle.Registry);
 
       Handle.Gnatls_Cache := null;
 
@@ -1059,8 +1058,8 @@ package body GPS.Kernel is
       Project   : Project_Type;
       Recursive : Boolean)
    is
-      Handler : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (Kernel));
+      Handler : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (Kernel));
       Num     : constant Natural := LI_Handlers_Count (Handler);
       LI      : LI_Handler;
       Count   : Natural := 0;
@@ -1322,7 +1321,7 @@ package body GPS.Kernel is
       Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
       GPS.Kernel.Scripts.Finalize (Handle);
 
-      Destroy (GPS_Language_Handler (Handle.Lang_Handler));
+      Destroy (Language_Handler (Handle.Lang_Handler));
       Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);

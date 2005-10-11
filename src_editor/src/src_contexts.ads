@@ -102,9 +102,9 @@ package Src_Contexts is
      File_Search_Context with private;
 
    function Search
-     (Context  : access Abstract_Files_Context;
-      Handler  : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
+     (Context : access Abstract_Files_Context;
+      Handler : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel  : GPS.Kernel.Kernel_Handle;
       Callback : Scan_Callback)
       return Boolean;
    --  Search either the next match or all the occurrences, depending on the

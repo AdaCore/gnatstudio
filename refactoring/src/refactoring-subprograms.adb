@@ -40,7 +40,7 @@ with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Histories;              use Histories;
 with Language;               use Language;
-with Language_Handlers.GPS;  use Language_Handlers.GPS;
+with Language_Handlers;  use Language_Handlers;
 with Refactoring.Performers; use Refactoring.Performers;
 with Traces;                 use Traces;
 with VFS;                    use VFS;
@@ -302,8 +302,8 @@ package body Refactoring.Subprograms is
       Method_Decl : String;
       Method_Body : String)
    is
-      Languages  : constant GPS_Language_Handler :=
-        GPS_Language_Handler (Get_Language_Handler (Kernel));
+      Languages  : constant Language_Handler :=
+        Language_Handler (Get_Language_Handler (Kernel));
       Handler    : constant LI_Handler :=
         Get_LI_Handler_From_File (Languages, In_File);
       Constructs : Construct_List;

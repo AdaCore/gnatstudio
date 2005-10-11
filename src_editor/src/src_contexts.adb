@@ -55,7 +55,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with OS_Utils;                  use OS_Utils;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
@@ -98,7 +98,7 @@ package body Src_Contexts is
 
    procedure Scan_File
      (Context       : access Search_Context'Class;
-      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle := null;
       Name          : VFS.Virtual_File;
       Callback      : Scan_Callback;
@@ -161,7 +161,7 @@ package body Src_Contexts is
 
    procedure First_Match
      (Context       : access Search_Context'Class;
-      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
@@ -199,7 +199,7 @@ package body Src_Contexts is
    function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
+      Handler         : access Language_Handler_Record'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
@@ -459,7 +459,7 @@ package body Src_Contexts is
 
    procedure Scan_File
      (Context       : access Search_Context'Class;
-      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Handler       : access Language_Handler_Record'Class;
       Kernel        : GPS.Kernel.Kernel_Handle := null;
       Name          : VFS.Virtual_File;
       Callback      : Scan_Callback;
@@ -816,7 +816,7 @@ package body Src_Contexts is
 
    procedure First_Match
      (Context       : access Search_Context'Class;
-      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Name          : VFS.Virtual_File;
       Scope         : Search_Scope;
@@ -1168,7 +1168,7 @@ package body Src_Contexts is
    function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
+      Handler         : access Language_Handler_Record'Class;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
@@ -1415,7 +1415,7 @@ package body Src_Contexts is
 
    function Search
      (Context  : access Abstract_Files_Context;
-      Handler  : access Language_Handlers.Language_Handler_Record'Class;
+      Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
       Callback : Scan_Callback)
       return Boolean

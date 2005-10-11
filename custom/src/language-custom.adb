@@ -35,7 +35,7 @@ with Language.Cpp;
 with Language.Java;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Language_Handlers;     use Language_Handlers;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;                use GPS.Kernel;
@@ -162,7 +162,7 @@ package body Language.Custom is
 
    procedure Initialize
      (Lang     : access Custom_Language'Class;
-      Handler  : access GPS_Language_Handler_Record'Class;
+      Handler  : access Language_Handler_Record'Class;
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top      : Glib.Xml_Int.Node_Ptr)
    is
@@ -349,10 +349,8 @@ package body Language.Custom is
 
       Lang.Name := Get_String (Get_Field (Top, "Name"));
 
-      Register_Language (Handler, Get_Name (Lang), Language_Access (Lang));
-      Set_Language_Handler
-        (Handler, Get_Name (Lang),
-         LI     => Dummy_Handler);
+      Register_Language (Handler, Language_Access (Lang),
+                         LI => Dummy_Handler);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => Get_Name (Lang),

@@ -36,7 +36,7 @@ with GPS.Kernel;               use GPS.Kernel;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
 with Language;                 use Language;
-with Language_Handlers.GPS;    use Language_Handlers.GPS;
+with Language_Handlers;    use Language_Handlers;
 with Naming_Editors;           use Naming_Editors;
 with Project_Viewers;          use Project_Viewers;
 with Projects.Registry;        use Projects.Registry;
@@ -130,7 +130,7 @@ package body Cpp_Module is
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Handler : constant GPS_Language_Handler := GPS_Language_Handler
+      Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
    begin
       if Object_Path (Get_Project (Kernel), False) = "" then
@@ -155,7 +155,7 @@ package body Cpp_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Handler : constant GPS_Language_Handler := GPS_Language_Handler
+      Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : LI_Handler := Create_CPP_Handler
         (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
@@ -173,19 +173,16 @@ package body Cpp_Module is
          Add_Hook
            (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
          On_Project_View_Changed (LI);
-         Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI);
       end if;
 
-      Register_Language (Handler, "c", C_Lang);
-      Set_Language_Handler (Handler, "c", LI => LI);
+      Register_Language (Handler, C_Lang, LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
 
-      Register_Language (Handler, "c++", Cpp_Lang);
-      Set_Language_Handler (Handler, "c++", LI => LI);
+      Register_Language (Handler, Cpp_Lang, LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c++",
