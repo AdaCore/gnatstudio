@@ -73,7 +73,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with Pango.Layout;              use Pango.Layout;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
