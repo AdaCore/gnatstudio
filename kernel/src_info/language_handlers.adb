@@ -18,20 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language;                  use Language;
-with Language.Unknown;          use Language.Unknown;
-with Entities;                  use Entities;
-with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Types;                     use Types;
-with Projects;                  use Projects;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Projects.Registry;         use Projects.Registry;
-with Traces;                    use Traces;
-with VFS;                       use VFS;
+with Ada.Unchecked_Deallocation;
+with Basic_Types;               use Basic_Types;
 with Case_Handling;             use Case_Handling;
+with Entities;                  use Entities;
 with GNAT.Bubble_Sort_G;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+with GPS.Intl;                  use GPS.Intl;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.List;                  use Gtk.List;
+with Gtk.List_Item;             use Gtk.List_Item;
+with Language.Unknown;          use Language.Unknown;
+with Language;                  use Language;
+with Projects.Registry;         use Projects.Registry;
+with Projects;                  use Projects;
+with Traces;                    use Traces;
+with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body Language_Handlers is
 
@@ -448,5 +454,53 @@ package body Language_Handlers is
 
       Unchecked_Free (Handler);
    end Destroy;
+
+   ---------------------------
+   -- Create_Language_Combo --
+   ---------------------------
+
+   function Create_Language_Combo
+     (Handler : access Language_Handler_Record;
+      File    : VFS.Virtual_File) return Gtk_Combo
+   is
+      Combo     : Gtk_Combo;
+      Languages : Argument_List := Known_Languages (Handler, Sorted => True);
+      Project_Lang : String :=
+        Get_Language_From_File (Handler, File, From_Project_Only => True);
+      Item : Gtk_List_Item;
+   begin
+      Gtk_New (Combo);
+      Set_Editable (Get_Entry (Combo), False);
+
+      if Project_Lang = "" then
+         Gtk_New (Item, -"(From project) unknown");
+      else
+         Mixed_Case (Project_Lang);
+         Gtk_New (Item, -"(From project) " & Project_Lang);
+      end if;
+
+      Add (Get_List (Combo), Item);
+      Show_All (Item);
+
+      for L in Languages'Range loop
+         Gtk_New (Item, Languages (L).all);
+         Add (Get_List (Combo), Item);
+         Show_All (Item);
+      end loop;
+
+      Free (Languages);
+
+      if File /= VFS.No_File
+        and then Language_Is_Overriden (Handler, File)
+      then
+         Set_Text (Get_Entry (Combo), Get_Language_From_File (Handler, File));
+      elsif Project_Lang = "" then
+         Set_Text (Get_Entry (Combo), -"(From project) unknown");
+      else
+         Set_Text (Get_Entry (Combo), -"(From project) " & Project_Lang);
+      end if;
+
+      return Combo;
+   end Create_Language_Combo;
 
 end Language_Handlers;
