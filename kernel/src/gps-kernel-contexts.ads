@@ -265,6 +265,12 @@ private
       Entity_Name   : GNAT.OS_Lib.String_Access := null;
       Entity_Column : Integer := 0;
       Entity        : Entities.Entity_Information := null;
+
+      Entity_Resolved : Boolean := False;
+      --  Set to True when we have called Get_Entity at least once. This is
+      --  used to differentiate cases where Entity is null because we have
+      --  never tested and cases where it is null because there is none to be
+      --  found.
    end record;
 
    type Activity_Context is new File_Selection_Context with record

@@ -26,9 +26,9 @@ with GPS.Kernel.Project; use GPS.Kernel.Project;
 with VFS;                use VFS;
 with Entities;           use Entities;
 with Entities.Queries;   use Entities.Queries;
+with Language_Handlers;  use Language_Handlers;
 
 package body GPS.Kernel.Contexts is
-
    type Filter_File is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_File;
@@ -501,16 +501,18 @@ package body GPS.Kernel.Contexts is
       File   : Source_File;
 
    begin
-      if Context.Entity = null
+      if not Context.Entity_Resolved
         and then Has_Entity_Name_Information (Context)
         and then Has_Line_Information (Context)
         and then Has_File_Information (Context)
       then
+         Context.Entity_Resolved := True;
+
          File := Get_Or_Create
            (Db   => Get_Database (Get_Kernel (Context)),
             File => File_Information (Context),
-            Handler => Get_LI_Handler
-              (Get_Database (Get_Kernel (Context)),
+            Handler => Get_LI_Handler_From_File
+              (Get_Language_Handler (Get_Kernel (Context)),
                File_Information (Context)));
 
          if File = null then
@@ -531,6 +533,8 @@ package body GPS.Kernel.Contexts is
          end if;
 
          Ref (Context.Entity);
+      else
+         Context.Entity_Resolved := True;
       end if;
 
       return Context.Entity;
