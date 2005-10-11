@@ -532,9 +532,9 @@ package body GPS.Kernel.Properties is
                  (Resource_Key  => Get_Attribute (File, "file"),
                   Resource_Kind => "file",
                   Name          => Get_Attribute (Prop, "name"),
-                  Property      => (Value    => null,
-                                    Unparsed => Prop.Child,
-                                    Persistent    => True));
+                  Property      => (Value      => null,
+                                    Unparsed   => Prop.Child,
+                                    Persistent => True));
                Prop.Child := null; --  Since we are deleting the tree afterward
                Prop := Prop.Next;
             end loop;
