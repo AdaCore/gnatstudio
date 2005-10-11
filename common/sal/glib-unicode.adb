@@ -108,7 +108,7 @@ package body Glib.Unicode is
                               Last : out Natural)
    is
    begin
-      if Char <= 255 then
+      if Char <= 127 then
          Str (Str'First) := Character'Val (Integer (Char));
          Last := Str'First;
       else
