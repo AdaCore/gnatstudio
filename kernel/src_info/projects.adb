@@ -2155,11 +2155,6 @@ package body Projects is
                      Prj.Tree.Name_Of (Project.Node, Project.Tree));
       end if;
 
-      if Project.Data.View = Prj.No_Project then
-         Trace (Me, "Get_View: No view computed for "
-                & Get_String
-                  (Prj.Tree.Name_Of (Project.Node, Project.Tree)));
-      end if;
       return Project.Data.View;
    end Get_View;
 

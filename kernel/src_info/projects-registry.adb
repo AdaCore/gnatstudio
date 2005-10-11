@@ -1454,7 +1454,6 @@ package body Projects.Registry is
                       & Get_String (Name) & " wasn't found");
 
             else
-               Trace (Me, "Get_Project_From_Name: Creating new Project_Type");
                Create_From_Node
                  (P, Registry, Registry.Data.Tree,
                   Registry.Data.View_Tree, Node);
