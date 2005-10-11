@@ -48,7 +48,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -1400,7 +1399,8 @@ package body Src_Editor_Module.Shell is
                   begin
                      Glib.Convert.Convert
                        (A.all,
-                        "UTF-8", Get_Pref (Default_Charset),
+                        "UTF-8",
+                        Get_File_Charset (File),
                         Ignore, Bytes, Result => Result_String);
                      Set_Return_Value (Data, Result_String (1 .. Bytes));
                   end;

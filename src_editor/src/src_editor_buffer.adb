@@ -2560,7 +2560,7 @@ package body Src_Editor_Buffer is
 
       UTF8 := Glib.Convert.Convert
         (Contents (Contents'First .. Last), "UTF-8",
-         Get_Pref (Default_Charset),
+         Get_File_Charset (Filename),
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
@@ -2741,7 +2741,7 @@ package body Src_Editor_Buffer is
                   declare
                      Contents : constant String := Glib.Convert.Convert
                        (Str.Contents (1 .. Str.Length),
-                        Get_Pref (Default_Charset), "UTF-8");
+                        Get_File_Charset (Filename), "UTF-8");
                   begin
                      if Strip_Blank then
                         Index := Contents'Length;
