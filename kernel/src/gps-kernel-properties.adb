@@ -33,6 +33,15 @@ with VFS;                        use VFS;
 package body GPS.Kernel.Properties is
    Me : constant Debug_Handle := Create ("Properties");
 
+   System_Wide_Properties : constant Debug_Handle :=
+     Create ("System_Wide_Properties", Default => Off);
+   --  If this trace is activated the properties file exists in ~/.gps, and
+   --  contains information for all the files on the system. Otherwise, it is
+   --  create in the root project's object directory, and only contains info
+   --  for the files edited while using that project. The second solution
+   --  requires less memory, but the same file might have different properties
+   --  dependening on how it is open.
+
    type Property_Description is record
       Value      : Property_Access;
       --  The actual value of the property. This is still null if the property
@@ -428,10 +437,13 @@ package body GPS.Kernel.Properties is
       --  We could use the .gps directory, but that would mean we have to keep
       --  in memory information for files that do not belong to the current
       --  project.
-      --  return Get_Hom_Dir (Kernel) & "properties.xml";
 
-      return Object_Path (Get_Project (Kernel), Recursive => False)
-        & Directory_Separator & ".gps_properties.xml";
+      if Active (System_Wide_Properties) then
+         return Get_Home_Dir (Kernel) & "properties.xml";
+      else
+         return Object_Path (Get_Project (Kernel), Recursive => False)
+           & Directory_Separator & ".gps_properties.xml";
+      end if;
    end Get_Properties_Filename;
 
    --------------------------------
