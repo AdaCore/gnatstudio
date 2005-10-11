@@ -106,15 +106,42 @@ package body Glib.Unicode is
    procedure Unichar_To_UTF8
      (Char : Gunichar;
       Str  : out UTF8_String;
-      Last : out Natural) is
+      Last : out Natural)
+   is
+      First : Gunichar;
+      C     : Gunichar := Char;
    begin
-      if Char <= 127 then
-         Str (Str'First) := Character'Val (Integer (Char));
-         Last := Str'First;
+      if C < 16#80# then
+         First := 0;
+         Last  := Str'First;
+
+      elsif C < 16#800# then
+         First := 16#C0#;
+         Last  := Str'First + 1;
+
+      elsif C < 16#10000# then
+         First := 16#E0#;
+         Last  := Str'First + 2;
+
+      elsif C < 16#200000# then
+         First := 16#F0#;
+         Last  := Str'First + 3;
+
+      elsif C < 16#4000000# then
+         First := 16#F8#;
+         Last  := Str'First + 4;
+
       else
-         Str (Str'First) := '?';
-         Last := Str'First;
+         First := 16#FC#;
+         Last  := Str'First + 5;
       end if;
+    
+      for J in reverse Str'First + 1 .. Last loop
+         Str (J) := Character'Val ((C and 16#3F#) or 16#80#);
+         C := C / (2 ** 6);
+      end loop;
+
+      Str (Str'First) := Character'Val (C or First);
    end Unichar_To_UTF8;
 
 end Glib.Unicode;
