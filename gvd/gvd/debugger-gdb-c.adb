@@ -917,4 +917,14 @@ package body Debugger.Gdb.C is
       return "tbreak main" & ASCII.LF & "run";
    end Start;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Gdb_C_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "c";
+   end Get_Name;
+
 end Debugger.Gdb.C;

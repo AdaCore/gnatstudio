@@ -38,6 +38,16 @@ package body Debugger.Gdb.Ada is
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Gdb_Ada_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "ada";
+   end Get_Name;
+
    --------------------
    -- Is_Simple_Type --
    --------------------

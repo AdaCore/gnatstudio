@@ -95,7 +95,7 @@ with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
+with Language_Handlers;     use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Process_Proxies;           use Process_Proxies;

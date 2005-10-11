@@ -200,4 +200,7 @@ private
    type Gdb_C_Language is new
      Language.Debugger.Language_Debugger with null record;
 
+   function Get_Name (Lang : access Gdb_C_Language) return String;
+   --  See inherited documentation
+
 end Debugger.Gdb.C;

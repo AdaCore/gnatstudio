@@ -624,4 +624,15 @@ package body Debugger.Gdb.Cpp is
       return Start (Lang_C'Access);
    end Start;
 
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Lang : access Gdb_Cpp_Language) return String is
+      pragma Unreferenced (Lang);
+   begin
+      return "c++";
+   end Get_Name;
+
 end Debugger.Gdb.Cpp;

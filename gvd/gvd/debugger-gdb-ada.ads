@@ -147,4 +147,7 @@ private
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with null record;
 
+   function Get_Name (Lang : access Gdb_Ada_Language) return String;
+   --  See inherited documentation
+
 end Debugger.Gdb.Ada;

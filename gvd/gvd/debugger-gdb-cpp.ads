@@ -144,4 +144,7 @@ private
    type Gdb_Cpp_Language is new
      Language.Debugger.Language_Debugger with null record;
 
+   function Get_Name (Lang : access Gdb_Cpp_Language) return String;
+   --  See inherited documentation
+
 end Debugger.Gdb.Cpp;
