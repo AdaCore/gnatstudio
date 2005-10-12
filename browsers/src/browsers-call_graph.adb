@@ -2310,6 +2310,13 @@ package body Browsers.Call_Graph is
          Filter => Filter,
          Action => Command);
 
+      Register_Contextual_Menu
+        (Kernel, "",
+         Label  => "References/",
+         Filter => Filter,
+         Action => null);
+      --  Separator
+
       Command := new Entity_Called_By_Command;
       Entity_Called_By_Command (Command.all).To_Browser := False;
       Register_Contextual_Menu
@@ -2325,6 +2332,13 @@ package body Browsers.Call_Graph is
          Label  => "References/%e is called by (in browser)",
          Filter => Filter,
          Action => Command);
+
+      Register_Contextual_Menu
+        (Kernel, "",
+         Label  => "References/",
+         Filter => Filter,
+         Action => null);
+      --  Separator
 
       Command := new Find_All_Refs_Command;
       Register_Contextual_Menu
