@@ -305,11 +305,14 @@ package body ALI_Parser is
       File_Num              : Sdep_Id;
       Line                  : Nat;
       Column                : Nat;
-      First_Sect, Last_Sect : Nat) return Entity_Information;
+      First_Sect, Last_Sect : Nat;
+      Allow_Fuzzy           : Boolean := True) return Entity_Information;
    --  Find or create an entity information based on the information contained
    --  in the current LI. This returns a placeholder for the declaration, but
    --  no specific information has been set
    --  If Column is 0, the first entity that matches the line is returned.
+   --  If Allow_Fuzzy is true, we also recognize fuzzy matches when looking for
+   --  the entity.
 
    procedure Process_Renaming_Ref
      (Handler               : access ALI_Handler_Record'Class;
@@ -903,7 +906,8 @@ package body ALI_Parser is
       File_Num              : Sdep_Id;
       Line                  : Nat;
       Column                : Nat;
-      First_Sect, Last_Sect : Nat) return Entity_Information
+      First_Sect, Last_Sect : Nat;
+      Allow_Fuzzy           : Boolean := True) return Entity_Information
    is
       S      : Source_File;
       Entity : Entity_Information;
@@ -981,7 +985,9 @@ package body ALI_Parser is
          Status          => Status,
          Check_Decl_Only => False);
 
-      if Status = Success or else Status = Fuzzy_Match then
+      if Status = Success
+        or else (Allow_Fuzzy and Status = Fuzzy_Match)
+      then
          return Entity;
       else
          Trace (Assert_Me, "Couldn't resolve closure");
@@ -1006,7 +1012,8 @@ package body ALI_Parser is
         (Handler,
          LI, Sfiles, Xref_Section.Table (Xref_Sect).File_Num,
          Xref_Entity.Table (Xref_Ent).Rref_Line,
-         Xref_Entity.Table (Xref_Ent).Rref_Col, First_Sect, Last_Sect);
+         Xref_Entity.Table (Xref_Ent).Rref_Col, First_Sect, Last_Sect,
+         Allow_Fuzzy => False);
    begin
       if Renaming /= null then
          Set_Is_Renaming_Of (Entity, Renaming);
