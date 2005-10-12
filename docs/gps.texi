@@ -2202,7 +2202,6 @@ Menu entries include the following categories:
 
 @table @b
 
-
 @item Source Navigation
 @xref{Contextual Menus for Source Navigation}.
 
@@ -2231,6 +2230,22 @@ Menu entries include the following categories:
 @xref{Refactoring}.
 
 @end table
+
+@cindex language, editor
+@cindex character set
+In addition, an entry @code{Properties...} is always visible in this
+contextual menu. When you select it, a dialog pops up that allows you
+to override the language used for the file, or the character set.
+
+This can be used for instance if you want to open a file that does not
+belong to the current project, but where you want to benefit from the
+syntax highlighting that GPS knows how to.
+
+It is not recommended to override the language for source files that
+belong to the project. Instead, you should use the @code{Project Properties}
+dialog and change the naming scheme if appropriate. This will ensure better
+consistency between GPS and the compiler in the way they manipulate the
+file.
 
 @c -----------------------------------------------------------------
 @node Handling of case exceptions
