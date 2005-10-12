@@ -114,6 +114,7 @@ Editing Files
 * The File Selector::
 * Menu Items::
 * Contextual Menus for Editing Files::
+* Handling of case exceptions::
 * Refactoring::
 * Using an External Editor::
 * Using the Clipboard::
@@ -1464,6 +1465,7 @@ to a new location, instead of moving them one by one.
 * The File Selector::
 * Menu Items::
 * Contextual Menus for Editing Files::
+* Handling of case exceptions::
 * Refactoring::
 * Using an External Editor::
 * Using the Clipboard::
@@ -2200,6 +2202,7 @@ Menu entries include the following categories:
 
 @table @b
 
+
 @item Source Navigation
 @xref{Contextual Menus for Source Navigation}.
 
@@ -2229,8 +2232,11 @@ Menu entries include the following categories:
 
 @end table
 
-@subsection Handling of case exceptions
-@anchor{Handling of case exceptions}
+@c -----------------------------------------------------------------
+@node Handling of case exceptions
+@section Handling of case exceptions
+@cindex casing
+@c -----------------------------------------------------------------
 
 GPS keeps a set of case exceptions that is used by all
 case insensitive languages. When editing or reformatting a buffer for
