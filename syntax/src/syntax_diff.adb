@@ -22,7 +22,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO;             use Ada.Text_IO;
 with String_Utils;            use String_Utils;
 with Basic_Types;             use Basic_Types;
-with Language;                use Language;
 
 package body Syntax_Diff is
 
