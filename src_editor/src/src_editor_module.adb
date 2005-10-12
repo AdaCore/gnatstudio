@@ -2664,7 +2664,8 @@ package body Src_Editor_Module is
          Name   => "Editor properties",
          Label  => "Properties...",
          Action => Command,
-         Filter => Create (Module => Src_Editor_Module_Name));
+         Filter => Create (Module => Src_Editor_Module_Name),
+         Group  => Integer'Last); --  Always keep last
 
       Command := new Control_Command;
       Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
