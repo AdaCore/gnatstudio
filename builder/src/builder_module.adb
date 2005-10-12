@@ -1985,22 +1985,22 @@ package body Builder_Module is
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
-      Register_Menu
-        (Kernel, Build, -"Recompute C/C++ _Xref info", "",
-         On_Compute_Xref'Access);
-      Register_Menu
-        (Kernel, Build, -"Load Xref info in memory", "",
-         Load_Xref_In_Memory'Access);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, Build, Mitem);
-
       --  Dynamic run menu
       Mitem := Register_Menu
         (Kernel, Build, -"_Run", Stock_Execute, null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Build, Mitem);
+
+      Register_Menu
+        (Kernel, Build, -"Recompute C/C++ _Xref info", "",
+         On_Compute_Xref'Access);
+      Register_Menu
+        (Kernel, Build, -"Load Xref info in memory", "",
+         Load_Xref_In_Memory'Access);
 
       Register_Menu
         (Kernel, Tools, -"_Interrupt", Stock_Stop, On_Tools_Interrupt'Access,
