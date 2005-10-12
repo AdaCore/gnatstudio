@@ -2636,6 +2636,7 @@ package body CPP_Parser is
       Source  : Source_File) is
    begin
       Trace (Me, "Parse_File " & Full_Name (Get_Filename (Source)).all);
+      Reset (Source);
       Parse_FIL_Table (Handler, Project, Source);
 
    exception
@@ -2700,8 +2701,7 @@ package body CPP_Parser is
            or else Get_LI (Source) = null
            or else Database_Timestamp (Project) /=
              Get_Timestamp (Get_LI (Source))
-           or else Name_As_Directory
-             (Object_Path (Get_Project (Get_LI (Source)), Recursive => False))
+           or else Get_DB_Dir (Get_Project (Get_LI (Source)))
              /= Dir_Name (Get_LI_Filename (Get_LI (Source))).all
          then
             Parse_File (Handler, Project, Source);
