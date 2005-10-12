@@ -20,8 +20,4 @@ project Standalone is
       for Default_Switches ("Ada") use ("-E");
    end Binder;
 
-   package Linker is
-      for Default_Switches ("Ada") use ("--LINK=../../../gps/obj/gpslink");
-   end Linker;
-
 end Standalone;
