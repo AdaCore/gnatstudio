@@ -2635,8 +2635,13 @@ package body CPP_Parser is
       Project : Project_Type;
       Source  : Source_File) is
    begin
+      --  Do not call Reset (Source) at this point: parsing the .cpp file after
+      --  the .h file would result in losing references found in the TO table
+      --  while parsing the .h file. For instance, most references are found
+      --  in the .cpp file when analyzing the TO table for entities declared in
+      --  the .h file
+
       Trace (Me, "Parse_File " & Full_Name (Get_Filename (Source)).all);
-      Reset (Source);
       Parse_FIL_Table (Handler, Project, Source);
 
    exception
