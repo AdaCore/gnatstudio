@@ -93,36 +93,45 @@ package body GPS.Kernel.Modules is
       Menu    : Gtk_Menu;
    end record;
 
+   type Contextual_Menu_Type is (Type_Command,
+                                 Type_Action,
+                                 Type_Submenu,
+                                 Type_Separator);
+   --  The type of the contextual menu
+
    type Contextual_Menu_Record;
    type Contextual_Menu_Access is access all Contextual_Menu_Record;
-   type Contextual_Menu_Record is record
-      Name     : GNAT.OS_Lib.String_Access;
-      Label    : Contextual_Menu_Label_Creator;
-      Pix      : GNAT.OS_Lib.String_Access;
-      Next     : Contextual_Menu_Access;
-      Ref_Item : Contextual_Menu_Access;
+   type Contextual_Menu_Record
+     (Menu_Type : Contextual_Menu_Type := Type_Separator)
+      is record
+         Name           : GNAT.OS_Lib.String_Access;
+         Label          : Contextual_Menu_Label_Creator;
+         Pix            : GNAT.OS_Lib.String_Access;
+         Next           : Contextual_Menu_Access;
+         Group          : Natural;
+         Visible        : Boolean := True;
+         Sensitive      : Boolean := True;
+         Filter_Matched : Boolean;
+         --  Only valid while computing a contextual menu
 
-      Action   : Action_Record_Access;
+         case Menu_Type is
+            when Type_Command =>
+               Command       : Commands.Interactive.Interactive_Command_Access;
+               Filter        : GPS.Kernel.Action_Filter;
 
-      Command  : Commands.Interactive.Interactive_Command_Access;
-      Filter   : GPS.Kernel.Action_Filter;
+            when Type_Action =>
+               Action        : Action_Record_Access;
 
-      Submenu  : Submenu_Factory;
-      Is_Submenu : Boolean := False;
+            when Type_Submenu =>
+               Submenu         : Submenu_Factory;
+               Submenu_Filter  : GPS.Kernel.Action_Filter;
 
-      Visible    : Boolean := True;
-
-      Sensitive : Boolean := True;
-
-      Filter_Matched : Boolean;
-      --  Only valid while computing a contextual menu
-   end record;
+            when Type_Separator =>
+               Ref_Item         : Contextual_Menu_Access;
+               Separator_Filter : GPS.Kernel.Action_Filter;
+         end case;
+      end record;
    --  A contextual menu entry declared by a user or GPS itself internally
-   --  If Action is not null, then (Command, Filter) should be ignored. We do
-   --  not use a discriminated record, because we need to be able to change the
-   --  whole definition of a menu at once. Likewise, Submenu should only be
-   --  used if none of Action, Command and Filter are used.
-   --  If both Action and Command are null, then we have a separator
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contextual_Menu_Record, Contextual_Menu_Access);
@@ -677,11 +686,14 @@ package body GPS.Kernel.Modules is
       --  null while the action executes
       Ref (Context.Context);
 
-      if Action.Action /= null then
-         C := Create_Proxy (Action.Action.Command, Context);
-      else
-         C := Create_Proxy (Action.Command, Context);
-      end if;
+      case Action.Menu_Type is
+         when Type_Action =>
+            C := Create_Proxy (Action.Action.Command, Context);
+         when Type_Command =>
+            C := Create_Proxy (Action.Command, Context);
+         when others =>
+            null;
+      end case;
 
       Launch_Background_Command
         (Kernel          => Kernel_Handle (Kernel),
@@ -761,58 +773,38 @@ package body GPS.Kernel.Modules is
 
       function Menu_Is_Visible
         (C : Contextual_Menu_Access;
-         Context : Selection_Context_Access) return Boolean
-      is
-         Has_Following_Entry : Boolean := False;
-         C2   : Contextual_Menu_Access;
-         Matches : Boolean;
+         Context : Selection_Context_Access) return Boolean is
       begin
          if not C.Visible then
             return False;
          end if;
 
-         --  A separator is visible only:
-         --     - Its own filter matches
-         --     - Or if it has no own filter, then only if the reference
-         --       item is also visible
-         --     - Always visible if there is no reference item
-         --  and then only if it isn't the last entry the contextual
-         --  menu
+         case C.Menu_Type is
+            when Type_Separator =>
+               --  A separator is visible only:
+               --     - Its own filter matches
+               --     - Or if it has no own filter, then only if the reference
+               --       item is also visible
+               --     - Always visible if there is no reference item
+               --  and then only if it isn't the last entry the contextual
+               --  menu
 
-         if C.Action = null
-           and then C.Command = null
-           and then not C.Is_Submenu
-         then
-            Has_Following_Entry := C.Is_Submenu;
-            if not Has_Following_Entry then
-               C2 := C.Next;
-               while C2 /= null loop
-                  if (C2.Action /= null or else C2.Command /= null)
-                    and then C2.Filter_Matched
-                  then
-                     Has_Following_Entry := True;
-                     exit;
-                  end if;
-                  C2 := C2.Next;
-               end loop;
-            end if;
+               if C.Separator_Filter /= null then
+                  return Filter_Matches (C.Separator_Filter, Context);
+               else
+                  return C.Ref_Item = null
+                    or else C.Ref_Item.Filter_Matched;
+               end if;
 
-            if not Has_Following_Entry then
-               Matches := False;
-            elsif C.Filter /= null then
-               Matches := Filter_Matches (C.Filter, Context);
-            else
-               Matches := C.Ref_Item = null
-                 or else C.Ref_Item.Filter_Matched;
-            end if;
+            when Type_Action =>
+               return Filter_Matches (C.Action.Filter, Context);
 
-         elsif C.Action /= null then
-            Matches := Filter_Matches (C.Action.Filter, Context);
-         else
-            Matches := Filter_Matches (C.Filter, Context);
-         end if;
+            when Type_Command =>
+               return Filter_Matches (C.Filter, Context);
 
-         return Matches;
+            when Type_Submenu =>
+               return Filter_Matches (C.Submenu_Filter, Context);
+         end case;
       end Menu_Is_Visible;
 
       -----------------
@@ -832,25 +824,23 @@ package body GPS.Kernel.Modules is
       begin
          Full_Name := new String'(Label_Name (C, Context));
 
-         --  A separator ?
-
-         if C.Action = null and then C.Command = null then
-            if C.Is_Submenu then
-               Gtk_New (Menu);
-
-               if C.Submenu /= null then
-                  C.Submenu
-                    (Object  => User.Object,
-                     Context => Context,
-                     Menu    => Menu);
-               end if;
-
-               --  Add all contextual menus that are children of C
+         case C.Menu_Type is
+            when Type_Submenu =>
                declare
-                  C2 : Contextual_Menu_Access;
+                  C2    : Contextual_Menu_Access;
                   Full2 : GNAT.OS_Lib.String_Access;
-                  Item    : Gtk_Menu_Item;
+                  Item  : Gtk_Menu_Item;
                begin
+                  Gtk_New (Menu);
+
+                  if C.Submenu /= null then
+                     C.Submenu
+                       (Object  => User.Object,
+                        Context => Context,
+                        Menu    => Menu);
+                  end if;
+
+                  --  Add all contextual menus that are children of C
                   C2 := Convert (User.Kernel.Contextual);
                   while C2 /= null loop
                      if C2.Filter_Matched then
@@ -873,31 +863,33 @@ package body GPS.Kernel.Modules is
                   Gtk_New (Item, Base_Name (Full_Name.all));
                   Set_Submenu (Item, Menu);
                end if;
-            else
-               --  A separator
+
+            when Type_Separator =>
                Gtk_New (Item, "");
-            end if;
 
-         elsif Full_Name.all /= "" then
-            if C.Pix = null then
-               Gtk_New (Item, Base_Name (Full_Name.all));
-            else
-               Gtk_New (Image, Base_Name (Full_Name.all));
-               Gtk_New (Pix,
-                        Stock_Id => C.Pix.all,
-                        Size     => Icon_Size_Menu);
-               Set_Image (Image, Pix);
-               Item := Gtk_Menu_Item (Image);
-            end if;
+            when Type_Action | Type_Command =>
+               if Full_Name.all /= "" then
+                  if C.Pix = null then
+                     Gtk_New (Item, Base_Name (Full_Name.all));
+                  else
+                     Gtk_New (Image, Base_Name (Full_Name.all));
+                     Gtk_New (Pix,
+                              Stock_Id => C.Pix.all,
+                              Size     => Icon_Size_Menu);
+                     Set_Image (Image, Pix);
+                     Item := Gtk_Menu_Item (Image);
+                  end if;
 
-            Action_Callback.Object_Connect
-              (Item, "activate",
-               Contextual_Action'Access,
-               User_Data   => C,
-               Slot_Object => User.Kernel);
-         else
-            Item := null;
-         end if;
+                  Action_Callback.Object_Connect
+                    (Item, "activate",
+                     Contextual_Action'Access,
+                     User_Data   => C,
+                     Slot_Object => User.Kernel);
+               else
+                  Item := null;
+               end if;
+         end case;
+
          if Item /= null then
             Set_Sensitive (Item, C.Sensitive);
          end if;
@@ -942,11 +934,11 @@ package body GPS.Kernel.Modules is
          return False;
       end Has_Explicit_Parent;
 
-      Context : Selection_Context_Access;
-      Menu    : Gtk_Menu := null;
-      Full_Name : GNAT.OS_Lib.String_Access;
-      C       : Contextual_Menu_Access;
-      Item    : Gtk_Menu_Item;
+      Context     : Selection_Context_Access;
+      Menu        : Gtk_Menu := null;
+      Full_Name   : GNAT.OS_Lib.String_Access;
+      C           : Contextual_Menu_Access;
+      Item        : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
    begin
@@ -985,12 +977,10 @@ package body GPS.Kernel.Modules is
 
       --  Compute what items should be made visible, except for separators
       --  for the moment
+
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Is_Submenu
-           or else C.Action  /= null
-           or else C.Command /= null
-         then
+         if C.Menu_Type /= Type_Separator then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
@@ -998,12 +988,10 @@ package body GPS.Kernel.Modules is
 
       --  Same, but only for separators now, since their visibility might
       --  depend on the visibility of other items
+
       C := Convert (User.Kernel.Contextual);
       while C /= null loop
-         if C.Action = null
-           and then C.Command = null
-           and then not C.Is_Submenu
-         then
+         if C.Menu_Type = Type_Separator then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
          end if;
          C := C.Next;
@@ -1674,7 +1662,7 @@ package body GPS.Kernel.Modules is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True)
    is
-      C, Previous : Contextual_Menu_Access;
+      C, Previous, Last_Group : Contextual_Menu_Access;
    begin
       Trace (Me, "Register_Contextual_Menu " & Menu.Name.all);
       C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
@@ -1695,20 +1683,37 @@ package body GPS.Kernel.Modules is
             while C /= null
               and then (Ref_Item = "" or else C.Name.all /= Ref_Item)
             loop
+               if C.Group > Menu.Group then
+                  Last_Group := Previous;
+               end if;
+
                Previous := C;
                C := C.Next;
             end loop;
 
-            Menu.Ref_Item := C;
+            if Menu.Menu_Type = Type_Separator then
+               Menu.Ref_Item := C;
+            end if;
 
             if Ref_Item /= "" and then C = null then
                Trace (Me, "Ref_Item not found (" & Ref_Item & ") when adding "
                       & Menu.Name.all);
             end if;
 
-            if Add_Before and then Ref_Item /= "" then
+            if C = null then
+               if Last_Group /= null then
+                  Menu.Next       := Last_Group.Next;
+                  Last_Group.Next := Menu;
+               elsif Previous /= null then
+                  Menu.Next     := Previous.Next;
+                  Previous.Next := Menu;
+               else
+                  Menu.Next         := Convert (Kernel.Contextual);
+                  Kernel.Contextual := Convert (Menu);
+               end if;
+
+            elsif Add_Before and then Ref_Item /= "" then
                if Previous = null then
-                  --  The first item is the reference
                   Menu.Next := Convert (Kernel.Contextual);
                   Kernel.Contextual := Convert (Menu);
                else
@@ -1716,16 +1721,8 @@ package body GPS.Kernel.Modules is
                   Previous.Next := Menu;
                end if;
             else
-               --  Always add after
-
-               if C = null then
-                  --  Ref_Item not found, add at the end of the list
-                  Menu.Next := null;
-                  Previous.Next := Menu;
-               else
-                  Menu.Next := C.Next;
-                  C.Next := Menu;
-               end if;
+               Menu.Next := C.Next;
+               C.Next := Menu;
             end if;
          else
             Kernel.Contextual := Convert (Menu);
@@ -1767,10 +1764,12 @@ package body GPS.Kernel.Modules is
       Custom        : Custom_Expansion := null;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+      Add_Before    : Boolean := True;
+      Group         : Natural := 0)
    is
       T : Contextual_Label_Param;
       Pix : GNAT.OS_Lib.String_Access;
+      Menu : Contextual_Menu_Access;
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
@@ -1783,24 +1782,34 @@ package body GPS.Kernel.Modules is
          Pix := new String'(Stock_Image);
       end if;
 
-      Add_Contextual_Menu
-        (Kernel,
-         new Contextual_Menu_Record'
-           (Name        => new String'(Name),
-            Action      => Action,
-            Command     => null,
-            Filter      => null,
+      if Action = null then
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Separator,
+            Name        => new String'(Name),
+            Separator_Filter => null,
             Pix         => Pix,
             Next        => null,
             Ref_Item    => null,
+            Group       => Group,
             Visible     => True,
-            Is_Submenu  => False,
-            Submenu     => null,
             Sensitive   => True,
             Filter_Matched => False,
-            Label       => Contextual_Menu_Label_Creator (T)),
-         Ref_Item,
-         Add_Before);
+            Label       => Contextual_Menu_Label_Creator (T));
+      else
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Action,
+            Name        => new String'(Name),
+            Action      => Action,
+            Pix         => Pix,
+            Next        => null,
+            Group       => Group,
+            Visible     => True,
+            Sensitive   => True,
+            Filter_Matched => False,
+            Label       => Contextual_Menu_Label_Creator (T));
+      end if;
+
+      Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -1814,32 +1823,44 @@ package body GPS.Kernel.Modules is
       Label         : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+      Add_Before    : Boolean := True;
+      Group         : Natural := 0)
    is
-      Pix : GNAT.OS_Lib.String_Access;
+      Pix  : GNAT.OS_Lib.String_Access;
+      Menu : Contextual_Menu_Access;
    begin
       if Stock_Image /= "" then
          Pix := new String'(Stock_Image);
       end if;
 
-      Add_Contextual_Menu
-        (Kernel,
-         new Contextual_Menu_Record'
-           (Name        => new String'(Name),
-            Action      => Action,
-            Command     => null,
-            Filter      => null,
+      if Action = null then
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Separator,
+            Name        => new String'(Name),
+            Separator_Filter => null,
             Pix         => Pix,
             Next        => null,
+            Group       => Group,
             Ref_Item    => null,
             Visible     => True,
-            Is_Submenu  => False,
-            Submenu     => null,
             Sensitive   => True,
             Filter_Matched => False,
-            Label       => Contextual_Menu_Label_Creator (Label)),
-         Ref_Item,
-         Add_Before);
+            Label       => Contextual_Menu_Label_Creator (Label));
+      else
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Action,
+            Name        => new String'(Name),
+            Action      => Action,
+            Pix         => Pix,
+            Next        => null,
+            Group       => Group,
+            Visible     => True,
+            Sensitive   => True,
+            Filter_Matched => False,
+            Label       => Contextual_Menu_Label_Creator (Label));
+      end if;
+
+      Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -1854,32 +1875,45 @@ package body GPS.Kernel.Modules is
       Label         : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+      Add_Before    : Boolean := True;
+      Group         : Natural := 0)
    is
-      Pix : GNAT.OS_Lib.String_Access;
+      Pix  : GNAT.OS_Lib.String_Access;
+      Menu : Contextual_Menu_Access;
    begin
       if Stock_Image /= "" then
          Pix := new String'(Stock_Image);
       end if;
 
-      Add_Contextual_Menu
-        (Kernel,
-         new Contextual_Menu_Record'
-           (Name        => new String'(Name),
-            Action      => null,
+      if Action = null then
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Separator,
+            Name        => new String'(Name),
+            Separator_Filter => Filter,
+            Pix         => Pix,
+            Next        => null,
+            Ref_Item    => null,
+            Group       => Group,
+            Visible     => True,
+            Filter_Matched => False,
+            Sensitive   => True,
+            Label       => Contextual_Menu_Label_Creator (Label));
+      else
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Command,
+            Name        => new String'(Name),
             Command     => Action,
             Filter      => Filter,
             Pix         => Pix,
             Next        => null,
-            Ref_Item    => null,
+            Group       => Group,
             Visible     => True,
             Filter_Matched => False,
-            Is_Submenu  => False,
             Sensitive   => True,
-            Submenu     => null,
-            Label       => Contextual_Menu_Label_Creator (Label)),
-         Ref_Item,
-         Add_Before);
+            Label       => Contextual_Menu_Label_Creator (Label));
+      end if;
+
+      Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -1895,10 +1929,12 @@ package body GPS.Kernel.Modules is
       Custom        : Custom_Expansion := null;
       Stock_Image   : String := "";
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+      Add_Before    : Boolean := True;
+      Group         : Natural := 0)
    is
       T : Contextual_Label_Param;
       Pix : GNAT.OS_Lib.String_Access;
+      Menu : Contextual_Menu_Access;
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
@@ -1911,24 +1947,35 @@ package body GPS.Kernel.Modules is
          Pix := new String'(Stock_Image);
       end if;
 
-      Add_Contextual_Menu
-        (Kernel,
-         new Contextual_Menu_Record'
-           (Name        => new String'(Name),
-            Action      => null,
-            Command     => Action,
-            Filter      => Filter,
+      if Action = null then
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Separator,
+            Name        => new String'(Name),
+            Separator_Filter => Filter,
             Pix         => Pix,
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
-            Is_Submenu  => False,
-            Submenu     => null,
+            Group       => Group,
             Sensitive   => True,
             Filter_Matched => False,
-            Label       => Contextual_Menu_Label_Creator (T)),
-         Ref_Item,
-         Add_Before);
+            Label       => Contextual_Menu_Label_Creator (T));
+      else
+         Menu := new Contextual_Menu_Record'
+           (Menu_Type   => Type_Command,
+            Name        => new String'(Name),
+            Command     => Action,
+            Filter      => Filter,
+            Pix         => Pix,
+            Next        => null,
+            Visible     => True,
+            Group       => Group,
+            Sensitive   => True,
+            Filter_Matched => False,
+            Label       => Contextual_Menu_Label_Creator (T));
+      end if;
+
+      Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);
    end Register_Contextual_Menu;
 
    ---------------------------------
@@ -2022,7 +2069,8 @@ package body GPS.Kernel.Modules is
       Filter        : GPS.Kernel.Action_Filter := null;
       Submenu       : Submenu_Factory := null;
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True)
+      Add_Before    : Boolean := True;
+      Group         : Natural := 0)
    is
       T : Contextual_Label_Param;
    begin
@@ -2036,19 +2084,17 @@ package body GPS.Kernel.Modules is
       Add_Contextual_Menu
         (Kernel,
          new Contextual_Menu_Record'
-           (Name        => new String'(Name),
-            Action      => null,
-            Command     => null,
-            Filter      => Filter,
-            Pix         => null,
-            Next        => null,
-            Ref_Item    => null,
-            Visible     => True,
+           (Menu_Type      => Type_Submenu,
+            Name           => new String'(Name),
+            Submenu_Filter => Filter,
+            Pix            => null,
+            Next           => null,
+            Visible        => True,
             Filter_Matched => False,
-            Sensitive   => True,
-            Submenu     => Submenu,
-            Is_Submenu  => True,
-            Label       => Contextual_Menu_Label_Creator (T)),
+            Sensitive      => True,
+            Group          => Group,
+            Submenu        => Submenu,
+            Label          => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
    end Register_Contextual_Submenu;

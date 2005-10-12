@@ -416,7 +416,8 @@ package GPS.Kernel.Modules is
       Custom      : Custom_Expansion := null;
       Stock_Image : String := "";
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Group       : Natural := 0);
    --  Register a new contextual menu entry to tbe displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Label (or Name if label isn't
@@ -437,8 +438,17 @@ package GPS.Kernel.Modules is
    --  to which the menu should be placed. There is no garantee that the new
    --  entry will appear just before or just after that item, in particular if
    --  other entries had the same requirement.
+   --
+   --  Separators:
    --  If Action is null, then a separator will be added to the contextual
-   --  menu instead. It is added in a submenu if Label is not the empty string
+   --  menu instead. It is added in a submenu if Label is not the empty string.
+   --  It is good policy to specify a Ref_Item for a separator, since the
+   --  separator will automatically be hidden if the Ref_Item itself is hidden
+   --
+   --  Groups:
+   --  Group indicates the group of the entry. If Ref_Item is specified, this
+   --  parameter is ignored. Otherwise, it groups items so that all items of
+   --  the same group appear before all items with a greater group number.
 
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -447,7 +457,8 @@ package GPS.Kernel.Modules is
       Label       : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image : String := "";
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Group       : Natural := 0);
    --  Same as above, except the label of the menu is computed dynamically
 
    procedure Register_Contextual_Menu
@@ -458,7 +469,8 @@ package GPS.Kernel.Modules is
       Label       : access Contextual_Menu_Label_Creator_Record'Class;
       Stock_Image : String := "";
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Group       : Natural := 0);
    --  Same as above, except the action to execute is defined internally
    --  When the command is executed, the Context.Context field will be set to
    --  the current selection context, and Context.Event to the event that
@@ -476,7 +488,8 @@ package GPS.Kernel.Modules is
       Custom      : Custom_Expansion := null;
       Stock_Image : String := "";
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Group       : Natural := 0);
    --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
@@ -493,7 +506,8 @@ package GPS.Kernel.Modules is
       Filter     : GPS.Kernel.Action_Filter := null;
       Submenu    : Submenu_Factory := null;
       Ref_Item   : String := "";
-      Add_Before : Boolean := True);
+      Add_Before : Boolean := True;
+      Group      : Natural := 0);
    --  Register a new submenu. Its contents can be computed dynamically by
    --  providing a Submenu callback. This can be left to null if all entries
    --  are added through Register_Contextual_Menu (in which case the call to
