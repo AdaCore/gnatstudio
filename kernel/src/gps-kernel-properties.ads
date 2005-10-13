@@ -50,18 +50,18 @@ package GPS.Kernel.Properties is
    --  Such properties can be marked as persistent, that is they will exist
    --  from one session of GPS to the next, transparently.
 
-   function Save
-     (Property : access Property_Record) return Glib.Xml_Int.Node_Ptr
-     is abstract;
-   --  Save the property to an XML node. This is the child node of the node
-   --  associated with the property.
-   --  Null should be returned if the property cannot be saved.
+   procedure Save
+     (Property : access Property_Record;
+      Node     : in out Glib.Xml_Int.Node_Ptr) is abstract;
+   --  Save the property to an XML node.
+   --  The Node has already been created, and its name must not be changed.
+   --  Attributes can be added if needed, though.
    --  In the end, the XML file will contain something like:
    --     <properties file="...">
    --        <property name="...">save1</property>
    --        <property name="...">save2</property>
    --     </properties>
-   --  where "save1" and "save2" are results of Save.
+   --  where "save1" and "save2" are set by Save.
 
    procedure Load
      (Property : in out Property_Record; From : Glib.Xml_Int.Node_Ptr)
@@ -71,6 +71,8 @@ package GPS.Kernel.Properties is
    --  it doesn't match the type expected by Property, it is likely because two
    --  properties have the same name. In this case, an error message should be
    --  written in the console.
+   --  You mustn't keep references to the Node_Ptr, which will be destroyed
+   --  after the call to Load
 
    procedure Destroy (Property : in out Property_Record);
    --  Free the memory occupied by the property. You should always call the
@@ -180,20 +182,20 @@ package GPS.Kernel.Properties is
 
 private
    procedure Destroy (Property : in out String_Property);
-   function Save
-     (Property : access String_Property) return Glib.Xml_Int.Node_Ptr;
+   procedure Save
+     (Property : access String_Property; Node : in out Glib.Xml_Int.Node_Ptr);
    procedure Load
      (Property : in out String_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation
 
-   function Save
-     (Property : access Integer_Property) return Glib.Xml_Int.Node_Ptr;
+   procedure Save
+     (Property : access Integer_Property; Node : in out Glib.Xml_Int.Node_Ptr);
    procedure Load
      (Property : in out Integer_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation
 
-   function Save
-     (Property : access Boolean_Property) return Glib.Xml_Int.Node_Ptr;
+   procedure Save
+     (Property : access Boolean_Property; Node : in out Glib.Xml_Int.Node_Ptr);
    procedure Load
      (Property : in out Boolean_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation

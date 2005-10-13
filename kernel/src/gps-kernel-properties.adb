@@ -53,15 +53,15 @@ package body GPS.Kernel.Properties is
       Unparsed   : Node_Ptr;
       Persistent : Boolean;
    end record;
-   No_Description : constant Property_Description := (null, null, False);
+   type Property_Description_Access is access Property_Description;
    --  The description of a property
 
-   procedure Free (Description : in out Property_Description);
+   procedure Free (Description : in out Property_Description_Access);
 
    package Properties_Description_Hash is new String_Hash
-     (Data_Type      => Property_Description,
+     (Data_Type      => Property_Description_Access,
       Free_Data      => Free,
-      Null_Ptr       => No_Description,
+      Null_Ptr       => null,
       Case_Sensitive => True);
    use Properties_Description_Hash.String_Hash_Table;
 
@@ -126,14 +126,20 @@ package body GPS.Kernel.Properties is
    -- Free --
    ----------
 
-   procedure Free (Description : in out Property_Description) is
+   procedure Free (Description : in out Property_Description_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Property_Record'Class, Property_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Property_Description, Property_Description_Access);
    begin
       if Description.Value /= null then
          Destroy (Description.Value.all);
          Unchecked_Free (Description.Value);
       end if;
+      if Description.Unparsed /= null then
+         Free (Description.Unparsed);
+      end if;
+      Unchecked_Free (Description);
    end Free;
 
    ----------
@@ -165,20 +171,12 @@ package body GPS.Kernel.Properties is
    -- Save --
    ----------
 
-   function Save
-     (Property : access String_Property) return Glib.Xml_Int.Node_Ptr is
+   procedure Save
+     (Property : access String_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
       if Property.Value /= null then
-         return new Node'
-           (Tag        => new String'("value"),
-            Attributes => null,
-            Value      => new String'(Property.Value.all),
-            Parent     => null,
-            Child      => null,
-            Next       => null,
-            Specific_Data => 1);
-      else
-         return null;
+         Node.Value := new String'(Property.Value.all);
       end if;
    end Save;
 
@@ -186,34 +184,22 @@ package body GPS.Kernel.Properties is
    -- Save --
    ----------
 
-   function Save
-     (Property : access Integer_Property) return Glib.Xml_Int.Node_Ptr is
+   procedure Save
+     (Property : access Integer_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
-      return new Node'
-        (Tag        => new String'("value"),
-         Attributes => null,
-         Value      => new String'(Integer'Image (Property.Value)),
-         Parent     => null,
-         Child      => null,
-         Next       => null,
-         Specific_Data => 1);
+      Node.Value := new String'(Integer'Image (Property.Value));
    end Save;
 
    ----------
    -- Save --
    ----------
 
-   function Save
-     (Property : access Boolean_Property) return Glib.Xml_Int.Node_Ptr is
+   procedure Save
+     (Property : access Boolean_Property;
+      Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
-      return new Node'
-        (Tag        => new String'("value"),
-         Attributes => null,
-         Value      => new String'(Boolean'Image (Property.Value)),
-         Parent     => null,
-         Child      => null,
-         Next       => null,
-         Specific_Data => 1);
+      Node.Value := new String'(Boolean'Image (Property.Value));
    end Save;
 
    ----------
@@ -287,7 +273,7 @@ package body GPS.Kernel.Properties is
          Set (All_Properties, Resource_Key, Hash);
       end if;
 
-      Set (Hash.all, Name, Property);
+      Set (Hash.all, Name, new Property_Description'(Property));
    end Set_Resource_Property;
 
    ---------------------------
@@ -303,16 +289,17 @@ package body GPS.Kernel.Properties is
    is
       pragma Unreferenced (Resource_Kind);
       Hash : Properties_Description_HTable;
-      Descr : Property_Description;
+      Descr : Property_Description_Access;
    begin
       Found := False;
       Hash := Get (All_Properties, Resource_Key);
       if Hash /= null then
          Descr := Get (Hash.all, Name);
-         if Descr /= No_Description then
+         if Descr /= null then
             if Descr.Value = null then
                Load (Property, Descr.Unparsed);
                Descr.Value := new Property_Record'Class'(Property);
+               Free (Descr.Unparsed);  --  No longer needed
             end if;
 
             Property := Descr.Value.all;
@@ -458,7 +445,7 @@ package body GPS.Kernel.Properties is
       Iter2 : Properties_Description_Hash.String_Hash_Table.Iterator;
       Hash  : Properties_Description_HTable;
       Root, File, Prop : Node_Ptr;
-      Descr : Property_Description;
+      Descr : Property_Description_Access;
    begin
       Trace (Me, "Saving " & Filename);
       Root := new Node'
@@ -487,24 +474,27 @@ package body GPS.Kernel.Properties is
          Get_First (Hash.all, Iter2);
          loop
             Descr := Get_Element (Iter2);
-            exit when Descr = No_Description;
+            exit when Descr = null;
 
             if Descr.Persistent then
-               Prop := new Node'
-                 (Tag        => new String'("property"),
-                  Attributes => new String'("name='" & Get_Key (Iter2) & "'"),
-                  Value      => null,
-                  Parent     => null,
-                  Child      => null,
-                  Next       => null,
-                  Specific_Data => 1);
-               Add_Child (File, Prop);
-
                if Descr.Value = null then
-                  Add_Child (Prop, Descr.Unparsed);
+                  Descr.Unparsed.Tag := new String'("property");
+                  Prop := Descr.Unparsed;
+                  Descr.Unparsed := null;
+
                else
-                  Add_Child (Prop, Save (Descr.Value));
+                  Prop := new Node'
+                    (Tag        => new String'("property"),
+                     Attributes =>
+                        new String'("name='" & Get_Key (Iter2) & "'"),
+                     Value      => null,
+                     Parent     => null,
+                     Child      => null,
+                     Next       => null,
+                     Specific_Data => 1);
+                  Save (Descr.Value, Prop);
                end if;
+               Add_Child (File, Prop);
             end if;
 
             Get_Next (Hash.all, Iter2);
@@ -520,6 +510,7 @@ package body GPS.Kernel.Properties is
       end loop;
 
       Print (Root, Filename);
+      Free (Root);
       Reset (All_Properties);
    end Save_Persistent_Properties;
 
@@ -531,7 +522,7 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Filename : constant String := Get_Properties_Filename (Kernel);
-      Root, File, Prop : Node_Ptr;
+      Root, File, Prop, Prop2 : Node_Ptr;
    begin
       Trace (Me, "Loading " & Filename);
       if Is_Readable_File (Filename) then
@@ -540,14 +531,18 @@ package body GPS.Kernel.Properties is
          while File /= null loop
             Prop := File.Child;
             while Prop /= null loop
+               Prop2 := Deep_Copy (Prop);
+               Xml_Int.Free (Prop2.Tag);
+               --  Prop.Tag is not needed, always "property", and this
+               --  saves space in memory
+
                Set_Resource_Property
                  (Resource_Key  => Get_Attribute (File, "file"),
                   Resource_Kind => "file",
                   Name          => Get_Attribute (Prop, "name"),
                   Property      => (Value      => null,
-                                    Unparsed   => Prop.Child,
+                                    Unparsed   => Prop2,
                                     Persistent => True));
-               Prop.Child := null; --  Since we are deleting the tree afterward
                Prop := Prop.Next;
             end loop;
 
