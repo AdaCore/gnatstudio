@@ -34,7 +34,7 @@ package body GPS.Kernel.Properties is
    Me : constant Debug_Handle := Create ("Properties");
 
    System_Wide_Properties : constant Debug_Handle :=
-     Create ("System_Wide_Properties", Default => Off);
+     Create ("System_Wide_Properties", Default => On);
    --  If this trace is activated the properties file exists in ~/.gps, and
    --  contains information for all the files on the system. Otherwise, it is
    --  create in the root project's object directory, and only contains info
