@@ -9,6 +9,9 @@ New features in GPS 3.1.0
 - E903-003 New check box in the "Find references..." contextual menu to find
   all entities imported from a given file
 
+- E817-002 Data Window no longer open automatically with the debugger.
+  It is now open on demand
+
 - E718-005 New shell command GPS.Project.dependencies
 
 - Open From Project dialog now states explicitely when no completion is found
