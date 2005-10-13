@@ -8,7 +8,11 @@ root=`dirname $0`
 
 # Strip 'bin' directory to retrieve the real root
 
-root=`dirname $root`
+if [ $root = "." ]; then
+   root=`cd ..; pwd`
+else
+   root=`dirname $root`
+fi
 
 GPS_STARTUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 GPS_STARTUP_PATH=$PATH
