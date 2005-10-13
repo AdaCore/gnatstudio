@@ -167,11 +167,6 @@ package body GVD.Process is
    --  Callback for all the button press events in the debugger command window.
    --  This is used to display the contexual menu.
 
-   function On_Data_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
-   --  Callback for the "delete_event" signal on the Data window.
-
    function On_Stack_Delete_Event
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
@@ -190,6 +185,10 @@ package body GVD.Process is
    procedure On_Debugger_Text_Grab_Focus
      (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the "grab_focus" signal on the command window.
+
+   procedure On_Data_Canvas_Destroy
+     (Canvas : access Gtk_Widget_Record'Class);
+   --  Called when the data canvas is destroyed
 
    function Interpret_Command_Handler
      (Console : access Interactive_Console_Record'Class;
@@ -213,12 +212,6 @@ package body GVD.Process is
       Object : System.Address)
       return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
-
-   procedure Setup_Data_Window
-     (Process : access Visual_Debugger_Record'Class);
-   --  Set up/initialize the data window associated with Process.
-   --  History will be used for the various dialog's combo boxes to store the
-   --  values used by the user
 
    procedure Setup_Command_Window
      (Process : access Visual_Debugger_Record'Class);
@@ -346,27 +339,6 @@ package body GVD.Process is
       N := Write (TTY_Descriptor (Top.Debuggee_TTY), NL'Address, 1);
       return "";
    end Debuggee_Console_Handler;
-
-   --------------------------
-   -- On_Data_Delete_Event --
-   --------------------------
-
-   function On_Data_Delete_Event
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Object);
-
-   begin
-      if Process.Exiting then
-         Process.Data_Scrolledwindow := null;
-         return False;
-      else
-         return True;
-      end if;
-   end On_Data_Delete_Event;
 
    ---------------------------
    -- On_Stack_Delete_Event --
@@ -928,67 +900,93 @@ package body GVD.Process is
       end if;
    end Create_Call_Stack;
 
-   -----------------------
-   -- Setup_Data_Window --
-   -----------------------
+   ----------------------------
+   -- On_Data_Canvas_Destroy --
+   ----------------------------
 
-   procedure Setup_Data_Window
+   procedure On_Data_Canvas_Destroy
+     (Canvas : access Gtk_Widget_Record'Class)
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Process (GVD_Canvas (Canvas)));
+   begin
+      Process.Data_Canvas := null;
+      Process.Data_Scrolledwindow := null;
+   end On_Data_Canvas_Destroy;
+
+   ------------------------
+   -- Create_Data_Window --
+   ------------------------
+
+   procedure Create_Data_Window
      (Process : access Visual_Debugger_Record'Class)
    is
+      Data_Window_Name : constant String := -"Debugger Data";
       Child           : MDI_Child;
       Annotation_Font : Pango_Font_Description;
    begin
-      --  Create the data area
+      if Process.Data_Canvas = null then
+         --  Create the data area
 
-      Gtk_New (Process.Data_Scrolledwindow);
-      Set_Policy
-        (Process.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-      Object_Return_Callback.Object_Connect
-        (Process.Data_Scrolledwindow, "delete_event",
-         On_Data_Delete_Event'Access, Process);
+         Gtk_New (Process.Data_Scrolledwindow);
+         Set_Policy
+           (Process.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
 
-      --  Create the canvas for this visual debugger.
+         --  Create the canvas for this visual debugger.
 
-      Gtk_New (GVD_Canvas (Process.Data_Canvas),
-               GPS.Kernel.Get_History (GPS_Window (Process.Window).Kernel));
-      Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
-      Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
-      Widget_Callback.Connect
-        (Process.Data_Canvas, "background_click",
-         Widget_Callback.To_Marshaller (On_Background_Click'Access));
-      Align_On_Grid (Process.Data_Canvas, True);
+         Gtk_New (GVD_Canvas (Process.Data_Canvas),
+                  GPS.Kernel.Get_History (GPS_Window (Process.Window).Kernel));
+         Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
+         Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
+         Widget_Callback.Connect
+           (Process.Data_Canvas, "background_click",
+            Widget_Callback.To_Marshaller (On_Background_Click'Access));
+         Widget_Callback.Connect
+           (Process.Data_Canvas, "destroy",
+            On_Data_Canvas_Destroy'Access);
+         Align_On_Grid (Process.Data_Canvas, True);
 
-      --  Initialize the canvas
+         --  Initialize the canvas
 
-      Annotation_Font :=
-        Copy (Get_Pref (GPS.Kernel.Preferences.Default_Font));
-      Set_Size
-        (Annotation_Font,
-         Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
-      Free (Annotation_Font);
+         Annotation_Font :=
+           Copy (Get_Pref (GPS.Kernel.Preferences.Default_Font));
+         Set_Size
+           (Annotation_Font,
+            Gint'Max (Pango_Scale,
+                      Get_Size (Annotation_Font) - 2 * Pango_Scale));
+         Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
+         Free (Annotation_Font);
 
-      Child := Put
-        (Get_Kernel (Debugger_Module_ID.all),
-         Process.Data_Scrolledwindow,
-         Position => Position_Debugger_Data,
-         Flags    => All_Buttons,
-         Module   => Debugger_Module_ID);
+         Child := Put
+           (Get_Kernel (Debugger_Module_ID.all),
+            Process.Data_Scrolledwindow,
+            Position => Position_Debugger_Data,
+            Module   => Debugger_Module_ID);
+         Set_Focus_Child (Child);
+         Split (Process.Window.MDI,
+                Orientation_Vertical,
+                Reuse_If_Possible => True,
+                Height => 200,
+                After => False);
 
-      Set_Focus_Child (Child);
-      Split (Process.Window.MDI,
-             Orientation_Vertical,
-             Reuse_If_Possible => True,
-             Height => 200,
-             After => False);
+         if Process.Debugger_Num = 1 then
+            Set_Title (Child, Data_Window_Name);
+         else
+            Set_Title (Child, Data_Window_Name & " <" &
+                       Image (Process.Debugger_Num) & ">");
+         end if;
 
-      if Process.Debugger_Num = 1 then
-         Set_Title (Child, -"Debugger Data");
+         --  Initialize the pixmaps and colors for the canvas
+
+         Realize (Process.Data_Canvas);
+         Init_Graphics (GVD_Canvas (Process.Data_Canvas));
+
       else
-         Set_Title (Child, (-"Debugger Data") & " <" &
-                    Image (Process.Debugger_Num) & ">");
+         Child := Find_MDI_Child
+           (Process.Window.MDI, Process.Data_Scrolledwindow);
+         Set_Focus_Child (Child);
       end if;
-   end Setup_Data_Window;
+   end Create_Data_Window;
 
    --------------------------
    -- Setup_Command_Window --
@@ -1182,16 +1180,10 @@ package body GVD.Process is
    begin
       Set_Busy (Process, True);
       Setup_Command_Window (Process);
-      Setup_Data_Window (Process);
 
       if Get_Pref (Show_Call_Stack) then
          Create_Call_Stack (Process);
       end if;
-
-      --  Initialize the pixmaps and colors for the canvas
-
-      Realize (Process.Data_Canvas);
-      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String'(Remote_Host);
@@ -1321,7 +1313,9 @@ package body GVD.Process is
          Process.Exiting := True;
 
          Close (Window.MDI, Process.Debugger_Text);
-         Close (Window.MDI, Process.Data_Scrolledwindow);
+         if Process.Data_Scrolledwindow /= null then
+            Close (Window.MDI, Process.Data_Scrolledwindow);
+         end if;
 
          if Process.Stack /= null then
             Close (Window.MDI, Process.Stack);
@@ -1404,6 +1398,7 @@ package body GVD.Process is
       Match (Graph_Cmd_Format, Cmd, Matched);
 
       if Matched (0) /= No_Match then
+         Create_Data_Window (Process);
          Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
            or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
 
@@ -1551,6 +1546,8 @@ package body GVD.Process is
          Match (Graph_Cmd_Format2, Cmd, Matched);
 
          if Matched (2) /= No_Match then
+            Create_Data_Window (Process);
+
             Index := Matched (2).First;
             Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'e'
               or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'E';
@@ -1573,6 +1570,7 @@ package body GVD.Process is
          else
             Match (Graph_Cmd_Format3, Cmd, Matched);
             if Matched (1) /= No_Match then
+               Create_Data_Window (Process);
                Index := Matched (1).First;
                while Index <= Cmd'Last loop
                   Last := Index;

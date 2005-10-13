@@ -355,6 +355,10 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Kill
 
+   procedure On_Data_Window
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Data Window
+
    procedure On_Call_Stack
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Data->Call Stack
@@ -1444,6 +1448,19 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Interrupt;
+
+   --------------------
+   -- On_Data_Window --
+   --------------------
+
+   procedure On_Data_Window
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Create_Data_Window
+        (Visual_Debugger (Get_Debugger_List (Kernel).Debugger));
+   end On_Data_Window;
 
    -------------------
    -- On_Call_Stack --
@@ -3563,6 +3580,8 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
 
+      Register_Menu (Kernel, Data_Sub, -"_Data Window", "",
+                     On_Data_Window'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
                      On_Call_Stack'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",

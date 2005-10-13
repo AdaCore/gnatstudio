@@ -312,23 +312,26 @@ package body GVD.Canvas is
       Win : constant Gdk.Window.Gdk_Window := Get_Window (Canvas);
    begin
       pragma Assert (Win /= null);
-      Create_From_Xpm_D
-        (Canvas.Box_Context.Close_Pixmap, Win,
-         Canvas.Box_Context.Close_Mask, Null_Color, cancel_xpm);
-      Create_From_Xpm_D
-        (Canvas.Box_Context.Locked_Pixmap, Win,
-         Canvas.Box_Context.Locked_Mask, Null_Color, lock_xpm);
-      Create_From_Xpm_D
-        (Canvas.Box_Context.Auto_Display_Pixmap, Win,
-         Canvas.Box_Context.Auto_Display_Mask, Null_Color, display_small_xpm);
-      Create_From_Xpm_D
-        (Canvas.Item_Context.Hidden_Pixmap, Win,
-         Canvas.Item_Context.Hidden_Mask, Null_Color, box_xpm);
-      Create_From_Xpm_D
-        (Canvas.Item_Context.Unknown_Pixmap, Win,
-         Canvas.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
+      if Canvas.Box_Context.Close_Pixmap = null then
+         Create_From_Xpm_D
+           (Canvas.Box_Context.Close_Pixmap, Win,
+            Canvas.Box_Context.Close_Mask, Null_Color, cancel_xpm);
+         Create_From_Xpm_D
+           (Canvas.Box_Context.Locked_Pixmap, Win,
+            Canvas.Box_Context.Locked_Mask, Null_Color, lock_xpm);
+         Create_From_Xpm_D
+           (Canvas.Box_Context.Auto_Display_Pixmap, Win,
+            Canvas.Box_Context.Auto_Display_Mask, Null_Color,
+            display_small_xpm);
+         Create_From_Xpm_D
+           (Canvas.Item_Context.Hidden_Pixmap, Win,
+            Canvas.Item_Context.Hidden_Mask, Null_Color, box_xpm);
+         Create_From_Xpm_D
+           (Canvas.Item_Context.Unknown_Pixmap, Win,
+            Canvas.Item_Context.Unknown_Mask, Null_Color, trash_xpm);
 
-      GVD.Canvas.Preferences_Changed (Canvas);
+         GVD.Canvas.Preferences_Changed (Canvas);
+      end if;
    end Init_Graphics;
 
    -----------------------
