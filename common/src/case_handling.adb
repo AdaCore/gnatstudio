@@ -50,27 +50,29 @@ package body Case_Handling is
    procedure Mixed_Case (S : in out String) is
       Dot : Boolean := False;
    begin
-      if S'Length /= 0 then
-         S (S'First) := To_Upper (S (S'First));
-
-         for J in S'First + 1 .. S'Last loop
-            if Dot or else S (J - 1) = '_' then
-               S (J) := To_Upper (S (J));
-            else
-               S (J) := To_Lower (S (J));
-            end if;
-
-            if S (J) = '.' then
-               Dot := True;
-            elsif S (J) /= ' '
-              and then S (J) /= ASCII.HT
-              and then S (J) /= ASCII.LF
-              and then S (J) /= ASCII.CR
-            then
-               Dot := False;
-            end if;
-         end loop;
+      if S'Length = 0 then
+         return;
       end if;
+
+      S (S'First) := To_Upper (S (S'First));
+
+      for J in S'First + 1 .. S'Last loop
+         if Dot or else S (J - 1) = '_' then
+            S (J) := To_Upper (S (J));
+         else
+            S (J) := To_Lower (S (J));
+         end if;
+
+         if S (J) = '.' then
+            Dot := True;
+         elsif S (J) /= ' '
+           and then S (J) /= ASCII.HT
+           and then S (J) /= ASCII.LF
+           and then S (J) /= ASCII.CR
+         then
+            Dot := False;
+         end if;
+      end loop;
    end Mixed_Case;
 
    ----------------------
