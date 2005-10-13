@@ -2439,7 +2439,8 @@ package body GVD_Module is
    begin
       return Process /= null
         and then Process.Debugger /= null
-        and then Context.all in Entity_Selection_Context'Class
+        and then (Context.all in Entity_Selection_Context'Class
+                  or else Context.all in File_Area_Context'Class)
         and then not Command_In_Process (Get_Process (Process.Debugger));
    end Filter_Matches_Primitive;
 
@@ -2474,9 +2475,13 @@ package body GVD_Module is
    begin
       if Context.all in Entity_Selection_Context'Class then
          Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+
          return Entity = null
            or else (not Get_Kind (Entity).Is_Type
                     and then Is_Printable_Entity (Get_Kind (Entity).Kind));
+      elsif Context.all in File_Area_Context'Class then
+         --  We assume the user knows best
+         return True;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -3423,7 +3428,7 @@ package body GVD_Module is
       Command := new Print_Variable_Command;
       Register_Contextual_Menu
         (Kernel, "Debug print variable",
-         Label  => "Debug/Print %e",
+         Label  => "Debug/Print %s",
          Action => Command,
          Filter => Filter);
 
@@ -3431,7 +3436,7 @@ package body GVD_Module is
       Print_Variable_Command (Command.all).Display := True;
       Register_Contextual_Menu
         (Kernel, "Debug display variable",
-         Label  => "Debug/Display %e",
+         Label  => "Debug/Display %s",
          Action => Command,
          Filter => Filter);
 
