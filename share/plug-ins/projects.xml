@@ -341,7 +341,7 @@
        label="Linker options"
        hide_in="wizard"
        list="true"
-       description="Additional switches that should be put on the command line when linking an application with the library"
+       description="Additional linker switches used when linking an executable. This attribute is ignored in the main project, and only used from dependent projects"
        <string />
    </project_attribute>
 
