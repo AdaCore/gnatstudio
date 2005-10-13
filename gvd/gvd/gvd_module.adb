@@ -2993,9 +2993,15 @@ package body GVD_Module is
       Entity : Entity_Selection_Context_Access;
       Lang   : Language_Access;
    begin
-      if Context = null
-        or else Context.all not in Entity_Selection_Context'Class
-      then
+      if Context = null then
+         return "";
+      end if;
+
+      if Context.all in File_Area_Context'Class then
+         return Text_Information (File_Area_Context_Access (Context));
+      end if;
+
+      if Context.all not in Entity_Selection_Context'Class then
          return "";
       end if;
 
