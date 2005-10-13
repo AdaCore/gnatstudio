@@ -9181,6 +9181,10 @@ project, ie the one that is importing the one the user clicked on. Note that
 with this definition of parent project, a given project might have multiple
 parents. The one that is returned is read from the Project View itself.
 
+@item %s
+This is the text selected by the user, if a single line was selected. When
+multiple lines were selected, this returns the empty string
+
 @item %p
 The current project. This is the name of the project, not the project file, ie
 the @file{.gpr} extension is not included in this name, and the casing is the
