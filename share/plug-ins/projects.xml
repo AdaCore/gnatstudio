@@ -305,7 +305,7 @@
    <project_attribute
        name="library_ali_dir"
        editor_page="Library"
-       editor_seection="General"
+       editor_section="General"
        label="Library ALI Directory"
        hide_in="wizard"
        description="Directory in which the ALI files needed by the GNAT compiler will be copied when the library is installed. By default, this will be the same as the Library Directory. This attribute requires a recent version of GNAT">
@@ -330,6 +330,18 @@
        label="Version"
        hide_in="wizard"
        description="The version of the library. This is a platform depend string, and you should make sure it is valid for your platform.">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="linker_options"
+       package="linker"
+       editor_page="Library"
+       editor_section="General"
+       label="Linker options"
+       hide_in="wizard"
+       list="true"
+       description="Additional switches that should be put on the command line when creating the library">
        <string />
    </project_attribute>
 
@@ -364,5 +376,4 @@
        description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory">
        <string type="directory" />
    </project_attribute>
-
 </GPS>
