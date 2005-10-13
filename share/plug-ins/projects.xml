@@ -341,7 +341,7 @@
        label="Linker options"
        hide_in="wizard"
        list="true"
-       description="Additional switches that should be put on the command line when creating the library">
+       description="Additional switches that should be put on the command line when linking an application with the library"
        <string />
    </project_attribute>
 
