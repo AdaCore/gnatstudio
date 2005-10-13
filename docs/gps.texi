@@ -5213,6 +5213,10 @@ need to stop the process on a breakpoint or interrupt it, before using
 the following commands. Failing to do so will result in blank windows.
 
 @table @b
+   @item Data Window
+      Displays the Data window. If this window already exists, it is raised so
+      that it becomes visible
+
    @item Call Stack
 @cindex call stack
       Displays the Call Stack window.
@@ -5370,6 +5374,15 @@ the following commands. Failing to do so will result in blank windows.
 @c --------------------------------------------------------------------
 
 @noindent
+
+The Data Window is the area in which various information about the debugged
+process can be displayed. This includes the value of selected variables, the
+current contents of the registeres, the local variables,@dots{}
+
+This window is not open by default when you start the debugger, but will be
+created automatically when GPS needs to display some information in it because
+you have selected a menu.
+
 @cindex menu
 @cindex contextual menu
    The data window contains all the graphic boxes that can be accessed
