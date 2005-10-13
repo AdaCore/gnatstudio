@@ -2502,6 +2502,8 @@ package body GVD_Module is
          return Entity = null
            or else (not Get_Kind (Entity).Is_Type
                     and then Is_Access_Entity (Get_Kind (Entity).Kind));
+      elsif Context.all in File_Area_Context'Class then
+         return True;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -2990,6 +2992,7 @@ package body GVD_Module is
      (Context     : Selection_Context_Access;
       Dereference : Boolean) return String
    is
+      File   : File_Selection_Context_Access;
       Entity : Entity_Selection_Context_Access;
       Lang   : Language_Access;
    begin
@@ -2998,6 +3001,21 @@ package body GVD_Module is
       end if;
 
       if Context.all in File_Area_Context'Class then
+         if Dereference then
+            File := File_Selection_Context_Access (Context);
+            if Has_File_Information (File) then
+               Lang := Get_Language_From_File
+                 (Get_Language_Handler (Get_Kernel (Context)),
+                  File_Information (File));
+
+               if Lang /= null then
+                  return Dereference_Name
+                    (Lang,
+                     Text_Information (File_Area_Context_Access (Context)));
+               end if;
+            end if;
+         end if;
+
          return Text_Information (File_Area_Context_Access (Context));
       end if;
 
