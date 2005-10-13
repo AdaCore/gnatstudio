@@ -430,6 +430,8 @@ package GPS.Kernel.Modules is
    --     %a => current category
    --     %e => current entity name
    --     %i => current importing project
+   --     %s => current single-line selection (nothing if multiples lines are
+   --           selected)
    --     %C => value returned by Custom (the menu will not appear if this
    --           returns the empty string or Custom is undefined)
    --  The label might contain a path to indicate submenus.
