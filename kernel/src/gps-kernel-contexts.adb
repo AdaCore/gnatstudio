@@ -469,9 +469,11 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Area_Information
      (Context    : access File_Area_Context;
+      Text       : String;
       Start_Line : Integer := 0;
       End_Line   : Integer := 0) is
    begin
+      Context.Text       := new String'(Text);
       Context.Start_Line := Start_Line;
       Context.End_Line   := End_Line;
    end Set_Area_Information;
@@ -580,6 +582,30 @@ package body GPS.Kernel.Contexts is
    begin
       Destroy (File_Selection_Context (Context));
       Free (Context.Id);
+   end Destroy;
+
+   ----------------------
+   -- Text_Information --
+   ----------------------
+
+   function Text_Information
+     (Context : access File_Area_Context) return String is
+   begin
+      if Context.Text /= null then
+         return Context.Text.all;
+      else
+         return "";
+      end if;
+   end Text_Information;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out File_Area_Context) is
+   begin
+      Destroy (File_Selection_Context (Context));
+      Free (Context.Text);
    end Destroy;
 
    ------------------------------

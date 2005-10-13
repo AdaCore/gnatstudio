@@ -124,6 +124,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Area_Information
      (Context    : access File_Area_Context;
+      Text       : String;
       Start_Line : Integer := 0;
       End_Line   : Integer := 0);
    --  Set the area information in Context
@@ -133,6 +134,10 @@ package GPS.Kernel.Contexts is
       Start_Line : out Integer;
       End_Line   : out Integer);
    --  Return the area information in Context
+
+   function Text_Information
+     (Context : access File_Area_Context) return String;
+   --  Return the text belonging to the selection
 
    type Is_Area_Context is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
@@ -238,6 +243,8 @@ package GPS.Kernel.Contexts is
 
 private
 
+   procedure Destroy (Context : in out File_Area_Context);
+
    type File_Selection_Context is new Selection_Context with record
       File              : VFS.Virtual_File      := VFS.No_File;
       Checked           : Boolean               := False;
@@ -259,6 +266,7 @@ private
    type File_Area_Context is new File_Selection_Context with record
       Start_Line : Integer;
       End_Line   : Integer;
+      Text       : GNAT.OS_Lib.String_Access;
    end record;
 
    type Entity_Selection_Context is new File_Selection_Context with record
