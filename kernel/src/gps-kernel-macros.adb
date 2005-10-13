@@ -91,6 +91,9 @@ package body GPS.Kernel.Macros is
          elsif Param = "i" then
             F.Requires.Importing := True;
 
+         elsif Param = "s" then
+            F.Requires.Single_Line := True;
+
          elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
             if Param /= "pps" and then Param /= "PPs" then
                F.Requires.Project := Param (Param'First);
@@ -189,6 +192,14 @@ package body GPS.Kernel.Macros is
       elsif Param = "a" then
          return Category_Information
            (Message_Context_Access (Context));
+
+      elsif Param = "s" then
+         if Context.all in Entity_Selection_Context'Class then
+            return Entity_Name_Information
+              (Entity_Selection_Context_Access (Context));
+         elsif Context.all in File_Area_Context'Class then
+            return Text_Information (File_Area_Context_Access (Context));
+         end if;
 
       elsif Param = "i" then
          if Importing_Project_Information
@@ -372,7 +383,12 @@ package body GPS.Kernel.Macros is
       Project : Project_Type;
       Is_File_Context : constant Boolean :=
         Context.all in File_Selection_Context'Class;
+      Is_Entity_Context : constant Boolean :=
+        Context.all in Entity_Selection_Context'Class;
+      Is_Area_Context : constant Boolean :=
+        Context.all in File_Area_Context'Class;
       Entity  : Entity_Information;
+      Start, Last : Integer;
    begin
       if Filter.Requires.Project = 'p'
         or else Filter.Requires.Project = 'P'
@@ -400,8 +416,19 @@ package body GPS.Kernel.Macros is
          return False;
       end if;
 
+      if Filter.Requires.Single_Line then
+         if Is_Area_Context then
+            Get_Area (File_Area_Context_Access (Context), Start, Last);
+            if Start /= Last then
+               return False;
+            end if;
+         elsif not Is_Entity_Context then
+            return False;
+         end if;
+      end if;
+
       if Filter.Requires.Entity then
-         if Context.all not in Entity_Selection_Context'Class then
+         if not Is_Entity_Context then
             return False;
          end if;
 

@@ -57,14 +57,15 @@ package GPS.Kernel.Macros is
 
 private
    type Requirements is record
-      File      : Boolean := False;
-      Directory : Boolean := False;
-      Entity    : Boolean := False;
-      Line      : Boolean := False;
-      Column    : Boolean := False;
-      Category  : Boolean := False;
-      Importing : Boolean := False;
-      Project   : Character := ' ';
+      File        : Boolean := False;
+      Directory   : Boolean := False;
+      Entity      : Boolean := False;
+      Line        : Boolean := False;
+      Column      : Boolean := False;
+      Category    : Boolean := False;
+      Importing   : Boolean := False;
+      Single_Line : Boolean := False;
+      Project     : Character := ' ';
       --  'p' for current project, 'P' for root project
    end record;
    pragma Pack (Requirements);
