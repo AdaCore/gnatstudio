@@ -5379,9 +5379,9 @@ The Data Window is the area in which various information about the debugged
 process can be displayed. This includes the value of selected variables, the
 current contents of the registeres, the local variables,@dots{}
 
-This window is not open by default when you start the debugger, but will be
-created automatically when GPS needs to display some information in it because
-you have selected a menu.
+This window is not open by default when you start the debugger. It will be
+created automatically when needed (e.g. when using the Debug constextual menu
+to display a variable).
 
 @cindex menu
 @cindex contextual menu
