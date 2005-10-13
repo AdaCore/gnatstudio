@@ -303,6 +303,16 @@
    </project_attribute>
 
    <project_attribute
+       name="library_ali_dir"
+       editor_page="Library"
+       editor_seection="General"
+       label="Library ALI Directory"
+       hide_in="wizard"
+       description="Directory in which the ALI files needed by the GNAT compiler will be copied when the library is installed. By default, this will be the same as the Library Directory. This attribute requires a recent version of GNAT">
+       <string type="directory"/>
+   </project_attribute>
+
+   <project_attribute
        name="library_kind"
        editor_page="Library"
        editor_section="General"
