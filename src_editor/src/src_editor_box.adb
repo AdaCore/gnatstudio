@@ -1217,7 +1217,9 @@ package body Src_Editor_Box is
                end if;
 
                Set_Area_Information
-                 (File_Area_Context_Access (Context), Start_Line, End_Line);
+                 (File_Area_Context_Access (Context),
+                  Get_Text (Start_Iter, End_Iter),
+                  Start_Line, End_Line);
 
             else
                Context := new Entity_Selection_Context;

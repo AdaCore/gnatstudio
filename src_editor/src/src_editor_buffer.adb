@@ -3914,7 +3914,7 @@ package body Src_Editor_Buffer is
          Last := Buffer.Last_Editable_Line;
       end if;
 
-      Set_Area_Information (Context, Integer (First), Integer (Last));
+      Set_Area_Information (Context, "", Integer (First), Integer (Last));
       GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
