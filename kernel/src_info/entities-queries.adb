@@ -918,6 +918,7 @@ package body Entities.Queries is
    ----------
 
    procedure Next (Iter : in out Entity_Reference_Iterator) is
+      Repeat : Boolean := True;
    begin
       --  We always return the declaration first
       if not Iter.Decl_Returned then
@@ -926,7 +927,7 @@ package body Entities.Queries is
          Iter.Index := Iter.Index + 1;
       end if;
 
-      loop
+      while Repeat loop
          while Iter.Index <= Last (Iter.Entity.References) loop
             if Iter.Returning_Existing_Refs
               and then Iter.Entity.References.Table (Iter.Index).Location.File
@@ -989,6 +990,8 @@ package body Entities.Queries is
             Setup_For_Entity
               (Iter, Iter.Extra_Entities.Table (Iter.Extra_Entities_Index));
             Iter.Extra_Entities_Index := Iter.Extra_Entities_Index + 1;
+         else
+            Repeat := False;
          end if;
 
          Next (Iter.Deps);
