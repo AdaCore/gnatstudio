@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 3.1.0
 
+- EA12-008 Debug contextual menu shows ".all" too often
+  Problem:    When you have started the debugger, if you select more than an
+              entity and right click in the selected text, the contextual menu
+              will have choices to display "text.all", instead of just "text"
+  Workaround: type the "graph display" command in the debugger console directly
+
 - EA06-005 Saving new file incorrectly sets the language
   Problem:    If you create a new file and save it, then start typing, the
               text is incorrectly highlighted because the language of the file
