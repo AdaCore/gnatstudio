@@ -4448,6 +4448,10 @@ case "${host}" in
         opsys=gnu-linux
 	PRINT_CMD="a2ps"
         ;;
+      *-hp-hpux11* )
+        opsys=hpux10
+	PRINT_CMD="a2ps"
+        ;;
     esac
   ;;
 
