@@ -226,6 +226,10 @@ package body Vsearch_Ext is
       return Boolean;
    --  Called when the search widget is about to be destroyed.
 
+   procedure Replace_Text_Changed
+     (Vsearch : access Gtk_Widget_Record'Class);
+   --  Called when the contents of the "Replace" field has changed
+
    procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class);
    --  Resize the vsearch window if needed.
 
@@ -1100,6 +1104,19 @@ package body Vsearch_Ext is
          return False;
    end Key_Press;
 
+   --------------------------
+   -- Replace_Text_Changed --
+   --------------------------
+
+   procedure Replace_Text_Changed
+     (Vsearch : access Gtk_Widget_Record'Class) is
+   begin
+      Set_Sensitive
+        (Vsearch_Extended (Vsearch).Search_Next_Button,
+         Get_Text (Vsearch_Extended (Vsearch).Replace_Entry) = "");
+      Reset_Search (Vsearch, Vsearch_Extended (Vsearch).Kernel);
+   end Replace_Text_Changed;
+
    -----------------------
    -- Key_Press_Replace --
    -----------------------
@@ -1115,6 +1132,7 @@ package body Vsearch_Ext is
          On_Search_Replace (Vsearch);
          return True;
       end if;
+
       return False;
 
    exception
@@ -1316,8 +1334,9 @@ package body Vsearch_Ext is
          Return_Callback.To_Marshaller (Key_Press_Replace'Access), Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Pattern_Entry, "changed", Reset_Search'Access, Handle);
-      Kernel_Callback.Connect
-        (Vsearch.Replace_Entry, "changed", Reset_Search'Access, Handle);
+      Widget_Callback.Object_Connect
+        (Vsearch.Replace_Entry, "changed",
+         Replace_Text_Changed'Access, Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Context_Entry, "changed", Reset_Search'Access, Handle);
       Kernel_Callback.Connect
