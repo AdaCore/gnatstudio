@@ -823,6 +823,7 @@ package body KeyManager_Module is
       Any_Context_Command : Action_Record_Access := null;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
       Context : Selection_Context_Access;
+      Context_Computed : Boolean := False;
       Custom  : Command_Access;
 
    begin
@@ -839,9 +840,6 @@ package body KeyManager_Module is
          end if;
 
          Handler.Secondary_Keymap := null;
-
-         Context := Get_Current_Context (Kernel);
-         Ref (Context);
 
          while Binding /= No_Key loop
             if Binding.Action = null then
@@ -864,25 +862,33 @@ package body KeyManager_Module is
                      Trace (Me, "Candidate action in any context: "
                             & Binding.Action.all);
 
-                  elsif Context /= null
-                    and then Filter_Matches (Command.Filter, Context)
-                  then
-                     Trace (Me, "Executing action " & Binding.Action.all);
+                  else
+                     if not Context_Computed then
+                        Context := Get_Current_Context (Kernel);
+                        Ref (Context);
+                        Context_Computed := True;
+                     end if;
 
-                     Launch_Background_Command
-                       (Kernel,
-                        Create_Proxy
-                          (Command.Command,
-                            (Event,
-                             Context,
-                             null,
-                             null,
-                             new String'(Binding.Action.all))),
-                        Destroy_On_Exit => False,
-                        Active          => True,
-                        Show_Bar        => False,
-                        Queue_Id        => "");
-                     return True;
+                     if Context /= null
+                       and then Filter_Matches (Command.Filter, Context)
+                     then
+                        Trace (Me, "Executing action " & Binding.Action.all);
+
+                        Launch_Background_Command
+                          (Kernel,
+                           Create_Proxy
+                             (Command.Command,
+                              (Event,
+                               Context,
+                               null,
+                               null,
+                               new String'(Binding.Action.all))),
+                           Destroy_On_Exit => False,
+                           Active          => True,
+                           Show_Bar        => False,
+                           Queue_Id        => "");
+                        return True;
+                     end if;
                   end if;
                end if;
             end if;
@@ -892,6 +898,12 @@ package body KeyManager_Module is
 
          if Any_Context_Command /= null then
             Trace (Me, "Executing any context action");
+
+            if not Context_Computed then
+               Context := Get_Current_Context (Kernel);
+               Ref (Context);
+               Context_Computed := True;
+            end if;
 
             if Any_Context_Command.Description = null then
                Custom :=
@@ -918,7 +930,9 @@ package body KeyManager_Module is
             return True;
          end if;
 
-         Unref (Context);
+         if Context_Computed then
+            Unref (Context);
+         end if;
       end if;
 
       --  Never pass through an event from a secondary keymap
