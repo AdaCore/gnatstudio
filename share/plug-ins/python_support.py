@@ -26,6 +26,7 @@ def create_python_menu():
   try:
      menu = GPS.Menu.get ("/Python/")
   except:
+     GPS.Menu.create ("/P_ython/", ref="Help", add_before=1)
      GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
      GPS.parse_xml ("""
   <documentation_file>
