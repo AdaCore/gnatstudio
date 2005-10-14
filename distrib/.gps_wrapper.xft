@@ -20,7 +20,11 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 
 LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
-FONTCONFIG_FILE=$root/share/fonts/fonts.conf
+
+if [ "`uname`" != "Linux" ]; then
+  FONTCONFIG_FILE=$root/share/fonts/fonts.conf
+  export FONTCONFIG_FILE
+fi
 
 if [ "$GDK_USE_XFT" = "" -a "$DISPLAY" != ":0.0" ]; then
   GDK_USE_XFT=0
@@ -33,5 +37,5 @@ else
    GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gnat-cross/html
 fi
 
-export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH FONTCONFIG_FILE
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
 exec $root/bin/${prog}_exe "$@"
