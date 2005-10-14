@@ -4,7 +4,7 @@ Known Problems fixed in GPS 3.1.0
   Problem:    When you have started the debugger, if you select more than an
               entity and right click in the selected text, the contextual menu
               will have choices to display "text.all", instead of just "text"
-  Workaround: type the "graph display" command in the debugger console directly
+  Workaround: Type the "graph display" command in the debugger console directly
 
 - EA06-005 Saving new file incorrectly sets the language
   Problem:    If you create a new file and save it, then start typing, the
@@ -136,4 +136,9 @@ Known Problems fixed in GPS 3.1.0
               /dev/ptyrd: No such file or directory.
               /proc/380269: No such file or directory.
   Workaround: Disable the "Execution Window" preference in the Debugger section
+
+- E223-016 Crash on menubar under Windows
+  Problem:    When navigating in the menu bar using the keyboard, GPS will
+              crash under Windows when moving to/from the last menu item.
+  Workaround: Use the mouse to navigate in the menu bar instead
 
