@@ -1317,7 +1317,7 @@ The new paths are added in front, so that they have priorities over previously d
   <shell_doc name="GPS.Project.add_source_dir">
       <param name="self">The instance of GPS.Project</param>
       <param name="directory">A string</param>
-      <description>Add a new source directory to the project. The new directory is added in front of the source path. You should call recompute() after calling this method, to recompute the list of source files. The directory is added for the current value of the scenario variables only</description>
+      <description>Add a new source directory to the project. The new directory is added in front of the source path. You should call recompute() after calling this method, to recompute the list of source files. The directory is added for the current value of the scenario variables only. Note that if the current source directory for the project is not specified explicitly in the .gpr file), it will be overriden by the new directory you are adding.</description>
       <see_also name="GPS.Project.source_dirs()"/>
       <see_also name="GPS.Project.remove_source_dir()"/>
   </shell_doc>
