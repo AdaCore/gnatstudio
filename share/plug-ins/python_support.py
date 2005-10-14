@@ -22,6 +22,33 @@ import GPS, sys, os.path
 pydoc_proc = None
 pydoc_port = 9432
 
+def create_python_menu():
+  try:
+     menu = GPS.Menu.get ("/Python/")
+  except:
+     GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
+     GPS.parse_xml ("""
+  <documentation_file>
+     <name>http://www.python.org/doc/2.3.4/tut/tut.html</name>
+     <descr>Python tutorial</descr>
+     <menu>/Python/Python Tutorial</menu>
+     <category>Scripts</category>
+  </documentation_file>
+
+  <documentation_file>
+     <shell lang="python">python_support.show_python_library()</shell>
+     <descr>Python Library</descr>
+     <menu>/Python/Python Library</menu>
+     <category>Scripts</category>
+  </documentation_file>
+""")
+
+def destroy_python_menu():
+  try:
+     GPS.Menu.get ("/Python/").destroy()
+  except:
+     pass
+
 def reload_file (menu):
   """Reload the currently edited file in python"""
   try:
@@ -35,18 +62,6 @@ def reload_file (menu):
   except:
      pass   ## Current context is not a file
 
-
-def context_changed (hook_name, context):
-  """Called when a new context is activated in GPS"""
-  try:
-    if context.file().language() == "python":
-       GPS.Menu.get ("/Python").show()
-    else:
-       GPS.Menu.get ("/Python").hide()
-  except:
-    GPS.Menu.get ("/Python").hide()
-
-
 def project_recomputed (hook_name):
   """Setup GPS for python support"""
 
@@ -57,7 +72,7 @@ def project_recomputed (hook_name):
     GPS.Project.root().languages (recursive=True).index ("python")
 
     # The rest is done only if we support python
-    GPS.Menu.get ("/Python").show()
+    create_python_menu()
     list=[]
     for p in sys.path:
       for root, dirs, files in os.walk ("/usr/local/lib/python2.3"):
@@ -66,7 +81,7 @@ def project_recomputed (hook_name):
     GPS.Project.add_predefined_paths (sources=os.pathsep.join (list))
 
   except:
-    GPS.Menu.get ("/Python").hide()
+    destroy_python_menu()
 
 def show_python_library ():
   """Open a navigator to show the help on the python library"""
@@ -91,10 +106,12 @@ def before_exit (hook_name):
   return 1
 
 
-GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
+### Do not call create_python_menu yet, since keeping a hidden toplevel menu
+### triggers bugs in gtk+, for instance leaving an empty space in the menubar
+
+# create_python_menu()
 
 GPS.Hook ("project_view_changed").add (project_recomputed)
-#GPS.Hook ("context_changed").add (context_changed);
 GPS.Hook ("before_exit_action_hook").add (before_exit)
 
 GPS.parse_xml ("""
@@ -130,20 +147,5 @@ GPS.parse_xml ("""
     <filter id="Source editor" />
      <filter language="Python" />
   </filter_and>
-
-  <documentation_file>
-     <name>http://www.python.org/doc/2.3.4/tut/tut.html</name>
-     <descr>Python tutorial</descr>
-     <menu>/Python/Python Tutorial</menu>
-     <category>Scripts</category>
-  </documentation_file>
-
-  <documentation_file>
-     <shell lang="python">python_support.show_python_library()</shell>
-     <descr>Python Library</descr>
-     <menu>/Python/Python Library</menu>
-     <category>Scripts</category>
-  </documentation_file>
 """)
 
-GPS.Menu.get ("/Python").hide()
