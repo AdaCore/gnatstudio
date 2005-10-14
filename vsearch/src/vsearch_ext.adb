@@ -229,6 +229,12 @@ package body Vsearch_Ext is
    procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class);
    --  Resize the vsearch window if needed.
 
+   procedure Internal_Search
+     (Vsearch : Vsearch_Extended;
+      Replace : Boolean := False);
+   --  Internal implementation of search capability, used by On_Search and
+   --  On_Search_Replace.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -663,12 +669,14 @@ package body Vsearch_Ext is
       end;
    end Create_Context;
 
-   ---------------
-   -- On_Search --
-   ---------------
+   ---------------------
+   -- Internal_Search --
+   ---------------------
 
-   procedure On_Search (Object : access Gtk_Widget_Record'Class) is
-      Vsearch        : constant Vsearch_Extended := Vsearch_Extended (Object);
+   procedure Internal_Search
+     (Vsearch : Vsearch_Extended;
+      Replace : Boolean := False)
+   is
       Toplevel       : constant Gtk_Widget := Get_Toplevel (Vsearch);
       Found          : Boolean;
       Has_Next       : Boolean;
@@ -679,6 +687,7 @@ package body Vsearch_Ext is
                          Get_Active (Vsearch.Search_All_Check);
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
       C              : Search_Commands.Generic_Asynchronous_Command_Access;
+
    begin
       if not Vsearch.Find_Next then
          Create_Context (Vsearch);
@@ -739,7 +748,8 @@ package body Vsearch_Ext is
       --  If the dialog is not docked and the option to auto-close the dialog
       --  is set, close the dialog.
 
-      if Realized_Is_Set (Vsearch)
+      if not Replace
+        and then Realized_Is_Set (Vsearch)
         and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
         and then Get_History
           (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key)
@@ -750,6 +760,20 @@ package body Vsearch_Ext is
    exception
       when E : others =>
          Pop_State (Vsearch.Kernel);
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Internal_Search;
+
+   ---------------
+   -- On_Search --
+   ---------------
+
+   procedure On_Search (Object : access Gtk_Widget_Record'Class) is
+   begin
+      Internal_Search (Vsearch_Extended (Object));
+
+   exception
+      when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Search;
@@ -766,13 +790,14 @@ package body Vsearch_Ext is
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       C              : Search_Commands.Generic_Asynchronous_Command_Access;
+
    begin
       if not All_Occurences then
          --  First time in Interactive mode ?
          if not Vsearch.Find_Next
            or else Vsearch.Last_Search_Context = null
          then
-            On_Search (Object);
+            Internal_Search (Vsearch, Replace => True);
 
          else
             Push_State (Vsearch.Kernel, Processing);
