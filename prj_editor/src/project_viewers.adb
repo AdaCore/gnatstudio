@@ -1516,17 +1516,33 @@ package body Project_Viewers is
       elsif Command = "add_source_dir" then
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
-            Dir : constant String := Nth_Arg (Data, 2);
-            Dirs : Argument_List := (1 => new String'(Dir));
+            Dir     : constant String := Name_As_Directory
+              (Normalize_Pathname
+                 (Nth_Arg (Data, 2), Directory => Project_Directory (Project),
+                  Resolve_Links => False));
+            Dirs    : Argument_List := (1 => new String'(Dir));
+            Sources : String_Array_Access :=
+              Source_Dirs (Project, Recursive => False);
+            Found   : Boolean := False;
          begin
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
-               Attribute          => Source_Dirs_Attribute,
-               Values             => Dirs,
-               Attribute_Index    => "",
-               Prepend            => True);
+            for S in Sources'Range loop
+               if Sources (S).all = Dir then
+                  Found := True;
+                  exit;
+               end if;
+            end loop;
+
+            if not Found then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
+                  Attribute          => Source_Dirs_Attribute,
+                  Values             => Dirs,
+                  Attribute_Index    => "",
+                  Prepend            => True);
+            end if;
             Free (Dirs);
+            Free (Sources);
          end;
 
       elsif Command = "remove_source_dir" then
