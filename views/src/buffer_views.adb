@@ -24,10 +24,11 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -59,6 +60,9 @@ package body Buffer_Views is
    Icon_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
+
+   Untitled    : constant String := "Untitled";
+   --  Label used for new window that is not yet saved
 
    type Buffer_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Tree   : Gtk_Tree_View;
@@ -157,6 +161,15 @@ package body Buffer_Views is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Context factory when creating contextual menus
+
+   procedure Title_Changed
+     (MDI    : access GObject_Record'Class;
+      Child  : Gtk_Args;
+      Kernel : Kernel_Handle);
+   --  Connect to signal "child_title_changed" sent when a windows is renamed
+
+   package Kernel_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Kernel_Handle);
 
    -------------
    -- Destroy --
@@ -337,10 +350,22 @@ package body Buffer_Views is
          begin
             if Iter = Null_Iter then
                Append (Model, Iter, Null_Iter);
-               Set (Model, Iter, Icon_Column,
-                    C_Proxy (Get_Icon (Get_File_Editor (Kernel, D.File))));
-               Set (Model, Iter, Name_Column, Base_Name (D.File));
-               Set (Model, Iter, Data_Column, Full_Name (D.File).all);
+               declare
+                  Name : constant String := Base_Name (D.File);
+               begin
+                  if Name'Length >= 8
+                    and then Name (Name'First .. Name'First + 7) = Untitled
+                  then
+                     Set (Model, Iter, Name_Column, Name);
+                     Set (Model, Iter, Data_Column, Name);
+                  else
+                     Set
+                       (Model, Iter, Icon_Column,
+                        C_Proxy (Get_Icon (Get_File_Editor (Kernel, D.File))));
+                     Set (Model, Iter, Name_Column, Name);
+                     Set (Model, Iter, Data_Column, Full_Name (D.File).all);
+                  end if;
+               end;
             end if;
          end;
       end if;
@@ -466,10 +491,20 @@ package body Buffer_Views is
                Box  : constant Source_Editor_Box :=
                         Get_Source_Box_From_MDI (Child);
                File : constant Virtual_File := Get_Filename (Box);
+               Name : constant String := Base_Name (File);
             begin
-               Set (Model, Iter, Icon_Column, C_Proxy (Get_Icon (Child)));
-               Set (Model, Iter, Name_Column, Base_Name (File));
-               Set (Model, Iter, Data_Column, Full_Name (File).all);
+               if Name = ""
+                 or else
+                   (Name'Length >= 8
+                    and then Name (Name'First .. Name'First + 7) = Untitled)
+               then
+                  Set (Model, Iter, Name_Column, Untitled);
+                  Set (Model, Iter, Data_Column, Untitled);
+               else
+                  Set (Model, Iter, Icon_Column, C_Proxy (Get_Icon (Child)));
+                  Set (Model, Iter, Name_Column, Name);
+                  Set (Model, Iter, Data_Column, Full_Name (File).all);
+               end if;
             end;
          end if;
 
@@ -500,6 +535,27 @@ package body Buffer_Views is
       Select_Iter (Get_Selection (V.Tree), Iter);
       return Context;
    end View_Context_Factory;
+
+   -------------------
+   -- Title_Changed --
+   -------------------
+
+   procedure Title_Changed
+     (MDI    : access GObject_Record'Class;
+      Child  : Gtk_Args;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (MDI, Kernel);
+      M    : constant Buffer_View_Module_Access := Buffer_View_Module;
+      C    : constant MDI_Child := MDI_Child (To_Object (Child, 1));
+      Name : constant String := String (Get_Title (C));
+   begin
+      if Name'Length < 8
+        or else Name (Name'First .. Name'First + 7) /= Untitled
+      then
+         Refresh (M.View);
+      end if;
+   end Title_Changed;
 
    -------------
    -- Gtk_New --
@@ -544,6 +600,10 @@ package body Buffer_Views is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => View,
          After       => False);
+
+      Kernel_Callback.Connect
+        (Get_MDI (Kernel), "child_title_changed",
+         Title_Changed'Unrestricted_Access, Kernel_Handle (Kernel));
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
