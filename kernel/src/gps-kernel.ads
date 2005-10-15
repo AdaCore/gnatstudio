@@ -147,7 +147,7 @@ package GPS.Kernel is
       Busy
       --  Kernel is busy, no other processing possible
      );
-   --  Possible states of the kernel.
+   --  Possible states of the kernel
 
    subtype Action_Kernel_State is Kernel_State range Processing .. Busy;
 
@@ -176,12 +176,12 @@ package GPS.Kernel is
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)
       return Basic_Mapper.File_Mapper_Access;
-   --  Return the mapper for file logs.
+   --  Return the mapper for file logs
 
    procedure Set_Logs_Mapper
      (Handle : access Kernel_Handle_Record;
       Mapper : Basic_Mapper.File_Mapper_Access);
-   --  Set the mapper for file logs.
+   --  Set the mapper for file logs
 
    function Get_Language_Handler
      (Handle : access Kernel_Handle_Record)
@@ -196,7 +196,7 @@ package GPS.Kernel is
    function Get_Icon_Factory
      (Handle : access Kernel_Handle_Record)
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
-   --  Return the default icon factory.
+   --  Return the default icon factory
 
    -------------
    -- Modules --
@@ -236,11 +236,11 @@ package GPS.Kernel is
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
       Filename : VFS.Virtual_File) return Boolean;
-   --  Whether Filename is currently opened in an editor.
+   --  Whether Filename is currently opened in an editor
 
    function Open_Files
      (Kernel : access Kernel_Handle_Record) return VFS.File_Array;
-   --  Return a list of currently open files.
+   --  Return a list of currently open files
 
    -------------
    -- Queries --
@@ -427,7 +427,7 @@ package GPS.Kernel is
    --  Set the error message to display if Filter doesn't match
 
    function Get_Error_Message (Filter : Action_Filter) return String;
-   --  Return the error message to display if the filter doesn't match.
+   --  Return the error message to display if the filter doesn't match
 
    function Get_Name (Filter : Action_Filter) return String;
    --  Return the description of the filter (a short string suitable for
@@ -570,14 +570,14 @@ package GPS.Kernel is
       User_Type   => Glib.Object.GObject,
       Return_Type => Boolean,
       Setup       => Setup);
-   --  Generic callback that can be used to connect a signal to a kernel.
+   --  Generic callback that can be used to connect a signal to a kernel
 
    package Kernel_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
-   --  Generic callback that can be used to connect a signal to a kernel.
+   --  Generic callback that can be used to connect a signal to a kernel
 
    package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
-   --  General Idle loop for a GObject.
+   --  General Idle loop for a GObject
 
    type File_Project_Record is record
       Project : Projects.Project_Type;
@@ -586,7 +586,7 @@ package GPS.Kernel is
 
    package File_Project_Cb is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, File_Project_Record);
-   --  Generic callback that can be used to connect a signal to a kernel.
+   --  Generic callback that can be used to connect a signal to a kernel
 
    -----------
    -- Hooks --
@@ -598,12 +598,12 @@ package GPS.Kernel is
    procedure Source_Lines_Revealed
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class);
-   --  Runs the "source_lines_revealed" hook.
+   --  Runs the "source_lines_revealed" hook
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File);
-   --  Runs the "file_edited" hook.
+   --  Runs the "file_edited" hook
 
    procedure File_Saved
      (Handle : access Kernel_Handle_Record;
@@ -715,7 +715,7 @@ private
    type Root_Table_Access is access all Root_Table'Class;
 
    procedure Reset (X : access Root_Table) is abstract;
-   --  Reset the table.
+   --  Reset the table
 
    procedure Do_Nothing (Filter : in out Action_Filter);
    --  Do nothing
@@ -786,7 +786,7 @@ private
       --  path.
 
       Preferences : Default_Preferences.Preferences_Manager;
-      --  The current setting for the preferences.
+      --  The current setting for the preferences
 
       Last_Context_For_Contextual : Selection_Context_Access := null;
       --  The context used in the last contextual menu. Ref_Count isn't
@@ -818,16 +818,16 @@ private
       --  The type used to convert from file names to languages
 
       Default_Desktop : Glib.Xml_Int.Node_Ptr;
-      --  The tree describing the default desktop.
+      --  The tree describing the default desktop
 
       Open_Files : VFS.File_Array_Access;
-      --  The list of currently open files.
+      --  The list of currently open files
 
       History : Histories.History;
       --  The various histories used throughout GPS
 
       Tasks : Task_Manager.Task_Manager_Access;
-      --  The GPS task manager.
+      --  The GPS task manager
 
       Custom_Files_Loaded : Boolean := False;
       --  Whether all custom files have already been loaded
@@ -837,7 +837,7 @@ private
       --  been registered before all modules are loaded.
 
       Icon_Factory : Gtk.Icon_Factory.Gtk_Icon_Factory;
-      --  The icon factory specific to GPS.
+      --  The icon factory specific to GPS
 
       Contextual : System.Address := System.Null_Address;
       --  The contextual menus registered by the user. This is only used in
@@ -846,7 +846,7 @@ private
 
       Clipboard  : System.Address := System.Null_Address;
       --  The clipboard used in GPS (See GPS.Kernel.Clipboard on how to use
-      --  this field)
+      --  this field).
    end record;
 
 end GPS.Kernel;
