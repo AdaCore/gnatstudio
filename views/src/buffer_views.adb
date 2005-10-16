@@ -177,6 +177,9 @@ package body Buffer_Views is
 
    procedure Destroy (Module : in out Buffer_View_Module_Record) is
    begin
+      Destroy (Module.View.Tree);
+      Module.View.Tree := null;
+      Module.View.Kernel := null;
       Module.View := null;
       Buffer_View_Module := null;
    end Destroy;
@@ -601,10 +604,6 @@ package body Buffer_Views is
          Slot_Object => View,
          After       => False);
 
-      Kernel_Callback.Connect
-        (Get_MDI (Kernel), "child_title_changed",
-         Title_Changed'Unrestricted_Access, Kernel_Handle (Kernel));
-
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => View.Tree,
@@ -660,21 +659,25 @@ package body Buffer_Views is
    is
       M     : constant Buffer_View_Module_Access := Buffer_View_Module;
       Child : MDI_Child;
-      View  : Buffer_View_Access;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Buffer_View_Record'Tag);
 
       if Child = null then
-         Gtk_New (View, Kernel);
-         M.View := View;
+         Gtk_New (M.View, Kernel);
          Child := Put
-           (Kernel, View,
+           (Kernel, M.View,
             Default_Width  => 215,
             Default_Height => 600,
             Position       => Position_Left,
             Module         => Buffer_View_Module);
          Set_Title (Child, -"Windows View", -"Windows View");
+
+         Kernel_Callback.Object_Connect
+           (Get_MDI (Kernel), "child_title_changed",
+            Title_Changed'Unrestricted_Access,
+            Child,
+            Kernel_Handle (Kernel));
       end if;
 
       return Child;
