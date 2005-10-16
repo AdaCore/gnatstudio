@@ -168,7 +168,7 @@ package body Buffer_Views is
       Kernel : Kernel_Handle);
    --  Connect to signal "child_title_changed" sent when a windows is renamed
 
-   package Kernel_Callback is new Gtk.Handlers.User_Callback
+   package View_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
 
    -------------
@@ -673,7 +673,7 @@ package body Buffer_Views is
             Module         => Buffer_View_Module);
          Set_Title (Child, -"Windows View", -"Windows View");
 
-         Kernel_Callback.Object_Connect
+         View_Callback.Object_Connect
            (Get_MDI (Kernel), "child_title_changed",
             Title_Changed'Unrestricted_Access,
             Child,
