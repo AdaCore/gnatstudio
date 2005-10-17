@@ -4450,7 +4450,6 @@ case "${host}" in
         ;;
       *-hp-hpux11* )
         opsys=hpux10
-	PRINT_CMD="a2ps"
         ;;
     esac
   ;;
