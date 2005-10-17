@@ -1124,15 +1124,6 @@ package body Vsearch_Ext is
       Set_Sensitive
         (Vsearch_Extended (Vsearch).Search_Next_Button, Has_Replace);
       Reset_Search (Vsearch, Vsearch_Extended (Vsearch).Kernel);
-
-      --  We cannot rely on Grab_Default here, since we do not necessarily have
-      --  a dialog when the search window is not floating. But when it is
-      --  floating, it is nice to get some visual feedback to the user
-      if Has_Replace then
-         Grab_Default (Vsearch_Extended (Vsearch).Search_Replace_Button);
-      else
-         Grab_Default (Vsearch_Extended (Vsearch).Search_Next_Button);
-      end if;
    end Replace_Text_Changed;
 
    -----------------------
@@ -1305,7 +1296,6 @@ package body Vsearch_Ext is
          -"Search next/all occurrence(s)");
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, "clicked", On_Search'Access, Vsearch);
-      Grab_Default (Vsearch.Search_Next_Button);
 
       Gtk_New (Vsearch.Search_Replace_Button, -"Replace");
       Pack_Start
