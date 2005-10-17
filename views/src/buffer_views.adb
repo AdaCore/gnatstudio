@@ -177,10 +177,13 @@ package body Buffer_Views is
 
    procedure Destroy (Module : in out Buffer_View_Module_Record) is
    begin
-      Destroy (Module.View.Tree);
-      Module.View.Tree := null;
-      Module.View.Kernel := null;
-      Module.View := null;
+      if Module.View /= null then
+         Destroy (Module.View.Tree);
+         Module.View.Tree := null;
+         Module.View.Kernel := null;
+         Module.View := null;
+      end if;
+
       Buffer_View_Module := null;
    end Destroy;
 
