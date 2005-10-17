@@ -1555,8 +1555,11 @@ package body Display_Items is
       Canvas : constant GVD_Canvas :=
         GVD_Canvas (Visual_Debugger (Object).Data_Canvas);
    begin
-      Recompute_All_Aliases (Canvas);
-      Refresh_Canvas (Canvas);
+      --  If the canvas is not displayed, nothing to do
+      if Canvas /= null then
+         Recompute_All_Aliases (Canvas);
+         Refresh_Canvas (Canvas);
+      end if;
 
    exception
       when E : others =>
