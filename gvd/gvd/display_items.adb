@@ -1557,6 +1557,11 @@ package body Display_Items is
    begin
       Recompute_All_Aliases (Canvas);
       Refresh_Canvas (Canvas);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end On_Canvas_Process_Stopped;
 
    --------------------
