@@ -142,6 +142,10 @@ package body Projects.Graphs is
         (Project : Project_Node_Id; Origin  : Vertex_Access);
       --  Add project and its dependencies, recursively, into the graph.
 
+      function Is_Virtual_Extending (Node : Project_Node_Id) return Boolean;
+      --  Return True if Node is a virtual extending project created
+      --  automatically by GNAT's project manager
+
       ---------------------------
       -- Create_Project_Vertex --
       ---------------------------
@@ -162,6 +166,21 @@ package body Projects.Graphs is
          Set (Table, Name, V);
          return V;
       end Create_Project_Vertex;
+
+      --------------------------
+      -- Is_Virtual_Extending --
+      --------------------------
+
+      function Is_Virtual_Extending (Node : Project_Node_Id) return Boolean is
+         --  ??? Should be the same as in prj.ads, which is unfortunately
+         --  private at this stage
+         Virtual_Prefix : constant String := "v$";
+         Name : constant String :=
+           Get_String (Prj.Tree.Name_Of (Node, Tree));
+      begin
+         return Name'Length > Virtual_Prefix'Length
+           and then Name (1 .. Virtual_Prefix'Length) = Virtual_Prefix;
+      end Is_Virtual_Extending;
 
       ---------------------
       -- Process_Project --
@@ -219,7 +238,10 @@ package body Projects.Graphs is
             --  project would not appear first in the topological sort, and
             --  then Projects.Start returns invalid results at least when
             --  its Recursive parameters is set to False.
-            if Project_Node_Of (With_Clause, Tree) /= Root_Project then
+            if Project_Node_Of (With_Clause, Tree) /= Root_Project
+              and then not Is_Virtual_Extending
+                (Project_Node_Of (With_Clause, Tree))
+            then
                Add_Project (Project_Node_Of (With_Clause, Tree),
                             Prj.Tree.Name_Of (With_Clause, Tree),
                             Limited_With =>
