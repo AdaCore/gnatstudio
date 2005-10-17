@@ -203,9 +203,6 @@ package body Python.GUI is
       end if;
 
       Interpreter.Buffer := new String'("");
-
-      PyEval_SetTrace
-        (Trace'Access, PyCObject_FromVoidPtr (Interpreter.all'Address));
    end Initialize;
 
    -------------------------
@@ -405,9 +402,12 @@ package body Python.GUI is
             end if;
          end if;
 
+         PyEval_SetTrace
+           (Trace'Access, PyCObject_FromVoidPtr (Interpreter.all'Address));
          Obj := PyEval_EvalCode
            (Code, Interpreter.Globals, Interpreter.Globals);
          Py_DECREF (PyObject (Code));
+         PyEval_SetTrace (null, null);
 
          --  Note: the widget might have been destroyed by the python command,
          --  we need to check that it still exists.
