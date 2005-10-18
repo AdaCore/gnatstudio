@@ -35,7 +35,6 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;            use GPS.Main_Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -63,8 +62,6 @@ package body Help_Module is
 
    Template_Index   : constant String := "help_index.html";
    Index_File       : constant String := "gps_index.xml";
-
-   Help_History_Key : constant History_Key := "help-recent-files";
 
    Url_Cst          : aliased constant String := "URL";
    Anchor_Cst       : aliased constant String := "anchor";
@@ -177,12 +174,6 @@ package body Help_Module is
    --  Register the menu in the GPS menubar.
    --  The name of the HTML file is either hard-coded in HTML_File or
    --  read from the result of a shell_cmd
-
-   procedure On_Open_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for Help->Open HTML...
-   --  Display a file selection dialog, and then open the HTML file in the
-   --  help widget.
 
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
@@ -883,37 +874,6 @@ package body Help_Module is
       Display_Welcome_Page (Kernel);
    end On_Welcome;
 
-   ------------------
-   -- On_Open_HTML --
-   ------------------
-
-   procedure On_Open_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      declare
-         Filename : constant Virtual_File :=
-           Select_File
-             (-"Open HTML File",
-              File_Pattern      => "*.htm*",
-              Pattern_Name      => -"HTML files",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
-              History           => Get_History (Kernel));
-
-      begin
-         if Filename /= VFS.No_File then
-            Open_Html (Kernel, Filename);
-         end if;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Open_HTML;
-
    -------------------------
    -- Set_URL_Information --
    -------------------------
@@ -1167,7 +1127,6 @@ package body Help_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Help             : constant String := "/_" & (-"Help") & '/';
-      Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env    : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
    begin
@@ -1185,19 +1144,6 @@ package body Help_Module is
 
       Register_Menu
         (Kernel, Help, -"_Welcome", "", On_Welcome'Access);
-
-      Register_Menu
-        (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
-
-      Recent_Menu_Item :=
-        Register_Menu (Kernel, Help, -"_Recent", "", null,
-                       Ref_Item   => -"Open HTML File...",
-                       Add_Before => False);
-      Associate (Get_History (Kernel).all,
-                 Help_History_Key,
-                 Recent_Menu_Item,
-                 new On_Recent'(Menu_Callback_Record with
-                                Kernel => Kernel_Handle (Kernel)));
 
       --  Register commands
 
