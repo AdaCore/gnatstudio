@@ -220,19 +220,19 @@ package body Casing_Exceptions is
       then
          C := Entity_Selection_Context_Access (Context);
          declare
-            Name : String := Krunch (Entity_Name_Information (C));
+            Name : String := Entity_Name_Information (C);
          begin
             case Creator.Casing is
                when Lower =>
-                  return "Casing/Lower " & To_Lower (Name);
+                  return "Casing/Lower " & Krunch (To_Lower (Name));
                when Upper =>
-                  return "Casing/Upper " & To_Upper (Name);
+                  return "Casing/Upper " & Krunch (To_Upper (Name));
                when Mixed =>
                   Mixed_Case (Name);
-                  return "Casing/Mixed " & Name;
+                  return "Casing/Mixed " & Krunch (Name);
                when Smart_Mixed =>
                   Smart_Mixed_Case (Name);
-                  return "Casing/Smart Mixed " & Name;
+                  return "Casing/Smart Mixed " & Krunch (Name);
             end case;
          end;
       end if;
