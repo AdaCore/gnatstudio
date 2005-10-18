@@ -21,8 +21,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 
-with Glib.Unicode;               use Glib.Unicode;
-
 package body Case_Handling is
 
    procedure Add_Exception
@@ -33,12 +31,6 @@ package body Case_Handling is
 
    procedure Remove_Exception (HTable : in out Exceptions_Table; Str : String);
    --  Remove str exception from the HTable
-
-   procedure Recase
-     (S     : in out String;
-      Smart : Boolean := False);
-   --  Redo the casing of a string. If Smart is true upper-case letters in the
-   --  string are not changed.
 
    ----------
    -- Free --
@@ -51,77 +43,36 @@ package body Case_Handling is
       Unchecked_Free (N.Word);
    end Free;
 
-   ------------
-   -- Recase --
-   ------------
-
-   procedure Recase
-     (S     : in out String;
-      Smart : Boolean := False)
-   is
-      Dot_Or_Underscore : Boolean := False;
-      Lower_Bound       : Natural := S'First;
-      Higher_Bound      : Natural;
-
-   begin
-      if S'Length = 0 then
-         return;
-      end if;
-
-      Higher_Bound := UTF8_Next_Char (S, Lower_Bound);
-
-      if Higher_Bound > S'Last then
-         --  The string contains a single character
-
-         S := UTF8_Strup (S);
-         return;
-      end if;
-
-      S (Lower_Bound .. Higher_Bound - 1) :=
-        To_Upper (S (Lower_Bound .. Higher_Bound - 1));
-
-      Lower_Bound := Higher_Bound;
-      Higher_Bound := UTF8_Next_Char (S, Lower_Bound);
-
-      while Higher_Bound <= S'Last loop
-         if Dot_Or_Underscore then
-            S (Lower_Bound .. Higher_Bound - 1) :=
-              UTF8_Strup (S (Lower_Bound .. Higher_Bound - 1));
-         elsif not Smart then
-            S (Lower_Bound .. Higher_Bound - 1) :=
-              UTF8_Strdown (S (Lower_Bound .. Higher_Bound - 1));
-         end if;
-
-         if S (Lower_Bound) = '.' or else S (Lower_Bound) = '_' then
-            Dot_Or_Underscore := True;
-         elsif S (Lower_Bound) /= ' '
-           and then S (Lower_Bound) /= ASCII.HT
-           and then S (Lower_Bound) /= ASCII.LF
-           and then S (Lower_Bound) /= ASCII.CR
-         then
-            Dot_Or_Underscore := False;
-         end if;
-
-         Lower_Bound := Higher_Bound;
-         Higher_Bound := UTF8_Next_Char (S, Lower_Bound);
-      end loop;
-
-      if Dot_Or_Underscore then
-         S (Lower_Bound .. S'Last) :=
-           UTF8_Strup (S (Lower_Bound .. S'Last));
-      elsif not Smart then
-         S (Lower_Bound .. S'Last) :=
-           UTF8_Strdown (S (Lower_Bound .. S'Last));
-      end if;
-   end Recase;
-
    ----------------
    -- Mixed_Case --
    ----------------
 
    procedure Mixed_Case (S : in out String) is
+      Dot : Boolean := False;
    begin
-      Recase (S);
+      if S'Length = 0 then
+         return;
+      end if;
+
+      S (S'First) := To_Upper (S (S'First));
+
+      for J in S'First + 1 .. S'Last loop
+         if Dot or else S (J - 1) = '_' then
+            S (J) := To_Upper (S (J));
+         else
+            S (J) := To_Lower (S (J));
+         end if;
+
+         if S (J) = '.' then
+            Dot := True;
+         elsif S (J) /= ' '
+           and then S (J) /= ASCII.HT
+           and then S (J) /= ASCII.LF
+           and then S (J) /= ASCII.CR
+         then
+            Dot := False;
+         end if;
+      end loop;
    end Mixed_Case;
 
    ----------------------
@@ -129,8 +80,25 @@ package body Case_Handling is
    ----------------------
 
    procedure Smart_Mixed_Case (S : in out String) is
+      Dot : Boolean := False;
    begin
-      Recase (S, Smart => True);
+      S (S'First) := To_Upper (S (S'First));
+
+      for J in S'First + 1 .. S'Last loop
+         if Dot or else S (J - 1) = '_' then
+            S (J) := To_Upper (S (J));
+         end if;
+
+         if S (J) = '.' then
+            Dot := True;
+         elsif S (J) /= ' '
+           and then S (J) /= ASCII.HT
+           and then S (J) /= ASCII.LF
+           and then S (J) /= ASCII.CR
+         then
+            Dot := False;
+         end if;
+      end loop;
    end Smart_Mixed_Case;
 
    ---------------
