@@ -403,15 +403,25 @@ package body Builder_Module is
       Project_Str    : String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
+      Remote_Host    : constant String :=
+        Get_Attribute_Value (Project, Remote_Host_Attribute);
 
    begin
-      --  Convert project path to unix pathname, since this is now supported
-      --  by Windows, and is needed when using a remote unix host from Windows.
+      --  If the compilation is remote, we need to use the unix pathname
+      if Remote_Host /= "" then
+         --  Convert project path to unix pathname, since this is needed when
+         --  using a remote unix host from Windows.
 
-      if Path = "" then
-         Project_Str := new String'(To_Unix_Pathname (Project_Path (Project)));
+         if Path = "" then
+            Project_Str := new String'(To_Unix_Pathname
+                                       (Project_Path (Project)));
+         else
+            Project_Str := new String'(To_Unix_Pathname (Path));
+         end if;
+      elsif Path = "" then
+         Project_Str := new String'(Project_Path (Project));
       else
-         Project_Str := new String'(To_Unix_Pathname (Path));
+         Project_Str := new String'(Path);
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
