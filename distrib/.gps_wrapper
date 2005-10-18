@@ -21,12 +21,6 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 LD_LIBRARY_PATH=$root/lib/gps:$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 
-if [ "$GPS_DOC_PATH" = "" ]; then
-   GPS_DOC_PATH=$root/share/doc/gnat/html:$root/share/doc/gnat-cross/html
-else
-   GPS_DOC_PATH=$GPS_DOC_PATH:$root/share/doc/gnat/html:$root/share/doc/gnat-cross/html
-fi
-
 export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
 
 exec $root/bin/${prog}_exe "$@"

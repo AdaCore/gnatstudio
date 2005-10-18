@@ -31,11 +31,5 @@ if [ "$GDK_USE_XFT" = "" -a "$DISPLAY" != ":0.0" ]; then
   export GDK_USE_XFT
 fi
 
-if [ "$GPS_DOC_PATH" = "" ]; then
-   GPS_DOC_PATH=$root/share/doc/gnat/html:$root/share/doc/gnat-cross/html
-else
-   GPS_DOC_PATH=$GPS_DOC_PATH:$root/share/doc/gnat/html:$root/share/doc/gnat-cross/html
-fi
-
 export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
 exec $root/bin/${prog}_exe "$@"
