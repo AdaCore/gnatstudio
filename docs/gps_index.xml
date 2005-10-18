@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <index>
+   <doc_path>share/doc/gnat/html</doc_path>
+   <doc_path>share/doc/gnat-cross/html</doc_path>
+
    <documentation_file>
       <name>gps-welcome.html</name>
       <descr>Welcome</descr>
