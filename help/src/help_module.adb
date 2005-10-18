@@ -1071,6 +1071,8 @@ package body Help_Module is
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
       Iter : Path_Iterator;
    begin
+      Trace (Me, "Parse_Index_Files, DOC_PATH="
+             & Help_Module_ID.Doc_Path.all);
       Iter := Start (Help_Module_ID.Doc_Path.all);
       while not At_End (Help_Module_ID.Doc_Path.all, Iter) loop
          Parse_Index_File
@@ -1179,15 +1181,6 @@ package body Help_Module is
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook, Open_Help_Hook'Access);
 
-      if Path_From_Env.all = "" then
-         Help_Module_ID.Doc_Path := new String'
-           (Get_System_Dir (Kernel) & "share/doc/gps/html/");
-      else
-         Help_Module_ID.Doc_Path := new String'
-           (Path_From_Env.all & Path_Separator &
-            Get_System_Dir (Kernel) & "share/doc/gps/html/");
-      end if;
-
       --  Add help menus
 
       Register_Menu
@@ -1257,7 +1250,10 @@ package body Help_Module is
          Text        => -"_Contents",
          Callback    => On_Load_Index'Access);
 
+      Help_Module_ID.Doc_Path := new String'(Path_From_Env.all);
       Parse_Index_Files (Kernel);
+      Add_Doc_Directory
+        (Kernel, Get_System_Dir (Kernel) & "share/doc/gps/html/");
 
       Register_Menu
         (Kernel, Help, -"A_bout", "", On_About'Access);
