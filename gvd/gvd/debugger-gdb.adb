@@ -992,28 +992,35 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Mode);
 
-      Exec                : constant String := To_Unix_Pathname (Executable);
       No_Such_File_Regexp : constant Pattern_Matcher :=
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
-      Exec_Has_Spaces     : constant Boolean := Index (Exec, " ") /= 0;
+      Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
 
    begin
       if Debugger.Remote_Target = null then
          if Exec_Has_Spaces then
-            Cmd := new String'("file """ & Exec & '"');
+            Cmd := new String'("file """ & Executable & '"');
          else
-            Cmd := new String'("file " & Exec);
+            Cmd := new String'("file " & Executable);
          end if;
+         Free (Debugger.Executable);
+         Debugger.Executable := new String'(Executable);
       else
-         if Exec_Has_Spaces then
-            Cmd := new String'("load """ & Exec & '"');
-         else
-            Cmd := new String'("load " & Exec);
-         end if;
+         declare
+            Exec : constant String := To_Unix_Pathname (Executable);
+         begin
+            if Exec_Has_Spaces then
+               Cmd := new String'("load """ & Exec & '"');
+            else
+               Cmd := new String'("load " & Exec);
+            end if;
+            Free (Debugger.Executable);
+            Debugger.Executable := new String'(Exec);
+         end;
       end if;
 
       if Debugger.Window /= null then
@@ -1040,8 +1047,6 @@ package body Debugger.Gdb is
       end if;
 
       Set_Is_Started (Debugger, False);
-      Free (Debugger.Executable);
-      Debugger.Executable := new String'(Exec);
 
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be
