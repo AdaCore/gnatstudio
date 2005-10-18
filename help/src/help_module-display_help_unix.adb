@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 separate (Help_Module)
 procedure Display_Help
