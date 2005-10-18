@@ -1843,8 +1843,8 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
       Highlight_Complete : Boolean := False;
-      Entity_Start       : Gtk_Text_Iter;
-      Entity_End         : Gtk_Text_Iter;
+      Entity_Start, Entity_Start_Save : Gtk_Text_Iter;
+      Entity_End, Entity_End_Save     : Gtk_Text_Iter;
       Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
       Slice_Offset_Line  : Buffer_Line_Type;
       --  Offset between the beginning of the Source_Buffer and the beginning
@@ -1882,12 +1882,21 @@ package body Src_Editor_Buffer is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         Success      : Boolean;
-         Col, Line    : Gint;
-         Offset       : Gint;
-         Buffer_Line  : Buffer_Line_Type;
+         Success         : Boolean;
+         Col, Line       : Gint;
+         Offset          : Gint;
+         Buffer_Line     : Buffer_Line_Type;
+         End_Buffer_Line : Buffer_Line_Type;
 
       begin
+         if Partial_Entity then
+            Highlight_Complete := False;
+         end if;
+
+         if Entity not in Standout_Language_Entity then
+            return False;
+         end if;
+
          --  Some parsers currently leave line numbers to 0. Don't highlight in
          --  this case, since we cannot use from the byte index due to
          --  limitations in gtk+
@@ -1912,8 +1921,17 @@ package body Src_Editor_Buffer is
             return False;
          end if;
 
-         Line := Gint (Buffer_Line - 1);
+         End_Buffer_Line :=
+           Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
 
+         --  If the column is 0, the entity really ended on the end of the
+         --  previous line.
+
+         if End_Buffer_Line = 0 then
+            return False;
+         end if;
+
+         Line := Gint (Buffer_Line - 1);
          Is_Valid_Index
            (Source_Buffer (Buffer), Entity_Start, Success, Line, Col);
          if not Success then
@@ -1921,16 +1939,7 @@ package body Src_Editor_Buffer is
             return False;
          end if;
 
-         --  If the column is 0, the entity really ended on the end of the
-         --  previous line.
-
-         Buffer_Line := Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
-
-         if Buffer_Line = 0 then
-            return False;
-         end if;
-
-         Line := Gint (Buffer_Line - 1);
+         Line := Gint (End_Buffer_Line - 1);
 
          if Sloc_End.Column = 0 then
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
@@ -1972,14 +1981,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
-         if Partial_Entity then
-            Highlight_Complete := False;
-         end if;
-
-         if Entity in Standout_Language_Entity then
-            Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
-         end if;
-
+         Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
          return False;
       end Highlight_Cb;
 
@@ -2030,17 +2032,32 @@ package body Src_Editor_Buffer is
          Copy (Source => Start_Iter, Dest => Entity_Start);
       end if;
 
-      --  Highlight to the end of line, to avoid missing most of the
-      --  partial entities (strings, characters, ...)
+      Copy (Entity_End,   Entity_End_Save);
+      Copy (Entity_Start, Entity_Start_Save);
 
-      Forward_Line (Entity_End, Result);
+      --  First try to highlight the exact region itself
+
       Local_Highlight;
+
+      if not Highlight_Complete then
+         --  Highlight to the end of line, to avoid missing most of the
+         --  partial entities (strings, characters, ...).
+         --  In case we have started typing a string for instance, that
+         --  provides a nice optimization over rehighlighting the whole buffer.
+
+         Copy (Entity_End_Save, Entity_End);
+         Copy (Entity_Start_Save, Entity_Start);
+         Forward_Line (Entity_End, Result);
+         Local_Highlight;
+      end if;
 
       if not Highlight_Complete then
          --  In this case, we are in the middle of e.g a multi-line comment,
          --  and we re-highlight the whole buffer since we do not know where
          --  the comment started.
-         --  ??? would be nice to optimize here
+         --  ??? would be nice to optimize here. We could for instance
+         --  highlight only from the beginning of the section instead of from
+         --  the start
 
          Set_Offset (Entity_Start, 0);
          Forward_To_End (Entity_End);
