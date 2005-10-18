@@ -1052,7 +1052,8 @@ package body Debugger.Gdb is
       --  No need to do anything in text-only mode
 
       if Debugger.Window /= null then
-         Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
+         Executable_Changed
+           (Convert (Debugger.Window, Debugger), Local_Executable);
       end if;
 
       --  Detect the current language, and get the name and line of the
