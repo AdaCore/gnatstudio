@@ -408,16 +408,18 @@ package body Builder_Module is
 
    begin
       --  If the compilation is remote, we need to use the unix pathname
+
       if Remote_Host /= "" then
          --  Convert project path to unix pathname, since this is needed when
          --  using a remote unix host from Windows.
 
          if Path = "" then
-            Project_Str := new String'(To_Unix_Pathname
-                                       (Project_Path (Project)));
+            Project_Str :=
+              new String'(To_Unix_Pathname (Project_Path (Project)));
          else
             Project_Str := new String'(To_Unix_Pathname (Path));
          end if;
+
       elsif Path = "" then
          Project_Str := new String'(Project_Path (Project));
       else
