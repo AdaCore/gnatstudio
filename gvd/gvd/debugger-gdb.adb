@@ -998,21 +998,27 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
+      Local_Executable    : constant String := Executable;
+      --  Copy Executable parameter, since Executable might be equal to
+      --  Debugger.Executable, in which case calling Free below would be
+      --  dangerous.
+
       Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
 
    begin
       Free (Debugger.Executable);
 
       if Debugger.Remote_Target = null then
-         Debugger.Executable := new String'(Executable);
+         Debugger.Executable := new String'(Local_Executable);
       else
-         Debugger.Executable := new String'(To_Unix_Pathname (Executable));
+         Debugger.Executable :=
+           new String'(To_Unix_Pathname (Local_Executable));
       end if;
 
       if Exec_Has_Spaces then
-         Cmd := new String'("file """ & Debug.Executable.all & '"');
+         Cmd := new String'("file """ & Debugger.Executable.all & '"');
       else
-         Cmd := new String'("file " & Debug.Executable.all);
+         Cmd := new String'("file " & Debugger.Executable.all);
       end if;
 
       if Debugger.Window /= null then
