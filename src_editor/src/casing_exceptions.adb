@@ -22,8 +22,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Glib.Unicode;            use Glib.Unicode;
-
 with Case_Handling.IO;        use Case_Handling.IO;
 with Case_Handling;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -226,9 +224,9 @@ package body Casing_Exceptions is
          begin
             case Creator.Casing is
                when Lower =>
-                  return "Casing/Lower " & UTF8_Strdown (Name);
+                  return "Casing/Lower " & To_Lower (Name);
                when Upper =>
-                  return "Casing/Upper " & UTF8_Strup (Name);
+                  return "Casing/Upper " & To_Upper (Name);
                when Mixed =>
                   Mixed_Case (Name);
                   return "Casing/Mixed " & Name;
