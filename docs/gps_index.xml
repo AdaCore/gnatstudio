@@ -55,14 +55,14 @@
    <documentation_file>
       <name>gdb.html</name>
       <descr>Using the GNU Debugger</descr>
-      <menu>/Help/Using the GNU Debugger</menu>
+      <menu>/Help/GNU Tools/Using the GNU Debugger</menu>
       <category>General</category>
    </documentation_file>
 
    <documentation_file>
       <name>gcc.html</name>
       <descr>Using GCC</descr>
-      <menu>/Help/Using GCC</menu>
+      <menu>/Help/GNU Tools/Using GCC</menu>
       <category>General</category>
    </documentation_file>
 
