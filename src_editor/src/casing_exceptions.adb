@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
+with Glib.Unicode;            use Glib.Unicode;
 
 with Case_Handling.IO;        use Case_Handling.IO;
 with Case_Handling;
@@ -225,9 +226,9 @@ package body Casing_Exceptions is
          begin
             case Creator.Casing is
                when Lower =>
-                  return "Casing/Lower " & To_Lower (Name);
+                  return "Casing/Lower " & UTF8_Strdown (Name);
                when Upper =>
-                  return "Casing/Upper " & To_Upper (Name);
+                  return "Casing/Upper " & UTF8_Strup (Name);
                when Mixed =>
                   Mixed_Case (Name);
                   return "Casing/Mixed " & Name;
