@@ -1001,26 +1001,18 @@ package body Debugger.Gdb is
       Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
 
    begin
+      Free (Debugger.Executable);
+
       if Debugger.Remote_Target = null then
-         if Exec_Has_Spaces then
-            Cmd := new String'("file """ & Executable & '"');
-         else
-            Cmd := new String'("file " & Executable);
-         end if;
-         Free (Debugger.Executable);
          Debugger.Executable := new String'(Executable);
       else
-         declare
-            Exec : constant String := To_Unix_Pathname (Executable);
-         begin
-            if Exec_Has_Spaces then
-               Cmd := new String'("load """ & Exec & '"');
-            else
-               Cmd := new String'("load " & Exec);
-            end if;
-            Free (Debugger.Executable);
-            Debugger.Executable := new String'(Exec);
-         end;
+         Debugger.Executable := new String'(To_Unix_Pathname (Executable));
+      end if;
+
+      if Exec_Has_Spaces then
+         Cmd := new String'("file """ & Debug.Executable.all & '"');
+      else
+         Cmd := new String'("file " & Debug.Executable.all);
       end if;
 
       if Debugger.Window /= null then
