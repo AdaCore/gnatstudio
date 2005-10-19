@@ -117,7 +117,8 @@ package GPS.Kernel.Contexts is
    ------------------------
    -- File_Area contexts --
    ------------------------
-   --  This context is used when multiple lines are selected in an editor.
+   --  This context is used when one or more lines are selected in an editor,
+   --  but more than a single entity.
 
    type File_Area_Context is new File_Selection_Context with private;
    type File_Area_Context_Access is access all File_Area_Context'Class;

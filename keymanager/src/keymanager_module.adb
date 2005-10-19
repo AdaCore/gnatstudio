@@ -827,6 +827,10 @@ package body KeyManager_Module is
       Custom  : Command_Access;
 
    begin
+      --  ??? We could test Modif/=0 if we can only have key shortcuts with a
+      --  modifier (control, alt,...) However, this prevents assigning key
+      --  shortcuts to f1, f2, Home, PageUp,.. so is probably not worth it.
+
       if Handler.Active
         and then Get_Event_Type (Event) = Key_Press
       then

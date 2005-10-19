@@ -387,7 +387,11 @@ package Entities is
    --  Same as above, but the file name is specified through a string
 
    function Is_Up_To_Date (File : Source_File) return Boolean;
-   --  Whether the cross-reference information is up-to-date for File
+   --  Whether the cross-reference information is up-to-date for File.
+   --  In the case of C/C++, this might return True although not all the
+   --  information is available. For instance, if we have only run
+   --  cbrowser, we only have the info for decls and bodies, not for
+   --  references. However, Is_Up_To_Date will still return True in that case.
 
    procedure Update_Xref
      (File                  : Source_File;
