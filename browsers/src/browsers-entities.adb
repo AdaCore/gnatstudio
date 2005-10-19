@@ -100,6 +100,10 @@ package body Browsers.Entities is
    end record;
    type Type_Browser is access all Type_Browser_Record'Class;
 
+   procedure Refresh_Layout_Orientation
+     (Browser : access Type_Browser_Record);
+   --  See inherited documentation
+
    ---------------
    -- Type item --
    ---------------
@@ -368,6 +372,18 @@ package body Browsers.Entities is
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   --------------------------------
+   -- Refresh_Layout_Orientation --
+   --------------------------------
+
+   procedure Refresh_Layout_Orientation
+     (Browser : access Type_Browser_Record)
+   is
+   begin
+      --  Always force a vertical layout
+      Set_Layout_Orientation (Get_Canvas (Browser), Vertical_Layout => True);
+   end Refresh_Layout_Orientation;
+
    ----------
    -- Call --
    ----------
@@ -432,6 +448,7 @@ package body Browsers.Entities is
         (Browser => Type_Browser (Get_Widget (Child)),
          Entity  =>
            Get_Entity (Entity_Selection_Context_Access (Context.Context)));
+      Layout (Type_Browser (Get_Widget (Child)), Force => False);
       return Commands.Success;
    end Execute;
 
@@ -1545,7 +1562,6 @@ package body Browsers.Entities is
          Gtk_New (Found, Browser, Entity);
          Put (Get_Canvas (Browser), Found);
          Refresh (Found);
-         Layout (Browser, Force => False);
       end if;
 
       --  Need to always refresh the canvas so that the links are correctly
