@@ -641,19 +641,22 @@ package body Docgen.Work_On_File is
       use Type_Source_File_Table;
 
       Doc_Directory : constant String :=
-        Docgen.Backend.Get_Doc_Directory (Data.Backend, Data.Kernel);
+                        Docgen.Backend.Get_Doc_Directory
+                          (Data.Backend, Data.Kernel);
 
    begin
       if Get_Element (Data.Source_File_Node) /= No_Source_File_Information then
          declare
             Current_Unit   : constant GNAT.OS_Lib.String_Access :=
-              Get_Element (Data.Source_File_Node).Unit_Name;
+                               Get_Element (Data.Source_File_Node).Unit_Name;
             File           : constant Source_File :=
-              Get_Key (Data.Source_File_Node);
-            Doc_File       : constant File_Descriptor := Create_File
-              (Doc_Directory &
-               Get_Element (Data.Source_File_Node).Doc_File_Name.all,
-               Binary);
+                               Get_Key (Data.Source_File_Node);
+            Doc_File       : constant File_Descriptor :=
+                               Create_File
+                                 (Doc_Directory &
+                                  Get_Element
+                                    (Data.Source_File_Node).Doc_File_Name.all,
+                                  Binary);
 
             Process_Result : Unbounded_String;
          begin
@@ -797,13 +800,16 @@ package body Docgen.Work_On_File is
       --  Stores the level of the current package in which we are
       --  processing types, subprograms...
 
+      Reporter         : constant File_Error_Reporter :=
+                           new Docgen_Error_Reporter_Record'
+                             (Kernel_Handle (Kernel), False);
    begin
       Trace
         (Me,
          "Generating doc for "
          & Full_Name (Get_Filename (Source_Filename)).all);
 
-      Update_Xref (Source_Filename);
+      Update_Xref (Source_Filename, Reporter);
 
       Get_All_References_In_File
         (File                          => Source_Filename,
