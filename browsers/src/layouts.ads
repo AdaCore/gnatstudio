@@ -30,4 +30,11 @@ package Layouts is
       Vertical_Layout : Boolean := True);
    --  Layout the graph in layers
 
+   procedure Simple_Layout
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Graph  : Glib.Graphs.Graph;
+      Force  : Boolean := False;
+      Vertical_Layout : Boolean := True);
+   --  Simple layout, where items are put in the first possible column
+
 end Layouts;

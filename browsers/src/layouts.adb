@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,10 +20,13 @@
 
 with Glib;          use Glib;
 with Glib.Graphs;   use Glib.Graphs;
+with Gdk.Rectangle; use Gdk.Rectangle;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Line_Sweep;    use Line_Sweep;
+--  with Traces;        use Traces;
 
 package body Layouts is
+--     Me : constant Debug_Handle := Create ("Layout");
 
    Max_Iterations : constant Natural := 21;
    --  Maximum number of iterations in Sort_Barycenter.
@@ -31,16 +34,10 @@ package body Layouts is
    Max_Position_Iteration : constant Natural := 20;
    --  Maximum number of iterations in Position_Node
 
-   Min_Dist : constant Natural := 15;
-   --  Minimum distance between two nodes on the same layer at the end
-
-   Max_Dist : constant Natural := 50;
-   --  Maximal distance between two nodes on the same layer
-
-   Min_Vertical_Dist : constant Natural := 30;
+   Min_Layer_Dist : constant Natural := 20;
    --  Minimum distance between two layers in the graph.
 
-   Min_Horizontal_Dist : constant Natural := 30;
+   Min_Node_Dist : constant Natural := 10;
    --  Minimum distance between two nodes on the same layer.
 
    Layer_Align : constant Float := 0.0;
@@ -56,13 +53,16 @@ package body Layouts is
    --  coordinates of the vertices, but the relative positions on the layer.
 
    procedure Partition_Topological
-     (G          : Graph;
-      Layers     : out Natural_Array;
-      Num_Layers : out Natural);
+     (G              : Graph;
+      Layers         : out Natural_Array;
+      Num_Layers     : out Natural;
+      New_Items_Only : Boolean);
    --  Partition the nodes through a depth-first search and topological sort.
    --  The nodes are organized into several layers.
    --  Layers are numbered from 1 to Num_Layers, and the layer for each node is
    --  available on exit in Layers.
+   --  If New_Items_Only is true, then only the items whose position has never
+   --  been computed will be taken into account.
 
    procedure Sort_Layers
      (G               : Graph;
@@ -78,7 +78,6 @@ package body Layouts is
    procedure Position_Nodes
      (G               : Graph;
       Lines           : Node_Matrix;
-      Max_Width       : Natural;
       X               : in out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean);
@@ -102,12 +101,6 @@ package body Layouts is
    --  Return the force that applies to a given vertex. This uses the rubber
    --  band method, where each edge pulls the nodes.
 
-   procedure Insert_Dummy_Nodes
-     (G : in out Graph; Layers : in out Natural_Array);
-   pragma Warnings (Off, Insert_Dummy_Nodes);
-   --  Insert some dummy nodes so that the edges do not cross multiple layers.
-   --  ??? not used for now
-
    function Width
      (V : access Vertex'Class;
       Vertical_Layout : Boolean) return Integer;
@@ -123,6 +116,19 @@ package body Layouts is
    procedure Reverse_Edge (G : Graph; E : Edge_Access);
    --  Reverse the two ends of the edge, so as to make the graph acyclick
 
+   function Never_Positionned (V : access Vertex'Class) return Boolean;
+   --  Return True if the V has never had a position assigned to it
+
+   -----------------------
+   -- Never_Positionned --
+   -----------------------
+
+   function Never_Positionned (V : access Vertex'Class) return Boolean is
+      Coord : constant Gdk_Rectangle := Get_Coord (Canvas_Item (V));
+   begin
+      return Coord.X = Gint'First and Coord.Y = Gint'First;
+   end Never_Positionned;
+
    -----------
    -- Width --
    -----------
@@ -131,14 +137,10 @@ package body Layouts is
      (V : access Vertex'Class;
       Vertical_Layout : Boolean) return Integer is
    begin
-      if not Is_From_Auto_Layout (Canvas_Item (V)) then
-         return -Min_Dist;
+      if Vertical_Layout then
+         return Integer (Get_Coord (Canvas_Item (V)).Width);
       else
-         if Vertical_Layout then
-            return Integer (Get_Coord (Canvas_Item (V)).Height);
-         else
-            return Integer (Get_Coord (Canvas_Item (V)).Width);
-         end if;
+         return Integer (Get_Coord (Canvas_Item (V)).Height);
       end if;
    end Width;
 
@@ -150,14 +152,10 @@ package body Layouts is
      (V : access Vertex'Class;
       Vertical_Layout : Boolean) return Integer is
    begin
-      if not Is_From_Auto_Layout (Canvas_Item (V)) then
-         return 0;
+      if Vertical_Layout then
+         return Integer (Get_Coord (Canvas_Item (V)).Height);
       else
-         if Vertical_Layout then
-            return Integer (Get_Coord (Canvas_Item (V)).Width);
-         else
-            return Integer (Get_Coord (Canvas_Item (V)).Height);
-         end if;
+         return Integer (Get_Coord (Canvas_Item (V)).Width);
       end if;
    end Height;
 
@@ -186,7 +184,8 @@ package body Layouts is
    procedure Partition_Topological
      (G          : Graph;
       Layers     : out Natural_Array;
-      Num_Layers : out Natural)
+      Num_Layers : out Natural;
+      New_Items_Only : Boolean)
    is
       Acyclic : aliased Boolean;
       Sorted  : constant Depth_Vertices_Array := Depth_First_Search
@@ -196,22 +195,26 @@ package body Layouts is
       V       : Vertex_Access;
       Num     : Natural := 0;
    begin
-      pragma Assert (Is_Directed (G));
+      pragma Assert (Is_Directed (G), "graph must directed");
       pragma Assert (Acyclic, "graph must be acyclic");
 
       Layers := (others => 0);
 
       for S in Sorted'Range loop
          Max := 0;
-         Eit := First (G, Dest => Sorted (S).Vertex);
-         while not At_End (Eit) loop
-            V   := Get_Src (Get (Eit));
-            Max := Natural'Max (Layers (Get_Index (V)), Max);
-            Next (Eit);
-         end loop;
+         if not New_Items_Only
+           or else Never_Positionned (Sorted (S).Vertex)
+         then
+            Eit := First (G, Dest => Sorted (S).Vertex);
+            while not At_End (Eit) loop
+               V   := Get_Src (Get (Eit));
+               Max := Natural'Max (Layers (Get_Index (V)), Max);
+               Next (Eit);
+            end loop;
 
-         Layers (Get_Index (Sorted (S).Vertex)) := Max + 1;
-         Num := Natural'Max (Num, Max + 1);
+            Layers (Get_Index (Sorted (S).Vertex)) := Max + 1;
+            Num := Natural'Max (Num, Max + 1);
+         end if;
       end loop;
       Num_Layers := Num;
    end Partition_Topological;
@@ -643,15 +646,13 @@ package body Layouts is
                Relative_Position (Get_Index (Lines (R, C))) := C;
                X (Get_Index (Lines (R, C))) := Current_X;
 
-               if Is_From_Auto_Layout (Canvas_Item (Lines (R, C))) then
-                  Current_X := Current_X + Min_Horizontal_Dist
-                    + Width (Lines (R, C), Vertical_Layout);
-                  Max_Height := Natural'Max
-                    (Max_Height, Height (Lines (R, C), Vertical_Layout));
-               end if;
+               Current_X := Current_X + Min_Node_Dist
+                 + Width (Lines (R, C), Vertical_Layout);
+               Max_Height := Natural'Max
+                 (Max_Height, Height (Lines (R, C), Vertical_Layout));
             end loop;
 
-            Current_Y := Current_Y + Min_Vertical_Dist + Max_Height / 2;
+            Current_Y := Current_Y + Min_Layer_Dist + Max_Height / 2;
 
             for C in 0 .. Num_Per_Line (R) - 1 loop
                Y (Get_Index (Lines (R, C))) := Current_Y
@@ -757,7 +758,6 @@ package body Layouts is
    procedure Position_Nodes
      (G               : Graph;
       Lines           : Node_Matrix;
-      Max_Width       : Natural;
       X               : in out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean)
@@ -766,22 +766,8 @@ package body Layouts is
       Iteration : Natural := 0;
       X1, X2, Min, Dist : Integer;
       C1, C2 : Natural;
-      Min_D : array (Lines'Range (1)) of Integer;
 
    begin
-      for Row in Lines'Range (1) loop
-         Min_D (Row) := Max_Width;
-         for Column in 0 .. Num_Per_Line (Row) - 1 loop
-            Min_D (Row) := Min_D (Row)
-              - Width (Lines (Row, Column), Vertical_Layout);
-         end loop;
-
-         Min_D (Row) := Integer'Max
-           (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
-         Min_D (Row) := Integer'Min (Min_D (Row), Max_Dist);
-      end loop;
-
-
       --  While the stability of the graph is not satisfactory
       while Iteration < Max_Position_Iteration loop
 
@@ -817,7 +803,7 @@ package body Layouts is
                            - X (Get_Index (Lines (Row, C2 - 1))))
                  = (Width (Lines (Row, C2), Vertical_Layout)
                     + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2
-                 + Min_D (Row)
+                 + Min_Node_Dist
                loop
                   C2 := C2 + 1;
                end loop;
@@ -841,7 +827,8 @@ package body Layouts is
                        + Width (Lines (Row, C1 - 1), Vertical_Layout) / 2;
                      Min := (Width (Lines (Row, C1 - 1), Vertical_Layout)
                              + Width (Lines (Row, C1), Vertical_Layout)) / 2;
-                     Dist := -Integer'Min (-Dist, X1 - X2 - Min - Min_D (Row));
+                     Dist :=
+                       -Integer'Min (-Dist, X1 - X2 - Min - Min_Node_Dist);
                   end if;
                else
                   if C2 < Num_Per_Line (Row) then
@@ -851,7 +838,8 @@ package body Layouts is
                        + Width (Lines (Row, C2), Vertical_Layout) / 2;
                      Min := (Width (Lines (Row, C2), Vertical_Layout)
                        + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2;
-                     Dist := Integer'Min (Dist, X2 - X1 - Min - Min_D (Row));
+                     Dist :=
+                       Integer'Min (Dist, X2 - X1 - Min - Min_Node_Dist);
                   end if;
                end if;
 
@@ -871,61 +859,6 @@ package body Layouts is
       end loop;
    end Position_Nodes;
 
-   ------------------------
-   -- Insert_Dummy_Nodes --
-   ------------------------
-
-   procedure Insert_Dummy_Nodes
-     (G : in out Graph; Layers : in out Natural_Array)
-   is
-      pragma Unreferenced (G, Layers);
-
-      --  Iter : Edge_Iterator := First (G, Src => Vertex_Access'(null));
-      --  S, D : Vertex_Access;
-      --  L1, L2 : Natural;
-   begin
-      return;
-
-      --  while not At_End (Iter) loop
-         --  S := Get_Src (Get (Iter));
-         --  D := Get_Dest (Get (Iter));
-         --  ??? Shouldn't do anything if S or D is a dummy node, since we
-         --  already took care of that.
-
-         --  L1 := Layers (Get_Index (S));
-         --  L2 := Layers (Get_Index (D));
-
-         --  if L2 - L1 > 1 then
-         --     for Row in L1 + 1 .. L2 - 1 loop
-         --        V := new Vertex'Class' (S.all);
-         --        V.Edges := null;
-         --        V.Next := null;
-         --        V.Width := 1;
-         --        V.Height := 1;
-         --        Layers (Get_Index (V)) := Row;
-         --        Add_Vertex (G, V);
-
-         --        E := new Edge'Class' (Get (Iter).all);
-         --        E.Next := null;
-         --        E.Src := null;
-         --        E.Dest := null;
-         --        Add_Edge (G, E, S, V);
-         --        S := V;
-         --     end loop;
-
-         --     E := new Edge'Class' (Get (Iter).all);
-         --     E.Next := null;
-         --     E.Src := null;
-         --     E.Dest := null;
-         --     Add_Edge (G, E, S, D);
-
-         --     Remove_Edge (G, Get (Iter));
-         --  end if;
-
-         --  Next (Iter);
-      --  end loop;
-   end Insert_Dummy_Nodes;
-
    ------------
    -- Layout --
    ------------
@@ -936,6 +869,8 @@ package body Layouts is
       Force           : Boolean := False;
       Vertical_Layout : Boolean := True)
    is
+      pragma Unreferenced (Force);
+
       Layers : Natural_Array (0 .. Max_Index (Graph) - 1);
       X, Y   : Integer_Array (0 .. Max_Index (Graph) - 1);
       Num_Layers : Natural;
@@ -943,7 +878,7 @@ package body Layouts is
    begin
       --  ??? We could also use the network simplex algorithm to assign the
       --  ranks.
-      Partition_Topological (Graph, Layers, Num_Layers);
+      Partition_Topological (Graph, Layers, Num_Layers, False);
 
       --  Insert dummy nodes so that edges do not cross layers.
       --  Insert_Dummy_Nodes (G);
@@ -967,38 +902,228 @@ package body Layouts is
 
          Sort_Layers
            (Graph, Lines, Layers, X, Y, Num_Per_Line, Vertical_Layout);
-
-         if Vertical_Layout then
-            Position_Nodes
-              (Graph, Lines, Natural (Get_Allocation_Height (Canvas)),
-               X, Num_Per_Line, Vertical_Layout);
-         else
-            Position_Nodes
-              (Graph, Lines, Natural (Get_Allocation_Width (Canvas)),
-               X, Num_Per_Line, Vertical_Layout);
-         end if;
+         Position_Nodes (Graph, Lines, X, Num_Per_Line, Vertical_Layout);
       end;
 
       Iter := First (Graph);
       while not At_End (Iter) loop
-         if Force
-           or else Is_From_Auto_Layout (Canvas_Item (Get (Iter)))
-         then
-            if Vertical_Layout then
-               Move_To
-                 (Canvas, Canvas_Item (Get (Iter)),
-                  Gint (Y (Get_Index (Get (Iter)))),
-                  Gint (X (Get_Index (Get (Iter)))));
-            else
-               Move_To
-                 (Canvas, Canvas_Item (Get (Iter)),
-                  Gint (X (Get_Index (Get (Iter)))),
-                  Gint (Y (Get_Index (Get (Iter)))));
-            end if;
+         if Vertical_Layout then
+            Move_To
+              (Canvas, Canvas_Item (Get (Iter)),
+               Gint (X (Get_Index (Get (Iter)))),
+               Gint (Y (Get_Index (Get (Iter)))));
+         else
+            Move_To
+              (Canvas, Canvas_Item (Get (Iter)),
+               Gint (Y (Get_Index (Get (Iter)))),
+               Gint (X (Get_Index (Get (Iter)))));
          end if;
          Next (Iter);
       end loop;
-
    end Layer_Layout;
+
+   -------------------
+   -- Simple_Layout --
+   -------------------
+
+   procedure Simple_Layout
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Graph  : Glib.Graphs.Graph;
+      Force  : Boolean := False;
+      Vertical_Layout : Boolean := True)
+   is
+      Max_X, Max_Y    : Natural := Natural'First;
+      Min_X, Min_Y    : Natural := Natural'Last;
+      Layers          : Natural_Array (0 .. Max_Index (Graph) - 1);
+      Num_Layers      : Natural;
+
+      procedure Find_Bounding_Boxes (Sizes : in out Integer_Array);
+      --  Compute the bounding fox items already positioned, or the size of
+      --  each of the new layers. The size of the new layers is stored in
+      --  Layers_Size.
+
+      procedure Space_Columns (Pos : in out Integer_Array);
+      --  Compute the left-most pixel for each new layer.
+
+      function Compute_Columns_Start (Layer : Natural) return Integer;
+      --  Return the start coordinate for the Layer-th column.
+      --  We try to organize items so that they are centered around their
+      --  parent:                B
+      --                     A - C
+      --                         D
+      --  This is not mandatory (and slightly inefficient), but produces
+      --  better results for a minimal cost.
+      --  This function could return Min_X instead, but then each column would
+      --  start at the same Y pos.
+      --                     A - B
+      --                         C
+      --                         D
+      --  As opposed to Layer_Layout, this algorithm doesn't try to split the
+      --  items on the layer into multiple groups, but will group all of them
+      --  graphically. This is less general, although in the general case this
+      --  is enough in the context of GPS.
+
+      procedure Move_Items
+        (Layer : Natural; Align_On : Integer);
+      --  Move all items for the given layer at the right position.
+      --  Align_On indicates the coordinate of the aligned edge for the nodes.
+
+      -------------------------
+      -- Find_Bounding_Boxes --
+      -------------------------
+
+      procedure Find_Bounding_Boxes (Sizes : in out Integer_Array) is
+         Iter  : Vertex_Iterator := First (Graph);
+         Rect  : Gdk.Rectangle.Gdk_Rectangle;
+         Layer : Natural;
+      begin
+         while not At_End (Iter) loop
+            Rect  := Get_Coord (Canvas_Item (Get (Iter)));
+
+            if not Force and then Rect.Y /= Gint'First then
+               Max_X := Natural'Max (Max_X, Natural (Rect.X + Rect.Width));
+               Max_Y := Natural'Max (Max_Y, Natural (Rect.Y + Rect.Height));
+               Min_X := Natural'Min (Min_X, Natural (Rect.X));
+               Min_Y := Natural'Min (Min_Y, Natural (Rect.Y));
+            else
+               Layer := Layers (Get_Index (Get (Iter)));
+               if Vertical_Layout then
+                  Sizes (Layer) :=
+                    Natural'Max (Sizes (Layer), Natural (Rect.Height));
+               else
+                  Sizes (Layer) :=
+                    Natural'Max (Sizes (Layer), Natural (Rect.Width));
+               end if;
+            end if;
+
+            Next (Iter);
+         end loop;
+      end Find_Bounding_Boxes;
+
+      -------------------
+      -- Space_Columns --
+      -------------------
+
+      procedure Space_Columns (Pos : in out Integer_Array) is
+      begin
+         if Max_X < Min_X then
+            Min_X := 0;
+            Min_Y := 0;
+         else
+            if Vertical_Layout then
+               Pos (Pos'First) := Pos (Pos'First) + Max_Y + Min_Layer_Dist;
+            else
+               Pos (Pos'First) := Pos (Pos'First) + Max_X + Min_Layer_Dist;
+            end if;
+         end if;
+
+         for L in Pos'First + 1 .. Pos'Last loop
+            Pos (L) := Pos (L) + Pos (L - 1) + Min_Layer_Dist;
+         end loop;
+      end Space_Columns;
+
+      ---------------------------
+      -- Compute_Columns_Start --
+      ---------------------------
+
+      function Compute_Columns_Start (Layer : Natural) return Integer is
+         Current         : Natural := 0;
+         Ancestors_Count : Natural := 0;
+         Parent          : Integer := 0;
+         Iter            : Vertex_Iterator := First (Graph);
+         Rect            : Gdk_Rectangle;
+         Eit             : Edge_Iterator;
+      begin
+         while not At_End (Iter) loop
+            --  The way we compute the mean position of the ancestors will
+            --  count several times a common ancestor for several items, thus
+            --  centering more around it. This is in fact a nicer layout.
+
+            --  The following test automatically excludes already
+            --  positionned items, since they are in layer 0.
+
+            if Layers (Get_Index (Get (Iter))) = Layer then
+               Rect := Get_Coord (Canvas_Item (Get (Iter)));
+               if Vertical_Layout then
+                  Current := Current + Natural (Rect.Width) + Min_Node_Dist;
+               else
+                  Current := Current + Natural (Rect.Height) + Min_Node_Dist;
+               end if;
+
+               Eit := First (Graph, Dest => Get (Iter));
+               while not At_End (Eit) loop
+                  if not Never_Positionned (Get_Src (Get (Eit))) then
+                     Rect  := Get_Coord (Canvas_Item (Get_Src (Get (Eit))));
+
+                     if Vertical_Layout then
+                        Parent := Parent + Natural (Rect.X + Rect.Width / 2);
+                     else
+                        Parent := Parent + Natural (Rect.Y + Rect.Height / 2);
+                     end if;
+
+                     Ancestors_Count := Ancestors_Count + 1;
+                  end if;
+
+                  Next (Eit);
+               end loop;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         if Ancestors_Count = 0 then
+            if Vertical_Layout then
+               return Min_X;
+            else
+               return Min_Y;
+            end if;
+         else
+            return Parent / Ancestors_Count - (Current - Min_Node_Dist) / 2;
+         end if;
+      end Compute_Columns_Start;
+
+      ----------------
+      -- Move_Items --
+      ----------------
+
+      procedure Move_Items (Layer : Natural; Align_On : Integer) is
+         Coord : Integer := Compute_Columns_Start (Layer);
+         Iter  : Vertex_Iterator := First (Graph);
+         Rect  : Gdk.Rectangle.Gdk_Rectangle;
+         Item  : Canvas_Item;
+      begin
+         while not At_End (Iter) loop
+            Item := Canvas_Item (Get (Iter));
+            if Layers (Get_Index (Item)) = Layer then
+               if Force or else Never_Positionned (Item) then
+                  Rect  := Get_Coord (Item);
+                  if Vertical_Layout then
+                     Move_To (Canvas, Item, Gint (Coord), Gint (Align_On));
+                     Coord := Coord + Natural (Rect.Width) + Min_Node_Dist;
+                  else
+                     Move_To (Canvas, Item, Gint (Align_On), Gint (Coord));
+                     Coord := Coord + Natural (Rect.Height) + Min_Node_Dist;
+                  end if;
+               end if;
+            end if;
+
+            Next (Iter);
+         end loop;
+      end Move_Items;
+
+   begin
+      Partition_Topological (Graph, Layers, Num_Layers, True);
+
+      declare
+         Layers_Size  : Integer_Array (0 .. Num_Layers) := (others => 0);
+      begin
+         Find_Bounding_Boxes (Layers_Size);
+         Space_Columns (Layers_Size);
+
+         for L in 1 .. Num_Layers loop
+            Move_Items (L, Layers_Size (L - 1));
+         end loop;
+      end;
+   end Simple_Layout;
 
 end Layouts;
