@@ -1217,6 +1217,10 @@ package body Src_Editor_Box is
                   Start_Line := Start_Line + 1;
                end if;
 
+               --  Set the column to the start of the selection
+
+               Column := Get_Line_Offset (Start_Iter);
+
                Set_Area_Information
                  (File_Area_Context_Access (Context),
                   Get_Text (Start_Iter, End_Iter),
@@ -1228,7 +1232,7 @@ package body Src_Editor_Box is
                --  Expand the tabs
 
                Get_Screen_Position
-                 (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
+                 (Editor.Source_Buffer, Entity_Start, Line, Entity_Column);
 
                Set_Entity_Information
                  (Entity_Selection_Context_Access (Context),
