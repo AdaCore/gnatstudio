@@ -37,7 +37,6 @@ with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
 with Gtk.Widget;          use Gtk.Widget;
 
 with GUI_Utils;           use GUI_Utils;
-with String_Utils;        use String_Utils;
 with Traces;              use Traces;
 with XML_Parsers;
 
@@ -707,7 +706,7 @@ package body Histories is
                Path  : constant String := Value (V).all;
                Mitem : Full_Path_Menu_Item;
             begin
-               Gtk_New (Mitem, Krunch (Path, 60), Path);
+               Gtk_New (Mitem, Path, Path);
                Append (Menu, Mitem);
 
                if Notifier.Callback /= null then

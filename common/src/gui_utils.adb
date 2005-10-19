@@ -873,7 +873,8 @@ package body GUI_Utils is
       Label     : String;
       Path      : String) is
    begin
-      Initialize (Gtk_Menu_Item (Menu_Item), Locale_To_UTF8 (Label));
+      Initialize (Gtk_Menu_Item (Menu_Item),
+                  Krunch (Locale_To_UTF8 (Label), 60));
       Menu_Item.Full_Path := Path;
    end Initialize;
 
