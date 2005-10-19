@@ -228,10 +228,6 @@ package body Navigation_Module is
          Module.Last_Marker := 0;
       end if;
 
-      Trace (Me, "Marker_Added_In_History, Current, Last="
-             & Module.Current_Marker'Img & Module.Last_Marker'Img
-             & " marker=" & To_String (D.Marker));
-
       Module.Current_Marker := Module.Current_Marker + 1;
       if Module.Current_Marker > Module.Markers'Last then
          Destroy (Module.Markers (Module.Markers'First).all);
