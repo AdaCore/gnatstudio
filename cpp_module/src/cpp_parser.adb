@@ -187,6 +187,9 @@ package body CPP_Parser is
       Current_File    : Natural;
       Lang_Handler    : Language_Handler;
 
+      Do_Dbimp        : Boolean := True;
+      --  Whether we should call Dbimp in the end
+
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       --  The name of a temporary file created by dbimp, which needs to be
       --  freed on completion
@@ -198,8 +201,21 @@ package body CPP_Parser is
 
    procedure Browse_Project
      (Project      : Project_Type;
-      Iterator     : in out CPP_Handler_Iterator'Class);
+      Iterator     : in out CPP_Handler_Iterator'Class;
+      Single_File  : VFS.Virtual_File := VFS.No_File);
    --  Runs cbrowser for all source files of Project.
+   --  If Single_File is specified, then only this information for this file
+   --  will be generated.
+
+   function Generate_LI_For_Source
+     (Handler      : access CPP_Handler_Record'Class;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Project_Type;
+      File         : VFS.Virtual_File) return LI_Handler_Iterator'Class;
+   --  Generate the cbrowser information for a single file. This means that
+   --  we will mostly know about entity declaration and bodies, but not about
+   --  references. On the other hand, it is extremely fast, and suitable when
+   --  displaying the list of entities declared in a file
 
    procedure Parse_File
      (Handler : access CPP_Handler_Record'Class;
@@ -2864,7 +2880,8 @@ package body CPP_Parser is
 
    procedure Browse_Project
      (Project      : Project_Type;
-      Iterator     : in out CPP_Handler_Iterator'Class)
+      Iterator     : in out CPP_Handler_Iterator'Class;
+      Single_File  : VFS.Virtual_File := VFS.No_File)
    is
       DB_Dir           : constant String := Get_DB_Dir (Project);
       Num_C_Files      : Natural := 0;
@@ -2880,9 +2897,15 @@ package body CPP_Parser is
              & Project_Name (Project));
 
       Unchecked_Free (Iterator.Current_Files);
-      Iterator.Current_Files := Get_Source_Files
-        (Project            => Project,
-         Recursive          => False);
+
+      if Single_File = VFS.No_File then
+         Iterator.Current_Files := Get_Source_Files
+           (Project            => Project,
+            Recursive          => False);
+      else
+         Iterator.Current_Files := new File_Array'(1 => Single_File);
+      end if;
+
       Iterator.Current_File := Iterator.Current_Files'First;
 
       --  If there is at least one source file, make sure the database
@@ -2910,7 +2933,7 @@ package body CPP_Parser is
          begin
             if Lang = C_String or else Lang = Cpp_String then
 
-               if File_Time_Stamp (Xref_File_Name) /=
+               if File_Time_Stamp (Xref_File_Name) <
                  File_Time_Stamp (File)
                then
                   Num_C_Files := Num_C_Files + 1;
@@ -2958,6 +2981,29 @@ package body CPP_Parser is
       end if;
    end Browse_Project;
 
+   ----------------------------
+   -- Generate_LI_For_Source --
+   ----------------------------
+
+   function Generate_LI_For_Source
+     (Handler      : access CPP_Handler_Record'Class;
+      Lang_Handler : access Abstract_Language_Handler_Record'Class;
+      Project      : Project_Type;
+      File         : VFS.Virtual_File) return LI_Handler_Iterator'Class
+   is
+      Iter : CPP_Handler_Iterator;
+   begin
+      Iter.Handler      := CPP_Handler (Handler);
+      Iter.Project      := Project;
+      Iter.Prj_Iterator := Start (Project, Recursive => False);
+      Iter.Lang_Handler := Language_Handler (Lang_Handler);
+      Iter.Do_Dbimp     := False;
+
+      Browse_Project (Current (Iter.Prj_Iterator), Iter, Single_File => File);
+
+      return Iter;
+   end Generate_LI_For_Source;
+
    -----------------------------
    -- Generate_LI_For_Project --
    -----------------------------
@@ -2974,6 +3020,7 @@ package body CPP_Parser is
       Iter.Project      := Project;
       Iter.Prj_Iterator := Start (Project, Recursive);
       Iter.Lang_Handler := Language_Handler (Lang_Handler);
+      Iter.Do_Dbimp     := True;
 
       if Current (Iter.Prj_Iterator) /= No_Project then
          Browse_Project (Current (Iter.Prj_Iterator), Iter);
@@ -3027,17 +3074,22 @@ package body CPP_Parser is
                end if;
             end if;
 
-            Trace (Me, "Starting dbimp on "
-                   & Project_Name (Current (Iterator.Prj_Iterator)));
-            Iterator.State := Process_Xrefs;
+            if Iterator.Do_Dbimp then
+               Trace (Me, "Starting dbimp on "
+                      & Project_Name (Current (Iterator.Prj_Iterator)));
+               Iterator.State := Process_Xrefs;
 
-            DB_Dirs := Get_DB_Dirs (Current (Iterator.Prj_Iterator));
-            SN.Browse.Generate_Xrefs
-              (DB_Directories => DB_Dirs,
-               DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
-               Temp_Name      => Iterator.Tmp_Filename,
-               PD             => Iterator.PD);
-            Free (DB_Dirs);
+               DB_Dirs := Get_DB_Dirs (Current (Iterator.Prj_Iterator));
+               SN.Browse.Generate_Xrefs
+                 (DB_Directories => DB_Dirs,
+                  DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
+                  Temp_Name      => Iterator.Tmp_Filename,
+                  PD             => Iterator.PD);
+               Free (DB_Dirs);
+            else
+               Iterator.Process_Running := False;
+               Iterator.State := Done;
+            end if;
 
          when Process_Xrefs =>
             if Iterator.Process_Running then
@@ -3187,28 +3239,28 @@ package body CPP_Parser is
 
    begin
       --  This call is just to check whether we know anything of the file from
-      --  the in-memory database
+      --  the on-disk database. If not loaded into memory yet, the info will
+      --  be loaded
+
       Source := Get_Source_Info
         (Handler         => Handler,
          Source_Filename => File_Name);
 
-      --  ??? Do not regenerate the DB if it is not up-to-date, since that
-      --  is too slow. When we can remove the need for dbimp, reconsider this
-      --  decision
       if Source = null
---  ???      or else not Is_Up_To_Date (Source)
+        or else not Is_Up_To_Date (Source)
       then
-         --  If we do not have any LI information, parse the database for the
-         --  project. Otherwise, do nothing to save time.
          declare
-            Iter : LI_Handler_Iterator'Class := Generate_LI_For_Project
+            --  This will only call cbrowser, not dbimp. Therefore, we have
+            --  partial info in memory. This is not a problem: to regenerate
+            --  the info, the user has to select the menu Build/Compute xref
+            --  anyway, which will systematically rerun cbrowser and dbimp, and
+            --  the info will be complete from then on.
+            Iter : LI_Handler_Iterator'Class := Generate_LI_For_Source
               (Handler,
                Lang_Handler => Languages,
-               Project      => Project,
-               Recursive    => False);
+               Project     => Project,
+               File        => File_Name);
          begin
-            --  In C/C++, it is the same cost to do it for one file or the
-            --  whole project
             loop
                Continue (Iter, Finished);
                exit when Finished;
