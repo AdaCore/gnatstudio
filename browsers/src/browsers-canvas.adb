@@ -348,7 +348,7 @@ package body Browsers.Canvas is
       Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Kernel := Kernel_Handle (Kernel);
 
-      Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
+      Set_Layout_Algorithm (Browser.Canvas, Simple_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
 
       if Create_Toolbar then
@@ -496,6 +496,10 @@ package body Browsers.Canvas is
       else
          Image_Canvas (Hook.Browser.Canvas).Background := null;
       end if;
+
+      Set_Layout_Orientation
+        (Hook.Browser.Canvas,
+         Vertical_Layout => Get_Pref (Browsers_Vertical_Layout));
 
       On_Zoom (Hook.Browser.Canvas);
 
@@ -875,8 +879,10 @@ package body Browsers.Canvas is
       B : constant General_Browser := General_Browser (Browser);
    begin
       Push_State (Get_Kernel (B), Busy);
+      Set_Layout_Algorithm (B.Canvas, Layer_Layout'Access);
       Layout (B, Force => True);
       Refresh_Canvas (Get_Canvas (B));
+      Set_Layout_Algorithm (B.Canvas, Simple_Layout'Access);
       Pop_State (Get_Kernel (B));
 
    exception
@@ -1800,10 +1806,7 @@ package body Browsers.Canvas is
      (Browser : access General_Browser_Record;
       Force : Boolean := False) is
    begin
-      Layout
-        (Get_Canvas (Browser),
-         Force => Force,
-         Vertical_Layout => Get_Pref (Browsers_Vertical_Layout));
+      Layout (Get_Canvas (Browser), Force => Force);
    end Layout;
 
    ------------------------------------
