@@ -33,7 +33,6 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
 with Gtk;                       use Gtk;
@@ -41,7 +40,6 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -130,6 +128,7 @@ package body VCS_Activities_View is
    Status_Pixbuf_Column      : constant := 5;
    Has_Log_Column            : constant := 6;
    Activity_Id_Column        : constant := 7;
+   Editable_Column           : constant := 8;
 
    -------------------
    -- Columns_Types --
@@ -145,7 +144,8 @@ package body VCS_Activities_View is
          Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
          Has_Log_Column            => GType_Boolean,
-         Activity_Id_Column        => GType_String);
+         Activity_Id_Column        => GType_String,
+         Editable_Column           => GType_Boolean);
    end Columns_Types;
 
    -----------------------
@@ -520,6 +520,7 @@ package body VCS_Activities_View is
 
       Set (Explorer.Model, Iter, Base_Name_Column, Get_Name (Activity));
       Set (Explorer.Model, Iter, Activity_Id_Column, Image (Activity));
+      Set (Explorer.Model, Iter, Editable_Column, True);
       Set (Explorer.Model, Iter, Has_Log_Column, False);
 
       Explorer.Iter := Iter;
@@ -675,6 +676,8 @@ package body VCS_Activities_View is
             Set (Explorer.Model, A_Iter, Activity_Id_Column, Image (Activity));
             Set (Explorer.Model, A_Iter,
                  Has_Log_Column, Has_Log (Kernel, Activity));
+            Set (Explorer.Model, A_Iter, Editable_Column, True);
+
             return A_Iter;
 
          else
@@ -911,6 +914,8 @@ package body VCS_Activities_View is
       Set (Explorer.Model, Iter, Base_Name_Column,
            Base_Name (Line_Info.Status.File));
 
+      Set (Explorer.Model, Iter, Editable_Column, False);
+
       if not String_List.Is_Empty (Line_Info.Status.Working_Revision) then
          Set (Explorer.Model, Iter, Local_Rev_Column,
               String_List.Head (Line_Info.Status.Working_Revision));
@@ -1089,8 +1094,6 @@ package body VCS_Activities_View is
 
       Set_Rules_Hint (Explorer.Tree, True);
 
-      Set_Property (Edit_Rend, Editable_Property, True);
-
       Tree_Model_Callback.Object_Connect
         (Edit_Rend, "edited", Edited_Callback'Access,
          Slot_Object => Explorer.Kernel, User_Data => Base_Name_Column);
@@ -1098,6 +1101,8 @@ package body VCS_Activities_View is
       Gtk_New (Explorer.File_Column);
       Set_Title (Explorer.File_Column, -"Activity / File");
       Pack_Start (Explorer.File_Column, Edit_Rend, True);
+      Add_Attribute
+        (Explorer.File_Column, Edit_Rend, "editable", Editable_Column);
       Add_Attribute
         (Explorer.File_Column, Edit_Rend, "text", Base_Name_Column);
       Set_Clickable (Explorer.File_Column, True);
