@@ -50,7 +50,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with Language_Handlers;     use Language_Handlers;
+with Language_Handlers;         use Language_Handlers;
 with Language.Ada;              use Language, Language.Ada;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
@@ -667,26 +667,42 @@ package body Docgen_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File)
    is
-      B                : constant Docgen.Backend.Backend_Handle :=
-                           Get_Backend (Kernel);
-      Is_Spec          : constant Boolean := Is_Spec_File (Kernel, File);
-      Process_Body     : constant Boolean :=
-         Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files;
-      Source_File_List : Type_Source_File_Table.HTable;
-      Body_File        : Virtual_File;
-      Source           : Source_File;
-      Nb_Files         : Natural := 1;
+      B                   : constant Docgen.Backend.Backend_Handle :=
+                              Get_Backend (Kernel);
+      Is_Spec             : constant Boolean := Is_Spec_File (Kernel, File);
+      Process_Body        : constant Boolean :=
+                              Docgen_Module
+                                (Docgen_Module_Id).Options.Process_Body_Files;
+      Source_File_List    : Type_Source_File_Table.HTable;
+      Other_File          : Virtual_File;
+      Other_File_Basename : GNAT.OS_Lib.String_Access;
+      Source              : Source_File;
+      Nb_Files            : Natural := 1;
+
+      Reporter            : constant File_Error_Reporter :=
+                              new Docgen_Error_Reporter_Record'
+                                (Kernel, False);
 
    begin
       if Get_Language_From_File (Get_Language_Handler (Kernel), File) /=
         Ada_Lang
       then
-         Trace (Me, Base_Name (File) & " is not an Ada file. " &
-                "No documentation will be generated.");
+         Insert
+           (Kernel,
+            Base_Name (File) & " is not an Ada file.",
+            Add_LF => True,
+            Mode   => Error);
+
          return;
       end if;
 
-      if B = null or else (not Is_Spec and then not Process_Body) then
+      if B = null then
+         Insert
+           (Kernel,
+            "No backend selected for the documentation generator.",
+            Add_LF => True,
+            Mode   => Error);
+
          return;
       end if;
 
@@ -694,7 +710,12 @@ package body Docgen_Module is
         (Db           => Get_Database (Kernel),
          File         => File,
          Allow_Create => True);
-      Update_Xref (Source);
+
+      Update_Xref (Source, Reporter);
+
+      if Docgen_Error_Reporter_Record (Reporter.all).Called then
+         return;
+      end if;
 
       Type_Source_File_Table.Set
         (Source_File_List,
@@ -704,22 +725,29 @@ package body Docgen_Module is
             (Get_Doc_File_Name (File, Docgen.Backend.Get_Extension (B))),
           Is_Spec       => Is_Spec_File (Kernel, File)));
 
-      if Is_Spec and then Process_Body then
-         Body_File := Create
-           (Other_File_Base_Name
-              (Get_Project_From_File
-                 (Project_Registry (Get_Registry (Kernel).all),
-                  File),
+      Other_File_Basename := new String'
+        (Other_File_Base_Name
+           (Get_Project_From_File
+              (Project_Registry (Get_Registry (Kernel).all),
                File),
+            File));
+
+      if (Is_Spec
+          and then Process_Body
+          and then Other_File_Basename.all /= Base_Name (File))
+        or else not Is_Spec
+      then
+         Other_File := Create
+           (Other_File_Basename.all,
             Kernel,
-            Use_Object_Path => False);
+           Use_Object_Path => False);
 
          Source := Get_Or_Create
            (Db           => Get_Database (Kernel),
-            File         => Body_File,
+            File         => Other_File,
             Allow_Create => True);
 
-         if Body_File /= No_File then
+         if Other_File /= No_File then
             Nb_Files := 2;
             Type_Source_File_Table.Set
               (Source_File_List,
@@ -727,11 +755,13 @@ package body Docgen_Module is
                (Unit_Name     => new String'(Get_Unit_Name (Source)),
                 Doc_File_Name => new String'
                   (Get_Doc_File_Name
-                     (Body_File,
+                     (Other_File,
                       Docgen.Backend.Get_Extension (B))),
-                Is_Spec       => Is_Spec_File (Kernel, Body_File)));
+                Is_Spec       => Is_Spec_File (Kernel, Other_File)));
          end if;
       end if;
+
+      Free (Other_File_Basename);
 
       Generate (Kernel, Source_File_List, Nb_Files, B);
 
