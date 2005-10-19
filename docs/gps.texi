@@ -4892,6 +4892,9 @@ cases where the dependencies might change (editing source files,
 changing the project hierarchy or the value of the scenario
 variables,...)
 
+It also recomputes the layout of the graph, and will change the current
+position of the boxes.
+
 @item Show system files
 @cindex show system files
 
