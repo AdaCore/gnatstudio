@@ -37,15 +37,30 @@ package Docgen is
    First_File_Line     : constant Natural := 1;
    No_Body_Line_Needed : constant Natural := 0;
 
+   type Docgen_Error_Reporter_Record is new Entities.File_Error_Reporter_Record
+   with record
+      Kernel : Kernel_Handle;
+      --  The GPS Kernel.
+
+      Called : Boolean := False;
+      --  Set to true when Error is called.
+   end record;
+   procedure Error
+     (Report : in out Docgen_Error_Reporter_Record;
+      File   : Source_File);
+   --  See inherited documentation.
+
    type Source_File_Information is record
-      Unit_Name  : GNAT.OS_Lib.String_Access;
+      Unit_Name     : GNAT.OS_Lib.String_Access;
       Doc_File_Name : GNAT.OS_Lib.String_Access;
       --  The base name of the output file that contains the documentation for
       --  this source file.
       Is_Spec       : Boolean;
    end record;
    No_Source_File_Information : constant Source_File_Information :=
-     (Unit_Name => null, Doc_File_Name => null, Is_Spec => False);
+                                  (Unit_Name     => null,
+                                   Doc_File_Name => null,
+                                   Is_Spec       => False);
    --  Description of a source file for which documentation should be
    --  generated.
 
