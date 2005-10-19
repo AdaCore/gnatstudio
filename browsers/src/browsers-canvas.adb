@@ -497,9 +497,7 @@ package body Browsers.Canvas is
          Image_Canvas (Hook.Browser.Canvas).Background := null;
       end if;
 
-      Set_Layout_Orientation
-        (Hook.Browser.Canvas,
-         Vertical_Layout => Get_Pref (Browsers_Vertical_Layout));
+      Refresh_Layout_Orientation (Hook.Browser);
 
       On_Zoom (Hook.Browser.Canvas);
 
@@ -515,6 +513,18 @@ package body Browsers.Canvas is
 
       Refresh_Canvas (Hook.Browser.Canvas);
    end Execute;
+
+   --------------------------------
+   -- Refresh_Layout_Orientation --
+   --------------------------------
+
+   procedure Refresh_Layout_Orientation
+     (Browser : access General_Browser_Record) is
+   begin
+      Set_Layout_Orientation
+        (Browser.Canvas,
+         Vertical_Layout => Get_Pref (Browsers_Vertical_Layout));
+   end Refresh_Layout_Orientation;
 
    ---------------------------
    -- Setup_Default_Toolbar --

@@ -106,6 +106,13 @@ package Browsers.Canvas is
    --  If Force is true, then even the items that have been moved manually by
    --  the user are recomputed.
 
+   procedure Refresh_Layout_Orientation
+     (Browser : access General_Browser_Record);
+   --  Called when the orientation of the layout might have changed (ie while
+   --  taking into account the new preferences). By default, the orientation is
+   --  read from the preferences, although by overriding this subprogram a
+   --  default orientation can be forced
+
    ------------------
    -- Active areas --
    ------------------
