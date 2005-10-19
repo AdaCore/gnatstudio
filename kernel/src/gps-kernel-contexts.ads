@@ -216,8 +216,8 @@ package GPS.Kernel.Contexts is
    --  This information is automatically cached in the context, in case several
    --  modules need to compute it;
    --  No_Entity_Information is returned if the information could not be found.
-   --  No also that in most cases you should set the busy cursor before calling
-   --  this function, since it might take some time.
+   --  Note also that in most cases you should set the busy cursor before
+   --  calling this function, since it might take some time.
    --  You do not need to free the memory, since it will automatically be freed
    --  when the context is destroyed.
 
