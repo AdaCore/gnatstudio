@@ -61,17 +61,12 @@ package body Casing_Exceptions is
 
    type Change_Case_Command (Casing : Casing_Type) is
      new Interactive_Command with null record;
---        Casing : Casing_Type;
---     end record;
    function Execute
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Add_Exception_Command (Substring, Remove : Boolean) is
      new Interactive_Command with null record;
---        Remove    : Boolean := False;
---        Substring : Boolean;
---     end record;
    function Execute
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -357,9 +352,28 @@ package body Casing_Exceptions is
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      C    : constant Entity_Selection_Context_Access :=
-               Entity_Selection_Context_Access (Context.Context);
-      Name : constant String := Entity_Name_Information (C);
+      function Get_Name return String;
+      --  Returns the name of the entity or the content of the selection
+      --  depending on the context.
+
+      --------------
+      -- Get_Name --
+      --------------
+
+      function Get_Name return String is
+      begin
+         if Context.Context.all in Entity_Selection_Context'Class then
+            return Entity_Name_Information
+              (Entity_Selection_Context_Access (Context.Context));
+         else
+            --  An area
+            return Text_Information
+              (File_Area_Context_Access (Context.Context));
+         end if;
+      end Get_Name;
+
+      Name : constant String := Get_Name;
+
    begin
       if Command.Substring then
          if Command.Remove then
@@ -387,30 +401,27 @@ package body Casing_Exceptions is
    is
       pragma Unreferenced (Filter);
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Selection : Entity_Selection_Context_Access;
    begin
-      if Context.all in Entity_Selection_Context'Class
-        and then Has_Entity_Name_Information
-          (Entity_Selection_Context_Access (Context))
-        and then Has_Entity_Column_Information
-          (Entity_Selection_Context_Access (Context))
-        and then Has_Line_Information
-          (Entity_Selection_Context_Access (Context))
-      then
-         Selection := Entity_Selection_Context_Access (Context);
+      if Context.all in Entity_Selection_Context'Class then
+         --  This is an entity, not a substring
+         return  False;
+
+      elsif Context.all in File_Area_Context'Class then
          declare
-            File   : constant Virtual_File := File_Information (Selection);
-            E_Name : constant String := Entity_Name_Information (Selection);
-            W_Seps : constant Character_Set :=
-                       To_Set (" ;.:=(),/'#*+-""><&" &
-                               ASCII.HT & ASCII.CR & ASCII.LF);
-            Before : aliased String := "1";
-            After  : aliased String := Integer'Image (E_Name'Length + 1);
-            Line   : aliased String :=
-                       Integer'Image (Line_Information (Selection));
-            Col    : aliased String :=
-                       Integer'Image (Entity_Column_Information (Selection));
-            Text   : constant String := Execute_GPS_Shell_Command
+            Selection : constant File_Area_Context_Access :=
+                          File_Area_Context_Access (Context);
+            File      : constant Virtual_File := File_Information (Selection);
+            Area      : constant String := Text_Information (Selection);
+            W_Seps    : constant Character_Set :=
+                          To_Set (" ;.:=(),/'#*+-""><&" &
+                                  ASCII.HT & ASCII.CR & ASCII.LF);
+            Before    : aliased String := "1";
+            After     : aliased String := Integer'Image (Area'Length + 1);
+            Line      : aliased String :=
+                          Integer'Image (Line_Information (Selection));
+            Col       : aliased String :=
+                          Integer'Image (Column_Information (Selection));
+            Text      : constant String := Execute_GPS_Shell_Command
               (Kernel, "Editor.get_chars",
                (1 => Full_Name (File).all'Unrestricted_Access,
                 2 => Line'Unchecked_Access,
@@ -518,14 +529,14 @@ package body Casing_Exceptions is
       Command := new Add_Exception_Command (False, Remove => False);
       Register_Contextual_Menu
         (Kernel, "Add casing exception",
-         Label  => -"Casing/Add exception for %e",
+         Label  => -"Casing/Add exception for %s",
          Action => Command,
          Filter => Action_Filter (Filter and Full_String_Filter));
 
       Command := new Add_Exception_Command (False, Remove => True);
       Register_Contextual_Menu
         (Kernel, "Remove casing exception",
-         Label  => -"Casing/Remove exception for %e",
+         Label  => -"Casing/Remove exception for %s",
          Action => Command,
          Filter => Action_Filter (Filter and Full_String_Filter));
    end Register_Module;
