@@ -72,6 +72,11 @@ when the GPS window is fully visible to the user:
      <description>There are two categories of hooks: the standard hooks and the action hooks. The former return nothing, the latter return a boolean indicating whether your callback was able to perform the requested action. They are used to override some of GPS's internal behavior</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ bookmark_added">
+     <param name="hook">A string, the name of the hook</param>
+     <description>Hook called when a new bookmark has been created by the user</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ preferences_changed">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when the value of some of the preferences changes. Modules should refresh themselves dynamically</description>
@@ -539,6 +544,12 @@ GPS.parse_xml ("""
         command os.getcwd(). The current directory can also be changed through
         a call to os.chdir("dir").
      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.dump_file">
+     <param name="text">A string</param>
+     <param name="filename">A string</param>
+     <description>Writes text to filename on the disk. This is mostly intended for poor shells like the GPS shell which do not have better solutions. In python, it is recommended to use python's own mechanisms</description>
   </shell_doc>
 
   <shell_doc name="GPS.cd">
@@ -1805,6 +1816,13 @@ If the line and column are not specified, then the current selection is returned
       <param name="file">A string</param>
       <param name="revision">A string</param>
       <description>Get the revision changelog for file. If revision is specified, query the changelog for this specific revision, otherwise query the entire changelog</description>
+  </shell_doc>
+`
+  <shell_doc name="GPS.VCS.annotations_parse">
+      <param name="vcs_identifier">A string</param>
+      <param name="file">A string</param>
+      <param name="output">A string</param>
+      <description>Parses the output of the annotations command (cvs annotate for instance), and add the corresponding information to the left of the editor</description>
   </shell_doc>
 
   <shell_doc name="GPS.VCS.status_parse">
