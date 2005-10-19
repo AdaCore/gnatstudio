@@ -201,10 +201,11 @@ package body Layouts is
       Layers := (others => 0);
 
       for S in Sorted'Range loop
-         Max := 0;
          if not New_Items_Only
            or else Never_Positionned (Sorted (S).Vertex)
          then
+            Max := 0;
+
             Eit := First (G, Dest => Sorted (S).Vertex);
             while not At_End (Eit) loop
                V   := Get_Src (Get (Eit));
@@ -216,6 +217,7 @@ package body Layouts is
             Num := Natural'Max (Num, Max + 1);
          end if;
       end loop;
+
       Num_Layers := Num;
    end Partition_Topological;
 
