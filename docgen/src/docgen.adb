@@ -18,14 +18,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Generic_List;
+with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Projects.Registry;  use Projects, Projects.Registry;
 with VFS;                use VFS;
 
 package body Docgen is
 
    function String_Hash is new HTables.Hash (HTable_Header);
+
+   -----------
+   -- Error --
+   -----------
+
+   procedure Error
+     (Report : in out Docgen_Error_Reporter_Record;
+      File   : Source_File)
+   is
+      Message : constant String := "No cross references found for " &
+      Full_Name (Get_Filename (File)).all & ".";
+   begin
+      Report.Called := True;
+      Insert (Report.Kernel, Message, Add_LF => True, Mode => Error);
+   end Error;
 
    ---------------------------
    -- Compare_Elements_Name --
