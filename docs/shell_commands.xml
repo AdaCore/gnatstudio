@@ -916,6 +916,15 @@ to a generic instantiation in Ada.</description>
       <description>Return the return type for entity. This applies to subprograms.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Entity.name_parameters">
+      <param name="self">The instance of GPS.Entity</param>
+      <param name="location">An instance of GPS.FileLocation</param>
+      <description>Refactor the code at the location, to add named parameters. This only work if the language has support for such parameters, namely Ada for the time being</description>
+      <example lang="python">
+         GPS.Entity ("foo", GPS.File ("decl.ads")).rename_parameters \
+            (GPS.FileLocation (GPS.File ("file.adb"), 23, 34))
+      </example>
+  </shell_doc>
 
   <!--#################################################################
     ####   FileLocation class
