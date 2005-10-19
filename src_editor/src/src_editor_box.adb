@@ -1154,8 +1154,9 @@ package body Src_Editor_Box is
          if Event = null
            or else Get_Event_Type (Event) not in Button_Press .. Button_Release
          then
-            Get_Iter_At_Mark (Editor.Source_Buffer, Start_Iter,
-                              Get_Insert (Editor.Source_Buffer));
+            Get_Iter_At_Mark
+              (Editor.Source_Buffer, Start_Iter,
+               Get_Insert (Editor.Source_Buffer));
             Line   := Get_Line (Start_Iter);
             Column := Get_Line_Offset (Start_Iter);
 
@@ -1165,7 +1166,7 @@ package body Src_Editor_Box is
          end if;
 
          if Out_Of_Bounds then
-            --  Invalid position: the cursor is outside the text.
+            --  Invalid position: the cursor is outside the text
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter, Line, Column);
             Context := new File_Selection_Context;
@@ -1224,10 +1225,8 @@ package body Src_Editor_Box is
             else
                Context := new Entity_Selection_Context;
 
-               Get_Iter_At_Line_Offset
-                 (Editor.Source_Buffer, Start_Iter, Line, Column);
-
                --  Expand the tabs
+
                Get_Screen_Position
                  (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
 
