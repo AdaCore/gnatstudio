@@ -807,7 +807,14 @@ package body Debugger.Gdb is
       --  Load the module to debug, if any.
 
       if Debugger.Executable /= null then
-         Set_Executable (Debugger, Debugger.Executable.all, Mode => Visible);
+         declare
+            Exec : constant String := Debugger.Executable.all;
+            --  Copy Executable, since Debugger.Executable might be freed
+            --  by Set_Executable below.
+
+         begin
+            Set_Executable (Debugger, Exec, Mode => Visible);
+         end;
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
@@ -998,21 +1005,16 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
-      Local_Executable    : constant String := Executable;
-      --  Copy Executable parameter, since Executable might be equal to
-      --  Debugger.Executable, in which case calling Free below would be
-      --  dangerous.
-
       Exec_Has_Spaces     : constant Boolean := Index (Executable, " ") /= 0;
 
    begin
       Free (Debugger.Executable);
 
       if Debugger.Remote_Target = null then
-         Debugger.Executable := new String'(Local_Executable);
+         Debugger.Executable := new String'(Executable);
       else
          Debugger.Executable :=
-           new String'(To_Unix_Pathname (Local_Executable));
+           new String'(To_Unix_Pathname (Executable));
       end if;
 
       if Exec_Has_Spaces then
@@ -1053,7 +1055,7 @@ package body Debugger.Gdb is
 
       if Debugger.Window /= null then
          Executable_Changed
-           (Convert (Debugger.Window, Debugger), Local_Executable);
+           (Convert (Debugger.Window, Debugger), Executable);
       end if;
 
       --  Detect the current language, and get the name and line of the
