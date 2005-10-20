@@ -1249,7 +1249,7 @@ package body Src_Editor_Box is
                   --  Do not move the cursor if we have clicked in the
                   --  selection, since otherwise that cancels the selection
 
-                  Place_Cursor (Editor.Source_Buffer, Start_Iter);
+                  Place_Cursor (Editor.Source_Buffer, Entity_Start);
                end if;
             end if;
          end if;
