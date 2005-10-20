@@ -278,7 +278,7 @@ It isn't recommended to do any direct graphical action before this hook has been
   <shell_doc name="@hook@ debugger_terminated">
      <param name="hook">A string, the name of the hook</param>
      <description>Hook called when the debugger session has been terminated</description>
-  </shell_doc>  
+  </shell_doc>
 
   <shell_doc name="@hook@ marker_added_to_history">
      <param name="hook">A string, the name of the hook</param>
@@ -1854,6 +1854,10 @@ If the line and column are not specified, then the current selection is returned
       <description>Represents a context in GPS. Depending on the currently selected window, an instance of one of the derived classes will be used</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Context.contextual_menu">
+      <description>returns a list containing the contextual menu labels of the currently focussed window. The output have the form "depth - label"</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   FileContext class
     ###################################################################-->
@@ -2695,12 +2699,12 @@ This function adds a widget inside the MDI of GPS. The resulting window can then
   <shell_doc name="GPS.MDI.hide">
       <description>Hides the graphical interface of GPS.</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.MDI.show">
       <description>Shows the graphical interface of GPS.</description>
   </shell_doc>
 
-  
+
   <!--#################################################################
     ####   MDIWindow class
     ###################################################################-->
@@ -2955,7 +2959,7 @@ After this, the menu will never be displayed again.
      <param name="Sensitivity">Boolean value</param>
      <description>Control whether the contextual menu is grayed-out: False if it should be grayed-out, True otherwise.</description>
   </shell_doc>
-  
+
   <!--#################################################################
    ##### Socket class
    ####################################################################-->
