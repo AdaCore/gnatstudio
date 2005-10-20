@@ -42,6 +42,7 @@ with Gtk.Window;      use Gtk.Window;
 with Traces;          use Traces;
 
 package body Tooltips is
+
    package Tooltip_Handler is new Gtk.Handlers.User_Return_Callback
      (Widget_Type => Gtk.Widget.Gtk_Widget_Record,
       Return_Type => Boolean,
@@ -98,11 +99,14 @@ package body Tooltips is
    ---------------------
 
    function Display_Tooltip (Tooltip : Tooltips_Access) return Boolean is
-      Mask          : Gdk_Modifier_Type;
-      X, Y          : Gint;
-      Window        : Gdk_Window;
-      W             : Gtk_Widget;
-      Focus         : Gtk_Widget;
+      Mask                  : Gdk_Modifier_Type;
+      X, Y                  : Gint;
+      Window                : Gdk_Window;
+      W                     : Gtk_Widget;
+      Focus                 : Gtk_Widget;
+      Win_X, Win_Y          : Gint;
+      Win_Width, Win_Height : Gint;
+      Win_Depth             : Gint;
    begin
       if not Tooltip.Active then
          return False;
@@ -122,7 +126,23 @@ package body Tooltips is
          Gtk_New       (Tooltip.Display_Window, Window_Popup);
          Add           (Tooltip.Display_Window, W);
          Get_Pointer   (null, X, Y, Mask, Window);
+
+         --  Get screen size and adjust the tooltip position to always be on
+         --  screen.
+
+         Get_Geometry
+           (Null_Window, Win_X, Win_Y, Win_Width, Win_Height, Win_Depth);
+
+         if X + Tooltip.Width + 12 > Win_Width then
+            X := Win_Width - Tooltip.Width - 12;
+         end if;
+
+         if Y + Tooltip.Height + 12 > Win_Height then
+            Y := Win_Height - Tooltip.Height - 12;
+         end if;
+
          Set_UPosition (Tooltip.Display_Window, X + 10, Y + 10);
+
          Show_All      (Tooltip.Display_Window);
 
          Add_Events (Tooltip.Display_Window, Leave_Notify_Mask);
@@ -177,16 +197,15 @@ package body Tooltips is
       Area     : out Gdk.Rectangle.Gdk_Rectangle)
    is
       use type Gdk_Window;
-      Pixmap        : Gdk_Pixmap;
-      Pix           : Gtk_Pixmap;
-      Width, Height : Gint;
+      Pixmap : Gdk_Pixmap;
+      Pix    : Gtk_Pixmap;
    begin
       Draw (Pixmap_Tooltips_Access (Tooltip), Pixmap, Tooltip.Area);
 
       if Pixmap /= null then
-         Gdk.Drawable.Get_Size (Pixmap, Width, Height);
+         Gdk.Drawable.Get_Size (Pixmap, Tooltip.Width, Tooltip.Height);
          Gtk_New (Pix, Pixmap, null);
-         Set_Size_Request (Pix, Width, Height);
+         Set_Size_Request (Pix, Tooltip.Width, Tooltip.Height);
          Gdk.Pixmap.Unref (Pixmap);
          Contents := Gtk_Widget (Pix);
          Area     := Tooltip.Area;
@@ -200,7 +219,7 @@ package body Tooltips is
    ------------------
 
    procedure Show_Tooltip
-     (Tooltip   : access Tooltips'Class)
+     (Tooltip : access Tooltips'Class)
    is
       Mask   : Gdk_Modifier_Type;
       Window : Gdk_Window;
