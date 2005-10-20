@@ -736,9 +736,11 @@ package body GPS.Kernel.Modules is
    -- Create_Contextual_Menu --
    ----------------------------
 
-   function Create_Contextual_Menu
-     (User  : Contextual_Menu_User_Data;
-      Event : Gdk_Event) return Gtk_Menu
+   procedure Create_Contextual_Menu
+     (Kernel  : Kernel_Handle;
+      Object  : Glib.Object.GObject;
+      Context : Selection_Context_Access;
+      Menu    : in out Gtk.Menu.Gtk_Menu)
    is
       use type Gtk.Widget.Widget_List.Glist;
 
@@ -835,13 +837,13 @@ package body GPS.Kernel.Modules is
 
                   if C.Submenu /= null then
                      C.Submenu
-                       (Object  => User.Object,
+                       (Object  => Object,
                         Context => Context,
                         Menu    => Menu);
                   end if;
 
                   --  Add all contextual menus that are children of C
-                  C2 := Convert (User.Kernel.Contextual);
+                  C2 := Convert (Kernel.Contextual);
                   while C2 /= null loop
                      if C2.Filter_Matched then
                         if Dir_Name ('/' & Label_Name (C2, Context)) =
@@ -884,7 +886,7 @@ package body GPS.Kernel.Modules is
                     (Item, "activate",
                      Contextual_Action'Access,
                      User_Data   => C,
-                     Slot_Object => User.Kernel);
+                     Slot_Object => Kernel);
                else
                   Item := null;
                end if;
@@ -923,7 +925,7 @@ package body GPS.Kernel.Modules is
          C2     : Contextual_Menu_Access;
       begin
          if Parent /= "/" then
-            C2 := Convert (User.Kernel.Contextual);
+            C2 := Convert (Kernel.Contextual);
             while C2 /= null loop
                if '/' & Label_Name (C2, Context) & '/' = Parent then
                   return True;
@@ -934,13 +936,105 @@ package body GPS.Kernel.Modules is
          return False;
       end Has_Explicit_Parent;
 
-      Context     : Selection_Context_Access;
-      Menu        : Gtk_Menu := null;
       Full_Name   : GNAT.OS_Lib.String_Access;
       C           : Contextual_Menu_Access;
       Item        : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
+   begin
+      Run_Hook (Kernel, Contextual_Menu_Open_Hook);
+
+      --  Compute what items should be made visible, except for separators
+      --  for the moment
+
+      C := Convert (Kernel.Contextual);
+      while C /= null loop
+         if C.Menu_Type /= Type_Separator then
+            C.Filter_Matched := Menu_Is_Visible (C, Context);
+         end if;
+         C := C.Next;
+      end loop;
+
+      --  Same, but only for separators now, since their visibility might
+      --  depend on the visibility of other items
+
+      C := Convert (Kernel.Contextual);
+      while C /= null loop
+         if C.Menu_Type = Type_Separator then
+            C.Filter_Matched := Menu_Is_Visible (C, Context);
+         end if;
+         C := C.Next;
+      end loop;
+
+      C := Convert (Kernel.Contextual);
+      while C /= null loop
+         if C.Filter_Matched
+           and then not Has_Explicit_Parent (C, Context)
+         then
+            Create_Item (C, Context, Item, Full_Name);
+
+            if Item /= null then
+               Parent_Item := Find_Or_Create_Menu_Tree
+                 (Menu_Bar      => null,
+                  Menu          => Menu,
+                  Path          => Dir_Name ('/' & Full_Name.all),
+                  Accelerators  => Get_Default_Accelerators (Kernel),
+                  Allow_Create  => True,
+                  Use_Mnemonics => False);
+               if Parent_Item /= null then
+                  Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
+                  if Parent_Menu = null then
+                     Gtk_New (Parent_Menu);
+                     Set_Submenu (Parent_Item, Parent_Menu);
+                  end if;
+               else
+                  Parent_Menu := Menu;
+               end if;
+
+               Add_Menu (Parent => Parent_Menu, Item => Item);
+            end if;
+
+            GNAT.OS_Lib.Free (Full_Name);
+         end if;
+
+         C := C.Next;
+      end loop;
+
+      --  Do not Unref context, it will be automatically freed the next
+      --  time a contextual menu is displayed
+
+      Pop_State (Kernel);
+
+      --  If the menu is empty, destroy it.
+
+      if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+         Destroy (Menu);
+         Menu := null;
+      end if;
+
+      if Menu /= null then
+         Weak_Ref (Menu, Contextual_Menu_Destroyed'Access,
+                   Data => Kernel.all'Address);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unhandled exception "
+                & Exception_Information (E));
+         Destroy (Menu);
+   end Create_Contextual_Menu;
+
+   ----------------------------
+   -- Create_Contextual_Menu --
+   ----------------------------
+
+   function Create_Contextual_Menu
+     (User  : Contextual_Menu_User_Data;
+      Event : Gdk_Event) return Gtk_Menu
+   is
+
+      Context     : Selection_Context_Access;
+      Menu        : Gtk_Menu := null;
    begin
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
@@ -973,80 +1067,7 @@ package body GPS.Kernel.Modules is
          Kernel  => User.Kernel,
          Creator => Abstract_Module_ID (User.ID));
 
-      Run_Hook (User.Kernel, Contextual_Menu_Open_Hook);
-
-      --  Compute what items should be made visible, except for separators
-      --  for the moment
-
-      C := Convert (User.Kernel.Contextual);
-      while C /= null loop
-         if C.Menu_Type /= Type_Separator then
-            C.Filter_Matched := Menu_Is_Visible (C, Context);
-         end if;
-         C := C.Next;
-      end loop;
-
-      --  Same, but only for separators now, since their visibility might
-      --  depend on the visibility of other items
-
-      C := Convert (User.Kernel.Contextual);
-      while C /= null loop
-         if C.Menu_Type = Type_Separator then
-            C.Filter_Matched := Menu_Is_Visible (C, Context);
-         end if;
-         C := C.Next;
-      end loop;
-
-      C := Convert (User.Kernel.Contextual);
-      while C /= null loop
-         if C.Filter_Matched
-           and then not Has_Explicit_Parent (C, Context)
-         then
-            Create_Item (C, Context, Item, Full_Name);
-
-            if Item /= null then
-               Parent_Item := Find_Or_Create_Menu_Tree
-                 (Menu_Bar      => null,
-                  Menu          => Menu,
-                  Path          => Dir_Name ('/' & Full_Name.all),
-                  Accelerators  => Get_Default_Accelerators (User.Kernel),
-                  Allow_Create  => True,
-                  Use_Mnemonics => False);
-               if Parent_Item /= null then
-                  Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
-                  if Parent_Menu = null then
-                     Gtk_New (Parent_Menu);
-                     Set_Submenu (Parent_Item, Parent_Menu);
-                  end if;
-               else
-                  Parent_Menu := Menu;
-               end if;
-
-               Add_Menu (Parent => Parent_Menu, Item => Item);
-            end if;
-
-            GNAT.OS_Lib.Free (Full_Name);
-         end if;
-
-         C := C.Next;
-      end loop;
-
-      --  Do not Unref context, it will be automatically freed the next
-      --  time a contextual menu is displayed
-
-      Pop_State (User.Kernel);
-
-      --  If the menu is empty, destroy it.
-
-      if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
-         Destroy (Menu);
-         Menu := null;
-      end if;
-
-      if Menu /= null then
-         Weak_Ref (Menu, Contextual_Menu_Destroyed'Access,
-                   Data => User.Kernel.all'Address);
-      end if;
+      Create_Contextual_Menu (User.Kernel, User.Object, Context, Menu);
 
       return Menu;
    exception
