@@ -76,6 +76,11 @@ package body Casing_Exceptions is
      (Filter  : access Substring_Filter_Record;
       Context : access Selection_Context'Class) return Boolean;
 
+   type Empty_Filter_Record is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Empty_Filter_Record;
+      Context : access Selection_Context'Class) return Boolean;
+
    -----------------
    -- Subprograms --
    -----------------
@@ -400,7 +405,7 @@ package body Casing_Exceptions is
       Context : access Selection_Context'Class) return Boolean
    is
       pragma Unreferenced (Filter);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Context.all in Entity_Selection_Context'Class then
          --  This is an entity, not a substring
@@ -437,6 +442,25 @@ package body Casing_Exceptions is
       return False;
    end Filter_Matches_Primitive;
 
+   function Filter_Matches_Primitive
+     (Filter  : access Empty_Filter_Record;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         return Entity_Name_Information
+           (Entity_Selection_Context_Access (Context)) = "";
+
+      elsif Context.all in File_Area_Context'Class then
+         return Text_Information (File_Area_Context_Access (Context)) = "";
+
+      else
+         --  Null context, this is empty
+         return True;
+      end if;
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -450,6 +474,7 @@ package body Casing_Exceptions is
       Label              : Contextual_Label;
       Substring_Filter   : Action_Filter;
       Full_String_Filter : Action_Filter;
+      Empty_Filter       : Action_Filter;
       Filter             : Action_Filter;
    begin
       Casing_Module_Id := new Casing_Module_Record;
@@ -464,7 +489,10 @@ package body Casing_Exceptions is
          Filename,
          Read_Only => False);
 
-      Filter := Action_Filter (Create (Module => Src_Editor_Module_Name));
+      Empty_Filter := new Empty_Filter_Record;
+
+      Filter := Action_Filter
+        (Create (Module => Src_Editor_Module_Name) and not Empty_Filter);
 
       Command := new Change_Case_Command (Lower);
       Label   := new Contextual_Label_Record;
