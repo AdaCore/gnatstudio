@@ -732,9 +732,7 @@ package body Docgen_Module is
                File),
             File));
 
-      if (Is_Spec
-          and then Process_Body
-          and then Other_File_Basename.all /= Base_Name (File))
+      if (Is_Spec and then Process_Body)
         or else not Is_Spec
       then
          Other_File := Create
@@ -742,22 +740,24 @@ package body Docgen_Module is
             Kernel,
            Use_Object_Path => False);
 
-         Source := Get_Or_Create
-           (Db           => Get_Database (Kernel),
-            File         => Other_File,
-            Allow_Create => True);
+         if Is_Regular_File (Other_File) then
+            Source := Get_Or_Create
+              (Db           => Get_Database (Kernel),
+               File         => Other_File,
+               Allow_Create => True);
 
-         if Other_File /= No_File then
-            Nb_Files := 2;
-            Type_Source_File_Table.Set
-              (Source_File_List,
-               Source,
-               (Unit_Name     => new String'(Get_Unit_Name (Source)),
-                Doc_File_Name => new String'
-                  (Get_Doc_File_Name
-                     (Other_File,
-                      Docgen.Backend.Get_Extension (B))),
-                Is_Spec       => Is_Spec_File (Kernel, Other_File)));
+            if Other_File /= No_File then
+               Nb_Files := 2;
+               Type_Source_File_Table.Set
+                 (Source_File_List,
+                  Source,
+                  (Unit_Name     => new String'(Get_Unit_Name (Source)),
+                   Doc_File_Name => new String'
+                     (Get_Doc_File_Name
+                        (Other_File,
+                         Docgen.Backend.Get_Extension (B))),
+                   Is_Spec       => Is_Spec_File (Kernel, Other_File)));
+            end if;
          end if;
       end if;
 
