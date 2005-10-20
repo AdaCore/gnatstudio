@@ -365,13 +365,14 @@ package body Src_Editor_Box.Tooltips is
       Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
 
       --  Compute the area surrounding the entity, relative to the pointer
-      --  coordinates
+      --  coordinates.
 
       Get_Iter_Location (Widget, Start_Iter, Location);
       Buffer_To_Window_Coords
         (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
       Area.X := Win_X - Mouse_X;
       Area.Y := Win_Y - Mouse_Y;
+
       Get_Iter_Location (Widget, End_Iter, Location);
       Buffer_To_Window_Coords
         (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
@@ -393,10 +394,10 @@ package body Src_Editor_Box.Tooltips is
            (Context'Unchecked_Access, Box.Kernel,
             Abstract_Module_ID (Src_Editor_Module_Id));
          Set_File_Information
-           (Context      => Context'Unchecked_Access,
-            File         => Filename,
-            Line         => To_Box_Line (Box.Source_Buffer, Line),
-            Column       => To_Box_Column (Cursor_Col));
+           (Context => Context'Unchecked_Access,
+            File    => Filename,
+            Line    => To_Box_Line (Box.Source_Buffer, Line),
+            Column  => To_Box_Column (Cursor_Col));
          Set_Entity_Information
            (Context       => Context'Unchecked_Access,
             Entity_Name   => Entity_Name,
@@ -425,20 +426,21 @@ package body Src_Editor_Box.Tooltips is
 
          declare
             Str : constant String :=
-              "<b>" & Attributes_To_String (Get_Attributes (Entity)) & ' ' &
-              (-Kind_To_String (Get_Kind (Entity))) & ' ' &
-               Get_Full_Name (Entity, ".") & "</b>"
-              & ASCII.LF
-              & (-"declared at ")
-              & Base_Name (Get_Filename
-                  (Get_File (Get_Declaration_Of (Entity)))) & ':'
-              & Image (Get_Line (Get_Declaration_Of (Entity)));
+                    "<b>" & Attributes_To_String (Get_Attributes (Entity)) &
+                    ' ' &
+                    (-Kind_To_String (Get_Kind (Entity))) & ' ' &
+                    Get_Full_Name (Entity, ".") & "</b>" &
+                    ASCII.LF &
+                    (-"declared at ") &
+                    Base_Name (Get_Filename
+                               (Get_File (Get_Declaration_Of (Entity)))) &
+                    ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
             Str2 : constant String :=
-              Get_Instance (Entity_Ref)
-              & Get_Documentation (Box.Kernel, Entity);
+                     Get_Instance (Entity_Ref)
+                     & Get_Documentation (Box.Kernel, Entity);
             Font : constant Pango_Font_Description :=
-              Get_Pref (Default_Font);
-            Color : Gdk_Color;
+                     Get_Pref (Default_Font);
+            Color  : Gdk_Color;
             Layout1, Layout2, Layout3 : Pango_Layout;
             Width, Height, W1, H1, W2, H2, W3, H3 : Gint := 0;
             GC     : Gdk.Gdk_GC;
@@ -481,7 +483,7 @@ package body Src_Editor_Box.Tooltips is
             Unref (Layout1);
 
             if Layout2 /= null or else Layout3 /= null then
-               Draw_Line   (Pixmap, GC, 0, H1 + 1, Width - 1, H1 + 1);
+               Draw_Line (Pixmap, GC, 0, H1 + 1, Width - 1, H1 + 1);
             end if;
 
             if Layout2 /= null then
