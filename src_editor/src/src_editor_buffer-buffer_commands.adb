@@ -46,6 +46,7 @@ package body Src_Editor_Buffer.Buffer_Commands is
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
       Last_Highlight_Iter  : Gtk_Text_Iter;
+      Found                : Integer;
 
    begin
       if Widget /= null
@@ -57,15 +58,13 @@ package body Src_Editor_Buffer.Buffer_Commands is
          return Commands.Failure;
       end if;
 
-      if not Buffer.Has_Delimiters_Highlight then
-         return Commands.Failure;
-      end if;
-
-      Get_Iter_At_Mark
-        (Buffer, First_Highlight_Iter, Buffer.Start_Delimiters_Highlight);
-      Get_Iter_At_Mark
-        (Buffer, Last_Highlight_Iter, Buffer.End_Delimiters_Highlight);
       Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+
+      Get_Delimiters
+        (On_Cursor_Iter,
+         First_Highlight_Iter,
+         Last_Highlight_Iter,
+         Found);
 
       if Equal (First_Highlight_Iter, On_Cursor_Iter) then
          Place_Cursor (Buffer, Last_Highlight_Iter);
