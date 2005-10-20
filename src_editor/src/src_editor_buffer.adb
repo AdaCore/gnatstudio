@@ -678,19 +678,17 @@ package body Src_Editor_Buffer is
          return False;
    end Check_Blocks;
 
-   ---------------------------
-   -- Highlight_Parenthesis --
-   ---------------------------
+   --------------------
+   -- Get_Delimiters --
+   --------------------
 
-   procedure Highlight_Parenthesis (Buffer : Source_Buffer) is
+   procedure Get_Delimiters
+     (On_Cursor_Iter   : Gtk_Text_Iter;
+      First_Delim_Iter : out Gtk_Text_Iter;
+      Last_Delim_Iter  : out Gtk_Text_Iter;
+      Found            : out Natural)
+   is
       Current              : Gtk_Text_Iter;
-      On_Cursor_Iter       : Gtk_Text_Iter;
-      First_Highlight_Iter : Gtk_Text_Iter;
-      Last_Highlight_Iter  : Gtk_Text_Iter;
-      Highlight_Necessary  : Boolean := False;
-
-      Both_Highlights      : Boolean := False;
-      --  Indicate whether highlighting occurs before and after the cursor.
 
       Success              : Boolean;
       Counter              : Natural;
@@ -705,7 +703,7 @@ package body Src_Editor_Buffer is
 
       function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
-      --  Returns false if parsing must stop (end of file reached for example)
+      --  Returns False if parsing must stop (end of file reached for example)
 
       function Check_Char (Forward : Boolean) return Boolean is
          Val     : constant array (Boolean) of Integer := (1, -1);
@@ -715,7 +713,7 @@ package body Src_Editor_Buffer is
 
          procedure Move_Char;
          pragma Inline (Move_Char);
-         --  Move one character backward or forward
+         --  Move one character vackward or forward
 
          procedure Move_Char is
          begin
@@ -758,7 +756,7 @@ package body Src_Editor_Buffer is
 
             C2 := Get_Char (Tmp);
 
-            if C2 = ''' then
+            if C2 = ''' theN
                Copy (Tmp, Current);
             end if;
          end if;
@@ -767,12 +765,9 @@ package body Src_Editor_Buffer is
       end Check_Char;
 
    begin
-      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
-
-      --  Highlight previous parenthesis, if necessary.
-
       --  Find a closing delimiter.
 
+      Found := 0;
       Delimiter := -1;
       Copy (On_Cursor_Iter, Current);
 
@@ -793,7 +788,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.NUL;
+         C          := ASCII.Nul;
 
          Backward_Char (Current, Success);
 
@@ -804,10 +799,10 @@ package body Src_Editor_Buffer is
             exit when not Success;
 
             if Stack = 0 and then not String_Tag then
-               Copy (Current, First_Highlight_Iter);
-               Copy (On_Cursor_Iter, Last_Highlight_Iter);
+               Copy (Current, First_Delim_Iter);
+               Copy (On_Cursor_Iter, Last_Delim_Iter);
 
-               Highlight_Necessary := True;
+               Found := Found + 1;
                exit;
             end if;
 
@@ -833,7 +828,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.NUL;
+         C          := ASCII.Nul;
 
          Forward_Char (Current, Success);
 
@@ -844,16 +839,14 @@ package body Src_Editor_Buffer is
             exit when not Success;
 
             if Stack = 0 and then not String_Tag then
-               if not Highlight_Necessary then
-                  Copy (On_Cursor_Iter, First_Highlight_Iter);
-               else
-                  Both_Highlights := True;
+               if Found = 0 then
+                  Copy (On_Cursor_Iter, First_Delim_Iter);
                end if;
 
                Forward_Char (Current, Success);
-               Copy (Current, Last_Highlight_Iter);
+               Copy (Current, Last_Delim_Iter);
 
-               Highlight_Necessary := True;
+               Found := Found + 1;
                exit;
             end if;
 
@@ -861,8 +854,29 @@ package body Src_Editor_Buffer is
             Forward_Char (Current, Success);
          end loop;
       end if;
+   end Get_Delimiters;
 
-      if Highlight_Necessary then
+
+   ---------------------------
+   -- Highlight_Parenthesis --
+   ---------------------------
+
+   procedure Highlight_Parenthesis (Buffer : Source_Buffer) is
+      On_Cursor_Iter       : Gtk_Text_Iter;
+      First_Highlight_Iter : Gtk_Text_Iter;
+      Last_Highlight_Iter  : Gtk_Text_Iter;
+      Current              : Gtk_Text_Iter;
+      Found                : Natural;
+      Success              : Boolean;
+   begin
+      Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
+      Get_Delimiters
+        (On_Cursor_Iter,
+         First_Highlight_Iter,
+         Last_Highlight_Iter,
+         Found);
+
+      if Found >= 1 then
          Copy (First_Highlight_Iter, Current);
          Forward_Char (Current, Success);
          Apply_Tag
@@ -879,7 +893,7 @@ package body Src_Editor_Buffer is
             Current,
             Last_Highlight_Iter);
 
-         if Both_Highlights then
+         if Found = 2 then
             Copy (On_Cursor_Iter, Current);
             Backward_Char (Current, Success);
             Forward_Char (On_Cursor_Iter, Success);
