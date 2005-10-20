@@ -234,9 +234,10 @@ package Projects is
    function Other_File_Base_Name
      (Project : Project_Type; Source_Filename : VFS.Virtual_File)
       return String;
-   --  Return the base name of the spec or body for Source_Filename, depending
-   --  on what Source_Filename is. Source_Filename is returned if there is no
-   --  other file.
+   --  Return the base name of the spec or body for Source_Filename.
+   --  If the other file is not found in the project, then the other file base
+   --  name, according to the GNAT naming scheme, is returned.
+   --  Otherwise the other file base name is returned as is.
 
    function Get_Filename_From_Unit
      (Project                  : Project_Type;
