@@ -98,17 +98,17 @@ package Tooltips is
 private
    type Tooltips is abstract tagged record
       Timeout : Glib.Guint32 := Default_Timeout;
-      --  The delay before draw function is called.
+      --  The delay before draw function is called
 
       Active : Boolean := False;
       --  States whether tooltips should be displayed when drawing
       --  is complete.
 
       Display_Window : Gtk.Window.Gtk_Window := null;
-      --  The window in which the tooltip is displayed.
+      --  The window in which the tooltip is displayed
 
       Handler_Id : Gtk.Main.Timeout_Handler_Id := 0;
-      --  Reference in case handler should be blocked.
+      --  Reference in case handler should be blocked
 
       X, Y : Glib.Gint := 0;
       --  The mouse coordinates associated with the last call to
@@ -119,7 +119,11 @@ private
       --  (See Draw_Tooltip specification for details).
 
       Widget : Gtk.Widget.Gtk_Widget;
-      --  The widget to which the tooltip is attached.
+      --  The widget to which the tooltip is attached
+
+      Width, Height : Glib.Gint := 0;
+      --  Size of the tooltip, if set it will be used to avoid the tooltip to
+      --  goes outside the screen.
    end record;
 
    type Pixmap_Tooltips is abstract new Tooltips with null record;
