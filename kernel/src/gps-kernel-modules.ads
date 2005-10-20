@@ -537,6 +537,14 @@ package GPS.Kernel.Modules is
    --  Return the list of registered contextual menus. The returned array must
    --  be freed by the caller
 
+   procedure Create_Contextual_Menu
+     (Kernel  : Kernel_Handle;
+      Object  : Glib.Object.GObject;
+      Context : Selection_Context_Access;
+      Menu    : in out Gtk.Menu.Gtk_Menu);
+   --  Creates a menu from context and object.
+   --  The Gtk_Menu shall be created before calling this procedure.
+
    --------------
    -- Tooltips --
    --------------
