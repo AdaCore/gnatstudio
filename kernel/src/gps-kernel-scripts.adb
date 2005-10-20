@@ -20,11 +20,19 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+
+with Glib.Object;             use Glib.Object;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Widget;              use Gtk.Widget;
+
 with Basic_Types;
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Entities.Queries;        use Entities, Entities.Queries;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -35,8 +43,6 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Glib.Object;             use Glib.Object;
-with Gtk.Widget;              use Gtk.Widget;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
 with Language_Handlers;   use Language_Handlers;
@@ -1322,8 +1328,54 @@ package body GPS.Kernel.Scripts is
       File     : File_Selection_Context_Access;
       Area     : File_Area_Context_Access;
       Context  : Selection_Context_Access;
+      Object   : Glib.Object.GObject;
+      Menu     : Gtk.Menu.Gtk_Menu;
       L, C     : Integer := -1;
       Inst     : Class_Instance;
+
+      procedure R_Analyze_Menu
+        (Depth : Natural;
+         Menu  : Gtk_Menu);
+      --  Recursive analysis of menu items
+
+      --------------------
+      -- R_Analyze_Menu --
+      --------------------
+
+      procedure R_Analyze_Menu
+        (Depth : Natural;
+         Menu  : Gtk_Menu)
+      is
+         List      : Gtk.Widget.Widget_List.Glist;
+         Menu_Item : Gtk_Menu_Item;
+         Label     : Gtk.Label.Gtk_Label;
+         Submenu   : Gtk_Menu;
+         use type Widget_List.Glist;
+      begin
+         List := Get_Children (Menu);
+
+         while List /= Widget_List.Null_List loop
+            Menu_Item := Gtk_Menu_Item (Widget_List.Get_Data (List));
+            if Menu_Item /= null then
+               Label := Gtk_Label
+                 (Gtk.Menu_Item.Get_Child (Menu_Item));
+               if Label /= null then
+                  Set_Return_Value (Data,
+                                    Natural'Image (Depth) & " - " &
+                                    Get_Text (Label));
+               else
+                  Set_Return_Value (Data,
+                                    Natural'Image (Depth) & " - " &
+                                    "<separator>");
+               end if;
+               Submenu := Gtk_Menu (Get_Submenu (Menu_Item));
+               if Submenu /= null then
+                  R_Analyze_Menu (Depth + 1, Submenu);
+               end if;
+            end if;
+            List := Widget_List.Next (List);
+         end loop;
+      end R_Analyze_Menu;
 
    begin
       if Command = Constructor_Method then
@@ -1415,6 +1467,25 @@ package body GPS.Kernel.Scripts is
             Set_Error_Msg (Data, -"No context available");
          else
             Set_Return_Value (Data, Inst);
+         end if;
+
+      elsif Command = "contextual_menu" then
+         Context := Get_Data (Data, 1);
+         Object := GObject (Get_Current_Focus_Widget (Kernel));
+
+         if Object /= null then
+            Gtk.Menu.Gtk_New (Menu);
+            GPS.Kernel.Modules.Create_Contextual_Menu
+              (Kernel, Object, Context, Menu);
+            if Menu /= null then
+               Set_Return_Value_As_List (Data);
+               R_Analyze_Menu (1, Menu);
+            else
+               Set_Return_Value (Data, "<empty menu>");
+            end if;
+            Destroy (Menu);
+         else
+            Set_Error_Msg (Data, -"Seems like no window has focus...");
          end if;
       end if;
    end Context_Command_Handler;
@@ -1824,6 +1895,11 @@ package body GPS.Kernel.Scripts is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, "contextual_menu",
+         Class        => Get_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
