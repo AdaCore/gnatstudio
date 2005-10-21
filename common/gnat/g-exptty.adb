@@ -42,6 +42,9 @@ package body GNAT.Expect.TTY is
       pragma Import (C, Waitpid, "gvd_waitpid");
       --  Wait for a specific process id, and return its exit code.
 
+      procedure Free_Process (Process : System.Address);
+      pragma Import (C, Free_Process, "gvd_free_process");
+
    begin
       Close (Descriptor.Input_Fd);
 
@@ -63,6 +66,8 @@ package body GNAT.Expect.TTY is
       Descriptor.Buffer_Size := 0;
 
       Status := Waitpid (Descriptor.Process);
+
+      Free_Process (Descriptor.Process'Address);
    end Close;
 
    -----------------------------

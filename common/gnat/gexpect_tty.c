@@ -1274,6 +1274,17 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
 #endif /* VMS */
 
 /********************************
+ **  gvd_free_process ()
+ ********************************/
+
+void
+gvd_free_process (struct GVD_Process** process) 
+{
+   free (*process);
+   *process = NULL;
+}
+
+/********************************
  **  gvd_setup_communication ()
  ********************************/
 
