@@ -130,6 +130,7 @@ Project Handling
 * Description of the Projects::
 * Supported Languages::
 * Scenarios and Configuration Variables::
+* Extending Projects::
 * The Project Explorer::
 * Disabling Project Edition Features::
 * The Project Menu::
@@ -3061,6 +3062,7 @@ how such projects can be created and maintained.
 * Description of the Projects::
 * Supported Languages::
 * Scenarios and Configuration Variables::
+* Extending Projects::
 * The Project Explorer::
 * Disabling Project Edition Features::
 * The Project Menu::
@@ -3470,6 +3472,80 @@ If you confirm that you want to delete the variable, GPS will simply
 remove the variable, and from now on act as if the variable always had
 the value it had when it was deleted.
 
+@c --------------------------------------------------------------------
+@node Extending Projects
+@section Extending Projects
+@cindex projects, extending
+@c --------------------------------------------------------------------
+
+@subsection Description of extending projects
+
+The project files where designed to support big projects, with several
+hundreds of thousands of source files. In such contexts, one developper
+will generally work on a subset of the sources. It is also not rare for
+such a project to take several hours to fully compile. Most developers
+therefore do not need to have the full copy of the project compiled on
+their own machine or personal disk space.
+
+However, one would still like to be able to parse the other source files
+of the application, for instance to find out whether a subprogram can be
+changed and where it is currently called.
+
+Such a setup can be achieved through extending projects. These are
+special types of projects that inherit most of their attributes and source
+files from another project, but can have, in their source directories, some
+source files that hide those inherited from the original project.
+
+When compiling such projects, the compiler will put the newly created
+project files in the extending project's diretory, and will leave the original
+untouched. As a result, the original project can be shared read-only among
+several developers (for instance, it is usual for this original project to be
+the result of a nightly build of the application).
+
+@subsection Creating extending projects
+
+This project wizard allows you to easily create extending projects. You
+should select an empty directory (which will be created automatically if
+needed), as well as a list of source files you want to work on initially.
+New files can be added later on.
+
+As a result, GPS will copy the selected source files to the new directory
+(if you so decided), and create a number of project files there. It will then
+load a new project, which has basically the same properties as the previous
+one, except that some files are found transparently in the new directory,
+and object files resulting from the compilation are copied into that
+directory as opposed to the object directory of the original project.
+
+@subsection Adding files to extending projects
+
+@cindex Add To Extending Project
+
+Once you have loaded an extending project in GPS, things work mostly
+transparently. If you open a file through the @code{File->Open From Project}
+dialog, the files found in the local directory of your extending project
+will be picked up first.
+
+Compilation, as we mentioned before, will put its object files in the
+extending project's directory as well, leaving the original project untouched.
+
+It might happen that you want to start working on a source file that you
+had not added in the extending project when it was created. You can of course
+edit the file found in the original project, provided you have write access
+to it. However, it is generally nicer to edit it in the context of the
+extending project, so that the original project can be shared among
+developers.
+
+This can be done by clicking on the file in the @code{Project View}, then
+selecting the menu @code{Add To Extending Project}. This will popup a
+dialog asking whether you want GPS to copy the file to the extending
+project's directory for you. GPS might also create some new project files
+in that directory if necessary, and automatically reload the project as
+needed. From then on, if you use the menu @code{File->Open From Project},
+GPS will first see the file from the extending project.
+
+Note that open editors will still be editing the same file they were before,
+so you should open the new file if needed.
+
 @c -------------------------------------------------------------------
 @node The Project Explorer
 @section The Project Explorer
@@ -3750,11 +3826,19 @@ that the list of source directories, object directories
 and tool switches are read directly from that file.
 
 @item Library Project
+@cindex project, library
 
 This specialized wizard is similar to the Single Project wizard, except it
 adds one extra page, the Library page. The output of the compilation of this
 project is a library (shared or static), as opposed to an executable in the
 case of @code{Single Project}.
+
+@item Extending Project
+@cindex project, extending
+
+This specialized wizard allows you to easily create extending projects
+(@pxref{Extending Projects}).
+
 @end itemize
 
 
