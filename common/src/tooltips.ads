@@ -123,7 +123,7 @@ private
 
       Width, Height : Glib.Gint := 0;
       --  Size of the tooltip, if set it will be used to avoid the tooltip to
-      --  goes outside the screen.
+      --  go outside the screen.
    end record;
 
    type Pixmap_Tooltips is abstract new Tooltips with null record;
