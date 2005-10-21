@@ -62,6 +62,7 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Basic_Types;                  use Basic_Types;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
+with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
 with File_Utils;                   use File_Utils;
 with GPS.Intl;                     use GPS.Intl;
@@ -2728,6 +2729,8 @@ package body Project_Viewers is
          Action => Command,
          Filter => Filter,
          Label  => "Edit switches for %f");
+
+      Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);
 
       Register_Command
         (Kernel, "add_main_unit",
