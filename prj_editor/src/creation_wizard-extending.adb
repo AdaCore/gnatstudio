@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;              use Basic_Types;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with Glib;                     use Glib;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;
@@ -28,8 +30,11 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
@@ -60,6 +65,31 @@ package body Creation_Wizard.Extending is
      (Page : access Extending_Sources_Page;
       Wiz  : access Wizard_Record'Class) return Boolean;
    --  See inherited documentation
+
+   type Edit_In_Extended_Project is
+     new Commands.Interactive.Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_In_Extended_Project;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Add the current file to the current extending all project (make a copy
+   --  of the file if necessary first)
+
+   type Can_Add_To_Extended is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Can_Add_To_Extended;
+      Context : access Selection_Context'Class) return Boolean;
+   --  True if the selected file can be added to an extending project
+
+   procedure Add_Source_Files
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Root_Project : Project_Type;
+      Files        : VFS.File_Array;
+      File_Project : Project_Type;
+      Copy_Files   : Boolean;
+      Recompute    : Boolean);
+   --  A Files in an extending project. These files must all belong to
+   --  File_Project initially
 
    --------------------------------
    -- Add_Extending_Wizard_Pages --
@@ -191,13 +221,8 @@ package body Creation_Wizard.Extending is
       P        : Integer;
       Projects : Project_Type_Array (1 .. Page.Projects_Count) :=
         (others => No_Project);
-      Sources  : array (1 .. Page.Projects_Count) of Argument_List_Access;
-      Full     : array (1 .. Page.Projects_Count) of Argument_List_Access;
+      Files    : array (1 .. Page.Projects_Count) of File_Array_Access;
       Count    : array (1 .. Page.Projects_Count) of Natural := (others => 0);
-      Extended : Project_Type;
-      Success  : Boolean;
-      Error    : Import_Project_Error;
-      pragma Unreferenced (Error);
 
    begin
       --  The new project will expand the root project. However, if the latter
@@ -243,17 +268,13 @@ package body Creation_Wizard.Extending is
                   Projects (P) := Prj;
                end if;
 
-               if Sources (P) = null then
-                  Sources (P) := new Argument_List
-                    (1 .. Direct_Sources_Count (Prj));
-                  Full (P) := new Argument_List
+               if Files (P) = null then
+                  Files (P) := new File_Array
                     (1 .. Direct_Sources_Count (Prj));
                end if;
 
                Count (P) := Count (P) + 1;
-
-               Sources (P)(Count (P)) := new String'(Base_Name (File));
-               Full (P)(Count (P)) := new String'(Full_Name (File).all);
+               Files (P)(Count (P)) := File;
             end if;
 
             Next (Model, FIter);
@@ -268,44 +289,185 @@ package body Creation_Wizard.Extending is
       for P in Projects'Range loop
          exit when Projects (P) = No_Project;
 
+         Add_Source_Files
+           (Kernel => Kernel,
+            Root_Project => Project,
+            Files        => Files (P) (1 .. Count (P)),
+            File_Project => Projects (P),
+            Copy_Files   => Get_Active (Page.Copy_Files),
+            Recompute    => False);
+         Changed := True;
+
+         Unchecked_Free (Files (P));
+      end loop;
+   end Generate_Project;
+
+   ----------------------
+   -- Add_Source_Files --
+   ----------------------
+
+   procedure Add_Source_Files
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Root_Project : Project_Type;
+      Files        : VFS.File_Array;
+      File_Project : Project_Type;
+      Copy_Files   : Boolean;
+      Recompute    : Boolean)
+   is
+      Extended   : Project_Type;
+      Iter       : Imported_Project_Iterator := Start (Root_Project);
+      File_Names : Argument_List (Files'Range);
+      Success    : Boolean;
+      Error      : Import_Project_Error;
+      Created    : Boolean := False;
+      pragma Unreferenced (Error);
+   begin
+      --  Search whether there is already a project extending File_Project
+      while Current (Iter) /= No_Project
+        and then Parent_Project (Current (Iter)) /= File_Project
+      loop
+         Next (Iter);
+      end loop;
+
+      Extended := Current (Iter);
+
+      if Extended = No_Project then
          Extended := Create_Project
            (Get_Registry (Kernel).all,
-            Name => Project_Name (Projects (P)) & "_Extending",
-            Path => Project_Directory (Project));
+            Name => Project_Name (File_Project) & "_Extending",
+            Path => Project_Directory (Root_Project));
 
          Set_Extended_Project
            (Project            => Extended,
-            Extended           => Projects (P),
+            Extended           => File_Project,
             Extend_All         => False,
             Use_Relative_Paths => True);
 
          Error := Add_Imported_Project
-           (Project,
-            Project,
+           (Root_Project,
+            Root_Project,
             Imported_Project  => Extended,
             Use_Relative_Path => True);
 
-         Update_Attribute_Value_In_Scenario
-           (Extended,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Source_Files_Attribute,
-            Values             => Sources (P)(1 .. Count (P)));
+         Created := True;
+      end if;
 
-         if Get_Active (Page.Copy_Files) then
-            for S in 1 .. Count (P) loop
-               Copy_File (Name => Full (P)(S).all,
-                          Pathname => Project_Directory (Project),
-                          Success  => Success);
-            end loop;
-         end if;
-
-         Changed := True;
-
-         Free (Sources (P));
-         Free (Full (P));
-
-         Success := Save_Project (Extended);
+      for F in Files'Range loop
+         File_Names (F) := new String'(Base_Name (Files (F)));
       end loop;
-   end Generate_Project;
+
+      Update_Attribute_Value_In_Scenario
+        (Extended,
+         Scenario_Variables => No_Scenario,
+         Attribute          => Source_Files_Attribute,
+         Values             => File_Names,
+         Prepend            => not Created);
+
+      Free (File_Names);
+
+      if Copy_Files then
+         for S in Files'Range loop
+            Copy_File (Name     => Full_Name (Files (S)).all,
+                       Pathname => Project_Directory (Extended),
+                       Success  => Success);
+         end loop;
+      end if;
+
+      Success := Save_Project (Extended);
+
+      if Recompute then
+         Recompute_View (Kernel);
+      end if;
+   end Add_Source_Files;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Edit_In_Extended_Project;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File_C   : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      File     : constant VFS.Virtual_File := File_Information (File_C);
+      Project  : constant Project_Type :=
+        Get_Project_From_File (Get_Registry (Kernel).all, File);
+      Button : Message_Dialog_Buttons;
+   begin
+      Button := Message_Dialog
+        (-"Should GPS copy the file in the extending project's directory ?"
+         & ASCII.LF
+         & Project_Directory (Get_Project (Kernel)),
+         Dialog_Type => Confirmation,
+         Buttons     => Button_Yes or Button_No,
+         Title       => -"Copy files ?",
+         Parent      => Get_Main_Window (Kernel));
+
+      Add_Source_Files
+        (Kernel       => Kernel,
+         Root_Project => Get_Project (Kernel),
+         Files        => (1 => File),
+         File_Project => Project,
+         Copy_Files   => Button = Button_Yes,
+         Recompute    => True);
+      return Success;
+   end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Can_Add_To_Extended;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      File    : VFS.Virtual_File;
+      Project : Project_Type;
+   begin
+      --  If the current root project is an extending all project
+
+      if Parent_Project (Get_Project (Kernel)) /= No_Project then
+         if Context.all in File_Selection_Context'Class then
+            File := File_Information
+              (File_Selection_Context_Access (Context));
+            if File /= VFS.No_File then
+               Project := Get_Project_From_File
+                 (Get_Registry (Kernel).all, File);
+
+               --  If the file doesn't already belong to an extending project
+               if Project /= No_Project
+                 and then Parent_Project (Project) = No_Project
+               then
+                  return True;
+               end if;
+            end if;
+         end if;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   -------------------------------
+   -- Register_Contextual_Menus --
+   -------------------------------
+
+   procedure Register_Contextual_Menus
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Command : Interactive_Command_Access;
+      Filter  : constant Action_Filter := new Can_Add_To_Extended;
+   begin
+      Command := new Edit_In_Extended_Project;
+      Register_Contextual_Menu
+        (Kernel, "Add to extending project",
+         Action => Command,
+         Filter => Filter,
+         Label  => "Add to extending project");
+   end Register_Contextual_Menus;
 
 end Creation_Wizard.Extending;

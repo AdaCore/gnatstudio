@@ -18,10 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GPS.Kernel;
+
 package Creation_Wizard.Extending is
 
    procedure Add_Extending_Wizard_Pages
      (Wiz : access Project_Wizard_Record'Class);
    --  Add the required pages to a wizard to make it an extending wizard
+
+   procedure Register_Contextual_Menus
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the contextual menus for this module
 
 end Creation_Wizard.Extending;
