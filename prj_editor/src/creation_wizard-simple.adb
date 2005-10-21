@@ -21,11 +21,11 @@
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPR_Creation;              use GPR_Creation;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Intl;                  use GPS.Intl;
 with Projects;                  use Projects;
 with Directory_Tree;            use Directory_Tree;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Creation_Wizard;           use Creation_Wizard;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
 with VFS;                       use VFS;
@@ -74,14 +74,14 @@ package body Creation_Wizard.Simple is
    begin
       Src_Dirs := new Dirs_Selection_Page;
       Add_Page (Wiz, Src_Dirs,
-                Description  => "Source directories",
-                Toc          => "Source directories");
+                Description  => -"Source directories",
+                Toc          => -"Source directories");
 
       Obj_Dirs := new Obj_Dirs_Page;
       Obj_Dirs.Src_Dirs := Src_Dirs;
       Add_Page (Wiz, Obj_Dirs,
-                Description  => "Object directories",
-                Toc          => "Object directories");
+                Description  => -"Object directories",
+                Toc          => -"Object directories");
    end Add_Simple_Wizard_Pages;
 
    --------------------
