@@ -12,6 +12,13 @@ Known Problems fixed in GPS 3.1.0
               has not been detected correctly.
   Workaround: Reload the project through Project->Recent
 
+- EA06-022 Contextual menus sometimes disappear under Windows
+  Problem:    Under Windows, when creating a contextual menu using a short
+              right-click, the menu might disappear immediately. This occurs
+              most often when clicking for the first time on an entity in a
+              file editor.
+  Workaround: Create the contextual menu by keeping the right button pressed.
+
 - EA06-002 Duplicate entries in Locations view after a search
   Problem:    If you do a Search for all occurrences twice for the same pattern,
               duplicate references are inserted into the Locations view
