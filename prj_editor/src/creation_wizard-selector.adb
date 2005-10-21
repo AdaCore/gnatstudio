@@ -29,15 +29,16 @@ with Gtk.Radio_Button;       use Gtk.Radio_Button;
 with Gtk.Separator;          use Gtk.Separator;
 with Gtk.Widget;             use Gtk.Widget;
 
-with Creation_Wizard.Adp;    use Creation_Wizard.Adp;
-with Creation_Wizard.Full;   use Creation_Wizard.Full;
-with Creation_Wizard.Simple; use Creation_Wizard.Simple;
-with Creation_Wizard;        use Creation_Wizard;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel;             use GPS.Kernel;
-with Traces;                 use Traces;
-with Wizards;                use Wizards;
+with Creation_Wizard.Adp;       use Creation_Wizard.Adp;
+with Creation_Wizard.Extending; use Creation_Wizard.Extending;
+with Creation_Wizard.Full;      use Creation_Wizard.Full;
+with Creation_Wizard.Simple;    use Creation_Wizard.Simple;
+with Creation_Wizard;           use Creation_Wizard;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel;                use GPS.Kernel;
+with Traces;                    use Traces;
+with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
 
@@ -48,6 +49,7 @@ package body Creation_Wizard.Selector is
       From_Existing : Gtk_Radio_Button;
       From_Library  : Gtk_Radio_Button;
       From_Adp      : Gtk_Radio_Button;
+      Extending     : Gtk_Radio_Button;
    end record;
    type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
    function Create_Content
@@ -72,7 +74,7 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      Selected : Integer;
+      Selected : Integer := 1;
    begin
       if Get_Active (Page.From_Existing) then
          Selected := 1;
@@ -80,8 +82,10 @@ package body Creation_Wizard.Selector is
          Selected := 2;
       elsif Get_Active (Page.From_Scratch) then
          Selected := 3;
-      else
+      elsif Get_Active (Page.From_Library) then
          Selected := 4;
+      elsif Get_Active (Page.Extending) then
+         Selected := 5;
       end if;
 
       if Page.Last_Selected /= Selected then
@@ -92,8 +96,11 @@ package body Creation_Wizard.Selector is
             when 2 => Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
             when 3 => Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
-            when others => Add_Full_Wizard_Pages
+            when 4 => Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "library_wizard");
+            when 5 => Add_Extending_Wizard_Pages (Project_Wizard (Wiz));
+            when others =>
+               null;
          end case;
       end if;
 
@@ -175,11 +182,7 @@ package body Creation_Wizard.Selector is
       Pack_Start (Box, Page.From_Scratch, Expand => False);
       Gtk_New
         (Label,
-         -("Create a new project file, where you can specify its"
-           & ASCII.LF
-           & "properties, like the set of source directories, the object"
-           & ASCII.LF
-           & "directory, compiler switches,..."));
+         -("Create a new project file, with full control of the properties"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
@@ -191,15 +194,9 @@ package body Creation_Wizard.Selector is
       Pack_Start (Box, Page.From_Existing, Expand => False);
       Gtk_New
         (Label,
-         -("Create a new set of projects given a set of source directories"
+         -("Create a new set of projects given an existing build environment."
            & ASCII.LF
-           & "and a set of object directories. GPS will try to create"
-           & ASCII.LF
-           & "projects so as to be able to get the same location for"
-           & ASCII.LF
-           & "object files when your application is build using project"
-           & ASCII.LF
-           & "files as it was when you build it previously."));
+           & "GPS will try to preserve the build structure you already have"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
@@ -213,13 +210,9 @@ package body Creation_Wizard.Selector is
       Pack_Start (Box, Page.From_Adp, Expand => False);
       Gtk_New
         (Label,
-         -(".adp files are simple project files used in the Emacs based"
+         -("Converts a .adp file into a project file. adp files are simple"
            & ASCII.LF
-           & "GLIDE environment."
-           & ASCII.LF
-           & "This option will allow you to convert such a file to a set"
-           & ASCII.LF
-           & "of GPS project files."));
+           & "project files used in the Emacs based GLIDE environment"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
@@ -234,6 +227,22 @@ package body Creation_Wizard.Selector is
          -("Create a new project file, that creates a library as a result"
            & ASCII.LF
            & "of the a build, instead of an executable"));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
+
+      Gtk_New
+        (Page.Extending, Get_Group (Page.From_Scratch), -"Extending Project");
+      Pack_Start (Box, Page.Extending, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create an extending project that allows you to work on a copy of"
+           & ASCII.LF
+           & "some sources and recompile them locally without affecting the"
+           & ASCII.LF
+           & "project's build"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
