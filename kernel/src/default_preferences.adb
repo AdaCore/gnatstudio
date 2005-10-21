@@ -754,6 +754,10 @@ package body Default_Preferences is
          Desc := From_String (Fallback_Font);
       end if;
 
+      if Info.Descr /= null then
+         Free (Info.Descr);
+      end if;
+
       Info.Descr := Desc;
    end Get_Font;
 
