@@ -94,7 +94,7 @@ package Browsers.Canvas is
       return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with the browser
 
-   function To_Brower
+   function To_Browser
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return General_Browser;
    --  Return the browser that contains Canvas.
