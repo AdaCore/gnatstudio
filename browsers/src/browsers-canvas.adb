@@ -978,12 +978,12 @@ package body Browsers.Canvas is
    -- To_Brower --
    ---------------
 
-   function To_Brower
+   function To_Browser
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return General_Browser is
    begin
       return General_Browser (Get_Parent (Get_Parent (Canvas)));
-   end To_Brower;
+   end To_Browser;
 
    ---------------
    -- Highlight --
@@ -1005,7 +1005,7 @@ package body Browsers.Canvas is
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint)
    is
-      Browser : constant General_Browser := To_Brower (Canvas);
+      Browser : constant General_Browser := To_Browser (Canvas);
    begin
       if not Browser_Item (Get_Src (Link)).Hide_Links
         and then not Browser_Item (Get_Dest (Link)).Hide_Links
