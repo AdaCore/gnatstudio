@@ -1373,7 +1373,7 @@ package body GPS.Kernel.Scripts is
                end if;
                Submenu := Gtk_Menu (Get_Submenu (Menu_Item));
                if Submenu /= null then
-                  R_Analyze_Menu (Depth + 1, Submenu);
+                  Recursive_Analyze_Menu (Depth + 1, Submenu);
                end if;
             end if;
             List := Widget_List.Next (List);
