@@ -88,6 +88,8 @@ with String_Utils;             use String_Utils;
 with System;                   use System;
 with Traces;                   use Traces;
 
+with Ada.Calendar;             use Ada.Calendar;
+
 package body GUI_Utils is
 
    Me : constant Debug_Handle := Create ("GUI_Utils");
@@ -406,11 +408,17 @@ package body GUI_Utils is
       Event  : Gdk.Event.Gdk_Event;
       Data   : Contextual_Menu_Data) return Boolean
    is
-      Menu : Gtk_Menu;
+      Menu                : Gtk_Menu;
+      Time_Before_Factory : Time;
+
    begin
       if Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
+         if Host = Windows then
+            Time_Before_Factory := Clock;
+         end if;
+
          Menu := Data.Create (Widget, Event);
 
          if Menu /= null then
@@ -420,15 +428,28 @@ package body GUI_Utils is
             Grab_Focus (Widget);
             Show_All (Menu);
 
-            --  Here we are calling Popup with an Activate_Time 200ms after
-            --  the event time. This works around a bug under Windows that
-            --  causes the menu to disappear on a click when there are too
-            --  many entries.
-
+            --  Here we are calling Popup with an Activate_Time 150ms after
+            --  the event time, plus the time to execute the menu factory.
+            --
+            --  The addition of 150ms is a workaround for a bug in Gtk+
+            --  versions 2.4.13 and under, and should be removed when we switch
+            --  to Gtk+ version 2.4.14 or above. The regression causes menus
+            --  with a lot of entries (such as in the VCS Explorer) to
+            --  disappear immediately if they are created with a single click.
+            --
+            --  The addition of the time to execute the menu factory is an
+            --  adjustment needed under Windows, because the time of events is
+            --  written at the time at which they reach the Gtk main loop,
+            --  whereas, under X11, they are written at the time they occur.
+            --  The regressions causes menus that have an expensive factory
+            --  (such as the first contextual menu on an entity, before any
+            --  xref information has been loaded) to disappear immediately if
+            --  they are created with a simple click.
             if Host = Windows then
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event) + 150);
+                      Activate_Time => Gdk.Event.Get_Time (Event) + 150
+                        + Guint32 ((Clock - Time_Before_Factory) * 1000));
             else
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
@@ -571,11 +592,17 @@ package body GUI_Utils is
          Event  : Gdk.Event.Gdk_Event;
          User   : Callback_User_Data) return Boolean
       is
-         Menu : Gtk_Menu;
+         Menu                : Gtk_Menu;
+         Time_Before_Factory : Time;
+
       begin
          if Get_Button (Event) = 3
            and then Get_Event_Type (Event) = Button_Press
          then
+            if Host = Windows then
+               Time_Before_Factory := Clock;
+            end if;
+
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
@@ -586,15 +613,13 @@ package body GUI_Utils is
                Grab_Focus (Widget);
                Show_All (Menu);
 
-               --  Here we are calling Popup with an Activate_Time 200ms after
-               --  the event time. This works around a bug under Windows that
-               --  causes the menu to disappear on a click when there are too
-               --  many entries.
+               --  See comments in Button_Press_For_Contextual_Menu above.
 
                if Host = Windows then
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event) + 150);
+                         Activate_Time => Gdk.Event.Get_Time (Event) + 150
+                        + Guint32 ((Clock - Time_Before_Factory) * 1000));
                else
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
