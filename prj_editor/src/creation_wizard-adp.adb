@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Adp_Converter;             use Adp_Converter;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Projects;                  use Projects;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Box;                   use Gtk.Box;
@@ -29,7 +29,7 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Label;                 use Gtk.Label;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with VFS;                       use VFS;
