@@ -289,6 +289,7 @@ package Projects is
    Vcs_Kind_Attribute         : constant Attribute_Pkg;
    Global_Pragmas_Attribute   : constant Attribute_Pkg;
    Local_Pragmas_Attribute    : constant Attribute_Pkg;
+   Locally_Removed_Files_Attribute : constant Attribute_Pkg;
 
    --  Naming package
    Casing_Attribute                : constant Attribute_Pkg;
@@ -695,6 +696,8 @@ private
    type Attribute_Pkg is new String;
    Source_Dirs_Attribute      : constant Attribute_Pkg := "source_dirs";
    Source_Files_Attribute     : constant Attribute_Pkg := "source_files";
+   Locally_Removed_Files_Attribute : constant Attribute_Pkg :=
+     "locally_removed_files";
    Gnatlist_Attribute         : constant Attribute_Pkg := "ide#gnatlist";
    Compiler_Command_Attribute : constant Attribute_Pkg :=
      "ide#compiler_command";
