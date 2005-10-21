@@ -263,7 +263,7 @@ package body GPS.Kernel.Custom is
       else
          --  else enclose it
          XML_Parsers.Parse_Buffer
-           ("<?xml version=""1.0""?><Root>" & Customization & "</Root>",
+           ("<?xml version=""1.0""?><GPS>" & Customization & "</GPS>",
             From_File  => From_File,
             Start_Line => Start_Line,
             Tree       => Node,
@@ -278,9 +278,15 @@ package body GPS.Kernel.Custom is
 
       if Node /= null then
          if Kernel.Custom_Files_Loaded then
-            Execute_Customization_String
-              (Kernel, No_File, Node.Child, Hard_Coded);
-            Free (Node);
+            begin
+               Execute_Customization_String
+                 (Kernel, No_File, Node.Child, Hard_Coded);
+               Free (Node);
+            exception
+               when others =>
+                  return "Error while executing parse_xml()";
+            end;
+
          else
             N := Kernel.Customization_Strings;
             if N = null then
