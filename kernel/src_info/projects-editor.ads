@@ -150,6 +150,15 @@ package Projects.Editor is
    --  statement, to avoid warnings from the project manager.
    --  This subprogram doesn't apply recursively to imported projects
 
+   procedure Set_Extended_Project
+     (Project    : Projects.Project_Type;
+      Extended   : Projects.Project_Type;
+      Extend_All : Boolean := False;
+      Use_Relative_Paths : Boolean := False);
+   --  Set the project that Project extends. If Extend_All is True, then this
+   --  is an "extend all" project.
+   --  The project must be recomputed afterward
+
    -----------
    -- Paths --
    -----------

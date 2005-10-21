@@ -2441,6 +2441,37 @@ package body Projects.Editor is
          end loop;
       end if;
 
+      --  Converts the "extends ..." part
+      declare
+         Old : constant String := Get_String
+           (Extended_Project_Path_Of (Project.Node, Tree));
+      begin
+         if Old /= "" then
+            if Use_Relative_Paths then
+               declare
+                  Conv : constant String :=
+                    Relative_Path_Name (Old, Base);
+               begin
+                  if Old /= Conv then
+                     Set_Extended_Project_Path_Of
+                       (Project.Node, Tree, Get_String (Conv));
+                     Changed := True;
+                  end if;
+               end;
+            else
+               declare
+                  Conv : constant String := Normalize_Pathname (Old, Base);
+               begin
+                  if Conv /= Old then
+                     Set_Extended_Project_Path_Of
+                       (Project.Node, Tree, Get_String (Conv));
+                     Changed := True;
+                  end if;
+               end;
+            end if;
+         end if;
+      end;
+
       --  Then replace all the paths
       For_Each_Directory_Node (Project, Convert_Path'Unrestricted_Access);
 
@@ -3776,5 +3807,44 @@ package body Projects.Editor is
         (First_Declarative_Item_Of
            (Project_Declaration_Of (Project.Node, Tree), Tree));
    end Normalize_Cases;
+
+   --------------------------
+   -- Set_Extended_Project --
+   --------------------------
+
+   procedure Set_Extended_Project
+     (Project            : Projects.Project_Type;
+      Extended           : Projects.Project_Type;
+      Extend_All         : Boolean := False;
+      Use_Relative_Paths : Boolean := False)
+   is
+   begin
+      if Use_Relative_Paths then
+         declare
+            Path : constant String :=
+              Relative_Path_Name (Project_Path (Extended),
+                                  Project_Directory (Project));
+         begin
+            Set_Extended_Project_Path_Of
+              (Project.Node,
+               Project.Tree,
+               To => Get_String (Path));
+         end;
+      else
+         Set_Extended_Project_Path_Of
+           (Project.Node,
+            Project.Tree,
+            To => Get_String (Project_Path (Extended)));
+      end if;
+
+      Set_Extended_Project_Of
+        (Project_Declaration_Of (Project.Node, Project.Tree),
+         Project.Tree,
+         To => Extended.Node);
+
+      if Extend_All then
+         Set_Is_Extending_All (Project.Node, Project.Tree);
+      end if;
+   end Set_Extended_Project;
 
 end Projects.Editor;
