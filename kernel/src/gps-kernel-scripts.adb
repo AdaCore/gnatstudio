@@ -1334,16 +1334,18 @@ package body GPS.Kernel.Scripts is
       L, C     : Integer := -1;
       Inst     : Class_Instance;
 
-      procedure R_Analyze_Menu
+      procedure Recursive_Analyze_Menu
         (Depth : Natural;
          Menu  : Gtk_Menu);
-      --  Recursive analysis of menu items
+      --  Recursively set the menu content as command result.
+      --  Depth is the current depth of the analyzed menu
+      --  Menu is the menu that will be analyzed
 
-      --------------------
-      -- R_Analyze_Menu --
-      --------------------
+      ----------------------------
+      -- Recursive_Analyze_Menu --
+      ----------------------------
 
-      procedure R_Analyze_Menu
+      procedure Recursive_Analyze_Menu
         (Depth : Natural;
          Menu  : Gtk_Menu)
       is
@@ -1376,7 +1378,7 @@ package body GPS.Kernel.Scripts is
             end if;
             List := Widget_List.Next (List);
          end loop;
-      end R_Analyze_Menu;
+      end Recursive_Analyze_Menu;
 
    begin
       if Command = Constructor_Method then
@@ -1480,7 +1482,7 @@ package body GPS.Kernel.Scripts is
               (Kernel, Object, Context, Menu);
             if Menu /= null then
                Set_Return_Value_As_List (Data);
-               R_Analyze_Menu (1, Menu);
+               Recursive_Analyze_Menu (1, Menu);
             else
                Set_Return_Value (Data, "<empty menu>");
             end if;
