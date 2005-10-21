@@ -267,7 +267,6 @@ package body Layouts is
             end loop;
          end loop;
 
-
          return Intersections_Count (X1, Y1, X2, Y2);
       end;
    end Num_Intersections_For_Layer;
@@ -666,7 +665,6 @@ package body Layouts is
          end loop;
       end Set_Initial_Positions;
 
-
       Intersections : Natural;
       Iteration : Natural := 0;
       Min_Intersections : Natural := Natural'Last;
@@ -934,8 +932,8 @@ package body Layouts is
       Force  : Boolean := False;
       Vertical_Layout : Boolean := True)
    is
-      Max_X, Max_Y    : Natural := Natural'First;
-      Min_X, Min_Y    : Natural := Natural'Last;
+      Max_X, Max_Y    : Integer := Integer'First;
+      Min_X, Min_Y    : Integer := Integer'Last;
       Layers          : Natural_Array (0 .. Max_Index (Graph) - 1);
       Num_Layers      : Natural;
 
@@ -983,10 +981,10 @@ package body Layouts is
             Rect  := Get_Coord (Canvas_Item (Get (Iter)));
 
             if not Force and then Rect.Y /= Gint'First then
-               Max_X := Natural'Max (Max_X, Natural (Rect.X + Rect.Width));
-               Max_Y := Natural'Max (Max_Y, Natural (Rect.Y + Rect.Height));
-               Min_X := Natural'Min (Min_X, Natural (Rect.X));
-               Min_Y := Natural'Min (Min_Y, Natural (Rect.Y));
+               Max_X := Integer'Max (Max_X, Integer (Rect.X + Rect.Width));
+               Max_Y := Integer'Max (Max_Y, Integer (Rect.Y + Rect.Height));
+               Min_X := Integer'Min (Min_X, Integer (Rect.X));
+               Min_Y := Integer'Min (Min_Y, Integer (Rect.Y));
             else
                Layer := Layers (Get_Index (Get (Iter)));
                if Vertical_Layout then
@@ -1058,9 +1056,9 @@ package body Layouts is
                      Rect  := Get_Coord (Canvas_Item (Get_Src (Get (Eit))));
 
                      if Vertical_Layout then
-                        Parent := Parent + Natural (Rect.X + Rect.Width / 2);
+                        Parent := Parent + Integer (Rect.X + Rect.Width / 2);
                      else
-                        Parent := Parent + Natural (Rect.Y + Rect.Height / 2);
+                        Parent := Parent + Integer (Rect.Y + Rect.Height / 2);
                      end if;
 
                      Ancestors_Count := Ancestors_Count + 1;
