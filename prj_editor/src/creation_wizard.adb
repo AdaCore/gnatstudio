@@ -296,22 +296,22 @@ package body Creation_Wizard is
          then
             raise Invalid_Project_Page;
          end if;
+      end if;
 
-         if not Is_Directory (Location) then
-            if Message_Dialog
-              (Msg         => Location
-                  & (-" is not a directory, would you like to create it ?"),
-               Title       => -"Directory not found",
-               Dialog_Type => Information,
-               Buttons     => Button_Yes or Button_No) = Button_Yes
-            then
-               begin
-                  Make_Dir (Location);
-               exception
-                  when Directory_Error =>
-                     null;
-               end;
-            end if;
+      if not Is_Directory (Location) then
+         if Message_Dialog
+           (Msg         => Location
+            & (-" is not a directory, would you like to create it ?"),
+            Title       => -"Directory not found",
+            Dialog_Type => Information,
+            Buttons     => Button_Yes or Button_No) = Button_Yes
+         then
+            begin
+               Make_Dir (Location);
+            exception
+               when Directory_Error =>
+                  null;
+            end;
          end if;
       end if;
 
