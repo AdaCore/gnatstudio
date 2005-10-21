@@ -2828,11 +2828,11 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "insert", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "delete", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "delete", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "indent", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "indent", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "refill", 2, 2, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "refill", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "start_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
