@@ -6631,7 +6631,9 @@ Remove the activity.
 Commit the activity. If group commit is activated then the shared log
 content is the catenation of the activity file's log plus the activity
 log. If group commit is not activated then the log content for each
-activity file is the file log catenated with the activity log.
+activity file is the file log catenated with the activity log. After
+this operation the file's log are removed but the activity log is kept
+as documentation.
 
 @item Query status
 Query the status for all the source files contained in the activity.
@@ -6660,7 +6662,8 @@ Create a new activity. The name can be edited by double clicking on
 it.
 
 @item Remove from activity
-Removes the selected file from the activity.
+Removes the selected file from the activity. This also delete the
+activity log.
 
 @item Edit revision log
 Edit the current revision log for the selected file.
