@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -185,6 +185,35 @@ package body Codefix.Formal_Errors is
    begin
       Free (This, True);
    end Free;
+
+   ----------
+   -- "or" --
+   ----------
+
+   function "or" (Right, Left : Useless_Entity_Operation)
+                  return Useless_Entity_Operation_Mask
+   is
+      type Mod_Type is mod 256;
+   begin
+      return Useless_Entity_Operation_Mask
+        (Mod_Type (Useless_Entity_Operation'Pos (Right)) or
+           Mod_Type (Useless_Entity_Operation'Pos (Left)));
+   end "or";
+
+   ------------
+   -- Is_Set --
+   ------------
+
+   function Is_Set
+     (Mask : Useless_Entity_Operation_Mask;
+      Flag : Useless_Entity_Operation) return Boolean
+   is
+      type Mod_Type is mod 256;
+   begin
+      return (Mod_Type (Mask) and
+                Mod_Type (Useless_Entity_Operation'Pos (Flag))) =
+        Mod_Type (Useless_Entity_Operation'Pos (Flag));
+   end Is_Set;
 
    ---------------
    -- Should_Be --
@@ -489,7 +518,8 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String) return Solution_List
+      Name         : String;
+      Operations   : Useless_Entity_Operation_Mask) return Solution_List
    is
       function Add_Pragma return Add_Pragma_Cmd;
       --  Add a pragma after the declaration or, if there is no declaration,
@@ -600,17 +630,27 @@ package body Codefix.Formal_Errors is
       case Category is
          when Cat_Variable =>
             declare
-               New_Command : Remove_Elements_Cmd;
-               Var_Cursor  : Word_Cursor;
+               Delete_Command : Remove_Elements_Cmd;
+               Pragma_Command : Add_Pragma_Cmd;
+               Var_Cursor     : Word_Cursor;
             begin
                Set_File (Var_Cursor, Get_File (Cursor));
                Set_Location
                  (Var_Cursor, Get_Line (Cursor), Get_Column (Cursor));
                Set_Word (Var_Cursor, Name, Text_Ascii);
 
-               Add_To_Remove (New_Command, Current_Text, Var_Cursor);
-               Set_Caption (New_Command, "Delete """ & Name & """");
-               Append (Result, New_Command);
+               if Is_Set (Operations, Remove_Entity) then
+                  Add_To_Remove (Delete_Command, Current_Text, Var_Cursor);
+                  Set_Caption (Delete_Command, "Delete """ & Name & """");
+                  Append (Result, Delete_Command);
+               end if;
+
+               if Is_Set (Operations, Add_Pragma_Unreferenced) then
+                  Pragma_Command := Add_Pragma;
+                  Set_Caption (Pragma_Command, "Add pragma for " & Name);
+                  Append (Result, Pragma_Command);
+               end if;
+
             end;
 
          when Cat_Function | Cat_Procedure =>
