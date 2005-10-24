@@ -791,6 +791,21 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'no entities of sth are referenced'.
 
+   type Never_Read is new Error_Parser
+     (new String'("Unit_Not_Referenced"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Never_Read);
+
+   procedure Fix
+     (This         : Never_Read;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like '"bla" is assigned but never read'.
+
    type Pragma_Missplaced is new Error_Parser
      (new String'("Pragma_Should_Begin"), 1)
    with null record;

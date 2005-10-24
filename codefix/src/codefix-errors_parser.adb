@@ -1286,34 +1286,43 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      First_Word : constant String := Get_Message (Message)
+      First_Word     : constant String := Get_Message (Message)
         (Matches (1).First .. Matches (1).Last);
-      Category   : Language_Category;
+      Category       : Language_Category;
+      Operation_Mask : Useless_Entity_Operation_Mask;
 
    begin
       if First_Word = "procedure" then
          Category := Cat_Procedure;
+         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
       elsif First_Word = "function" then
          Category := Cat_Function;
+         Operation_Mask := Remove_Entity or Add_Pragma_Unreferenced;
       elsif First_Word = "variable" then
          Category := Cat_Variable;
+         Operation_Mask := Remove_Entity or Nothing;
       elsif First_Word = "constant"
         or else First_Word = "named number"
       then
          Category := Cat_Variable;
+         Operation_Mask := Remove_Entity or Nothing;
       elsif First_Word = "parameter" then
          Category := Cat_Parameter;
+         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
       elsif First_Word = "literal" then
          Category := Cat_Literal;
+         Operation_Mask := Add_Pragma_Unreferenced or Nothing;
       elsif First_Word = "type" then
          Category := Cat_Type;
+         Operation_Mask := Add_Pragma_Unreferenced or Remove_Entity;
       end if;
 
       Solutions := Not_Referenced
          (Current_Text,
           Message,
           Category,
-          Get_Message (Message) (Matches (2).First .. Matches (2).Last));
+          Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+          Operation_Mask);
    end Fix;
 
    ------------------------
@@ -1345,7 +1354,37 @@ package body Codefix.Errors_Parser is
         (Current_Text,
          Message,
          Cat_With,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Remove_Entity or Nothing);
+   end Fix;
+
+   ----------------
+   -- Never_Read --
+   ----------------
+
+   procedure Initialize (This : in out Never_Read) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("variable ""([^""]+)"" is assigned but never read")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Never_Read;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+   begin
+      Solutions := Not_Referenced
+        (Current_Text,
+         Message,
+         Cat_Variable,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Add_Pragma_Unreferenced or Nothing);
    end Fix;
 
    -----------------------
