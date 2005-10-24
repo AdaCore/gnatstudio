@@ -198,8 +198,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Light_Misspelling) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("misspelling of ""([^""]+)""$")));
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("misspelling of ""([^""]+)""$")),
+         new Pattern_Matcher'
+           (Compile ("incorrect spelling of keyword ""([^""]+)""$")));
    end Initialize;
 
    procedure Fix
@@ -1385,6 +1388,35 @@ package body Codefix.Errors_Parser is
          Cat_Variable,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
          Add_Pragma_Unreferenced or Nothing);
+   end Fix;
+
+   --------------------
+   -- Never_Assigned --
+   --------------------
+
+   procedure Initialize (This : in out Never_Assigned) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("""([^""]+)"" is never assigned a value")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Never_Assigned;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+   begin
+      Solutions := Not_Referenced
+        (Current_Text,
+         Message,
+         Cat_Variable,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Remove_Entity or Nothing);
    end Fix;
 
    -----------------------
