@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2005                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,6 +83,30 @@ package Codefix.Formal_Errors is
    --  Free the memory associated to a Solution_List.
 
    ----------------------------------------------------------------------------
+   --  type Useless_Entity_Operation
+   ----------------------------------------------------------------------------
+
+   type Useless_Entity_Operation is
+     (Nothing, Remove_Entity, Add_Pragma_Unreferenced, Comment_Entity);
+
+   for Useless_Entity_Operation use
+     (Nothing => 0,
+      Remove_Entity => 1,
+      Add_Pragma_Unreferenced => 2,
+      Comment_Entity => 4);
+
+   type Useless_Entity_Operation_Mask is range 0 .. 7;
+
+   function "or" (Right, Left : Useless_Entity_Operation)
+                  return Useless_Entity_Operation_Mask;
+   --  Performs a bitwise operation for the two operands
+
+   function Is_Set
+     (Mask : Useless_Entity_Operation_Mask;
+      Flag : Useless_Entity_Operation) return Boolean;
+   --  Returns true if the Flag is contained in the Mask.
+
+   ----------------------------------------------------------------------------
    --  functions of formal errors
    ----------------------------------------------------------------------------
 
@@ -142,9 +166,11 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String) return Solution_List;
+      Name         : String;
+      Operations   : Useless_Entity_Operation_Mask) return Solution_List;
    --  Propose to delete the unit unreferrenced or, in some cases, to add
-   --  a pragma 'not referreced'
+   --  a pragma 'not referrenced'. Those operations can be disabled with
+   --  the appropriate mask.
 
    function First_Line_Pragma
      (Current_Text : Text_Navigator_Abstr'Class;
