@@ -227,7 +227,7 @@ package Codefix.Errors_Parser is
    --  Fix 'possible mispelling of "=>"'
 
    type Light_Misspelling is new Error_Parser
-     (new String'("Misspelling"), 1)
+     (new String'("Misspelling"), 2)
    with null record;
 
    procedure Initialize (This : in out Light_Misspelling);
@@ -799,6 +799,21 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Never_Read;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like '"bla" is assigned but never read'.
+
+   type Never_Assigned is new Error_Parser
+     (new String'("Unit_Not_Referenced"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Never_Assigned);
+
+   procedure Fix
+     (This         : Never_Assigned;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
