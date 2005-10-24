@@ -842,7 +842,7 @@ package body Browsers.Call_Graph is
       if To_Browser then
          Layout (Cb.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Cb.Browser));
-         Align_Item (Get_Canvas (Cb.Browser), Cb.Item, 0.0, 0.5);
+         Align_Item (Get_Canvas (Cb.Browser), Cb.Item, 0.5, 0.5);
 
          Redraw_Title_Bar (Cb.Item);
       else
