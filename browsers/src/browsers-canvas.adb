@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;         use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;
 with GNAT.Strings;           use GNAT.Strings;
 
 with Gdk.Color;              use Gdk.Color;
@@ -68,12 +69,15 @@ with Commands.Interactive;   use Commands.Interactive;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with Layouts;                use Layouts;
-with VFS;                    use VFS;
+with OS_Utils;               use OS_Utils;
+with String_Utils;
 with Traces;                 use Traces;
+with VFS;                    use VFS;
 
 package body Browsers.Canvas is
 
@@ -119,6 +123,9 @@ package body Browsers.Canvas is
 
    procedure On_Export (Browser : access Gtk_Widget_Record'Class);
    --  Export the contents of the browser as an image.
+
+   procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class);
+   --  Export the contents of the browser to SVG.
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
@@ -726,7 +733,12 @@ package body Browsers.Canvas is
          Widget_Callback.Object_Connect
            (Mitem, "activate", Toggle_Orthogonal'Access, B);
 
-         Gtk_New (Mitem, Label => -"Export...");
+         Gtk_New (Mitem, Label => -"Export to SVG");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate", On_Export_To_SVG'Access, B);
+
+         Gtk_New (Mitem, Label => -"Export to PNG");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate", On_Export'Access, B);
@@ -880,6 +892,67 @@ package body Browsers.Canvas is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end On_Export;
+
+   ----------------------
+   -- On_Export_To_SVG --
+   ----------------------
+
+   procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class) is
+      use GNAT.OS_Lib;
+      use String_Utils;
+
+      B             : constant General_Browser := General_Browser (Browser);
+      Canvas        : constant Interactive_Canvas := Get_Canvas (B);
+      Kernel        : constant Kernel_Handle := Get_Kernel (B);
+      SVG_File      : File_Descriptor;
+      SVG_File_Name : constant String := "/tmp/test.svg";
+      Iterator      : Item_Iterator;
+      Item          : Canvas_Item;
+      World_X,
+      World_Y,
+      World_Width,
+      World_Height  : Gint;
+   begin
+      SVG_File := Create_File (SVG_File_Name, Text);
+
+      if SVG_File = Invalid_FD then
+         GPS.Kernel.Console.Insert
+           (Kernel, "Cannot create " & SVG_File_Name,
+            Mode => GPS.Kernel.Console.Error);
+         return;
+      end if;
+
+      Get_World_Coordinates
+        (Canvas, World_X, World_Y, World_Width, World_Height);
+
+      Put_Line (SVG_File, "<?xml version=""1.0"" standalone=""no""?>");
+      Put_Line (SVG_File, "<svg xmlns=""http://www.w3.org/2000/svg"" "
+                & "x=""" & Image (Integer (World_X)) & """ "
+                & "y=""" & Image (Integer (World_Y)) & """ "
+                & "width=""" & Image (Integer (World_Width)) & """ "
+                & "height=""" & Image (Integer (World_Height)) & """ >");
+      Put_Line (SVG_File, "<style type=""text/css""> <![CDATA[");
+      Put_Line (SVG_File, "rect.item {fill:none; stroke:black}");
+      Put_Line (SVG_File, "rect.title {fill:silver; stroke:black}");
+      Put_Line (SVG_File, "]]>");
+      Put_Line (SVG_File, "</style>");
+      Put_Line (SVG_File, "<title>"
+                & Get_Title (Get (First_Child (Get_MDI (Kernel))))
+                & "</title>" & ASCII.LF);
+
+      Iterator := Start (Canvas);
+      Item := Get (Iterator);
+
+      while Item /= null loop
+         Put_Line (SVG_File, Output_SVG (Browser_Item (Item)));
+         Next (Iterator);
+         Item := Get (Iterator);
+      end loop;
+
+      Put_Line (SVG_File, "</svg>");
+
+      Close (SVG_File);
+   end On_Export_To_SVG;
 
    ----------------
    -- On_Refresh --
@@ -2487,5 +2560,37 @@ package body Browsers.Canvas is
            Commands.Failure;
       end if;
    end Execute;
+
+   ----------------
+   -- Output_SVG --
+   ----------------
+
+   function Output_SVG (Item : access Browser_Item_Record'Class) return String
+   is
+      use String_Utils;
+
+      Coord : constant Gdk.Rectangle.Gdk_Rectangle := Get_Coord (Item);
+
+   begin
+      return
+        "<g transform=""translate(" & String_Utils.Image (Integer (Coord.X))
+        & "," & String_Utils.Image (Integer (Coord.Y)) & ")"">"
+        & ASCII.LF
+        & "<rect width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
+        & "height=""" & String_Utils.Image (Integer (Coord.Height)) & """ "
+        & "class=""item""" & "/>"
+        & ASCII.LF
+        & "<rect width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
+        & "height=""1.3em"" "
+        & "class=""title""" & "/>"
+        & ASCII.LF
+        & "<text x=""" & Image (Integer (Item.Title_X)) & """ "
+        & "y=""" & Image (Integer (Item.Title_X)) & """ dy=""1em"">"
+        & Get_Text (Item.Title_Layout)
+        & "</text>"
+        & ASCII.LF
+        & "</g>"
+        & ASCII.LF;
+   end Output_SVG;
 
 end Browsers.Canvas;
