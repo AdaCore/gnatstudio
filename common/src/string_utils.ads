@@ -161,7 +161,11 @@ package String_Utils is
    --  If String is less than Max_String_Length characters long, return it,
    --  otherwise return a krunched string no longer than Max_String_Length.
 
+   function Strip_Character (Text : String; C : Character) return String;
+   --  Return a version of Text after stripping all C's from the string.
+
    function Strip_CR (Text : String) return String;
+   pragma Inline (Strip_CR);
    --  Return a version of Text after stripping all the CR from the string.
    --  This function is used on Windows or when the Strip_CR preference is
    --  enabled (for systems that share dos files).
