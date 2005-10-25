@@ -927,8 +927,7 @@ package body Browsers.Canvas is
 
       Put_Line (SVG_File, "<?xml version=""1.0"" standalone=""no""?>");
       Put_Line (SVG_File, "<svg xmlns=""http://www.w3.org/2000/svg"" "
-                & "x=""" & Image (Integer (World_X)) & """ "
-                & "y=""" & Image (Integer (World_Y)) & """ "
+                & "x=""0"" y=""0"" "
                 & "width=""" & Image (Integer (World_Width)) & """ "
                 & "height=""" & Image (Integer (World_Height)) & """ >");
       Put_Line (SVG_File, "<style type=""text/css""> <![CDATA[");
@@ -939,6 +938,9 @@ package body Browsers.Canvas is
       Put_Line (SVG_File, "<title>"
                 & Get_Title (Get (First_Child (Get_MDI (Kernel))))
                 & "</title>" & ASCII.LF);
+      Put_Line (SVG_File, "<g transform=""translate("
+                & Image (abs Integer (World_X)) & ","
+                & Image (abs Integer (World_Y)) & ")"">");
 
       Iterator := Start (Canvas);
       Item := Get (Iterator);
@@ -949,6 +951,7 @@ package body Browsers.Canvas is
          Item := Get (Iterator);
       end loop;
 
+      Put_Line (SVG_File, "</g>");
       Put_Line (SVG_File, "</svg>");
 
       Close (SVG_File);
