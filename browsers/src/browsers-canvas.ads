@@ -332,6 +332,10 @@ package Browsers.Canvas is
    function Output_SVG (Item : access Browser_Item_Record'Class) return String;
    --  Return the XML string representing Item in SVG.
 
+   function Output_SVG_Item_Content
+     (Item : access Browser_Item_Record) return String;
+   --  Return the XML string representing the content of an Item in SVG.
+
    -----------------
    -- Xrefs lists --
    -----------------
