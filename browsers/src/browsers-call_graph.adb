@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;                use Ada.Exceptions;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -218,6 +219,10 @@ package body Browsers.Call_Graph is
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint;
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   function Output_SVG_Item_Content
+     (Item : access Entity_Item_Record) return String;
    --  See doc for inherited subprogram
 
    function Build
@@ -2539,5 +2544,35 @@ package body Browsers.Call_Graph is
       Y := Yoffset + 1;
       Display_Lines (Item, Item.Refs, Margin + Xoffset, Y, Ref_W1, Layout);
    end Resize_And_Draw;
+
+   -----------------------------
+   -- Output_SVG_Item_Content --
+   -----------------------------
+
+   function Output_SVG_Item_Content
+     (Item : access Entity_Item_Record) return String
+   is
+      use Ada.Strings.Unbounded;
+
+      Output   : Unbounded_String;
+      Line     : GNAT.OS_Lib.String_Access;
+      Dummy_Cb : Active_Area_Cb := null;
+      J        : Positive := 1;
+   begin
+      Get_Line (Item.Refs, J, Callback => Dummy_Cb, Text => Line);
+
+      while Line /= null loop
+         Append
+           (Output,
+            "<tspan y=""" & Image (J + 1) & ".3em"">"
+            & Strip_Character (Line.all, '@') & "</tspan>"
+            & ASCII.LF);
+
+         J := J + 1;
+         Get_Line (Item.Refs, J, Callback => Dummy_Cb, Text => Line);
+      end loop;
+
+      return "<text>" & ASCII.LF & To_String (Output) & "</text>";
+   end Output_SVG_Item_Content;
 
 end Browsers.Call_Graph;
