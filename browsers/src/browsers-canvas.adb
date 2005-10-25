@@ -2589,8 +2589,21 @@ package body Browsers.Canvas is
         & Get_Text (Item.Title_Layout)
         & "</text>"
         & ASCII.LF
+        & Output_SVG_Item_Content (Item)
+        & ASCII.LF
         & "</g>"
         & ASCII.LF;
    end Output_SVG;
+
+   -----------------------------
+   -- Output_SVG_Item_Content --
+   -----------------------------
+
+   function Output_SVG_Item_Content
+     (Item : access Browser_Item_Record) return String is
+      pragma Unreferenced (Item);
+   begin
+      return "<text>Default content</text>";
+   end Output_SVG_Item_Content;
 
 end Browsers.Canvas;
