@@ -603,11 +603,11 @@ package body String_Utils is
       end if;
    end Krunch;
 
-   --------------
-   -- Strip_CR --
-   --------------
+   ---------------------
+   -- Strip_Character --
+   ---------------------
 
-   function Strip_CR (Text : String) return String is
+   function Strip_Character (Text : String; C : Character) return String is
       pragma Suppress (All_Checks);
 
       To       : String (1 .. Text'Length);
@@ -615,13 +615,22 @@ package body String_Utils is
 
    begin
       for Index in Text'Range loop
-         if Text (Index) /= ASCII.CR then
+         if Text (Index) /= C then
             To (Index_To) := Text (Index);
             Index_To := Index_To + 1;
          end if;
       end loop;
 
       return To (1 .. Index_To - 1);
+   end Strip_Character;
+
+   --------------
+   -- Strip_CR --
+   --------------
+
+   function Strip_CR (Text : String) return String is
+   begin
+      return Strip_Character (Text, ASCII.LF);
    end Strip_CR;
 
    procedure Strip_CR
