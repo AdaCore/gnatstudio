@@ -329,6 +329,9 @@ package Browsers.Canvas is
    --  If Other_Areas is False, then the areas that are not in the title bar
    --  are not removed.
 
+   function Output_SVG (Item : access Browser_Item_Record'Class) return String;
+   --  Return the XML string representing Item in SVG.
+
    -----------------
    -- Xrefs lists --
    -----------------
@@ -538,9 +541,9 @@ package Browsers.Canvas is
 private
 
    type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
-      Canvas    : Gtkada.Canvas.Interactive_Canvas;
-      Kernel    : GPS.Kernel.Kernel_Handle;
-      Toolbar   : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
+      Canvas                : Gtkada.Canvas.Interactive_Canvas;
+      Kernel                : GPS.Kernel.Kernel_Handle;
+      Toolbar               : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
       Selected_Link_Color   : Gdk.Color.Gdk_Color;
       Unselected_Link_Color : Gdk.Color.Gdk_Color;
@@ -551,10 +554,10 @@ private
       Text_GC               : Gdk.GC.Gdk_GC;
       Title_GC              : Gdk.GC.Gdk_GC;
 
-      Selected_Item : Gtkada.Canvas.Canvas_Item;
+      Selected_Item         : Gtkada.Canvas.Canvas_Item;
 
-      Close_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
-      Up_Arrow, Down_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+      Close_Pixmap          : Gdk.Pixbuf.Gdk_Pixbuf;
+      Up_Arrow, Down_Arrow  : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
    type Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
