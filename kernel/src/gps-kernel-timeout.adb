@@ -50,6 +50,7 @@ with String_Utils;               use String_Utils;
 with Traces;                     use Traces;
 
 package body GPS.Kernel.Timeout is
+   Me : constant Debug_Handle := Create ("Timeout");
 
    type Console_Process_Data is new GObject_Record with record
       Console          : Interactive_Console;
@@ -111,6 +112,32 @@ package body GPS.Kernel.Timeout is
      (Command : access Monitor_Command) return Command_Return_Type;
    function Name (Command : access Monitor_Command) return String;
    --  See inherited documentation
+
+   function Execute_Monitor
+     (Command : Command_Access) return Command_Return_Type;
+   --  Execute the monitor command Command once, then process its current
+   --  output and check whether it should be executed again.
+
+   ---------------------
+   -- Execute_Monitor --
+   ---------------------
+
+   function Execute_Monitor
+     (Command : Command_Access) return Command_Return_Type
+   is
+      C      : constant Monitor_Command_Access :=
+        Monitor_Command_Access (Command);
+      Result : Command_Return_Type;
+      Continue : Boolean;
+      pragma Unreferenced (Continue);
+   begin
+      Result := Execute (Command);
+      Continue := Process_Cb (C.Data);
+      return Result;
+   end Execute_Monitor;
+
+   procedure Launch_Monitor_Command_Synchronous is new
+     Launch_Synchronous_Generic (Execute_Monitor);
 
    ----------
    -- Free --
@@ -447,6 +474,8 @@ package body GPS.Kernel.Timeout is
             Change_Dir (Directory);
          end if;
 
+         Trace (Me, "Spawning " & Exec.all
+                & ' ' & Argument_List_To_String (Args.all));
          Non_Blocking_Spawn (Fd.all, Exec.all, Args.all, Err_To_Out => True);
 
          if Directory /= "" then
@@ -513,7 +542,7 @@ package body GPS.Kernel.Timeout is
             Data.D.Command := Command_Access (C);
 
             if Synchronous then
-               Launch_Synchronous (Command_Access (C), 0.1);
+               Launch_Monitor_Command_Synchronous (Command_Access (C), 0.1);
                Destroy (Command_Access (C));
             else
                Launch_Background_Command
