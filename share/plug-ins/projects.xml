@@ -240,7 +240,7 @@
         hide_in="library_wizard wizard"
         list="true"
         base_name_only="true">
-        <string type="file" filter="extending_project" default="" />
+        <string type="file" filter="extended_project" default="" />
     </project_attribute>
 
     <!--  Object directories -->
