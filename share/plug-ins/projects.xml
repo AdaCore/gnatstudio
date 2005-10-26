@@ -194,7 +194,7 @@
 
     <project_attribute
         name="source_dirs"
-        editor_page="Sources"
+        editor_page="Source dirs"
         editor_section="Source directories"
         list="true"
         ordered="true"
@@ -228,6 +228,21 @@
         <string type="file" default="project source files" />
     </project_attribute>
 
+    <!--  Locally removed files -->
+
+    <project_attribute
+        name="locally_removed_files"
+        label="files"
+        editor_page="Hidden files"
+        editor_section="Locally removed files"
+        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project"
+        disable_if_not_set="true"
+        hide_in="library_wizard wizard"
+        list="true"
+        base_name_only="true">
+        <string type="file" filter="extending_project" default="" />
+    </project_attribute>
+
     <!--  Object directories -->
 
     <project_attribute
@@ -257,7 +272,7 @@
         description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications"
         label=""
         base_name_only="true" >
-        <string type="file" />
+        <string type="file" filter="project" />
    </project_attribute>
 
    <project_attribute
