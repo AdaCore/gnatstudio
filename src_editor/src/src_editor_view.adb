@@ -58,6 +58,7 @@ with Pango.Layout;               use Pango.Layout;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
+with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 
 with Config;                     use Config;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -68,7 +69,7 @@ with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
                                  use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
-with VFS;                        use VFS;
+with Vfs;                        use Vfs;
 
 package body Src_Editor_View is
 
@@ -1403,6 +1404,8 @@ package body Src_Editor_View is
       View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
 
       Invalidate_Window (Source_View (View));
+
+      Push_Current_Editor_Location_In_History (Kernel);
    end Initialize;
 
    --------------------
