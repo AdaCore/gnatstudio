@@ -964,6 +964,7 @@ package body Builder_Module is
                Cb_Data := new Files_Callback_Data'(Files => Files_To_Free);
             end if;
 
+            Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
             Launch_Process
               (Kernel,
                Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -984,7 +985,6 @@ package body Builder_Module is
                Show_In_Task_Manager => True,
                Synchronous          => Synchronous,
                Show_Exit_Status     => True);
-            Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
             Free (Default_Builder_Switches);
          end;
 
@@ -995,6 +995,7 @@ package body Builder_Module is
             Shadow_Path.all,
             Compilable_File,
             Compile_Only => True);
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Launch_Process
            (Kernel,
             Remote_Protocol      => Get_Pref (Remote_Protocol),
@@ -1013,7 +1014,6 @@ package body Builder_Module is
             Show_In_Task_Manager => True,
             Synchronous          => Synchronous,
             Show_Exit_Status     => True);
-         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
          Free (Args);
       end if;
 
