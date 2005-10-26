@@ -307,26 +307,25 @@ package body Buffer_Views is
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
       Model    : constant Gtk_Tree_Store :=
                    Gtk_Tree_Store (Get_Model (M.View.Tree));
-      Path     : Gtk_Tree_Path;
+      Path     : constant Gtk_Tree_Path :=
+        Get_Path_At_Event (Explorer.Tree, Event);
       Iter     : Gtk_Tree_Iter;
+      Child    : MDI_Child;
    begin
-      if Get_Event_Type (Event) = Gdk_2button_Press then
-         Path := Get_Path_At_Event (Explorer.Tree, Event);
+      if Path /= null then
+         Iter := Get_Iter (Model, Path);
+         Path_Free (Path);
 
-         if Path /= null then
-            Iter := Get_Iter (Model, Path);
-            Open_File_Editor
-              (Kernel,
-               Create
-                 (Full_Filename =>
-                    Get_String (Model, Iter, Data_Column)),
-               New_File => False);
-            Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
+         Child := Find_MDI_Child_By_Name
+           (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+
+         if Get_Event_Type (Event) = Gdk_2button_Press then
+            Raise_Child (Child, Give_Focus => True);
+            return True;
          end if;
       end if;
 
       return False;
-
    exception
       when E : others =>
          Trace (Exception_Handle,
