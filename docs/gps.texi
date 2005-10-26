@@ -10962,6 +10962,17 @@ name, although no check is done to make sure the file actually exists
 on the disk. But GPS will be able to do some special marshalling with
 the file name. The third case indicates that GPS should expect a
 directory.
+
+@item @code{filter} (one of "none", "project", "extending_project")
+
+This attribute is ignored for all types except @code{"file"}. In this case,
+it further specifies what kind of files can be used in this attribute. If
+the filter is @code{"none"}, then any file anywhere on the system is valid.
+If the filter is @code{"project"}, then only files from the selected project
+can be specified. If the filter is @code{"extended_project"}, then only the
+files from the project extended by the current project can be specified. The
+attribute will not be shown if the current project is now an extending project.
+
 @end itemize
 
 @cindex <choice>
