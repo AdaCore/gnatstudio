@@ -536,8 +536,12 @@ package body Projects is
 
    function Direct_Sources_Count (Project : Project_Type) return Natural is
    begin
-      return Length (Project.View_Tree,
-                     Projects_Table (Project)(Get_View (Project)).Sources);
+      if Get_View (Project) = Prj.No_Project then
+         return 0;
+      else
+         return Length (Project.View_Tree,
+                        Projects_Table (Project)(Get_View (Project)).Sources);
+      end if;
    end Direct_Sources_Count;
 
    ------------
